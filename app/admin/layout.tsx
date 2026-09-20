@@ -37,6 +37,9 @@ export default async function AdminLayout({
               <Link href="/admin" className="muted">
                 ダッシュボード
               </Link>
+              <Link href="/admin/analytics" className="muted">
+                アクセス分析
+              </Link>
               <Link href="/admin/stores" className="muted">
                 店舗管理
               </Link>

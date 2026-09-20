@@ -34,14 +34,25 @@ export async function pickBanner(
   const pref = opts.pref || "";
   const region = pref ? PREF_REGION[pref] || "" : opts.region || "";
 
+  let picked: PickedBanner | null = null;
   if (pref) {
-    const match = banners.find((b) => b.scope === pref);
-    if (match) return match;
+    picked = banners.find((b) => b.scope === pref) ?? null;
   }
-  if (region) {
-    const match = banners.find((b) => b.scope === region);
-    if (match) return match;
+  if (!picked && region) {
+    picked = banners.find((b) => b.scope === region) ?? null;
   }
-  const unscoped = banners.find((b) => !b.scope);
-  return unscoped ?? null;
+  if (!picked) {
+    picked = banners.find((b) => !b.scope) ?? null;
+  }
+
+  if (picked) {
+    // Fire-and-forget impression log for the アクセス分析 banner tab (real data,
+    // not the prototype's hardcoded impressions/clicks numbers).
+    supabase
+      .from("banner_impressions")
+      .insert({ banner_id: picked.id })
+      .then(() => {});
+  }
+
+  return picked;
 }

@@ -166,6 +166,12 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
+      <div style={{ marginBottom: 28 }}>
+        <Link href="/admin/analytics" className="btn primary">
+          📈 アクセス分析を見る →
+        </Link>
+      </div>
+
       <h2 style={{ fontSize: 16, marginBottom: 10 }}>
         よく見られている店舗（直近200件のアクセスより）
       </h2>

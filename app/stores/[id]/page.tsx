@@ -14,6 +14,7 @@ import { reportStore, reportJob } from "@/app/report-actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { classifyDevice } from "@/lib/device";
 
 export default async function StoreDetailPage({
   params,
@@ -37,11 +38,13 @@ export default async function StoreDetailPage({
   }
 
   const path = `/stores/${store.id}`;
-  const referrer = (await headers()).get("referer") ?? null;
+  const hdrs = await headers();
+  const referrer = hdrs.get("referer") ?? null;
+  const device = classifyDevice(hdrs.get("user-agent"));
 
   supabase
     .from("page_views")
-    .insert({ path, store_id: store.id, referrer })
+    .insert({ path, store_id: store.id, referrer, device })
     .then(() => {});
 
   const { data: events } = await supabase
