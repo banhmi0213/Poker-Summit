@@ -1,23 +1,172 @@
 import { createClient } from "@/lib/supabase/server";
-import { setStoreStatus, setStoreOwnerByEmail } from "./actions";
-import { STORE_STATUS_LABEL as STATUS_LABEL } from "@/lib/constants";
+import {
+  setStoreStatus,
+  setStoreOwnerByEmail,
+  createStoreByAdmin,
+  updateStoreByAdmin,
+  deleteStoreByAdmin,
+} from "./actions";
+import {
+  STORE_STATUS_LABEL as STATUS_LABEL,
+  CATEGORY_LABEL,
+  CATEGORY_OPTIONS,
+  REGIONS,
+  PREF_OPTIONS,
+} from "@/lib/constants";
 
-export default async function AdminStoresPage() {
+export default async function AdminStoresPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; status?: string };
+}) {
   const supabase = await createClient();
+  const q = searchParams.q?.trim() ?? "";
+  const status = searchParams.status ?? "all";
 
-  const { data: stores } = await supabase
+  let query = supabase
     .from("stores")
-    .select("id, name, category, region, pref, status, owner_user_id, created_at")
+    .select(
+      "id, name, category, region, pref, city, address, tel, hours, description, status, owner_user_id, created_at"
+    )
     .order("created_at", { ascending: false });
+
+  if (status !== "all") {
+    query = query.eq("status", status);
+  }
+  if (q) {
+    query = query.ilike("name", `%${q}%`);
+  }
+
+  const { data: stores } = await query;
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, marginBottom: 16 }}>店舗管理</h1>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
+        <h1 style={{ fontSize: 22 }}>店舗管理</h1>
+      </div>
+
+      <details className="card" style={{ marginBottom: 16 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 700 }}>＋ 店舗を追加</summary>
+        <form
+          action={createStoreByAdmin}
+          style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}
+        >
+          <div className="field">
+            <span className="muted">店舗名 *</span>
+            <input type="text" name="name" required />
+          </div>
+          <div className="field">
+            <span className="muted">カテゴリ</span>
+            <select name="category" defaultValue="">
+              <option value="">未設定</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">地方</span>
+            <select name="region" defaultValue="">
+              <option value="">未設定</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">都道府県</span>
+            <select name="pref" defaultValue="">
+              <option value="">未設定</option>
+              {PREF_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">市区町村</span>
+            <input type="text" name="city" />
+          </div>
+          <div className="field">
+            <span className="muted">住所</span>
+            <input type="text" name="address" />
+          </div>
+          <div className="field">
+            <span className="muted">電話番号</span>
+            <input type="text" name="tel" />
+          </div>
+          <div className="field">
+            <span className="muted">営業時間</span>
+            <input type="text" name="hours" />
+          </div>
+          <div className="field">
+            <span className="muted">紹介文</span>
+            <textarea name="description" rows={3} />
+          </div>
+          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+            追加する（即時掲載）
+          </button>
+        </form>
+      </details>
+
+      <form
+        method="get"
+        style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}
+      >
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="店舗名で検索"
+          style={{
+            padding: "8px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--border-strong)",
+            background: "var(--surface-2)",
+            fontSize: 13,
+            width: 220,
+          }}
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--border-strong)",
+            background: "var(--surface-2)",
+            fontSize: 13,
+          }}
+        >
+          <option value="all">ステータス: すべて</option>
+          <option value="approved">承認済み</option>
+          <option value="pending">承認待ち</option>
+          <option value="rejected">却下</option>
+        </select>
+        <button type="submit" className="btn">
+          検索
+        </button>
+      </form>
 
       <table>
         <thead>
           <tr>
             <th>店舗名</th>
+            <th>カテゴリ</th>
             <th>エリア</th>
             <th>ステータス</th>
             <th>オーナー</th>
@@ -25,9 +174,21 @@ export default async function AdminStoresPage() {
           </tr>
         </thead>
         <tbody>
+          {(!stores || stores.length === 0) && (
+            <tr>
+              <td colSpan={6} className="muted">
+                該当する店舗がありません。
+              </td>
+            </tr>
+          )}
           {stores?.map((s) => (
             <tr key={s.id}>
               <td>{s.name}</td>
+              <td>
+                <span className="badge outline">
+                  {CATEGORY_LABEL[s.category ?? ""] ?? s.category ?? ""}
+                </span>
+              </td>
               <td>{[s.region, s.pref].filter(Boolean).join(" / ")}</td>
               <td>
                 <span className="badge">
@@ -63,28 +224,123 @@ export default async function AdminStoresPage() {
                 </form>
               </td>
               <td>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                  {s.status === "pending" && (
+                    <>
+                      <form
+                        action={async () => {
+                          "use server";
+                          await setStoreStatus(s.id, "approved");
+                        }}
+                      >
+                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
+                          承認
+                        </button>
+                      </form>
+                      <form
+                        action={async () => {
+                          "use server";
+                          await setStoreStatus(s.id, "rejected");
+                        }}
+                      >
+                        <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                          却下
+                        </button>
+                      </form>
+                    </>
+                  )}
+                  {s.status === "rejected" && (
+                    <form
+                      action={async () => {
+                        "use server";
+                        await setStoreStatus(s.id, "pending");
+                      }}
+                    >
+                      <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                        承認待ちに戻す
+                      </button>
+                    </form>
+                  )}
                   <form
                     action={async () => {
                       "use server";
-                      await setStoreStatus(s.id, "approved");
+                      await deleteStoreByAdmin(s.id);
                     }}
                   >
-                    <button type="submit" className="btn primary">
-                      承認
-                    </button>
-                  </form>
-                  <form
-                    action={async () => {
-                      "use server";
-                      await setStoreStatus(s.id, "rejected");
-                    }}
-                  >
-                    <button type="submit" className="btn">
-                      却下
+                    <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                      削除
                     </button>
                   </form>
                 </div>
+                <details>
+                  <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
+                  <form
+                    action={updateStoreByAdmin}
+                    style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 220 }}
+                  >
+                    <input type="hidden" name="storeId" value={s.id} />
+                    <div className="field">
+                      <span className="muted">店舗名 *</span>
+                      <input type="text" name="name" defaultValue={s.name} required />
+                    </div>
+                    <div className="field">
+                      <span className="muted">カテゴリ</span>
+                      <select name="category" defaultValue={s.category ?? ""}>
+                        <option value="">未設定</option>
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <span className="muted">地方</span>
+                      <select name="region" defaultValue={s.region ?? ""}>
+                        <option value="">未設定</option>
+                        {REGIONS.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <span className="muted">都道府県</span>
+                      <select name="pref" defaultValue={s.pref ?? ""}>
+                        <option value="">未設定</option>
+                        {PREF_OPTIONS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <span className="muted">市区町村</span>
+                      <input type="text" name="city" defaultValue={s.city ?? ""} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">住所</span>
+                      <input type="text" name="address" defaultValue={s.address ?? ""} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">電話番号</span>
+                      <input type="text" name="tel" defaultValue={s.tel ?? ""} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">営業時間</span>
+                      <input type="text" name="hours" defaultValue={s.hours ?? ""} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">紹介文</span>
+                      <textarea name="description" rows={3} defaultValue={s.description ?? ""} />
+                    </div>
+                    <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+                      保存する
+                    </button>
+                  </form>
+                </details>
               </td>
             </tr>
           ))}

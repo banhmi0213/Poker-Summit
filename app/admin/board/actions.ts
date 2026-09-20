@@ -33,3 +33,16 @@ export async function setReplyStatus(id: string, status: string) {
   await logAdminAction(supabase, `board_reply_${status}`, "board_reply", id);
   revalidatePath("/admin/board");
 }
+
+export async function deletePostByAdmin(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("board_posts").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await logAdminAction(supabase, "board_post_delete", "board_post", id);
+  revalidatePath("/admin/board");
+  revalidatePath("/board");
+}

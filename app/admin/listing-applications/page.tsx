@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { approveApplication, rejectApplication } from "./actions";
+import { approveApplication, rejectApplication, revertApplication } from "./actions";
 import { CATEGORY_LABEL } from "@/lib/constants";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -11,12 +11,28 @@ const STATUS_LABEL: Record<string, string> = {
   listed: "掲載済み",
 };
 
-export default async function AdminListingApplicationsPage() {
+export default async function AdminListingApplicationsPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; status?: string };
+}) {
   const supabase = await createClient();
-  const { data: applications } = await supabase
+  const q = searchParams.q?.trim() ?? "";
+  const status = searchParams.status ?? "all";
+
+  let query = supabase
     .from("listing_applications")
     .select("*")
     .order("applied_at", { ascending: false });
+
+  if (status !== "all") {
+    query = query.eq("status", status);
+  }
+  if (q) {
+    query = query.or(`company_name.ilike.%${q}%,contact_name.ilike.%${q}%`);
+  }
+
+  const { data: applications } = await query;
 
   const isDone = (status: string) =>
     status === "approved" || status === "rejected" || status === "listed";
@@ -24,6 +40,44 @@ export default async function AdminListingApplicationsPage() {
   return (
     <div>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>掲載申込管理</h1>
+
+      <form style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="会社名・店舗名・担当者で検索"
+          style={{
+            padding: "8px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--border-strong)",
+            background: "var(--surface-2)",
+            fontSize: 13,
+            width: 240,
+          }}
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          style={{
+            padding: "8px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--border-strong)",
+            background: "var(--surface-2)",
+            fontSize: 13,
+          }}
+        >
+          <option value="all">ステータス: すべて</option>
+          <option value="unconfirmed">未確認</option>
+          <option value="pending">承認待ち</option>
+          <option value="approved">承認済み</option>
+          <option value="listed">掲載済み</option>
+          <option value="rejected">却下</option>
+        </select>
+        <button type="submit" className="btn">
+          検索
+        </button>
+      </form>
 
       {(!applications || applications.length === 0) && (
         <p className="muted">現在、掲載申込はありません。</p>
@@ -65,6 +119,18 @@ export default async function AdminListingApplicationsPage() {
                     <Link href={`/admin/listing-applications/${a.id}`} className="btn" style={{ fontSize: 12 }}>
                       詳細
                     </Link>
+                    {a.status === "rejected" && (
+                      <form
+                        action={async () => {
+                          "use server";
+                          await revertApplication(a.id);
+                        }}
+                      >
+                        <button type="submit" className="btn">
+                          承認待ちに戻す
+                        </button>
+                      </form>
+                    )}
                     {isDone(a.status) ? (
                       <span className="muted">対応済み</span>
                     ) : (

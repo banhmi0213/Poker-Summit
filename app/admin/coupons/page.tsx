@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { setCouponActive, deleteCoupon } from "./actions";
+import { setCouponActive, deleteCoupon, createCouponByAdmin, updateCouponByAdmin } from "./actions";
 
 export default async function AdminCouponsPage({
   searchParams,
@@ -10,9 +10,14 @@ export default async function AdminCouponsPage({
   const q = searchParams.q ?? "";
   const status = searchParams.status ?? "all";
 
+  const { data: allStores } = await supabase
+    .from("stores")
+    .select("id, name")
+    .order("name", { ascending: true });
+
   let query = supabase
     .from("coupons")
-    .select("id, title, discount, code, valid_until, active, store_id, stores(name)")
+    .select("id, title, discount, code, valid_until, usage_limit, used_count, active, store_id, stores(name)")
     .order("created_at", { ascending: false });
 
   if (status === "active") {
@@ -21,7 +26,14 @@ export default async function AdminCouponsPage({
     query = query.eq("active", false);
   }
   if (q) {
-    query = query.ilike("title", `%${q}%`);
+    const matchingStoreIds = (allStores ?? [])
+      .filter((s) => s.name.includes(q))
+      .map((s) => s.id);
+    const orParts = [`title.ilike.%${q}%`];
+    if (matchingStoreIds.length > 0) {
+      orParts.push(`store_id.in.(${matchingStoreIds.join(",")})`);
+    }
+    query = query.or(orParts.join(","));
   }
 
   const { data: coupons } = await query;
@@ -31,12 +43,61 @@ export default async function AdminCouponsPage({
     <div>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>クーポン管理（全店舗）</h1>
 
+      <details className="card" style={{ marginBottom: 16 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 700 }}>＋ クーポンを発行</summary>
+        <form
+          action={createCouponByAdmin}
+          style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}
+        >
+          <div className="field">
+            <span className="muted">店舗 *</span>
+            <select name="storeId" required defaultValue="">
+              <option value="" disabled>
+                選択してください
+              </option>
+              {allStores?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">タイトル *</span>
+            <input type="text" name="title" required />
+          </div>
+          <div className="field">
+            <span className="muted">割引内容</span>
+            <input type="text" name="discount" placeholder="例: 20%OFF" />
+          </div>
+          <div className="field">
+            <span className="muted">説明</span>
+            <textarea name="description" rows={2} />
+          </div>
+          <div className="field">
+            <span className="muted">クーポンコード</span>
+            <input type="text" name="code" />
+          </div>
+          <div className="field">
+            <span className="muted">有効期限</span>
+            <input type="date" name="validUntil" />
+          </div>
+          <div className="field">
+            <span className="muted">利用可能回数（空欄で無制限）</span>
+            <input type="number" name="usageLimit" min={1} />
+          </div>
+          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+            発行する
+          </button>
+        </form>
+      </details>
+
       <form style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <input
           type="text"
           name="q"
           defaultValue={q}
-          placeholder="クーポンタイトルで検索"
+          placeholder="タイトル・店舗名で検索"
           style={{
             padding: "8px 10px",
             borderRadius: 6,
@@ -77,6 +138,7 @@ export default async function AdminCouponsPage({
               <th>割引内容</th>
               <th>コード</th>
               <th>有効期限</th>
+              <th>利用数</th>
               <th>ステータス</th>
               <th>操作</th>
             </tr>
@@ -98,11 +160,14 @@ export default async function AdminCouponsPage({
                       </span>
                     )}
                   </td>
+                  <td className="tabular">
+                    {c.used_count ?? 0}/{c.usage_limit ?? "∞"}
+                  </td>
                   <td>
                     <span className="badge">{c.active ? "公開中" : "停止中"}</span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                       <form
                         action={async () => {
                           "use server";
@@ -124,6 +189,43 @@ export default async function AdminCouponsPage({
                         </button>
                       </form>
                     </div>
+                    <details>
+                      <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
+                      <form
+                        action={updateCouponByAdmin}
+                        style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 200 }}
+                      >
+                        <input type="hidden" name="couponId" value={c.id} />
+                        <div className="field">
+                          <span className="muted">タイトル *</span>
+                          <input type="text" name="title" defaultValue={c.title} required />
+                        </div>
+                        <div className="field">
+                          <span className="muted">割引内容</span>
+                          <input type="text" name="discount" defaultValue={c.discount ?? ""} />
+                        </div>
+                        <div className="field">
+                          <span className="muted">クーポンコード</span>
+                          <input type="text" name="code" defaultValue={c.code ?? ""} />
+                        </div>
+                        <div className="field">
+                          <span className="muted">有効期限</span>
+                          <input type="date" name="validUntil" defaultValue={c.valid_until ?? ""} />
+                        </div>
+                        <div className="field">
+                          <span className="muted">利用可能回数</span>
+                          <input
+                            type="number"
+                            name="usageLimit"
+                            min={1}
+                            defaultValue={c.usage_limit ?? ""}
+                          />
+                        </div>
+                        <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+                          保存する
+                        </button>
+                      </form>
+                    </details>
                   </td>
                 </tr>
               );

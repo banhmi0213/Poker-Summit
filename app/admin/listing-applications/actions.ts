@@ -66,3 +66,19 @@ export async function rejectApplication(id: string) {
 
   revalidatePath("/admin/listing-applications");
 }
+
+export async function revertApplication(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("listing_applications")
+    .update({ status: "pending" })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await logAdminAction(supabase, "application_revert", "listing_application", id);
+
+  revalidatePath("/admin/listing-applications");
+}
