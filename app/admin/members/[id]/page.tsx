@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { setMemberSuspended, sendMemberPasswordReset } from "../actions";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -67,7 +68,38 @@ export default async function AdminMemberDetailPage({
             店舗オーナー: {member.store_name}
           </span>
         )}
+        {member.suspended && (
+          <span
+            className="badge"
+            style={{ marginLeft: 8, background: "rgba(230, 80, 80, 0.14)", color: "var(--critical)" }}
+          >
+            利用停止中
+          </span>
+        )}
       </p>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+        <form
+          action={async () => {
+            "use server";
+            await setMemberSuspended(member.id, !member.suspended);
+          }}
+        >
+          <button type="submit" className={`btn ${member.suspended ? "" : "primary"}`}>
+            {member.suspended ? "利用停止を解除する" : "利用停止にする"}
+          </button>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await sendMemberPasswordReset(member.email, member.id);
+          }}
+        >
+          <button type="submit" className="btn">
+            パスワードリセットメール送信
+          </button>
+        </form>
+      </div>
 
       <h2 style={{ fontSize: 15, marginBottom: 10 }}>お気に入り店舗</h2>
       {(!favStores || favStores.length === 0) && (

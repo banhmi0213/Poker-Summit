@@ -33,18 +33,3 @@ export async function setReplyStatus(id: string, status: string) {
   await logAdminAction(supabase, `board_reply_${status}`, "board_reply", id);
   revalidatePath("/admin/board");
 }
-
-export async function resolveReport(id: string) {
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("board_reports")
-    .update({ status: "resolved" })
-    .eq("id", id);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  await logAdminAction(supabase, "board_report_resolve", "board_report", id);
-  revalidatePath("/admin/board");
-}

@@ -71,8 +71,9 @@ export async function reportPost(postId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("board_reports").insert({
-    post_id: postId,
+  const { error } = await supabase.from("reports").insert({
+    target_type: "post",
+    target_id: postId,
     reporter_user_id: user?.id ?? null,
     reason: "ユーザーからの通報",
   });
@@ -90,8 +91,9 @@ export async function reportReply(replyId: string, postId: string) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("board_reports").insert({
-    reply_id: replyId,
+  const { error } = await supabase.from("reports").insert({
+    target_type: "reply",
+    target_id: replyId,
     reporter_user_id: user?.id ?? null,
     reason: "ユーザーからの通報",
   });

@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("status", "unread"),
     supabase
-      .from("board_reports")
+      .from("reports")
       .select("*", { count: "exact", head: true })
       .eq("status", "open"),
     supabase.from("page_views").select("*", { count: "exact", head: true }),
@@ -131,9 +131,9 @@ export default async function AdminDashboardPage() {
       href: "/admin/inquiries",
     },
     {
-      label: "未対応の掲示板通報",
+      label: "未対応の通報",
       value: openReports ?? 0,
-      href: "/admin/board",
+      href: "/admin/reports",
     },
     {
       label: "店舗詳細の閲覧数（累計）",

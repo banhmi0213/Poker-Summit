@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { toggleFavoriteJob, applyToJob } from "@/app/member-actions";
+import { reportJob } from "@/app/report-actions";
 
 export default async function JobsPage() {
   const supabase = await createClient();
@@ -77,6 +78,16 @@ export default async function JobsPage() {
                   disabled={appliedJobIds.has(j.id)}
                 >
                   {appliedJobIds.has(j.id) ? "応募済み" : "応募する"}
+                </button>
+              </form>
+              <form
+                action={async () => {
+                  "use server";
+                  await reportJob(j.id, "/jobs");
+                }}
+              >
+                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                  通報
                 </button>
               </form>
             </div>

@@ -14,6 +14,11 @@ async function requireUser() {
     redirect("/login?next=/mypage");
   }
 
+  const { data: suspended } = await supabase.rpc("is_suspended");
+  if (suspended) {
+    redirect("/account/suspended");
+  }
+
   return { supabase, user };
 }
 

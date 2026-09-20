@@ -23,6 +23,7 @@ export default async function AdminMembersPage() {
             <th>登録日</th>
             <th>種別</th>
             <th>紐づく店舗</th>
+            <th>状態</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -41,6 +42,18 @@ export default async function AdminMembersPage() {
                 )}
               </td>
               <td>{m.store_name ?? ""}</td>
+              <td>
+                {m.suspended ? (
+                  <span
+                    className="badge"
+                    style={{ background: "rgba(230, 80, 80, 0.14)", color: "var(--critical)" }}
+                  >
+                    利用停止中
+                  </span>
+                ) : (
+                  <span className="muted">通常</span>
+                )}
+              </td>
               <td>
                 <Link href={`/admin/members/${m.id}`} className="btn" style={{ fontSize: 12 }}>
                   詳細

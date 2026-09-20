@@ -43,8 +43,20 @@ export default async function AdminLayout({
               <Link href="/admin/listing-applications" className="muted">
                 掲載申込
               </Link>
+              <Link href="/admin/jobs" className="muted">
+                求人管理
+              </Link>
+              <Link href="/admin/events" className="muted">
+                イベント管理
+              </Link>
+              <Link href="/admin/coupons" className="muted">
+                クーポン管理
+              </Link>
               <Link href="/admin/board" className="muted">
                 掲示板管理
+              </Link>
+              <Link href="/admin/reports" className="muted">
+                通報管理
               </Link>
               <Link href="/admin/banners" className="muted">
                 バナー管理

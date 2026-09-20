@@ -10,6 +10,7 @@ import {
   joinEvent,
   useCoupon,
 } from "@/app/member-actions";
+import { reportStore, reportJob } from "@/app/report-actions";
 
 export default async function StoreDetailPage({
   params,
@@ -126,17 +127,28 @@ export default async function StoreDetailPage({
           {[store.region, store.pref, store.city].filter(Boolean).join(" / ")}
         </p>
 
-        <form
-          action={async () => {
-            "use server";
-            await toggleFavoriteStore(store.id, path);
-          }}
-          style={{ marginBottom: 20 }}
-        >
-          <button type="submit" className={`btn ${isFavoriteStore ? "primary" : ""}`}>
-            {isFavoriteStore ? "★ お気に入り済み" : "☆ お気に入りに追加"}
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+          <form
+            action={async () => {
+              "use server";
+              await toggleFavoriteStore(store.id, path);
+            }}
+          >
+            <button type="submit" className={`btn ${isFavoriteStore ? "primary" : ""}`}>
+              {isFavoriteStore ? "★ お気に入り済み" : "☆ お気に入りに追加"}
+            </button>
+          </form>
+          <form
+            action={async () => {
+              "use server";
+              await reportStore(store.id, path);
+            }}
+          >
+            <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+              この店舗を通報する
+            </button>
+          </form>
+        </div>
 
         <div className="card">
           {store.description && <p style={{ marginBottom: 12 }}>{store.description}</p>}
@@ -228,6 +240,16 @@ export default async function StoreDetailPage({
                   disabled={appliedJobIds.has(j.id)}
                 >
                   {appliedJobIds.has(j.id) ? "応募済み" : "応募する"}
+                </button>
+              </form>
+              <form
+                action={async () => {
+                  "use server";
+                  await reportJob(j.id, path);
+                }}
+              >
+                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                  通報
                 </button>
               </form>
             </div>
