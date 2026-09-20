@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAdminAction } from "@/lib/audit";
 
 export async function approveApplication(id: string) {
   const supabase = await createClient();
@@ -42,6 +43,10 @@ export async function approveApplication(id: string) {
     throw new Error(updateError.message);
   }
 
+  await logAdminAction(supabase, "application_approve", "listing_application", id, {
+    storeId: store.id,
+  });
+
   revalidatePath("/admin/listing-applications");
   revalidatePath("/admin/stores");
 }
@@ -56,6 +61,8 @@ export async function rejectApplication(id: string) {
   if (error) {
     throw new Error(error.message);
   }
+
+  await logAdminAction(supabase, "application_reject", "listing_application", id);
 
   revalidatePath("/admin/listing-applications");
 }

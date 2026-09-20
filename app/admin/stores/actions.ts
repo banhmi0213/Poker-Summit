@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAdminAction } from "@/lib/audit";
 
 export async function setStoreStatus(id: string, status: string) {
   const supabase = await createClient();
@@ -13,6 +14,8 @@ export async function setStoreStatus(id: string, status: string) {
   if (error) {
     throw new Error(error.message);
   }
+
+  await logAdminAction(supabase, `store_status_${status}`, "store", id);
 
   revalidatePath("/admin/stores");
   revalidatePath("/");
@@ -36,6 +39,8 @@ export async function setStoreOwnerByEmail(formData: FormData) {
   if (error) {
     throw new Error(error.message);
   }
+
+  await logAdminAction(supabase, "store_set_owner", "store", storeId, { email });
 
   revalidatePath("/admin/stores");
 }

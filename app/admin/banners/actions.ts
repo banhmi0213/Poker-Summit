@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { logAdminAction } from "@/lib/audit";
 
 export async function createBanner(formData: FormData) {
   const supabase = await createClient();
@@ -16,17 +17,23 @@ export async function createBanner(formData: FormData) {
     throw new Error("バナー名を入力してください。");
   }
 
-  const { error } = await supabase.from("banners").insert({
-    title,
-    image_url: imageUrl || null,
-    link_url: linkUrl || null,
-    position,
-    sort_order: sortOrder,
-  });
+  const { data: banner, error } = await supabase
+    .from("banners")
+    .insert({
+      title,
+      image_url: imageUrl || null,
+      link_url: linkUrl || null,
+      position,
+      sort_order: sortOrder,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(error.message);
   }
+
+  await logAdminAction(supabase, "banner_create", "banner", banner.id, { title });
 
   revalidatePath("/admin/banners");
 }
@@ -42,6 +49,13 @@ export async function toggleBannerActive(bannerId: string, active: boolean) {
   if (error) {
     throw new Error(error.message);
   }
+
+  await logAdminAction(
+    supabase,
+    active ? "banner_activate" : "banner_deactivate",
+    "banner",
+    bannerId
+  );
 
   revalidatePath("/admin/banners");
 }

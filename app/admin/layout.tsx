@@ -33,15 +33,39 @@ export default async function AdminLayout({
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <div className="brand">Poker Summit 管理画面</div>
           {adminRow && (
-            <nav style={{ display: "flex", gap: 14 }}>
+            <nav style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              <Link href="/admin" className="muted">
+                ダッシュボード
+              </Link>
               <Link href="/admin/stores" className="muted">
                 店舗管理
               </Link>
               <Link href="/admin/listing-applications" className="muted">
                 掲載申込
               </Link>
+              <Link href="/admin/board" className="muted">
+                掲示板管理
+              </Link>
               <Link href="/admin/banners" className="muted">
                 バナー管理
+              </Link>
+              <Link href="/admin/members" className="muted">
+                会員管理
+              </Link>
+              <Link href="/admin/inquiries" className="muted">
+                お問い合わせ
+              </Link>
+              <Link href="/admin/admins" className="muted">
+                管理者
+              </Link>
+              <Link href="/admin/audit-log" className="muted">
+                操作ログ
+              </Link>
+              <Link href="/admin/ng-words" className="muted">
+                NGワード
+              </Link>
+              <Link href="/admin/settings" className="muted">
+                サイト設定
               </Link>
             </nav>
           )}

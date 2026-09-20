@@ -21,6 +21,18 @@ export default async function StoreDetailPage({
     notFound();
   }
 
+  supabase
+    .from("page_views")
+    .insert({ path: `/stores/${store.id}`, store_id: store.id })
+    .then(() => {});
+
+  const { data: events } = await supabase
+    .from("events")
+    .select("id, title, location, start_at")
+    .eq("store_id", store.id)
+    .eq("status", "published")
+    .order("start_at", { ascending: true });
+
   const { data: jobs } = await supabase
     .from("jobs")
     .select("id, title, job_type, salary, description, posted_at")
@@ -89,6 +101,19 @@ export default async function StoreDetailPage({
             </tbody>
           </table>
         </div>
+
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>イベント</h2>
+        {(!events || events.length === 0) && (
+          <p className="muted">現在開催予定のイベントはありません。</p>
+        )}
+        {events?.map((ev) => (
+          <Link href={`/events/${ev.id}`} key={ev.id} style={{ display: "block" }}>
+            <div className="card">
+              <h3>{ev.title}</h3>
+              {ev.location && <p className="muted">{ev.location}</p>}
+            </div>
+          </Link>
+        ))}
 
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>求人情報</h2>
         {(!jobs || jobs.length === 0) && (
