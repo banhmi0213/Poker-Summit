@@ -1,12 +1,42 @@
 import { submitApplication } from "./actions";
 import { CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ApplyPage({
+export default async function ApplyPage({
   searchParams,
 }: {
   searchParams: { error?: string; done?: string };
 }) {
   const params = searchParams;
+
+  const supabase = await createClient();
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("listing_accept_new")
+    .eq("id", true)
+    .maybeSingle();
+  const acceptingNew = settings?.listing_accept_new ?? true;
+
+  if (!acceptingNew && !params.done) {
+    return (
+      <div className="container" style={{ maxWidth: 480, paddingTop: 60 }}>
+        <div className="brand" style={{ marginBottom: 20 }}>
+          Poker Summit
+        </div>
+        <div className="card">
+          <h1 style={{ fontSize: 18, marginBottom: 8 }}>
+            現在、掲載申込の受付を停止しております
+          </h1>
+          <p className="muted">
+            大変申し訳ございませんが、現在新規の掲載申込を一時的に停止しております。再開時期はお問い合わせよりご確認ください。
+          </p>
+          <a href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
+            トップへ戻る
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   if (params.done) {
     return (

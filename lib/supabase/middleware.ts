@@ -29,17 +29,41 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const pathname = request.nextUrl.pathname;
+
   if (
     !user &&
-    (request.nextUrl.pathname.startsWith("/admin") ||
-      request.nextUrl.pathname.startsWith("/store/") ||
-      request.nextUrl.pathname.startsWith("/mypage") ||
-      request.nextUrl.pathname.startsWith("/account"))
+    (pathname.startsWith("/admin") ||
+      pathname.startsWith("/store/") ||
+      pathname.startsWith("/mypage") ||
+      pathname.startsWith("/account"))
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", request.nextUrl.pathname);
+    url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
+  }
+
+  const maintenanceExempt =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/store/") ||
+    pathname === "/login" ||
+    pathname === "/maintenance" ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/go/");
+
+  if (!maintenanceExempt) {
+    const { data: settings } = await supabase
+      .from("site_settings")
+      .select("maintenance_mode")
+      .eq("id", true)
+      .maybeSingle();
+
+    if (settings?.maintenance_mode) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/maintenance";
+      return NextResponse.rewrite(url);
+    }
   }
 
   return supabaseResponse;

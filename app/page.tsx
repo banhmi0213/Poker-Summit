@@ -45,6 +45,12 @@ export default async function HomePage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("announcement")
+    .eq("id", true)
+    .maybeSingle();
+
   const now = new Date().toISOString();
   const { data: banners } = await supabase
     .from("banners")
@@ -90,6 +96,20 @@ export default async function HomePage({
         </div>
       </header>
       <div className="container">
+        {settings?.announcement && (
+          <div
+            className="card"
+            style={{
+              marginBottom: 16,
+              background: "var(--accent-soft)",
+              borderColor: "var(--accent)",
+              fontSize: 13.5,
+            }}
+          >
+            {settings.announcement}
+          </div>
+        )}
+
         {banners && banners.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
             {banners.map((b) => {

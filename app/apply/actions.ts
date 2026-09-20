@@ -6,6 +6,20 @@ import { createClient } from "@/lib/supabase/server";
 export async function submitApplication(formData: FormData) {
   const supabase = await createClient();
 
+  const { data: settings } = await supabase
+    .from("site_settings")
+    .select("listing_accept_new")
+    .eq("id", true)
+    .maybeSingle();
+
+  if (settings && settings.listing_accept_new === false) {
+    redirect(
+      `/apply?error=${encodeURIComponent(
+        "現在、新規の掲載申込の受付を停止しております。"
+      )}`
+    );
+  }
+
   const companyName = String(formData.get("companyName") ?? "").trim();
   const contactName = String(formData.get("contactName") ?? "").trim();
   const tel = String(formData.get("tel") ?? "").trim();
