@@ -202,7 +202,7 @@ export default async function HomePage({
                 : "jp-tile";
               const href = isSelected
                 ? buildStoreListHref(q, category, "")
-                : `${buildStoreListHref(q, category, name)}#store-list`;
+                : buildStoreListHref(q, category, name);
               return (
                 <a
                   key={name}
