@@ -1,12 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { setStoreStatus, setStoreOwnerByEmail } from "./actions";
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: "承認待ち",
-  approved: "承認済み",
-  rejected: "却下",
-  listed: "掲載済み",
-};
+import { STORE_STATUS_LABEL as STATUS_LABEL } from "@/lib/constants";
 
 export default async function AdminStoresPage() {
   const supabase = await createClient();

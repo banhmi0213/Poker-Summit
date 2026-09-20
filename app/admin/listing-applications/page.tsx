@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { approveApplication, rejectApplication } from "./actions";
+import { CATEGORY_LABEL } from "@/lib/constants";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "未対応",
@@ -7,17 +8,6 @@ const STATUS_LABEL: Record<string, string> = {
   approved: "承認済み",
   rejected: "却下",
   listed: "掲載済み",
-};
-
-const CATEGORY_LABEL: Record<string, string> = {
-  amusement: "アミューズメントポーカー",
-  bar: "ポーカーバー",
-  casino: "カジノバー",
-  vip: "VIPルーム",
-  mahjong: "麻雀併設",
-  tournament: "トーナメント会場",
-  school: "ポーカースクール",
-  ladies: "レディース",
 };
 
 export default async function AdminListingApplicationsPage() {
