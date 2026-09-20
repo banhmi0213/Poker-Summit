@@ -2,6 +2,16 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
+import { PREF_GRID, shortPref } from "@/lib/pref-grid";
+
+function buildStoreListHref(q: string, category: string, pref: string): string {
+  const sp = new URLSearchParams();
+  if (q) sp.set("q", q);
+  if (category) sp.set("category", category);
+  if (pref) sp.set("pref", pref);
+  const qs = sp.toString();
+  return qs ? `/?${qs}` : "/";
+}
 
 export default async function HomePage({
   searchParams,
@@ -35,6 +45,16 @@ export default async function HomePage({
   }
 
   const { data: stores } = await query;
+
+  const { data: prefRows } = await supabase
+    .from("stores")
+    .select("pref")
+    .in("status", ["approved", "listed"]);
+  const prefCounts: Record<string, number> = {};
+  prefRows?.forEach((r) => {
+    if (!r.pref) return;
+    prefCounts[r.pref] = (prefCounts[r.pref] ?? 0) + 1;
+  });
 
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -149,6 +169,56 @@ export default async function HomePage({
           掲載のお申込みはこちら
         </a>
 
+        <p className="muted" style={{ marginBottom: 6, fontSize: 13.5 }}>
+          全国47の地で、ポーカーと出会える。気になる都道府県をタップしてください。
+        </p>
+        <div className="map-panel" style={{ marginBottom: 24 }}>
+          <div className="map-overlay-bar">
+            {pref ? (
+              <>
+                <div>
+                  <span className="name">
+                    {pref}
+                    <span className="count">{prefCounts[pref] ?? 0}店舗</span>
+                  </span>
+                </div>
+                <a href="#store-list" className="btn primary" style={{ fontSize: 12 }}>
+                  店舗を見る →
+                </a>
+              </>
+            ) : (
+              <span className="hint">気になる都道府県をタップしてください</span>
+            )}
+          </div>
+          <div className="jp-grid">
+            {PREF_GRID.map(([name, col, row, cs, rs]) => {
+              const count = prefCounts[name] ?? 0;
+              const isSelected = name === pref;
+              const cls = isSelected
+                ? "jp-tile selected"
+                : count > 0
+                ? "jp-tile has-data"
+                : "jp-tile";
+              const href = isSelected
+                ? buildStoreListHref(q, category, "")
+                : `${buildStoreListHref(q, category, name)}#store-list`;
+              return (
+                <a
+                  key={name}
+                  href={href}
+                  className={cls}
+                  style={{
+                    gridColumn: `${col + 1} / span ${cs ?? 1}`,
+                    gridRow: `${row + 1} / span ${rs ?? 1}`,
+                  }}
+                >
+                  {shortPref(name)}
+                </a>
+              );
+            })}
+          </div>
+        </div>
+
         <form
           method="get"
           className="card"
@@ -191,6 +261,7 @@ export default async function HomePage({
           </button>
         </form>
 
+        <div id="store-list" />
         {(!stores || stores.length === 0) && (
           <p className="muted">条件に一致する店舗はありません。</p>
         )}
