@@ -48,7 +48,7 @@ export async function signIn(formData: FormData) {
     }
   }
 
-  redirect("/");
+  redirect("/mypage");
 }
 
 export async function signOut() {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signIn } from "./actions";
 
 export default function LoginPage({
@@ -34,6 +35,9 @@ export default function LoginPage({
             ログイン
           </button>
         </form>
+        <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
+          会員登録がまだの方は<Link href="/signup">こちらから登録</Link>
+        </p>
       </div>
     </div>
   );

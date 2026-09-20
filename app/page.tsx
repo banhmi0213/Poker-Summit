@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
+import { toggleFavoriteStore } from "./member-actions";
 
 export default async function HomePage({
   searchParams,
@@ -13,6 +14,10 @@ export default async function HomePage({
   const pref = params.pref ?? "";
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   let query = supabase
     .from("stores")
     .select("id, name, category, region, pref, city, description, status")
@@ -30,6 +35,15 @@ export default async function HomePage({
   }
 
   const { data: stores } = await query;
+
+  let favoriteStoreIds = new Set<string>();
+  if (user) {
+    const { data: favs } = await supabase
+      .from("favorite_stores")
+      .select("store_id")
+      .eq("user_id", user.id);
+    favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
+  }
 
   const now = new Date().toISOString();
   const { data: banners } = await supabase
@@ -61,6 +75,15 @@ export default async function HomePage({
           <Link href="/contact" className="btn">
             お問い合わせ
           </Link>
+          {user ? (
+            <Link href="/mypage" className="btn">
+              マイページ
+            </Link>
+          ) : (
+            <Link href="/signup" className="btn">
+              会員登録/ログイン
+            </Link>
+          )}
           <Link href="/login" className="btn">
             店舗・運営ログイン
           </Link>
@@ -153,8 +176,8 @@ export default async function HomePage({
         )}
 
         {stores?.map((s) => (
-          <Link href={`/stores/${s.id}`} key={s.id} style={{ display: "block" }}>
-            <div className="card">
+          <div className="card" key={s.id}>
+            <Link href={`/stores/${s.id}`} style={{ display: "block" }}>
               <div
                 style={{
                   display: "flex",
@@ -176,8 +199,19 @@ export default async function HomePage({
               {s.description && (
                 <p style={{ marginTop: 8, fontSize: 13.5 }}>{s.description}</p>
               )}
-            </div>
-          </Link>
+            </Link>
+            <form
+              action={async () => {
+                "use server";
+                await toggleFavoriteStore(s.id, "/");
+              }}
+              style={{ marginTop: 8 }}
+            >
+              <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                {favoriteStoreIds.has(s.id) ? "★ お気に入り済み" : "☆ お気に入りに追加"}
+              </button>
+            </form>
+          </div>
         ))}
       </div>
     </div>

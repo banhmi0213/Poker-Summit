@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { joinEvent, leaveEvent } from "@/app/member-actions";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -20,6 +21,10 @@ export default async function EventDetailPage({
   params: { id: string };
 }) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { data: event } = await supabase
     .from("events")
     .select("id, title, location, description, start_at, end_at, status, store_id, stores(id, name)")
@@ -32,6 +37,18 @@ export default async function EventDetailPage({
   }
 
   const e = event as any;
+  const path = `/events/${e.id}`;
+
+  let joined = false;
+  if (user) {
+    const { data: participant } = await supabase
+      .from("event_participants")
+      .select("event_id")
+      .eq("user_id", user.id)
+      .eq("event_id", e.id)
+      .maybeSingle();
+    joined = !!participant;
+  }
 
   return (
     <div>
@@ -64,6 +81,21 @@ export default async function EventDetailPage({
               {e.description}
             </p>
           )}
+          <form
+            action={async () => {
+              "use server";
+              if (joined) {
+                await leaveEvent(e.id, path);
+              } else {
+                await joinEvent(e.id, path);
+              }
+            }}
+            style={{ marginTop: 16 }}
+          >
+            <button type="submit" className={`btn ${joined ? "" : "primary"}`}>
+              {joined ? "参加を取り消す" : "参加予定にする"}
+            </button>
+          </form>
         </div>
       </div>
     </div>
