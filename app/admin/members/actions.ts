@@ -25,6 +25,20 @@ export async function setMemberSuspended(userId: string, suspended: boolean) {
   revalidatePath(`/admin/members/${userId}`);
 }
 
+export async function deleteMember(userId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_delete_member", {
+    p_user_id: userId,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await logAdminAction(supabase, "member_delete", "member", userId);
+  revalidatePath("/admin/members");
+}
+
 export async function sendMemberPasswordReset(email: string, userId: string) {
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {

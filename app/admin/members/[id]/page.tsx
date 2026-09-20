@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { setMemberSuspended, sendMemberPasswordReset } from "../actions";
+import { setMemberSuspended, sendMemberPasswordReset, deleteMember } from "../actions";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -99,6 +99,23 @@ export default async function AdminMemberDetailPage({
             パスワードリセットメール送信
           </button>
         </form>
+        {!member.is_admin && (
+          <form
+            action={async () => {
+              "use server";
+              await deleteMember(member.id);
+              redirect("/admin/members");
+            }}
+          >
+            <button
+              type="submit"
+              className="btn"
+              style={{ background: "var(--critical)", color: "#fff", borderColor: "var(--critical)" }}
+            >
+              この会員を完全に削除する
+            </button>
+          </form>
+        )}
       </div>
 
       <h2 style={{ fontSize: 15, marginBottom: 10 }}>お気に入り店舗</h2>

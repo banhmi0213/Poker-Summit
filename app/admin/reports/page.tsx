@@ -23,10 +23,12 @@ function formatDate(value: string) {
 export default async function AdminReportsPage({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: { status?: string; from?: string; to?: string };
 }) {
   const supabase = await createClient();
   const status = searchParams.status ?? "open";
+  const from = searchParams.from ?? "";
+  const to = searchParams.to ?? "";
 
   let query = supabase
     .from("reports")
@@ -36,6 +38,8 @@ export default async function AdminReportsPage({
   if (status !== "all") {
     query = query.eq("status", status);
   }
+  if (from) query = query.gte("created_at", from);
+  if (to) query = query.lte("created_at", `${to}T23:59:59`);
 
   const { data: reports } = await query;
 
@@ -125,7 +129,7 @@ export default async function AdminReportsPage({
         {filters.map((f) => (
           <Link
             key={f.key}
-            href={`/admin/reports?status=${f.key}`}
+            href={`/admin/reports?status=${f.key}${from ? `&from=${from}` : ""}${to ? `&to=${to}` : ""}`}
             className={`btn ${status === f.key ? "primary" : ""}`}
             style={{ fontSize: 12.5 }}
           >
@@ -133,6 +137,21 @@ export default async function AdminReportsPage({
           </Link>
         ))}
       </div>
+
+      <form style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <input type="hidden" name="status" value={status} />
+        <label style={{ display: "flex", flexDirection: "column", gap: 2, fontSize: 12 }}>
+          <span className="muted">日時 from</span>
+          <input type="date" name="from" defaultValue={from} style={{ maxWidth: 160 }} />
+        </label>
+        <label style={{ display: "flex", flexDirection: "column", gap: 2, fontSize: 12 }}>
+          <span className="muted">日時 to</span>
+          <input type="date" name="to" defaultValue={to} style={{ maxWidth: 160 }} />
+        </label>
+        <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+          絞り込む
+        </button>
+      </form>
 
       {(!reports || reports.length === 0) && (
         <p className="muted">該当する通報はありません。</p>

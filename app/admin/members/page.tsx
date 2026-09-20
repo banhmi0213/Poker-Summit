@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { deleteMember } from "./actions";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -109,9 +110,23 @@ export default async function AdminMembersPage({
                 )}
               </td>
               <td>
-                <Link href={`/admin/members/${m.id}`} className="btn" style={{ fontSize: 12 }}>
-                  詳細
-                </Link>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <Link href={`/admin/members/${m.id}`} className="btn" style={{ fontSize: 12 }}>
+                    詳細
+                  </Link>
+                  {!m.is_admin && (
+                    <form
+                      action={async () => {
+                        "use server";
+                        await deleteMember(m.id);
+                      }}
+                    >
+                      <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                        削除
+                      </button>
+                    </form>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

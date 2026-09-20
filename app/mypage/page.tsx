@@ -121,6 +121,9 @@ export default async function MyPage({
               <Link href="/account/password" className="btn" style={{ fontSize: 12.5 }}>
                 パスワード変更
               </Link>
+              <Link href="/account/delete" className="btn" style={{ fontSize: 12.5 }}>
+                退会
+              </Link>
               <form action={signOut}>
                 <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
                   ログアウト
