@@ -3,6 +3,7 @@ import { signOut } from "@/app/login/actions";
 import { updateStoreProfile } from "./actions";
 import { createJob, toggleJobStatus } from "./jobs-actions";
 import { createCoupon, deactivateCoupon } from "./coupons-actions";
+import { createEvent, toggleEventStatus } from "./events-actions";
 import { JOB_TYPE_OPTIONS, STORE_STATUS_LABEL } from "@/lib/constants";
 
 export default async function StoreProfilePage() {
@@ -31,6 +32,14 @@ export default async function StoreProfilePage() {
         .select("*")
         .eq("store_id", store.id)
         .order("created_at", { ascending: false })
+    : { data: null };
+
+  const { data: events } = store
+    ? await supabase
+        .from("events")
+        .select("*")
+        .eq("store_id", store.id)
+        .order("start_at", { ascending: true })
     : { data: null };
 
   return (
@@ -214,6 +223,65 @@ export default async function StoreProfilePage() {
                     </button>
                   </form>
                 )}
+              </div>
+            ))}
+
+            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+              イベント管理
+            </h2>
+            <div className="card">
+              <form action={createEvent}>
+                <input type="hidden" name="storeId" value={store.id} />
+                <div className="field">
+                  <span className="muted">イベント名 *</span>
+                  <input type="text" name="title" required />
+                </div>
+                <div className="field">
+                  <span className="muted">開催場所</span>
+                  <input type="text" name="location" />
+                </div>
+                <div className="field">
+                  <span className="muted">開始日時</span>
+                  <input type="datetime-local" name="startAt" />
+                </div>
+                <div className="field">
+                  <span className="muted">終了日時</span>
+                  <input type="datetime-local" name="endAt" />
+                </div>
+                <div className="field">
+                  <span className="muted">イベント詳細</span>
+                  <textarea name="description" rows={3} />
+                </div>
+                <button type="submit" className="btn primary">
+                  イベントを掲載する
+                </button>
+              </form>
+            </div>
+
+            {events?.map((ev) => (
+              <div className="card" key={ev.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                  <h3>{ev.title}</h3>
+                  <span className="badge">
+                    {ev.status === "published" ? "公開中" : "非公開"}
+                  </span>
+                </div>
+                {ev.location && <p className="muted">{ev.location}</p>}
+                <form
+                  action={async () => {
+                    "use server";
+                    await toggleEventStatus(
+                      ev.id,
+                      store.id,
+                      ev.status === "published" ? "closed" : "published"
+                    );
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  <button type="submit" className="btn">
+                    {ev.status === "published" ? "非公開にする" : "公開する"}
+                  </button>
+                </form>
               </div>
             ))}
           </>

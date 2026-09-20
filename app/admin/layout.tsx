@@ -40,6 +40,9 @@ export default async function AdminLayout({
               <Link href="/admin/listing-applications" className="muted">
                 掲載申込
               </Link>
+              <Link href="/admin/banners" className="muted">
+                バナー管理
+              </Link>
             </nav>
           )}
         </div>

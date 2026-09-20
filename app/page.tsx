@@ -31,16 +31,35 @@ export default async function HomePage({
 
   const { data: stores } = await query;
 
+  const now = new Date().toISOString();
+  const { data: banners } = await supabase
+    .from("banners")
+    .select("id, title, image_url, link_url")
+    .eq("position", "top")
+    .eq("active", true)
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gte.${now}`)
+    .order("sort_order", { ascending: true });
+
   return (
     <div>
       <header className="header">
         <div className="brand">Poker Summit</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Link href="/events" className="btn">
+            イベント
+          </Link>
           <Link href="/jobs" className="btn">
             求人
           </Link>
           <Link href="/coupons" className="btn">
             クーポン
+          </Link>
+          <Link href="/board" className="btn">
+            掲示板
+          </Link>
+          <Link href="/contact" className="btn">
+            お問い合わせ
           </Link>
           <Link href="/login" className="btn">
             店舗・運営ログイン
@@ -48,6 +67,33 @@ export default async function HomePage({
         </div>
       </header>
       <div className="container">
+        {banners && banners.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+            {banners.map((b) => {
+              const content = (
+                <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+                  {b.image_url ? (
+                    <img
+                      src={b.image_url}
+                      alt={b.title}
+                      style={{ width: "100%", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ padding: 16 }}>{b.title}</div>
+                  )}
+                </div>
+              );
+              return b.link_url ? (
+                <a href={b.link_url} key={b.id} target="_blank" rel="noreferrer">
+                  {content}
+                </a>
+              ) : (
+                <div key={b.id}>{content}</div>
+              );
+            })}
+          </div>
+        )}
+
         <h1 style={{ fontSize: 24, marginBottom: 6 }}>店舗を探す</h1>
         <p className="muted" style={{ marginBottom: 12 }}>
           全国のポーカースポットを掲載しています。
