@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { CATEGORY_LABEL } from "@/lib/constants";
+
+function dayKey(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -60,6 +65,55 @@ export default async function AdminDashboardPage() {
   const topViewedStores = Array.from(viewCounts.values())
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+
+  const since = new Date();
+  since.setDate(since.getDate() - 13);
+  const { data: recentAllViews } = await supabase
+    .from("page_views")
+    .select("created_at")
+    .gte("created_at", since.toISOString());
+
+  const dailyCounts = new Map<string, number>();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(since);
+    d.setDate(d.getDate() + i);
+    dailyCounts.set(dayKey(d), 0);
+  }
+  recentAllViews?.forEach((v) => {
+    const key = dayKey(new Date(v.created_at));
+    if (dailyCounts.has(key)) {
+      dailyCounts.set(key, (dailyCounts.get(key) ?? 0) + 1);
+    }
+  });
+  const dailyList = Array.from(dailyCounts.entries());
+  const maxDaily = Math.max(1, ...dailyList.map(([, c]) => c));
+
+  const { data: storesForCategory } = await supabase
+    .from("stores")
+    .select("category")
+    .in("status", ["approved", "listed"]);
+  const categoryCounts = new Map<string, number>();
+  storesForCategory?.forEach((s) => {
+    const key = s.category ?? "未分類";
+    categoryCounts.set(key, (categoryCounts.get(key) ?? 0) + 1);
+  });
+  const categoryList = Array.from(categoryCounts.entries()).sort(
+    (a, b) => b[1] - a[1]
+  );
+
+  const { data: banners } = await supabase
+    .from("banners")
+    .select("id, title");
+  const { data: clicks } = await supabase
+    .from("banner_clicks")
+    .select("banner_id");
+  const clickCounts = new Map<string, number>();
+  clicks?.forEach((c) => {
+    clickCounts.set(c.banner_id, (clickCounts.get(c.banner_id) ?? 0) + 1);
+  });
+  const bannerStats = (banners ?? [])
+    .map((b) => ({ title: b.title, count: clickCounts.get(b.id) ?? 0 }))
+    .sort((a, b) => b.count - a.count);
 
   const stats = [
     { label: "登録店舗数", value: totalStores ?? 0, href: "/admin/stores" },
@@ -123,6 +177,60 @@ export default async function AdminDashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <span>{s.name}</span>
             <span className="badge">{s.count}回</span>
+          </div>
+        </div>
+      ))}
+
+      <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
+        今週の閲覧数の推移（日次・全体）
+      </h2>
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120 }}>
+          {dailyList.map(([day, count]) => (
+            <div
+              key={day}
+              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+              title={`${day}: ${count}件`}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: `${Math.max(2, (count / maxDaily) * 90)}px`,
+                  background: "var(--accent-gradient)",
+                  borderRadius: 3,
+                }}
+              />
+              <span style={{ fontSize: 9.5, color: "var(--muted)" }}>
+                {day.slice(5)}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
+        カテゴリ別 掲載店舗数
+      </h2>
+      {categoryList.map(([cat, count]) => (
+        <div className="card" key={cat}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{CATEGORY_LABEL[cat] ?? cat}</span>
+            <span className="badge">{count}店舗</span>
+          </div>
+        </div>
+      ))}
+
+      <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
+        バナー別クリック数
+      </h2>
+      {bannerStats.length === 0 && (
+        <p className="muted">まだバナーがありません。</p>
+      )}
+      {bannerStats.map((b) => (
+        <div className="card" key={b.title}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span>{b.title}</span>
+            <span className="badge">{b.count}クリック</span>
           </div>
         </div>
       ))}

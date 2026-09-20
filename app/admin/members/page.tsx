@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 function formatDate(value: string) {
@@ -22,6 +23,7 @@ export default async function AdminMembersPage() {
             <th>登録日</th>
             <th>種別</th>
             <th>紐づく店舗</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody>
@@ -39,6 +41,11 @@ export default async function AdminMembersPage() {
                 )}
               </td>
               <td>{m.store_name ?? ""}</td>
+              <td>
+                <Link href={`/admin/members/${m.id}`} className="btn" style={{ fontSize: 12 }}>
+                  詳細
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>

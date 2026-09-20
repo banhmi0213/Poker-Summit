@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { approveApplication, rejectApplication } from "./actions";
 import { CATEGORY_LABEL } from "@/lib/constants";
@@ -60,32 +61,37 @@ export default async function AdminListingApplicationsPage() {
                   </span>
                 </td>
                 <td>
-                  {isDone(a.status) ? (
-                    <span className="muted">対応済み</span>
-                  ) : (
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <form
-                        action={async () => {
-                          "use server";
-                          await approveApplication(a.id);
-                        }}
-                      >
-                        <button type="submit" className="btn primary">
-                          承認して店舗作成
-                        </button>
-                      </form>
-                      <form
-                        action={async () => {
-                          "use server";
-                          await rejectApplication(a.id);
-                        }}
-                      >
-                        <button type="submit" className="btn">
-                          却下
-                        </button>
-                      </form>
-                    </div>
-                  )}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <Link href={`/admin/listing-applications/${a.id}`} className="btn" style={{ fontSize: 12 }}>
+                      詳細
+                    </Link>
+                    {isDone(a.status) ? (
+                      <span className="muted">対応済み</span>
+                    ) : (
+                      <>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await approveApplication(a.id);
+                          }}
+                        >
+                          <button type="submit" className="btn primary">
+                            承認して店舗作成
+                          </button>
+                        </form>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await rejectApplication(a.id);
+                          }}
+                        >
+                          <button type="submit" className="btn">
+                            却下
+                          </button>
+                        </form>
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

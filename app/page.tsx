@@ -107,7 +107,7 @@ export default async function HomePage({
                 </div>
               );
               return b.link_url ? (
-                <a href={b.link_url} key={b.id} target="_blank" rel="noreferrer">
+                <a href={`/go/banner/${b.id}`} key={b.id} target="_blank" rel="noreferrer">
                   {content}
                 </a>
               ) : (

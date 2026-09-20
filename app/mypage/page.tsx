@@ -51,11 +51,16 @@ export default async function MyPage() {
         <Link href="/" className="brand">
           Poker Summit
         </Link>
-        <form action={signOut}>
-          <button type="submit" className="btn">
-            ログアウト ({user.email})
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/account/password" className="btn">
+            パスワード変更
+          </Link>
+          <form action={signOut}>
+            <button type="submit" className="btn">
+              ログアウト ({user.email})
+            </button>
+          </form>
+        </div>
       </header>
       <div className="container">
         <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>

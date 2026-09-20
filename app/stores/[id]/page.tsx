@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import {
@@ -32,10 +33,11 @@ export default async function StoreDetailPage({
   }
 
   const path = `/stores/${store.id}`;
+  const referrer = (await headers()).get("referer") ?? null;
 
   supabase
     .from("page_views")
-    .insert({ path, store_id: store.id })
+    .insert({ path, store_id: store.id, referrer })
     .then(() => {});
 
   const { data: events } = await supabase

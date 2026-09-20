@@ -67,14 +67,22 @@ export default async function AdminLayout({
               <Link href="/admin/settings" className="muted">
                 サイト設定
               </Link>
+              <Link href="/admin/system" className="muted">
+                システム
+              </Link>
             </nav>
           )}
         </div>
-        <form action={signOut}>
-          <button type="submit" className="btn">
-            ログアウト ({user.email})
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/account/password" className="btn">
+            パスワード変更
+          </Link>
+          <form action={signOut}>
+            <button type="submit" className="btn">
+              ログアウト ({user.email})
+            </button>
+          </form>
+        </div>
       </header>
       <div className="container">
         {adminRow ? (

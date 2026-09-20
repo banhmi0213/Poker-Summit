@@ -46,11 +46,19 @@ export default async function StoreProfilePage() {
     <div>
       <header className="header">
         <div className="brand">Poker Summit 店舗管理</div>
-        <form action={signOut}>
-          <button type="submit" className="btn">
-            ログアウト ({user?.email})
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8 }}>
+          <a href="/store/profile/analytics" className="btn">
+            アクセス分析
+          </a>
+          <a href="/account/password" className="btn">
+            パスワード変更
+          </a>
+          <form action={signOut}>
+            <button type="submit" className="btn">
+              ログアウト ({user?.email})
+            </button>
+          </form>
+        </div>
       </header>
       <div className="container">
         {!store ? (
