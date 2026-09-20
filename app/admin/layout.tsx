@@ -68,7 +68,7 @@ export default async function AdminLayout({
                 お問い合わせ
               </Link>
               <Link href="/admin/admins" className="muted">
-                管理者
+                運営ユーザー
               </Link>
               <Link href="/admin/audit-log" className="muted">
                 操作ログ
