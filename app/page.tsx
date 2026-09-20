@@ -26,9 +26,16 @@ export default async function HomePage() {
       </header>
       <div className="container">
         <h1 style={{ fontSize: 24, marginBottom: 6 }}>店舗を探す</h1>
-        <p className="muted" style={{ marginBottom: 20 }}>
+        <p className="muted" style={{ marginBottom: 12 }}>
           全国のポーカースポットを掲載しています。
         </p>
+        <a
+          href="/apply"
+          className="btn"
+          style={{ marginBottom: 20, display: "inline-flex" }}
+        >
+          掲載のお申込みはこちら
+        </a>
 
         {(!stores || stores.length === 0) && (
           <p className="muted">現在掲載中の店舗はありません。</p>

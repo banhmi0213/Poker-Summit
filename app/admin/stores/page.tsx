@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/login/actions";
-import { setStoreStatus } from "./actions";
+import { setStoreStatus, setStoreOwnerByEmail } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "承認待ち",
@@ -12,55 +11,14 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function AdminStoresPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { data: adminRow } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user?.id ?? "")
-    .maybeSingle();
-
-  if (!adminRow) {
-    return (
-      <div className="container" style={{ paddingTop: 60 }}>
-        <p className="err">
-          このアカウントには運営権限がありません。管理者に admin_users
-          テーブルへの登録を依頼してください。
-        </p>
-        <p className="muted">ログイン中: {user?.email}</p>
-        <form action={signOut}>
-          <button type="submit" className="btn">
-            ログアウト
-          </button>
-        </form>
-      </div>
-    );
-  }
-
   const { data: stores } = await supabase
     .from("stores")
-    .select("id, name, category, region, pref, status, created_at")
+    .select("id, name, category, region, pref, status, owner_user_id, created_at")
     .order("created_at", { ascending: false });
 
   return (
-    <div className="container">
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-        }}
-      >
-        <h1 style={{ fontSize: 22 }}>店舗管理</h1>
-        <form action={signOut}>
-          <button type="submit" className="btn">
-            ログアウト ({user?.email})
-          </button>
-        </form>
-      </header>
+    <div>
+      <h1 style={{ fontSize: 22, marginBottom: 16 }}>店舗管理</h1>
 
       <table>
         <thead>
@@ -68,6 +26,7 @@ export default async function AdminStoresPage() {
             <th>店舗名</th>
             <th>エリア</th>
             <th>ステータス</th>
+            <th>オーナー</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -80,6 +39,34 @@ export default async function AdminStoresPage() {
                 <span className="badge">
                   {STATUS_LABEL[s.status] ?? s.status}
                 </span>
+              </td>
+              <td>
+                <div style={{ marginBottom: 6 }}>
+                  <span className="badge">
+                    {s.owner_user_id ? "設定済み" : "未設定"}
+                  </span>
+                </div>
+                <form
+                  action={setStoreOwnerByEmail}
+                  style={{ display: "flex", gap: 6 }}
+                >
+                  <input type="hidden" name="storeId" value={s.id} />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="オーナーのメール"
+                    style={{
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                      fontSize: 12.5,
+                      width: 170,
+                    }}
+                  />
+                  <button type="submit" className="btn" style={{ padding: "6px 10px", fontSize: 12.5 }}>
+                    設定
+                  </button>
+                </form>
               </td>
               <td>
                 <div style={{ display: "flex", gap: 6 }}>

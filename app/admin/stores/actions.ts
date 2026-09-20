@@ -17,3 +17,25 @@ export async function setStoreStatus(id: string, status: string) {
   revalidatePath("/admin/stores");
   revalidatePath("/");
 }
+
+export async function setStoreOwnerByEmail(formData: FormData) {
+  const supabase = await createClient();
+
+  const storeId = String(formData.get("storeId") ?? "");
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (!storeId || !email) {
+    throw new Error("店舗とメールアドレスを指定してください。");
+  }
+
+  const { error } = await supabase.rpc("admin_set_store_owner_by_email", {
+    p_store_id: storeId,
+    p_email: email,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/admin/stores");
+}

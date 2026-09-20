@@ -6,7 +6,7 @@ export default function LoginPage({
   searchParams: { error?: string; next?: string };
 }) {
   const params = searchParams;
-  const next = params.next ?? "/admin/stores";
+  const next = params.next ?? "";
 
   return (
     <div className="container" style={{ maxWidth: 380, paddingTop: 60 }}>
