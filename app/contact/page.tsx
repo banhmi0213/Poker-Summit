@@ -1,36 +1,41 @@
 import Link from "next/link";
 import { submitInquiry } from "./actions";
+import { createClient } from "@/lib/supabase/server";
+import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
+import { INQUIRY_CATEGORIES } from "@/lib/constants";
 
-export default function ContactPage({
+export default async function ContactPage({
   searchParams,
 }: {
   searchParams: { error?: string; done?: string };
 }) {
   const params = searchParams;
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <div>
-      <header className="header">
-        <Link href="/" className="brand">
-          Poker Summit
-        </Link>
-      </header>
+      <PortalHeader userEmail={user?.email} />
       <div className="container" style={{ maxWidth: 480 }}>
         <h1 style={{ fontSize: 20, marginBottom: 6 }}>お問い合わせ</h1>
         <p className="muted" style={{ marginBottom: 20 }}>
-          ご質問・ご要望などございましたら、以下のフォームよりお問い合わせください。
+          掲載や広告、不具合報告などお気軽にご連絡ください。
         </p>
 
         {params.done ? (
-          <div className="card">
-            <h2 style={{ fontSize: 16, marginBottom: 8 }}>
-              お問い合わせありがとうございます
-            </h2>
-            <p className="muted">
-              内容を確認のうえ、担当者よりご連絡いたします。
+          <div className="card" style={{ textAlign: "center", padding: "40px 24px" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+            <h2 style={{ fontSize: 16, marginBottom: 10 }}>お問い合わせを受け付けました</h2>
+            <p className="muted small" style={{ marginBottom: 20 }}>
+              内容を確認のうえ、担当より折り返しご連絡いたします。
             </p>
-            <Link href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
-              トップへ戻る
+            <Link href="/" className="btn primary" style={{ display: "inline-flex" }}>
+              ホームに戻る
             </Link>
           </div>
         ) : (
@@ -39,19 +44,30 @@ export default function ContactPage({
             <form action={submitInquiry}>
               <div className="field">
                 <span className="muted">お名前 *</span>
-                <input type="text" name="name" required />
+                <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
               </div>
               <div className="field">
                 <span className="muted">メールアドレス *</span>
-                <input type="email" name="email" required />
+                <input type="email" name="email" required defaultValue={user?.email ?? ""} />
               </div>
               <div className="field">
                 <span className="muted">電話番号</span>
                 <input type="tel" name="tel" />
               </div>
               <div className="field">
-                <span className="muted">件名</span>
-                <input type="text" name="subject" />
+                <span className="muted">カテゴリ</span>
+                <select name="category" defaultValue="">
+                  <option value="">選択してください</option>
+                  {INQUIRY_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <span className="muted">件名 *</span>
+                <input type="text" name="subject" required />
               </div>
               <div className="field">
                 <span className="muted">お問い合わせ内容 *</span>
@@ -64,6 +80,8 @@ export default function ContactPage({
           </div>
         )}
       </div>
+      <PortalFooter />
+      <BottomTabs />
     </div>
   );
 }

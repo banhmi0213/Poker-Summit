@@ -10,6 +10,8 @@ import {
 import { toggleFavoriteStore } from "./member-actions";
 import { PREF_GRID, shortPref } from "@/lib/pref-grid";
 import { PortalHeader } from "./portal-header";
+import { PortalFooter } from "./portal-footer";
+import { BottomTabs } from "./bottom-tabs";
 import { StoreCard } from "./store-card";
 
 function buildStoreListHref(q: string, category: string, pref: string): string {
@@ -268,6 +270,17 @@ export default async function HomePage({
               {PREF_OPTIONS.map((p) => (
                 <option key={p} value={p}>
                   {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field" style={{ marginBottom: 0, flex: "1 1 140px" }}>
+            <span className="muted">地方</span>
+            <select name="region" defaultValue={region}>
+              <option value="">すべて</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
                 </option>
               ))}
             </select>
@@ -617,6 +630,8 @@ export default async function HomePage({
           ))}
         </div>
       </div>
+      <PortalFooter />
+      <BottomTabs active="home" />
     </div>
   );
 }

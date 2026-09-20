@@ -106,11 +106,28 @@ export const PREF_OPTIONS = [
 ];
 
 export const JOB_TYPE_OPTIONS = [
-  "アルバイト",
-  "パート",
   "正社員",
   "契約社員",
+  "パート",
+  "アルバイト",
   "業務委託",
+];
+
+export const BOARD_CATEGORIES = [
+  "雑談",
+  "初心者質問",
+  "大会情報",
+  "おすすめ店舗",
+  "攻略・戦略",
+];
+
+export const EVENT_CATEGORIES = ["大会", "体験会", "講座", "交流会"];
+
+export const INQUIRY_CATEGORIES = [
+  "掲載について",
+  "広告掲載について",
+  "不具合報告",
+  "その他",
 ];
 
 export const STORE_STATUS_LABEL: Record<string, string> = {

@@ -36,6 +36,7 @@ export async function createEvent(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
 
   if (!title) {
     throw new Error("イベント名を入力してください。");
@@ -48,6 +49,7 @@ export async function createEvent(formData: FormData) {
     description: description || null,
     start_at: startAt || null,
     end_at: endAt || null,
+    category: category || null,
   });
 
   if (error) {

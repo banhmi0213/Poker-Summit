@@ -1,95 +1,151 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { toggleFavoriteJob, applyToJob } from "@/app/member-actions";
-import { reportJob } from "@/app/report-actions";
+import { toggleFavoriteJob } from "@/app/member-actions";
 import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
+import { PREF_OPTIONS, JOB_TYPE_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
 
-export default async function JobsPage() {
+export default async function JobsPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; pref?: string; jobType?: string };
+}) {
+  const q = searchParams.q?.trim() ?? "";
+  const pref = searchParams.pref ?? "";
+  const jobType = searchParams.jobType ?? "";
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: jobs } = await supabase
+  let query = supabase
     .from("jobs")
-    .select("id, title, job_type, salary, description, posted_at, store_id, stores(name)")
+    .select(
+      "id, title, job_type, salary, description, posted_at, banner_image_url, store_id, stores(name, category, pref, status)"
+    )
     .eq("status", "open")
     .order("posted_at", { ascending: false });
 
+  if (q) query = query.ilike("title", `%${q}%`);
+  if (jobType) query = query.eq("job_type", jobType);
+
+  const { data: rawJobs } = await query;
+  let jobs = (rawJobs ?? []).filter((j: any) => j.stores?.status === "approved" || j.stores?.status === "listed");
+  if (pref) jobs = jobs.filter((j: any) => j.stores?.pref === pref);
+
   let favoriteJobIds = new Set<string>();
-  let appliedJobIds = new Set<string>();
   if (user) {
-    const [{ data: favs }, { data: apps }] = await Promise.all([
-      supabase.from("favorite_jobs").select("job_id").eq("user_id", user.id),
-      supabase.from("job_applications").select("job_id").eq("user_id", user.id),
-    ]);
+    const { data: favs } = await supabase
+      .from("favorite_jobs")
+      .select("job_id")
+      .eq("user_id", user.id);
     favoriteJobIds = new Set((favs ?? []).map((f) => f.job_id));
-    appliedJobIds = new Set((apps ?? []).map((a) => a.job_id));
   }
 
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ fontSize: 24, marginBottom: 20 }}>求人を探す</h1>
+        <h1 style={{ fontSize: 24, marginBottom: 16 }}>求人を探す</h1>
 
-        {(!jobs || jobs.length === 0) && (
-          <p className="muted">現在募集中の求人はありません。</p>
-        )}
+        <form
+          method="get"
+          className="card"
+          style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}
+        >
+          <div className="field" style={{ marginBottom: 0, flex: "1 1 200px" }}>
+            <span className="muted">キーワードで検索</span>
+            <input type="text" name="q" defaultValue={q} placeholder="求人タイトル" />
+          </div>
+          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
+            <span className="muted">都道府県</span>
+            <select name="pref" defaultValue={pref}>
+              <option value="">すべて</option>
+              {PREF_OPTIONS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
+            <span className="muted">雇用形態</span>
+            <select name="jobType" defaultValue={jobType}>
+              <option value="">すべて</option>
+              {JOB_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button type="submit" className="btn primary">
+            🔍 検索する
+          </button>
+        </form>
 
-        {jobs?.map((j: any) => (
-          <div className="card" key={j.id}>
-            <Link href={`/stores/${j.store_id}`}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <h3>{j.title}</h3>
-                {j.job_type && <span className="badge">{j.job_type}</span>}
-              </div>
-              <div className="muted">{j.stores?.name}</div>
-              {j.salary && <p className="muted">{j.salary}</p>}
-              {j.description && (
-                <p style={{ marginTop: 6, fontSize: 13.5 }}>{j.description}</p>
-              )}
-            </Link>
-            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+        {jobs.length === 0 && <div className="empty">条件に合う求人が見つかりませんでした。</div>}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: 14,
+          }}
+        >
+          {jobs.map((j: any) => (
+            <div className="card" key={j.id} style={{ padding: 0, overflow: "hidden" }}>
               <form
                 action={async () => {
                   "use server";
                   await toggleFavoriteJob(j.id, "/jobs");
                 }}
               >
-                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  {favoriteJobIds.has(j.id) ? "★ お気に入り済み" : "☆ お気に入り"}
-                </button>
-              </form>
-              <form
-                action={async () => {
-                  "use server";
-                  await applyToJob(j.id, "/jobs");
-                }}
-              >
                 <button
                   type="submit"
-                  className={`btn ${appliedJobIds.has(j.id) ? "" : "primary"}`}
-                  style={{ fontSize: 12.5 }}
-                  disabled={appliedJobIds.has(j.id)}
+                  className={`job-fav-btn ${favoriteJobIds.has(j.id) ? "active" : ""}`}
+                  aria-label="お気に入り"
                 >
-                  {appliedJobIds.has(j.id) ? "応募済み" : "応募する"}
+                  {favoriteJobIds.has(j.id) ? "★" : "☆"}
                 </button>
               </form>
-              <form
-                action={async () => {
-                  "use server";
-                  await reportJob(j.id, "/jobs");
-                }}
-              >
-                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  通報
-                </button>
-              </form>
+              <Link href={`/jobs/${j.id}`} style={{ display: "block" }}>
+                {j.banner_image_url ? (
+                  <div
+                    style={{
+                      height: 110,
+                      backgroundImage: `url('${j.banner_image_url}')`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  />
+                ) : null}
+                <div style={{ padding: "13px 15px" }}>
+                  <div className="meta" style={{ marginBottom: 6 }}>
+                    {j.stores?.category && (
+                      <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
+                    )}
+                    {j.job_type && <span className="badge outline">{j.job_type}</span>}
+                  </div>
+                  <h3>{j.title}</h3>
+                  <div className="muted">
+                    {j.stores?.name} ・ {j.stores?.pref}
+                  </div>
+                  {j.salary && (
+                    <div style={{ fontWeight: 700, color: "var(--accent-text)", marginTop: 4 }}>
+                      {j.salary}
+                    </div>
+                  )}
+                </div>
+              </Link>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
+      <PortalFooter />
+      <BottomTabs active="jobs" />
     </div>
   );
 }

@@ -13,6 +13,7 @@ export async function createPost(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
   const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
+  const category = String(formData.get("category") ?? "").trim();
 
   if (!title || !body) {
     throw new Error("タイトルと本文を入力してください。");
@@ -25,6 +26,7 @@ export async function createPost(formData: FormData) {
       body,
       author_name: authorName,
       author_user_id: user?.id ?? null,
+      category: category || null,
     })
     .select("id")
     .single();

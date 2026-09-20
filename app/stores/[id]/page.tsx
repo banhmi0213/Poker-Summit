@@ -12,6 +12,8 @@ import {
 } from "@/app/member-actions";
 import { reportStore, reportJob } from "@/app/report-actions";
 import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
 
 export default async function StoreDetailPage({
   params,
@@ -63,6 +65,11 @@ export default async function StoreDetailPage({
     .eq("active", true)
     .order("created_at", { ascending: false });
 
+  const { count: likeCount } = await supabase
+    .from("favorite_stores")
+    .select("*", { count: "exact", head: true })
+    .eq("store_id", store.id);
+
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();
   let appliedJobIds = new Set<string>();
@@ -103,6 +110,9 @@ export default async function StoreDetailPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
+        <Link href="/#store-list" className="breadcrumb">
+          ← 店舗を探すに戻る
+        </Link>
         <div
           style={{
             display: "flex",
@@ -113,17 +123,26 @@ export default async function StoreDetailPage({
           }}
         >
           <h1 style={{ fontSize: 24 }}>{store.name}</h1>
+        </div>
+        <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
           {store.category && (
             <span className="badge">
               {CATEGORY_LABEL[store.category] ?? store.category}
             </span>
           )}
+          <span className="badge outline">
+            📍 {[store.pref, store.city].filter(Boolean).join("")}
+          </span>
+          <span className="badge accent">♥ {likeCount ?? 0}</span>
         </div>
         <p className="muted" style={{ marginBottom: 12 }}>
           {[store.region, store.pref, store.city].filter(Boolean).join(" / ")}
         </p>
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
+          <Link href="/contact" className="btn primary">
+            📩 お問い合わせ
+          </Link>
           <form
             action={async () => {
               "use server";
@@ -172,35 +191,9 @@ export default async function StoreDetailPage({
           </table>
         </div>
 
-        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>イベント</h2>
-        {(!events || events.length === 0) && (
-          <p className="muted">現在開催予定のイベントはありません。</p>
-        )}
-        {events?.map((ev) => (
-          <div className="card" key={ev.id}>
-            <Link href={`/events/${ev.id}`}>
-              <h3>{ev.title}</h3>
-              {ev.location && <p className="muted">{ev.location}</p>}
-            </Link>
-            <form
-              action={async () => {
-                "use server";
-                await joinEvent(ev.id, path);
-              }}
-              style={{ marginTop: 8 }}
-            >
-              <button
-                type="submit"
-                className={`btn ${joinedEventIds.has(ev.id) ? "primary" : ""}`}
-                style={{ fontSize: 12.5 }}
-              >
-                {joinedEventIds.has(ev.id) ? "参加予定" : "参加予定にする"}
-              </button>
-            </form>
-          </div>
-        ))}
-
-        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>求人情報</h2>
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+          この店舗の求人 ({jobs?.length ?? 0})
+        </h2>
         {(!jobs || jobs.length === 0) && (
           <p className="muted">現在募集中の求人はありません。</p>
         )}
@@ -252,7 +245,9 @@ export default async function StoreDetailPage({
           </div>
         ))}
 
-        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>クーポン</h2>
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+          この店舗のクーポン ({coupons?.length ?? 0})
+        </h2>
         {(!coupons || coupons.length === 0) && (
           <p className="muted">現在利用可能なクーポンはありません。</p>
         )}
@@ -293,7 +288,39 @@ export default async function StoreDetailPage({
             </div>
           );
         })}
+
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+          この店舗のイベント ({events?.length ?? 0})
+        </h2>
+        {(!events || events.length === 0) && (
+          <p className="muted">開催予定のイベントはありません。</p>
+        )}
+        {events?.map((ev) => (
+          <div className="card" key={ev.id}>
+            <Link href={`/events/${ev.id}`}>
+              <h3>{ev.title}</h3>
+              {ev.location && <p className="muted">{ev.location}</p>}
+            </Link>
+            <form
+              action={async () => {
+                "use server";
+                await joinEvent(ev.id, path);
+              }}
+              style={{ marginTop: 8 }}
+            >
+              <button
+                type="submit"
+                className={`btn ${joinedEventIds.has(ev.id) ? "primary" : ""}`}
+                style={{ fontSize: 12.5 }}
+              >
+                {joinedEventIds.has(ev.id) ? "参加予定" : "参加予定にする"}
+              </button>
+            </form>
+          </div>
+        ))}
       </div>
+      <PortalFooter />
+      <BottomTabs active="stores" />
     </div>
   );
 }

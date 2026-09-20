@@ -7,6 +7,9 @@ import {
   toggleFavoriteJob,
   leaveEvent,
 } from "@/app/member-actions";
+import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
 
 export default async function MyPage() {
   const supabase = await createClient();
@@ -47,22 +50,18 @@ export default async function MyPage() {
 
   return (
     <div>
-      <header className="header">
-        <Link href="/" className="brand">
-          Poker Summit
+      <PortalHeader userEmail={user.email} />
+      <div className="container" style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingBottom: 0 }}>
+        <Link href="/account/password" className="btn" style={{ fontSize: 12.5 }}>
+          パスワード変更
         </Link>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link href="/account/password" className="btn">
-            パスワード変更
-          </Link>
-          <form action={signOut}>
-            <button type="submit" className="btn">
-              ログアウト ({user.email})
-            </button>
-          </form>
-        </div>
-      </header>
-      <div className="container">
+        <form action={signOut}>
+          <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+            ログアウト ({user.email})
+          </button>
+        </form>
+      </div>
+      <div className="container" style={{ paddingTop: 6 }}>
         <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>
 
         <h2 style={{ fontSize: 16, marginBottom: 10 }}>♥ お気に入り店舗</h2>
@@ -183,6 +182,8 @@ export default async function MyPage() {
           );
         })}
       </div>
+      <PortalFooter />
+      <BottomTabs active="mypage" />
     </div>
   );
 }

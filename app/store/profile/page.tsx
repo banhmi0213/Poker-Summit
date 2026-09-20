@@ -4,7 +4,7 @@ import { updateStoreProfile } from "./actions";
 import { createJob, toggleJobStatus } from "./jobs-actions";
 import { createCoupon, deactivateCoupon } from "./coupons-actions";
 import { createEvent, toggleEventStatus } from "./events-actions";
-import { JOB_TYPE_OPTIONS, STORE_STATUS_LABEL } from "@/lib/constants";
+import { JOB_TYPE_OPTIONS, STORE_STATUS_LABEL, EVENT_CATEGORIES } from "@/lib/constants";
 
 export default async function StoreProfilePage() {
   const supabase = await createClient();
@@ -146,6 +146,10 @@ export default async function StoreProfilePage() {
                   <span className="muted">仕事内容</span>
                   <textarea name="description" rows={3} />
                 </div>
+                <div className="field">
+                  <span className="muted">バナー画像URL</span>
+                  <input type="text" name="bannerImageUrl" placeholder="https://..." />
+                </div>
                 <button type="submit" className="btn primary">
                   求人を掲載する
                 </button>
@@ -205,6 +209,10 @@ export default async function StoreProfilePage() {
                   <span className="muted">有効期限</span>
                   <input type="date" name="validUntil" />
                 </div>
+                <div className="field">
+                  <span className="muted">利用上限件数（空欄で無制限）</span>
+                  <input type="number" name="usageLimit" min={1} />
+                </div>
                 <button type="submit" className="btn primary">
                   クーポンを発行する
                 </button>
@@ -259,6 +267,17 @@ export default async function StoreProfilePage() {
                 <div className="field">
                   <span className="muted">イベント詳細</span>
                   <textarea name="description" rows={3} />
+                </div>
+                <div className="field">
+                  <span className="muted">カテゴリ</span>
+                  <select name="category" defaultValue="">
+                    <option value="">選択してください</option>
+                    {EVENT_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <button type="submit" className="btn primary">
                   イベントを掲載する

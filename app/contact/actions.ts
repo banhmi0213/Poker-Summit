@@ -11,6 +11,7 @@ export async function submitInquiry(formData: FormData) {
   const tel = String(formData.get("tel") ?? "").trim();
   const subject = String(formData.get("subject") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
 
   if (!name || !email || !message) {
     redirect("/contact?error=" + encodeURIComponent("必須項目を入力してください。"));
@@ -22,6 +23,7 @@ export async function submitInquiry(formData: FormData) {
     tel: tel || null,
     subject: subject || null,
     message,
+    category: category || null,
   });
 
   if (error) {

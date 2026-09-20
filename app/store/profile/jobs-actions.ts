@@ -35,6 +35,7 @@ export async function createJob(formData: FormData) {
   const jobType = String(formData.get("jobType") ?? "").trim();
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const bannerImageUrl = String(formData.get("bannerImageUrl") ?? "").trim();
 
   if (!title) {
     throw new Error("求人タイトルを入力してください。");
@@ -46,6 +47,7 @@ export async function createJob(formData: FormData) {
     job_type: jobType || null,
     salary: salary || null,
     description: description || null,
+    banner_image_url: bannerImageUrl || null,
   });
 
   if (error) {

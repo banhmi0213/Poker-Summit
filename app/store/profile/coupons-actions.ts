@@ -36,6 +36,8 @@ export async function createCoupon(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const code = String(formData.get("code") ?? "").trim();
   const validUntil = String(formData.get("validUntil") ?? "").trim();
+  const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
+  const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
 
   if (!title) {
     throw new Error("クーポンのタイトルを入力してください。");
@@ -48,6 +50,7 @@ export async function createCoupon(formData: FormData) {
     description: description || null,
     code: code || null,
     valid_until: validUntil || null,
+    usage_limit: usageLimit,
   });
 
   if (error) {
