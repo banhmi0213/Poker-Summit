@@ -11,6 +11,7 @@ import {
   useCoupon,
 } from "@/app/member-actions";
 import { reportStore, reportJob } from "@/app/report-actions";
+import { PortalHeader } from "@/app/portal-header";
 
 export default async function StoreDetailPage({
   params,
@@ -100,12 +101,7 @@ export default async function StoreDetailPage({
 
   return (
     <div>
-      <header className="header">
-        <div className="brand">Poker Summit</div>
-        <Link href="/" className="btn">
-          店舗一覧へ戻る
-        </Link>
-      </header>
+      <PortalHeader userEmail={user?.email} />
       <div className="container">
         <div
           style={{

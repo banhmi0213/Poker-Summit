@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { toggleFavoriteJob, applyToJob } from "@/app/member-actions";
 import { reportJob } from "@/app/report-actions";
+import { PortalHeader } from "@/app/portal-header";
 
 export default async function JobsPage() {
   const supabase = await createClient();
@@ -28,14 +29,9 @@ export default async function JobsPage() {
 
   return (
     <div>
-      <header className="header">
-        <div className="brand">Poker Summit</div>
-        <Link href="/" className="btn">
-          店舗一覧へ戻る
-        </Link>
-      </header>
+      <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ fontSize: 24, marginBottom: 20 }}>求人一覧</h1>
+        <h1 style={{ fontSize: 24, marginBottom: 20 }}>求人を探す</h1>
 
         {(!jobs || jobs.length === 0) && (
           <p className="muted">現在募集中の求人はありません。</p>

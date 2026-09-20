@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PortalHeader } from "@/app/portal-header";
 
 export default async function CouponsPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: coupons } = await supabase
     .from("coupons")
@@ -12,14 +16,9 @@ export default async function CouponsPage() {
 
   return (
     <div>
-      <header className="header">
-        <div className="brand">Poker Summit</div>
-        <Link href="/" className="btn">
-          店舗一覧へ戻る
-        </Link>
-      </header>
+      <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ fontSize: 24, marginBottom: 20 }}>クーポン一覧</h1>
+        <h1 style={{ fontSize: 24, marginBottom: 20 }}>人気のクーポン</h1>
 
         {(!coupons || coupons.length === 0) && (
           <p className="muted">現在利用可能なクーポンはありません。</p>

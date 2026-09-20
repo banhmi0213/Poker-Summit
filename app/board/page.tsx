@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { createPost } from "./actions";
+import { PortalHeader } from "@/app/portal-header";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -15,6 +16,9 @@ function formatDate(value: string) {
 
 export default async function BoardPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const { data: posts } = await supabase
     .from("board_posts")
     .select("id, title, author_name, created_at")
@@ -23,21 +27,9 @@ export default async function BoardPage() {
 
   return (
     <div>
-      <header className="header">
-        <Link href="/" className="brand">
-          Poker Summit
-        </Link>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Link href="/events" className="btn">
-            イベント
-          </Link>
-          <Link href="/jobs" className="btn">
-            求人
-          </Link>
-        </div>
-      </header>
+      <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>掲示板</h1>
+        <h1 style={{ fontSize: 22, marginBottom: 16 }}>サミット（情報交換）</h1>
 
         <div className="card">
           <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
