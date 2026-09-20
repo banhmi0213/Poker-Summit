@@ -12,6 +12,7 @@ export async function createBanner(formData: FormData) {
   const linkUrl = String(formData.get("linkUrl") ?? "").trim();
   const position = String(formData.get("position") ?? "top").trim();
   const sortOrder = Number(formData.get("sortOrder") ?? 0) || 0;
+  const scope = String(formData.get("scope") ?? "").trim();
 
   if (!title) {
     throw new Error("バナー名を入力してください。");
@@ -25,6 +26,7 @@ export async function createBanner(formData: FormData) {
       link_url: linkUrl || null,
       position,
       sort_order: sortOrder,
+      scope: scope || null,
     })
     .select("id")
     .single();

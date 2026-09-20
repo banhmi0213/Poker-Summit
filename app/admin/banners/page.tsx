@@ -5,6 +5,9 @@ const POSITION_LABEL: Record<string, string> = {
   top: "トップ",
   sidebar: "サイドバー",
   footer: "フッター",
+  store_list: "店舗一覧",
+  job_list: "求人一覧",
+  job_detail: "求人詳細",
 };
 
 export default async function AdminBannersPage() {
@@ -39,7 +42,14 @@ export default async function AdminBannersPage() {
               <option value="top">トップ</option>
               <option value="sidebar">サイドバー</option>
               <option value="footer">フッター</option>
+              <option value="store_list">店舗一覧</option>
+              <option value="job_list">求人一覧</option>
+              <option value="job_detail">求人詳細</option>
             </select>
+          </div>
+          <div className="field">
+            <span className="muted">絞り込み範囲（都道府県名 or 地方名。空欄で全体に表示）</span>
+            <input type="text" name="scope" placeholder="例: 東京都 / 関東" />
           </div>
           <div className="field">
             <span className="muted">表示順（小さいほど先）</span>
@@ -56,6 +66,7 @@ export default async function AdminBannersPage() {
           <tr>
             <th>バナー名</th>
             <th>位置</th>
+            <th>範囲</th>
             <th>順序</th>
             <th>状態</th>
             <th>操作</th>
@@ -66,6 +77,7 @@ export default async function AdminBannersPage() {
             <tr key={b.id}>
               <td>{b.title}</td>
               <td>{POSITION_LABEL[b.position] ?? b.position}</td>
+              <td>{b.scope || "—"}</td>
               <td>{b.sort_order}</td>
               <td>
                 <span className="badge">{b.active ? "公開中" : "停止中"}</span>

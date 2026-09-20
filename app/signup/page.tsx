@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signUp } from "./actions";
+import { PREF_OPTIONS } from "@/lib/constants";
 
 export default function SignupPage({
   searchParams,
@@ -37,6 +38,19 @@ export default function SignupPage({
             <div className="field">
               <span className="muted">ハンドルネーム</span>
               <input type="text" name="name" autoComplete="nickname" />
+            </div>
+            <div className="field">
+              <span className="muted">都道府県</span>
+              <select name="pref" defaultValue="" required>
+                <option value="" disabled>
+                  選択してください
+                </option>
+                {PREF_OPTIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field">
               <span className="muted">メールアドレス</span>

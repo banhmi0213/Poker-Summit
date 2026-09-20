@@ -72,3 +72,49 @@ export async function toggleJobStatus(jobId: string, storeId: string, status: st
 
   revalidatePath("/store/profile");
 }
+
+export async function updateJob(formData: FormData) {
+  const storeId = String(formData.get("storeId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "");
+  const supabase = await getOwnedStoreId(storeId);
+
+  const title = String(formData.get("title") ?? "").trim();
+  const jobType = String(formData.get("jobType") ?? "").trim();
+  const salary = String(formData.get("salary") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const bannerImageUrl = String(formData.get("bannerImageUrl") ?? "").trim();
+
+  if (!title) {
+    throw new Error("求人タイトルを入力してください。");
+  }
+
+  const { error } = await supabase
+    .from("jobs")
+    .update({
+      title,
+      job_type: jobType || null,
+      salary: salary || null,
+      description: description || null,
+      banner_image_url: bannerImageUrl || null,
+    })
+    .eq("id", jobId)
+    .eq("store_id", storeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+}
+
+export async function deleteJob(jobId: string, storeId: string) {
+  const supabase = await getOwnedStoreId(storeId);
+
+  const { error } = await supabase.from("jobs").delete().eq("id", jobId).eq("store_id", storeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+}

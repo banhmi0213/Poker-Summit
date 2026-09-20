@@ -7,6 +7,7 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const pref = String(formData.get("pref") ?? "").trim();
 
   if (!email || !password) {
     redirect(`/signup?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
@@ -21,7 +22,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      data: { display_name: name || undefined },
+      data: { display_name: name || undefined, pref: pref || undefined },
     },
   });
 

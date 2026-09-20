@@ -15,14 +15,33 @@ export async function updateStoreProfile(formData: FormData) {
   }
 
   const storeId = String(formData.get("storeId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const category = String(formData.get("category") ?? "").trim();
+  const pref = String(formData.get("pref") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
   const address = String(formData.get("address") ?? "");
   const tel = String(formData.get("tel") ?? "");
   const hours = String(formData.get("hours") ?? "");
   const description = String(formData.get("description") ?? "");
+  const lineUrl = String(formData.get("lineUrl") ?? "").trim();
+
+  if (!name) {
+    throw new Error("店舗名を入力してください。");
+  }
 
   const { error } = await supabase
     .from("stores")
-    .update({ address, tel, hours, description })
+    .update({
+      name,
+      category: category || null,
+      pref: pref || null,
+      city: city || null,
+      address,
+      tel,
+      hours,
+      description,
+      line_url: lineUrl || null,
+    })
     .eq("id", storeId)
     .eq("owner_user_id", user.id);
 

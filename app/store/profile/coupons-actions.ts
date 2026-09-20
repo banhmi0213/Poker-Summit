@@ -75,3 +75,56 @@ export async function deactivateCoupon(couponId: string, storeId: string) {
 
   revalidatePath("/store/profile");
 }
+
+export async function updateCoupon(formData: FormData) {
+  const storeId = String(formData.get("storeId") ?? "");
+  const couponId = String(formData.get("couponId") ?? "");
+  const supabase = await getOwnedStoreClient(storeId);
+
+  const title = String(formData.get("title") ?? "").trim();
+  const discount = String(formData.get("discount") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const code = String(formData.get("code") ?? "").trim();
+  const validUntil = String(formData.get("validUntil") ?? "").trim();
+  const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
+  const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+
+  if (!title) {
+    throw new Error("クーポンのタイトルを入力してください。");
+  }
+
+  const { error } = await supabase
+    .from("coupons")
+    .update({
+      title,
+      discount: discount || null,
+      description: description || null,
+      code: code || null,
+      valid_until: validUntil || null,
+      usage_limit: usageLimit,
+    })
+    .eq("id", couponId)
+    .eq("store_id", storeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+}
+
+export async function deleteCoupon(couponId: string, storeId: string) {
+  const supabase = await getOwnedStoreClient(storeId);
+
+  const { error } = await supabase
+    .from("coupons")
+    .delete()
+    .eq("id", couponId)
+    .eq("store_id", storeId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+}

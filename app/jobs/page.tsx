@@ -5,6 +5,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS, JOB_TYPE_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
+import { pickBanner } from "@/lib/banners";
 
 export default async function JobsPage({
   searchParams,
@@ -43,6 +44,8 @@ export default async function JobsPage({
       .eq("user_id", user.id);
     favoriteJobIds = new Set((favs ?? []).map((f) => f.job_id));
   }
+
+  const jobListBanner = await pickBanner(supabase, "job_list", { pref });
 
   return (
     <div>
@@ -143,6 +146,23 @@ export default async function JobsPage({
             </div>
           ))}
         </div>
+
+        {jobListBanner && (
+          <a
+            href={`/go/banner/${jobListBanner.id}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: "block", maxWidth: 760, margin: "24px auto 0" }}
+          >
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              {jobListBanner.image_url ? (
+                <img src={jobListBanner.image_url} alt={jobListBanner.title} style={{ width: "100%", display: "block" }} />
+              ) : (
+                <div style={{ padding: 16 }}>{jobListBanner.title}</div>
+              )}
+            </div>
+          </a>
+        )}
       </div>
       <PortalFooter />
       <BottomTabs active="jobs" />

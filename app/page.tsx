@@ -9,6 +9,7 @@ import {
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
 import { PREF_GRID, shortPref } from "@/lib/pref-grid";
+import { pickBanner } from "@/lib/banners";
 import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
@@ -94,6 +95,8 @@ export default async function HomePage({
       .eq("user_id", user.id);
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
+
+  const storeListBanner = await pickBanner(supabase, "store_list", { pref, region });
 
   const { data: settings } = await supabase
     .from("site_settings")
@@ -629,6 +632,23 @@ export default async function HomePage({
             </div>
           ))}
         </div>
+
+        {storeListBanner && (
+          <a
+            href={`/go/banner/${storeListBanner.id}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{ display: "block", maxWidth: 760, margin: "24px auto 0" }}
+          >
+            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+              {storeListBanner.image_url ? (
+                <img src={storeListBanner.image_url} alt={storeListBanner.title} style={{ width: "100%", display: "block" }} />
+              ) : (
+                <div style={{ padding: 16 }}>{storeListBanner.title}</div>
+              )}
+            </div>
+          </a>
+        )}
       </div>
       <PortalFooter />
       <BottomTabs active="home" />
