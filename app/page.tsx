@@ -173,6 +173,7 @@ export default async function HomePage({
           全国47の地で、ポーカーと出会える。気になる都道府県をタップしてください。
         </p>
         <div className="map-panel" style={{ marginBottom: 24 }}>
+          <div className="map-bg-shade" />
           <div className="map-overlay-bar">
             {pref ? (
               <>
