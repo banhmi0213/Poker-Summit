@@ -1,8 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
+
+function randomPassword(length = 10) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
+function randomLoginId(storeId: string) {
+  return `store-${storeId.slice(0, 8)}`;
+}
 
 export async function setStoreStatus(id: string, status: string) {
   const supabase = await createClient();
@@ -131,6 +146,64 @@ export async function updateStoreByAdmin(formData: FormData) {
   revalidatePath("/admin/stores");
   revalidatePath("/");
   revalidatePath(`/stores/${storeId}`);
+}
+
+export async function issueStoreLogin(storeId: string) {
+  const supabase = await createClient();
+  const loginId = randomLoginId(storeId);
+  const password = randomPassword();
+
+  const { error } = await supabase.rpc("admin_issue_store_login", {
+    p_store_id: storeId,
+    p_login_id: loginId,
+    p_password: password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await logAdminAction(supabase, "store_issue_login", "store", storeId, { loginId });
+
+  const jar = await cookies();
+  jar.set("issued_credentials", JSON.stringify({ storeId, loginId, password }), {
+    httpOnly: true,
+    maxAge: 60,
+    path: "/admin/stores",
+  });
+
+  revalidatePath("/admin/stores");
+  redirect("/admin/stores");
+}
+
+export async function reissueStorePassword(storeId: string) {
+  const supabase = await createClient();
+  const password = randomPassword();
+
+  const { error } = await supabase.rpc("admin_reissue_store_password", {
+    p_store_id: storeId,
+    p_new_password: password,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const { data: loginId } = await supabase.rpc("admin_get_store_login_id", {
+    p_store_id: storeId,
+  });
+
+  await logAdminAction(supabase, "store_reissue_password", "store", storeId);
+
+  const jar = await cookies();
+  jar.set("issued_credentials", JSON.stringify({ storeId, loginId, password }), {
+    httpOnly: true,
+    maxAge: 60,
+    path: "/admin/stores",
+  });
+
+  revalidatePath("/admin/stores");
+  redirect("/admin/stores");
 }
 
 export async function deleteStoreByAdmin(id: string) {

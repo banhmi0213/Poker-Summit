@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
   setStoreStatus,
@@ -5,6 +6,8 @@ import {
   createStoreByAdmin,
   updateStoreByAdmin,
   deleteStoreByAdmin,
+  issueStoreLogin,
+  reissueStorePassword,
 } from "./actions";
 import {
   STORE_STATUS_LABEL as STATUS_LABEL,
@@ -39,8 +42,45 @@ export default async function AdminStoresPage({
 
   const { data: stores } = await query;
 
+  const { data: logins } = await supabase.rpc("admin_list_store_logins");
+  const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
+
+  const jar = await cookies();
+  const issuedRaw = jar.get("issued_credentials")?.value;
+  let issued: { storeId: string; loginId: string; password: string } | null = null;
+  if (issuedRaw) {
+    try {
+      issued = JSON.parse(issuedRaw);
+    } catch {
+      issued = null;
+    }
+    jar.delete("issued_credentials");
+  }
+  const issuedStoreName = issued ? stores?.find((s) => s.id === issued!.storeId)?.name : null;
+
   return (
     <div>
+      {issued && (
+        <div className="card" style={{ borderColor: "var(--good)", marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 8 }}>
+            {issuedStoreName ?? "店舗"} のログイン情報（この画面を閉じると二度と表示されません）
+          </h3>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span className="muted" style={{ fontSize: 12 }}>ログインID</span>
+              <input readOnly value={`${issued.loginId}@login.poker-summit.jp`} style={{ minWidth: 260 }} />
+            </label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span className="muted" style={{ fontSize: 12 }}>パスワード</span>
+              <input readOnly value={issued.password} style={{ minWidth: 160 }} />
+            </label>
+          </div>
+          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+            この内容を店舗にお伝えください。ログインページではメールアドレス欄にログインIDをそのまま入力してもらいます。
+          </p>
+        </div>
+      )}
+
       <div
         style={{
           display: "flex",
@@ -196,32 +236,67 @@ export default async function AdminStoresPage({
                 </span>
               </td>
               <td>
-                <div style={{ marginBottom: 6 }}>
-                  <span className="badge">
-                    {s.owner_user_id ? "設定済み" : "未設定"}
-                  </span>
-                </div>
-                <form
-                  action={setStoreOwnerByEmail}
-                  style={{ display: "flex", gap: 6 }}
-                >
-                  <input type="hidden" name="storeId" value={s.id} />
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="オーナーのメール"
-                    style={{
-                      padding: "6px 8px",
-                      borderRadius: 6,
-                      border: "1px solid var(--border)",
-                      fontSize: 12.5,
-                      width: 170,
-                    }}
-                  />
-                  <button type="submit" className="btn" style={{ padding: "6px 10px", fontSize: 12.5 }}>
-                    設定
-                  </button>
-                </form>
+                {loginMap.has(s.id) ? (
+                  <div style={{ marginBottom: 6 }}>
+                    <div className="cred-box" style={{ fontSize: 12, marginBottom: 4 }}>
+                      ID: {loginMap.get(s.id)}
+                    </div>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await reissueStorePassword(s.id);
+                      }}
+                    >
+                      <button type="submit" className="btn" style={{ fontSize: 12, padding: "5px 8px" }}>
+                        パスワード再発行
+                      </button>
+                    </form>
+                  </div>
+                ) : s.owner_user_id ? (
+                  <div style={{ marginBottom: 6 }}>
+                    <span className="badge">設定済み(既存アカウント連携)</span>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: 6 }}>
+                    <span className="badge" style={{ marginBottom: 4, display: "inline-block" }}>未設定</span>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await issueStoreLogin(s.id);
+                      }}
+                    >
+                      <button type="submit" className="btn primary" style={{ fontSize: 12, padding: "5px 8px" }}>
+                        ログイン情報を発行
+                      </button>
+                    </form>
+                  </div>
+                )}
+                <details>
+                  <summary className="muted" style={{ cursor: "pointer", fontSize: 11.5 }}>
+                    既存アカウントのメールで設定
+                  </summary>
+                  <form
+                    action={setStoreOwnerByEmail}
+                    style={{ display: "flex", gap: 6, marginTop: 6 }}
+                  >
+                    <input type="hidden" name="storeId" value={s.id} />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="オーナーのメール"
+                      style={{
+                        padding: "6px 8px",
+                        borderRadius: 6,
+                        border: "1px solid var(--border)",
+                        fontSize: 12.5,
+                        width: 150,
+                      }}
+                    />
+                    <button type="submit" className="btn" style={{ padding: "6px 10px", fontSize: 12.5 }}>
+                      設定
+                    </button>
+                  </form>
+                </details>
               </td>
               <td>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>

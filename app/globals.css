@@ -562,6 +562,15 @@ th {
   color: var(--critical);
 }
 
+.cred-box {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--surface-2, #f4f0e6);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
 /* ===== Detail head ===== */
 .detail-head {
   display: flex;
