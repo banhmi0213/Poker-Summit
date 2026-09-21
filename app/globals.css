@@ -366,6 +366,8 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  background: var(--surface);
+  border-radius: 13px;
 }
 
 .search-box input[type="text"] {

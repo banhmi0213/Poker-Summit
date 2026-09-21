@@ -225,7 +225,7 @@ export default async function HomePage({
           アミューズメントポーカー・ポーカーバーを、日本全国から検索できます。
         </p>
 
-        <form method="get" className="card search-box">
+        <form method="get" className="search-box">
           {/* pref/region come from the map & region chips below, not this
               form — carried through as hidden fields so a name/category
               search doesn't clear whichever area was already selected. */}
@@ -255,10 +255,6 @@ export default async function HomePage({
             🔍 検索する
           </button>
         </form>
-
-        <a href="/apply" className="btn" style={{ marginTop: 14, display: "inline-flex" }}>
-          掲載のお申込みはこちら
-        </a>
 
         {banners && banners.length > 0 && (
           <div
