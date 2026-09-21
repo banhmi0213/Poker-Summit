@@ -289,7 +289,7 @@ export default async function HomePage({
 
         <div className="chip-row" style={{ justifyContent: "center", marginTop: 20 }}>
           {REGIONS.map((r) => (
-            
+            <a
               key={r}
               href={`/stores?region=${encodeURIComponent(r)}`}
               className={`chip ${region === r ? "active" : ""}`}
