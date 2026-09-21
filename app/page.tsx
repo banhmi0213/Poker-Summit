@@ -338,9 +338,10 @@ export default async function HomePage({
                 ? buildStoreListHref(q, category, "")
                 : buildStoreListHref(q, category, name);
               return (
-                <a
+                <Link
                   key={name}
                   href={href}
+                  scroll={false}
                   className={cls}
                   style={{
                     gridColumn: `${col + 1} / span ${cs ?? 1}`,
@@ -348,7 +349,7 @@ export default async function HomePage({
                   }}
                 >
                   {shortPref(name)}
-                </a>
+                </Link>
               );
             })}
           </div>
