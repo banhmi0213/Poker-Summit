@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
-  { href: "/#store-list", label: "店舗を探す" },
+  { href: "/stores", label: "店舗を探す" },
   { href: "/jobs", label: "求人を探す" },
   { href: "/coupons", label: "クーポン" },
   { href: "/events", label: "トーナメント・イベント" },
