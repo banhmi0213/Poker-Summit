@@ -102,6 +102,39 @@ textarea {
   letter-spacing: 0.02em;
 }
 
+.logo-img {
+  height: 42px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0.5px 0.5px 0 rgba(90, 60, 15, 0.8))
+    drop-shadow(-0.5px -0.5px 0 rgba(90, 60, 15, 0.8))
+    drop-shadow(0.5px -0.5px 0 rgba(90, 60, 15, 0.8))
+    drop-shadow(-0.5px 0.5px 0 rgba(90, 60, 15, 0.8))
+    drop-shadow(0 1px 2px rgba(60, 40, 10, 0.3));
+}
+
+.app-sidebar .logo-img {
+  height: 36px;
+}
+
+.auth-brand-wrap {
+  max-width: 400px;
+  margin: 8vh auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-brand-wrap .brand.wordmark {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-brand-wrap .logo-img {
+  height: 52px;
+}
+
 /* ===== Portal nav (prototype's .portal-nav / .plink pattern) ===== */
 .portal-nav {
   position: sticky;

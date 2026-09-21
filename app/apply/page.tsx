@@ -20,8 +20,8 @@ export default async function ApplyPage({
   if (!acceptingNew && !params.done) {
     return (
       <div className="container" style={{ maxWidth: 480, paddingTop: 60 }}>
-        <div className="brand" style={{ marginBottom: 20 }}>
-          Poker Summit
+        <div className="brand wordmark" style={{ marginBottom: 20 }}>
+          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
         </div>
         <div className="card">
           <h1 style={{ fontSize: 18, marginBottom: 8 }}>
@@ -41,8 +41,8 @@ export default async function ApplyPage({
   if (params.done) {
     return (
       <div className="container" style={{ maxWidth: 480, paddingTop: 60 }}>
-        <div className="brand" style={{ marginBottom: 20 }}>
-          Poker Summit
+        <div className="brand wordmark" style={{ marginBottom: 20 }}>
+          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
         </div>
         <div className="card">
           <h1 style={{ fontSize: 18, marginBottom: 8 }}>
@@ -61,8 +61,8 @@ export default async function ApplyPage({
 
   return (
     <div className="container" style={{ maxWidth: 480, paddingTop: 40 }}>
-      <div className="brand" style={{ marginBottom: 20 }}>
-        Poker Summit
+      <div className="brand wordmark" style={{ marginBottom: 20 }}>
+        <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
       </div>
       <h1 style={{ fontSize: 20, marginBottom: 6 }}>掲載のお申込み</h1>
       <p className="muted" style={{ marginBottom: 20 }}>

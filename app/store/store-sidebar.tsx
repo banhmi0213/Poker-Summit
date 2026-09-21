@@ -13,8 +13,8 @@ export function StoreSidebar() {
 
   return (
     <nav className="app-sidebar">
-      <div className="brand">
-        Poker Summit
+      <div className="brand wordmark">
+        <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
         <small>店舗管理画面</small>
       </div>
       {STORE_LINKS.map((l) => {

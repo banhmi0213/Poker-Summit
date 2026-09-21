@@ -11,8 +11,10 @@ export default function SignupPage({
 
   return (
     <div className="container" style={{ maxWidth: 380, paddingTop: 60 }}>
-      <div className="brand" style={{ textAlign: "center", marginBottom: 20 }}>
-        Poker Summit
+      <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
+        <div className="brand wordmark">
+          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+        </div>
       </div>
 
       {params.done ? (

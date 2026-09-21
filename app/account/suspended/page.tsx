@@ -16,7 +16,9 @@ export default async function AccountSuspendedPage() {
   return (
     <div>
       <header className="header">
-        <div className="brand">Poker Summit</div>
+        <div className="brand wordmark">
+          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" style={{ height: 28 }} />
+        </div>
         <form action={signOut}>
           <button type="submit" className="btn">
             ログアウト
