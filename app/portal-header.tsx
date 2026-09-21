@@ -10,53 +10,60 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
 
 export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
   const memberBtn = userEmail ? (
-    <Link href="/mypage" className="btn primary">
+    <Link href="/mypage" className="portal-cta">
       マイページ
     </Link>
   ) : (
-    <Link href="/signup" className="btn primary">
+    <Link href="/signup" className="portal-cta">
       会員登録/ログイン
     </Link>
   );
 
   return (
-    <header className="header" style={{ flexWrap: "wrap", gap: 10, rowGap: 8 }}>
+    <nav className="portal-nav">
       <input type="checkbox" id="mobile-nav-toggle" className="nav-toggle" />
-      <Link href="/" className="brand">
-        Poker Summit
-      </Link>
-      <div className="portal-links" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {NAV_LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className="btn">
-            {l.label}
+      <div className="portal-nav-inner">
+        <Link href="/" className="portal-logo">
+          Poker Summit
+        </Link>
+        <div className="portal-links">
+          {NAV_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} className="plink">
+              {l.label}
+              {l.sub ? (
+                <span className="muted" style={{ marginLeft: 4, fontSize: 12 }}>
+                  {l.sub}
+                </span>
+              ) : null}
+            </Link>
+          ))}
+          <Link href="/contact" className="plink">
+            お問い合わせ
           </Link>
-        ))}
-        <Link href="/contact" className="btn">
-          お問い合わせ
-        </Link>
+          <Link href="/login" className="plink">
+            店舗・運営ログイン
+          </Link>
+        </div>
         {memberBtn}
-        <Link href="/login" className="btn">
-          店舗・運営ログイン
-        </Link>
+        <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
+          ☰
+        </label>
       </div>
-      <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
-        ☰
-      </label>
       <div className="mobile-nav-drawer">
         {NAV_LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className="btn">
+          <Link key={l.href} href={l.href} className="plink">
             {l.label}
             {l.sub ? <span className="muted" style={{ marginLeft: 4 }}>{l.sub}</span> : null}
           </Link>
         ))}
-        <Link href="/contact" className="btn">
+        <Link href="/contact" className="plink">
           お問い合わせ
         </Link>
-        {memberBtn}
-        <Link href="/login" className="btn">
+        <Link href="/login" className="plink">
           店舗・運営ログイン
         </Link>
+        {memberBtn}
       </div>
-    </header>
+    </nav>
   );
 }
