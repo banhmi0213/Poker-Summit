@@ -1090,7 +1090,20 @@ th {
   color: var(--accent-text);
 }
 
-.store-fav-btn.active {
+/* ===== Store favorite overlay button (heart, on the store card thumb) ===== */
+.store-fav-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 2;
+  border: none;
+  background: transparent;
+  font-size: 19px;
+  line-height: 1;
+  color: #b9a98a;
+  cursor: pointer;
+  padding: 4px;
+}.store-fav-btn.active {
   color: var(--accent-text);
 }
 
