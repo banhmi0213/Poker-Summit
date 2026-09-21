@@ -58,33 +58,48 @@ export default async function EventsPage({
 
         <form
           method="get"
-          className="card"
-          style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}
+          style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">都道府県</span>
-            <select name="pref" defaultValue={pref}>
-              <option value="">すべて</option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">カテゴリ</span>
-            <select name="category" defaultValue={category}>
-              <option value="">すべて</option>
-              {EVENT_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn primary">
-            🔍 絞り込む
+          <select
+            name="pref"
+            defaultValue={pref}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "1 1 160px",
+            }}
+          >
+            <option value="">都道府県: すべて</option>
+            {PREF_OPTIONS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            name="category"
+            defaultValue={category}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "1 1 160px",
+            }}
+          >
+            <option value="">カテゴリ: すべて</option>
+            {EVENT_CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
+            検索
           </button>
         </form>
 
@@ -103,9 +118,12 @@ export default async function EventsPage({
               <Link
                 href={`/events/${e.id}`}
                 key={e.id}
-                style={{ display: "block", opacity: isPast ? 0.62 : 1 }}
+                style={{ display: "block", opacity: isPast ? 0.62 : 1, height: "100%" }}
               >
-                <div className="card">
+                <div
+                  className="card"
+                  style={{ height: "100%", minHeight: 170, display: "flex", flexDirection: "column" }}
+                >
                   <div className="meta" style={{ marginBottom: 6 }}>
                     {e.start_at && <span className="badge accent">{formatDate(e.start_at)}</span>}
                     {e.category && <span className="badge outline">{e.category}</span>}
