@@ -366,7 +366,7 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  background: var(--surface);
+  background: var(--surface-2);
   border-radius: 13px;
 }
 
@@ -377,7 +377,7 @@ th {
   border: 1px solid var(--border-strong);
   font-size: 14px;
   font-family: inherit;
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
 }
 
