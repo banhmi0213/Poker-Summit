@@ -186,12 +186,13 @@ export default async function HomePage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container">
-        {settings?.announcement && (
+
+      {settings?.announcement && (
+        <div className="container" style={{ paddingBottom: 0 }}>
           <div
             className="card"
             style={{
-              marginBottom: 16,
+              marginTop: 16,
               background: "var(--accent-soft)",
               borderColor: "var(--accent)",
               fontSize: 13.5,
@@ -199,55 +200,18 @@ export default async function HomePage({
           >
             {settings.announcement}
           </div>
-        )}
-
-        {banners && banners.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-            {banners.map((b) => {
-              const content = (
-                <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                  {b.image_url ? (
-                    <img
-                      src={b.image_url}
-                      alt={b.title}
-                      style={{ width: "100%", display: "block" }}
-                    />
-                  ) : (
-                    <div style={{ padding: 16 }}>{b.title}</div>
-                  )}
-                </div>
-              );
-              return b.link_url ? (
-                <a href={`/go/banner/${b.id}`} key={b.id} target="_blank" rel="noreferrer">
-                  {content}
-                </a>
-              ) : (
-                <div key={b.id}>{content}</div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="muted" style={{ fontSize: 12, letterSpacing: "0.08em", marginBottom: 6 }}>
-          POKER FOR A NEW TOMORROW
         </div>
-        <h1 style={{ fontSize: 28, marginBottom: 6 }}>全国のポーカースポットを探す</h1>
-        <p className="muted" style={{ marginBottom: 16 }}>
+      )}
+
+      <div className="hero">
+        <div className="eyebrow">POKER FOR A NEW TOMORROW</div>
+        <h1>全国のポーカースポットを探す</h1>
+        <p className="sub">
           アミューズメントポーカー・ポーカーバーを、日本全国から検索できます。
         </p>
 
-        <form
-          method="get"
-          className="card"
-          style={{
-            display: "flex",
-            gap: 10,
-            flexWrap: "wrap",
-            alignItems: "flex-end",
-            marginBottom: 16,
-          }}
-        >
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 180px" }}>
+        <form method="get" className="card search-box">
+          <div className="field" style={{ marginBottom: 0, flex: "2 1 180px" }}>
             <span className="muted">店舗名で検索</span>
             <input type="text" name="q" defaultValue={q} placeholder="店名・キーワード" />
           </div>
@@ -289,105 +253,111 @@ export default async function HomePage({
           </button>
         </form>
 
-        <a
-          href="/apply"
-          className="btn"
-          style={{ marginBottom: 20, display: "inline-flex" }}
-        >
+        <a href="/apply" className="btn" style={{ marginTop: 14, display: "inline-flex" }}>
           掲載のお申込みはこちら
         </a>
 
-        <p className="muted" style={{ marginBottom: 6, fontSize: 13.5, textAlign: "center" }}>
+        {banners && banners.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              maxWidth: 760,
+              margin: "20px auto 0",
+            }}
+          >
+            {banners.map((b) => {
+              const content = (
+                <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+                  {b.image_url ? (
+                    <img
+                      src={b.image_url}
+                      alt={b.title}
+                      style={{ width: "100%", display: "block" }}
+                    />
+                  ) : (
+                    <div style={{ padding: 16 }}>{b.title}</div>
+                  )}
+                </div>
+              );
+              return b.link_url ? (
+                <a href={`/go/banner/${b.id}`} key={b.id} target="_blank" rel="noreferrer">
+                  {content}
+                </a>
+              ) : (
+                <div key={b.id}>{content}</div>
+              );
+            })}
+          </div>
+        )}
+
+        <p className="tagline">
           ポーカーがつなぐ、新しい出会いを。日本のすみずみまで。
           <br />
           全国47の地で、ポーカーと出会える。
         </p>
         <PrefMap prefCounts={prefCounts} q={q} category={category} initialPref={pref} />
-        <p className="muted" style={{ fontSize: 11.5, textAlign: "center", marginBottom: 20 }}>
+        <p className="muted" style={{ fontSize: 11.5, textAlign: "center", marginTop: 10 }}>
           <span style={{ color: "var(--accent-text)" }}>■</span> 掲載店舗あり ・ 枠のみ = 今後拡大予定 ・
           タップすると店舗数を表示
         </p>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", marginBottom: 24 }}>
+        <div className="chip-row" style={{ justifyContent: "center", marginTop: 20 }}>
           {REGIONS.map((r) => (
             <a
               key={r}
               href={`/?region=${encodeURIComponent(r)}#store-list`}
-              className={`btn ${region === r ? "primary" : ""}`}
-              style={{ fontSize: 12.5 }}
+              className={`chip ${region === r ? "active" : ""}`}
             >
               {r}
             </a>
           ))}
         </div>
 
-        <div
-          className="card"
-          style={{
-            display: "flex",
-            justifyContent: "space-around",
-            textAlign: "center",
-            marginBottom: 28,
-            flexWrap: "wrap",
-            gap: 12,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>{totalStoreCount ?? 0}</div>
-            <div className="muted" style={{ fontSize: 12.5 }}>👑 全国の掲載店舗</div>
+        <div className="stats-row">
+          <div className="item">
+            <div className="num">{totalStoreCount ?? 0}</div>
+            <div className="lbl">👑 全国の掲載店舗</div>
           </div>
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>{openJobCount ?? 0}</div>
-            <div className="muted" style={{ fontSize: 12.5 }}>👤 掲載求人</div>
+          <div className="item">
+            <div className="num">{openJobCount ?? 0}</div>
+            <div className="lbl">👤 掲載求人</div>
           </div>
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>{threadCount ?? 0}</div>
-            <div className="muted" style={{ fontSize: 12.5 }}>💬 スレッド</div>
+          <div className="item">
+            <div className="num">{threadCount ?? 0}</div>
+            <div className="lbl">💬 スレッド</div>
           </div>
         </div>
+      </div>
 
-        {/* 🏆 注目店舗 */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>🏆 注目店舗</h2>
-          <a href="#store-list" className="muted" style={{ fontSize: 13 }}>
+          <a href="#store-list" className="see-all">
             すべて見る →
           </a>
         </div>
         {featuredStores.length === 0 && <p className="muted">まだ店舗がありません。</p>}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 14,
-            marginBottom: 28,
-          }}
-        >
+        <div className="grid cols-4">
           {featuredStores.map((s) => (
             <StoreCard key={s.id} store={s} likeCount={likeCounts[s.id] ?? 0} />
           ))}
         </div>
+      </div>
 
-        {/* 💼 新着求人 */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>💼 新着求人</h2>
-          <Link href="/jobs" className="muted" style={{ fontSize: 13 }}>
+          <Link href="/jobs" className="see-all">
             すべて見る →
           </Link>
         </div>
         {(!latestJobs || latestJobs.length === 0) && (
-          <p className="muted" style={{ marginBottom: 28 }}>
-            現在募集中の求人はありません。
-          </p>
+          <p className="muted">現在募集中の求人はありません。</p>
         )}
         {latestJobs && latestJobs.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 14,
-              marginBottom: 28,
-            }}
-          >
+          <div className="grid cols-3">
             {latestJobs.map((j: any) => (
               <Link href={`/stores/${j.store_id}`} key={j.id} className="card" style={{ display: "block" }}>
                 <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
@@ -407,21 +377,20 @@ export default async function HomePage({
             ))}
           </div>
         )}
+      </div>
 
-        {/* 💬 盛り上がっているサミット */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>💬 盛り上がっているサミット</h2>
-          <Link href="/board" className="muted" style={{ fontSize: 13 }}>
+          <Link href="/board" className="see-all">
             すべて見る →
           </Link>
         </div>
         {(!latestPosts || latestPosts.length === 0) && (
-          <p className="muted" style={{ marginBottom: 28 }}>
-            まだ投稿がありません。
-          </p>
+          <p className="muted">まだ投稿がありません。</p>
         )}
         {latestPosts && latestPosts.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {latestPosts.map((p) => (
               <Link href={`/board/${p.id}`} key={p.id} className="card" style={{ display: "block" }}>
                 <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{p.title}</div>
@@ -432,28 +401,20 @@ export default async function HomePage({
             ))}
           </div>
         )}
+      </div>
 
-        {/* 🎉 開催予定のイベント */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>🎉 開催予定のイベント</h2>
-          <Link href="/events" className="muted" style={{ fontSize: 13 }}>
+          <Link href="/events" className="see-all">
             すべて見る →
           </Link>
         </div>
         {(!upcomingEvents || upcomingEvents.length === 0) && (
-          <p className="muted" style={{ marginBottom: 28 }}>
-            現在開催予定のイベントはありません。
-          </p>
+          <p className="muted">現在開催予定のイベントはありません。</p>
         )}
         {upcomingEvents && upcomingEvents.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 14,
-              marginBottom: 28,
-            }}
-          >
+          <div className="grid cols-3">
             {upcomingEvents.map((ev: any) => (
               <Link href={`/events/${ev.id}`} key={ev.id} className="card" style={{ display: "block" }}>
                 <span className="badge" style={{ marginBottom: 6 }}>
@@ -467,28 +428,20 @@ export default async function HomePage({
             ))}
           </div>
         )}
+      </div>
 
-        {/* 🎟️ 人気のクーポン */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>🎟️ 人気のクーポン</h2>
-          <Link href="/coupons" className="muted" style={{ fontSize: 13 }}>
+          <Link href="/coupons" className="see-all">
             すべて見る →
           </Link>
         </div>
         {(!popularCoupons || popularCoupons.length === 0) && (
-          <p className="muted" style={{ marginBottom: 28 }}>
-            現在利用可能なクーポンはありません。
-          </p>
+          <p className="muted">現在利用可能なクーポンはありません。</p>
         )}
         {popularCoupons && popularCoupons.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: 14,
-              marginBottom: 28,
-            }}
-          >
+          <div className="grid cols-4">
             {popularCoupons.map((c: any) => (
               <Link
                 href={`/stores/${c.store_id}`}
@@ -523,35 +476,31 @@ export default async function HomePage({
             ))}
           </div>
         )}
+      </div>
 
-        {/* コミュニティCTA */}
-        <div
-          className="card"
-          style={{
-            textAlign: "center",
-            padding: "32px 20px",
-            marginBottom: 32,
-            background: "var(--accent-soft)",
-          }}
-        >
-          <div className="muted" style={{ fontSize: 12, letterSpacing: "0.08em", marginBottom: 6 }}>
-            POKER LOVERS COMMUNITY
+      <div className="cta-banner">
+        <div className="cta-banner-inner">
+          <div className="cta-icon" style={{ fontSize: 32 }}>
+            🃏
           </div>
-          <h2 style={{ fontSize: 20, marginBottom: 8 }}>ポーカー好きと、もっとつながる。</h2>
-          <p className="muted" style={{ marginBottom: 16 }}>
-            会員登録して、店舗情報や求人、全国の仲間との情報交換を楽しもう。
-          </p>
-          {user ? (
-            <Link href="/mypage" className="btn primary">
-              マイページへ
-            </Link>
-          ) : (
-            <Link href="/signup" className="btn primary">
-              無料で会員登録
-            </Link>
-          )}
+          <div className="cta-body">
+            <div className="eyebrow">POKER LOVERS COMMUNITY</div>
+            <h2>ポーカー好きと、もっとつながる。</h2>
+            <p>会員登録して、店舗情報や求人、全国の仲間との情報交換を楽しもう。</p>
+            {user ? (
+              <Link href="/mypage" className="btn-outline-gold">
+                マイページへ
+              </Link>
+            ) : (
+              <Link href="/signup" className="btn-outline-gold">
+                無料で会員登録
+              </Link>
+            )}
+          </div>
         </div>
+      </div>
 
+      <div className="container">
         <div id="store-list" />
         <h2 style={{ fontSize: 18, marginBottom: 12 }}>店舗を探す</h2>
         {(!stores || stores.length === 0) && (
