@@ -53,3 +53,12 @@ export const PREF_GRID: [string, number, number, number?, number?][] = [
 export function shortPref(p: string): string {
   return p === "北海道" ? p : p.replace(/[都道府県]$/, "");
 }
+
+export function buildStoreListHref(q: string, category: string, pref: string): string {
+  const sp = new URLSearchParams();
+  if (q) sp.set("q", q);
+  if (category) sp.set("category", category);
+  if (pref) sp.set("pref", pref);
+  const qs = sp.toString();
+  return qs ? `/?${qs}` : "/";
+}

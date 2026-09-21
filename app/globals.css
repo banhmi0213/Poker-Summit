@@ -398,6 +398,9 @@ th {
 }
 
 .jp-tile {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
   border-radius: 9px;
   border: 1.3px solid rgba(212, 169, 74, 0.55);
   background: rgba(212, 169, 74, 0.16);
