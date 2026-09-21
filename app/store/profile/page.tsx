@@ -44,6 +44,7 @@ export default async function StoreProfilePage() {
     : [{ data: null }, { data: null }, { data: null }];
 
   let jobApplicantCounts: Record<string, number> = {};
+  let jobFavoriteCounts: Record<string, number> = {};
   let eventParticipantCounts: Record<string, number> = {};
   let favoriteCount = 0;
   let totalViews = 0;
@@ -53,26 +54,37 @@ export default async function StoreProfilePage() {
     const jobIds = (jobs ?? []).map((j) => j.id);
     const eventIds = (events ?? []).map((e) => e.id);
 
-    const [{ data: appRows }, { data: partRows }, { count: favCount }, { count: viewCount }] =
-      await Promise.all([
-        jobIds.length
-          ? supabase.from("job_applications").select("job_id").in("job_id", jobIds)
-          : Promise.resolve({ data: [] as { job_id: string }[] }),
-        eventIds.length
-          ? supabase.from("event_participants").select("event_id").in("event_id", eventIds)
-          : Promise.resolve({ data: [] as { event_id: string }[] }),
-        supabase
-          .from("favorite_stores")
-          .select("*", { count: "exact", head: true })
-          .eq("store_id", store.id),
-        supabase
-          .from("page_views")
-          .select("*", { count: "exact", head: true })
-          .eq("store_id", store.id),
-      ]);
+    const [
+      { data: appRows },
+      { data: jobFavRows },
+      { data: partRows },
+      { count: favCount },
+      { count: viewCount },
+    ] = await Promise.all([
+      jobIds.length
+        ? supabase.from("job_applications").select("job_id").in("job_id", jobIds)
+        : Promise.resolve({ data: [] as { job_id: string }[] }),
+      jobIds.length
+        ? supabase.from("favorite_jobs").select("job_id").in("job_id", jobIds)
+        : Promise.resolve({ data: [] as { job_id: string }[] }),
+      eventIds.length
+        ? supabase.from("event_participants").select("event_id").in("event_id", eventIds)
+        : Promise.resolve({ data: [] as { event_id: string }[] }),
+      supabase
+        .from("favorite_stores")
+        .select("*", { count: "exact", head: true })
+        .eq("store_id", store.id),
+      supabase
+        .from("page_views")
+        .select("*", { count: "exact", head: true })
+        .eq("store_id", store.id),
+    ]);
 
     appRows?.forEach((r) => {
       jobApplicantCounts[r.job_id] = (jobApplicantCounts[r.job_id] ?? 0) + 1;
+    });
+    jobFavRows?.forEach((r) => {
+      jobFavoriteCounts[r.job_id] = (jobFavoriteCounts[r.job_id] ?? 0) + 1;
     });
     partRows?.forEach((r) => {
       eventParticipantCounts[r.event_id] = (eventParticipantCounts[r.event_id] ?? 0) + 1;
@@ -268,7 +280,7 @@ export default async function StoreProfilePage() {
                 </div>
                 {j.salary && <p className="muted">{j.salary}</p>}
                 <p className="muted small" style={{ marginTop: 4 }}>
-                  応募数: {jobApplicantCounts[j.id] ?? 0}件
+                  応募数: {jobApplicantCounts[j.id] ?? 0}件 ・ お気に入り数: {jobFavoriteCounts[j.id] ?? 0}件
                   {!j.job_type && " ・ ⚠️ 雇用形態が未設定です"}
                 </p>
                 <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
