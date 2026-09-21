@@ -408,11 +408,11 @@ export default async function AdminStoresPage({
                       <input type="text" name="hours" defaultValue={s.hours ?? ""} />
                     </div>
                     <div className="field">
-                      <span className="muted">エリアキーワード（検索用・任意）</span>
+                      <span className="muted">検索キーワード（検索用・任意）</span>
                       <input
                         type="text"
                         name="areaKeywords"
-                        placeholder="例: ミナミ アメ村 心斎橋"
+                        placeholder="例: ミナミ アメ村 心斎橋 駅近 駐車場あり パーキングあり"
                         defaultValue={s.area_keywords ?? ""}
                       />
                     </div>
