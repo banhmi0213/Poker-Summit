@@ -103,7 +103,7 @@ textarea {
 }
 
 .logo-img {
-  height: 42px;
+  height: 54px;
   width: auto;
   display: block;
   filter: drop-shadow(0.5px 0.5px 0 rgba(90, 60, 15, 0.8))
@@ -132,7 +132,7 @@ textarea {
 }
 
 .auth-brand-wrap .logo-img {
-  height: 52px;
+  height: 64px;
 }
 
 /* ===== Portal nav (prototype's .portal-nav / .plink pattern) ===== */
@@ -401,6 +401,7 @@ th {
   flex-wrap: wrap;
   background: var(--surface-2);
   border-radius: 13px;
+  box-shadow: none;
 }
 
 .search-box input[type="text"],
@@ -412,6 +413,7 @@ th {
   font-family: inherit;
   background: var(--surface);
   color: var(--text);
+  box-shadow: none;
 }
 
 .search-box input[type="text"]:focus,
