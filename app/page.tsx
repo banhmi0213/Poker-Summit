@@ -481,28 +481,6 @@ export default async function HomePage({
         )}
       </div>
 
-      <div className="cta-banner">
-        <div className="cta-banner-inner">
-          <div className="cta-icon" style={{ fontSize: 32 }}>
-            🃏
-          </div>
-          <div className="cta-body">
-            <div className="eyebrow">POKER LOVERS COMMUNITY</div>
-            <h2>ポーカー好きと、もっとつながる。</h2>
-            <p>会員登録して、店舗情報や求人、全国の仲間との情報交換を楽しもう。</p>
-            {user ? (
-              <Link href="/mypage" className="btn-outline-gold">
-                マイページへ
-              </Link>
-            ) : (
-              <Link href="/signup" className="btn-outline-gold">
-                無料で会員登録
-              </Link>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="container">
         <div id="store-list" />
         <h2 style={{ fontSize: 18, marginBottom: 12 }}>店舗を探す</h2>
@@ -552,6 +530,29 @@ export default async function HomePage({
           </a>
         )}
       </div>
+
+      <div className="cta-banner">
+        <div className="cta-banner-inner">
+          <div className="cta-icon" style={{ fontSize: 32 }}>
+            🃏
+          </div>
+          <div className="cta-body">
+            <div className="eyebrow">POKER LOVERS COMMUNITY</div>
+            <h2>ポーカー好きと、もっとつながる。</h2>
+            <p>会員登録して、店舗情報や求人、全国の仲間との情報交換を楽しもう。</p>
+            {user ? (
+              <Link href="/mypage" className="btn-outline-gold">
+                マイページへ
+              </Link>
+            ) : (
+              <Link href="/signup" className="btn-outline-gold">
+                無料で会員登録
+              </Link>
+            )}
+          </div>
+        </div>
+      </div>
+
       <PortalFooter />
       <BottomTabs active="home" />
     </div>
