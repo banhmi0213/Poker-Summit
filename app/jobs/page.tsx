@@ -55,37 +55,62 @@ export default async function JobsPage({
 
         <form
           method="get"
-          className="card"
-          style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end", marginBottom: 20 }}
+          style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 200px" }}>
-            <span className="muted">キーワードで検索</span>
-            <input type="text" name="q" defaultValue={q} placeholder="求人タイトル" />
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">都道府県</span>
-            <select name="pref" defaultValue={pref}>
-              <option value="">すべて</option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">雇用形態</span>
-            <select name="jobType" defaultValue={jobType}>
-              <option value="">すべて</option>
-              {JOB_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button type="submit" className="btn primary">
-            🔍 検索する
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="キーワードで検索"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "2 1 220px",
+            }}
+          />
+          <select
+            name="pref"
+            defaultValue={pref}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "1 1 160px",
+            }}
+          >
+            <option value="">都道府県: すべて</option>
+            {PREF_OPTIONS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            name="jobType"
+            defaultValue={jobType}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "1 1 160px",
+            }}
+          >
+            <option value="">雇用形態: すべて</option>
+            {JOB_TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
+            検索
           </button>
         </form>
 
@@ -126,7 +151,10 @@ export default async function JobsPage({
                   />
                 ) : null}
                 <div style={{ padding: "13px 15px" }}>
-                  <div className="meta" style={{ marginBottom: 6 }}>
+                  <div
+                    className="meta"
+                    style={{ marginBottom: 6, paddingRight: j.banner_image_url ? 0 : 40 }}
+                  >
                     {j.stores?.category && (
                       <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
                     )}
@@ -148,7 +176,7 @@ export default async function JobsPage({
         </div>
 
         {jobListBanner && (
-          <a
+          
             href={`/go/banner/${jobListBanner.id}`}
             target="_blank"
             rel="noreferrer"

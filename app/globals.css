@@ -1071,7 +1071,7 @@ th {
 }
 
 /* ===== Job favorite overlay button ===== */
-.job-fav-btn {
+. {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -1088,28 +1088,22 @@ th {
   justify-content: center;
 }
 
-.job-fav-btn.active {
-  color: var(--accent-text);
-}
-
-/* ===== Store favorite overlay button (heart, on the store card thumb) ===== */
-.store-fav-btn {
+.job-fav-btn {
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 2;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
+  background: transparent;
+  font-size: 19px;
   line-height: 1;
   color: #b9a98a;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 4px;
+}
+
+.job-fav-btn.active {
+  color: var(--accent-text);
 }
 
 .store-fav-btn.active {
@@ -1118,7 +1112,7 @@ th {
 
 .store-fav-btn:hover {
   filter: brightness(0.97);
-}
+}job-fav-btn
 
 
 /* ===== Store favorite button (heart, inline next to a page title) ===== */
