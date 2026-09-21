@@ -7,7 +7,6 @@ import {
   REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
-import { pickBanner } from "@/lib/banners";
 import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
@@ -44,41 +43,6 @@ export default async function HomePage({
   const supabase = await createClient();
   const now = new Date().toISOString();
 
-  let storesQuery = supabase
-    .from("stores")
-    .select("id, name, category, region, pref, city, description, status")
-    .in("status", ["approved", "listed"])
-    .order("created_at", { ascending: false });
-
-  if (q) {
-    // Widen the free-word search beyond just the store name: match address,
-    // description, city, pref/region, and the owner-editable "area keywords"
-    // field (e.g. "ミナミ アメ村 心斎橋") so nickname/area searches work even
-    // without a dedicated pref/region dropdown in the UI.
-    const escaped = q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const pattern = `"%${escaped}%"`;
-    storesQuery = storesQuery.or(
-      [
-        `name.ilike.${pattern}`,
-        `address.ilike.${pattern}`,
-        `description.ilike.${pattern}`,
-        `area_keywords.ilike.${pattern}`,
-        `city.ilike.${pattern}`,
-        `pref.ilike.${pattern}`,
-        `region.ilike.${pattern}`,
-      ].join(",")
-    );
-  }
-  if (category) {
-    storesQuery = storesQuery.eq("category", category);
-  }
-  if (pref) {
-    storesQuery = storesQuery.eq("pref", pref);
-  }
-  if (region) {
-    storesQuery = storesQuery.eq("region", region);
-  }
-
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
   // making 12+ round trips to the database back to back, which is what was
@@ -87,7 +51,6 @@ export default async function HomePage({
     {
       data: { user },
     },
-    { data: stores },
     { data: prefRows },
     { data: settings },
     { data: banners },
@@ -98,10 +61,8 @@ export default async function HomePage({
     { data: latestPosts },
     { data: upcomingEvents },
     { data: popularCoupons },
-    storeListBanner,
   ] = await Promise.all([
     supabase.auth.getUser(),
-    storesQuery,
     supabase.from("stores").select("pref").in("status", ["approved", "listed"]),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
     supabase
@@ -153,7 +114,6 @@ export default async function HomePage({
       .eq("active", true)
       .order("created_at", { ascending: false })
       .limit(4),
-    pickBanner(supabase, "store_list", { pref, region }),
   ]);
 
   const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
@@ -225,11 +185,7 @@ export default async function HomePage({
           アミューズメントポーカー・ポーカーバーを、日本全国から検索できます。
         </p>
 
-        <form method="get" className="search-box">
-          {/* category/region are still filterable via URL (e.g. from the
-              jobs/category pages or the region chips below), just not shown
-              as their own controls here — this form matches the prototype's
-              original text + prefecture layout. */}
+        <form method="get" action="/stores" className="search-box">
           <input type="hidden" name="category" value={category} />
           <input type="hidden" name="region" value={region} />
           <input
@@ -300,9 +256,9 @@ export default async function HomePage({
 
         <div className="chip-row" style={{ justifyContent: "center", marginTop: 20 }}>
           {REGIONS.map((r) => (
-            <a
+            
               key={r}
-              href={`/?region=${encodeURIComponent(r)}#store-list`}
+              href={`/stores?region=${encodeURIComponent(r)}`}
               className={`chip ${region === r ? "active" : ""}`}
             >
               {r}
@@ -329,9 +285,9 @@ export default async function HomePage({
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>🏆 注目店舗</h2>
-          <a href="#store-list" className="see-all">
+          <Link href="/stores" className="see-all">
             すべて見る →
-          </a>
+          </Link>
         </div>
         {featuredStores.length === 0 && <p className="muted">まだ店舗がありません。</p>}
         <div className="grid cols-4">
@@ -478,51 +434,6 @@ export default async function HomePage({
               </Link>
             ))}
           </div>
-        )}
-      </div>
-
-      <div className="container">
-        <div id="store-list" />
-        <h2 style={{ fontSize: 18, marginBottom: 12 }}>店舗を探す</h2>
-        {(!stores || stores.length === 0) && (
-          <p className="muted">条件に一致する店舗はありません。</p>
-        )}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 14,
-          }}
-        >
-          {stores?.map((s) => (
-            <StoreCard
-              key={s.id}
-              store={s}
-              isFavorite={favoriteStoreIds.has(s.id)}
-              favoriteAction={async () => {
-                "use server";
-                await toggleFavoriteStore(s.id, "/");
-              }}
-            />
-          ))}
-        </div>
-
-        {storeListBanner && (
-          <a
-            href={`/go/banner/${storeListBanner.id}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ display: "block", maxWidth: 760, margin: "24px auto 0" }}
-          >
-            <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              {storeListBanner.image_url ? (
-                <img src={storeListBanner.image_url} alt={storeListBanner.title} style={{ width: "100%", display: "block" }} />
-              ) : (
-                <div style={{ padding: 16 }}>{storeListBanner.title}</div>
-              )}
-            </div>
-          </a>
         )}
       </div>
 
