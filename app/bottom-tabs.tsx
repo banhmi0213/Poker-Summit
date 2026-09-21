@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const ITEMS: { key: string; href: string; icon: string; label: string }[] = [
   { key: "home", href: "/", icon: "🏠", label: "ホーム" },
-  { key: "stores", href: "/#store-list", icon: "🏪", label: "店舗" },
+  { key: "stores", href: "/stores", icon: "🏪", label: "店舗" },
   { key: "jobs", href: "/jobs", icon: "💼", label: "求人" },
   { key: "board", href: "/board", icon: "💬", label: "サミット" },
   { key: "mypage", href: "/mypage", icon: "👤", label: "マイページ" },
