@@ -115,7 +115,7 @@ export default async function StoreDetailPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <Link href="/#store-list" className="breadcrumb">
+        <Link href="/stores" className="breadcrumb">
           ← 店舗を探すに戻る
         </Link>
         <div
