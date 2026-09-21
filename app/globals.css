@@ -399,7 +399,11 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  background: var(--surface-2);
+  /* Deliberately much closer to the hero's background than --surface-2:
+     a strong beige/white contrast made the box's rounded-corner edge
+     anti-aliasing read as a soft drop shadow. Keeping the tone barely
+     off-white avoids that while still reading as a filled panel. */
+  background: #fbf9f3;
   border-radius: 13px;
   box-shadow: none;
 }
