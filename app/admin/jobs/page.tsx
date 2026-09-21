@@ -38,13 +38,20 @@ export default async function AdminJobsPage({
   const { data: jobs } = await query;
 
   const jobIds = (jobs ?? []).map((j) => j.id);
-  const { data: applications } =
+  const [{ data: applications }, { data: jobFavorites }] =
     jobIds.length > 0
-      ? await supabase.from("job_applications").select("job_id").in("job_id", jobIds)
-      : { data: [] as { job_id: string }[] };
+      ? await Promise.all([
+          supabase.from("job_applications").select("job_id").in("job_id", jobIds),
+          supabase.from("favorite_jobs").select("job_id").in("job_id", jobIds),
+        ])
+      : [{ data: [] as { job_id: string }[] }, { data: [] as { job_id: string }[] }];
   const applicantCounts = new Map<string, number>();
   (applications ?? []).forEach((a) => {
     applicantCounts.set(a.job_id, (applicantCounts.get(a.job_id) ?? 0) + 1);
+  });
+  const favoriteCounts = new Map<string, number>();
+  (jobFavorites ?? []).forEach((f) => {
+    favoriteCounts.set(f.job_id, (favoriteCounts.get(f.job_id) ?? 0) + 1);
   });
 
   return (
@@ -147,6 +154,7 @@ export default async function AdminJobsPage({
               <th>ステータス</th>
               <th>掲載日</th>
               <th>応募数</th>
+              <th>お気に入り数</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -162,6 +170,7 @@ export default async function AdminJobsPage({
                 </td>
                 <td>{j.posted_at ? String(j.posted_at).slice(0, 10) : ""}</td>
                 <td className="tabular">{applicantCounts.get(j.id) ?? 0}</td>
+                <td className="tabular">{favoriteCounts.get(j.id) ?? 0}</td>
                 <td>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                     <form
