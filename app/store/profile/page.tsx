@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/app/login/actions";
 import { updateStoreProfile } from "./actions";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "./jobs-actions";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "./coupons-actions";
@@ -91,31 +90,14 @@ export default async function StoreProfilePage() {
   const activeCouponCount = (coupons ?? []).filter((c) => c.active).length;
 
   return (
-    <div>
-      <header className="header">
-        <div className="brand">Poker Summit 店舗管理</div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href="/store/profile/analytics" className="btn">
-            アクセス分析
-          </a>
-          <a href="/account/password" className="btn">
-            パスワード変更
-          </a>
-          <form action={signOut}>
-            <button type="submit" className="btn">
-              ログアウト ({user?.email})
-            </button>
-          </form>
-        </div>
-      </header>
-      <div className="container">
-        {!store ? (
-          <p className="err">
-            このアカウントに紐づく店舗が見つかりません。運営に店舗オーナーとしての登録を依頼してください。
-          </p>
-        ) : (
-          <>
-            <div
+    <>
+      {!store ? (
+        <p className="err">
+          このアカウントに紐づく店舗が見つかりません。運営に店舗オーナーとしての登録を依頼してください。
+        </p>
+      ) : (
+        <>
+          <div
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -600,9 +582,8 @@ export default async function StoreProfilePage() {
                 </div>
               );
             })}
-          </>
-        )}
-      </div>
-    </div>
+        </>
+      )}
+    </>
   );
 }

@@ -269,7 +269,7 @@ th {
   box-shadow: var(--shadow);
   container-type: inline-size;
   container-name: mappanel;
-  background: linear-gradient(155deg, #2a2044 0%, #1c1730 55%, #120f22 100%);
+  background: linear-gradient(155deg, #4a3418 0%, #2f2210 55%, #1c1508 100%);
   background-image: url("/images/map-bg.jpg");
   background-size: cover;
   background-position: center;
@@ -281,9 +281,9 @@ th {
   z-index: 0;
   background: linear-gradient(
     180deg,
-    rgba(8, 12, 26, 0.35) 0%,
-    rgba(8, 12, 26, 0.55) 55%,
-    rgba(8, 12, 26, 0.72) 100%
+    rgba(35, 24, 6, 0.18) 0%,
+    rgba(35, 24, 6, 0.4) 55%,
+    rgba(35, 24, 6, 0.58) 100%
   );
 }
 
@@ -306,6 +306,7 @@ th {
   font-weight: 800;
   font-size: 14.5px;
   color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .map-overlay-bar .count {
@@ -317,6 +318,7 @@ th {
 .map-overlay-bar .hint {
   font-size: 13px;
   color: #f3ead2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .jp-grid {
@@ -331,14 +333,17 @@ th {
 
 .jp-tile {
   border-radius: 9px;
-  border: 1.3px solid rgba(212, 169, 74, 0.4);
-  background: rgba(212, 169, 74, 0.1);
+  border: 1.3px solid rgba(212, 169, 74, 0.55);
+  background: rgba(212, 169, 74, 0.16);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: clamp(6px, 1.9cqw, 11px);
   font-weight: 700;
   color: #fffaf0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   text-align: center;
   line-height: 1.05;
   padding: 1px;
@@ -349,13 +354,13 @@ th {
 }
 
 .jp-tile:hover {
-  background: rgba(212, 169, 74, 0.28);
+  background: rgba(212, 169, 74, 0.32);
   border-color: var(--accent);
 }
 
 .jp-tile.has-data {
   border-color: var(--accent);
-  background: rgba(212, 169, 74, 0.28);
+  background: rgba(212, 169, 74, 0.32);
   color: #fff;
   font-weight: 800;
 }
@@ -628,6 +633,110 @@ th {
 
 .empty.small {
   padding: 18px 12px;
+}
+
+/* ===== App shell (admin / store dashboards) ===== */
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-sidebar .brand {
+  font-weight: 700;
+  font-size: 19px;
+  padding: 6px 10px 16px;
+  color: var(--accent-text);
+}
+
+.app-sidebar .brand small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  text-align: left;
+  width: 100%;
+}
+
+.side-link:hover {
+  background: var(--surface-3);
+}
+
+.side-link.active {
+  background: var(--accent-gradient);
+  color: var(--accent-ink);
+  font-weight: 700;
+  box-shadow: var(--accent-shadow);
+}
+
+.app-main {
+  padding: 24px 28px 60px;
+  min-width: 0;
+}
+
+.app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.app-topbar h1 {
+  font-size: 22px;
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  .app-sidebar .brand {
+    width: 100%;
+    padding-bottom: 6px;
+  }
+
+  .side-link {
+    width: auto;
+  }
+
+  .app-main {
+    padding: 18px 16px 48px;
+  }
 }
 
 /* ===== Job favorite overlay button ===== */

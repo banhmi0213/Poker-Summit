@@ -3,9 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/login/actions";
-import { AdminSidebar } from "./admin-sidebar";
+import { StoreSidebar } from "./store-sidebar";
 
-export default async function AdminLayout({
+export default async function StoreLayout({
   children,
 }: {
   children: ReactNode;
@@ -16,29 +16,12 @@ export default async function AdminLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?next=/admin/stores");
-  }
-
-  const { data: adminRow } = await supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!adminRow) {
-    return (
-      <div className="container">
-        <p className="err">
-          このアカウントには運営権限がありません。管理者に admin_users
-          テーブルへの登録を依頼してください。
-        </p>
-      </div>
-    );
+    redirect("/login?next=/store/profile");
   }
 
   return (
     <div className="app-shell">
-      <AdminSidebar />
+      <StoreSidebar />
       <div className="app-main">
         <div className="app-topbar" style={{ justifyContent: "flex-end" }}>
           <div style={{ display: "flex", gap: 8 }}>
