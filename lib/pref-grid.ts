@@ -60,5 +60,5 @@ export function buildStoreListHref(q: string, category: string, pref: string): s
   if (category) sp.set("category", category);
   if (pref) sp.set("pref", pref);
   const qs = sp.toString();
-  return qs ? `/?${qs}` : "/";
+  return qs ? `/stores?${qs}` : "/stores";
 }
