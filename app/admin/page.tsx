@@ -9,6 +9,12 @@ function dayKey(d: Date) {
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
+  const since = new Date();
+  since.setDate(since.getDate() - 13);
+
+  // All 13 of these are independent of each other, so fire them together
+  // instead of one-by-one — this page used to make a dozen round trips to
+  // the database back to back, which is what was making it feel slow.
   const [
     { count: totalStores },
     { count: pendingStores },
@@ -18,6 +24,11 @@ export default async function AdminDashboardPage() {
     { count: unreadInquiries },
     { count: openReports },
     { count: totalViews },
+    { data: recentViews },
+    { data: recentAllViews },
+    { data: storesForCategory },
+    { data: banners },
+    { data: clicks },
   ] = await Promise.all([
     supabase.from("stores").select("*", { count: "exact", head: true }),
     supabase
@@ -45,14 +56,17 @@ export default async function AdminDashboardPage() {
       .select("*", { count: "exact", head: true })
       .eq("status", "open"),
     supabase.from("page_views").select("*", { count: "exact", head: true }),
+    supabase
+      .from("page_views")
+      .select("store_id, stores(name)")
+      .not("store_id", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(200),
+    supabase.from("page_views").select("created_at").gte("created_at", since.toISOString()),
+    supabase.from("stores").select("category").in("status", ["approved", "listed"]),
+    supabase.from("banners").select("id, title"),
+    supabase.from("banner_clicks").select("banner_id"),
   ]);
-
-  const { data: recentViews } = await supabase
-    .from("page_views")
-    .select("store_id, stores(name)")
-    .not("store_id", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(200);
 
   const viewCounts = new Map<string, { name: string; count: number }>();
   recentViews?.forEach((v: any) => {
@@ -65,13 +79,6 @@ export default async function AdminDashboardPage() {
   const topViewedStores = Array.from(viewCounts.values())
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
-
-  const since = new Date();
-  since.setDate(since.getDate() - 13);
-  const { data: recentAllViews } = await supabase
-    .from("page_views")
-    .select("created_at")
-    .gte("created_at", since.toISOString());
 
   const dailyCounts = new Map<string, number>();
   for (let i = 0; i < 14; i++) {
@@ -88,10 +95,6 @@ export default async function AdminDashboardPage() {
   const dailyList = Array.from(dailyCounts.entries());
   const maxDaily = Math.max(1, ...dailyList.map(([, c]) => c));
 
-  const { data: storesForCategory } = await supabase
-    .from("stores")
-    .select("category")
-    .in("status", ["approved", "listed"]);
   const categoryCounts = new Map<string, number>();
   storesForCategory?.forEach((s) => {
     const key = s.category ?? "未分類";
@@ -101,12 +104,6 @@ export default async function AdminDashboardPage() {
     (a, b) => b[1] - a[1]
   );
 
-  const { data: banners } = await supabase
-    .from("banners")
-    .select("id, title");
-  const { data: clicks } = await supabase
-    .from("banner_clicks")
-    .select("banner_id");
   const clickCounts = new Map<string, number>();
   clicks?.forEach((c) => {
     clickCounts.set(c.banner_id, (clickCounts.get(c.banner_id) ?? 0) + 1);

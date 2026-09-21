@@ -23,29 +23,25 @@ export default async function StoreProfilePage() {
     .eq("owner_user_id", user?.id ?? "")
     .maybeSingle();
 
-  const { data: jobs } = store
-    ? await supabase
-        .from("jobs")
-        .select("*")
-        .eq("store_id", store.id)
-        .order("posted_at", { ascending: false })
-    : { data: null };
-
-  const { data: coupons } = store
-    ? await supabase
-        .from("coupons")
-        .select("*")
-        .eq("store_id", store.id)
-        .order("created_at", { ascending: false })
-    : { data: null };
-
-  const { data: events } = store
-    ? await supabase
-        .from("events")
-        .select("*")
-        .eq("store_id", store.id)
-        .order("start_at", { ascending: true })
-    : { data: null };
+  const [{ data: jobs }, { data: coupons }, { data: events }] = store
+    ? await Promise.all([
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("store_id", store.id)
+          .order("posted_at", { ascending: false }),
+        supabase
+          .from("coupons")
+          .select("*")
+          .eq("store_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("events")
+          .select("*")
+          .eq("store_id", store.id)
+          .order("start_at", { ascending: true }),
+      ])
+    : [{ data: null }, { data: null }, { data: null }];
 
   let jobApplicantCounts: Record<string, number> = {};
   let eventParticipantCounts: Record<string, number> = {};

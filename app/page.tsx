@@ -52,71 +52,61 @@ export default async function HomePage({
   const region = params.region ?? "";
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const now = new Date().toISOString();
 
-  let query = supabase
+  let storesQuery = supabase
     .from("stores")
     .select("id, name, category, region, pref, city, description, status")
     .in("status", ["approved", "listed"])
     .order("created_at", { ascending: false });
 
   if (q) {
-    query = query.ilike("name", `%${q}%`);
+    storesQuery = storesQuery.ilike("name", `%${q}%`);
   }
   if (category) {
-    query = query.eq("category", category);
+    storesQuery = storesQuery.eq("category", category);
   }
   if (pref) {
-    query = query.eq("pref", pref);
+    storesQuery = storesQuery.eq("pref", pref);
   }
   if (region) {
-    query = query.eq("region", region);
+    storesQuery = storesQuery.eq("region", region);
   }
 
-  const { data: stores } = await query;
-
-  const { data: prefRows } = await supabase
-    .from("stores")
-    .select("pref")
-    .in("status", ["approved", "listed"]);
-  const prefCounts: Record<string, number> = {};
-  prefRows?.forEach((r) => {
-    if (!r.pref) return;
-    prefCounts[r.pref] = (prefCounts[r.pref] ?? 0) + 1;
-  });
-
-  let favoriteStoreIds = new Set<string>();
-  if (user) {
-    const { data: favs } = await supabase
-      .from("favorite_stores")
-      .select("store_id")
-      .eq("user_id", user.id);
-    favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
-  }
-
-  const storeListBanner = await pickBanner(supabase, "store_list", { pref, region });
-
-  const { data: settings } = await supabase
-    .from("site_settings")
-    .select("announcement")
-    .eq("id", true)
-    .maybeSingle();
-
-  const now = new Date().toISOString();
-  const { data: banners } = await supabase
-    .from("banners")
-    .select("id, title, image_url, link_url")
-    .eq("position", "top")
-    .eq("active", true)
-    .or(`starts_at.is.null,starts_at.lte.${now}`)
-    .or(`ends_at.is.null,ends_at.gte.${now}`)
-    .order("sort_order", { ascending: true });
-
-  // --- Stats row ---
-  const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
-    await Promise.all([
+  // All of the following are independent of each other, so they're fired
+  // together instead of one-by-one — the serial version of this page was
+  // making 12+ round trips to the database back to back, which is what was
+  // making the whole site feel slow to load.
+  const [
+    {
+      data: { user },
+    },
+    { data: stores },
+    { data: prefRows },
+    { data: settings },
+    { data: banners },
+    statsResults,
+    { data: allStoresForFeature },
+    { data: allFavRows },
+    { data: latestJobs },
+    { data: latestPosts },
+    { data: upcomingEvents },
+    { data: popularCoupons },
+    storeListBanner,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    storesQuery,
+    supabase.from("stores").select("pref").in("status", ["approved", "listed"]),
+    supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
+    supabase
+      .from("banners")
+      .select("id, title, image_url, link_url")
+      .eq("position", "top")
+      .eq("active", true)
+      .or(`starts_at.is.null,starts_at.lte.${now}`)
+      .or(`ends_at.is.null,ends_at.gte.${now}`)
+      .order("sort_order", { ascending: true }),
+    Promise.all([
       supabase
         .from("stores")
         .select("*", { count: "exact", head: true })
@@ -126,14 +116,60 @@ export default async function HomePage({
         .from("board_posts")
         .select("*", { count: "exact", head: true })
         .eq("status", "visible"),
-    ]);
+    ]),
+    supabase
+      .from("stores")
+      .select("id, name, category, pref, city, description, created_at")
+      .in("status", ["approved", "listed"]),
+    supabase.from("favorite_stores").select("store_id"),
+    supabase
+      .from("jobs")
+      .select("id, title, job_type, salary, store_id, stores(name, category)")
+      .eq("status", "open")
+      .order("posted_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("board_posts")
+      .select("id, title, author_name, created_at")
+      .eq("status", "visible")
+      .order("created_at", { ascending: false })
+      .limit(4),
+    supabase
+      .from("events")
+      .select("id, title, location, start_at, store_id, stores(name)")
+      .eq("status", "published")
+      .gte("start_at", now)
+      .order("start_at", { ascending: true })
+      .limit(3),
+    supabase
+      .from("coupons")
+      .select("id, title, discount, valid_until, store_id, stores(name, category)")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(4),
+    pickBanner(supabase, "store_list", { pref, region }),
+  ]);
+
+  const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
+    statsResults;
+
+  const prefCounts: Record<string, number> = {};
+  prefRows?.forEach((r) => {
+    if (!r.pref) return;
+    prefCounts[r.pref] = (prefCounts[r.pref] ?? 0) + 1;
+  });
+
+  // --- Favorites (depends on `user`, so it runs after the batch above) ---
+  let favoriteStoreIds = new Set<string>();
+  if (user) {
+    const { data: favs } = await supabase
+      .from("favorite_stores")
+      .select("store_id")
+      .eq("user_id", user.id);
+    favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
+  }
 
   // --- Featured stores (by favorite count) ---
-  const { data: allStoresForFeature } = await supabase
-    .from("stores")
-    .select("id, name, category, pref, city, description, created_at")
-    .in("status", ["approved", "listed"]);
-  const { data: allFavRows } = await supabase.from("favorite_stores").select("store_id");
   const likeCounts: Record<string, number> = {};
   allFavRows?.forEach((r) => {
     likeCounts[r.store_id] = (likeCounts[r.store_id] ?? 0) + 1;
@@ -146,21 +182,7 @@ export default async function HomePage({
     })
     .slice(0, 4);
 
-  // --- Latest jobs ---
-  const { data: latestJobs } = await supabase
-    .from("jobs")
-    .select("id, title, job_type, salary, store_id, stores(name, category)")
-    .eq("status", "open")
-    .order("posted_at", { ascending: false })
-    .limit(3);
-
-  // --- Latest board threads ---
-  const { data: latestPosts } = await supabase
-    .from("board_posts")
-    .select("id, title, author_name, created_at")
-    .eq("status", "visible")
-    .order("created_at", { ascending: false })
-    .limit(4);
+  // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
   const { data: replyRows } = postIds.length
     ? await supabase.from("board_replies").select("post_id").in("post_id", postIds)
@@ -169,23 +191,6 @@ export default async function HomePage({
   replyRows?.forEach((r) => {
     replyCounts[r.post_id] = (replyCounts[r.post_id] ?? 0) + 1;
   });
-
-  // --- Upcoming events ---
-  const { data: upcomingEvents } = await supabase
-    .from("events")
-    .select("id, title, location, start_at, store_id, stores(name)")
-    .eq("status", "published")
-    .gte("start_at", now)
-    .order("start_at", { ascending: true })
-    .limit(3);
-
-  // --- Popular coupons ---
-  const { data: popularCoupons } = await supabase
-    .from("coupons")
-    .select("id, title, discount, valid_until, store_id, stores(name, category)")
-    .eq("active", true)
-    .order("created_at", { ascending: false })
-    .limit(4);
 
   return (
     <div>

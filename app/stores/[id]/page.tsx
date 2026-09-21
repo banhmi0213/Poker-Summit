@@ -22,16 +22,22 @@ export default async function StoreDetailPage({
   params: { id: string };
 }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  const { data: store } = await supabase
-    .from("stores")
-    .select("*")
-    .eq("id", params.id)
-    .in("status", ["approved", "listed"])
-    .maybeSingle();
+  // Independent of each other, so fetched together.
+  const [
+    {
+      data: { user },
+    },
+    { data: store },
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase
+      .from("stores")
+      .select("*")
+      .eq("id", params.id)
+      .in("status", ["approved", "listed"])
+      .maybeSingle(),
+  ]);
 
   if (!store) {
     notFound();
@@ -47,31 +53,32 @@ export default async function StoreDetailPage({
     .insert({ path, store_id: store.id, referrer, device })
     .then(() => {});
 
-  const { data: events } = await supabase
-    .from("events")
-    .select("id, title, location, start_at")
-    .eq("store_id", store.id)
-    .eq("status", "published")
-    .order("start_at", { ascending: true });
-
-  const { data: jobs } = await supabase
-    .from("jobs")
-    .select("id, title, job_type, salary, description, posted_at")
-    .eq("store_id", store.id)
-    .eq("status", "open")
-    .order("posted_at", { ascending: false });
-
-  const { data: coupons } = await supabase
-    .from("coupons")
-    .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
-    .eq("store_id", store.id)
-    .eq("active", true)
-    .order("created_at", { ascending: false });
-
-  const { count: likeCount } = await supabase
-    .from("favorite_stores")
-    .select("*", { count: "exact", head: true })
-    .eq("store_id", store.id);
+  // These four only depend on store.id, not on each other.
+  const [{ data: events }, { data: jobs }, { data: coupons }, { count: likeCount }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("id, title, location, start_at")
+        .eq("store_id", store.id)
+        .eq("status", "published")
+        .order("start_at", { ascending: true }),
+      supabase
+        .from("jobs")
+        .select("id, title, job_type, salary, description, posted_at")
+        .eq("store_id", store.id)
+        .eq("status", "open")
+        .order("posted_at", { ascending: false }),
+      supabase
+        .from("coupons")
+        .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+        .eq("store_id", store.id)
+        .eq("active", true)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("favorite_stores")
+        .select("*", { count: "exact", head: true })
+        .eq("store_id", store.id),
+    ]);
 
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();

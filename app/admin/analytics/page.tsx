@@ -86,34 +86,49 @@ function StatTile({ label, value, delta }: { label: string; value: string; delta
 
 async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
   const issues: AnalyticsIssue[] = [];
+  const today = new Date().toISOString().slice(0, 10);
+  const in7 = new Date();
+  in7.setDate(in7.getDate() + 7);
 
-  const { data: pendingStores } = await supabase.from("stores").select("id, name").eq("status", "pending");
+  // These six queries don't depend on each other, so fire them together
+  // instead of one-by-one (this function used to make 7+ round trips in a row
+  // on every single analytics page load, tab or no tab).
+  const [
+    { data: pendingStores },
+    { data: openReports },
+    { data: unreadInquiries },
+    { data: pendingApps },
+    { data: approvedApps },
+    { data: coupons },
+  ] = await Promise.all([
+    supabase.from("stores").select("id, name").eq("status", "pending"),
+    supabase.from("reports").select("id, reason").eq("status", "open"),
+    supabase.from("inquiries").select("id, subject").eq("status", "unread"),
+    supabase
+      .from("listing_applications")
+      .select("id, company_name")
+      .in("status", ["pending", "unconfirmed"]),
+    supabase.from("listing_applications").select("id, company_name, store_id").eq("status", "approved"),
+    supabase.from("coupons").select("id, title, valid_until").eq("active", true).not("valid_until", "is", null),
+  ]);
+
   (pendingStores ?? []).forEach((s: any) =>
     issues.push({ cls: "warning", icon: "🏪", text: `${s.name} が承認待ちです`, href: "/admin/stores" })
   );
 
-  const { data: openReports } = await supabase.from("reports").select("id, reason").eq("status", "open");
   (openReports ?? []).forEach((r: any) =>
     issues.push({ cls: "critical", icon: "🚨", text: `通報未対応: ${r.reason ?? "理由なし"}`, href: "/admin/reports" })
   );
 
-  const { data: unreadInquiries } = await supabase.from("inquiries").select("id, subject").eq("status", "unread");
   (unreadInquiries ?? []).forEach((i: any) =>
     issues.push({ cls: "warning", icon: "✉️", text: `未読の問い合わせ: ${i.subject || "（件名なし）"}`, href: "/admin/inquiries" })
   );
 
-  const { data: pendingApps } = await supabase
-    .from("listing_applications")
-    .select("id, company_name")
-    .in("status", ["pending", "unconfirmed"]);
   (pendingApps ?? []).forEach((a: any) =>
     issues.push({ cls: "warning", icon: "📝", text: `掲載申込が未審査: ${a.company_name}`, href: "/admin/listing-applications" })
   );
 
-  const { data: approvedApps } = await supabase
-    .from("listing_applications")
-    .select("id, company_name, store_id")
-    .eq("status", "approved");
+  // Depends on approvedApps's store ids, so it has to run after the batch above.
   const storeIds = (approvedApps ?? []).map((a: any) => a.store_id).filter(Boolean);
   const { data: linkedStores } =
     storeIds.length > 0
@@ -132,14 +147,6 @@ async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
     }
   });
 
-  const today = new Date().toISOString().slice(0, 10);
-  const in7 = new Date();
-  in7.setDate(in7.getDate() + 7);
-  const { data: coupons } = await supabase
-    .from("coupons")
-    .select("id, title, valid_until")
-    .eq("active", true)
-    .not("valid_until", "is", null);
   (coupons ?? []).forEach((c: any) => {
     if (c.valid_until < today) {
       issues.push({ cls: "outline", icon: "🎟️", text: `クーポン「${c.title}」の有効期限が切れています`, href: "/admin/coupons" });
@@ -159,13 +166,14 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const filters = { period, from: searchParams.from, to: searchParams.to };
   const since = analyticsSince(filters);
 
-  const { data: approvedStores } = await supabase
-    .from("stores")
-    .select("id, name")
-    .in("status", ["approved", "listed"])
-    .order("name", { ascending: true });
-
-  const issues = await computeIssues(supabase);
+  const [{ data: approvedStores }, issues] = await Promise.all([
+    supabase
+      .from("stores")
+      .select("id, name")
+      .in("status", ["approved", "listed"])
+      .order("name", { ascending: true }),
+    computeIssues(supabase),
+  ]);
   const issueCount = issues.filter((i) => i.cls === "critical" || i.cls === "warning").length;
 
   const tabs: { key: string; label: string }[] = [
@@ -317,18 +325,16 @@ async function OverviewTab({
 }: any) {
   // Store-scoped drill-down
   if (scope === "store" && storeId) {
-    const { data: store } = await supabase.from("stores").select("id, name, category, pref").eq("id", storeId).maybeSingle();
+    const [{ data: store }, { data: views }, { count: favCount }] = await Promise.all([
+      supabase.from("stores").select("id, name, category, pref").eq("id", storeId).maybeSingle(),
+      supabase
+        .from("page_views")
+        .select("created_at, referrer, device")
+        .eq("store_id", storeId)
+        .gte("created_at", since.toISOString()),
+      supabase.from("favorite_stores").select("*", { count: "exact", head: true }).eq("store_id", storeId),
+    ]);
     if (!store) return <p className="empty">店舗が見つかりません。</p>;
-
-    const { data: views } = await supabase
-      .from("page_views")
-      .select("created_at, referrer, device")
-      .eq("store_id", storeId)
-      .gte("created_at", since.toISOString());
-    const { count: favCount } = await supabase
-      .from("favorite_stores")
-      .select("*", { count: "exact", head: true })
-      .eq("store_id", storeId);
 
     const { counts, labels } = bucketTrend((views ?? []).map((v: any) => v.created_at), filters);
     const totalViews = (views ?? []).length;
@@ -407,14 +413,24 @@ async function OverviewTab({
     );
   }
 
-  // Site-wide overview
-  const { data: allViews } = await supabase
-    .from("page_views")
-    .select("created_at, referrer, device, store_id")
-    .not("store_id", "is", null)
-    .gte("created_at", since.toISOString());
-  const { count: totalFavorites } = await supabase.from("favorite_stores").select("*", { count: "exact", head: true });
-  const { count: totalStoreCount } = await supabase.from("stores").select("*", { count: "exact", head: true });
+  // Site-wide overview — these five queries are independent, so run them together.
+  const [
+    { data: allViews },
+    { count: totalFavorites },
+    { count: totalStoreCount },
+    { data: allStoresFull },
+    { data: favByStoreRaw },
+  ] = await Promise.all([
+    supabase
+      .from("page_views")
+      .select("created_at, referrer, device, store_id")
+      .not("store_id", "is", null)
+      .gte("created_at", since.toISOString()),
+    supabase.from("favorite_stores").select("*", { count: "exact", head: true }),
+    supabase.from("stores").select("*", { count: "exact", head: true }),
+    supabase.from("stores").select("id, name, category, pref, status").order("name", { ascending: true }),
+    supabase.from("favorite_stores").select("store_id"),
+  ]);
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
   const totalViews = (allViews ?? []).length;
@@ -424,12 +440,6 @@ async function OverviewTab({
     viewsByStore.set(v.store_id, (viewsByStore.get(v.store_id) ?? 0) + 1);
   });
 
-  const { data: allStoresFull } = await supabase
-    .from("stores")
-    .select("id, name, category, pref, status")
-    .order("name", { ascending: true });
-
-  const { data: favByStoreRaw } = await supabase.from("favorite_stores").select("store_id");
   const favByStore = new Map<string, number>();
   (favByStoreRaw ?? []).forEach((f: any) => favByStore.set(f.store_id, (favByStore.get(f.store_id) ?? 0) + 1));
 
@@ -590,17 +600,20 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
   const { data: stores } = await storesQuery;
 
   const storeIds = (stores ?? []).map((s: any) => s.id);
-  const { data: views } =
+  const [{ data: views }, { data: favs }] =
     storeIds.length > 0
-      ? await supabase.from("page_views").select("store_id, created_at").in("store_id", storeIds).gte("created_at", since.toISOString())
-      : { data: [] as any[] };
+      ? await Promise.all([
+          supabase
+            .from("page_views")
+            .select("store_id, created_at")
+            .in("store_id", storeIds)
+            .gte("created_at", since.toISOString()),
+          supabase.from("favorite_stores").select("store_id").in("store_id", storeIds),
+        ])
+      : [{ data: [] as any[] }, { data: [] as any[] }];
   const viewsByStore = new Map<string, number>();
   (views ?? []).forEach((v: any) => viewsByStore.set(v.store_id, (viewsByStore.get(v.store_id) ?? 0) + 1));
 
-  const { data: favs } =
-    storeIds.length > 0
-      ? await supabase.from("favorite_stores").select("store_id").in("store_id", storeIds)
-      : { data: [] as any[] };
   const favByStore = new Map<string, number>();
   (favs ?? []).forEach((f: any) => favByStore.set(f.store_id, (favByStore.get(f.store_id) ?? 0) + 1));
 
