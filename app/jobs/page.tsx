@@ -176,7 +176,7 @@ export default async function JobsPage({
         </div>
 
         {jobListBanner && (
-          
+          <a
             href={`/go/banner/${jobListBanner.id}`}
             target="_blank"
             rel="noreferrer"
