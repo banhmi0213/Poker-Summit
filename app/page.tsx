@@ -2,8 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   CATEGORY_LABEL,
-  CATEGORY_OPTIONS,
   CATEGORY_COLOR,
+  PREF_OPTIONS,
   REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
@@ -226,23 +226,24 @@ export default async function HomePage({
         </p>
 
         <form method="get" className="search-box">
-          {/* pref/region come from the map & region chips below, not this
-              form — carried through as hidden fields so a name/category
-              search doesn't clear whichever area was already selected. */}
-          <input type="hidden" name="pref" value={pref} />
+          {/* category/region are still filterable via URL (e.g. from the
+              jobs/category pages or the region chips below), just not shown
+              as their own controls here — this form matches the prototype's
+              original text + prefecture layout. */}
+          <input type="hidden" name="category" value={category} />
           <input type="hidden" name="region" value={region} />
           <input
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="店名・エリア名(例: ミナミ, アメ村)・キーワード"
+            placeholder="店名・フリーワードで検索(例: 渋谷, VIP, トーナメント)"
             style={{ flex: "2 1 220px" }}
           />
-          <select name="category" defaultValue={category} style={{ flex: "1 1 160px" }}>
-            <option value="">カテゴリ</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
+          <select name="pref" defaultValue={pref} style={{ flex: "1 1 160px" }}>
+            <option value="">都道府県を選択</option>
+            {PREF_OPTIONS.map((p) => (
+              <option key={p} value={p}>
+                {p}
               </option>
             ))}
           </select>
