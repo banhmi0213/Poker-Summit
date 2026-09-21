@@ -29,7 +29,7 @@ export default async function AdminStoresPage({
   let query = supabase
     .from("stores")
     .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, status, owner_user_id, created_at"
+      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, owner_user_id, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -406,6 +406,15 @@ export default async function AdminStoresPage({
                     <div className="field">
                       <span className="muted">営業時間</span>
                       <input type="text" name="hours" defaultValue={s.hours ?? ""} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">エリアキーワード（検索用・任意）</span>
+                      <input
+                        type="text"
+                        name="areaKeywords"
+                        placeholder="例: ミナミ アメ村 心斎橋"
+                        defaultValue={s.area_keywords ?? ""}
+                      />
                     </div>
                     <div className="field">
                       <span className="muted">紹介文</span>

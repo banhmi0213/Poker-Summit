@@ -191,6 +191,18 @@ export default async function StoreProfilePage() {
                   <input type="text" name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
                 </div>
                 <div className="field">
+                  <span className="muted">エリアキーワード（検索用・任意）</span>
+                  <input
+                    type="text"
+                    name="areaKeywords"
+                    placeholder="例: ミナミ アメ村 心斎橋"
+                    defaultValue={store.area_keywords ?? ""}
+                  />
+                  <span className="muted" style={{ fontSize: 11.5 }}>
+                    通称・繁華街名などをスペース区切りで入力すると、トップ画面の検索でヒットしやすくなります。
+                  </span>
+                </div>
+                <div className="field">
                   <span className="muted">店舗紹介文</span>
                   <textarea
                     name="description"

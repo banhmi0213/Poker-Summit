@@ -24,6 +24,7 @@ export async function updateStoreProfile(formData: FormData) {
   const hours = String(formData.get("hours") ?? "");
   const description = String(formData.get("description") ?? "");
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
+  const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
 
   if (!name) {
     throw new Error("店舗名を入力してください。");
@@ -41,6 +42,7 @@ export async function updateStoreProfile(formData: FormData) {
       hours,
       description,
       line_url: lineUrl || null,
+      area_keywords: areaKeywords || null,
     })
     .eq("id", storeId)
     .eq("owner_user_id", user.id);

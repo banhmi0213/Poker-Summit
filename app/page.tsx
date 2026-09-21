@@ -4,7 +4,6 @@ import {
   CATEGORY_LABEL,
   CATEGORY_OPTIONS,
   CATEGORY_COLOR,
-  PREF_OPTIONS,
   REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
@@ -52,7 +51,23 @@ export default async function HomePage({
     .order("created_at", { ascending: false });
 
   if (q) {
-    storesQuery = storesQuery.ilike("name", `%${q}%`);
+    // Widen the free-word search beyond just the store name: match address,
+    // description, city, pref/region, and the owner-editable "area keywords"
+    // field (e.g. "ミナミ アメ村 心斎橋") so nickname/area searches work even
+    // without a dedicated pref/region dropdown in the UI.
+    const escaped = q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const pattern = `"%${escaped}%"`;
+    storesQuery = storesQuery.or(
+      [
+        `name.ilike.${pattern}`,
+        `address.ilike.${pattern}`,
+        `description.ilike.${pattern}`,
+        `area_keywords.ilike.${pattern}`,
+        `city.ilike.${pattern}`,
+        `pref.ilike.${pattern}`,
+        `region.ilike.${pattern}`,
+      ].join(",")
+    );
   }
   if (category) {
     storesQuery = storesQuery.eq("category", category);
@@ -211,9 +226,19 @@ export default async function HomePage({
         </p>
 
         <form method="get" className="card search-box">
-          <div className="field" style={{ marginBottom: 0, flex: "2 1 180px" }}>
-            <span className="muted">店舗名で検索</span>
-            <input type="text" name="q" defaultValue={q} placeholder="店名・キーワード" />
+          {/* pref/region come from the map & region chips below, not this
+              form — carried through as hidden fields so a name/category
+              search doesn't clear whichever area was already selected. */}
+          <input type="hidden" name="pref" value={pref} />
+          <input type="hidden" name="region" value={region} />
+          <div className="field" style={{ marginBottom: 0, flex: "2 1 220px" }}>
+            <span className="muted">フリーワードで検索</span>
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="店名・エリア名(例: ミナミ, アメ村)・キーワード"
+            />
           </div>
           <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
             <span className="muted">カテゴリ</span>
@@ -222,28 +247,6 @@ export default async function HomePage({
               {CATEGORY_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">都道府県</span>
-            <select name="pref" defaultValue={pref}>
-              <option value="">すべて</option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 140px" }}>
-            <span className="muted">地方</span>
-            <select name="region" defaultValue={region}>
-              <option value="">すべて</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
                 </option>
               ))}
             </select>

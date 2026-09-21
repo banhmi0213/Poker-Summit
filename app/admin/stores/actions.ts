@@ -117,6 +117,7 @@ export async function updateStoreByAdmin(formData: FormData) {
   const tel = String(formData.get("tel") ?? "").trim();
   const hours = String(formData.get("hours") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
 
   if (!name) {
     throw new Error("店舗名を入力してください。");
@@ -134,6 +135,7 @@ export async function updateStoreByAdmin(formData: FormData) {
       tel: tel || null,
       hours: hours || null,
       description: description || null,
+      area_keywords: areaKeywords || null,
     })
     .eq("id", storeId);
 
