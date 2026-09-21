@@ -1119,3 +1119,30 @@ th {
 .store-fav-btn:hover {
   filter: brightness(0.97);
 }
+
+
+/* ===== Store favorite button (heart, inline next to a page title) ===== */
+.store-fav-btn-inline {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  font-size: 17px;
+  line-height: 1;
+  color: #b9a98a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.store-fav-btn-inline.active {
+  color: var(--accent-text);
+  border-color: rgba(120, 84, 24, 0.2);
+}
+
+.store-fav-btn-inline:hover {
+  filter: brightness(0.97);
+}

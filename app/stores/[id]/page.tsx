@@ -53,32 +53,27 @@ export default async function StoreDetailPage({
     .insert({ path, store_id: store.id, referrer, device })
     .then(() => {});
 
-  // These four only depend on store.id, not on each other.
-  const [{ data: events }, { data: jobs }, { data: coupons }, { count: likeCount }] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("id, title, location, start_at")
-        .eq("store_id", store.id)
-        .eq("status", "published")
-        .order("start_at", { ascending: true }),
-      supabase
-        .from("jobs")
-        .select("id, title, job_type, salary, description, posted_at")
-        .eq("store_id", store.id)
-        .eq("status", "open")
-        .order("posted_at", { ascending: false }),
-      supabase
-        .from("coupons")
-        .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
-        .eq("store_id", store.id)
-        .eq("active", true)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("favorite_stores")
-        .select("*", { count: "exact", head: true })
-        .eq("store_id", store.id),
-    ]);
+  // These three only depend on store.id, not on each other.
+  const [{ data: events }, { data: jobs }, { data: coupons }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, title, location, start_at")
+      .eq("store_id", store.id)
+      .eq("status", "published")
+      .order("start_at", { ascending: true }),
+    supabase
+      .from("jobs")
+      .select("id, title, job_type, salary, description, posted_at")
+      .eq("store_id", store.id)
+      .eq("status", "open")
+      .order("posted_at", { ascending: false }),
+    supabase
+      .from("coupons")
+      .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+      .eq("store_id", store.id)
+      .eq("active", true)
+      .order("created_at", { ascending: false }),
+  ]);
 
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();
@@ -133,6 +128,20 @@ export default async function StoreDetailPage({
           }}
         >
           <h1 style={{ fontSize: 24 }}>{store.name}</h1>
+          <form
+            action={async () => {
+              "use server";
+              await toggleFavoriteStore(store.id, path);
+            }}
+          >
+            <button
+              type="submit"
+              className={`store-fav-btn-inline ${isFavoriteStore ? "active" : ""}`}
+              aria-label="お気に入り"
+            >
+              {isFavoriteStore ? "♥" : "♡"}
+            </button>
+          </form>
         </div>
         <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
           {store.category && (
@@ -143,7 +152,6 @@ export default async function StoreDetailPage({
           <span className="badge outline">
             📍 {[store.pref, store.city].filter(Boolean).join("")}
           </span>
-          <span className="badge accent">♥ {likeCount ?? 0}</span>
         </div>
         <p className="muted" style={{ marginBottom: 12 }}>
           {[store.region, store.pref, store.city].filter(Boolean).join(" / ")}
@@ -153,16 +161,6 @@ export default async function StoreDetailPage({
           <Link href="/contact" className="btn primary">
             📩 お問い合わせ
           </Link>
-          <form
-            action={async () => {
-              "use server";
-              await toggleFavoriteStore(store.id, path);
-            }}
-          >
-            <button type="submit" className={`btn ${isFavoriteStore ? "primary" : ""}`}>
-              {isFavoriteStore ? "★ お気に入り済み" : "☆ お気に入りに追加"}
-            </button>
-          </form>
           <form
             action={async () => {
               "use server";
