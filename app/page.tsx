@@ -29,6 +29,25 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString("ja-JP");
 }
 
+// --- Per-event status for the home page badges: live (started, not yet
+// ended) / soon (starts within the next hour) / upcoming (everything else).
+function getEventStatus(
+  ev: { start_at: string | null; end_at: string | null },
+  nowIso: string
+): "live" | "soon" | "upcoming" {
+  const nowMs = new Date(nowIso).getTime();
+  const startMs = ev.start_at ? new Date(ev.start_at).getTime() : null;
+  const endMs = ev.end_at ? new Date(ev.end_at).getTime() : null;
+
+  if (startMs !== null && startMs <= nowMs && (endMs === null || endMs >= nowMs)) {
+    return "live";
+  }
+  if (startMs !== null && startMs > nowMs && startMs - nowMs <= 60 * 60 * 1000) {
+    return "soon";
+  }
+  return "upcoming";
+}
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -103,11 +122,11 @@ export default async function HomePage({
       .limit(4),
     supabase
       .from("events")
-      .select("id, title, location, start_at, store_id, stores(name)")
+      .select("id, title, location, start_at, end_at, store_id, stores(name)")
       .eq("status", "published")
-      .gte("start_at", now)
+      .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`)
       .order("start_at", { ascending: true })
-      .limit(3),
+      .limit(8),
     supabase
       .from("coupons")
       .select("id, title, discount, valid_until, store_id, stores(name, category)")
@@ -124,6 +143,15 @@ export default async function HomePage({
     if (!r.pref) return;
     prefCounts[r.pref] = (prefCounts[r.pref] ?? 0) + 1;
   });
+
+  // --- Live vs upcoming events: prefer showing what's happening right now,
+  // and only fall back to "coming up" events when nothing is live. ---
+  const liveEvents = (upcomingEvents ?? []).filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 3);
+  const nextEvents = (upcomingEvents ?? [])
+    .filter((ev: any) => !ev.start_at || ev.start_at > now)
+    .slice(0, 3);
+  const isEventsLive = liveEvents.length > 0;
+  const displayEvents = isEventsLive ? liveEvents : nextEvents;
 
   // --- Favorites (depends on `user`, so it runs after the batch above) ---
   let favoriteStoreIds = new Set<string>();
@@ -186,6 +214,11 @@ export default async function HomePage({
         </p>
 
         <form method="get" action="/stores" className="search-box">
+          {/* category/region are still filterable via URL (e.g. from the
+              jobs/category pages or the region chips below), just not shown
+              as their own controls here — this form matches the prototype's
+              original text + prefecture layout. Submits to the dedicated
+              /stores search page rather than staying on the home page. */}
           <input type="hidden" name="category" value={category} />
           <input type="hidden" name="region" value={region} />
           <input
@@ -256,7 +289,7 @@ export default async function HomePage({
 
         <div className="chip-row" style={{ justifyContent: "center", marginTop: 20 }}>
           {REGIONS.map((r) => (
-            <a
+            
               key={r}
               href={`/stores?region=${encodeURIComponent(r)}`}
               className={`chip ${region === r ? "active" : ""}`}
@@ -364,27 +397,44 @@ export default async function HomePage({
 
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>🎉 開催予定のイベント</h2>
+          <h2 style={{ fontSize: 18 }}>
+            {isEventsLive ? "🔥本日 開催中のトーナメント・イベント" : "📅 開催予定のトーナメント・イベント"}
+          </h2>
           <Link href="/events" className="see-all">
             すべて見る →
           </Link>
         </div>
-        {(!upcomingEvents || upcomingEvents.length === 0) && (
+        {displayEvents.length === 0 && (
           <p className="muted">現在開催予定のイベントはありません。</p>
         )}
-        {upcomingEvents && upcomingEvents.length > 0 && (
+        {displayEvents.length > 0 && (
           <div className="grid cols-3">
-            {upcomingEvents.map((ev: any) => (
-              <Link href={`/events/${ev.id}`} key={ev.id} className="card" style={{ display: "block" }}>
-                <span className="badge" style={{ marginBottom: 6 }}>
-                  {formatDate(ev.start_at)}
-                </span>
-                <div style={{ fontWeight: 700, marginTop: 4, marginBottom: 4 }}>{ev.title}</div>
-                <div className="muted" style={{ fontSize: 12.5 }}>
-                  {[ev.stores?.name, ev.location].filter(Boolean).join(" ・ ")}
-                </div>
-              </Link>
-            ))}
+            {displayEvents.map((ev: any) => {
+              const status = getEventStatus(ev, now);
+              return (
+                <Link href={`/events/${ev.id}`} key={ev.id} className="card" style={{ display: "block" }}>
+                  {status === "live" && (
+                    <span className="badge accent" style={{ marginBottom: 6 }}>
+                      🔥 開催中
+                    </span>
+                  )}
+                  {status === "soon" && (
+                    <span className="badge warning" style={{ marginBottom: 6 }}>
+                      ⏰ まもなく
+                    </span>
+                  )}
+                  {status === "upcoming" && (
+                    <span className="badge" style={{ marginBottom: 6 }}>
+                      📅 開催予定
+                    </span>
+                  )}
+                  <div style={{ fontWeight: 700, marginTop: 4, marginBottom: 4 }}>{ev.title}</div>
+                  <div className="muted" style={{ fontSize: 12.5 }}>
+                    {[ev.stores?.name, ev.location].filter(Boolean).join(" ・ ")}
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
