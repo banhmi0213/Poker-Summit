@@ -370,13 +370,28 @@ th {
   border-radius: 13px;
 }
 
+.search-box input[type="text"],
+.search-box select {
+  padding: 11px 13px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.search-box input[type="text"]:focus,
+.search-box select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .search-box input[type="text"] {
-  flex: 2;
   min-width: 160px;
 }
 
 .search-box select {
-  flex: 1;
   min-width: 130px;
 }
 

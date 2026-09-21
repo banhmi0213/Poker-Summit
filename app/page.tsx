@@ -231,26 +231,21 @@ export default async function HomePage({
               search doesn't clear whichever area was already selected. */}
           <input type="hidden" name="pref" value={pref} />
           <input type="hidden" name="region" value={region} />
-          <div className="field" style={{ marginBottom: 0, flex: "2 1 220px" }}>
-            <span className="muted">フリーワードで検索</span>
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="店名・エリア名(例: ミナミ, アメ村)・キーワード"
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0, flex: "1 1 160px" }}>
-            <span className="muted">カテゴリ</span>
-            <select name="category" defaultValue={category}>
-              <option value="">すべて</option>
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="店名・エリア名(例: ミナミ, アメ村)・キーワード"
+            style={{ flex: "2 1 220px" }}
+          />
+          <select name="category" defaultValue={category} style={{ flex: "1 1 160px" }}>
+            <option value="">カテゴリ</option>
+            {CATEGORY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
           <button type="submit" className="btn primary">
             🔍 検索する
           </button>
