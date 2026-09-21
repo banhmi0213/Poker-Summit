@@ -336,7 +336,15 @@ export default async function HomePage({
         {featuredStores.length === 0 && <p className="muted">まだ店舗がありません。</p>}
         <div className="grid cols-4">
           {featuredStores.map((s) => (
-            <StoreCard key={s.id} store={s} likeCount={likeCounts[s.id] ?? 0} />
+            <StoreCard
+              key={s.id}
+              store={s}
+              isFavorite={favoriteStoreIds.has(s.id)}
+              favoriteAction={async () => {
+                "use server";
+                await toggleFavoriteStore(s.id, "/");
+              }}
+            />
           ))}
         </div>
       </div>
@@ -488,20 +496,15 @@ export default async function HomePage({
           }}
         >
           {stores?.map((s) => (
-            <div key={s.id}>
-              <StoreCard store={s} likeCount={likeCounts[s.id] ?? 0} />
-              <form
-                action={async () => {
-                  "use server";
-                  await toggleFavoriteStore(s.id, "/");
-                }}
-                style={{ marginTop: 6 }}
-              >
-                <button type="submit" className="btn" style={{ fontSize: 12, width: "100%" }}>
-                  {favoriteStoreIds.has(s.id) ? "★ お気に入り済み" : "☆ お気に入りに追加"}
-                </button>
-              </form>
-            </div>
+            <StoreCard
+              key={s.id}
+              store={s}
+              isFavorite={favoriteStoreIds.has(s.id)}
+              favoriteAction={async () => {
+                "use server";
+                await toggleFavoriteStore(s.id, "/");
+              }}
+            />
           ))}
         </div>
 
