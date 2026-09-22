@@ -1160,12 +1160,14 @@ th {
 
   position: relative;
   width: 100%;
-  max-width: 1640px;
+  max-width: 880px;
   margin: 0 auto;
   aspect-ratio: 1640 / 960;
   overflow: hidden;
   background: #eef8ff;
   isolation: isolate;
+  container-type: inline-size;
+  container-name: pokerregionhero;
 }
 
 .ps-region-hero__bg {
@@ -1190,22 +1192,23 @@ th {
   color: var(--ps-navy);
 }
 .ps-region-hero__logo-script {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   font-style: italic;
-  font-size: clamp(18px, 1.7vw, 28px);
+  font-weight: 500;
+  font-size: clamp(18px, 1.7cqw, 28px);
   color: var(--ps-gold);
   margin-bottom: 10px;
 }
 .ps-region-hero__headline {
   margin: 0 0 14px;
-  font-size: clamp(22px, 2.6vw, 40px);
+  font-size: clamp(22px, 2.6cqw, 40px);
   font-weight: 800;
   line-height: 1.35;
   color: var(--ps-navy);
 }
 .ps-region-hero__vertical-tagline {
   margin-top: 18px;
-  font-size: clamp(16px, 1.9vw, 30px);
+  font-size: clamp(16px, 1.9cqw, 30px);
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1.35;
@@ -1224,7 +1227,7 @@ th {
 }
 .ps-region-hero__right-headline {
   margin: 0;
-  font-size: clamp(18px, 2vw, 30px);
+  font-size: clamp(18px, 2cqw, 30px);
   font-weight: 800;
   line-height: 1.4;
 }
@@ -1235,7 +1238,7 @@ th {
 }
 .ps-region-hero__right-tagline {
   margin-top: 14px;
-  font-size: clamp(11px, 0.85vw, 14px);
+  font-size: clamp(11px, 0.85cqw, 14px);
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--ps-gold);
@@ -1246,24 +1249,60 @@ th {
   z-index: 15;
   right: 6%;
   bottom: 20%;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   font-style: italic;
-  font-size: clamp(11px, 0.9vw, 15px);
+  font-weight: 500;
+  font-size: clamp(11px, 0.9cqw, 15px);
   line-height: 1.4;
   color: var(--ps-gold);
   text-align: right;
 }
 
 /* --- Search (the site's existing /stores search form, unstyled logic —
-   this only positions it inside the panel) --- */
+   this only positions it inside the panel). Fixed one-row layout: the
+   approved comp shows キーワード|都道府県|エリア|店舗タイプ|検索 as a
+   single edge-to-edge bar, not a narrow centered card, and the button must
+   never wrap to a second row. --- */
 .ps-region-hero__search {
   position: absolute;
   z-index: 20;
-  top: 2.2%;
-  left: 3.1%;
-  right: 4.8%;
+  top: 1.6%;
+  left: 1.8%;
+  right: 1.8%;
 }
 .ps-region-hero__search > * { width: 100%; }
+
+/* Single-row grid is a PC-only layout (the approved comp's mobile
+   treatment keeps the original wrapping card — see the max-width:767px
+   block below, which leaves .search-box's base flex-wrap rules in place). */
+@media (min-width: 768px) {
+  .ps-region-hero__search .search-box {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1.35fr 1fr 1fr 1fr auto;
+    align-items: stretch;
+    gap: 0.6cqw;
+    padding: 0.7cqw;
+    flex-wrap: nowrap;
+  }
+  .ps-region-hero__search .search-box input[type="text"],
+  .ps-region-hero__search .search-box select {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
+    font-size: clamp(11px, 1.05cqw, 14px);
+    padding: 0.55cqw 0.7cqw;
+  }
+  .ps-region-hero__search .search-box button {
+    white-space: nowrap;
+    height: 100%;
+    padding: 0.55cqw 1.1cqw;
+    font-size: clamp(11px, 1.05cqw, 14px);
+  }
+}
 
 /* --- Map: real SVG, one <a>+<polygon> per region, class-based color --- */
 .ps-region-map-svg {
@@ -1341,7 +1380,7 @@ th {
   --region-color: var(--ps-gold);
   position: absolute;
   display: block;
-  width: 210px;
+  width: clamp(88px, 12.8cqw, 112px);
   pointer-events: auto;
   text-decoration: none;
   transition: transform 150ms ease;
@@ -1353,19 +1392,19 @@ th {
 .ps-region-label__pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: var(--region-color);
   color: #fff;
   font-weight: 800;
-  font-size: 14px;
-  padding: 6px 14px;
+  font-size: clamp(9px, 1.55cqw, 14px);
+  padding: 0.5cqw 1.1cqw;
   border-radius: 16px;
   white-space: nowrap;
 }
 .ps-region-label__prefs {
   display: block;
-  margin-top: 6px;
-  font-size: 11.5px;
+  margin-top: 0.5cqw;
+  font-size: clamp(7.5px, 1.25cqw, 11.5px);
   color: var(--ps-navy);
   line-height: 1.6;
 }
@@ -1383,21 +1422,22 @@ th {
    text reads better than white on the lighter of the two. */
 .ps-region-label--shikoku .ps-region-label__pill { color: #4a3a0a; }
 
-/* --- Stats panel (real data, overlaid at the comp's exact position) --- */
+/* --- Stats panel (real data): a thin, wide 4-up bar per the approved
+   comp — sized down to ~78% of the previous width/height. --- */
 .ps-region-stats {
   position: absolute;
   z-index: 21;
-  left: 23.6%;
-  bottom: 6%;
-  width: 52.6%;
-  min-height: 15.1%;
+  left: 29.4%;
+  bottom: 5%;
+  width: 41%;
+  min-height: 11.8%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
   background: var(--ps-panel);
   border: 1.5px solid #d99a37;
-  border-radius: 14px;
-  box-shadow: 0 7px 24px rgba(30, 65, 100, 0.08);
+  border-radius: 11px;
+  box-shadow: 0 5px 18px rgba(30, 65, 100, 0.08);
   overflow: hidden;
 }
 
@@ -1409,7 +1449,7 @@ th {
   align-items: center;
   justify-content: center;
   color: var(--ps-navy);
-  padding: 10px 8px 12px;
+  padding: 0.7cqw 0.5cqw 0.8cqw;
   text-align: center;
 }
 .ps-region-stat + .ps-region-stat::before {
@@ -1422,23 +1462,27 @@ th {
   background: #dfe4ea;
 }
 .ps-region-stat__icon {
-  min-height: 20px;
-  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14px;
+  margin-bottom: 3px;
   color: #b66d00;
-  font-size: clamp(15px, 1.25vw, 24px);
-  font-weight: 900;
-  line-height: 1;
+}
+.ps-region-stat__icon svg {
+  width: clamp(13px, 1.7cqw, 22px);
+  height: clamp(13px, 1.7cqw, 22px);
 }
 .ps-region-stat__label {
-  font-size: clamp(9px, 0.73vw, 13px);
+  font-size: clamp(8px, 0.68cqw, 12px);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
 }
 .ps-region-stat strong {
-  margin-top: 4px;
+  margin-top: 2px;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(21px, 2.15vw, 42px);
+  font-size: clamp(15px, 1.6cqw, 26px);
   line-height: 1;
   letter-spacing: -0.02em;
 }
