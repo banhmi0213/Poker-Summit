@@ -33,6 +33,16 @@ export default async function StoresPage({
     : PREF_OPTIONS;
   const prefFieldLabel = isKnownRegion ? "エリア" : "都道府県";
 
+  // Page heading, most specific wins: a chosen prefecture beats a chosen
+  // region beats nothing at all (nationwide) — whether the prefecture came
+  // from a region chip's narrowed "エリア" list or straight from the TOP
+  // page's own 47-prefecture dropdown makes no difference.
+  const pageHeading = pref
+    ? `${pref}の店舗を探す`
+    : isKnownRegion
+    ? `${region}の店舗を探す`
+    : "全国から店舗を探す";
+
   const supabase = await createClient();
 
   let storesQuery = supabase
@@ -116,7 +126,7 @@ export default async function StoresPage({
           </a>
         )}
 
-        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>店舗を探す</h1>
+        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>{pageHeading}</h1>
 
         <form
           method="get"
