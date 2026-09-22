@@ -54,7 +54,10 @@ export default async function StoresPage({
     .from("stores")
     .select("id, name, category, region, pref, city, description, status")
     .in("status", ["approved", "listed"])
-    .order("created_at", { ascending: false });
+    // Secondary sort by id: created_at alone ties for rows inserted in the
+    // same batch, and Postgres doesn't guarantee a stable order for ties.
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   if (q) {
     // Widen the free-word search beyond just the store name: match address,
