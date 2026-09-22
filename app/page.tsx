@@ -74,8 +74,7 @@ export default async function HomePage({
     { data: settings },
     { data: banners },
     statsResults,
-    { data: allStoresForFeature },
-    { data: allFavRows },
+    { data: featuredStoresRaw },
     { data: latestJobs },
     { data: latestPosts },
     { data: upcomingEvents },
@@ -106,8 +105,10 @@ export default async function HomePage({
     supabase
       .from("stores")
       .select("id, name, category, pref, city, description, created_at")
-      .in("status", ["approved", "listed"]),
-    supabase.from("favorite_stores").select("store_id"),
+      .in("status", ["approved", "listed"])
+      .eq("is_recommended", true)
+      .order("created_at", { ascending: false })
+      .limit(4),
     supabase
       .from("jobs")
       .select("id, title, job_type, salary, store_id, stores(name, category)")
@@ -163,18 +164,9 @@ export default async function HomePage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
-  // --- Featured stores (by favorite count) ---
-  const likeCounts: Record<string, number> = {};
-  allFavRows?.forEach((r) => {
-    likeCounts[r.store_id] = (likeCounts[r.store_id] ?? 0) + 1;
-  });
-  const featuredStores = [...(allStoresForFeature ?? [])]
-    .sort((a, b) => {
-      const diff = (likeCounts[b.id] ?? 0) - (likeCounts[a.id] ?? 0);
-      if (diff !== 0) return diff;
-      return (b.created_at ?? "").localeCompare(a.created_at ?? "");
-    })
-    .slice(0, 4);
+  // --- Featured stores: admin-curated (is_recommended flag in the store
+  // management screen), already filtered/ordered/limited server-side above.
+  const featuredStores = featuredStoresRaw ?? [];
 
   // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
@@ -318,7 +310,7 @@ export default async function HomePage({
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>🏆 注目店舗</h2>
-          <Link href="/stores" className="see-all">
+          <Link href="/stores/featured" className="see-all">
             すべて見る →
           </Link>
         </div>
