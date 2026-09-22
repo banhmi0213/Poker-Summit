@@ -98,6 +98,13 @@ export const PREF_REGION: Record<string, string[]> = {
   沖縄県: ["九州・沖縄"],
 };
 
+// Optional display order override for a region's prefecture list (used by
+// the /stores "エリア" dropdown). A region not listed here just falls back to
+// PREF_OPTIONS' natural (north-to-south) order.
+export const PREF_REGION_ORDER: Record<string, string[]> = {
+  関東: ["東京都", "神奈川県", "埼玉県", "千葉県", "茨城県", "栃木県", "群馬県"],
+};
+
 export const PREF_OPTIONS = [
   "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
   "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
+import { CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import { pickBanner } from "@/lib/banners";
 import { PortalHeader } from "@/app/portal-header";
@@ -24,8 +24,12 @@ export default async function StoresPage({
   // as before. Prefectures that belong to more than one region (三重県) show
   // up under either.
   const isKnownRegion = REGIONS.includes(region);
+  const regionPrefs = PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region));
+  const regionOrder = PREF_REGION_ORDER[region];
   const prefOptionsForRegion = isKnownRegion
-    ? PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region))
+    ? regionOrder
+      ? regionOrder.filter((p) => regionPrefs.includes(p))
+      : regionPrefs
     : PREF_OPTIONS;
   const prefFieldLabel = isKnownRegion ? "エリア" : "都道府県";
 
