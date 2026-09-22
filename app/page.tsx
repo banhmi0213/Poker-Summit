@@ -107,7 +107,10 @@ export default async function HomePage({
       .select("id, name, category, pref, city, description, created_at")
       .in("status", ["approved", "listed"])
       .eq("is_recommended", true)
+      // Secondary sort by id: created_at alone ties for rows inserted in the
+      // same batch, and Postgres doesn't guarantee a stable order for ties.
       .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(4),
     supabase
       .from("jobs")
