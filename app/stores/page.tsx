@@ -226,7 +226,7 @@ export default async function StoresPage({
               flex: "1 1 180px",
             }}
           >
-            <option value="">カテゴリ: すべて</option>
+            <option value="">店舗タイプ: すべて</option>
             {CATEGORY_OPTIONS.map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
