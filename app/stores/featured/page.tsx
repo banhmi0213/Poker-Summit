@@ -5,7 +5,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreCard } from "@/app/store-card";
 
-// The "すべて見る →" destination from the home page's 🏆注目店舗 section.
+// The "すべて見る →" destination from the home page's 🏆PICK UP店舗 section.
 // Shows every admin-curated recommended store (stores.is_recommended = true,
 // set from the 店舗管理 admin screen) — not the general /stores directory.
 export default async function FeaturedStoresPage() {
@@ -42,10 +42,10 @@ export default async function FeaturedStoresPage() {
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>🏆 注目店舗一覧</h1>
+        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>🏆 PICK UP店舗一覧</h1>
 
         {(!stores || stores.length === 0) && (
-          <p className="muted">まだ注目店舗がありません。</p>
+          <p className="muted">まだPICK UP店舗がありません。</p>
         )}
 
         <div
