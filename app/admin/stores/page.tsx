@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
   setStoreStatus,
+  setStoreRecommended,
   setStoreOwnerByEmail,
   createStoreByAdmin,
   updateStoreByAdmin,
@@ -29,7 +30,7 @@ export default async function AdminStoresPage({
   let query = supabase
     .from("stores")
     .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, owner_user_id, created_at"
+      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -209,6 +210,7 @@ export default async function AdminStoresPage({
             <th>カテゴリ</th>
             <th>エリア</th>
             <th>ステータス</th>
+            <th>注目</th>
             <th>オーナー</th>
             <th>操作</th>
           </tr>
@@ -216,7 +218,7 @@ export default async function AdminStoresPage({
         <tbody>
           {(!stores || stores.length === 0) && (
             <tr>
-              <td colSpan={6} className="muted">
+              <td colSpan={7} className="muted">
                 該当する店舗がありません。
               </td>
             </tr>
@@ -234,6 +236,23 @@ export default async function AdminStoresPage({
                 <span className="badge">
                   {STATUS_LABEL[s.status] ?? s.status}
                 </span>
+              </td>
+              <td>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                  <span className={`badge ${s.is_recommended ? "" : "outline"}`}>
+                    {s.is_recommended ? "注目中" : "通常"}
+                  </span>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await setStoreRecommended(s.id, !s.is_recommended);
+                    }}
+                  >
+                    <button type="submit" className="btn" style={{ fontSize: 12, padding: "5px 8px" }}>
+                      {s.is_recommended ? "注目を解除" : "注目にする"}
+                    </button>
+                  </form>
+                </div>
               </td>
               <td>
                 {loginMap.has(s.id) ? (
