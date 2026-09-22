@@ -32,7 +32,12 @@ export default async function AdminStoresPage({
     .select(
       "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, created_at"
     )
-    .order("created_at", { ascending: false });
+    // Secondary sort by id: created_at alone ties for rows inserted in the
+    // same batch (dummy seed data today, bulk Places-API imports later), and
+    // Postgres doesn't guarantee a stable order for ties — without this the
+    // row order can visibly shuffle between page loads.
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   if (status !== "all") {
     query = query.eq("status", status);
