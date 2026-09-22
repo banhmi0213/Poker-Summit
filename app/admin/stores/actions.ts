@@ -36,6 +36,24 @@ export async function setStoreStatus(id: string, status: string) {
   revalidatePath("/");
 }
 
+export async function setStoreRecommended(id: string, recommended: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("stores")
+    .update({ is_recommended: recommended })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  await logAdminAction(supabase, recommended ? "store_recommend_on" : "store_recommend_off", "store", id);
+
+  revalidatePath("/admin/stores");
+  revalidatePath("/");
+  revalidatePath("/stores/featured");
+}
+
 export async function setStoreOwnerByEmail(formData: FormData) {
   const supabase = await createClient();
 
