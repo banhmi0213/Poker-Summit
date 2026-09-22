@@ -3,15 +3,16 @@ import { createClient } from "@/lib/supabase/server";
 import {
   CATEGORY_LABEL,
   CATEGORY_COLOR,
+  CATEGORY_OPTIONS,
   PREF_OPTIONS,
-  REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
 import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { StoreCard } from "./store-card";
-import { PrefMap } from "./pref-map";
+import { PrefAreaSelect } from "./pref-area-select";
+import { PokerRegionHero } from "./poker-region-hero";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
@@ -51,13 +52,14 @@ function getEventStatus(
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string; pref?: string; region?: string };
+  searchParams: { q?: string; category?: string; pref?: string; region?: string; area?: string };
 }) {
   const params = searchParams;
   const q = params.q?.trim() ?? "";
   const category = params.category ?? "";
   const pref = params.pref ?? "";
   const region = params.region ?? "";
+  const area = params.area ?? "";
 
   const supabase = await createClient();
   const now = new Date().toISOString();
@@ -70,10 +72,10 @@ export default async function HomePage({
     {
       data: { user },
     },
-    { data: prefRows },
     { data: settings },
     { data: banners },
     statsResults,
+    { data: memberCountRaw },
     { data: featuredStoresRaw },
     { data: latestJobs },
     { data: latestPosts },
@@ -81,7 +83,6 @@ export default async function HomePage({
     { data: popularCoupons },
   ] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.from("stores").select("pref").in("status", ["approved", "listed"]),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
     supabase
       .from("banners")
@@ -102,6 +103,10 @@ export default async function HomePage({
         .select("*", { count: "exact", head: true })
         .eq("status", "visible"),
     ]),
+    // Real member count for the region-hero stats panel. auth.users isn't
+    // queryable through PostgREST directly (no PII exposed here, just a
+    // count), so this goes through a SECURITY DEFINER RPC.
+    supabase.rpc("public_member_count"),
     supabase
       .from("stores")
       .select("id, name, category, pref, city, description, created_at")
@@ -141,12 +146,6 @@ export default async function HomePage({
 
   const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
     statsResults;
-
-  const prefCounts: Record<string, number> = {};
-  prefRows?.forEach((r) => {
-    if (!r.pref) return;
-    prefCounts[r.pref] = (prefCounts[r.pref] ?? 0) + 1;
-  });
 
   // --- Live vs upcoming events: prefer showing what's happening right now,
   // and only fall back to "coming up" events when nothing is live. ---
@@ -201,42 +200,8 @@ export default async function HomePage({
         </div>
       )}
 
-      <div className="hero">
-        <div className="eyebrow">POKER FOR A NEW TOMORROW</div>
-        <h1>全国のポーカースポットを探す</h1>
-        <p className="sub">
-          アミューズメントポーカー・ポーカーバーを、日本全国から検索できます。
-        </p>
-
-        <form method="get" action="/stores" className="search-box">
-          {/* category/region are still filterable via URL (e.g. from the
-              jobs/category pages or the region chips below), just not shown
-              as their own controls here — this form matches the prototype's
-              original text + prefecture layout. Submits to the dedicated
-              /stores search page rather than staying on the home page. */}
-          <input type="hidden" name="category" value={category} />
-          <input type="hidden" name="region" value={region} />
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder="店名・フリーワードで検索(例: 渋谷, VIP, トーナメント)"
-            style={{ flex: "2 1 220px" }}
-          />
-          <select name="pref" defaultValue={pref} style={{ flex: "1 1 160px" }}>
-            <option value="">都道府県を選択</option>
-            {PREF_OPTIONS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="btn primary">
-            🔍 検索する
-          </button>
-        </form>
-
-        {banners && banners.length > 0 && (
+      {banners && banners.length > 0 && (
+        <div className="container">
           <div
             style={{
               display: "flex",
@@ -269,46 +234,60 @@ export default async function HomePage({
               );
             })}
           </div>
-        )}
+        </div>
+      )}
 
-        <p className="tagline">
-          ポーカーがつなぐ、新しい出会いを。日本のすみずみまで。
-          <br />
-          全国47の地で、ポーカーと出会える。
-        </p>
-        <PrefMap prefCounts={prefCounts} q={q} category={category} initialPref={pref} />
-        <p className="muted" style={{ fontSize: 11.5, textAlign: "center", marginTop: 10 }}>
-          <span style={{ color: "var(--accent-text)" }}>■</span> 掲載店舗あり ・ 枠のみ = 今後拡大予定 ・
-          タップすると店舗数を表示
-        </p>
-
-        <div className="chip-row" style={{ justifyContent: "center", marginTop: 20 }}>
-          {REGIONS.map((r) => (
-            <a
-              key={r}
-              href={`/stores?region=${encodeURIComponent(r)}`}
-              className={`chip ${region === r ? "active" : ""}`}
+      <PokerRegionHero
+        searchControls={
+          <form method="get" action="/stores" className="search-box">
+            {/* Same /stores search this site already runs — only the fields
+                shown have changed (pref/area/category are now all visible,
+                matching the approved comp), no new search logic. */}
+            <input type="hidden" name="region" value={region} />
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="店名やキーワードで検索"
+              style={{ flex: "2 1 200px" }}
+            />
+            <PrefAreaSelect
+              prefOptions={PREF_OPTIONS}
+              prefLabel="都道府県"
+              initialPref={pref}
+              initialArea={area}
+            />
+            <select
+              name="category"
+              defaultValue={category}
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--border-strong)",
+                background: "var(--surface-2)",
+                fontSize: 13,
+                flex: "1 1 160px",
+              }}
             >
-              {r}
-            </a>
-          ))}
-        </div>
-
-        <div className="stats-row">
-          <div className="item">
-            <div className="num">{totalStoreCount ?? 0}</div>
-            <div className="lbl">👑 全国の掲載店舗</div>
-          </div>
-          <div className="item">
-            <div className="num">{openJobCount ?? 0}</div>
-            <div className="lbl">👤 掲載求人</div>
-          </div>
-          <div className="item">
-            <div className="num">{threadCount ?? 0}</div>
-            <div className="lbl">💬 スレッド</div>
-          </div>
-        </div>
-      </div>
+              <option value="">店舗タイプ: すべて</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className="btn primary">
+              🔍 検索する
+            </button>
+          </form>
+        }
+        stats={{
+          storeCount: totalStoreCount ?? 0,
+          jobCount: openJobCount ?? 0,
+          memberCount: memberCountRaw ?? 0,
+          summitPostCount: threadCount ?? 0,
+        }}
+      />
 
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
