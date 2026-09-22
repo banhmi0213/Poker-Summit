@@ -130,7 +130,7 @@ export default async function StoresPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container">
         {storeListBanner && (
-          <a
+          
             href={`/go/banner/${storeListBanner.id}`}
             target="_blank"
             rel="noreferrer"
