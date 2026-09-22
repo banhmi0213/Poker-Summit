@@ -38,13 +38,13 @@ const REGION_CLASS: Record<string, string> = {
 // real map data and should only be regenerated if the map's fit transform
 // (scale/translate on .ps-region-map-fit) ever changes.
 const REGION_LABEL: Record<string, { leftPct: number; topPct: number; leaderTo: [number, number] }> = {
-  "北海道・東北": { leftPct: 68.5, topPct: 13.1, leaderTo: [1049.8, 289.1] },
-  "関東": { leftPct: 60.1, topPct: 44.5, leaderTo: [927.6, 553.7] },
-  "中部": { leftPct: 36.3, topPct: 19.9, leaderTo: [859.7, 492.6] },
-  "近畿": { leftPct: 49.4, topPct: 59.2, leaderTo: [789.2, 574.5] },
-  "中国": { leftPct: 29.2, topPct: 39.8, leaderTo: [688.5, 551.3] },
-  "四国": { leftPct: 34.8, topPct: 66.0, leaderTo: [711.0, 612.8] },
-  "九州・沖縄": { leftPct: 12.2, topPct: 66.0, leaderTo: [681.1, 424.8] },
+  "北海道・東北": { leftPct: 74.4, topPct: 12.7, leaderTo: [1145.8, 285.3] },
+  "関東": { leftPct: 63.0, topPct: 55.1, leaderTo: [974.7, 655.8] },
+  "中部": { leftPct: 37.5, topPct: 28.0, leaderTo: [879.7, 570.2] },
+  "近畿": { leftPct: 48.9, topPct: 70.7, leaderTo: [781.0, 684.7] },
+  "中国": { leftPct: 26.2, topPct: 50.3, leaderTo: [640.0, 652.4] },
+  "四国": { leftPct: 32.4, topPct: 79.1, leaderTo: [671.5, 738.4] },
+  "九州・沖縄": { leftPct: 9.1, topPct: 71.3, leaderTo: [629.6, 475.2] },
 };
 
 // Copy exactly as specified by the approved comp image. Every string that
@@ -66,6 +66,56 @@ function prefecturesFor(region: string): string[] {
   return Object.entries(PREF_REGION)
     .filter(([, regions]) => regions.includes(region))
     .map(([prefecture]) => prefecture);
+}
+
+const ICON_PROPS = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+
+function StoreIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <path d="M3.5 9L4.5 4h15l1 5" />
+      <path d="M3.5 9v10.5a1 1 0 0 0 1 1H10v-6.5h4V20.5h5.5a1 1 0 0 0 1-1V9" />
+      <path d="M3.5 9h17" />
+    </svg>
+  );
+}
+
+function BriefcaseIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <rect x="3" y="7.5" width="18" height="11.5" rx="2" />
+      <path d="M8.5 7.5V5.8a1.8 1.8 0 0 1 1.8-1.8h3.4a1.8 1.8 0 0 1 1.8 1.8V7.5" />
+      <path d="M3 13h18" />
+    </svg>
+  );
+}
+
+function MembersIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <circle cx="12" cy="7.2" r="3" />
+      <path d="M6.3 20c0-3.3 2.6-5 5.7-5s5.7 1.7 5.7 5" />
+      <circle cx="4.6" cy="9.4" r="2.1" />
+      <path d="M1.3 19.3c0-2.2 1.5-3.7 3.3-4.1" />
+      <circle cx="19.4" cy="9.4" r="2.1" />
+      <path d="M22.7 19.3c0-2.2-1.5-3.7-3.3-4.1" />
+    </svg>
+  );
+}
+
+function SpeechBubbleIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <path d="M4.5 5.5h15a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9.8l-4.3 3.7v-3.7H4.5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z" />
+    </svg>
+  );
 }
 
 function formatCount(value: number) {
@@ -171,7 +221,7 @@ export function PokerRegionHero({
             map-full.svg), grouped into the 7 PREF_REGION regions. Fit into
             the comp's map footprint via a uniform scale+translate — the
             geometry itself is untouched. */}
-        <g className="ps-region-map-fit" transform="translate(538.507,96.000) scale(0.652800)">
+        <g className="ps-region-map-fit" transform="translate(430.000,15.000) scale(0.913920)">
           <g className="svg-map" transform="matrix(1.028807, 0, 0, 1.028807, -47.544239, -28.806583)">
             <g className="prefectures" transform="matrix(1, 0, 0, 1, 6, 18)">
         <a
@@ -451,13 +501,6 @@ export function PokerRegionHero({
         <polygon points="27 848 24 842 29 840 30 844"/>
         <polygon points="4 868 6 865 7 867 2 875 0 874"/>
         <polygon points="12 864 9 861 14 861"/>
-        <polygon points="284 149 280 150 279 146 289 144"/>
-        <polygon points="301 126 301 118 306 118 305 122 309 126 308 129 303 132 300 128"/>
-        <polygon points="363 98 360 99 359 97 365 93"/>
-        <polygon points="344 90 331 98 335 101 330 104 327 103 329 107 323 102 325 99 316 97 324 97 325 95 321 94 335 88 337 90 339 86 344 85 342 89 344 87 345 89 347 82 349 88"/>
-        <polygon points="324 108 322 106 320 108 318 101 323 102 322 105 328 107 325 109 326 107"/>
-        <polygon points="355 12 352 16 352 13"/>
-        <polygon points="361 1 363 0 365 4"/>
           </g>
           {/* 47: 沖縄県 */}
           <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(52.000000, 193.000000)">
@@ -504,22 +547,22 @@ export function PokerRegionHero({
 
       <div className="ps-region-stats" aria-label="Poker Summit 統計">
         <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true">▰</span>
+          <span className="ps-region-stat__icon" aria-hidden="true"><StoreIcon /></span>
           <span className="ps-region-stat__label">全国の掲載店舗数</span>
           <strong>{formatCount(stats.storeCount)}</strong>
         </div>
         <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true">▣</span>
+          <span className="ps-region-stat__icon" aria-hidden="true"><BriefcaseIcon /></span>
           <span className="ps-region-stat__label">掲載求人数</span>
           <strong>{formatCount(stats.jobCount)}</strong>
         </div>
         <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true">●●●</span>
+          <span className="ps-region-stat__icon" aria-hidden="true"><MembersIcon /></span>
           <span className="ps-region-stat__label">会員数</span>
           <strong>{formatCount(stats.memberCount)}</strong>
         </div>
         <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true">•••</span>
+          <span className="ps-region-stat__icon" aria-hidden="true"><SpeechBubbleIcon /></span>
           <span className="ps-region-stat__label">サミット投稿数</span>
           <strong>{formatCount(stats.summitPostCount)}</strong>
         </div>
