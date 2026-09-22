@@ -33,7 +33,10 @@ export default async function StoresPage({
       ? regionOrder.filter((p) => regionPrefs.includes(p))
       : regionPrefs
     : PREF_OPTIONS;
-  const prefFieldLabel = isKnownRegion ? "エリア" : "都道府県";
+  // Labeled "都道府県エリア" (not just "エリア") when narrowed by a region chip,
+  // so it reads clearly distinct from the neighborhood-level "エリア" dropdown
+  // that sits right next to it once a prefecture is picked.
+  const prefFieldLabel = isKnownRegion ? "都道府県エリア" : "都道府県";
 
   // Page heading, most specific wins: a chosen prefecture beats a chosen
   // region beats nothing at all (nationwide) — whether the prefecture came
@@ -161,6 +164,14 @@ export default async function StoresPage({
               region filter (the region chips, the prefecture map) don't lose
               it when the visitor refines with a keyword or category. */}
           <input type="hidden" name="region" value={region} />
+          {/* Once a specific prefecture is already fixed (came straight from
+              the TOP page's own 47-prefecture dropdown, or from a region
+              chip's narrowed selector after a prefecture was picked there),
+              re-showing a whole prefecture dropdown is redundant — the
+              heading above already says which one. Keep it in the form via
+              a hidden field and show only the neighborhood-level エリア
+              select for that fixed prefecture instead. */}
+          {pref && <input type="hidden" name="pref" value={pref} />}
           <input
             type="text"
             name="q"
@@ -175,12 +186,34 @@ export default async function StoresPage({
               flex: "2 1 220px",
             }}
           />
-          <PrefAreaSelect
-            prefOptions={prefOptionsForRegion}
-            prefLabel={prefFieldLabel}
-            initialPref={pref}
-            initialArea={area}
-          />
+          {pref ? (
+            <select
+              name="area"
+              defaultValue={area}
+              style={{
+                padding: "8px 10px",
+                borderRadius: 6,
+                border: "1px solid var(--border-strong)",
+                background: "var(--surface-2)",
+                fontSize: 13,
+                flex: "1 1 160px",
+              }}
+            >
+              <option value="">エリア: すべて</option>
+              {(AREA_OPTIONS[pref] ?? []).map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <PrefAreaSelect
+              prefOptions={prefOptionsForRegion}
+              prefLabel={prefFieldLabel}
+              initialPref={pref}
+              initialArea={area}
+            />
+          )}
           <select
             name="category"
             defaultValue={category}
