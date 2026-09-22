@@ -23,7 +23,10 @@ export default async function FeaturedStoresPage() {
       .select("id, name, category, region, pref, city, description, status")
       .in("status", ["approved", "listed"])
       .eq("is_recommended", true)
-      .order("created_at", { ascending: false }),
+      // Secondary sort by id: created_at alone ties for rows inserted in the
+      // same batch, and Postgres doesn't guarantee a stable order for ties.
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false }),
   ]);
 
   let favoriteStoreIds = new Set<string>();
