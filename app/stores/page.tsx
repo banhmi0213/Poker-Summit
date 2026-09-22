@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
+import { CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import { pickBanner } from "@/lib/banners";
 import { PortalHeader } from "@/app/portal-header";
@@ -18,6 +18,17 @@ export default async function StoresPage({
   const pref = searchParams.pref ?? "";
   const region = searchParams.region ?? "";
 
+  // When arriving via a region chip (home page / prefecture map), narrow the
+  // prefecture dropdown down to just that region's prefectures and relabel it
+  // "エリア" instead of "都道府県" — otherwise show the full 47-prefecture list
+  // as before. Prefectures that belong to more than one region (三重県) show
+  // up under either.
+  const isKnownRegion = REGIONS.includes(region);
+  const prefOptionsForRegion = isKnownRegion
+    ? PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region))
+    : PREF_OPTIONS;
+  const prefFieldLabel = isKnownRegion ? "エリア" : "都道府県";
+
   const supabase = await createClient();
 
   let storesQuery = supabase
@@ -27,6 +38,10 @@ export default async function StoresPage({
     .order("created_at", { ascending: false });
 
   if (q) {
+    // Widen the free-word search beyond just the store name: match address,
+    // description, city, pref/region, and the owner-editable "area keywords"
+    // field (e.g. "ミナミ アメ村 心斎橋") so nickname/area searches work even
+    // without a dedicated region dropdown in the UI.
     const escaped = q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     const pattern = `"%${escaped}%"`;
     storesQuery = storesQuery.or(
@@ -103,6 +118,10 @@ export default async function StoresPage({
           method="get"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
+          {/* region isn't its own dropdown here (only q / pref / category are),
+              but it's preserved as a hidden field so links that arrive with a
+              region filter (the region chips, the prefecture map) don't lose
+              it when the visitor refines with a keyword or category. */}
           <input type="hidden" name="region" value={region} />
           <input
             type="text"
@@ -130,8 +149,8 @@ export default async function StoresPage({
               flex: "1 1 160px",
             }}
           >
-            <option value="">都道府県: すべて</option>
-            {PREF_OPTIONS.map((p) => (
+            <option value="">{prefFieldLabel}: すべて</option>
+            {prefOptionsForRegion.map((p) => (
               <option key={p} value={p}>
                 {p}
               </option>

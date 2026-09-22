@@ -32,14 +32,16 @@ export async function pickBanner(
   if (!banners || banners.length === 0) return null;
 
   const pref = opts.pref || "";
-  const region = pref ? PREF_REGION[pref] || "" : opts.region || "";
+  // A prefecture can belong to more than one region (e.g. 三重県 is both 近畿
+  // and 中部), so this is a list of candidate regions rather than a single one.
+  const regions = pref ? PREF_REGION[pref] ?? [] : opts.region ? [opts.region] : [];
 
   let picked: PickedBanner | null = null;
   if (pref) {
     picked = banners.find((b) => b.scope === pref) ?? null;
   }
-  if (!picked && region) {
-    picked = banners.find((b) => b.scope === region) ?? null;
+  if (!picked && regions.length > 0) {
+    picked = banners.find((b) => b.scope && regions.includes(b.scope)) ?? null;
   }
   if (!picked) {
     picked = banners.find((b) => !b.scope) ?? null;
