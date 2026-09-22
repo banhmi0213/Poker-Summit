@@ -312,7 +312,7 @@ export default async function HomePage({
 
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>🏆 注目店舗</h2>
+          <h2 style={{ fontSize: 18 }}>🏆 PICK UP店舗</h2>
           <Link href="/stores/featured" className="see-all">
             すべて見る →
           </Link>
