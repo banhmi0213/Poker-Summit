@@ -2,11 +2,10 @@ export const CATEGORY_LABEL: Record<string, string> = {
   amusement: "アミューズメントポーカー",
   bar: "ポーカーバー",
   casino: "カジノバー",
-  vip: "VIPルーム",
-  mahjong: "麻雀併設",
-  tournament: "トーナメント会場",
+  ring: "リングのみ",
+  tournament: "トーナメントのみ",
   school: "ポーカースクール",
-  ladies: "レディース歓迎",
+  other: "その他",
 };
 
 export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(
@@ -19,20 +18,18 @@ export const CATEGORY_COLOR: Record<string, string> = {
   casino: "#199e70",
   school: "#c98500",
   tournament: "#d55181",
-  mahjong: "#1fae1f",
-  vip: "#9085e9",
-  ladies: "#e66767",
+  ring: "#9085e9",
+  other: "#8a8f98",
 };
 
+// リングのみ / その他 は専用アイコンを持たず、store-card.tsx のデフォルト(♠️)に
+// フォールバックする(意図的に未設定)。
 export const CATEGORY_ICON: Record<string, string> = {
   amusement: "♠️",
   bar: "🍸",
   casino: "🎰",
   school: "🎓",
   tournament: "🏆",
-  mahjong: "🀄",
-  vip: "👑",
-  ladies: "💎",
 };
 
 export const REGIONS = [
