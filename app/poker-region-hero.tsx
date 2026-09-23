@@ -41,7 +41,7 @@ const REGION_LABEL: Record<string, { leftPct: number; topPct: number; leaderTo: 
   "北海道・東北": { leftPct: 74.4, topPct: 12.7, leaderTo: [1145.8, 285.3] },
   "関東": { leftPct: 63.0, topPct: 55.1, leaderTo: [974.7, 655.8] },
   "中部": { leftPct: 37.5, topPct: 28.0, leaderTo: [879.7, 570.2] },
-  "近畿": { leftPct: 48.9, topPct: 70.7, leaderTo: [781.0, 684.7] },
+  "近畿": { leftPct: 48.9, topPct: 65.0, leaderTo: [781.0, 684.7] },
   "中国": { leftPct: 26.2, topPct: 50.3, leaderTo: [640.0, 652.4] },
   "四国": { leftPct: 32.4, topPct: 79.1, leaderTo: [671.5, 738.4] },
   "九州・沖縄": { leftPct: 9.1, topPct: 71.3, leaderTo: [629.6, 475.2] },
