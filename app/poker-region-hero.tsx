@@ -503,7 +503,7 @@ export function PokerRegionHero({
         <polygon points="12 864 9 861 14 861"/>
           </g>
           {/* 47: 沖縄県 */}
-          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(52.000000, 193.000000)">
+          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(-25.222666, 962.506956) scale(0.350000)">
             <title>沖縄 / Okinawa</title>
         <polygon points="4 109 6 110 4 111 0 110"/>
         <polygon points="48 121 55 123 51 129 39 124 42 122 44 125 46 118"/>
