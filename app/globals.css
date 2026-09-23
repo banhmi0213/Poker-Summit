@@ -1163,7 +1163,7 @@ th {
   margin: 0 auto;
   aspect-ratio: 1640 / 960;
   overflow: hidden;
-  background: #eef8ff;
+  background: #ffffff;
   isolation: isolate;
   container-type: inline-size;
   container-name: pokerregionhero;
@@ -1281,7 +1281,7 @@ th {
   width: 27%;
   top: 0;
   height: 100%;
-  background: #eef8ff;
+  background: #ffffff;
   z-index: -1;
   pointer-events: none;
 }
@@ -1502,7 +1502,7 @@ th {
   .ps-region-hero {
     aspect-ratio: auto;
     overflow: visible;
-    background: linear-gradient(180deg, #eef8ff 0%, #fff 100%);
+    background: #ffffff;
     padding-bottom: 20px;
   }
 
