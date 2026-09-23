@@ -38,14 +38,43 @@ const REGION_CLASS: Record<string, string> = {
 // real map data and should only be regenerated if the map's fit transform
 // (scale/translate on .ps-region-map-fit) ever changes.
 const REGION_LABEL: Record<string, { leftPct: number; topPct: number; leaderTo: [number, number] }> = {
-  "北海道・東北": { leftPct: 74.4, topPct: 12.7, leaderTo: [1145.8, 285.3] },
-  "関東": { leftPct: 63.0, topPct: 55.1, leaderTo: [974.7, 655.8] },
-  "中部": { leftPct: 37.5, topPct: 28.0, leaderTo: [879.7, 570.2] },
-  "近畿": { leftPct: 48.9, topPct: 65.0, leaderTo: [781.0, 684.7] },
-  "中国": { leftPct: 26.2, topPct: 50.3, leaderTo: [640.0, 652.4] },
-  "四国": { leftPct: 32.4, topPct: 73.2, leaderTo: [671.5, 738.4] },
-  "九州・沖縄": { leftPct: 9.1, topPct: 71.3, leaderTo: [629.6, 475.2] },
+  "北海道・東北": { leftPct: 69.2, topPct: 14.7, leaderTo: [1089.8, 304.9] },
+  "関東": { leftPct: 61.1, topPct: 46.6, leaderTo: [951.4, 604.4] },
+  "中部": { leftPct: 38.9, topPct: 25.6, leaderTo: [874.6, 535.2] },
+  "近畿": { leftPct: 52.6, topPct: 61.5, leaderTo: [794.7, 627.9] },
+  "中国": { leftPct: 34.0, topPct: 43.1, leaderTo: [680.8, 601.7] },
+  "四国": { leftPct: 41.8, topPct: 66.5, leaderTo: [706.2, 671.3] },
+  "九州・沖縄": { leftPct: 18.2, topPct: 63.5, leaderTo: [583.8, 692.5] },
 };
+
+// Line-break groups for each region’s prefecture list under its tab, read
+// off the approved comp image (e.g. 北海道・東北 wraps after 4 items, most
+// others after 3, 四国 after 2) — kept as explicit per-region groupings
+// rather than a single fixed chunk size because the comp itself doesn’t use
+// one. Any prefecture beyond the last listed group falls onto one final
+// extra line automatically (see chunkPrefs), so this never silently drops
+// data if PREF_REGION ever gains an entry.
+const PREF_LINE_BREAKS: Record<string, number[]> = {
+  "北海道・東北": [4, 3],
+  "関東": [3, 3, 1],
+  "中部": [3, 3, 3, 1],
+  "近畿": [3, 3, 1],
+  "中国": [3, 2],
+  "四国": [2, 2],
+  "九州・沖縄": [3, 3, 2],
+};
+
+function chunkPrefs(prefs: string[], sizes: number[]): string[][] {
+  const lines: string[][] = [];
+  let idx = 0;
+  for (const size of sizes) {
+    if (idx >= prefs.length) break;
+    lines.push(prefs.slice(idx, idx + size));
+    idx += size;
+  }
+  if (idx < prefs.length) lines.push(prefs.slice(idx));
+  return lines;
+}
 
 // Copy exactly as specified by the approved comp image. Every string that
 // appears in the hero panel lives here — changing wording/region labels
@@ -221,7 +250,7 @@ export function PokerRegionHero({
             map-full.svg), grouped into the 7 PREF_REGION regions. Fit into
             the comp's map footprint via a uniform scale+translate — the
             geometry itself is untouched. */}
-        <g className="ps-region-map-fit" transform="translate(430.000,15.000) scale(0.913920)">
+        <g className="ps-region-map-fit" transform="translate(511.070,86.400) scale(0.738800)">
           <g className="svg-map" transform="matrix(1.028807, 0, 0, 1.028807, -47.544239, -28.806583)">
             <g className="prefectures" transform="matrix(1, 0, 0, 1, 6, 18)">
         <a
@@ -503,7 +532,7 @@ export function PokerRegionHero({
         <polygon points="12 864 9 861 14 861"/>
           </g>
           {/* 47: 沖縄県 */}
-          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(-25.222666, 962.506956) scale(0.350000)">
+          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(-175.222666, 900.000000) scale(0.350000)">
             <title>沖縄 / Okinawa</title>
         <polygon points="4 109 6 110 4 111 0 110"/>
         <polygon points="48 121 55 123 51 129 39 124 42 122 44 125 46 118"/>
@@ -539,7 +568,13 @@ export function PokerRegionHero({
               <span className="ps-region-label__pill">
                 {region} <span aria-hidden="true">→</span>
               </span>
-              <span className="ps-region-label__prefs">{prefs.join("　")}</span>
+              <span className="ps-region-label__prefs">
+                {chunkPrefs(prefs, PREF_LINE_BREAKS[region] ?? [3]).map((line, i) => (
+                  <span key={i} className="ps-region-label__prefs-line">
+                    {line.join("　")}
+                  </span>
+                ))}
+              </span>
             </Link>
           );
         })}
