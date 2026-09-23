@@ -399,12 +399,11 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  /* Deliberately much closer to the hero's background than --surface-2:
-     a strong beige/white contrast made the box's rounded-corner edge
-     anti-aliasing read as a soft drop shadow. Keeping the tone barely
-     off-white avoids that while still reading as a filled panel. */
-  background: #fbf9f3;
-  border-radius: 13px;
+  /* No card frame: the beige panel background/border-radius were removed
+     per request, so only the input/select/button fields themselves are
+     visible, sitting directly on the hero background. */
+  background: transparent;
+  border-radius: 0;
   box-shadow: none;
 }
 
@@ -1267,14 +1266,6 @@ th {
   right: 1.8%;
 }
 .ps-region-hero__search > * { width: 100%; }
-/* The map fills the panel edge-to-edge with no top margin (Hokkaido's tip
-   sits right at the top), so the search card's bottom edge touches the map
-   directly. Rather than move the map/labels/stats panel (all fixed), a
-   light shadow reads the card as floating above the map instead of
-   colliding with it. */
-.ps-region-hero__search .search-box {
-  box-shadow: 0 6px 16px rgba(30, 65, 100, 0.14);
-}
 
 /* Single-row grid is a PC-only layout (the approved comp's mobile
    treatment keeps the original wrapping card — see the max-width:767px
