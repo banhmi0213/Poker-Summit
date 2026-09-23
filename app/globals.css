@@ -1432,17 +1432,12 @@ th {
   position: absolute;
   z-index: 21;
   left: 29.4%;
-  bottom: 5%;
+  bottom: 2%;
   width: 41%;
   min-height: 11.8%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
-  background: var(--ps-panel);
-  border: 1.5px solid #d99a37;
-  border-radius: 11px;
-  box-shadow: 0 5px 18px rgba(30, 65, 100, 0.08);
-  overflow: hidden;
 }
 
 .ps-region-stat {
@@ -1460,10 +1455,10 @@ th {
   content: "";
   position: absolute;
   left: 0;
-  top: 18%;
-  bottom: 18%;
-  width: 1px;
-  background: #dfe4ea;
+  top: 10%;
+  bottom: 10%;
+  width: 1.5px;
+  background: rgba(7, 22, 56, 0.25);
 }
 .ps-region-stat__icon {
   display: flex;
