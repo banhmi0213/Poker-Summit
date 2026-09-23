@@ -1218,7 +1218,7 @@ th {
   position: absolute;
   z-index: 15;
   right: 4%;
-  top: 24%;
+  top: 31%;
   width: 24%;
   text-align: right;
   color: var(--ps-navy);
@@ -1248,7 +1248,7 @@ th {
   right: 6%;
   bottom: 20%;
   font-family: "Allura", cursive;
-  font-size: clamp(11px, 0.9cqw, 15px);
+  font-size: clamp(14px, 1.3cqw, 19px);
   line-height: 1.4;
   color: var(--ps-gold);
   text-align: right;
