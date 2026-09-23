@@ -1181,6 +1181,22 @@ th {
   user-select: none;
 }
 
+/* The background photo is busy (cherry blossoms, chips, city lights), and
+   region tabs / prefecture-list text sit directly on top of it wherever
+   the map doesn't cover it — over dark parts of the photo (like the poker
+   chips) navy text was nearly unreadable. A light scrim between the photo
+   (z-index 0) and the map/labels (z-index 10+) mutes the photo just
+   enough that every tab and prefecture list reads cleanly everywhere,
+   without moving or resizing the map, tabs, labels or stats panel. */
+.ps-region-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
 /* --- Headline / copy (real HTML text reconstructed from the comp) --- */
 .ps-region-hero__copy-left {
   position: absolute;
