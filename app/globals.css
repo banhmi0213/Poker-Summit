@@ -1414,7 +1414,7 @@ th {
   --region-color: var(--ps-gold);
   position: absolute;
   display: block;
-  width: clamp(88px, 12.8cqw, 112px);
+  width: clamp(100px, 14.9cqw, 175px);
   pointer-events: auto;
   text-decoration: none;
   transition: transform 150ms ease;
@@ -1441,6 +1441,15 @@ th {
   font-size: clamp(7.5px, 1.25cqw, 11.5px);
   color: var(--ps-navy);
   line-height: 1.6;
+}
+/* Each region's prefecture list renders as explicit, pre-broken lines (see
+   PREF_LINE_BREAKS in poker-region-hero.tsx) rather than relying on the
+   browser to wrap a single joined string — natural wrapping could break
+   mid-word (e.g. "岩手県" splitting into "岩" / "手県") once the label is
+   this wide. Each line is its own nowrap block instead. */
+.ps-region-label__prefs-line {
+  display: block;
+  white-space: nowrap;
 }
 
 .ps-region-label--hokkaido-tohoku { --region-color: var(--ps-hokkaido-tohoku); }
