@@ -1266,6 +1266,25 @@ th {
   right: 1.8%;
 }
 .ps-region-hero__search > * { width: 100%; }
+/* The search row has no background of its own now, so Hokkaido's northern
+   tip (the map fills the panel with no top margin) shows through right
+   behind the エリア field. Map/labels/leader-lines/stats stay exactly as
+   they are — this only patches the small strip of hero background color
+   over that one overlapping sliver so it visually disappears. Same fill
+   as .ps-region-hero's own background, so it reads as empty sea, not a
+   card. pointer-events: none keeps clicks passing straight through to the
+   SVG underneath, so the region's click target and data are unaffected. */
+.ps-region-hero__search::before {
+  content: "";
+  position: absolute;
+  left: 57%;
+  width: 27%;
+  top: 0;
+  height: 100%;
+  background: #eef8ff;
+  z-index: -1;
+  pointer-events: none;
+}
 
 /* Single-row grid is a PC-only layout (the approved comp's mobile
    treatment keeps the original wrapping card — see the max-width:767px
