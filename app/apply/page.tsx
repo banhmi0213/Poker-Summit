@@ -1,4 +1,4 @@
-import { submitApplication } from "./actions";
+import { submitApplication, startPaidApplication } from "./actions";
 import { CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,6 +16,12 @@ export default async function ApplyPage({
     .eq("id", true)
     .maybeSingle();
   const acceptingNew = settings?.listing_accept_new ?? true;
+
+  const { data: plans } = await supabase
+    .from("plans")
+    .select("id, name, monthly_fee, description")
+    .eq("active", true)
+    .order("sort_order");
 
   if (!acceptingNew && !params.done) {
     return (
@@ -113,13 +119,41 @@ export default async function ApplyPage({
             <span className="muted">お問い合わせ内容</span>
             <textarea name="message" rows={4} />
           </div>
+
+          {plans && plans.length > 0 && (
+            <div className="field">
+              <span className="muted">
+                プランを選んでその場でお申込みの場合(クレジットカード登録へ進みます)
+              </span>
+              <select name="planId" defaultValue="">
+                <option value="">選択しない(まずは問い合わせのみ)</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}(月額{p.monthly_fee.toLocaleString()}円)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
             type="submit"
-            className="btn primary"
-            style={{ width: "100%" }}
+            formAction={submitApplication}
+            className="btn"
+            style={{ width: "100%", marginBottom: 8 }}
           >
-            申込む
+            問い合わせのみ送る(担当者より連絡)
           </button>
+          {plans && plans.length > 0 && (
+            <button
+              type="submit"
+              formAction={startPaidApplication}
+              className="btn primary"
+              style={{ width: "100%" }}
+            >
+              プランを選んでクレジットカード登録へ進む
+            </button>
+          )}
         </form>
       </div>
     </div>
