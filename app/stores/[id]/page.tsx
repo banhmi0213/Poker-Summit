@@ -53,27 +53,40 @@ export default async function StoreDetailPage({
     .insert({ path, store_id: store.id, referrer, device })
     .then(() => {});
 
-  // These three only depend on store.id, not on each other.
-  const [{ data: events }, { data: jobs }, { data: coupons }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id, title, location, start_at")
-      .eq("store_id", store.id)
-      .eq("status", "published")
-      .order("start_at", { ascending: true }),
-    supabase
-      .from("jobs")
-      .select("id, title, job_type, salary, description, posted_at")
-      .eq("store_id", store.id)
-      .eq("status", "open")
-      .order("posted_at", { ascending: false }),
-    supabase
-      .from("coupons")
-      .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
-      .eq("store_id", store.id)
-      .eq("active", true)
-      .order("created_at", { ascending: false }),
-  ]);
+  // These only depend on store.id, not on each other.
+  const [{ data: events }, { data: jobs }, { data: coupons }, { data: notices }, { data: photos }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("id, title, location, start_at")
+        .eq("store_id", store.id)
+        .eq("status", "published")
+        .order("start_at", { ascending: true }),
+      supabase
+        .from("jobs")
+        .select("id, title, job_type, salary, description, posted_at")
+        .eq("store_id", store.id)
+        .eq("status", "open")
+        .order("posted_at", { ascending: false }),
+      supabase
+        .from("coupons")
+        .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+        .eq("store_id", store.id)
+        .eq("active", true)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("store_notices")
+        .select("id, title, body, created_at")
+        .eq("store_id", store.id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("store_photos")
+        .select("id, url")
+        .eq("store_id", store.id)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+    ]);
 
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();
@@ -173,6 +186,32 @@ export default async function StoreDetailPage({
           </form>
         </div>
 
+        {photos && photos.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              overflowX: "auto",
+              marginBottom: 16,
+              paddingBottom: 4,
+            }}
+          >
+            {photos.map((p) => (
+              <img
+                key={p.id}
+                src={p.url}
+                alt={store.name}
+                style={{
+                  height: 140,
+                  borderRadius: 10,
+                  flex: "0 0 auto",
+                  objectFit: "cover",
+                }}
+              />
+            ))}
+          </div>
+        )}
+
         <div className="card">
           {store.description && <p style={{ marginBottom: 12 }}>{store.description}</p>}
           <table>
@@ -198,6 +237,23 @@ export default async function StoreDetailPage({
             </tbody>
           </table>
         </div>
+
+        {notices && notices.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+              お知らせ ({notices.length})
+            </h2>
+            {notices.map((n) => (
+              <div className="card" key={n.id}>
+                <h3>{n.title}</h3>
+                {n.body && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{n.body}</p>}
+                <p className="muted small" style={{ marginTop: 6 }}>
+                  {new Date(n.created_at).toLocaleDateString("ja-JP")}
+                </p>
+              </div>
+            ))}
+          </>
+        )}
 
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
           この店舗の求人 ({jobs?.length ?? 0})
