@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import { pickBanner } from "@/lib/banners";
+import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -12,13 +13,32 @@ import { PrefAreaSelect } from "@/app/pref-area-select";
 export default async function StoresPage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string; pref?: string; region?: string; area?: string };
+  searchParams: {
+    q?: string;
+    category?: string;
+    pref?: string;
+    region?: string;
+    area?: string;
+    lat?: string;
+    lng?: string;
+  };
 }) {
   const q = searchParams.q?.trim() ?? "";
   const category = searchParams.category ?? "";
   const pref = searchParams.pref ?? "";
   const region = searchParams.region ?? "";
   const area = searchParams.area ?? "";
+
+  // Present only when the visitor arrived via "現在地から探す" (top page) —
+  // used to sort the results below by distance instead of the usual
+  // newest-first order.
+  const originLat = searchParams.lat ? Number(searchParams.lat) : null;
+  const originLng = searchParams.lng ? Number(searchParams.lng) : null;
+  const hasOrigin =
+    typeof originLat === "number" &&
+    !Number.isNaN(originLat) &&
+    typeof originLng === "number" &&
+    !Number.isNaN(originLng);
 
   // When arriving via a region chip (home page / prefecture map), narrow the
   // prefecture dropdown down to just that region's prefectures and relabel it
@@ -52,7 +72,7 @@ export default async function StoresPage({
 
   let storesQuery = supabase
     .from("stores")
-    .select("id, name, category, region, pref, city, description, status")
+    .select("id, name, category, region, pref, city, address, lat, lng, description, status")
     .in("status", ["approved", "listed"])
     // Secondary sort by id: created_at alone ties for rows inserted in the
     // same batch, and Postgres doesn't guarantee a stable order for ties.
@@ -131,6 +151,29 @@ export default async function StoresPage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
+  // When arriving via "現在地から探す", sort by distance from the visitor's
+  // current location instead of the query's default newest-first order.
+  // Stores without geocoded coordinates yet can't be placed on that scale,
+  // so they're kept at the end (in their existing order) rather than dropped.
+  type StoreWithDistance = (typeof stores extends (infer T)[] | null ? T : never) & {
+    distanceKm: number | null;
+  };
+  let displayStores: StoreWithDistance[] = (stores ?? []).map((s) => ({
+    ...s,
+    distanceKm:
+      hasOrigin && typeof s.lat === "number" && typeof s.lng === "number"
+        ? distanceKm(originLat as number, originLng as number, s.lat, s.lng)
+        : null,
+  }));
+  if (hasOrigin) {
+    displayStores = [...displayStores].sort((a, b) => {
+      if (a.distanceKm == null && b.distanceKm == null) return 0;
+      if (a.distanceKm == null) return 1;
+      if (b.distanceKm == null) return -1;
+      return a.distanceKm - b.distanceKm;
+    });
+  }
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
@@ -156,7 +199,12 @@ export default async function StoresPage({
           </a>
         )}
 
-        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>{pageHeading}</h1>
+        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: hasOrigin ? 4 : 16 }}>{pageHeading}</h1>
+        {hasOrigin && (
+          <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
+            📍 現在地から近い順に表示しています
+          </p>
+        )}
 
         <form
           method="get"
@@ -167,6 +215,15 @@ export default async function StoresPage({
               region filter (the region chips, the prefecture map) don't lose
               it when the visitor refines with a keyword or category. */}
           <input type="hidden" name="region" value={region} />
+          {/* Carry the "現在地から探す" origin through a keyword/category
+              refinement on this page too, so the distance sort doesn't reset
+              just because the visitor narrowed the results further. */}
+          {hasOrigin && (
+            <>
+              <input type="hidden" name="lat" value={String(originLat)} />
+              <input type="hidden" name="lng" value={String(originLng)} />
+            </>
+          )}
           {/* Once a specific prefecture is already fixed (came straight from
               the TOP page's own 47-prefecture dropdown, or from a region
               chip's narrowed selector after a prefecture was picked there),
@@ -241,7 +298,7 @@ export default async function StoresPage({
           </button>
         </form>
 
-        {(!stores || stores.length === 0) && (
+        {displayStores.length === 0 && (
           <p className="muted">条件に一致する店舗はありません。</p>
         )}
 
@@ -252,11 +309,12 @@ export default async function StoresPage({
             gap: 14,
           }}
         >
-          {stores?.map((s) => (
+          {displayStores.map((s) => (
             <StoreCard
               key={s.id}
               store={s}
               isFavorite={favoriteStoreIds.has(s.id)}
+              distanceKm={s.distanceKm}
               favoriteAction={async () => {
                 "use server";
                 await toggleFavoriteStore(s.id, "/stores");
