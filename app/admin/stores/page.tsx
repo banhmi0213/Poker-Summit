@@ -9,6 +9,9 @@ import {
   deleteStoreByAdmin,
   issueStoreLogin,
   reissueStorePassword,
+  issueStoreLineLinkCode,
+  approveStoreChangeRequestByAdmin,
+  rejectStoreChangeRequestByAdmin,
 } from "./actions";
 import {
   STORE_STATUS_LABEL as STATUS_LABEL,
@@ -30,7 +33,7 @@ export default async function AdminStoresPage({
   let query = supabase
     .from("stores")
     .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, created_at"
+      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at"
     )
     // Secondary sort by id: created_at alone ties for rows inserted in the
     // same batch (dummy seed data today, bulk Places-API imports later), and
@@ -51,6 +54,12 @@ export default async function AdminStoresPage({
   const { data: logins } = await supabase.rpc("admin_list_store_logins");
   const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
 
+  const { data: pendingChangeRequests } = await supabase
+    .from("store_change_requests")
+    .select("id, store_id, field, current_value, proposed_value, requested_by, requested_at, stores(name)")
+    .eq("status", "pending")
+    .order("requested_at", { ascending: true });
+
   const jar = await cookies();
   const issuedRaw = jar.get("issued_credentials")?.value;
   let issued: { storeId: string; loginId: string; password: string } | null = null;
@@ -63,6 +72,20 @@ export default async function AdminStoresPage({
     jar.delete("issued_credentials");
   }
   const issuedStoreName = issued ? stores?.find((s) => s.id === issued!.storeId)?.name : null;
+
+  const issuedLinkCodeRaw = jar.get("issued_line_link_code")?.value;
+  let issuedLinkCode: { storeId: string; code: string } | null = null;
+  if (issuedLinkCodeRaw) {
+    try {
+      issuedLinkCode = JSON.parse(issuedLinkCodeRaw);
+    } catch {
+      issuedLinkCode = null;
+    }
+    jar.delete("issued_line_link_code");
+  }
+  const issuedLinkCodeStoreName = issuedLinkCode
+    ? stores?.find((s) => s.id === issuedLinkCode!.storeId)?.name
+    : null;
 
   return (
     <div>
@@ -84,6 +107,97 @@ export default async function AdminStoresPage({
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             この内容を店舗にお伝えください。ログインページではメールアドレス欄にログインIDをそのまま入力してもらいます。
           </p>
+        </div>
+      )}
+
+      {issuedLinkCode && (
+        <div className="card" style={{ borderColor: "var(--good)", marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 8 }}>
+            {issuedLinkCodeStoreName ?? "店舗"} のLINE連携コード（この画面を閉じると二度と表示されません）
+          </h3>
+          <input
+            readOnly
+            value={issuedLinkCode.code}
+            style={{ minWidth: 160, fontSize: 18, fontWeight: 700, letterSpacing: 2 }}
+          />
+          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+            このコードを店舗にお伝えください。店舗はLINEミニアプリの初回起動時にこのコードを入力して、自分のLINEアカウントとこの店舗を連携します（24時間有効・1回のみ使用可）。
+          </p>
+        </div>
+      )}
+
+      {pendingChangeRequests && pendingChangeRequests.length > 0 && (
+        <div className="card" style={{ borderColor: "var(--accent)", marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 10 }}>
+            店名・住所の変更申請（承認待ち {pendingChangeRequests.length}件）
+          </h3>
+          {pendingChangeRequests.map((r: any) => (
+            <div
+              key={r.id}
+              style={{
+                borderTop: "1px solid var(--border)",
+                paddingTop: 10,
+                marginTop: 10,
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 10,
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ fontSize: 13 }}>
+                <div style={{ fontWeight: 700 }}>
+                  {r.stores?.name ?? "店舗"} ・ {r.field === "name" ? "店舗名" : "住所"}の変更
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                  申請元: {r.requested_by?.startsWith("line:") ? "LINE" : "Web管理画面"} ・{" "}
+                  {new Date(r.requested_at).toLocaleString("ja-JP")}
+                </div>
+                <div style={{ marginTop: 6 }}>
+                  {r.field === "name" ? (
+                    <>
+                      現在: {r.current_value?.name ?? "(未設定)"} → 変更後: <strong>{r.proposed_value?.name}</strong>
+                    </>
+                  ) : (
+                    <>
+                      現在: {[r.current_value?.pref, r.current_value?.city, r.current_value?.address].filter(Boolean).join(" ") || "(未設定)"}
+                      <br />
+                      変更後: <strong>{[r.proposed_value?.pref, r.proposed_value?.city, r.proposed_value?.address].filter(Boolean).join(" ")}</strong>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <form
+                  action={async () => {
+                    "use server";
+                    await approveStoreChangeRequestByAdmin(r.id);
+                  }}
+                >
+                  <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
+                    承認して反映
+                  </button>
+                </form>
+                <details>
+                  <summary className="btn" style={{ fontSize: 12, cursor: "pointer", display: "inline-block" }}>
+                    却下
+                  </summary>
+                  <form action={rejectStoreChangeRequestByAdmin} style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    <input type="hidden" name="requestId" value={r.id} />
+                    <input
+                      type="text"
+                      name="note"
+                      placeholder="却下理由（任意）"
+                      style={{ padding: "6px 8px", borderRadius: 6, border: "1px solid var(--border)", fontSize: 12.5 }}
+                    />
+                    <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                      却下する
+                    </button>
+                  </form>
+                </details>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -217,13 +331,14 @@ export default async function AdminStoresPage({
             <th>ステータス</th>
             <th>注目</th>
             <th>オーナー</th>
+            <th>LINE連携</th>
             <th>操作</th>
           </tr>
         </thead>
         <tbody>
           {(!stores || stores.length === 0) && (
             <tr>
-              <td colSpan={7} className="muted">
+              <td colSpan={8} className="muted">
                 該当する店舗がありません。
               </td>
             </tr>
@@ -321,6 +436,27 @@ export default async function AdminStoresPage({
                     </button>
                   </form>
                 </details>
+              </td>
+              <td>
+                {s.line_user_id ? (
+                  <span className="badge">連携済み</span>
+                ) : (
+                  <div>
+                    <span className="badge outline" style={{ marginBottom: 4, display: "inline-block" }}>
+                      未連携
+                    </span>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await issueStoreLineLinkCode(s.id);
+                      }}
+                    >
+                      <button type="submit" className="btn" style={{ fontSize: 12, padding: "5px 8px" }}>
+                        コード発行
+                      </button>
+                    </form>
+                  </div>
+                )}
               </td>
               <td>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
