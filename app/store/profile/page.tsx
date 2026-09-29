@@ -3,6 +3,8 @@ import { updateStoreProfile } from "./actions";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "./jobs-actions";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "./coupons-actions";
 import { createEvent, toggleEventStatus, updateEvent, deleteEvent } from "./events-actions";
+import { createNotice, updateNotice, toggleNoticeStatus, deleteNotice } from "./notices-actions";
+import { uploadStorePhoto, deleteStorePhoto } from "./photos-actions";
 import {
   JOB_TYPE_OPTIONS,
   STORE_STATUS_LABEL,
@@ -23,7 +25,14 @@ export default async function StoreProfilePage() {
     .eq("owner_user_id", user?.id ?? "")
     .maybeSingle();
 
-  const [{ data: jobs }, { data: coupons }, { data: events }] = store
+  const [
+    { data: jobs },
+    { data: coupons },
+    { data: events },
+    { data: pendingRequests },
+    { data: notices },
+    { data: photos },
+  ] = store
     ? await Promise.all([
         supabase
           .from("jobs")
@@ -40,8 +49,29 @@ export default async function StoreProfilePage() {
           .select("*")
           .eq("store_id", store.id)
           .order("start_at", { ascending: true }),
+        supabase
+          .from("store_change_requests")
+          .select("id, field, proposed_value, requested_at")
+          .eq("store_id", store.id)
+          .eq("status", "pending"),
+        supabase
+          .from("store_notices")
+          .select("*")
+          .eq("store_id", store.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("store_photos")
+          .select("*")
+          .eq("store_id", store.id)
+          .order("sort_order", { ascending: true })
+          .order("created_at", { ascending: true }),
       ])
-    : [{ data: null }, { data: null }, { data: null }];
+    : [{ data: null }, { data: null }, { data: null }, { data: null }, { data: null }, { data: null }];
+
+  // 店名・住所は運営承認待ちのあいだ、フォームを読み取り専用にして二重申請
+  // を防ぐ(store/profile/actions.ts の申請ロジックと対になる表示)。
+  const pendingNameRequest = pendingRequests?.find((r) => r.field === "name");
+  const pendingAddressRequest = pendingRequests?.find((r) => r.field === "address");
 
   let jobApplicantCounts: Record<string, number> = {};
   let jobFavoriteCounts: Record<string, number> = {};
@@ -150,7 +180,23 @@ export default async function StoreProfilePage() {
                 <input type="hidden" name="storeId" value={store.id} />
                 <div className="field">
                   <span className="muted">店舗名 *</span>
-                  <input type="text" name="name" required defaultValue={store.name ?? ""} />
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    defaultValue={store.name ?? ""}
+                    readOnly={Boolean(pendingNameRequest)}
+                    style={pendingNameRequest ? { background: "var(--surface-2)" } : undefined}
+                  />
+                  {pendingNameRequest ? (
+                    <span className="muted" style={{ fontSize: 11.5 }}>
+                      ⏳「{(pendingNameRequest.proposed_value as { name?: string })?.name}」への変更は運営の承認待ちです。承認されるまでこの欄は編集できません。
+                    </span>
+                  ) : (
+                    <span className="muted" style={{ fontSize: 11.5 }}>
+                      店舗名の変更は検索・地図に影響するため、保存後は運営の承認を経てから反映されます。
+                    </span>
+                  )}
                 </div>
                 <div className="field">
                   <span className="muted">カテゴリ</span>
@@ -165,7 +211,18 @@ export default async function StoreProfilePage() {
                 </div>
                 <div className="field">
                   <span className="muted">都道府県</span>
-                  <select name="pref" defaultValue={store.pref ?? ""}>
+                  {pendingAddressRequest && (
+                    // A disabled <select> is excluded from FormData entirely,
+                    // so carry the unchanged current value through a hidden
+                    // field instead — otherwise the action would see pref
+                    // arrive as "" and mistake that for an intentional clear.
+                    <input type="hidden" name="pref" value={store.pref ?? ""} />
+                  )}
+                  <select
+                    name={pendingAddressRequest ? undefined : "pref"}
+                    defaultValue={store.pref ?? ""}
+                    disabled={Boolean(pendingAddressRequest)}
+                  >
                     <option value="">未設定</option>
                     {PREF_OPTIONS.map((p) => (
                       <option key={p} value={p}>
@@ -176,7 +233,13 @@ export default async function StoreProfilePage() {
                 </div>
                 <div className="field">
                   <span className="muted">市区町村</span>
-                  <input type="text" name="city" defaultValue={store.city ?? ""} />
+                  <input
+                    type="text"
+                    name="city"
+                    defaultValue={store.city ?? ""}
+                    readOnly={Boolean(pendingAddressRequest)}
+                    style={pendingAddressRequest ? { background: "var(--surface-2)" } : undefined}
+                  />
                 </div>
                 <div className="field">
                   <span className="muted">住所</span>
@@ -184,7 +247,18 @@ export default async function StoreProfilePage() {
                     type="text"
                     name="address"
                     defaultValue={store.address ?? ""}
+                    readOnly={Boolean(pendingAddressRequest)}
+                    style={pendingAddressRequest ? { background: "var(--surface-2)" } : undefined}
                   />
+                  {pendingAddressRequest ? (
+                    <span className="muted" style={{ fontSize: 11.5 }}>
+                      ⏳ 新しい住所への変更は運営の承認待ちです。承認されるまでこれらの欄は編集できません。
+                    </span>
+                  ) : (
+                    <span className="muted" style={{ fontSize: 11.5 }}>
+                      住所の変更は地図・現在地検索・ナビに影響するため、保存後は運営の承認を経てから反映されます(反映時に座標も自動取得されます)。
+                    </span>
+                  )}
                 </div>
                 <div className="field">
                   <span className="muted">電話番号</span>
@@ -602,6 +676,118 @@ export default async function StoreProfilePage() {
                 </div>
               );
             })}
+
+            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+              お知らせ管理
+            </h2>
+            <div className="card">
+              <form action={createNotice}>
+                <input type="hidden" name="storeId" value={store.id} />
+                <div className="field">
+                  <span className="muted">タイトル *</span>
+                  <input type="text" name="title" required />
+                </div>
+                <div className="field">
+                  <span className="muted">本文</span>
+                  <textarea name="body" rows={3} />
+                </div>
+                <button type="submit" className="btn primary">
+                  お知らせを掲載する
+                </button>
+              </form>
+            </div>
+
+            {notices?.map((n) => (
+              <div className="card" key={n.id}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                  <h3>{n.title}</h3>
+                  <span className="badge">{n.status === "published" ? "公開中" : "非公開"}</span>
+                </div>
+                {n.body && <p className="muted" style={{ marginTop: 6, fontSize: 13.5 }}>{n.body}</p>}
+                <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await toggleNoticeStatus(n.id, store.id, n.status === "published" ? "hidden" : "published");
+                    }}
+                  >
+                    <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                      {n.status === "published" ? "非公開にする" : "公開する"}
+                    </button>
+                  </form>
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deleteNotice(n.id, store.id);
+                    }}
+                  >
+                    <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                      削除
+                    </button>
+                  </form>
+                </div>
+                <details style={{ marginTop: 10 }}>
+                  <summary className="muted small" style={{ cursor: "pointer" }}>
+                    編集
+                  </summary>
+                  <form action={updateNotice} style={{ marginTop: 10 }}>
+                    <input type="hidden" name="storeId" value={store.id} />
+                    <input type="hidden" name="noticeId" value={n.id} />
+                    <div className="field">
+                      <span className="muted">タイトル *</span>
+                      <input type="text" name="title" required defaultValue={n.title} />
+                    </div>
+                    <div className="field">
+                      <span className="muted">本文</span>
+                      <textarea name="body" rows={3} defaultValue={n.body ?? ""} />
+                    </div>
+                    <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
+                      更新する
+                    </button>
+                  </form>
+                </details>
+              </div>
+            ))}
+
+            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+              店舗写真
+            </h2>
+            <div className="card">
+              <form action={uploadStorePhoto} encType="multipart/form-data">
+                <input type="hidden" name="storeId" value={store.id} />
+                <div className="field">
+                  <span className="muted">写真を追加（スマホの写真ライブラリ・カメラから選択できます）</span>
+                  <input type="file" name="photo" accept="image/*" capture="environment" required />
+                </div>
+                <button type="submit" className="btn primary">
+                  アップロードする
+                </button>
+              </form>
+              {photos && photos.length > 0 && (
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
+                  {photos.map((p) => (
+                    <div key={p.id} style={{ position: "relative" }}>
+                      <img
+                        src={p.url}
+                        alt=""
+                        style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }}
+                      />
+                      <form
+                        action={async () => {
+                          "use server";
+                          await deleteStorePhoto(p.id, store.id);
+                        }}
+                        style={{ marginTop: 4 }}
+                      >
+                        <button type="submit" className="btn" style={{ fontSize: 11.5, padding: "4px 8px" }}>
+                          削除
+                        </button>
+                      </form>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
         </>
       )}
     </>

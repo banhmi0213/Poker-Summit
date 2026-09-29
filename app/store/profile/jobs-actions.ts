@@ -55,6 +55,7 @@ export async function createJob(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function toggleJobStatus(jobId: string, storeId: string, status: string) {
@@ -71,6 +72,7 @@ export async function toggleJobStatus(jobId: string, storeId: string, status: st
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function updateJob(formData: FormData) {
@@ -105,6 +107,7 @@ export async function updateJob(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function deleteJob(jobId: string, storeId: string) {
@@ -117,4 +120,5 @@ export async function deleteJob(jobId: string, storeId: string) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }

@@ -58,6 +58,7 @@ export async function createCoupon(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function deactivateCoupon(couponId: string, storeId: string) {
@@ -74,6 +75,7 @@ export async function deactivateCoupon(couponId: string, storeId: string) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function updateCoupon(formData: FormData) {
@@ -111,6 +113,7 @@ export async function updateCoupon(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function deleteCoupon(couponId: string, storeId: string) {
@@ -127,4 +130,5 @@ export async function deleteCoupon(couponId: string, storeId: string) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }

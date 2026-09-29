@@ -57,6 +57,7 @@ export async function createEvent(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function toggleEventStatus(
@@ -77,6 +78,7 @@ export async function toggleEventStatus(
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function updateEvent(formData: FormData) {
@@ -113,6 +115,7 @@ export async function updateEvent(formData: FormData) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
 
 export async function deleteEvent(eventId: string, storeId: string) {
@@ -129,4 +132,5 @@ export async function deleteEvent(eventId: string, storeId: string) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath(`/stores/${storeId}`);
 }
