@@ -69,7 +69,6 @@ export default async function AdminStoresPage({
     } catch {
       issued = null;
     }
-    jar.delete("issued_credentials");
   }
   const issuedStoreName = issued ? stores?.find((s) => s.id === issued!.storeId)?.name : null;
 
@@ -81,7 +80,6 @@ export default async function AdminStoresPage({
     } catch {
       issuedLinkCode = null;
     }
-    jar.delete("issued_line_link_code");
   }
   const issuedLinkCodeStoreName = issuedLinkCode
     ? stores?.find((s) => s.id === issuedLinkCode!.storeId)?.name
