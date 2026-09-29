@@ -1,8 +1,16 @@
 "use client";
 
 import { useTransition } from "react";
-import { ALL_PREF_SENTINEL } from "@/lib/current-pref";
 import { setCurrentPref } from "./pref-actions";
+
+// Duplicated from lib/current-pref.ts (not imported from there) on purpose:
+// that file has a top-level `import ... from "next/headers"`, which Next.js
+// will pull into this component's client bundle if anything is imported
+// from it here — even just this string constant — and fail the build with
+// "You're importing a component that needs next/headers" (headers()/cookies()
+// only work in Server Components). Keep this in sync with
+// lib/current-pref.ts's ALL_PREF_SENTINEL by hand if that value ever changes.
+const ALL_PREF_SENTINEL = "ALL";
 
 /**
  * "現在表示中の都道府県" bar — sits on the TOP page, separate from (and below)
