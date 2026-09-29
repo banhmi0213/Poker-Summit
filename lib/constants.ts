@@ -112,6 +112,22 @@ export const PREF_OPTIONS = [
   "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県",
 ];
 
+// PREF_OPTIONS above happens to already be ordered exactly by JIS X 0401 /
+// ISO 3166-2:JP subdivision code (01=北海道 ... 47=沖縄県). That numbering is
+// also what two free, keyless geolocation sources hand back directly:
+//   - Vercel's `x-vercel-ip-country-region` request header for Japan
+//     (the region portion only, e.g. "13" for Tokyo, "27" for Osaka)
+//   - GSI's reverse-geocoder `muniCd` field, whose first 2 digits are the
+//     JIS prefecture code (see lib/geocode.ts's reverseGeocodeToPref)
+// so one small helper covers both call sites instead of a separate mapping
+// table per source.
+export function prefFromJisCode(code: string | null | undefined): string | null {
+  if (!code) return null;
+  const n = parseInt(code, 10);
+  if (!Number.isInteger(n) || n < 1 || n > PREF_OPTIONS.length) return null;
+  return PREF_OPTIONS[n - 1];
+}
+
 // Neighborhood/district-level "エリア" options within each prefecture, used by
 // the /stores page's second-level area dropdown (appears once a prefecture is
 // picked). The last entry per prefecture ("その他◯◯") is a catch-all handled
