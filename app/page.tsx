@@ -13,6 +13,10 @@ import { BottomTabs } from "./bottom-tabs";
 import { StoreCard } from "./store-card";
 import { PrefAreaSelect } from "./pref-area-select";
 import { PokerRegionHero } from "./poker-region-hero";
+import { PrefSelector } from "./pref-selector";
+import { PrefGeoDetector } from "./pref-geo-detector";
+import { GeolocateSearchButton } from "./geolocate-search-button";
+import { getCurrentPref } from "@/lib/current-pref";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
@@ -64,6 +68,29 @@ export default async function HomePage({
   const supabase = await createClient();
   const now = new Date().toISOString();
 
+  // "現在表示中の都道府県" — see lib/current-pref.ts. Read up front (cheap:
+  // cookies/headers only, no DB round trip) so the PICK UP店舗 section below
+  // can be filtered by it, same as /stores/featured already does.
+  const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
+
+  // featuredStoresQuery is built as a variable (rather than inline in the
+  // Promise.all below) purely so the currentPref filter can be attached
+  // conditionally, matching the pattern already used on /stores/featured.
+  let featuredStoresQuery = supabase
+    .from("stores")
+    .select("id, name, category, pref, city, description, created_at")
+    .in("status", ["approved", "listed"])
+    .eq("is_recommended", true);
+  if (currentPref) {
+    featuredStoresQuery = featuredStoresQuery.eq("pref", currentPref);
+  }
+  featuredStoresQuery = featuredStoresQuery
+    // Secondary sort by id: created_at alone ties for rows inserted in the
+    // same batch, and Postgres doesn't guarantee a stable order for ties.
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(4);
+
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
   // making 12+ round trips to the database back to back, which is what was
@@ -107,16 +134,7 @@ export default async function HomePage({
     // queryable through PostgREST directly (no PII exposed here, just a
     // count), so this goes through a SECURITY DEFINER RPC.
     supabase.rpc("public_member_count"),
-    supabase
-      .from("stores")
-      .select("id, name, category, pref, city, description, created_at")
-      .in("status", ["approved", "listed"])
-      .eq("is_recommended", true)
-      // Secondary sort by id: created_at alone ties for rows inserted in the
-      // same batch, and Postgres doesn't guarantee a stable order for ties.
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(4),
+    featuredStoresQuery,
     supabase
       .from("jobs")
       .select("id, title, job_type, salary, store_id, stores(name, category)")
@@ -276,6 +294,7 @@ export default async function HomePage({
                 </option>
               ))}
             </select>
+            <GeolocateSearchButton />
             <button type="submit" className="btn primary">
               🔍 検索する
             </button>
@@ -289,14 +308,29 @@ export default async function HomePage({
         }}
       />
 
+      {/* Invisible: silently asks the browser for the visitor's location and
+          upgrades currentPref from IP-guess to a real geo result. Skipped
+          once a manual choice or a still-fresh geo result already exists. */}
+      <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
+
+      <div className="container" style={{ paddingTop: 0, paddingBottom: 0 }}>
+        <PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />
+      </div>
+
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>🏆 PICK UP店舗</h2>
+          <h2 style={{ fontSize: 18 }}>
+            🏆 PICK UP店舗{currentPref ? `（${currentPref}）` : ""}
+          </h2>
           <Link href="/stores/featured" className="see-all">
             すべて見る →
           </Link>
         </div>
-        {featuredStores.length === 0 && <p className="muted">まだ店舗がありません。</p>}
+        {featuredStores.length === 0 && (
+          <p className="muted">
+            {currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}
+          </p>
+        )}
         <div className="grid cols-4">
           {featuredStores.map((s) => (
             <StoreCard

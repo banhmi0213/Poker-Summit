@@ -1660,3 +1660,44 @@ th {
     transition: none !important;
   }
 }
+
+/* --- "現在表示中の都道府県" selector bar (app/pref-selector.tsx) ---
+   Self-contained: does not touch any existing rule above. Sits directly
+   below the hero, above the PICK UP店舗 section. */
+.ps-pref-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.ps-pref-selector__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted, #6b7280);
+  white-space: nowrap;
+}
+
+.ps-pref-selector__select {
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1, #fff);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.ps-pref-selector__select:disabled {
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .ps-pref-selector {
+    margin: 14px 12px 0;
+  }
+}
