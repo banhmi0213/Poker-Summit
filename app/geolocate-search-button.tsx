@@ -56,7 +56,15 @@ export function GeolocateSearchButton() {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 170px" }}>
+    // position: relative + the error box below being position: absolute is
+    // deliberate: earlier this used a normal flex column, which made the
+    // error text an extra in-flow line. Inside the search form's flex-wrap
+    // row that extra line shoved every other field (都道府県/エリア/店舗タイプ)
+    // into a squashed, overlapping mess instead of just appearing under the
+    // button. Absolutely positioning it means a failure can never reflow —
+    // let alone break the look of — the rest of the search bar; on success
+    // the form navigates away before this would even matter.
+    <div style={{ position: "relative", flex: "1 1 170px" }}>
       <input type="hidden" name="lat" ref={latInputRef} />
       <input type="hidden" name="lng" ref={lngInputRef} />
       <button
@@ -69,7 +77,25 @@ export function GeolocateSearchButton() {
         {status === "loading" ? "取得中…" : "📍 現在地から探す"}
       </button>
       {status === "error" && (
-        <span style={{ fontSize: 11.5, color: "#d1453b", lineHeight: 1.4 }}>{errorMessage}</span>
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            zIndex: 5,
+            padding: "6px 8px",
+            borderRadius: 6,
+            background: "#fff",
+            border: "1px solid #d1453b",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            fontSize: 11.5,
+            lineHeight: 1.4,
+            color: "#d1453b",
+          }}
+        >
+          {errorMessage}
+        </div>
       )}
     </div>
   );
