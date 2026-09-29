@@ -40,11 +40,11 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
           <Link href="/contact" className="plink">
             お問い合わせ
           </Link>
-          <Link href="/login" className="plink">
-            店舗・運営ログイン
-          </Link>
         </div>
         {memberBtn}
+<Link href="/login" className="plink">
+            店舗ログイン
+          </Link>
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
           ☰
         </label>
@@ -59,10 +59,10 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
         <Link href="/contact" className="plink">
           お問い合わせ
         </Link>
-        <Link href="/login" className="plink">
-          店舗・運営ログイン
-        </Link>
         {memberBtn}
+        <Link href="/login" className="plink">
+            店舗ログイン
+          </Link>
       </div>
     </nav>
   );
