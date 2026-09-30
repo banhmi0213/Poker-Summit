@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateStoreByAdmin } from "../../actions";
+import { HoursInput } from "@/app/hours-input";
 import {
   STORE_STATUS_LABEL as STATUS_LABEL,
   CATEGORY_LABEL,
@@ -119,7 +120,7 @@ export default async function AdminStoreEditPage({
 
           <div className="field">
             <span className="muted">営業時間</span>
-            <input type="text" name="hours" defaultValue={store.hours ?? ""} />
+            <HoursInput initialValue={store.hours} />
           </div>
 
           <div className="field" style={{ gridColumn: "1 / -1" }}>
