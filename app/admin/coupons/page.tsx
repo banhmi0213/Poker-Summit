@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { setCouponActive, deleteCoupon, createCouponByAdmin, updateCouponByAdmin } from "./actions";
+import { setCouponActive, deleteCoupon, createCouponByAdmin } from "./actions";
 
 export default async function AdminCouponsPage({
   searchParams,
@@ -167,7 +168,14 @@ export default async function AdminCouponsPage({
                     <span className="badge">{c.active ? "公開中" : "停止中"}</span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                    <Link
+                      href={`/admin/coupons/${c.id}/edit`}
+                      className="btn primary"
+                      style={{ fontSize: 12, marginBottom: 8, display: "inline-block" }}
+                    >
+                      編集
+                    </Link>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <form
                         action={async () => {
                           "use server";
@@ -189,43 +197,6 @@ export default async function AdminCouponsPage({
                         </button>
                       </form>
                     </div>
-                    <details>
-                      <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
-                      <form
-                        action={updateCouponByAdmin}
-                        style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 200 }}
-                      >
-                        <input type="hidden" name="couponId" value={c.id} />
-                        <div className="field">
-                          <span className="muted">タイトル *</span>
-                          <input type="text" name="title" defaultValue={c.title} required />
-                        </div>
-                        <div className="field">
-                          <span className="muted">割引内容</span>
-                          <input type="text" name="discount" defaultValue={c.discount ?? ""} />
-                        </div>
-                        <div className="field">
-                          <span className="muted">クーポンコード</span>
-                          <input type="text" name="code" defaultValue={c.code ?? ""} />
-                        </div>
-                        <div className="field">
-                          <span className="muted">有効期限</span>
-                          <input type="date" name="validUntil" defaultValue={c.valid_until ?? ""} />
-                        </div>
-                        <div className="field">
-                          <span className="muted">利用可能回数</span>
-                          <input
-                            type="number"
-                            name="usageLimit"
-                            min={1}
-                            defaultValue={c.usage_limit ?? ""}
-                          />
-                        </div>
-                        <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-                          保存する
-                        </button>
-                      </form>
-                    </details>
                   </td>
                 </tr>
               );
