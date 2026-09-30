@@ -4,7 +4,6 @@ import { CATEGORY_LABEL, CATEGORY_COLOR, CATEGORY_ICON } from "@/lib/constants";
 export function StoreCard({
   store,
   isFavorite,
-  favoriteCount,
   rank,
   favoriteAction,
 }: {
@@ -17,7 +16,6 @@ export function StoreCard({
     description: string | null;
   };
   isFavorite: boolean;
-  favoriteCount?: number;
   rank?: number;
   favoriteAction: () => Promise<void>;
 }) {
@@ -34,8 +32,7 @@ export function StoreCard({
           className={`store-fav-btn ${isFavorite ? "active" : ""}`}
           aria-label="お気に入り"
         >
-          <span>{isFavorite ? "♥" : "♡"}</span>
-          <span>{favoriteCount ?? 0}</span>
+          {isFavorite ? "♥" : "♡"}
         </button>
       </form>
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>

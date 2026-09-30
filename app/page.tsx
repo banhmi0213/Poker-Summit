@@ -188,10 +188,9 @@ export default async function HomePage({
   // management screen), already filtered/ordered/limited server-side above.
   const featuredStores = featuredStoresRaw ?? [];
 
-  // 「❤マークでお気に入りされてる数がわかるように」との要望により、店舗
-  // カードの♥ボタンに総お気に入り数を表示する。あわせて「お気に入り数が
-  // 多い上位10店舗」の店舗ランキングセクションもこの数字を使って作る
-  // (2026/09/30)。
+  // 「お気に入り数が多い上位10店舗」の店舗ランキングセクション用の集計
+  // (2026/09/30)。件数自体は店舗オーナー側の画面にだけ出す仕様のため、
+  // ここでは並び順(ランキング)にしか使わず、♥ボタンには表示しない。
   const { data: allFavStoreRows } = await supabase.from("favorite_stores").select("store_id");
   const favoriteStoreCounts: Record<string, number> = {};
   allFavStoreRows?.forEach((r) => {
@@ -357,7 +356,6 @@ export default async function HomePage({
               key={s.id}
               store={s}
               isFavorite={favoriteStoreIds.has(s.id)}
-              favoriteCount={favoriteStoreCounts[s.id] ?? 0}
               favoriteAction={async () => {
                 "use server";
                 await toggleFavoriteStore(s.id, "/");
@@ -438,7 +436,6 @@ export default async function HomePage({
                 key={s.id}
                 store={s}
                 isFavorite={favoriteStoreIds.has(s.id)}
-                favoriteCount={s.favoriteCount}
                 rank={idx + 1}
                 favoriteAction={async () => {
                   "use server";

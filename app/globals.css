@@ -1139,29 +1139,19 @@ th {
   color: var(--accent-text);
 }
 
-/* ===== Store favorite overlay button (heart + お気に入りされてる数, on the store card thumb) ===== */
+/* ===== Store favorite overlay button (heart, on the store card thumb) ===== */
 .store-fav-btn {
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 3px;
   border: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  font-size: 13px;
-  font-weight: 800;
+  background: transparent;
+  font-size: 19px;
   line-height: 1;
   color: #b9a98a;
   cursor: pointer;
-  padding: 5px 9px;
-}
-
-.store-fav-btn span:first-child {
-  font-size: 16px;
+  padding: 4px;
 }
 
 .store-fav-btn.active {
@@ -1202,21 +1192,21 @@ th {
   color: #3a2200;
 }
 
-/* ===== Store favorite button (heart + count, inline next to a page title) ===== */
+/* ===== Store favorite button (heart, inline next to a page title) ===== */
 .store-fav-btn-inline {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 14px;
-  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
   border: 1px solid var(--border-strong);
   background: var(--surface);
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
   line-height: 1;
   color: #b9a98a;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .store-fav-btn-inline.active {
