@@ -65,13 +65,6 @@ export default async function JobDetailPage({
     .select("*", { count: "exact", head: true })
     .eq("job_id", j.id);
 
-  // 「求人は★マークでお気に入りされてる数がわかるように」との要望により、
-  // 求人詳細ページのボタンにも総お気に入り数を表示する(2026/09/30)。
-  const { count: jobFavoriteCount } = await supabase
-    .from("favorite_jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("job_id", j.id);
-
   const jobDetailBanner = await pickBanner(supabase, "job_detail", { pref: j.stores?.pref });
 
   return (
@@ -160,9 +153,7 @@ export default async function JobDetailPage({
             }}
           >
             <button type="submit" className={`btn ${favJob ? "primary" : ""}`}>
-              {favJob
-                ? `★ お気に入り済み（${jobFavoriteCount ?? 0}人が登録）`
-                : `☆ お気に入りに追加(あとで応募)（${jobFavoriteCount ?? 0}人が登録）`}
+              {favJob ? "★ お気に入り済み" : "☆ お気に入りに追加(あとで応募)"}
             </button>
           </form>
           <Link href={`/stores/${j.stores.id}`} className="btn">
