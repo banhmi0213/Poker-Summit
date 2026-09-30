@@ -1500,6 +1500,28 @@ th {
   pointer-events: none;
 }
 
+/* Okinawa is drawn in its own inset southwest of Kyushu. The outline
+   distinguishes it from Nagasaki's offshore islands without blocking taps. */
+.ps-okinawa-inset {
+  position: absolute;
+  left: 15.2%;
+  top: 79.5%;
+  width: 12.5%;
+  height: 11.5%;
+  border: 1px dashed rgba(115, 34, 203, 0.65);
+  border-radius: 12px;
+  pointer-events: none;
+}
+.ps-okinawa-inset__title {
+  position: absolute;
+  left: 9px;
+  top: -1.55em;
+  color: #5a168f;
+  font-size: clamp(9px, 1.35cqw, 13px);
+  font-weight: 800;
+  text-shadow: 0 1px 3px #fff, 0 -1px 3px #fff;
+}
+
 .ps-region-label {
   --region-color: var(--ps-gold);
   position: absolute;
