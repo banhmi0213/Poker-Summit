@@ -409,32 +409,33 @@ export default async function AdminStoresPage({
                     </form>
                   </div>
                 )}
-                <details>
-                  <summary className="muted" style={{ cursor: "pointer", fontSize: 11.5 }}>
-                    既存アカウントのメールで設定
-                  </summary>
-                  <form
-                    action={setStoreOwnerByEmail}
-                    style={{ display: "flex", gap: 6, marginTop: 6 }}
-                  >
-                    <input type="hidden" name="storeId" value={s.id} />
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="オーナーのメール"
-                      style={{
-                        padding: "6px 8px",
-                        borderRadius: 6,
-                        border: "1px solid var(--border)",
-                        fontSize: 12.5,
-                        width: 150,
-                      }}
-                    />
-                    <button type="submit" className="btn" style={{ padding: "6px 10px", fontSize: 12.5 }}>
-                      設定
-                    </button>
-                  </form>
-                </details>
+                {/* 以前は<details>で折りたたんでいたが、パスワード再発行ボタンと
+                    こちらが同時に見えず片方しか使えないように見えるとの指摘で、
+                    常に両方表示する形に変更(2026/09/30)。 */}
+                <div className="muted" style={{ fontSize: 11.5, marginTop: 4 }}>
+                  既存アカウントのメールで設定
+                </div>
+                <form
+                  action={setStoreOwnerByEmail}
+                  style={{ display: "flex", gap: 6, marginTop: 4 }}
+                >
+                  <input type="hidden" name="storeId" value={s.id} />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="オーナーのメール"
+                    style={{
+                      padding: "6px 8px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                      fontSize: 12.5,
+                      width: 150,
+                    }}
+                  />
+                  <button type="submit" className="btn" style={{ padding: "6px 10px", fontSize: 12.5 }}>
+                    設定
+                  </button>
+                </form>
               </td>
               <td>
                 {s.line_user_id ? (
