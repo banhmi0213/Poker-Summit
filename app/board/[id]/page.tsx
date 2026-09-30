@@ -45,7 +45,7 @@ export default async function BoardPostPage({
 
   const { data: post } = await supabase
     .from("board_posts")
-    .select("id, title, body, author_name, created_at, category")
+    .select("id, title, body, author_name, created_at, category, image_url")
     .eq("id", params.id)
     .eq("status", "visible")
     .maybeSingle();
@@ -105,6 +105,21 @@ export default async function BoardPostPage({
             </div>
           </div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{post.body}</p>
+          {post.image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={post.image_url}
+              alt=""
+              style={{
+                width: "100%",
+                maxHeight: 420,
+                objectFit: "contain",
+                borderRadius: 10,
+                marginTop: 12,
+                background: "var(--surface-2)",
+              }}
+            />
+          )}
         </div>
 
         <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
