@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isBillingFailedThisMonth } from "@/lib/contracts";
+import { approvePlanChangeRequest, rejectPlanChangeRequest } from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "契約中",
@@ -47,6 +48,17 @@ export default async function AdminContractsPage({
     isBillingFailedThisMonth({ last_billing_status: c.last_billing_status, last_billing_at: c.last_billing_at })
   );
 
+  // 店舗オーナーが/store/profile#plan(PC)やLINEリッチメニューから送って
+  // きた「プラン変更申請」の未処理分。承認するとstore_contracts.plan_id
+  // が切り替わる(2026/09/30 新設)。
+  const { data: planRequests } = await supabase
+    .from("plan_change_requests")
+    .select(
+      "id, note, requested_at, stores(name), current_plan:current_plan_id(name), requested_plan:requested_plan_id(name, monthly_fee)"
+    )
+    .eq("status", "pending")
+    .order("requested_at", { ascending: true });
+
   return (
     <div>
       <div className="section-head" style={{ marginBottom: 16 }}>
@@ -87,6 +99,64 @@ export default async function AdminContractsPage({
               </Link>
             ))}
           </div>
+        </div>
+      )}
+
+      {planRequests && planRequests.length > 0 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>
+            📋 プラン変更申請が{planRequests.length}件あります(店舗管理画面・LINEリッチメニューから)
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>店舗名</th>
+                <th>現在のプラン</th>
+                <th>希望プラン</th>
+                <th>連絡事項</th>
+                <th>申請日</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {planRequests.map((r: any) => (
+                <tr key={r.id}>
+                  <td>{r.stores?.name}</td>
+                  <td>{r.current_plan?.name ?? "未設定"}</td>
+                  <td>
+                    {r.requested_plan?.name}
+                    {r.requested_plan?.monthly_fee != null
+                      ? `（${formatYen(r.requested_plan.monthly_fee)}）`
+                      : ""}
+                  </td>
+                  <td style={{ maxWidth: 200 }}>{r.note || "-"}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>
+                    {new Date(r.requested_at).toLocaleDateString("ja-JP")}
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <form
+                        action={async () => {
+                          "use server";
+                          await approvePlanChangeRequest(r.id);
+                        }}
+                      >
+                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
+                          承認
+                        </button>
+                      </form>
+                      <form action={rejectPlanChangeRequest}>
+                        <input type="hidden" name="requestId" value={r.id} />
+                        <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                          却下
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
