@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin", label: "ダッシュボード" },
-  { href: "/admin/analytics", label: "アクセス分析" },
+  { href: "/admin/analytics", label: "アクセス統計" },
   { href: "/admin/stores", label: "店舗管理" },
   { href: "/admin/contracts", label: "契約店舗" },
   { href: "/admin/listing-applications", label: "掲載申込" },

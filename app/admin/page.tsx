@@ -186,7 +186,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   return (
     <div>
       <div className="app-topbar" style={{ marginBottom: 10 }}>
-        <h1 style={{ fontSize: 22, margin: 0 }}>アクセス分析</h1>
+        <h1 style={{ fontSize: 22, margin: 0 }}>アクセス統計</h1>
         <span className="muted" style={{ fontSize: 12.5 }}>
           サイト全体の閲覧動向（実データ集計・{analyticsPeriodLabel(filters)}）
         </span>
