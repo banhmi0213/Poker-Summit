@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "../coupons-actions";
 
 // /store/profile 1ページの中の1セクションだったクーポン管理を、独立した
