@@ -21,8 +21,8 @@ export default function LoginPage({
         <form action={signIn}>
           <input type="hidden" name="next" value={next} />
           <div className="field">
-            <span className="muted">メールアドレス</span>
-            <input type="email" name="email" required autoComplete="email" />
+            <span className="muted">メールアドレス（店舗管理の方はログインID）</span>
+            <input type="text" name="email" required autoComplete="username" />
           </div>
           <div className="field">
             <span className="muted">パスワード</span>
