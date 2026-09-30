@@ -55,6 +55,13 @@ export default async function StoreAnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .in("status", ["approved", "listed"]);
 
+  // 「アクセス分析にお気に入り数もわかるようにしといて」との指示により
+  // 追加(2026/09/30)。
+  const { count: favoriteCount } = await supabase
+    .from("favorite_stores")
+    .select("*", { count: "exact", head: true })
+    .eq("store_id", store.id);
+
   const avgViewsPerStore =
     totalStores && totalStores > 0
       ? Math.round(((sitewideViews ?? 0) / totalStores) * 10) / 10
@@ -122,6 +129,12 @@ export default async function StoreAnalyticsPage() {
             {avgViewsPerStore}
           </div>
           <div className="muted">件（累計・店舗あたり平均）</div>
+        </div>
+        <div className="card">
+          <div className="muted">お気に入り数</div>
+          <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
+            ♥ {favoriteCount ?? 0}
+          </div>
         </div>
       </div>
 
