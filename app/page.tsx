@@ -197,10 +197,14 @@ export default async function HomePage({
     favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
   });
 
-  const { data: rankableStores } = await supabase
+  // PICK UP店舗と同じく、現在選択中の都道府県(currentPref)に合わせて
+  // ランキングも絞り込む(2026/09/30)。
+  let rankableStoresQuery = supabase
     .from("stores")
     .select("id, name, category, pref, city, description")
     .in("status", ["approved", "listed"]);
+  if (currentPref) rankableStoresQuery = rankableStoresQuery.eq("pref", currentPref);
+  const { data: rankableStores } = await rankableStoresQuery;
   const rankedStores = (rankableStores ?? [])
     .map((s) => ({ ...s, favoriteCount: favoriteStoreCounts[s.id] ?? 0 }))
     .filter((s) => s.favoriteCount > 0)
@@ -424,10 +428,16 @@ export default async function HomePage({
 
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>🏅 店舗ランキング（お気に入り数）</h2>
+          <h2 style={{ fontSize: 18 }}>
+            🏅 店舗ランキング（お気に入り数）{currentPref ? `（${currentPref}）` : ""}
+          </h2>
         </div>
         {rankedStores.length === 0 && (
-          <p className="muted">まだお気に入りされた店舗がありません。</p>
+          <p className="muted">
+            {currentPref
+              ? `${currentPref}にはまだお気に入りされた店舗がありません。`
+              : "まだお気に入りされた店舗がありません。"}
+          </p>
         )}
         {rankedStores.length > 0 && (
           <div className="grid cols-4">
