@@ -1,17 +1,11 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { setEventStatus, deleteEvent, createEventByAdmin, updateEventByAdmin } from "./actions";
+import { setEventStatus, deleteEvent, createEventByAdmin } from "./actions";
 import { EVENT_CATEGORIES, PREF_OPTIONS } from "@/lib/constants";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
   return new Date(value).toLocaleString("ja-JP");
-}
-
-function toDatetimeLocal(value: string | null) {
-  if (!value) return "";
-  const d = new Date(value);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default async function AdminEventsPage({
@@ -187,7 +181,14 @@ export default async function AdminEventsPage({
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                    <Link
+                      href={`/admin/events/${ev.id}/edit`}
+                      className="btn primary"
+                      style={{ fontSize: 12, marginBottom: 8, display: "inline-block" }}
+                    >
+                      編集
+                    </Link>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       <form
                         action={async () => {
                           "use server";
@@ -212,64 +213,6 @@ export default async function AdminEventsPage({
                         </button>
                       </form>
                     </div>
-                    <details>
-                      <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
-                      <form
-                        action={updateEventByAdmin}
-                        style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 220 }}
-                      >
-                        <input type="hidden" name="eventId" value={ev.id} />
-                        <div className="field">
-                          <span className="muted">イベント名 *</span>
-                          <input type="text" name="title" defaultValue={ev.title} required />
-                        </div>
-                        <div className="field">
-                          <span className="muted">カテゴリ</span>
-                          <select name="category" defaultValue={ev.category ?? ""}>
-                            <option value="">未設定</option>
-                            {EVENT_CATEGORIES.map((c) => (
-                              <option key={c} value={c}>
-                                {c}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="field">
-                          <span className="muted">都道府県</span>
-                          <select name="pref" defaultValue={ev.pref ?? ""}>
-                            <option value="">未設定</option>
-                            {PREF_OPTIONS.map((p) => (
-                              <option key={p} value={p}>
-                                {p}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="field">
-                          <span className="muted">開催場所</span>
-                          <input type="text" name="location" defaultValue={ev.location ?? ""} />
-                        </div>
-                        <div className="field">
-                          <span className="muted">開始日時</span>
-                          <input
-                            type="datetime-local"
-                            name="startAt"
-                            defaultValue={toDatetimeLocal(ev.start_at)}
-                          />
-                        </div>
-                        <div className="field">
-                          <span className="muted">終了日時</span>
-                          <input
-                            type="datetime-local"
-                            name="endAt"
-                            defaultValue={toDatetimeLocal(ev.end_at)}
-                          />
-                        </div>
-                        <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-                          保存する
-                        </button>
-                      </form>
-                    </details>
                   </td>
                 </tr>
               );

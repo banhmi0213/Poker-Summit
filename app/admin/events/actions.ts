@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -104,4 +105,8 @@ export async function updateEventByAdmin(formData: FormData) {
   await logAdminAction(supabase, "event_edit", "event", eventId);
   revalidatePath("/admin/events");
   revalidatePath("/events");
+
+  // 独立した編集ページ(/admin/events/[id]/edit)から呼ばれるようになったので、
+  // 保存後は一覧に戻す(admin/stores・admin/jobs の編集ページと同じパターン)。
+  redirect("/admin/events");
 }
