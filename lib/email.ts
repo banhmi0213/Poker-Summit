@@ -77,7 +77,7 @@ export async function sendStoreCredentialsEmail(params: {
   決済が完了し、店舗管理アカウントを発行いたしました。
 
   ■ 店舗管理画面ログイン情報
-  URL: ${siteUrl}/login
+  URL: ${siteUrl}/store/login
   ログインID: ${params.loginId}
   パスワード: ${params.password}
 
