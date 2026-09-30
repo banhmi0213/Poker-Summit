@@ -7,6 +7,9 @@ import { recordStoreHistory } from "@/lib/store-update";
 
 const PHOTOS_BUCKET = "store-photos";
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024; // 8MB
+// 「店舗写真をギャラリーに変更、上限を10枚にして」との指示により追加
+// (2026/09/30)。
+export const MAX_PHOTOS = 10;
 
 async function getOwnedStoreClient(storeId: string) {
   const supabase = await createClient();
@@ -54,6 +57,14 @@ export async function uploadStorePhoto(formData: FormData) {
   }
   if (file.size > MAX_PHOTO_BYTES) {
     throw new Error("写真のサイズが大きすぎます（8MBまで）。");
+  }
+
+  const { count: existingCount } = await supabase
+    .from("store_photos")
+    .select("*", { count: "exact", head: true })
+    .eq("store_id", storeId);
+  if ((existingCount ?? 0) >= MAX_PHOTOS) {
+    throw new Error(`店舗写真は${MAX_PHOTOS}枚まで登録できます。削除してから追加してください。`);
   }
 
   const path = `${storeId}/${randomUUID()}.${extFromFile(file)}`;

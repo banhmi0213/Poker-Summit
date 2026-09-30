@@ -2,7 +2,8 @@ import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
 import { updateStoreProfile } from "./actions";
-import { uploadStorePhoto, deleteStorePhoto } from "./photos-actions";
+import { uploadStorePhoto, MAX_PHOTOS } from "./photos-actions";
+import { PhotoGallery } from "./photo-gallery";
 import {
   STORE_STATUS_LABEL,
   CATEGORY_OPTIONS,
@@ -225,43 +226,41 @@ export default async function StoreProfilePage() {
             </form>
           </div>
 
-          <h2 id="photos" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
-            店舗写真
-          </h2>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "baseline",
+              justifyContent: "space-between",
+              marginTop: 28,
+              marginBottom: 12,
+            }}
+          >
+            <h2 id="photos" style={{ fontSize: 18, scrollMarginTop: 20 }}>
+              店舗写真ギャラリー
+            </h2>
+            <span className="muted small">
+              {(photos?.length ?? 0)}/{MAX_PHOTOS}枚
+            </span>
+          </div>
           <div className="card">
-            <form action={uploadStorePhoto} encType="multipart/form-data">
-              <input type="hidden" name="storeId" value={store.id} />
-              <div className="field">
-                <span className="muted">写真を追加（スマホの写真ライブラリ・カメラから選択できます）</span>
-                <input type="file" name="photo" accept="image/*" capture="environment" required />
-              </div>
-              <button type="submit" className="btn primary">
-                アップロードする
-              </button>
-            </form>
+            {(photos?.length ?? 0) >= MAX_PHOTOS ? (
+              <p className="muted small">
+                写真は上限の{MAX_PHOTOS}枚に達しています。追加するには、ギャラリーから不要な写真を削除してください。
+              </p>
+            ) : (
+              <form action={uploadStorePhoto} encType="multipart/form-data">
+                <input type="hidden" name="storeId" value={store.id} />
+                <div className="field">
+                  <span className="muted">写真を追加（スマホの写真ライブラリ・カメラから選択できます）</span>
+                  <input type="file" name="photo" accept="image/*" capture="environment" required />
+                </div>
+                <button type="submit" className="btn primary">
+                  アップロードする
+                </button>
+              </form>
+            )}
             {photos && photos.length > 0 && (
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 16 }}>
-                {photos.map((p) => (
-                  <div key={p.id} style={{ position: "relative" }}>
-                    <img
-                      src={p.url}
-                      alt=""
-                      style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 8 }}
-                    />
-                    <form
-                      action={async () => {
-                        "use server";
-                        await deleteStorePhoto(p.id, store.id);
-                      }}
-                      style={{ marginTop: 4 }}
-                    >
-                      <button type="submit" className="btn" style={{ fontSize: 11.5, padding: "4px 8px" }}>
-                        削除
-                      </button>
-                    </form>
-                  </div>
-                ))}
-              </div>
+              <PhotoGallery photos={photos} storeId={store.id} />
             )}
           </div>
         </>
