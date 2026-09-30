@@ -19,6 +19,10 @@ const STORE_LINKS: { href: string; label: string }[] = [
   // (2026/09/30)。料金プラン一覧を見せる導線なので、求人より上に配置
   // (2026/09/30)。
   { href: "/store/profile/plan", label: "プラン・アップグレード" },
+  // 店舗独自の料金表(参加費・レイト等、運営利用料のプランとは別物)。
+  // 「料金・メニューな」「一覧に追加」との指示により新設、求人より上に
+  // 配置(2026/09/30)。
+  { href: "/store/profile/menu", label: "料金・メニュー" },
   { href: "/store/profile/jobs", label: "求人" },
   { href: "/store/profile/coupons", label: "クーポン" },
   { href: "/store/profile/events", label: "トーナメント・イベント" },
