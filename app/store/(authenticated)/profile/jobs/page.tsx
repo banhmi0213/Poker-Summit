@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "../jobs-actions";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
+import { storeHasJobsAddon } from "@/lib/store-addons";
 
 // 以前は/store/profile 1ページの中の1セクションだった求人管理を、独立した
 // ページへ分離(2026/09/30)。「求人を押したのにクーポンまで出てくる」との
@@ -29,6 +30,29 @@ export default async function StoreJobsPage() {
     return (
       <div className="container">
         <p className="err">このアカウントに紐づく店舗が見つかりません。運営に店舗オーナーとしての登録を依頼してください。</p>
+      </div>
+    );
+  }
+
+  // 求人掲載アドオン(月額11,000円/1件)を契約していない店舗には、求人
+  // 管理画面を触らせない(2026/09/30、「求人はアドオンしてないと触れない
+  // ようにして」との指示)。
+  const hasJobsAddon = await storeHasJobsAddon(supabase, store.id);
+  if (!hasJobsAddon) {
+    return (
+      <div>
+        <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
+          ← 店舗管理に戻る
+        </Link>
+        <h1 style={{ fontSize: 20, marginBottom: 16 }}>求人管理</h1>
+        <div className="card">
+          <p style={{ fontWeight: 700, marginBottom: 6 }}>
+            求人機能は「求人掲載」アドオンのご契約が必要です
+          </p>
+          <p className="muted small">
+            月額11,000円（求人1件につき）でご利用いただけます。ご契約は運営までお問い合わせください。
+          </p>
+        </div>
       </div>
     );
   }
