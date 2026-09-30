@@ -1225,7 +1225,7 @@ th {
   position: absolute;
   z-index: 15;
   left: 4.5%;
-  top: 11%;
+  top: 16%;
   width: 35%;
   color: var(--ps-navy);
 }
@@ -1265,7 +1265,7 @@ th {
   position: absolute;
   z-index: 15;
   right: 4%;
-  top: 31%;
+  top: 37%;
   width: 24%;
   text-align: right;
   color: var(--ps-navy);
@@ -1277,13 +1277,6 @@ th {
   font-weight: 700;
   line-height: 1.38;
   letter-spacing: -0.04em;
-}
-.ps-region-hero__right-headline strong {
-  color: var(--ps-gold);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 2.2em;
-  font-weight: 400;
-  margin: 0 2px;
 }
 .ps-region-hero__right-tagline {
   margin-top: 14px;
