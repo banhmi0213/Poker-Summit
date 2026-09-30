@@ -1302,6 +1302,17 @@ th {
   right: 1.8%;
 }
 .ps-region-hero__search > * { width: 100%; }
+.ps-region-hero__search .search-box input[type="text"],
+.ps-region-hero__search .search-box select {
+  background: rgba(255, 255, 255, 0.22) !important;
+  border-color: rgba(88, 72, 50, 0.3) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.ps-region-hero__search .search-box input[type="text"]::placeholder {
+  color: rgba(42, 32, 19, 0.68);
+}
 /* Single-row grid is a PC-only layout (the approved comp's mobile
    treatment keeps the original wrapping card — see the max-width:767px
    block below, which leaves .search-box's base flex-wrap rules in place). */
