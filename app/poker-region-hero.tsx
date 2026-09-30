@@ -29,23 +29,15 @@ const REGION_CLASS: Record<string, string> = {
   "九州・沖縄": "kyushu-okinawa",
 };
 
-// Label callout position (percentage of the 1640x960 panel) read off the
-// approved comp image (no code source exists for these — the comp never
-// rendered these as separate elements, only baked into the flat image).
-// leaderTo is the on-map anchor the dashed line points to: the bounding-box
-// center of that region's real prefecture geometry below, expressed in the
-// same 1640x960 coordinate space (after the ps-region-map-fit transform).
-// To move a LABEL, edit leftPct/topPct only. leaderTo is derived from the
-// real map data and should only be regenerated if the map's fit transform
-// (scale/translate on .ps-region-map-fit) ever changes.
-const REGION_LABEL: Record<string, { leftPct: number; topPct: number; leaderTo: [number, number] }> = {
-  "北海道・東北": { leftPct: 69.2, topPct: 14.7, leaderTo: [1089.8, 304.9] },
-  "関東": { leftPct: 61.1, topPct: 46.6, leaderTo: [951.4, 604.4] },
-  "中部": { leftPct: 38.9, topPct: 25.6, leaderTo: [874.6, 535.2] },
-  "近畿": { leftPct: 52.6, topPct: 61.5, leaderTo: [794.7, 627.9] },
-  "中国": { leftPct: 34.0, topPct: 43.1, leaderTo: [680.8, 601.7] },
-  "四国": { leftPct: 41.8, topPct: 76.5, leaderTo: [706.2, 671.3] },
-  "九州・沖縄": { leftPct: 12.2, topPct: 63.5, leaderTo: [583.8, 692.5] },
+// Region tabs stay beside their matching colors on the map.
+const REGION_LABEL: Record<string, { leftPct: number; topPct: number }> = {
+  "北海道・東北": { leftPct: 69.2, topPct: 14.7 },
+  "関東": { leftPct: 64.5, topPct: 46.2 },
+  "中部": { leftPct: 43.5, topPct: 39.0 },
+  "近畿": { leftPct: 56.0, topPct: 61.5 },
+  "中国": { leftPct: 32.5, topPct: 56.8 },
+  "四国": { leftPct: 45.8, topPct: 75.8 },
+  "九州・沖縄": { leftPct: 21.0, topPct: 64.0 },
 };
 
 // Line-break groups for each region’s prefecture list under its tab, read
@@ -250,38 +242,27 @@ export function PokerRegionHero({
         preserveAspectRatio="xMidYMid meet"
         aria-label="7地方を選べる日本地図"
       >
-        {REGIONS.map((region) => {
-          const label = REGION_LABEL[region];
-          return (
-            <line
+        <g transform="translate(14 8) rotate(5 838 506)">
+          <image
+            href="/images/hero-map-reference.svg"
+            x="392"
+            y="60"
+            width="892"
+            height="892"
+            className="ps-reference-map-image"
+            aria-hidden="true"
+          />
+          {REGIONS.map((region) => (
+            <a
               key={region}
-              x1={(label.leftPct / 100) * 1640}
-              y1={(label.topPct / 100) * 960}
-              x2={label.leaderTo[0]}
-              y2={label.leaderTo[1]}
-              className="ps-region-leader"
-            />
-          );
-        })}
-        <image
-          href="/images/hero-map-reference.svg"
-          x="392"
-          y="60"
-          width="892"
-          height="892"
-          className="ps-reference-map-image"
-          aria-hidden="true"
-        />
-        {REGIONS.map((region) => (
-          <a
-            key={region}
-            href={`/stores?region=${encodeURIComponent(region)}`}
-            className={`ps-region-group ps-region-group--${REGION_CLASS[region]}`}
-            aria-label={`${region}の店舗を見る`}
-          >
-            <path d={REFERENCE_MAP_HITS[region]} className="ps-reference-map-hit" />
-          </a>
-        ))}
+              href={`/stores?region=${encodeURIComponent(region)}`}
+              className={`ps-region-group ps-region-group--${REGION_CLASS[region]}`}
+              aria-label={`${region}の店舗を見る`}
+            >
+              <path d={REFERENCE_MAP_HITS[region]} className="ps-reference-map-hit" />
+            </a>
+          ))}
+        </g>
       </svg>
 
       <nav className="ps-region-hero__labels" aria-label="地方から店舗を探す">
