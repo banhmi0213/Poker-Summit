@@ -5,6 +5,7 @@ export function StoreCard({
   store,
   isFavorite,
   favoriteCount,
+  rank,
   favoriteAction,
 }: {
   store: {
@@ -17,6 +18,7 @@ export function StoreCard({
   };
   isFavorite: boolean;
   favoriteCount?: number;
+  rank?: number;
   favoriteAction: () => Promise<void>;
 }) {
   const color = CATEGORY_COLOR[store.category ?? ""] ?? "#3987e5";
@@ -25,6 +27,7 @@ export function StoreCard({
 
   return (
     <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+      {rank ? <div className={`store-rank-badge ${rank <= 3 ? `top${rank}` : ""}`}>{rank}位</div> : null}
       <form action={favoriteAction}>
         <button
           type="submit"

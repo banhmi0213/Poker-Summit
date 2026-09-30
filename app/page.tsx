@@ -188,19 +188,25 @@ export default async function HomePage({
   // management screen), already filtered/ordered/limited server-side above.
   const featuredStores = featuredStoresRaw ?? [];
 
-  // 「❤マークでお気に入りされてる数がわかるように」との要望により、
-  // 店舗カードの♥ボタンに総お気に入り数を表示する(2026/09/30)。
-  const featuredStoreIds = featuredStores.map((s: any) => s.id);
+  // 「❤マークでお気に入りされてる数がわかるように」との要望により、店舗
+  // カードの♥ボタンに総お気に入り数を表示する。あわせて「お気に入り数が
+  // 多い上位10店舗」の店舗ランキングセクションもこの数字を使って作る
+  // (2026/09/30)。
+  const { data: allFavStoreRows } = await supabase.from("favorite_stores").select("store_id");
   const favoriteStoreCounts: Record<string, number> = {};
-  if (featuredStoreIds.length) {
-    const { data: favCountRows } = await supabase
-      .from("favorite_stores")
-      .select("store_id")
-      .in("store_id", featuredStoreIds);
-    favCountRows?.forEach((r) => {
-      favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
-    });
-  }
+  allFavStoreRows?.forEach((r) => {
+    favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
+  });
+
+  const { data: rankableStores } = await supabase
+    .from("stores")
+    .select("id, name, category, pref, city, description")
+    .in("status", ["approved", "listed"]);
+  const rankedStores = (rankableStores ?? [])
+    .map((s) => ({ ...s, favoriteCount: favoriteStoreCounts[s.id] ?? 0 }))
+    .filter((s) => s.favoriteCount > 0)
+    .sort((a, b) => b.favoriteCount - a.favoriteCount)
+    .slice(0, 10);
 
   // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
@@ -413,6 +419,32 @@ export default async function HomePage({
                   {p.author_name} ・ {formatDateTime(p.created_at)} ・ 💬 {replyCounts[p.id] ?? 0}
                 </div>
               </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18 }}>🏅 店舗ランキング（お気に入り数）</h2>
+        </div>
+        {rankedStores.length === 0 && (
+          <p className="muted">まだお気に入りされた店舗がありません。</p>
+        )}
+        {rankedStores.length > 0 && (
+          <div className="grid cols-4">
+            {rankedStores.map((s, idx) => (
+              <StoreCard
+                key={s.id}
+                store={s}
+                isFavorite={favoriteStoreIds.has(s.id)}
+                favoriteCount={s.favoriteCount}
+                rank={idx + 1}
+                favoriteAction={async () => {
+                  "use server";
+                  await toggleFavoriteStore(s.id, "/");
+                }}
+              />
             ))}
           </div>
         )}

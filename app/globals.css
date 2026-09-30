@@ -1120,29 +1120,19 @@ th {
   }
 }
 
-/* ===== Job favorite overlay button (star + お気に入りされてる数, 2026/09/30) ===== */
+/* ===== Job favorite overlay button ===== */
 .job-fav-btn {
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 3px;
   border: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  font-size: 13px;
-  font-weight: 800;
+  background: transparent;
+  font-size: 19px;
   line-height: 1;
   color: #b9a98a;
   cursor: pointer;
-  padding: 5px 9px;
-}
-
-.job-fav-btn span:first-child {
-  font-size: 16px;
+  padding: 4px;
 }
 
 .job-fav-btn.active {
@@ -1180,6 +1170,36 @@ th {
 
 .store-fav-btn:hover {
   filter: brightness(0.97);
+}
+
+/* ===== Store ranking badge (TOP page 店舗ランキング, top-left of the card thumb, 2026/09/30) ===== */
+.store-rank-badge {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 2;
+  border-radius: 999px;
+  background: rgba(30, 30, 30, 0.72);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 9px;
+}
+
+.store-rank-badge.top1 {
+  background: linear-gradient(135deg, #ffd76a, #e8a613);
+  color: #4a3400;
+}
+
+.store-rank-badge.top2 {
+  background: linear-gradient(135deg, #e4e4e4, #b7b7b7);
+  color: #3a3a3a;
+}
+
+.store-rank-badge.top3 {
+  background: linear-gradient(135deg, #e3b088, #b9773f);
+  color: #3a2200;
 }
 
 /* ===== Store favorite button (heart + count, inline next to a page title) ===== */
