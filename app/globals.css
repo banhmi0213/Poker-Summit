@@ -216,39 +216,28 @@ textarea {
   font-weight: 700;
 }
 
-/* 会員登録・ログインを1つの枠にまとめて見せる(同じ枠内の2タブ風)。
-   店舗ログインはこれとは別の独立したボタンにし、ナビ左側の
-   「お問い合わせ」から視覚的にはっきり距離を取る(2026/09/30)。 */
+/* 会員登録/ログインボタンと店舗ログインボタンをまとめて右端に寄せる。
+   店舗ログインは会員とは別の色(ゴールドの枠線+背景を薄く)を付けて、
+   plainな黒枠ボタンにならないようにする(2026/09/30)。 */
 .portal-auth-actions {
   display: inline-flex;
   align-items: center;
   gap: 14px;
-  margin-left: 22px;
+  margin-left: auto;
   flex-shrink: 0;
-}
-
-.portal-auth-group {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.portal-auth-group .plink {
-  border-radius: 0;
-}
-
-.portal-auth-sep {
-  width: 1px;
-  align-self: stretch;
-  background: var(--border-strong);
 }
 
 .portal-store-btn {
   white-space: nowrap;
   flex-shrink: 0;
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent-text);
+}
+
+.portal-store-btn:hover {
+  background: var(--accent-soft);
+  filter: brightness(0.97);
 }
 
 .card {
@@ -804,19 +793,9 @@ th {
     justify-content: center;
   }
 
-  .mobile-nav-drawer .portal-auth-group {
-    width: 100%;
-    margin-top: 4px;
-  }
-
-  .mobile-nav-drawer .portal-auth-group .plink {
-    flex: 1;
-    width: auto;
-    justify-content: center;
-  }
-
   .mobile-nav-drawer .portal-store-btn {
     margin-top: 4px;
+    justify-content: center;
   }
 }
 
