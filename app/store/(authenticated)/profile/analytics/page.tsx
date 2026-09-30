@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 
 function dayKey(d: Date) {
   return d.toISOString().slice(0, 10);
