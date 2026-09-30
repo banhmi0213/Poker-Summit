@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { setJobStatus, deleteJob, createJobByAdmin, updateJobByAdmin } from "./actions";
+import { setJobStatus, deleteJob, createJobByAdmin } from "./actions";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
 
 export default async function AdminJobsPage({
@@ -172,7 +173,14 @@ export default async function AdminJobsPage({
                 <td className="tabular">{applicantCounts.get(j.id) ?? 0}</td>
                 <td className="tabular">{favoriteCounts.get(j.id) ?? 0}</td>
                 <td>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                  <Link
+                    href={`/admin/jobs/${j.id}/edit`}
+                    className="btn primary"
+                    style={{ fontSize: 12, marginBottom: 8, display: "inline-block" }}
+                  >
+                    編集
+                  </Link>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <form
                       action={async () => {
                         "use server";
@@ -194,37 +202,6 @@ export default async function AdminJobsPage({
                       </button>
                     </form>
                   </div>
-                  <details>
-                    <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
-                    <form
-                      action={updateJobByAdmin}
-                      style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 200 }}
-                    >
-                      <input type="hidden" name="jobId" value={j.id} />
-                      <div className="field">
-                        <span className="muted">求人タイトル *</span>
-                        <input type="text" name="title" defaultValue={j.title} required />
-                      </div>
-                      <div className="field">
-                        <span className="muted">雇用形態</span>
-                        <select name="jobType" defaultValue={j.job_type ?? ""}>
-                          <option value="">未設定</option>
-                          {JOB_TYPE_OPTIONS.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="field">
-                        <span className="muted">給与</span>
-                        <input type="text" name="salary" defaultValue={j.salary ?? ""} />
-                      </div>
-                      <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-                        保存する
-                      </button>
-                    </form>
-                  </details>
                 </td>
               </tr>
             ))}

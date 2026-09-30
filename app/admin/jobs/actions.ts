@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -93,4 +94,8 @@ export async function updateJobByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "job_edit", "job", jobId);
   revalidatePath("/admin/jobs");
+
+  // 独立した編集ページ(/admin/jobs/[id]/edit)から呼ばれるようになったので、
+  // 保存後は一覧に戻す(admin/stores の編集ページと同じパターン)。
+  redirect("/admin/jobs");
 }
