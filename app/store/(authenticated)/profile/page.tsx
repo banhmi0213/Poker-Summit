@@ -176,7 +176,7 @@ export default async function StoreProfilePage() {
               </div>
             </div>
 
-            <div className="card">
+            <div className="card" id="profile-info" style={{ scrollMarginTop: 20 }}>
               <form action={updateStoreProfile}>
                 <input type="hidden" name="storeId" value={store.id} />
                 <div className="field">
@@ -299,7 +299,7 @@ export default async function StoreProfilePage() {
               </form>
             </div>
 
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+            <h2 id="jobs" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
               求人管理
             </h2>
             <div className="card">
@@ -422,7 +422,7 @@ export default async function StoreProfilePage() {
               </div>
             ))}
 
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+            <h2 id="coupons" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
               クーポン管理
             </h2>
             <div className="card">
@@ -532,7 +532,7 @@ export default async function StoreProfilePage() {
               </div>
             ))}
 
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+            <h2 id="events" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
               イベント管理
             </h2>
             <div className="card">
@@ -674,7 +674,7 @@ export default async function StoreProfilePage() {
               );
             })}
 
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+            <h2 id="notices" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
               お知らせ管理
             </h2>
             <div className="card">
@@ -746,7 +746,7 @@ export default async function StoreProfilePage() {
               </div>
             ))}
 
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+            <h2 id="photos" style={{ fontSize: 18, marginTop: 28, marginBottom: 12, scrollMarginTop: 20 }}>
               店舗写真
             </h2>
             <div className="card">
