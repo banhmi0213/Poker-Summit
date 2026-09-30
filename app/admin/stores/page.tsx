@@ -96,7 +96,7 @@ export default async function AdminStoresPage({
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span className="muted" style={{ fontSize: 12 }}>ログインID</span>
-              <input readOnly value={`${issued.loginId}@login.poker-summit.jp`} style={{ minWidth: 260 }} />
+              <input readOnly value={issued.loginId} style={{ minWidth: 260 }} />
             </label>
             <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               <span className="muted" style={{ fontSize: 12 }}>パスワード</span>
