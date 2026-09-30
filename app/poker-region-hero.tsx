@@ -188,7 +188,7 @@ export function PokerRegionHero({
       <img className="ps-region-hero__bg" src={backgroundSrc} alt="" aria-hidden="true" />
 
       <div className="ps-region-hero__copy-left">
-        <div className="ps-region-hero__logo-script">{HERO_COPY.logoScript}</div>
+        <img className="ps-region-hero__logo-script" src="/images/hero-script-reference.png" alt={HERO_COPY.logoScript} />
         <h1 className="ps-region-hero__headline">
           {HERO_COPY.headline.map((line, i) => (
             <span key={line}>
