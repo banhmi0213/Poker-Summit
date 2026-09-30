@@ -239,6 +239,14 @@ export const STORE_STATUS_LABEL: Record<string, string> = {
 // でのサインイン時の両方でこの定数を使い、値のずれを防ぐ)。
 export const STORE_LOGIN_ID_DOMAIN = "login.poker-summit.jp";
 
+// 店舗管理ログイン(/store/login)用セッションのCookie名。会員・管理者側の
+// ログイン(/login, デフォルトのCookie名)と完全に別のCookieに分離すること
+// で、同じブラウザで「店舗管理画面」と「総合管理画面」に同時にログイン
+// できるようにしている(2026/09/30、「シークレットとかじゃなしに両方
+// はいれるようにして」との指示)。片方にログインしてももう片方が
+// ログアウトされなくなる。
+export const STORE_AUTH_COOKIE_NAME = "sb-store-auth-token";
+
 // 求人掲載アドオン(月額11,000円/1件)のID。addonsテーブルへ固定IDで
 // 登録済み(migration: add_jobs_listing_addon)。運営が管理画面でアドオン名
 // を編集しても求人機能のゲーティングが壊れないよう、名前ではなくこの
