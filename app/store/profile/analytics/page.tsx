@@ -13,7 +13,7 @@ export default async function StoreAnalyticsPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?next=/store/profile/analytics");
+    redirect("/store/login?next=/store/profile/analytics");
   }
 
   const { data: store } = await supabase
