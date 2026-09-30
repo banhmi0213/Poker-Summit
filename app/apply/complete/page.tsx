@@ -95,7 +95,7 @@ export default async function ApplyCompletePage({
             <p>LINE連携コード: {credentials.lineCode}</p>
           </div>
           <p className="muted" style={{ fontSize: 13 }}>
-            ログインID・パスワードは店舗管理画面(/login)でご利用ください。LINE連携コードは、LINE公式アカウントの店舗用ミニアプリで店舗と紐付ける際にご利用ください(24時間有効・1回限り)。
+            ログインID・パスワードは店舗管理ログイン画面(/store/login)でご利用ください。LINE連携コードは、LINE公式アカウントの店舗用ミニアプリで店舗と紐付ける際にご利用ください(24時間有効・1回限り)。
           </p>
         </>
       ) : (
