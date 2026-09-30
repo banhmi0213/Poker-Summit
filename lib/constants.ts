@@ -223,3 +223,10 @@ export const STORE_STATUS_LABEL: Record<string, string> = {
   rejected: "却下",
   listed: "掲載済み",
 };
+
+// 店舗ログインID(例: "store-xxxxxxxx")をSupabase Auth上の実メールアドレスに
+// 変換する際のダミードメイン。実在するメールドメインではなく、Supabase Auth
+// が要求するemail形式を満たすためだけに使う(lib/store-provision.ts /
+// app/admin/stores/actions.ts でのアカウント発行時と、app/login/actions.ts
+// でのサインイン時の両方でこの定数を使い、値のずれを防ぐ)。
+export const STORE_LOGIN_ID_DOMAIN = "login.poker-summit.jp";
