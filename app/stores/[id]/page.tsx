@@ -124,6 +124,13 @@ export default async function StoreDetailPage({
     usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
   }
 
+  // 「❤マークでお気に入りされてる数がわかるように」との要望により、
+  // 店舗詳細ページのハートボタンにも総お気に入り数を表示する(2026/09/30)。
+  const { count: storeFavoriteCount } = await supabase
+    .from("favorite_stores")
+    .select("*", { count: "exact", head: true })
+    .eq("store_id", store.id);
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
@@ -152,7 +159,8 @@ export default async function StoreDetailPage({
               className={`store-fav-btn-inline ${isFavoriteStore ? "active" : ""}`}
               aria-label="お気に入り"
             >
-              {isFavoriteStore ? "♥" : "♡"}
+              <span>{isFavoriteStore ? "♥" : "♡"}</span>
+              <span>{storeFavoriteCount ?? 0}</span>
             </button>
           </form>
         </div>
