@@ -238,3 +238,10 @@ export const STORE_STATUS_LABEL: Record<string, string> = {
 // app/admin/stores/actions.ts でのアカウント発行時と、app/login/actions.ts
 // でのサインイン時の両方でこの定数を使い、値のずれを防ぐ)。
 export const STORE_LOGIN_ID_DOMAIN = "login.poker-summit.jp";
+
+// 求人掲載アドオン(月額11,000円/1件)のID。addonsテーブルへ固定IDで
+// 登録済み(migration: add_jobs_listing_addon)。運営が管理画面でアドオン名
+// を編集しても求人機能のゲーティングが壊れないよう、名前ではなくこの
+// 固定IDで判定する(2026/09/30、「求人はアドオンしてないと触れないように
+// して」との指示)。
+export const JOBS_ADDON_ID = "a1000000-0000-4000-8000-000000000001";
