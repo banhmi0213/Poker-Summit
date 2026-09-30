@@ -252,6 +252,10 @@ export async function updateStoreByAdmin(formData: FormData) {
   revalidatePath(`/stores/${storeId}`);
   // 運営側が直接編集した内容も、店舗自身のLINE/Web管理画面に即座に反映する。
   revalidatePath("/store/profile");
+
+  // 独立した編集ページ(/admin/stores/[id]/edit)から呼ばれるようになったので、
+  // 保存後は一覧に戻す(一覧テーブル内にインライン展開していた頃は不要だった)。
+  redirect("/admin/stores");
 }
 
 export async function issueStoreLogin(storeId: string) {

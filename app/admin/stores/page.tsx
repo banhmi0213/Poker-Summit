@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -5,7 +6,6 @@ import {
   setStoreRecommended,
   setStoreOwnerByEmail,
   createStoreByAdmin,
-  updateStoreByAdmin,
   deleteStoreByAdmin,
   issueStoreLogin,
   reissueStorePassword,
@@ -457,6 +457,13 @@ export default async function AdminStoresPage({
                 )}
               </td>
               <td>
+                <Link
+                  href={`/admin/stores/${s.id}/edit`}
+                  className="btn primary"
+                  style={{ fontSize: 12, marginBottom: 8, display: "inline-block" }}
+                >
+                  編集
+                </Link>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                   {s.status === "pending" && (
                     <>
@@ -505,84 +512,6 @@ export default async function AdminStoresPage({
                     </button>
                   </form>
                 </div>
-                <details>
-                  <summary style={{ cursor: "pointer", fontSize: 12.5 }}>編集</summary>
-                  <form
-                    action={updateStoreByAdmin}
-                    style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8, minWidth: 220 }}
-                  >
-                    <input type="hidden" name="storeId" value={s.id} />
-                    <div className="field">
-                      <span className="muted">店舗名 *</span>
-                      <input type="text" name="name" defaultValue={s.name} required />
-                    </div>
-                    <div className="field">
-                      <span className="muted">カテゴリ</span>
-                      <select name="category" defaultValue={s.category ?? ""}>
-                        <option value="">未設定</option>
-                        {CATEGORY_OPTIONS.map((c) => (
-                          <option key={c.value} value={c.value}>
-                            {c.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <span className="muted">地方</span>
-                      <select name="region" defaultValue={s.region ?? ""}>
-                        <option value="">未設定</option>
-                        {REGIONS.map((r) => (
-                          <option key={r} value={r}>
-                            {r}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <span className="muted">都道府県</span>
-                      <select name="pref" defaultValue={s.pref ?? ""}>
-                        <option value="">未設定</option>
-                        {PREF_OPTIONS.map((p) => (
-                          <option key={p} value={p}>
-                            {p}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <span className="muted">市区町村</span>
-                      <input type="text" name="city" defaultValue={s.city ?? ""} />
-                    </div>
-                    <div className="field">
-                      <span className="muted">住所</span>
-                      <input type="text" name="address" defaultValue={s.address ?? ""} />
-                    </div>
-                    <div className="field">
-                      <span className="muted">電話番号</span>
-                      <input type="text" name="tel" defaultValue={s.tel ?? ""} />
-                    </div>
-                    <div className="field">
-                      <span className="muted">営業時間</span>
-                      <input type="text" name="hours" defaultValue={s.hours ?? ""} />
-                    </div>
-                    <div className="field">
-                      <span className="muted">検索キーワード（検索用・任意）</span>
-                      <input
-                        type="text"
-                        name="areaKeywords"
-                        placeholder="例: ミナミ アメ村 心斎橋 駅近 駐車場あり パーキングあり"
-                        defaultValue={s.area_keywords ?? ""}
-                      />
-                    </div>
-                    <div className="field">
-                      <span className="muted">紹介文</span>
-                      <textarea name="description" rows={3} defaultValue={s.description ?? ""} />
-                    </div>
-                    <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-                      保存する
-                    </button>
-                  </form>
-                </details>
               </td>
             </tr>
           ))}
