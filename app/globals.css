@@ -216,18 +216,18 @@ textarea {
   font-weight: 700;
 }
 
-/* 会員登録/ログインボタンと店舗ログインボタンをまとめて右端に寄せる。
-   店舗ログインは会員とは別の色(ゴールドの枠線+背景を薄く)を付けて、
-   plainな黒枠ボタンにならないようにする(2026/09/30)。 */
+/* 会員登録(ソリッドのゴールド)・ログイン・店舗ログイン(ともに薄いゴールドの
+   セカンダリボタン)をまとめて右端に寄せる。plainな黒枠ボタンにならない
+   ようにする(2026/09/30)。 */
 .portal-auth-actions {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   margin-left: auto;
   flex-shrink: 0;
 }
 
-.portal-store-btn {
+.portal-secondary-btn {
   white-space: nowrap;
   flex-shrink: 0;
   background: var(--accent-soft);
@@ -235,7 +235,7 @@ textarea {
   color: var(--accent-text);
 }
 
-.portal-store-btn:hover {
+.portal-secondary-btn:hover {
   background: var(--accent-soft);
   filter: brightness(0.97);
 }
@@ -793,7 +793,7 @@ th {
     justify-content: center;
   }
 
-  .mobile-nav-drawer .portal-store-btn {
+  .mobile-nav-drawer .portal-secondary-btn {
     margin-top: 4px;
     justify-content: center;
   }

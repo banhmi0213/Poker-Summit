@@ -9,23 +9,27 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
 ];
 
 export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
-  // 会員登録・ログインは1つのボタン(会員登録/ログイン)にまとめ、/signupへ。
-  // /signup側に「すでにアカウントをお持ちの方はこちらからログイン」の導線が
-  // あるのでこれで足りる。店舗ログインは会員とは別のアカウント体系
-  // (ログインID/パスワード)なので、常に別の色付きボタンとして
-  // /store/loginへ飛ばす(2026/09/30)。
+  // 会員登録・ログインは別々の窓(ボタン)にする(2026/09/30、1つのボタンに
+  // まとめたが「2窓にして」との指摘で再度分離)。店舗ログインは会員とは
+  // 別のアカウント体系(ログインID/パスワード)なので、常に別の色付き
+  // ボタンとして/store/loginへ飛ばす。
   const memberLinks = userEmail ? (
     <Link href="/mypage" className="portal-cta">
       マイページ
     </Link>
   ) : (
-    <Link href="/signup" className="portal-cta">
-      会員登録/ログイン
-    </Link>
+    <>
+      <Link href="/signup" className="portal-cta">
+        会員登録
+      </Link>
+      <Link href="/login" className="btn portal-secondary-btn">
+        ログイン
+      </Link>
+    </>
   );
 
   const storeLoginLink = (
-    <Link href="/store/login" className="btn portal-store-btn">
+    <Link href="/store/login" className="btn portal-secondary-btn">
       店舗ログイン
     </Link>
   );
