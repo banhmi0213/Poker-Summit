@@ -13,7 +13,7 @@ import { usePathname } from "next/navigation";
 // 残しているため、ここには項目を作らない(2026/09/30)。
 const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile", label: "店舗管理" },
-  { href: "/store/profile/analytics", label: "アクセス分析" },
+  { href: "/store/profile/analytics", label: "アクセス統計" },
   // LINEリッチメニュー側にある「プラン・アップグレード」と同じ導線を、
   // LINEを開いていないPCブラウザからも使えるようにするため新設
   // (2026/09/30)。料金プラン一覧を見せる導線なので、求人より上に配置
