@@ -44,7 +44,7 @@ const REGION_LABEL: Record<string, { leftPct: number; topPct: number; leaderTo: 
   "近畿": { leftPct: 52.6, topPct: 61.5, leaderTo: [794.7, 627.9] },
   "中国": { leftPct: 34.0, topPct: 43.1, leaderTo: [680.8, 601.7] },
   "四国": { leftPct: 41.8, topPct: 76.5, leaderTo: [706.2, 671.3] },
-  "九州・沖縄": { leftPct: 18.2, topPct: 63.5, leaderTo: [583.8, 692.5] },
+  "九州・沖縄": { leftPct: 12.2, topPct: 63.5, leaderTo: [583.8, 692.5] },
 };
 
 // Line-break groups for each region’s prefecture list under its tab, read
@@ -531,7 +531,7 @@ export function PokerRegionHero({
         <polygon points="12 864 9 861 14 861"/>
           </g>
           {/* 47: 沖縄県 */}
-          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(-222.000000, 924.000000) scale(0.650000)">
+          <g className="ps-pref ps-pref--kyushu-okinawa" data-code="47" strokeLinejoin="round" fill="#EEEEEE" fillRule="nonzero" stroke="#000000" strokeWidth="1.0" transform="translate(-145.000000, 894.000000) scale(0.450000)">
             <title>沖縄 / Okinawa</title>
         <polygon points="4 109 6 110 4 111 0 110"/>
         <polygon points="48 121 55 123 51 129 39 124 42 122 44 125 46 118"/>
