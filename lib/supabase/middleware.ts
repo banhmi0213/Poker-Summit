@@ -31,15 +31,23 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // 店舗管理(/store/*)配下は、未ログイン時の行き先を会員ログイン(/login,
+  // メールアドレス)ではなく専用の店舗ログイン画面(/store/login,
+  // ログインID)にする(2026/09/30、会員と店舗の入口を分離)。
+  // /store/login自体は未ログインでもアクセスできる必要があるので、
+  // ここでガード対象から除外する(含めると自分自身へのリダイレクトが
+  // 無限ループする)。
+  const isStorePath = pathname.startsWith("/store/") && pathname !== "/store/login";
+
   if (
     !user &&
     (pathname.startsWith("/admin") ||
-      pathname.startsWith("/store/") ||
+      isStorePath ||
       pathname.startsWith("/mypage") ||
       pathname.startsWith("/account"))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = isStorePath ? "/store/login" : "/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
