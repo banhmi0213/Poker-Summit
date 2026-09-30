@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { storeSignOut } from "@/app/store/login/actions";
 import { StoreSidebar } from "./store-sidebar";
 
@@ -38,7 +38,10 @@ export default async function StoreLayout({
       <div className="app-main">
         <div className="app-topbar" style={{ justifyContent: "flex-end" }}>
           <div style={{ display: "flex", gap: 8 }}>
-            <Link href="/account/password" className="btn">
+            {/* 会員・総合管理画面用の/account/password(デフォルトCookie)
+                ではなく、店舗用Cookieのセッションを更新できる専用ページ
+                を使う(2026/09/30、店舗/管理者セッション分離に伴う変更)。 */}
+            <Link href="/store/profile/password" className="btn">
               パスワード変更
             </Link>
             <form action={storeSignOut}>
