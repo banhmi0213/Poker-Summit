@@ -2,12 +2,13 @@ import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
 import { updateStoreProfile } from "./actions";
-import { uploadStorePhoto, MAX_PHOTOS } from "./photos-actions";
+import { uploadStorePhoto } from "./photos-actions";
 import { PhotoGallery } from "./photo-gallery";
 import {
   STORE_STATUS_LABEL,
   CATEGORY_OPTIONS,
   PREF_OPTIONS,
+  MAX_STORE_PHOTOS,
 } from "@/lib/constants";
 
 // 求人・クーポン・イベント・お知らせ・プランは、それぞれ独立したページへ
@@ -239,13 +240,13 @@ export default async function StoreProfilePage() {
               店舗写真ギャラリー
             </h2>
             <span className="muted small">
-              {(photos?.length ?? 0)}/{MAX_PHOTOS}枚
+              {(photos?.length ?? 0)}/{MAX_STORE_PHOTOS}枚
             </span>
           </div>
           <div className="card">
-            {(photos?.length ?? 0) >= MAX_PHOTOS ? (
+            {(photos?.length ?? 0) >= MAX_STORE_PHOTOS ? (
               <p className="muted small">
-                写真は上限の{MAX_PHOTOS}枚に達しています。追加するには、ギャラリーから不要な写真を削除してください。
+                写真は上限の{MAX_STORE_PHOTOS}枚に達しています。追加するには、ギャラリーから不要な写真を削除してください。
               </p>
             ) : (
               <form action={uploadStorePhoto} encType="multipart/form-data">
