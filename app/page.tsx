@@ -188,6 +188,20 @@ export default async function HomePage({
   // management screen), already filtered/ordered/limited server-side above.
   const featuredStores = featuredStoresRaw ?? [];
 
+  // 「❤マークでお気に入りされてる数がわかるように」との要望により、
+  // 店舗カードの♥ボタンに総お気に入り数を表示する(2026/09/30)。
+  const featuredStoreIds = featuredStores.map((s: any) => s.id);
+  const favoriteStoreCounts: Record<string, number> = {};
+  if (featuredStoreIds.length) {
+    const { data: favCountRows } = await supabase
+      .from("favorite_stores")
+      .select("store_id")
+      .in("store_id", featuredStoreIds);
+    favCountRows?.forEach((r) => {
+      favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
+    });
+  }
+
   // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
   const { data: replyRows } = postIds.length
@@ -337,6 +351,7 @@ export default async function HomePage({
               key={s.id}
               store={s}
               isFavorite={favoriteStoreIds.has(s.id)}
+              favoriteCount={favoriteStoreCounts[s.id] ?? 0}
               favoriteAction={async () => {
                 "use server";
                 await toggleFavoriteStore(s.id, "/");
