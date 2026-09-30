@@ -218,11 +218,7 @@ export function PokerRegionHero({
         </div>
       </div>
 
-      <div className="ps-region-hero__footer-script" aria-hidden="true">
-        {HERO_COPY.footerScript.map((line) => (
-          <div key={line}>{line}</div>
-        ))}
-      </div>
+      <img className="ps-region-hero__footer-script" src="/images/hero-footer-script-reference.png" alt="" aria-hidden="true" />
 
       <div className="ps-region-hero__search">{searchControls}</div>
 
