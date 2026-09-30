@@ -104,7 +104,7 @@ export default async function AdminStoresPage({
             </label>
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
-            この内容を店舗にお伝えください。ログインページではメールアドレス欄にログインIDをそのまま入力してもらいます。
+            この内容を店舗にお伝えください。店舗管理ログイン（/store/login）のログインID欄にそのまま入力してもらいます。
           </p>
         </div>
       )}
