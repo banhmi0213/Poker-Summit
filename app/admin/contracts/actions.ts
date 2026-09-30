@@ -340,7 +340,7 @@ export async function recordManualBillingEvent(formData: FormData) {
   revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
 }
 
-// --- プラン変更申請(店舗オーナー発、/store/profile#plan から) -----------
+// --- プラン変更申請(店舗オーナー発、/store/profile/plan から) -----------
 // 店舗オーナー側はfincode決済を直接叩けないため、申請止まりになって
 // いる。ここで承認するとstore_contracts.plan_idを実際に切り替える
 // (決済金額自体の変更・請求はfincode側で別途運営が対応する想定で、

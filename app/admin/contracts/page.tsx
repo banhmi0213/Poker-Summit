@@ -48,7 +48,7 @@ export default async function AdminContractsPage({
     isBillingFailedThisMonth({ last_billing_status: c.last_billing_status, last_billing_at: c.last_billing_at })
   );
 
-  // 店舗オーナーが/store/profile#plan(PC)やLINEリッチメニューから送って
+  // 店舗オーナーが/store/profile/plan(PC)やLINEリッチメニューから送って
   // きた「プラン変更申請」の未処理分。承認するとstore_contracts.plan_id
   // が切り替わる(2026/09/30 新設)。
   const { data: planRequests } = await supabase
