@@ -47,7 +47,7 @@ export default async function BoardPage({
 
   let query = supabase
     .from("board_posts")
-    .select("id, title, author_name, created_at, category")
+    .select("id, title, author_name, created_at, category, image_url")
     .eq("status", "visible")
     .order("created_at", { ascending: false });
   if (category) query = query.eq("category", category);
@@ -111,6 +111,13 @@ export default async function BoardPage({
               <span className="muted">本文 *</span>
               <textarea name="body" rows={4} required />
             </div>
+            <div className="field">
+              <span className="muted">画像（任意）</span>
+              <input type="file" name="image" accept="image/*" />
+              <span className="muted" style={{ fontSize: 11.5 }}>
+                1枚まで添付できます（8MBまで）。
+              </span>
+            </div>
             <button type="submit" className="btn primary">
               投稿する
             </button>
@@ -127,7 +134,7 @@ export default async function BoardPage({
               <div className="avatar" style={{ background: avatarColor(p.author_name) }}>
                 {p.author_name.slice(0, 1)}
               </div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
@@ -136,6 +143,20 @@ export default async function BoardPage({
                   <span className="muted">💬 {replyCounts[p.id] ?? 0}</span>
                 </div>
               </div>
+              {p.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.image_url}
+                  alt=""
+                  style={{
+                    width: 56,
+                    height: 56,
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    flexShrink: 0,
+                  }}
+                />
+              )}
             </div>
           </Link>
         ))}

@@ -1,8 +1,21 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+const BOARD_IMAGES_BUCKET = "board-images";
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
+
+function extFromFile(file: File): string {
+  const fromName = file.name?.split(".").pop();
+  if (fromName && /^[a-zA-Z0-9]{1,8}$/.test(fromName)) {
+    return fromName.toLowerCase();
+  }
+  const fromType = file.type?.split("/").pop();
+  return fromType && /^[a-zA-Z0-9]{1,8}$/.test(fromType) ? fromType.toLowerCase() : "jpg";
+}
 
 export async function createPost(formData: FormData) {
   const supabase = await createClient();
@@ -19,6 +32,16 @@ export async function createPost(formData: FormData) {
     throw new Error("タイトルと本文を入力してください。");
   }
 
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    if (!image.type.startsWith("image/")) {
+      throw new Error("画像ファイルを選択してください。");
+    }
+    if (image.size > MAX_IMAGE_BYTES) {
+      throw new Error("画像のサイズが大きすぎます（8MBまで）。");
+    }
+  }
+
   const { data: post, error } = await supabase
     .from("board_posts")
     .insert({
@@ -33,6 +56,22 @@ export async function createPost(formData: FormData) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (image instanceof File && image.size > 0) {
+    const path = `${post.id}/${randomUUID()}.${extFromFile(image)}`;
+    const { error: uploadError } = await supabase.storage
+      .from(BOARD_IMAGES_BUCKET)
+      .upload(path, image, { contentType: image.type, upsert: false });
+
+    if (!uploadError) {
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(BOARD_IMAGES_BUCKET).getPublicUrl(path);
+      await supabase.from("board_posts").update({ image_url: publicUrl }).eq("id", post.id);
+    }
+    // アップロードに失敗しても投稿自体は作成済みなので、画像なしでそのまま
+    // 進める(投稿全体を失敗させない)。
   }
 
   revalidatePath("/board");
