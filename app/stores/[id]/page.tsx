@@ -54,7 +54,7 @@ export default async function StoreDetailPage({
     .then(() => {});
 
   // These only depend on store.id, not on each other.
-  const [{ data: events }, { data: jobs }, { data: coupons }, { data: notices }, { data: photos }] =
+  const [{ data: events }, { data: jobs }, { data: coupons }, { data: notices }, { data: photos }, { data: menuItems }] =
     await Promise.all([
       supabase
         .from("events")
@@ -84,6 +84,13 @@ export default async function StoreDetailPage({
         .from("store_photos")
         .select("id, url")
         .eq("store_id", store.id)
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("store_menu_items")
+        .select("id, name, price, description")
+        .eq("store_id", store.id)
+        .eq("status", "published")
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: true }),
     ]);
@@ -237,6 +244,33 @@ export default async function StoreDetailPage({
             </tbody>
           </table>
         </div>
+
+        {menuItems && menuItems.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+              料金・メニュー
+            </h2>
+            <div className="card">
+              <table>
+                <tbody>
+                  {menuItems.map((it) => (
+                    <tr key={it.id}>
+                      <th style={{ width: 130, verticalAlign: "top" }}>{it.name}</th>
+                      <td>
+                        <div style={{ fontWeight: 700 }}>{it.price}</div>
+                        {it.description && (
+                          <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>
+                            {it.description}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
 
         {notices && notices.length > 0 && (
           <>
