@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { STORE_LOGIN_ID_DOMAIN } from "@/lib/constants";
 
 // 店舗管理専用のログイン処理。ログインID("store-xxxxxxxx"形式・@を含まない)
