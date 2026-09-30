@@ -81,11 +81,8 @@ function chunkPrefs(prefs: string[], sizes: number[]): string[][] {
 // should never require touching the JSX below.
 const HERO_COPY = {
   logoScript: "Poker Spots in Japan",
-  headline: ["ポーカーがつなぐ、", "新しい出会いを。", "日本のすみずみまで。"],
+  headline: ["新しい出会いを。", "日本のすみずみまで。"],
   verticalTagline: ["PLAY", "TRAVEL", "CONNECT"],
-  rightHeadlinePrefix: "全国",
-  rightHeadlineNumber: "47",
-  rightHeadlineSuffix: "の地で、",
   rightHeadlineLine2: "ポーカーと出会える。",
   rightTagline: ["MORE POKER", "A BIGGER JAPAN"],
   footerScript: ["Good Game", "Good People", "A Brighter Tomorrow"],
@@ -206,10 +203,6 @@ export function PokerRegionHero({
 
       <div className="ps-region-hero__copy-right">
         <p className="ps-region-hero__right-headline">
-          {HERO_COPY.rightHeadlinePrefix}
-          <strong>{HERO_COPY.rightHeadlineNumber}</strong>
-          {HERO_COPY.rightHeadlineSuffix}
-          <br />
           {HERO_COPY.rightHeadlineLine2}
         </p>
         <div className="ps-region-hero__right-tagline">
