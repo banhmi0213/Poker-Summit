@@ -18,18 +18,19 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
       マイページ
     </Link>
   ) : (
-    <>
-      <Link href="/signup" className="portal-cta">
+    <div className="portal-auth-group">
+      <Link href="/signup" className="plink">
         会員登録
       </Link>
+      <span className="portal-auth-sep" aria-hidden="true" />
       <Link href="/login" className="plink">
         ログイン
       </Link>
-    </>
+    </div>
   );
 
   const storeLoginLink = (
-    <Link href="/store/login" className="plink">
+    <Link href="/store/login" className="btn portal-store-btn">
       店舗ログイン
     </Link>
   );
@@ -56,8 +57,10 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
             お問い合わせ
           </Link>
         </div>
-        {memberLinks}
-        {storeLoginLink}
+        <div className="portal-auth-actions">
+          {memberLinks}
+          {storeLoginLink}
+        </div>
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
           ☰
         </label>
