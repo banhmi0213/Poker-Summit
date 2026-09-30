@@ -68,6 +68,52 @@ export default async function StorePlanPage() {
           </div>
         </div>
 
+        <div style={{ marginTop: 20, marginBottom: 4 }}>
+          <span className="muted">料金プラン一覧</span>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            gap: 10,
+            marginBottom: 20,
+          }}
+        >
+          {(allPlans ?? []).map((p) => {
+            const isCurrent = p.id === contract?.plan_id;
+            return (
+              <div
+                key={p.id}
+                className="card"
+                style={{
+                  background: "var(--surface-2)",
+                  border: isCurrent ? "2px solid var(--accent, #c9a24b)" : undefined,
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: 14.5 }}>
+                  {p.name}
+                  {isCurrent && (
+                    <span className="badge" style={{ marginLeft: 6, fontSize: 10.5 }}>
+                      現在のプラン
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>
+                  ¥{(p.monthly_fee ?? 0).toLocaleString("ja-JP")}
+                  <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>
+                    /月
+                  </span>
+                </div>
+                {p.description && (
+                  <p className="muted" style={{ fontSize: 12, marginTop: 6, whiteSpace: "pre-wrap" }}>
+                    {p.description}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         {pendingPlanRequest ? (
           <div className="card" style={{ background: "var(--surface-2)", marginBottom: 12 }}>
             <div style={{ fontSize: 13.5 }}>
