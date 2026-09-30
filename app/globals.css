@@ -1225,7 +1225,7 @@ th {
   position: absolute;
   z-index: 15;
   left: 4.5%;
-  top: 16%;
+  top: 17%;
   width: 35%;
   color: var(--ps-navy);
 }
@@ -1233,26 +1233,34 @@ th {
   font-family: "Allura", cursive;
   font-size: clamp(26px, 3.4cqw, 48px);
   color: var(--ps-gold);
-  margin-bottom: 1px;
+  margin-bottom: 2.4cqw;
 }
 .ps-region-hero__headline {
   margin: 0 0 14px;
   font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
-  font-size: clamp(25px, 3.05cqw, 47px);
+  font-size: clamp(27px, 3.6cqw, 54px);
   font-weight: 700;
   letter-spacing: -0.05em;
-  line-height: 1.42;
+  line-height: 1.3;
   color: var(--ps-navy);
 }
 .ps-region-hero__headline span { display: block; white-space: nowrap; }
 .ps-region-hero__headline br { display: none; }
 .ps-region-hero__headline span:last-child {
-  margin-top: 0.3em;
-  font-size: 0.63em;
+  margin-top: 0.24em;
+  font-size: 0.55em;
   letter-spacing: 0;
 }
+.ps-region-hero__headline::after {
+  content: "";
+  display: block;
+  width: 4.2cqw;
+  height: 2px;
+  margin-top: 0.45em;
+  background: var(--ps-gold);
+}
 .ps-region-hero__vertical-tagline {
-  margin-top: 20px;
+  margin-top: 2.1cqw;
   font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(19px, 2.25cqw, 34px);
   font-weight: 400;
@@ -1265,21 +1273,39 @@ th {
   position: absolute;
   z-index: 15;
   right: 4%;
-  top: 37%;
+  top: 28%;
   width: 24%;
-  text-align: right;
+  text-align: center;
   color: var(--ps-navy);
 }
 .ps-region-hero__right-headline {
   margin: 0;
   font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
-  font-size: clamp(19px, 2.1cqw, 32px);
+  font-size: clamp(20px, 2.5cqw, 38px);
   font-weight: 700;
-  line-height: 1.38;
+  line-height: 1.3;
   letter-spacing: -0.04em;
 }
+.ps-region-hero__right-first-line,
+.ps-region-hero__right-line { display: block; white-space: nowrap; }
+.ps-region-hero__right-first-line strong {
+  color: var(--ps-gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.2em;
+  font-weight: 400;
+  line-height: .85;
+  margin: 0 .05em;
+}
+.ps-region-hero__right-headline::after {
+  content: "";
+  display: block;
+  width: 56%;
+  height: 2px;
+  margin: .35em 0 0 auto;
+  background: var(--ps-gold);
+}
 .ps-region-hero__right-tagline {
-  margin-top: 14px;
+  margin-top: 1.1cqw;
   font-size: clamp(11px, 0.85cqw, 14px);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1289,10 +1315,10 @@ th {
 .ps-region-hero__footer-script {
   position: absolute;
   z-index: 15;
-  right: 6%;
-  bottom: 20%;
+  right: 5%;
+  bottom: 5%;
   font-family: "Allura", cursive;
-  font-size: clamp(14px, 1.3cqw, 19px);
+  font-size: clamp(17px, 2.15cqw, 32px);
   line-height: 1.4;
   color: var(--ps-gold);
   text-align: right;
