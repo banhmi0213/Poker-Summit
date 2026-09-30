@@ -45,6 +45,20 @@ export default async function JobsPage({
     favoriteJobIds = new Set((favs ?? []).map((f) => f.job_id));
   }
 
+  // 「求人は★マークでお気に入りされてる数がわかるように」との要望により、
+  // 求人カードの★ボタンに総お気に入り数を表示する(2026/09/30)。
+  const jobFavoriteCounts: Record<string, number> = {};
+  const jobIds = jobs.map((j: any) => j.id);
+  if (jobIds.length) {
+    const { data: jobFavCountRows } = await supabase
+      .from("favorite_jobs")
+      .select("job_id")
+      .in("job_id", jobIds);
+    jobFavCountRows?.forEach((r) => {
+      jobFavoriteCounts[r.job_id] = (jobFavoriteCounts[r.job_id] ?? 0) + 1;
+    });
+  }
+
   const jobListBanner = await pickBanner(supabase, "job_list", { pref });
 
   return (
@@ -136,7 +150,8 @@ export default async function JobsPage({
                   className={`job-fav-btn ${favoriteJobIds.has(j.id) ? "active" : ""}`}
                   aria-label="お気に入り"
                 >
-                  {favoriteJobIds.has(j.id) ? "★" : "☆"}
+                  <span>{favoriteJobIds.has(j.id) ? "★" : "☆"}</span>
+                  <span>{jobFavoriteCounts[j.id] ?? 0}</span>
                 </button>
               </form>
               <Link href={`/jobs/${j.id}`} style={{ display: "block" }}>
