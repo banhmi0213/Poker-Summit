@@ -3,26 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-// 「店舗管理」ページは求人・クーポン・イベント・お知らせ・写真の管理を
-// すべて1ページの中のセクションとしてまとめて持っているため、以前はサイド
-// メニューが「店舗管理」「アクセス分析」の2項目だけだった。1ページに全部
-// 詰まっていて目的のセクションまで毎回スクロールが必要で分かりにくい、
-// という指摘を受け、それぞれのセクションへ直接ジャンプできるアンカー
-// リンクをサイドメニューにも並べる形に変更(2026/09/30)。実体は別ページ
-// ではなく同じ/store/profile内の#id自己文アンカーなので、リンク先を
-// 増やしても管理対象のページ数が増えるわけではない。
+// 以前は求人・クーポン・イベント・お知らせ・写真・プランを/store/profile
+// 1ページ内のアンカーリンク(#jobs等)としてまとめていたが、「求人を押した
+// のにクーポンまで一緒に出てくる」という指摘を受け、各セクションを完全に
+// 別ページへ分離した(2026/09/30)。管理画面(/admin)側と同じ、1メニュー
+// 1ページの構成に揃えている。
+// ただし店舗写真だけは「店舗写真を消して店舗管理に画像を入れれるように
+// して」との指示により独立ページにせず、店舗管理(店舗情報)ページの中に
+// 残しているため、ここには項目を作らない(2026/09/30)。
 const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile", label: "店舗管理" },
   { href: "/store/profile/analytics", label: "アクセス分析" },
-  { href: "/store/profile#jobs", label: "求人" },
-  { href: "/store/profile#coupons", label: "クーポン" },
-  { href: "/store/profile#events", label: "トーナメント・イベント" },
-  { href: "/store/profile#notices", label: "お知らせ" },
-  { href: "/store/profile#photos", label: "店舗写真" },
+  { href: "/store/profile/jobs", label: "求人" },
+  { href: "/store/profile/coupons", label: "クーポン" },
+  { href: "/store/profile/events", label: "トーナメント・イベント" },
+  { href: "/store/profile/notices", label: "お知らせ" },
   // LINEリッチメニュー側にある「プラン・アップグレード」と同じ導線を、
   // LINEを開いていないPCブラウザからも使えるようにするため新設
-  // (2026/09/30)。実体は/store/profile内の申請フォームへのアンカー。
-  { href: "/store/profile#plan", label: "プラン・アップグレード" },
+  // (2026/09/30)。
+  { href: "/store/profile/plan", label: "プラン・アップグレード" },
 ];
 
 export function StoreSidebar() {
@@ -35,16 +34,12 @@ export function StoreSidebar() {
         <small>店舗管理画面</small>
       </div>
       {STORE_LINKS.map((l) => {
-        const path = l.href.split("#")[0];
-        const active = path === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(path);
-        // 同一ページ内アンカー(#jobs等)は個別にactive判定できないため、
-        // 「店舗管理」トップリンクだけを代表してハイライトする。
-        const isAnchor = l.href.includes("#");
+        const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
         return (
           <Link
             key={l.href}
             href={l.href}
-            className={`side-link${active && !isAnchor ? " active" : ""}`}
+            className={`side-link${active ? " active" : ""}`}
           >
             {l.label}
           </Link>
