@@ -101,7 +101,7 @@ export default async function StoreAnalyticsPage() {
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
         ← 店舗情報編集へ戻る
       </Link>
-      <h1 style={{ fontSize: 22, marginBottom: 16 }}>{store.name} の分析</h1>
+      <h1 style={{ fontSize: 22, marginBottom: 16 }}>{store.name} のアクセス統計</h1>
 
       <div
         style={{
