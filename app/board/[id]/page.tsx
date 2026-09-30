@@ -56,7 +56,7 @@ export default async function BoardPostPage({
 
   const { data: replies } = await supabase
     .from("board_replies")
-    .select("id, body, author_name, created_at")
+    .select("id, body, author_name, created_at, image_url")
     .eq("post_id", params.id)
     .eq("status", "visible")
     .order("created_at", { ascending: true });
@@ -161,7 +161,22 @@ export default async function BoardPostPage({
                   </button>
                 </form>
               </div>
-              <div style={{ fontSize: 13.5, marginTop: 2 }}>{r.body}</div>
+              <div style={{ fontSize: 13.5, marginTop: 2, whiteSpace: "pre-wrap" }}>{r.body}</div>
+              {r.image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={r.image_url}
+                  alt=""
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: 280,
+                    objectFit: "contain",
+                    borderRadius: 8,
+                    marginTop: 8,
+                    background: "var(--surface-2)",
+                  }}
+                />
+              )}
             </div>
           </div>
         ))}
@@ -169,7 +184,7 @@ export default async function BoardPostPage({
         {user ? (
           <div className="card" style={{ marginTop: 16 }}>
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
-            <form action={createReply}>
+            <form action={createReply} encType="multipart/form-data">
               <input type="hidden" name="postId" value={post.id} />
               <div className="field">
                 <span className="muted">お名前（未入力の場合は匿名）</span>
@@ -178,6 +193,10 @@ export default async function BoardPostPage({
               <div className="field">
                 <span className="muted">返信内容 *</span>
                 <textarea name="body" rows={3} required />
+              </div>
+              <div className="field">
+                <span className="muted">画像を添付（任意）</span>
+                <input type="file" name="image" accept="image/*" />
               </div>
               <button type="submit" className="btn primary">
                 送信
