@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createEvent, toggleEventStatus, updateEvent, deleteEvent } from "../events-actions";
 import { EVENT_CATEGORIES } from "@/lib/constants";
 
