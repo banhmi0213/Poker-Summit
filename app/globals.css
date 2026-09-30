@@ -1532,9 +1532,10 @@ th {
   max-width: 100%;
   padding: 2px 5px;
   border-radius: 5px;
-  background: rgba(255, 255, 255, 0.8);
+  background: transparent;
   font-size: clamp(7.5px, 1.25cqw, 11.5px);
   color: var(--ps-navy);
+  text-shadow: 0 1px 3px #fff, 0 -1px 3px #fff;
   line-height: 1.6;
 }
 /* Each region's prefecture list renders as explicit, pre-broken lines (see
