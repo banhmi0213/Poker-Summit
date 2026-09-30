@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "../jobs-actions";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
 import { storeHasJobsAddon } from "@/lib/store-addons";
