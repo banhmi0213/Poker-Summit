@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
+import { storeHasJobsAddon } from "@/lib/store-addons";
 
 async function getOwnedStoreId(storeId: string) {
   const supabase = await createClient();
@@ -23,6 +24,15 @@ async function getOwnedStoreId(storeId: string) {
 
   if (!store) {
     throw new Error("この店舗を編集する権限がありません。");
+  }
+
+  // 求人掲載アドオン契約がない店舗は、フォームを直接叩かれても操作でき
+  // ないようサーバー側でも弾く(2026/09/30)。
+  const hasAddon = await storeHasJobsAddon(supabase, storeId);
+  if (!hasAddon) {
+    throw new Error(
+      "求人機能は「求人掲載」アドオンのご契約が必要です。運営にお問い合わせください。"
+    );
   }
 
   return supabase;
