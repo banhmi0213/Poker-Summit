@@ -13,12 +13,16 @@ import { usePathname } from "next/navigation";
 // 増やしても管理対象のページ数が増えるわけではない。
 const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile", label: "店舗管理" },
-  { href: "/store/profile#jobs", label: "求人管理" },
-  { href: "/store/profile#coupons", label: "クーポン管理" },
-  { href: "/store/profile#events", label: "イベント管理" },
-  { href: "/store/profile#notices", label: "お知らせ管理" },
-  { href: "/store/profile#photos", label: "店舗写真" },
   { href: "/store/profile/analytics", label: "アクセス分析" },
+  { href: "/store/profile#jobs", label: "求人" },
+  { href: "/store/profile#coupons", label: "クーポン" },
+  { href: "/store/profile#events", label: "トーナメント・イベント" },
+  { href: "/store/profile#notices", label: "お知らせ" },
+  { href: "/store/profile#photos", label: "店舗写真" },
+  // LINEリッチメニュー側にある「プラン・アップグレード」と同じ導線を、
+  // LINEを開いていないPCブラウザからも使えるようにするため新設
+  // (2026/09/30)。実体は/store/profile内の申請フォームへのアンカー。
+  { href: "/store/profile#plan", label: "プラン・アップグレード" },
 ];
 
 export function StoreSidebar() {
