@@ -1226,30 +1226,39 @@ th {
   z-index: 15;
   left: 4.5%;
   top: 11%;
-  width: 30%;
+  width: 35%;
   color: var(--ps-navy);
 }
 .ps-region-hero__logo-script {
   font-family: "Allura", cursive;
-  font-size: clamp(18px, 1.7cqw, 28px);
+  font-size: clamp(26px, 3.4cqw, 48px);
   color: var(--ps-gold);
-  margin-bottom: 10px;
+  margin-bottom: 1px;
 }
 .ps-region-hero__headline {
   margin: 0 0 14px;
-  font-size: clamp(22px, 2.6cqw, 40px);
-  font-weight: 800;
-  line-height: 1.35;
+  font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(25px, 3.05cqw, 47px);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  line-height: 1.42;
   color: var(--ps-navy);
 }
+.ps-region-hero__headline span { display: block; white-space: nowrap; }
+.ps-region-hero__headline br { display: none; }
+.ps-region-hero__headline span:last-child {
+  margin-top: 0.3em;
+  font-size: 0.63em;
+  letter-spacing: 0;
+}
 .ps-region-hero__vertical-tagline {
-  margin-top: 18px;
-  font-size: clamp(16px, 1.9cqw, 30px);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1.35;
-  color: var(--ps-navy);
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95);
+  margin-top: 20px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(19px, 2.25cqw, 34px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.08;
+  color: rgba(7, 22, 56, 0.36);
 }
 
 .ps-region-hero__copy-right {
@@ -1263,13 +1272,17 @@ th {
 }
 .ps-region-hero__right-headline {
   margin: 0;
-  font-size: clamp(18px, 2cqw, 30px);
-  font-weight: 800;
-  line-height: 1.4;
+  font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  font-size: clamp(19px, 2.1cqw, 32px);
+  font-weight: 700;
+  line-height: 1.38;
+  letter-spacing: -0.04em;
 }
 .ps-region-hero__right-headline strong {
   color: var(--ps-gold);
-  font-size: 1.5em;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.2em;
+  font-weight: 400;
   margin: 0 2px;
 }
 .ps-region-hero__right-tagline {
@@ -1591,6 +1604,9 @@ th {
     margin: 14px 12px 0;
   }
   .ps-region-hero__vertical-tagline { display: none; }
+  .ps-region-hero__headline { font-size: clamp(24px, 6.5vw, 36px); }
+  .ps-region-hero__headline span { white-space: normal; }
+  .ps-region-hero__right-headline { font-size: clamp(20px, 5vw, 28px); }
   .ps-region-hero__right-tagline { color: var(--ps-gold); }
   .ps-region-hero__footer-script { display: none; }
 
