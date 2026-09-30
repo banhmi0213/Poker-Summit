@@ -92,15 +92,52 @@ export async function createReply(formData: FormData) {
     throw new Error("返信内容を入力してください。");
   }
 
-  const { error } = await supabase.from("board_replies").insert({
-    post_id: postId,
-    body,
-    author_name: authorName,
-    author_user_id: user?.id ?? null,
-  });
+  // 「サミット返信にも画像添付できるようにして」との指示により追加
+  // (2026/09/30)。createPost と同じ流れ: 添付があればバリデートし、
+  // 先に返信本体を作成してから、その画像を board-images バケットへ
+  // アップロードして image_url を更新する。
+  const image = formData.get("image");
+  if (image instanceof File && image.size > 0) {
+    if (!image.type.startsWith("image/")) {
+      throw new Error("画像ファイルを選択してください。");
+    }
+    if (image.size > MAX_IMAGE_BYTES) {
+      throw new Error("画像のサイズが大きすぎます（8MBまで）。");
+    }
+  }
+
+  const { data: reply, error } = await supabase
+    .from("board_replies")
+    .insert({
+      post_id: postId,
+      body,
+      author_name: authorName,
+      author_user_id: user?.id ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (image instanceof File && image.size > 0 && reply) {
+    // 投稿画像と同じバケット・同じ投稿フォルダ配下に置くことで、既存の
+    // ストレージ削除ポリシー(投稿フォルダ単位で判定)をそのまま使えるように
+    // している。
+    const path = `${postId}/replies/${randomUUID()}.${extFromFile(image)}`;
+    const { error: uploadError } = await supabase.storage
+      .from(BOARD_IMAGES_BUCKET)
+      .upload(path, image, { contentType: image.type, upsert: false });
+
+    if (!uploadError) {
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(BOARD_IMAGES_BUCKET).getPublicUrl(path);
+      await supabase.from("board_replies").update({ image_url: publicUrl }).eq("id", reply.id);
+    }
+    // アップロードに失敗しても返信自体は作成済みなので、画像なしでそのまま
+    // 進める(返信全体を失敗させない)。
   }
 
   revalidatePath(`/board/${postId}`);
