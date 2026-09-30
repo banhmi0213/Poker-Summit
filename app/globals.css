@@ -1467,14 +1467,6 @@ th {
   height: 100%;
 }
 
-.ps-region-leader {
-  stroke: #c9a45c;
-  stroke-width: 1.4;
-  stroke-dasharray: 4, 4;
-  fill: none;
-  opacity: 0.7;
-}
-
 /* .ps-region-group wraps ALL of one region's real prefecture <g>s in a
    single <a>. Hover/focus/tap ANYWHERE inside it (i.e. on any one
    prefecture) lights up the WHOLE region, because :hover/:focus-visible/
