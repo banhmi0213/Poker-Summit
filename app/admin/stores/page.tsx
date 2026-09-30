@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { HoursInput } from "@/app/hours-input";
 import { createClient } from "@/lib/supabase/server";
 import {
   setStoreStatus,
@@ -269,7 +270,7 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">営業時間</span>
-            <input type="text" name="hours" />
+            <HoursInput initialValue="" />
           </div>
           <div className="field">
             <span className="muted">紹介文</span>
