@@ -91,10 +91,27 @@ const HERO_COPY = {
   footerScript: ["Good Game", "Good People", "A Brighter Tomorrow"],
 };
 
+// Display priority only. Region membership and search links still come from PREF_REGION.
+const HERO_PREF_ORDER: Record<string, string[]> = {
+  "北海道・東北": ["北海道", "宮城県", "福島県", "青森県", "岩手県", "秋田県", "山形県"],
+  "関東": ["東京都", "神奈川県", "埼玉県", "千葉県", "茨城県", "栃木県", "群馬県"],
+  "中部": ["愛知県", "静岡県", "長野県", "新潟県", "岐阜県", "石川県", "富山県", "福井県", "山梨県", "三重県"],
+  "近畿": ["大阪府", "京都府", "兵庫県", "奈良県", "滋賀県", "和歌山県", "三重県"],
+  "中国": ["広島県", "岡山県", "山口県", "鳥取県", "島根県"],
+  "四国": ["香川県", "愛媛県", "徳島県", "高知県"],
+  "九州・沖縄": ["福岡県", "沖縄県", "熊本県", "長崎県", "大分県", "鹿児島県", "佐賀県", "宮崎県"],
+};
+
 function prefecturesFor(region: string): string[] {
-  return Object.entries(PREF_REGION)
+  const prefs = Object.entries(PREF_REGION)
     .filter(([, regions]) => regions.includes(region))
     .map(([prefecture]) => prefecture);
+  const order = HERO_PREF_ORDER[region] ?? [];
+  return prefs.sort((a, b) => {
+    const ai = order.indexOf(a);
+    const bi = order.indexOf(b);
+    return (ai < 0 ? Infinity : ai) - (bi < 0 ? Infinity : bi);
+  });
 }
 
 const ICON_PROPS = {
@@ -565,7 +582,7 @@ export function PokerRegionHero({
               style={{ left: `${pos.leftPct}%`, top: `${pos.topPct}%` }}
             >
               <span className="ps-region-label__pill">
-                {region} <span aria-hidden="true">→</span>
+                {region}
               </span>
               <span className="ps-region-label__prefs">
                 {chunkPrefs(prefs, PREF_LINE_BREAKS[region] ?? [3]).map((line, i) => (
