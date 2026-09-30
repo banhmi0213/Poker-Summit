@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createMenuItem, updateMenuItem, toggleMenuItemStatus, deleteMenuItem } from "../menu-actions";
 
 // 店舗独自の料金・メニュー(参加費・レイト・ドリンク等)を店舗オーナーが
