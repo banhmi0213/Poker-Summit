@@ -1346,20 +1346,13 @@ th {
 .ps-region-hero__footer-script {
   position: absolute;
   z-index: 15;
-  right: 2%;
+  right: 4%;
   bottom: 5%;
-  width: 23cqw;
-  font-family: "Allura", cursive;
-  font-size: clamp(19px, 2.45cqw, 36px);
-  line-height: 1.15;
-  color: var(--ps-gold);
-  text-align: left;
-  white-space: nowrap;
-  transform: rotate(-10deg);
-  transform-origin: left bottom;
+  display: block;
+  width: 21cqw;
+  max-width: none;
+  height: auto;
 }
-.ps-region-hero__footer-script div:nth-child(2) { margin-left: 1.5cqw; }
-.ps-region-hero__footer-script div:nth-child(3) { margin-left: 3cqw; }
 
 /* --- Existing /stores search form, positioned inside the panel. On desktop
    all six visible controls, including current-location search, share one row. --- */
@@ -1561,17 +1554,19 @@ th {
 .ps-region-stats {
   position: absolute;
   z-index: 21;
-  left: 38%;
+  left: 50%;
+  transform: translateX(-50%);
   bottom: 2%;
   width: 41%;
   min-height: 11.8%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-items: stretch;
-  border: 1px solid rgba(200, 132, 20, 0.2);
+  border: 0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 6px 24px rgba(7, 22, 56, 0.08);
+  background: transparent;
+  box-shadow: none;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.95);
 }
 
 .ps-region-stat {
@@ -1684,6 +1679,7 @@ th {
     bottom: auto;
     width: auto;
     margin: 12px;
+    transform: none;
     grid-template-columns: repeat(2, 1fr);
     min-height: 0;
   }
