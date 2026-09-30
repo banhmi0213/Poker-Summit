@@ -95,6 +95,14 @@ export const PREF_REGION: Record<string, string[]> = {
   沖縄県: ["九州・沖縄"],
 };
 
+// 都道府県から地方を1つ決める(店舗側で都道府県が変更された際に、総合管理
+// 画面のstores.regionを自動追従させるために使う。三重県のように地方が
+// 複数ありうる県はPREF_REGIONの先頭(近畿)を代表値として採用する。2026/09/30)。
+export function primaryRegionForPref(pref: string | null | undefined): string | null {
+  if (!pref) return null;
+  return PREF_REGION[pref]?.[0] ?? null;
+}
+
 // Optional display order override for a region's prefecture list (used by
 // the /stores "エリア" dropdown). A region not listed here just falls back to
 // PREF_OPTIONS' natural (north-to-south) order.

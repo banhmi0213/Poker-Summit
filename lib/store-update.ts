@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { geocodeAddress } from "@/lib/geocode";
+import { primaryRegionForPref } from "@/lib/constants";
 
 // Loose on purpose: this module is called with both the cookie-scoped
 // server client (web portal, RLS-enforced) and the service-role client
@@ -278,6 +279,15 @@ export async function approveStoreChangeRequest(
     );
     updatePayload.lat = geocoded?.lat ?? null;
     updatePayload.lng = geocoded?.lng ?? null;
+
+    // 店舗側(Web/LINE)で都道府県が変更された場合、総合管理画面の「地方」も
+    // 都道府県から自動で連動させる(2026/09/30、手動での入れ忘れ・食い違いを
+    // 防ぐため)。三重県のように地方が2つありうる県はPREF_REGIONの代表値
+    // (近畿)を採用する。管理画面から手動で個別の地方に直したい場合は、
+    // 従来通り店舗編集画面(/admin/stores/[id]/edit)で上書きできる。
+    updatePayload.region = primaryRegionForPref(
+      (proposed.pref as string | undefined) ?? null
+    );
   }
 
   const columns = Object.keys(updatePayload);
