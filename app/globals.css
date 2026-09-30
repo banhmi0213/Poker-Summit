@@ -1225,8 +1225,8 @@ th {
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1.35;
-  color: rgba(255, 255, 255, 0.88);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: var(--ps-navy);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95);
 }
 
 .ps-region-hero__copy-right {
@@ -1269,11 +1269,8 @@ th {
   text-align: right;
 }
 
-/* --- Search (the site's existing /stores search form, unstyled logic —
-   this only positions it inside the panel). Fixed one-row layout: the
-   approved comp shows キーワード|都道府県|エリア|店舗タイプ|検索 as a
-   single edge-to-edge bar, not a narrow centered card, and the button must
-   never wrap to a second row. --- */
+/* --- Existing /stores search form, positioned inside the panel. On desktop
+   all six visible controls, including current-location search, share one row. --- */
 .ps-region-hero__search {
   position: absolute;
   z-index: 20;
@@ -1282,30 +1279,6 @@ th {
   right: 1.8%;
 }
 .ps-region-hero__search > * { width: 100%; }
-/* The search row has no background of its own now, so Hokkaido's northern
-   tip (the map fills the panel with no top margin) shows through right
-   behind the エリア field. Map/labels/leader-lines/stats stay exactly as
-   they are — this only softens that one overlapping sliver with a blur so
-   it visually disappears. A solid-color patch would need to match the
-   hero background exactly, but that's now a photo, not a flat color, so a
-   backdrop blur is used instead: it always blends with whatever is behind
-   it (photo, sky, map). pointer-events: none keeps clicks passing straight
-   through to the SVG underneath, so the region's click target and data
-   are unaffected. */
-.ps-region-hero__search::before {
-  content: "";
-  position: absolute;
-  left: 57%;
-  width: 27%;
-  top: 0;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.001);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  z-index: -1;
-  pointer-events: none;
-}
-
 /* Single-row grid is a PC-only layout (the approved comp's mobile
    treatment keeps the original wrapping card — see the max-width:767px
    block below, which leaves .search-box's base flex-wrap rules in place). */
@@ -1315,7 +1288,10 @@ th {
     width: 100%;
     margin: 0;
     display: grid;
-    grid-template-columns: 1.35fr 1fr 1fr 1fr auto;
+    /* Keyword, prefecture, area, category, location and submit. The location
+       control was added after the original five-column layout and otherwise
+       landed on a second row over the hero copy. */
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)) minmax(0, 1.25fr) auto;
     align-items: stretch;
     gap: 0.6cqw;
     padding: 0.7cqw;
@@ -1335,6 +1311,13 @@ th {
     height: 100%;
     padding: 0.55cqw 1.1cqw;
     font-size: clamp(11px, 1.05cqw, 14px);
+  }
+  .ps-region-hero__search .search-box > div {
+    min-width: 0;
+  }
+  .ps-region-hero__search .search-box > div button {
+    padding-inline: 0.35cqw;
+    font-size: clamp(10px, 0.95cqw, 13px) !important;
   }
 }
 
@@ -1438,6 +1421,11 @@ th {
 .ps-region-label__prefs {
   display: block;
   margin-top: 0.5cqw;
+  width: max-content;
+  max-width: 100%;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.8);
   font-size: clamp(7.5px, 1.25cqw, 11.5px);
   color: var(--ps-navy);
   line-height: 1.6;
