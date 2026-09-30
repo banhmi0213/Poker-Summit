@@ -571,6 +571,9 @@ export function PokerRegionHero({
       </svg>
 
       <nav className="ps-region-hero__labels" aria-label="地方から店舗を探す">
+        <span className="ps-okinawa-inset" aria-hidden="true">
+          <span className="ps-okinawa-inset__title">沖縄</span>
+        </span>
         {REGIONS.map((region) => {
           const prefs = prefecturesFor(region);
           const pos = REGION_LABEL[region];
