@@ -1260,13 +1260,11 @@ th {
   color: var(--ps-navy);
 }
 .ps-region-hero__logo-script {
-  font-family: "Allura", cursive;
-  font-size: clamp(38px, 4.8cqw, 70px);
-  line-height: 1.1;
-  color: var(--ps-gold);
-  margin-bottom: 2.4cqw;
-  transform: rotate(-8deg);
-  transform-origin: left center;
+  display: block;
+  width: 35cqw;
+  max-width: none;
+  height: auto;
+  margin-bottom: 0.7cqw;
 }
 .ps-region-hero__headline {
   margin: 0 0 14px;
