@@ -22,7 +22,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
       <Link href="/signup" className="portal-cta">
         会員登録
       </Link>
-      <Link href="/login" className="btn portal-secondary-btn">
+      <Link href="/login" className="portal-cta">
         ログイン
       </Link>
     </>
