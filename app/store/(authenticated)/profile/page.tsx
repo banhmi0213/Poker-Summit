@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { HoursInput } from "@/app/hours-input";
+import { AddressFields } from "./address-fields";
 import { updateStoreProfile } from "./actions";
 import { uploadStorePhoto, deleteStorePhoto } from "./photos-actions";
 import {
@@ -183,57 +184,13 @@ export default async function StoreProfilePage() {
                   ))}
                 </select>
               </div>
-              <div className="field">
-                <span className="muted">都道府県</span>
-                {pendingAddressRequest && (
-                  // A disabled <select> is excluded from FormData entirely,
-                  // so carry the unchanged current value through a hidden
-                  // field instead — otherwise the action would see pref
-                  // arrive as "" and mistake that for an intentional clear.
-                  <input type="hidden" name="pref" value={store.pref ?? ""} />
-                )}
-                <select
-                  name={pendingAddressRequest ? undefined : "pref"}
-                  defaultValue={store.pref ?? ""}
-                  disabled={Boolean(pendingAddressRequest)}
-                >
-                  <option value="">未設定</option>
-                  {PREF_OPTIONS.map((p) => (
-                    <option key={p} value={p}>
-                      {p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <span className="muted">市区町村</span>
-                <input
-                  type="text"
-                  name="city"
-                  defaultValue={store.city ?? ""}
-                  readOnly={Boolean(pendingAddressRequest)}
-                  style={pendingAddressRequest ? { background: "var(--surface-2)" } : undefined}
-                />
-              </div>
-              <div className="field">
-                <span className="muted">住所</span>
-                <input
-                  type="text"
-                  name="address"
-                  defaultValue={store.address ?? ""}
-                  readOnly={Boolean(pendingAddressRequest)}
-                  style={pendingAddressRequest ? { background: "var(--surface-2)" } : undefined}
-                />
-                {pendingAddressRequest ? (
-                  <span className="muted" style={{ fontSize: 11.5 }}>
-                    ⏳ 新しい住所への変更は運営の承認待ちです。承認されるまでこれらの欄は編集できません。
-                  </span>
-                ) : (
-                  <span className="muted" style={{ fontSize: 11.5 }}>
-                    住所の変更は地図・現在地検索・ナビに影響するため、保存後は運営の承認を経てから反映されます(反映時に座標も自動取得されます)。
-                  </span>
-                )}
-              </div>
+              <AddressFields
+                prefOptions={PREF_OPTIONS}
+                initialPref={store.pref ?? ""}
+                initialCity={store.city ?? ""}
+                initialAddress={store.address ?? ""}
+                disabled={Boolean(pendingAddressRequest)}
+              />
               <div className="field">
                 <span className="muted">電話番号</span>
                 <input type="text" name="tel" defaultValue={store.tel ?? ""} />
