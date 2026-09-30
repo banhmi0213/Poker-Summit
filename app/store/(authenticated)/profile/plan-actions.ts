@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 
 // 店舗オーナーが自分のプランを直接fincode決済まで変更する仕組みはまだ無い
 // ため(store_contractsのINSERT/UPDATEは運営のみ許可)、まずは「このプラン
