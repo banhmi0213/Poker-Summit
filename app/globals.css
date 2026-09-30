@@ -1458,7 +1458,7 @@ th {
 .ps-reference-map-hit {
   fill: rgba(255, 255, 255, 0.001);
   stroke: none;
-  pointer-events: visiblePainted;
+  pointer-events: all;
   transition: fill 160ms ease, filter 160ms ease;
 }
 .ps-region-group:hover .ps-reference-map-hit,
