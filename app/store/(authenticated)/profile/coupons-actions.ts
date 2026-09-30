@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
 
 async function getOwnedStoreClient(storeId: string) {
   const supabase = await createClient();
@@ -38,9 +39,18 @@ export async function createCoupon(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  const bannerFile = formData.get("bannerImage");
 
   if (!title) {
     throw new Error("クーポンのタイトルを入力してください。");
+  }
+
+  let bannerImageUrl: string | null = null;
+  let bannerStoragePath: string | null = null;
+  if (bannerFile instanceof File && bannerFile.size > 0) {
+    const uploaded = await uploadBannerImage(supabase, storeId, "coupons", bannerFile);
+    bannerImageUrl = uploaded.url;
+    bannerStoragePath = uploaded.path;
   }
 
   const { error } = await supabase.from("coupons").insert({
@@ -51,13 +61,19 @@ export async function createCoupon(formData: FormData) {
     code: code || null,
     valid_until: validUntil || null,
     usage_limit: usageLimit,
+    banner_image_url: bannerImageUrl,
+    banner_storage_path: bannerStoragePath,
   });
 
   if (error) {
+    if (bannerStoragePath) {
+      await removeBannerImage(supabase, bannerStoragePath);
+    }
     throw new Error(error.message);
   }
 
   revalidatePath("/store/profile");
+  revalidatePath("/store/profile/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -75,6 +91,7 @@ export async function deactivateCoupon(couponId: string, storeId: string) {
   }
 
   revalidatePath("/store/profile");
+  revalidatePath("/store/profile/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -90,21 +107,45 @@ export async function updateCoupon(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  const bannerFile = formData.get("bannerImage");
+  const removeBanner = formData.get("removeBanner") === "on";
 
   if (!title) {
     throw new Error("クーポンのタイトルを入力してください。");
   }
 
+  const { data: current } = await supabase
+    .from("coupons")
+    .select("banner_storage_path")
+    .eq("id", couponId)
+    .eq("store_id", storeId)
+    .maybeSingle();
+
+  const updates: Record<string, unknown> = {
+    title,
+    discount: discount || null,
+    description: description || null,
+    code: code || null,
+    valid_until: validUntil || null,
+    usage_limit: usageLimit,
+  };
+
+  let oldPathToRemove: string | null = null;
+
+  if (bannerFile instanceof File && bannerFile.size > 0) {
+    const uploaded = await uploadBannerImage(supabase, storeId, "coupons", bannerFile);
+    updates.banner_image_url = uploaded.url;
+    updates.banner_storage_path = uploaded.path;
+    oldPathToRemove = current?.banner_storage_path ?? null;
+  } else if (removeBanner) {
+    updates.banner_image_url = null;
+    updates.banner_storage_path = null;
+    oldPathToRemove = current?.banner_storage_path ?? null;
+  }
+
   const { error } = await supabase
     .from("coupons")
-    .update({
-      title,
-      discount: discount || null,
-      description: description || null,
-      code: code || null,
-      valid_until: validUntil || null,
-      usage_limit: usageLimit,
-    })
+    .update(updates)
     .eq("id", couponId)
     .eq("store_id", storeId);
 
@@ -112,12 +153,24 @@ export async function updateCoupon(formData: FormData) {
     throw new Error(error.message);
   }
 
+  if (oldPathToRemove) {
+    await removeBannerImage(supabase, oldPathToRemove);
+  }
+
   revalidatePath("/store/profile");
+  revalidatePath("/store/profile/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
 export async function deleteCoupon(couponId: string, storeId: string) {
   const supabase = await getOwnedStoreClient(storeId);
+
+  const { data: current } = await supabase
+    .from("coupons")
+    .select("banner_storage_path")
+    .eq("id", couponId)
+    .eq("store_id", storeId)
+    .maybeSingle();
 
   const { error } = await supabase
     .from("coupons")
@@ -129,6 +182,11 @@ export async function deleteCoupon(couponId: string, storeId: string) {
     throw new Error(error.message);
   }
 
+  if (current?.banner_storage_path) {
+    await removeBannerImage(supabase, current.banner_storage_path);
+  }
+
   revalidatePath("/store/profile");
+  revalidatePath("/store/profile/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
