@@ -9,13 +9,28 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
 ];
 
 export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
-  const memberBtn = userEmail ? (
+  // 会員登録・会員ログインは別々の窓(ボタン)に分ける。店舗ログインは会員と
+  // 別のアカウント体系(ログインID/パスワード)なので、常に別リンクとして
+  // /store/loginへ飛ばす(以前は/loginへの誤リンクになっており、店舗ログイン
+  // ボタンから会員ログイン画面に飛んでしまっていた不具合を修正 2026/09/30)。
+  const memberLinks = userEmail ? (
     <Link href="/mypage" className="portal-cta">
       マイページ
     </Link>
   ) : (
-    <Link href="/signup" className="portal-cta">
-      会員登録/ログイン
+    <>
+      <Link href="/signup" className="portal-cta">
+        会員登録
+      </Link>
+      <Link href="/login" className="plink">
+        ログイン
+      </Link>
+    </>
+  );
+
+  const storeLoginLink = (
+    <Link href="/store/login" className="plink">
+      店舗ログイン
     </Link>
   );
 
@@ -41,10 +56,8 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
             お問い合わせ
           </Link>
         </div>
-        {memberBtn}
-<Link href="/login" className="plink">
-            店舗ログイン
-          </Link>
+        {memberLinks}
+        {storeLoginLink}
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
           ☰
         </label>
@@ -59,10 +72,8 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
         <Link href="/contact" className="plink">
           お問い合わせ
         </Link>
-        {memberBtn}
-        <Link href="/login" className="plink">
-            店舗ログイン
-          </Link>
+        {memberLinks}
+        {storeLoginLink}
       </div>
     </nav>
   );
