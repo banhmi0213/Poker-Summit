@@ -227,7 +227,10 @@ textarea {
   flex-shrink: 0;
 }
 
-.portal-secondary-btn {
+/* .btn(後方で定義)と同じ詳細度(単一クラス)だと、ソース順で.btnが
+   勝ってtransparent背景に上書きされてしまうため、.btn.portal-secondary-btn
+   の複合セレクタにして確実に勝たせる(2026/09/30、色が付かない不具合を修正)。 */
+.btn.portal-secondary-btn {
   white-space: nowrap;
   flex-shrink: 0;
   background: var(--accent-soft);
@@ -235,9 +238,9 @@ textarea {
   color: var(--accent-text);
 }
 
-.portal-secondary-btn:hover {
+.btn.portal-secondary-btn:hover {
   background: var(--accent-soft);
-  filter: brightness(0.97);
+  filter: brightness(0.94);
 }
 
 .card {
