@@ -2,27 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { STORE_LOGIN_ID_DOMAIN } from "@/lib/constants";
 
+// 会員・運営(admin_users)向けの通常ログイン。実メールアドレスでのログイン
+// のみを扱う。店舗管理のログインID("store-xxxxxxxx"形式・パスワード)は
+// 会員ログインと混ざって分かりにくいとの指摘(2026/09/30)を受けて、
+// 専用の店舗ログイン画面(/store/login, app/store/login/actions.ts)に
+// 分離した。
 export async function signIn(formData: FormData) {
-  const rawInput = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
-
-  // 店舗管理画面のログインIDは "store-xxxxxxxx" 形式(@を含まない)。
-  // 発行時(lib/store-provision.ts / app/admin/stores/actions.ts)は
-  // Supabase Auth上のメールアドレスとして "loginId@login.poker-summit.jp"
-  // で登録しているため、入力に@が含まれない(=店舗ログインID)場合はここで
-  // 同じ形式に変換してからサインインする。通常会員・管理者は実メール
-  // アドレス(@を含む)でログインするのでそのまま使う。(2026/09/30、
-  // ログイン画面には「メールアドレス」欄しかなく店舗ログインIDをそのまま
-  // 入力してもサインインできなかった不具合の修正)
-  // DB側(admin_issue_store_login/system_issue_store_login)はloginIdを
-  // lower(trim())してからメールアドレスを組み立てて登録しているため、
-  // ここでも同じ正規化をして一致させる。
-  const email = rawInput.includes("@")
-    ? rawInput
-    : `${rawInput.toLowerCase()}@${STORE_LOGIN_ID_DOMAIN}`;
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({

@@ -21,8 +21,8 @@ export default function LoginPage({
         <form action={signIn}>
           <input type="hidden" name="next" value={next} />
           <div className="field">
-            <span className="muted">メールアドレス（店舗管理の方はログインID）</span>
-            <input type="text" name="email" required autoComplete="username" />
+            <span className="muted">メールアドレス</span>
+            <input type="email" name="email" required autoComplete="email" />
           </div>
           <div className="field">
             <span className="muted">パスワード</span>
@@ -39,6 +39,9 @@ export default function LoginPage({
         </form>
         <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
           会員登録がまだの方は<Link href="/signup">こちらから登録</Link>
+        </p>
+        <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
+          店舗の方は<Link href="/store/login">こちらから店舗管理ログイン</Link>
         </p>
       </div>
     </div>
