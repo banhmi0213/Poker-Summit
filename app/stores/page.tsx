@@ -151,6 +151,20 @@ export default async function StoresPage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
+  // 「❤マークでお気に入りされてる数がわかるように」との要望により、
+  // 店舗カードの♥ボタンに総お気に入り数を表示する(2026/09/30)。
+  const favoriteStoreCounts: Record<string, number> = {};
+  const allStoreIds = (stores ?? []).map((s) => s.id);
+  if (allStoreIds.length) {
+    const { data: favCountRows } = await supabase
+      .from("favorite_stores")
+      .select("store_id")
+      .in("store_id", allStoreIds);
+    favCountRows?.forEach((r) => {
+      favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
+    });
+  }
+
   // When arriving via "現在地から探す", sort by distance from the visitor's
   // current location instead of the query's default newest-first order.
   // Stores without geocoded coordinates yet can't be placed on that scale,
@@ -314,6 +328,7 @@ export default async function StoresPage({
               key={s.id}
               store={s}
               isFavorite={favoriteStoreIds.has(s.id)}
+              favoriteCount={favoriteStoreCounts[s.id] ?? 0}
               distanceKm={s.distanceKm}
               favoriteAction={async () => {
                 "use server";
