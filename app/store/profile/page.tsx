@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { HoursInput } from "@/app/hours-input";
 import { updateStoreProfile } from "./actions";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "./jobs-actions";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "./coupons-actions";
@@ -266,11 +267,7 @@ export default async function StoreProfilePage() {
                 </div>
                 <div className="field">
                   <span className="muted">営業時間</span>
-                  <input
-                    type="text"
-                    name="hours"
-                    defaultValue={store.hours ?? ""}
-                  />
+                  <HoursInput initialValue={store.hours} />
                 </div>
                 <div className="field">
                   <span className="muted">LINE公式アカウントURL</span>
