@@ -51,6 +51,7 @@ export default async function StoreProfilePage() {
   let totalCouponUses = 0;
   let favoriteCount = 0;
   let totalViews = 0;
+  let jobFavoriteCount = 0;
 
   if (store) {
     const [
@@ -59,6 +60,7 @@ export default async function StoreProfilePage() {
       { data: couponsForStats },
       { count: favCount },
       { count: viewCount },
+      { data: storeJobIds },
     ] = await Promise.all([
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("store_id", store.id),
       supabase
@@ -75,6 +77,7 @@ export default async function StoreProfilePage() {
         .from("page_views")
         .select("*", { count: "exact", head: true })
         .eq("store_id", store.id),
+      supabase.from("jobs").select("id").eq("store_id", store.id),
     ]);
 
     totalJobCount = totalJobs ?? 0;
@@ -83,6 +86,17 @@ export default async function StoreProfilePage() {
     totalCouponUses = (couponsForStats ?? []).reduce((sum, c) => sum + (c.used_count ?? 0), 0);
     favoriteCount = favCount ?? 0;
     totalViews = viewCount ?? 0;
+
+    // 「求人のお気に入り数も店舗管理画面でわかるように」との要望により
+    // 追加(2026/09/30)。この店舗の全求人を通算したお気に入り数。
+    const jobIdList = (storeJobIds ?? []).map((j) => j.id);
+    if (jobIdList.length) {
+      const { count: jobFavCount } = await supabase
+        .from("favorite_jobs")
+        .select("*", { count: "exact", head: true })
+        .in("job_id", jobIdList);
+      jobFavoriteCount = jobFavCount ?? 0;
+    }
   }
 
   return (
@@ -128,6 +142,10 @@ export default async function StoreProfilePage() {
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>♥ {favoriteCount}</div>
               <div className="muted small">お気に入り数</div>
+            </div>
+            <div className="card" style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>★ {jobFavoriteCount}</div>
+              <div className="muted small">求人のお気に入り数（全求人合計）</div>
             </div>
           </div>
 
