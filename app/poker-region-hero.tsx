@@ -32,7 +32,7 @@ const REGION_CLASS: Record<string, string> = {
 // Region tabs stay beside their matching colors on the map.
 const REGION_LABEL: Record<string, { leftPct: number; topPct: number }> = {
   "北海道・東北": { leftPct: 70.0, topPct: 15.0 },
-  "関東": { leftPct: 61.5, topPct: 52.0 },
+  "関東": { leftPct: 61.5, topPct: 61.5 },
   "中部": { leftPct: 43.0, topPct: 42.5 },
   "近畿": { leftPct: 48.2, topPct: 72.5 },
   "中国": { leftPct: 32.0, topPct: 56.0 },
