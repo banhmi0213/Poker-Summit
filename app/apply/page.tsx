@@ -1,5 +1,5 @@
 import { submitApplication, startPaidApplication } from "./actions";
-import { CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
+import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ApplyPage({
@@ -108,7 +108,7 @@ export default async function ApplyPage({
             <span className="muted">カテゴリ</span>
             <select name="category" defaultValue="">
               <option value="">選択してください</option>
-              {CATEGORY_OPTIONS.map((c) => (
+              {APPLY_CATEGORY_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
