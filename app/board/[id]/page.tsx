@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createReply, reportPost, reportReply } from "../actions";
 import { PortalHeader } from "@/app/portal-header";
@@ -42,6 +42,13 @@ export default async function BoardPostPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // スレッド一覧(/board)は誰でも見れるが、スレッド詳細(本文・コメント)の
+  // 閲覧は会員登録必須にする(2026/10、「サミット観覧には会員登録が必要」
+  // との指示)。未ログインならここでログイン画面へ誘導する。
+  if (!user) {
+    redirect(`/login?next=/board/${params.id}`);
+  }
 
   const { data: post } = await supabase
     .from("board_posts")
@@ -181,44 +188,30 @@ export default async function BoardPostPage({
           </div>
         ))}
 
-        {user ? (
-          <div className="card" style={{ marginTop: 16 }}>
-            <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
-            <form action={createReply} encType="multipart/form-data">
-              <input type="hidden" name="postId" value={post.id} />
-              <div className="field">
-                <span className="muted">お名前（未入力の場合は匿名）</span>
-                <input type="text" name="authorName" placeholder="匿名" />
-              </div>
-              <div className="field">
-                <span className="muted">返信内容 *</span>
-                <textarea name="body" rows={3} required />
-              </div>
-              <div className="field">
-                <span className="muted">画像を添付（任意）</span>
-                <input type="file" name="image" accept="image/*" />
-              </div>
-              <button type="submit" className="btn primary">
-                送信
-              </button>
-              <p className="muted small" style={{ marginTop: 8 }}>
-                ⚠️ 不適切なコメントは運営者によって削除される場合があります。
-              </p>
-            </form>
-          </div>
-        ) : (
-          <div className="card" style={{ marginTop: 16, textAlign: "center", padding: 20 }}>
-            <p style={{ fontWeight: 700, marginBottom: 4 }}>
-              コメントには会員登録（無料）が必要です
+        <div className="card" style={{ marginTop: 16 }}>
+          <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
+          <form action={createReply} encType="multipart/form-data">
+            <input type="hidden" name="postId" value={post.id} />
+            <div className="field">
+              <span className="muted">お名前（未入力の場合は匿名）</span>
+              <input type="text" name="authorName" placeholder="匿名" />
+            </div>
+            <div className="field">
+              <span className="muted">返信内容 *</span>
+              <textarea name="body" rows={3} required />
+            </div>
+            <div className="field">
+              <span className="muted">画像を添付（任意）</span>
+              <input type="file" name="image" accept="image/*" />
+            </div>
+            <button type="submit" className="btn primary">
+              送信
+            </button>
+            <p className="muted small" style={{ marginTop: 8 }}>
+              ⚠️ 不適切なコメントは運営者によって削除される場合があります。
             </p>
-            <p className="muted small" style={{ marginBottom: 14 }}>
-              会員登録すると、スレッドへの投稿・コメントのほか、お気に入り登録・求人応募・クーポン利用・イベント参加登録もできるようになります。
-            </p>
-            <Link href="/signup" className="btn primary">
-              ログイン / 会員登録（無料）
-            </Link>
-          </div>
-        )}
+          </form>
+        </div>
       </div>
       <PortalFooter />
       <BottomTabs active="board" />
