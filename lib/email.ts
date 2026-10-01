@@ -9,7 +9,7 @@
 // sendStoreCredentialsEmail()のコメント参照)。
 // ============================================================================
 
-const FROM_ADDRESS = "Poker Summit <no-reply@pokersummit.jp>";
+const FROM_ADDRESS = "Poker Summit <info@pokersummit.jp>";
 
 function getResendApiKey(): string | null {
   return process.env.RESEND_API_KEY || null;
@@ -95,4 +95,31 @@ await sendEmail({
   subject: "【Poker Summit】店舗管理アカウント発行のお知らせ",
   text,
 });
+}
+
+// ---------------------------------------------------------------------------
+// 管理画面からの店舗への一斉メール配信(2026/10/01追加)
+//
+// 宛先ごとにtry/catchし、一部の宛先への送信失敗が他の宛先への送信を止めない
+// ようにする(1通のResend API呼び出しにつき宛先1件。失敗した宛先だけを
+// 呼び出し元(admin/stores/bulk-email)に返し、画面に結果を表示する)。
+// ---------------------------------------------------------------------------
+export async function sendBulkEmail(params: {
+  recipients: string[];
+  subject: string;
+  text: string;
+}): Promise<{ sent: string[]; failed: { to: string; error: string }[] }> {
+  const sent: string[] = [];
+  const failed: { to: string; error: string }[] = [];
+
+  for (const to of params.recipients) {
+    try {
+      await sendEmail({ to, subject: params.subject, text: params.text });
+      sent.push(to);
+    } catch (e) {
+      failed.push({ to, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  return { sent, failed };
 }
