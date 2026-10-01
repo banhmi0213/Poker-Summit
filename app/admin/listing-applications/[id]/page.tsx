@@ -44,7 +44,7 @@ export default async function AdminListingApplicationDetailPage({
         <table>
           <tbody>
             <tr>
-              <th style={{ width: 140 }}>会社名・屋号</th>
+              <th style={{ width: 140 }}>店舗名・会社名</th>
               <td>{a.company_name}</td>
             </tr>
             <tr>
