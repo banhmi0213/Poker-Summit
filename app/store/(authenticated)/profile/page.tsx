@@ -3,6 +3,7 @@ import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
 import { updateStoreProfile } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
+import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
 import { PhotoGallery } from "./photo-gallery";
 import {
   STORE_STATUS_LABEL,
@@ -153,6 +154,68 @@ export default async function StoreProfilePage() {
           </div>
 
           <div className="card" id="profile-info" style={{ scrollMarginTop: 20 }}>
+            <div style={{ marginBottom: 20 }}>
+              <span className="muted" style={{ display: "block", marginBottom: 8 }}>
+                ロゴ画像（店舗カードのピンク帯に表示されます）
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                {store.logo_url ? (
+                  <img
+                    src={store.logo_url}
+                    alt=""
+                    style={{
+                      width: 88,
+                      height: 88,
+                      objectFit: "cover",
+                      borderRadius: 10,
+                      border: "1px solid var(--border-strong)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 88,
+                      height: 88,
+                      borderRadius: 10,
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border-strong)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      textAlign: "center",
+                      padding: 4,
+                    }}
+                    className="muted"
+                  >
+                    未設定
+                  </div>
+                )}
+                <form
+                  action={uploadStoreLogo}
+                  encType="multipart/form-data"
+                  style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+                >
+                  <input type="hidden" name="storeId" value={store.id} />
+                  <input type="file" name="logo" accept="image/*" required />
+                  <button type="submit" className="btn">
+                    {store.logo_url ? "変更する" : "アップロードする"}
+                  </button>
+                </form>
+                {store.logo_url && (
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deleteStoreLogo(store.id);
+                    }}
+                  >
+                    <button type="submit" className="btn">
+                      削除
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
             <form action={updateStoreProfile}>
               <input type="hidden" name="storeId" value={store.id} />
               <div className="field">
