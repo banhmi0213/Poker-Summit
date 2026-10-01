@@ -24,26 +24,23 @@ export async function PortalFooter() {
           <br />
         </>
       )}
-      {/* サイト最下部の規約・会社情報リンク行(2026/10/01、「サイト1番下に
-          利用規約｜プライバシーポリシー｜免責事項｜特商法｜運営会社概要｜
-          お問い合わせ｜掲載希望の店舗様へ」との指示により追加)。中身のページは
-          仮の準備中表示で、内容は別途差し替え予定。 */}
-      <div className="footer-links">
+      <nav className="footer-links" aria-label="フッターリンク">
         <a href="/terms">利用規約</a>
-        {" ｜ "}
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/privacy">プライバシーポリシー</a>
-        {" ｜ "}
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/disclaimer">免責事項</a>
-        {" ｜ "}
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/tokushoho">特定商取引法に基づく表記</a>
-        {" ｜ "}
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/company">運営会社概要</a>
-        {" ｜ "}
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/contact">お問い合わせ</a>
-        {" ｜ "}
-        <a href="/apply">掲載希望の店舗様へ</a>
-      </div>
-      © 2026 Poker Summit All Rights Reserved.
+        <span className="footer-links__separator footer-links__apply-separator" aria-hidden="true"> ｜ </span>
+        <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ</a>
+      </nav>
+      <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.</div>
+      <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
     </div>
   );
 }
