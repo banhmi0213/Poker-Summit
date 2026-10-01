@@ -87,7 +87,7 @@ export default async function AdminListingApplicationsPage({
         <table>
           <thead>
             <tr>
-              <th>会社名・屋号</th>
+              <th>店舗名・会社名</th>
               <th>担当者</th>
               <th>連絡先</th>
               <th>都道府県</th>
