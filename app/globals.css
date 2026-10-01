@@ -1645,6 +1645,9 @@ th {
   margin-bottom: 0.5cqw;
   transform: translateX(-3.5cqw);
 }
+.ps-region-label--chugoku .ps-region-label__pill {
+  transform: translate(5cqw, -2cqw);
+}
 .ps-region-label--shikoku { --region-color: var(--ps-shikoku); }
 .ps-region-label--kyushu-okinawa {
   --region-color: var(--ps-kyushu-okinawa);
