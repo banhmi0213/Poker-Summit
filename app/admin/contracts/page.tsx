@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isBillingFailedThisMonth } from "@/lib/contracts";
-import {
-  approvePlanChangeRequest,
-  rejectPlanChangeRequest,
-  approveAddonChangeRequest,
-  rejectAddonChangeRequest,
-} from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "契約中",
   canceled: "解約済み",
+};
+
+// 店舗が自分で行ったプラン・アドオン変更(lib/contracts-billing.ts)の
+// 状態ラベル。運営の承認操作は廃止し、ここは閲覧専用の監査ログになった
+// (2026/10)。
+const CHANGE_STATUS_LABEL: Record<string, string> = {
+  completed: "✅ 決済完了・反映済み",
+  failed: "❌ 決済失敗",
+  pending: "⏳ 期間終了時に予約中",
+  canceled: "予約取消",
 };
 
 function formatYen(value: number | null | undefined) {
@@ -32,7 +36,7 @@ export default async function AdminContractsPage({
   let query = supabase
     .from("store_contracts")
     .select(
-      "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, created_at, stores!inner(id, name, pref, region, tel), plans(name, monthly_fee), store_contract_addons(addon_id)"
+      "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, current_period_end, pending_plan_id, pending_plan_effective_at, created_at, stores!inner(id, name, pref, region, tel), plans(name, monthly_fee), store_contract_addons(addon_id)"
     )
     .order("created_at", { ascending: false });
 
@@ -53,26 +57,23 @@ export default async function AdminContractsPage({
     isBillingFailedThisMonth({ last_billing_status: c.last_billing_status, last_billing_at: c.last_billing_at })
   );
 
-  // 店舗オーナーが/store/profile/plan(PC)やLINEリッチメニューから送って
-  // きた「プラン変更申請」の未処理分。承認するとstore_contracts.plan_id
-  // が切り替わる(2026/09/30 新設)。
-  const { data: planRequests } = await supabase
-    .from("plan_change_requests")
-    .select(
-      "id, note, requested_at, stores(name), current_plan:current_plan_id(name), requested_plan:requested_plan_id(name, monthly_fee)"
-    )
-    .eq("status", "pending")
-    .order("requested_at", { ascending: true });
-
-  // アドオン変更申請(2026/10新設)。requested_addon_idsはuuid[]で、名前は
-  // 下のallAddonsNameByIdから引く(配列カラムはPostgRESTのネスト選択で
-  // 名前を直接取れないため)。
-  const [{ data: addonRequests }, { data: allAddonsForNames }] = await Promise.all([
+  // 店舗オーナーが/store/profile/plan(PC)やLINEリッチメニューから自分で
+  // 行ったプラン・アドオン変更の履歴(2026/10、カード決済組み込みにより
+  // 運営の事前承認は不要になった。ここは「店舗が何を変更し、決済が完了
+  // したか」を運営が把握するための閲覧専用ログ)。直近50件まで表示する。
+  const [{ data: planRequests }, { data: addonRequests }, { data: allAddonsForNames }] = await Promise.all([
+    supabase
+      .from("plan_change_requests")
+      .select(
+        "id, note, status, payment_status, charged_amount, review_note, requested_at, stores(name), current_plan:current_plan_id(name), requested_plan:requested_plan_id(name, monthly_fee)"
+      )
+      .order("requested_at", { ascending: false })
+      .limit(50),
     supabase
       .from("addon_change_requests")
-      .select("id, note, requested_at, requested_addon_ids, stores(name)")
-      .eq("status", "pending")
-      .order("requested_at", { ascending: true }),
+      .select("id, note, status, payment_status, charged_amount, review_note, requested_at, requested_addon_ids, stores(name)")
+      .order("requested_at", { ascending: false })
+      .limit(50),
     supabase.from("addons").select("id, name"),
   ]);
   const addonNameById = new Map((allAddonsForNames ?? []).map((a) => [a.id, a.name]));
@@ -123,17 +124,18 @@ export default async function AdminContractsPage({
       {planRequests && planRequests.length > 0 && (
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>
-            📋 プラン変更申請が{planRequests.length}件あります(店舗管理画面・LINEリッチメニューから)
+            📒 プラン変更ログ(店舗管理画面・LINEリッチメニューから、店舗が自分でカード決済・直近{planRequests.length}件)
           </div>
           <table>
             <thead>
               <tr>
                 <th>店舗名</th>
-                <th>現在のプラン</th>
-                <th>希望プラン</th>
+                <th>変更前プラン</th>
+                <th>変更後プラン</th>
+                <th>状態</th>
+                <th>決済金額</th>
                 <th>連絡事項</th>
-                <th>申請日</th>
-                <th>操作</th>
+                <th>日時</th>
               </tr>
             </thead>
             <tbody>
@@ -147,29 +149,18 @@ export default async function AdminContractsPage({
                       ? `（${formatYen(r.requested_plan.monthly_fee)}）`
                       : ""}
                   </td>
+                  <td>
+                    {CHANGE_STATUS_LABEL[r.status] ?? r.status}
+                    {r.status === "failed" && r.review_note && (
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        {r.review_note}
+                      </div>
+                    )}
+                  </td>
+                  <td>{r.charged_amount != null ? formatYen(r.charged_amount) : "-"}</td>
                   <td style={{ maxWidth: 200 }}>{r.note || "-"}</td>
                   <td className="muted" style={{ fontSize: 12 }}>
-                    {new Date(r.requested_at).toLocaleDateString("ja-JP")}
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <form
-                        action={async () => {
-                          "use server";
-                          await approvePlanChangeRequest(r.id);
-                        }}
-                      >
-                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
-                          承認
-                        </button>
-                      </form>
-                      <form action={rejectPlanChangeRequest}>
-                        <input type="hidden" name="requestId" value={r.id} />
-                        <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                          却下
-                        </button>
-                      </form>
-                    </div>
+                    {new Date(r.requested_at).toLocaleString("ja-JP")}
                   </td>
                 </tr>
               ))}
@@ -181,16 +172,17 @@ export default async function AdminContractsPage({
       {addonRequests && addonRequests.length > 0 && (
         <div className="card" style={{ marginBottom: 16 }}>
           <div style={{ fontWeight: 700, marginBottom: 8 }}>
-            📋 アドオン変更申請が{addonRequests.length}件あります(店舗管理画面から)
+            📒 アドオン変更ログ(店舗管理画面から、店舗が自分でカード決済・直近{addonRequests.length}件)
           </div>
           <table>
             <thead>
               <tr>
                 <th>店舗名</th>
-                <th>希望するアドオン構成</th>
+                <th>変更後のアドオン構成</th>
+                <th>状態</th>
+                <th>決済金額</th>
                 <th>連絡事項</th>
-                <th>申請日</th>
-                <th>操作</th>
+                <th>日時</th>
               </tr>
             </thead>
             <tbody>
@@ -204,29 +196,18 @@ export default async function AdminContractsPage({
                           .join("、")
                       : "なし（全解除）"}
                   </td>
+                  <td>
+                    {CHANGE_STATUS_LABEL[r.status] ?? r.status}
+                    {r.status === "failed" && r.review_note && (
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        {r.review_note}
+                      </div>
+                    )}
+                  </td>
+                  <td>{r.charged_amount != null ? formatYen(r.charged_amount) : "-"}</td>
                   <td style={{ maxWidth: 200 }}>{r.note || "-"}</td>
                   <td className="muted" style={{ fontSize: 12 }}>
-                    {new Date(r.requested_at).toLocaleDateString("ja-JP")}
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <form
-                        action={async () => {
-                          "use server";
-                          await approveAddonChangeRequest(r.id);
-                        }}
-                      >
-                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
-                          承認
-                        </button>
-                      </form>
-                      <form action={rejectAddonChangeRequest}>
-                        <input type="hidden" name="requestId" value={r.id} />
-                        <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                          却下
-                        </button>
-                      </form>
-                    </div>
+                    {new Date(r.requested_at).toLocaleString("ja-JP")}
                   </td>
                 </tr>
               ))}
@@ -283,6 +264,7 @@ export default async function AdminContractsPage({
               <th>連絡先</th>
               <th>月額プラン</th>
               <th>アドオン</th>
+              <th>契約期間・予約</th>
               <th>決済状況</th>
               <th>契約ステータス</th>
               <th>操作</th>
@@ -312,6 +294,18 @@ export default async function AdminContractsPage({
                   </td>
                   <td>{c.plans ? `${c.plans.name}（${formatYen(c.plans.monthly_fee)}）` : "未設定"}</td>
                   <td>{addonCount > 0 ? `あり（${addonCount}件）` : "なし"}</td>
+                  <td>
+                    {c.current_period_end ? (
+                      <div style={{ fontSize: 12 }}>〜{new Date(c.current_period_end).toLocaleDateString("ja-JP")}</div>
+                    ) : (
+                      <span className="muted" style={{ fontSize: 12 }}>未記録</span>
+                    )}
+                    {c.pending_plan_id && c.pending_plan_effective_at && (
+                      <div className="muted" style={{ fontSize: 11 }}>
+                        ⏳ {new Date(c.pending_plan_effective_at).toLocaleDateString("ja-JP")}にプラン変更予約あり
+                      </div>
+                    )}
+                  </td>
                   <td>
                     {failed ? (
                       <span style={{ color: "#d1453b", fontWeight: 700 }}>⚠️ 今月失敗</span>
