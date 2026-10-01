@@ -161,7 +161,18 @@ export async function createReply(formData: FormData) {
     // 進める(返信全体を失敗させない)。
   }
 
+  // スレッドの「更新日時」を返信があるたびに更新する(2026/10、「スレッド
+  // 一覧は更新があれば一番先頭に来るように」「更新された順にTOPページにも
+  // 来るように」との指示)。board_postsのUPDATE用RLSは投稿者本人にしか
+  // 許可していないため、他人のスレッドに返信した場合は直接UPDATEできない
+  // (RLSに弾かれて黙って0件更新になる)。そのためtouch_board_post()
+  // RPC(SECURITY DEFINER、ログイン済みなら誰でも呼べるがupdated_at以外は
+  // 一切変更しない)経由で更新する。
+  await supabase.rpc("touch_board_post", { target_post_id: postId });
+
   revalidatePath(`/board/${postId}`);
+  revalidatePath("/board");
+  revalidatePath("/");
 }
 
 export async function reportPost(postId: string) {
