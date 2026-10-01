@@ -59,11 +59,15 @@ export default async function BoardPage({
     .eq("status", "visible");
   if (category) countQuery = countQuery.eq("category", category);
 
+  // スレッド一覧の並び順(2026/10、「スレッド一覧は更新があれば一番先頭に
+  // 来るように」との指示)。返信があるたびにcreateReply側でboard_posts.
+  // updated_atを更新しているので、作成日時(created_at)ではなく更新日時
+  // (updated_at、新規投稿時点ではcreated_atと同じ)でソートする。
   let query = supabase
     .from("board_posts")
-    .select("id, title, author_name, created_at, category, image_url")
+    .select("id, title, author_name, created_at, updated_at, category, image_url")
     .eq("status", "visible")
-    .order("created_at", { ascending: false })
+    .order("updated_at", { ascending: false })
     .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
   query = query.range(from, to);
