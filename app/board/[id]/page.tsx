@@ -33,10 +33,14 @@ function avatarColor(name: string) {
   return colors[h];
 }
 
+const PAGE_SIZE = 100;
+
 export default async function BoardPostPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { page?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -61,12 +65,34 @@ export default async function BoardPostPage({
     notFound();
   }
 
-  const { data: replies } = await supabase
-    .from("board_replies")
-    .select("id, body, author_name, created_at, image_url")
-    .eq("post_id", params.id)
-    .eq("status", "visible")
-    .order("created_at", { ascending: true });
+  // コメントのページ送り(2026/10、「スレッドの中身も100件でページ送りに
+  // して」との指示。/boardのスレッド一覧と同じ1ページ100件固定方式)。
+  // 投稿順(古い順)のまま、100件ごとに区切る。
+  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  const [{ count: totalReplyCount }, { data: replies }] = await Promise.all([
+    supabase
+      .from("board_replies")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", params.id)
+      .eq("status", "visible"),
+    supabase
+      .from("board_replies")
+      .select("id, body, author_name, created_at, image_url")
+      .eq("post_id", params.id)
+      .eq("status", "visible")
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(from, to),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
+
+  function pageHref(p: number) {
+    return p > 1 ? `/board/${params.id}?page=${p}` : `/board/${params.id}`;
+  }
 
   return (
     <div>
@@ -130,7 +156,7 @@ export default async function BoardPostPage({
         </div>
 
         <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
-          コメント ({replies?.length ?? 0})
+          コメント ({totalReplyCount ?? 0})
         </h2>
 
         {(!replies || replies.length === 0) && (
@@ -187,6 +213,42 @@ export default async function BoardPostPage({
             </div>
           </div>
         ))}
+
+        {totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 14,
+              marginBottom: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            {page > 1 ? (
+              <Link href={pageHref(page - 1)} className="btn" style={{ padding: "6px 14px" }}>
+                ← 前へ
+              </Link>
+            ) : (
+              <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
+                ← 前へ
+              </span>
+            )}
+            <span className="muted" style={{ fontSize: 13 }}>
+              {page} / {totalPages} ページ
+            </span>
+            {page < totalPages ? (
+              <Link href={pageHref(page + 1)} className="btn" style={{ padding: "6px 14px" }}>
+                次へ →
+              </Link>
+            ) : (
+              <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
+                次へ →
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="card" style={{ marginTop: 16 }}>
           <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
