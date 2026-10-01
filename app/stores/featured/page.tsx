@@ -20,7 +20,7 @@ export default async function FeaturedStoresPage() {
 
   let storesQuery = supabase
     .from("stores")
-    .select("id, name, category, region, pref, city, address, lat, lng, description, status")
+    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url")
     .in("status", ["approved", "listed"])
     .eq("is_recommended", true);
   if (currentPref) storesQuery = storesQuery.eq("pref", currentPref);
