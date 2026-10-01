@@ -429,7 +429,7 @@ export default async function HomePage({
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>
-            🏅 店舗ランキング（お気に入り数）{currentPref ? `（${currentPref}）` : ""}
+            🏅 店舗ランキング{currentPref ? `（${currentPref}）` : ""}
           </h2>
         </div>
         {rankedStores.length === 0 && (
