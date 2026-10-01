@@ -763,13 +763,29 @@ th {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    border: 1px solid var(--border-strong);
+    width: 44px;
+    height: 44px;
+    border: 0;
     background: transparent;
-    font-size: 17px;
+    color: var(--text);
+    font-size: 0;
     cursor: pointer;
+  }
+
+  .nav-hamburger::before {
+    content: "";
+    width: 28px;
+    height: 22px;
+    background: repeating-linear-gradient(
+      to bottom,
+      currentColor 0 2px,
+      transparent 2px 10px
+    );
+  }
+
+  .nav-hamburger:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
   .mobile-nav-drawer {
