@@ -33,7 +33,7 @@ export async function submitApplication(formData: FormData) {
   if (!companyName || !contactName || !email) {
           redirect(
                     `/apply?error=${encodeURIComponent(
-                                "会社名・屋号、担当者名、メールアドレスは必須です。"
+                                "店舗名・会社名、担当者名、メールアドレスは必須です。"
                               )}`
                   );
   }
@@ -101,7 +101,7 @@ export async function startPaidApplication(formData: FormData) {
 
   if (!companyName || !contactName || !email) {
           redirect(
-                    `/apply?error=${encodeURIComponent("会社名・屋号、担当者名、メールアドレスは必須です。")}`
+                    `/apply?error=${encodeURIComponent("店舗名・会社名、担当者名、メールアドレスは必須です。")}`
                   );
   }
       if (!planId) {

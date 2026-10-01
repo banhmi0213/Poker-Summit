@@ -78,7 +78,7 @@ export default async function ApplyPage({
         {params.error && <p className="err">{params.error}</p>}
         <form action={submitApplication}>
           <div className="field">
-            <span className="muted">会社名・屋号 *</span>
+            <span className="muted">店舗名・会社名 *</span>
             <input type="text" name="companyName" required />
           </div>
           <div className="field">
