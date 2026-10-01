@@ -52,7 +52,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
               ) : null}
             </Link>
           ))}
-          <Link href="/contact" className="plink">
+          <Link href="/news" className="plink">
             お知らせ
           </Link>
         </div>
@@ -71,7 +71,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
             {l.sub ? <span className="muted" style={{ marginLeft: 4 }}>{l.sub}</span> : null}
           </Link>
         ))}
-        <Link href="/contact" className="plink">
+        <Link href="/news" className="plink">
           お知らせ
         </Link>
         {memberLinks}
