@@ -2,8 +2,6 @@ export const CATEGORY_LABEL: Record<string, string> = {
   amusement: "アミューズメントポーカー",
   bar: "ポーカーバー",
   casino: "カジノバー",
-  ring: "リングのみ",
-  tournament: "トーナメントのみ",
   school: "ポーカースクール",
   other: "その他",
 };
@@ -17,19 +15,16 @@ export const CATEGORY_COLOR: Record<string, string> = {
   bar: "#d95926",
   casino: "#199e70",
   school: "#c98500",
-  tournament: "#d55181",
-  ring: "#9085e9",
   other: "#8a8f98",
 };
 
-// リングのみ / その他 は専用アイコンを持たず、store-card.tsx のデフォルト(♠️)に
+// その他 は専用アイコンを持たず、store-card.tsx のデフォルト(♠️)に
 // フォールバックする(意図的に未設定)。
 export const CATEGORY_ICON: Record<string, string> = {
   amusement: "♠️",
   bar: "🍸",
   casino: "🎰",
   school: "🎓",
-  tournament: "🏆",
 };
 
 export const REGIONS = [
