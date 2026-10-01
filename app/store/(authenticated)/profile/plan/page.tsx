@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { requestPlanChange, cancelPlanChangeRequest } from "../plan-actions";
+import { requestAddonChange, cancelAddonChangeRequest } from "../addons-actions";
 
 // /store/profile 1ページの中の1セクションだったプラン・アップグレードを、
 // 独立したページへ分離(2026/09/30)。LINEリッチメニュー側の導線と同じ
@@ -30,31 +31,47 @@ export default async function StorePlanPage() {
     );
   }
 
-  const [{ data: contract }, { data: allPlans }, { data: pendingPlanRequest }] = await Promise.all([
-    supabase
-      .from("store_contracts")
-      .select("id, status, plan_id, plans(id, name, monthly_fee, description)")
-      .eq("store_id", store.id)
-      .maybeSingle(),
-    supabase
-      .from("plans")
-      .select("id, name, monthly_fee, description")
-      .eq("active", true)
-      .order("sort_order", { ascending: true }),
-    supabase
-      .from("plan_change_requests")
-      .select("id, requested_plan_id, note, requested_at, plans:requested_plan_id(name, monthly_fee)")
-      .eq("store_id", store.id)
-      .eq("status", "pending")
-      .maybeSingle(),
-  ]);
+  const [{ data: contract }, { data: allPlans }, { data: pendingPlanRequest }, { data: allAddons }, { data: pendingAddonRequest }] =
+    await Promise.all([
+      supabase
+        .from("store_contracts")
+        .select("id, status, plan_id, plans(id, name, monthly_fee, description), store_contract_addons(addon_id)")
+        .eq("store_id", store.id)
+        .maybeSingle(),
+      supabase
+        .from("plans")
+        .select("id, name, monthly_fee, description")
+        .eq("active", true)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("plan_change_requests")
+        .select("id, requested_plan_id, note, requested_at, plans:requested_plan_id(name, monthly_fee)")
+        .eq("store_id", store.id)
+        .eq("status", "pending")
+        .maybeSingle(),
+      supabase
+        .from("addons")
+        .select("id, name, monthly_fee, description")
+        .eq("active", true)
+        .order("sort_order", { ascending: true }),
+      supabase
+        .from("addon_change_requests")
+        .select("id, requested_addon_ids, note, requested_at")
+        .eq("store_id", store.id)
+        .eq("status", "pending")
+        .maybeSingle(),
+    ]);
+
+  const currentAddonIds = ((contract as any)?.store_contract_addons ?? []).map(
+    (a: { addon_id: string }) => a.addon_id
+  ) as string[];
 
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
         ← 店舗管理に戻る
       </Link>
-      <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・アップグレード</h1>
+      <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・アドオン</h1>
 
       <div className="card">
         <div style={{ marginBottom: 12 }}>
@@ -161,6 +178,98 @@ export default async function StorePlanPage() {
             </div>
             <button type="submit" className="btn primary">
               プラン変更を申請する
+            </button>
+            <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
+              申請後、運営が内容を確認し決済・契約内容を更新します。反映まで少しお時間をいただく場合があります。
+            </p>
+          </form>
+        )}
+      </div>
+
+      <div className="card" style={{ marginTop: 20 }}>
+        <div style={{ marginBottom: 12 }}>
+          <span className="muted">現在契約中のアドオン</span>
+          <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>
+            {currentAddonIds.length > 0
+              ? (allAddons ?? [])
+                  .filter((a) => currentAddonIds.includes(a.id))
+                  .map((a) => a.name)
+                  .join("、")
+              : "なし"}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 20, marginBottom: 4 }}>
+          <span className="muted">アドオン一覧</span>
+        </div>
+
+        {pendingAddonRequest ? (
+          <div className="card" style={{ background: "var(--surface-2)", marginBottom: 12, marginTop: 10 }}>
+            <div style={{ fontSize: 13.5 }}>
+              ⏳ アドオンを「
+              {pendingAddonRequest.requested_addon_ids.length > 0
+                ? (allAddons ?? [])
+                    .filter((a) => pendingAddonRequest.requested_addon_ids.includes(a.id))
+                    .map((a) => a.name)
+                    .join("、")
+                : "なし"}
+              」の構成に変更するよう運営に申請中です。運営の確認後に反映されます。
+            </div>
+            {pendingAddonRequest.note && (
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                メモ: {pendingAddonRequest.note}
+              </div>
+            )}
+            <form
+              action={async () => {
+                "use server";
+                await cancelAddonChangeRequest(pendingAddonRequest.id);
+              }}
+              style={{ marginTop: 8 }}
+            >
+              <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                申請を取り消す
+              </button>
+            </form>
+          </div>
+        ) : (
+          <form action={requestAddonChange} style={{ marginTop: 10 }}>
+            <input type="hidden" name="storeId" value={store.id} />
+            <div className="field">
+              <span className="muted">申し込みたいアドオン（複数選択可）</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
+                {(allAddons ?? []).length === 0 && (
+                  <p className="muted" style={{ fontSize: 12.5 }}>
+                    現在申し込めるアドオンはありません。
+                  </p>
+                )}
+                {(allAddons ?? []).map((a) => (
+                  <label key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13.5 }}>
+                    <input
+                      type="checkbox"
+                      name="addonIds"
+                      value={a.id}
+                      defaultChecked={currentAddonIds.includes(a.id)}
+                      style={{ marginTop: 3 }}
+                    />
+                    <span>
+                      <strong>{a.name}</strong>（¥{(a.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）
+                      {a.description && (
+                        <div className="muted" style={{ fontSize: 12 }}>
+                          {a.description}
+                        </div>
+                      )}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="field">
+              <span className="muted">運営への連絡事項（任意）</span>
+              <textarea name="note" rows={3} placeholder="例: 来月から求人アドオンを使いたいです" />
+            </div>
+            <button type="submit" className="btn primary">
+              アドオン変更を申請する
             </button>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
               申請後、運営が内容を確認し決済・契約内容を更新します。反映まで少しお時間をいただく場合があります。
