@@ -1633,7 +1633,17 @@ th {
 .ps-region-label--kanto { --region-color: var(--ps-kanto); }
 .ps-region-label--chubu { --region-color: var(--ps-chubu); }
 .ps-region-label--kinki { --region-color: var(--ps-kinki); }
-.ps-region-label--chugoku { --region-color: var(--ps-chugoku); }
+.ps-region-label--chugoku {
+  --region-color: var(--ps-chugoku);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ps-region-label--chugoku .ps-region-label__prefs {
+  order: -1;
+  margin-top: 0;
+  margin-bottom: 0.5cqw;
+}
 .ps-region-label--shikoku { --region-color: var(--ps-shikoku); }
 .ps-region-label--kyushu-okinawa {
   --region-color: var(--ps-kyushu-okinawa);
