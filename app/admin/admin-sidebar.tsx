@@ -8,6 +8,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/analytics", label: "アクセス統計" },
   { href: "/admin/stores", label: "店舗管理" },
   { href: "/admin/contracts", label: "契約店舗" },
+  { href: "/admin/stores/bulk-email", label: "一斉メール" },
   { href: "/admin/listing-applications", label: "掲載申込" },
   { href: "/admin/jobs", label: "求人管理" },
   { href: "/admin/events", label: "イベント管理" },
