@@ -25,8 +25,9 @@ const STORE_LINKS: { href: string; label: string }[] = [
   // LINEリッチメニュー側にある「プラン・アップグレード」と同じ導線を、
   // LINEを開いていないPCブラウザからも使えるようにするため新設
   // (2026/09/30)。「プラン・アップグレードは一番下」との指示により
-  // 一覧の最後に配置(2026/09/30)。
-  { href: "/store/profile/plan", label: "プラン・アップグレード" },
+  // 一覧の最後に配置(2026/09/30)。アドオン申請も同ページに追加した
+  // ため、ラベルを管理画面側の「プラン・アドオン管理」に揃えた(2026/10)。
+  { href: "/store/profile/plan", label: "プラン・アドオン" },
 ];
 
 export function StoreSidebar() {
