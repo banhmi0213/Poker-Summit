@@ -1608,7 +1608,7 @@ th {
 }
 /* Keep the Kyushu tab beside the purple map; place its prefectures clear of the islands. */
 .ps-region-label--kyushu-okinawa .ps-region-label__prefs {
-  transform: translateX(-8.5cqw);
+  transform: translateX(-6.5cqw);
 }
 /* 四国/九州・沖縄 pills sit on the gold/purple ends of the scale — dark
    text reads better than white on the lighter of the two. */
