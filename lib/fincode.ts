@@ -279,3 +279,11 @@ export async function createFincodeSubscription(params: {
                   start_date: formatFincodeDate(addOneMonth(new Date())),
         });
 }
+
+// プラン・アドオン変更時、古いサブスクリプションを停止して新しい金額の
+// サブスクリプションに差し替えるために使う(2026/10新設)。該当サブスクが
+// 既に解約済み・存在しない場合もエラーにせず無視してよい呼び出し側を想定
+// (呼び出し元でtry/catchする)。
+export async function cancelFincodeSubscription(subscriptionId: string): Promise<void> {
+        await fincodeFetch("DELETE", `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`);
+}

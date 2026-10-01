@@ -61,6 +61,13 @@ if (storeError || !store) {
 }
     const storeId = store.id as string;
 
+// current_period_end: 初回課金した「今」を起点に1ヶ月後まで(2026/10、
+// プラン・アドオンの自己決済機能で「日割りなし、決済日起点で翌月同日
+// まで」という請求期間の考え方を導入したのに合わせ、新規契約もここから
+// 期間追跡を開始する)。
+const periodEnd = new Date();
+periodEnd.setMonth(periodEnd.getMonth() + 1);
+
 const { error: contractError } = await supabase.from("store_contracts").insert({
     store_id: storeId,
     plan_id: application.plan_id,
@@ -72,6 +79,7 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
     fincode_subscription_id: params.fincodeSubscriptionId,
     last_billing_status: "success",
     last_billing_at: new Date().toISOString(),
+    current_period_end: periodEnd.toISOString(),
 });
     if (contractError) {
         throw new Error(contractError.message);
