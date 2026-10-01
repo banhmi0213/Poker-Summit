@@ -1643,6 +1643,7 @@ th {
   order: -1;
   margin-top: 0;
   margin-bottom: 0.5cqw;
+  transform: translateX(-3.5cqw);
 }
 .ps-region-label--shikoku { --region-color: var(--ps-shikoku); }
 .ps-region-label--kyushu-okinawa {
