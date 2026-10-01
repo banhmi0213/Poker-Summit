@@ -85,44 +85,62 @@ export default async function BoardPage({
           ))}
         </div>
 
-        <div className="card">
-          <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
-          <form action={createPost}>
-            <div className="field">
-              <span className="muted">お名前（未入力の場合は匿名）</span>
-              <input type="text" name="authorName" placeholder="匿名" />
-            </div>
-            <div className="field">
-              <span className="muted">カテゴリ</span>
-              <select name="category" defaultValue="">
-                <option value="">選択してください</option>
-                {BOARD_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="field">
-              <span className="muted">タイトル *</span>
-              <input type="text" name="title" required />
-            </div>
-            <div className="field">
-              <span className="muted">本文 *</span>
-              <textarea name="body" rows={4} required />
-            </div>
-            <div className="field">
-              <span className="muted">画像（任意）</span>
-              <input type="file" name="image" accept="image/*" />
-              <span className="muted" style={{ fontSize: 11.5 }}>
-                1枚まで添付できます（8MBまで）。
-              </span>
-            </div>
-            <button type="submit" className="btn primary">
-              投稿する
-            </button>
-          </form>
-        </div>
+        {user ? (
+          <div className="card">
+            <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
+            <form action={createPost}>
+              <div className="field">
+                <span className="muted">お名前（未入力の場合は匿名）</span>
+                <input type="text" name="authorName" placeholder="匿名" />
+              </div>
+              <div className="field">
+                <span className="muted">カテゴリ</span>
+                <select name="category" defaultValue="">
+                  <option value="">選択してください</option>
+                  {BOARD_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="field">
+                <span className="muted">タイトル *</span>
+                <input type="text" name="title" required />
+              </div>
+              <div className="field">
+                <span className="muted">本文 *</span>
+                <textarea name="body" rows={4} required />
+              </div>
+              <div className="field">
+                <span className="muted">画像（任意）</span>
+                <input type="file" name="image" accept="image/*" />
+                <span className="muted" style={{ fontSize: 11.5 }}>
+                  1枚まで添付できます（8MBまで）。
+                </span>
+              </div>
+              <button type="submit" className="btn primary">
+                投稿する
+              </button>
+            </form>
+          </div>
+        ) : (
+          // 投稿には会員登録が必要(2026/10、「サミット投稿・観覧・返信には
+          // 会員登録が必要」との指示)。一覧自体は誰でも見れるが、投稿フォーム
+          // はログイン済みの人にしか表示しない(サーバー側の強制はcreatePost
+          // 側のrequireUser()で行う。こちらはUIのみ)。
+          <div className="card" style={{ textAlign: "center", padding: 20 }}>
+            <p style={{ fontWeight: 700, marginBottom: 4 }}>
+              投稿には会員登録（無料）が必要です
+            </p>
+            <p className="muted small" style={{ marginBottom: 14 }}>
+              会員登録すると、スレッドの投稿・閲覧・コメントのほか、お気に入り登録・求人応募・クーポン利用・イベント参加登録もできるようになります。
+            </p>
+            <Link href="/signup" className="btn primary">
+              ログイン / 会員登録（無料）
+            </Link>
+          </div>
+        )}
 
         {(!posts || posts.length === 0) && (
           <div className="empty">まだ投稿がありません。</div>
