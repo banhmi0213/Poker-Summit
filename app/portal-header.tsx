@@ -2,10 +2,10 @@ import Link from "next/link";
 
 const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
   { href: "/stores", label: "店舗を探す" },
-  { href: "/jobs", label: "求人を探す" },
-  { href: "/coupons", label: "クーポン" },
   { href: "/events", label: "トーナメント・イベント" },
+  { href: "/coupons", label: "クーポン" },
   { href: "/board", label: "サミット", sub: "(情報交換)" },
+  { href: "/jobs", label: "求人を探す" },
 ];
 
 export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
@@ -53,7 +53,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
             </Link>
           ))}
           <Link href="/contact" className="plink">
-            お問い合わせ
+            お知らせ
           </Link>
         </div>
         <div className="portal-auth-actions">
@@ -72,7 +72,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
           </Link>
         ))}
         <Link href="/contact" className="plink">
-          お問い合わせ
+          お知らせ
         </Link>
         {memberLinks}
         {storeLoginLink}
