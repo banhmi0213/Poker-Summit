@@ -8,6 +8,33 @@ import { createClient } from "@/lib/supabase/server";
 const BOARD_IMAGES_BUCKET = "board-images";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
 
+// サミット(掲示板)の投稿・返信・観覧(スレッド詳細)は会員登録必須にする
+// (2026/10、「会員登録しないとできないこと: 求人に応募, サミット投稿・
+// 観覧・返信」との指示)。それまではcreatePostがauthor_user_idを
+// 任意(user?.id ?? null)で受け入れ、createReplyも画面側(UIのみ)で
+// ログイン必須表示をしているだけでサーバー側は未ログインでも素通りして
+// いた抜け穴だったため、ここで両方ともサーバー側で強制する。
+// app/member-actions.tsのrequireUser()と同じパターン(未ログイン→
+// /loginへリダイレクト、停止アカウント→/account/suspendedへ
+// リダイレクト)。
+async function requireUser(nextPath: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(`/login?next=${nextPath}`);
+  }
+
+  const { data: suspended } = await supabase.rpc("is_suspended");
+  if (suspended) {
+    redirect("/account/suspended");
+  }
+
+  return { supabase, user };
+}
+
 function extFromFile(file: File): string {
   const fromName = file.name?.split(".").pop();
   if (fromName && /^[a-zA-Z0-9]{1,8}$/.test(fromName)) {
@@ -18,10 +45,7 @@ function extFromFile(file: File): string {
 }
 
 export async function createPost(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await requireUser("/board");
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
@@ -48,7 +72,7 @@ export async function createPost(formData: FormData) {
       title,
       body,
       author_name: authorName,
-      author_user_id: user?.id ?? null,
+      author_user_id: user.id,
       category: category || null,
     })
     .select("id")
@@ -79,12 +103,9 @@ export async function createPost(formData: FormData) {
 }
 
 export async function createReply(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const postId = String(formData.get("postId") ?? "");
+  const { supabase, user } = await requireUser(`/board/${postId}`);
+
   const body = String(formData.get("body") ?? "").trim();
   const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
 
@@ -112,7 +133,7 @@ export async function createReply(formData: FormData) {
       post_id: postId,
       body,
       author_name: authorName,
-      author_user_id: user?.id ?? null,
+      author_user_id: user.id,
     })
     .select("id")
     .single();
