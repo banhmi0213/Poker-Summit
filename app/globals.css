@@ -1743,57 +1743,88 @@ th {
   .ps-region-hero {
     aspect-ratio: auto;
     overflow: visible;
-    background: #ffffff;
+    background: #fff;
     padding-bottom: 20px;
   }
 
-  .ps-region-hero__bg {
-    position: relative;
+  /* Reserve a portrait hero for the photo and its live HTML copy. */
+  .ps-region-hero::before {
+    content: "";
+    display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 1640 / 960;
+    aspect-ratio: 4 / 5;
+  }
+  .ps-region-hero__bg {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 125cqw;
     object-fit: cover;
-    object-position: center top;
+    object-position: 43% center;
+  }
+  .ps-region-hero::after {
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 125cqw;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.57),
+      rgba(255, 255, 255, 0.4) 47%,
+      rgba(255, 255, 255, 0.25));
   }
 
-  /* Headline copy has no code-given mobile treatment (it never existed as a
-     separate element in the GPT spec, only baked into the flat comp image) —
-     stack it as normal flowing text above the search bar instead of
-     overlaying the now-decoration-only background photo. All of the same
-     copy strings are kept; only the positioning becomes static. */
-  .ps-region-hero__copy-left,
-  .ps-region-hero__copy-right,
-  .ps-region-hero__footer-script {
-    position: relative;
-    inset: auto;
-    left: auto;
-    right: auto;
-    top: auto;
-    bottom: auto;
-    width: auto;
-    z-index: auto;
-    text-align: left;
+  .ps-region-hero__copy-left {
+    position: absolute;
+    inset: 13cqw auto auto 5%;
+    width: 90%;
+    z-index: 15;
+    margin: 0;
     color: var(--ps-navy);
-    margin: 14px 12px 0;
   }
-  .ps-region-hero__vertical-tagline { display: none; }
-  .ps-region-hero__headline { font-size: clamp(24px, 6.5vw, 36px); }
-  .ps-region-hero__headline span { white-space: normal; }
-  .ps-region-hero__right-headline { font-size: clamp(20px, 5vw, 28px); }
-  .ps-region-hero__right-tagline { color: var(--ps-gold); }
+  .ps-region-hero__logo-script {
+    width: 82cqw;
+    max-width: 100%;
+    margin-bottom: 3cqw;
+  }
+  .ps-region-hero__headline {
+    font-size: clamp(21px, 6.4cqw, 42px);
+    line-height: 1.35;
+    margin: 0;
+  }
+  .ps-region-hero__headline span { white-space: nowrap; }
+  .ps-region-hero__vertical-tagline,
   .ps-region-hero__footer-script { display: none; }
+
+  .ps-region-hero__copy-right {
+    position: absolute;
+    inset: 79cqw 5% auto auto;
+    width: 67%;
+    z-index: 15;
+    text-align: right;
+    margin: 0;
+    color: var(--ps-navy);
+  }
+  .ps-region-hero__right-headline {
+    font-size: clamp(15px, 4.3cqw, 28px);
+    line-height: 1.25;
+  }
+  .ps-region-hero__right-first-line strong { font-size: 1.9em; }
+  .ps-region-hero__right-headline::after { margin-left: auto; }
+  .ps-region-hero__right-tagline {
+    margin-top: 1.5cqw;
+    font-size: clamp(9px, 2.5cqw, 15px);
+    color: var(--ps-gold);
+  }
 
   .ps-region-hero__search {
     position: relative;
     inset: auto;
     z-index: 20;
-    margin: 14px 12px;
+    margin: 12px;
   }
 
   .ps-region-map-svg,
-  .ps-region-hero__labels {
-    display: none;
-  }
+  .ps-region-hero__labels,
+  .ps-region-mobile-list { display: none; }
 
   .ps-region-stats {
     position: relative;
@@ -1805,68 +1836,9 @@ th {
     grid-template-columns: repeat(2, 1fr);
     min-height: 0;
   }
-
   .ps-region-stat { padding: 14px 8px; }
   .ps-region-stat:nth-child(3)::before { display: none; }
   .ps-region-stat:nth-child(n + 3) { border-top: 1px solid #e5e7eb; }
-
-  .ps-region-mobile-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    margin: 12px;
-  }
-
-  .ps-region-mobile-card {
-    --region-color: var(--ps-gold);
-    display: block;
-    padding: 14px 15px 13px;
-    color: #14213d;
-    text-decoration: none;
-    border: 1px solid color-mix(in srgb, var(--region-color) 38%, #d9dde5);
-    border-left: 5px solid var(--region-color);
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.055);
-    transition: box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .ps-region-mobile-card:hover,
-  .ps-region-mobile-card:focus-visible,
-  .ps-region-mobile-card:active {
-    transform: translateY(-1px);
-    border-color: var(--region-color);
-    box-shadow:
-      0 0 0 2px color-mix(in srgb, var(--region-color) 14%, transparent),
-      0 0 22px color-mix(in srgb, var(--region-color) 30%, transparent),
-      0 8px 22px rgba(0, 0, 0, 0.08);
-    outline: none;
-  }
-
-  .ps-region-mobile-card__title {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    font-size: 16px;
-    font-weight: 800;
-  }
-  .ps-region-mobile-card__prefs {
-    display: block;
-    margin-top: 7px;
-    font-size: 12px;
-    line-height: 1.55;
-    color: #687083;
-  }
-
-  .ps-region-mobile-card--hokkaido-tohoku { --region-color: var(--ps-hokkaido-tohoku); }
-  .ps-region-mobile-card--kanto { --region-color: var(--ps-kanto); }
-  .ps-region-mobile-card--chubu { --region-color: var(--ps-chubu); }
-  .ps-region-mobile-card--kinki { --region-color: var(--ps-kinki); }
-  .ps-region-mobile-card--chugoku { --region-color: var(--ps-chugoku); }
-  .ps-region-mobile-card--shikoku { --region-color: var(--ps-shikoku); }
-  .ps-region-mobile-card--kyushu-okinawa { --region-color: var(--ps-kyushu-okinawa); }
 }
 
 @media (prefers-reduced-motion: reduce) {
