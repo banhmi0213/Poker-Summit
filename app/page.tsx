@@ -143,12 +143,16 @@ export default async function HomePage({
       .limit(3),
     // 「更新された順にTOPページにも来るように」との指示(2026/10)。/board
     // 一覧と同じく、返信があるたびに更新されるboard_posts.updated_atで
-    // ソートする(新規投稿時点ではcreated_atと同じ値)。
+    // ソートする(新規投稿時点ではcreated_atと同じ値)。/boardと同じくid
+    // の降順も付けておく: updated_atが同値(複数スレッドがまだ一度も
+    // 更新されていない等)の場合、二次キーなしだとPostgresが順序を
+    // 保証しないため、/board一覧と表示順がずれてしまう。
     supabase
       .from("board_posts")
       .select("id, title, author_name, created_at, updated_at")
       .eq("status", "visible")
       .order("updated_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(4),
     supabase
       .from("events")
