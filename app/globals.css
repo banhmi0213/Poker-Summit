@@ -1320,12 +1320,17 @@ th {
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.78) 0%,
-    rgba(255, 255, 255, 0.56) 30%,
-    rgba(255, 255, 255, 0.4) 50%,
-    rgba(255, 255, 255, 0.56) 72%,
-    rgba(255, 255, 255, 0.76) 100%);
+  background:
+    radial-gradient(ellipse 48% 43% at 58% 60%,
+      rgba(255, 255, 255, 0.4) 0%,
+      rgba(255, 255, 255, 0.22) 55%,
+      rgba(255, 255, 255, 0) 100%),
+    linear-gradient(90deg,
+      rgba(255, 255, 255, 0.78) 0%,
+      rgba(255, 255, 255, 0.56) 30%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0.56) 72%,
+      rgba(255, 255, 255, 0.76) 100%);
   pointer-events: none;
 }
 
