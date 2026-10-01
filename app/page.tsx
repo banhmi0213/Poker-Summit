@@ -78,7 +78,7 @@ export default async function HomePage({
   // conditionally, matching the pattern already used on /stores/featured.
   let featuredStoresQuery = supabase
     .from("stores")
-    .select("id, name, category, pref, city, description, created_at")
+    .select("id, name, category, pref, city, description, created_at, logo_url")
     .in("status", ["approved", "listed"])
     .eq("is_recommended", true);
   if (currentPref) {
@@ -201,7 +201,7 @@ export default async function HomePage({
   // ランキングも絞り込む(2026/09/30)。
   let rankableStoresQuery = supabase
     .from("stores")
-    .select("id, name, category, pref, city, description")
+    .select("id, name, category, pref, city, description, logo_url")
     .in("status", ["approved", "listed"]);
   if (currentPref) rankableStoresQuery = rankableStoresQuery.eq("pref", currentPref);
   const { data: rankableStores } = await rankableStoresQuery;

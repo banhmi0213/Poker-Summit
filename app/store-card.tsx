@@ -14,6 +14,7 @@ export function StoreCard({
     pref: string | null;
     city: string | null;
     description: string | null;
+    logo_url?: string | null;
   };
   isFavorite: boolean;
   rank?: number;
@@ -45,9 +46,18 @@ export function StoreCard({
             justifyContent: "center",
             fontSize: 34,
             color: "#fff",
+            overflow: "hidden",
           }}
         >
-          {icon}
+          {store.logo_url ? (
+            <img
+              src={store.logo_url}
+              alt=""
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            icon
+          )}
         </div>
         <div style={{ padding: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{store.name}</div>
