@@ -818,6 +818,20 @@ th {
   font-weight: 700;
 }
 
+.footer-links {
+  margin: 12px 0;
+  font-weight: 400;
+}
+
+.footer-links a {
+  font-weight: 400;
+  color: var(--text-2);
+}
+
+.footer-links a:hover {
+  color: var(--accent-text);
+}
+
 @media (min-width: 861px) {
   .portal-footer {
     padding-bottom: 26px;
