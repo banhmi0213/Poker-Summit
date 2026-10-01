@@ -33,25 +33,51 @@ function avatarColor(name: string) {
   return colors[h];
 }
 
+const PAGE_SIZE = 100;
+
 export default async function BoardPage({
   searchParams,
 }: {
-  searchParams: { category?: string };
+  searchParams: { category?: string; page?: string };
 }) {
   const category = searchParams.category ?? "";
+  // スレッド一覧のページ送り(2026/10、「100件でページ送りで」との指示)。
+  // 1ページ100件固定。カテゴリ絞り込みと組み合わせても動くよう、ページ数は
+  // 絞り込み後の件数から計算する。
+  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  let countQuery = supabase
+    .from("board_posts")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "visible");
+  if (category) countQuery = countQuery.eq("category", category);
+
   let query = supabase
     .from("board_posts")
     .select("id, title, author_name, created_at, category, image_url")
     .eq("status", "visible")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
-  const { data: posts } = await query;
+  query = query.range(from, to);
+
+  const [{ count: totalCount }, { data: posts }] = await Promise.all([countQuery, query]);
+  const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
+
+  function pageHref(p: number) {
+    const params = new URLSearchParams();
+    if (category) params.set("category", category);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return `/board${qs ? `?${qs}` : ""}`;
+  }
 
   const postIds = (posts ?? []).map((p) => p.id);
   const { data: replyRows } = postIds.length
@@ -178,6 +204,42 @@ export default async function BoardPage({
             </div>
           </Link>
         ))}
+
+        {totalPages > 1 && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 18,
+              marginBottom: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            {page > 1 ? (
+              <Link href={pageHref(page - 1)} className="btn" style={{ padding: "6px 14px" }}>
+                ← 前へ
+              </Link>
+            ) : (
+              <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
+                ← 前へ
+              </span>
+            )}
+            <span className="muted" style={{ fontSize: 13 }}>
+              {page} / {totalPages} ページ
+            </span>
+            {page < totalPages ? (
+              <Link href={pageHref(page + 1)} className="btn" style={{ padding: "6px 14px" }}>
+                次へ →
+              </Link>
+            ) : (
+              <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
+                次へ →
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <PortalFooter />
       <BottomTabs active="board" />
