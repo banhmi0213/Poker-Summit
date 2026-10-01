@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { isBillingFailedThisMonth } from "@/lib/contracts";
-import { approvePlanChangeRequest, rejectPlanChangeRequest } from "./actions";
+import {
+  approvePlanChangeRequest,
+  rejectPlanChangeRequest,
+  approveAddonChangeRequest,
+  rejectAddonChangeRequest,
+} from "./actions";
 
 const STATUS_LABEL: Record<string, string> = {
   active: "契約中",
@@ -58,6 +63,19 @@ export default async function AdminContractsPage({
     )
     .eq("status", "pending")
     .order("requested_at", { ascending: true });
+
+  // アドオン変更申請(2026/10新設)。requested_addon_idsはuuid[]で、名前は
+  // 下のallAddonsNameByIdから引く(配列カラムはPostgRESTのネスト選択で
+  // 名前を直接取れないため)。
+  const [{ data: addonRequests }, { data: allAddonsForNames }] = await Promise.all([
+    supabase
+      .from("addon_change_requests")
+      .select("id, note, requested_at, requested_addon_ids, stores(name)")
+      .eq("status", "pending")
+      .order("requested_at", { ascending: true }),
+    supabase.from("addons").select("id, name"),
+  ]);
+  const addonNameById = new Map((allAddonsForNames ?? []).map((a) => [a.id, a.name]));
 
   return (
     <div>
@@ -146,6 +164,63 @@ export default async function AdminContractsPage({
                         </button>
                       </form>
                       <form action={rejectPlanChangeRequest}>
+                        <input type="hidden" name="requestId" value={r.id} />
+                        <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                          却下
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {addonRequests && addonRequests.length > 0 && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, marginBottom: 8 }}>
+            📋 アドオン変更申請が{addonRequests.length}件あります(店舗管理画面から)
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>店舗名</th>
+                <th>希望するアドオン構成</th>
+                <th>連絡事項</th>
+                <th>申請日</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {addonRequests.map((r: any) => (
+                <tr key={r.id}>
+                  <td>{r.stores?.name}</td>
+                  <td>
+                    {(r.requested_addon_ids ?? []).length > 0
+                      ? (r.requested_addon_ids as string[])
+                          .map((id) => addonNameById.get(id) ?? id)
+                          .join("、")
+                      : "なし（全解除）"}
+                  </td>
+                  <td style={{ maxWidth: 200 }}>{r.note || "-"}</td>
+                  <td className="muted" style={{ fontSize: 12 }}>
+                    {new Date(r.requested_at).toLocaleDateString("ja-JP")}
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <form
+                        action={async () => {
+                          "use server";
+                          await approveAddonChangeRequest(r.id);
+                        }}
+                      >
+                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
+                          承認
+                        </button>
+                      </form>
+                      <form action={rejectAddonChangeRequest}>
                         <input type="hidden" name="requestId" value={r.id} />
                         <button type="submit" className="btn" style={{ fontSize: 12 }}>
                           却下

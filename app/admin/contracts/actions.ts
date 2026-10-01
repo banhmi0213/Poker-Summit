@@ -408,3 +408,67 @@ export async function rejectPlanChangeRequest(formData: FormData) {
 
   revalidatePath(CONTRACTS_PATH);
 }
+
+// --- アドオン変更申請(店舗オーナー発、/store/profile/plan から) -----------
+// プラン変更申請と同じ運用。承認するとstore_contract_addonsを申請内容
+// (requested_addon_ids、丸ごと置き換え)で確定させる(2026/10新設、
+// 「店舗がアドオン申請できるようにせなあかん」との指示)。
+export async function approveAddonChangeRequest(requestId: string) {
+  const supabase = await createClient();
+
+  const { data: request, error: fetchError } = await supabase
+    .from("addon_change_requests")
+    .select("id, store_id, store_contract_id, requested_addon_ids, status")
+    .eq("id", requestId)
+    .single();
+  if (fetchError) throw new Error(fetchError.message);
+  if (!request) throw new Error("申請が見つかりません。");
+  if (request.status !== "pending") throw new Error("この申請はすでに処理済みです。");
+
+  if (!request.store_contract_id) {
+    throw new Error(
+      "この店舗には契約(store_contracts)がまだ登録されていません。先に契約を登録してください。"
+    );
+  }
+
+  await replaceContractAddons(supabase, request.store_contract_id, request.requested_addon_ids ?? []);
+
+  const { error: updateRequestError } = await supabase
+    .from("addon_change_requests")
+    .update({
+      status: "approved",
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", requestId);
+  if (updateRequestError) throw new Error(updateRequestError.message);
+
+  await logAdminAction(supabase, "addon_change_request_approve", "store_contract", request.store_contract_id, {
+    requestId,
+    requestedAddonIds: request.requested_addon_ids,
+  });
+
+  revalidatePath(CONTRACTS_PATH);
+  revalidatePath(`${CONTRACTS_PATH}/${request.store_contract_id}`);
+}
+
+export async function rejectAddonChangeRequest(formData: FormData) {
+  const requestId = String(formData.get("requestId") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  if (!requestId) throw new Error("申請が指定されていません。");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("addon_change_requests")
+    .update({
+      status: "rejected",
+      reviewed_at: new Date().toISOString(),
+      review_note: note || null,
+    })
+    .eq("id", requestId)
+    .eq("status", "pending");
+  if (error) throw new Error(error.message);
+
+  await logAdminAction(supabase, "addon_change_request_reject", "addon_change_request", requestId, { note });
+
+  revalidatePath(CONTRACTS_PATH);
+}
