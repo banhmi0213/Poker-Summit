@@ -371,94 +371,6 @@ export default async function HomePage({
 
       <div className="section">
         <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>💼 新着求人</h2>
-          <Link href="/jobs" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {(!latestJobs || latestJobs.length === 0) && (
-          <p className="muted">現在募集中の求人はありません。</p>
-        )}
-        {latestJobs && latestJobs.length > 0 && (
-          <div className="grid cols-3">
-            {latestJobs.map((j: any) => (
-              <Link href={`/stores/${j.store_id}`} key={j.id} className="card" style={{ display: "block" }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                  {j.stores?.category && (
-                    <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
-                  )}
-                  {j.job_type && <span className="badge">{j.job_type}</span>}
-                </div>
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>{j.title}</div>
-                <div className="muted" style={{ fontSize: 12.5 }}>{j.stores?.name}</div>
-                {j.salary && (
-                  <div style={{ marginTop: 6, fontWeight: 700, color: "var(--accent-text)", fontSize: 13 }}>
-                    {j.salary}
-                  </div>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>💬 盛り上がっているサミット</h2>
-          <Link href="/board" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {(!latestPosts || latestPosts.length === 0) && (
-          <p className="muted">まだ投稿がありません。</p>
-        )}
-        {latestPosts && latestPosts.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {latestPosts.map((p) => (
-              <Link href={`/board/${p.id}`} key={p.id} className="card" style={{ display: "block" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{p.title}</div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  {p.author_name} ・ {formatDateTime(p.created_at)} ・ 💬 {replyCounts[p.id] ?? 0}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>
-            🏅 店舗ランキング{currentPref ? `（${currentPref}）` : ""}
-          </h2>
-        </div>
-        {rankedStores.length === 0 && (
-          <p className="muted">
-            {currentPref
-              ? `${currentPref}にはまだお気に入りされた店舗がありません。`
-              : "まだお気に入りされた店舗がありません。"}
-          </p>
-        )}
-        {rankedStores.length > 0 && (
-          <div className="grid cols-4">
-            {rankedStores.map((s, idx) => (
-              <StoreCard
-                key={s.id}
-                store={s}
-                isFavorite={favoriteStoreIds.has(s.id)}
-                rank={idx + 1}
-                favoriteAction={async () => {
-                  "use server";
-                  await toggleFavoriteStore(s.id, "/");
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
           <h2 style={{ fontSize: 18 }}>
             {isEventsLive ? "🔥本日 開催中のトーナメント・イベント" : "📅 開催予定のトーナメント・イベント"}
           </h2>
@@ -543,6 +455,94 @@ export default async function HomePage({
                     </span>
                   )}
                 </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18 }}>
+            🏅 店舗ランキング{currentPref ? `（${currentPref}）` : ""}
+          </h2>
+        </div>
+        {rankedStores.length === 0 && (
+          <p className="muted">
+            {currentPref
+              ? `${currentPref}にはまだお気に入りされた店舗がありません。`
+              : "まだお気に入りされた店舗がありません。"}
+          </p>
+        )}
+        {rankedStores.length > 0 && (
+          <div className="grid cols-4">
+            {rankedStores.map((s, idx) => (
+              <StoreCard
+                key={s.id}
+                store={s}
+                isFavorite={favoriteStoreIds.has(s.id)}
+                rank={idx + 1}
+                favoriteAction={async () => {
+                  "use server";
+                  await toggleFavoriteStore(s.id, "/");
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18 }}>💬 盛り上がっているサミット</h2>
+          <Link href="/board" className="see-all">
+            すべて見る →
+          </Link>
+        </div>
+        {(!latestPosts || latestPosts.length === 0) && (
+          <p className="muted">まだ投稿がありません。</p>
+        )}
+        {latestPosts && latestPosts.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {latestPosts.map((p) => (
+              <Link href={`/board/${p.id}`} key={p.id} className="card" style={{ display: "block" }}>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{p.title}</div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  {p.author_name} ・ {formatDateTime(p.created_at)} ・ 💬 {replyCounts[p.id] ?? 0}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="section">
+        <div className="section-head" style={{ marginBottom: 12 }}>
+          <h2 style={{ fontSize: 18 }}>💼 新着求人</h2>
+          <Link href="/jobs" className="see-all">
+            すべて見る →
+          </Link>
+        </div>
+        {(!latestJobs || latestJobs.length === 0) && (
+          <p className="muted">現在募集中の求人はありません。</p>
+        )}
+        {latestJobs && latestJobs.length > 0 && (
+          <div className="grid cols-3">
+            {latestJobs.map((j: any) => (
+              <Link href={`/stores/${j.store_id}`} key={j.id} className="card" style={{ display: "block" }}>
+                <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                  {j.stores?.category && (
+                    <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
+                  )}
+                  {j.job_type && <span className="badge">{j.job_type}</span>}
+                </div>
+                <div style={{ fontWeight: 700, marginBottom: 4 }}>{j.title}</div>
+                <div className="muted" style={{ fontSize: 12.5 }}>{j.stores?.name}</div>
+                {j.salary && (
+                  <div style={{ marginTop: 6, fontWeight: 700, color: "var(--accent-text)", fontSize: 13 }}>
+                    {j.salary}
+                  </div>
+                )}
               </Link>
             ))}
           </div>
