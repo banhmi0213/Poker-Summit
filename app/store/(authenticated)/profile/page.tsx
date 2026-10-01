@@ -194,13 +194,18 @@ export default async function StoreProfilePage() {
                 <form
                   action={uploadStoreLogo}
                   encType="multipart/form-data"
-                  style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}
+                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
                 >
                   <input type="hidden" name="storeId" value={store.id} />
-                  <input type="file" name="logo" accept="image/*" required />
-                  <button type="submit" className="btn">
-                    {store.logo_url ? "変更する" : "アップロードする"}
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <input type="file" name="logo" accept="image/*" required />
+                    <button type="submit" className="btn">
+                      {store.logo_url ? "変更する" : "アップロードする"}
+                    </button>
+                  </div>
+                  <span className="muted" style={{ fontSize: 11.5 }}>
+                    画像サイズは8MBまで。
+                  </span>
                 </form>
                 {store.logo_url && (
                   <form
