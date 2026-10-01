@@ -35,7 +35,9 @@ export default async function StorePlanPage() {
     await Promise.all([
       supabase
         .from("store_contracts")
-        .select("id, status, plan_id, plans(id, name, monthly_fee, description), store_contract_addons(addon_id)")
+        .select(
+          "id, status, plan_id, current_period_end, fincode_customer_id, plans(id, name, monthly_fee, description), store_contract_addons(addon_id)"
+        )
         .eq("store_id", store.id)
         .maybeSingle(),
       supabase
@@ -73,6 +75,14 @@ export default async function StorePlanPage() {
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・アドオン</h1>
 
+      {contract && !contract.fincode_customer_id && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
+          <div style={{ color: "#d1453b", fontSize: 13.5 }}>
+            ⚠️ カード情報が登録されていないため、プラン・アドオンの変更に伴うカード決済ができません。運営にお問い合わせください。
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <div style={{ marginBottom: 12 }}>
           <span className="muted">現在のプラン</span>
@@ -83,6 +93,11 @@ export default async function StorePlanPage() {
                 ).toLocaleString("ja-JP")}/月）`
               : "未契約・プラン未設定"}
           </div>
+          {contract?.current_period_end && (
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              現在の契約期間: 〜{new Date(contract.current_period_end).toLocaleDateString("ja-JP")}
+            </div>
+          )}
         </div>
 
         <div style={{ marginTop: 20, marginBottom: 4 }}>
@@ -136,7 +151,10 @@ export default async function StorePlanPage() {
             <div style={{ fontSize: 13.5 }}>
               ⏳「
               {(pendingPlanRequest.plans as { name?: string } | null)?.name ?? "選択したプラン"}
-              」への変更を運営に申請中です。運営の確認後に反映されます。
+              」へのダウングレードを予約しています。
+              {contract?.current_period_end
+                ? `現在の契約期間が終わる ${new Date(contract.current_period_end).toLocaleDateString("ja-JP")} に新しい料金で切り替わります。`
+                : "現在の契約期間が終わるタイミングで新しい料金に切り替わります。"}
             </div>
             {pendingPlanRequest.note && (
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
@@ -151,7 +169,7 @@ export default async function StorePlanPage() {
               style={{ marginTop: 8 }}
             >
               <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                申請を取り消す
+                予約を取り消す
               </button>
             </form>
           </div>
@@ -180,7 +198,7 @@ export default async function StorePlanPage() {
               プラン変更を申請する
             </button>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              申請後、運営が内容を確認し決済・契約内容を更新します。反映まで少しお時間をいただく場合があります。
+              料金が上がるプランへの変更は、送信時にカード決済が即時実行され、成功次第すぐに反映されます(日割りなし・満額請求)。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映されます。
             </p>
           </form>
         )}
@@ -213,7 +231,10 @@ export default async function StorePlanPage() {
                     .map((a) => a.name)
                     .join("、")
                 : "なし"}
-              」の構成に変更するよう運営に申請中です。運営の確認後に反映されます。
+              」の構成に変更するよう予約しています。
+              {contract?.current_period_end
+                ? `現在の契約期間が終わる ${new Date(contract.current_period_end).toLocaleDateString("ja-JP")} に反映されます。`
+                : "現在の契約期間が終わるタイミングで反映されます。"}
             </div>
             {pendingAddonRequest.note && (
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
@@ -228,7 +249,7 @@ export default async function StorePlanPage() {
               style={{ marginTop: 8 }}
             >
               <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                申請を取り消す
+                予約を取り消す
               </button>
             </form>
           </div>
@@ -272,7 +293,7 @@ export default async function StorePlanPage() {
               アドオン変更を申請する
             </button>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              申請後、運営が内容を確認し決済・契約内容を更新します。反映まで少しお時間をいただく場合があります。
+              アドオンの追加を含む変更は、送信時に新しい構成の合計金額でカード決済が即時実行され、成功次第すぐに反映されます。解除のみの変更は、現在の契約期間が終わるタイミングで反映されます。
             </p>
           </form>
         )}
