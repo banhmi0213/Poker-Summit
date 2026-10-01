@@ -204,7 +204,7 @@ export default async function StoreProfilePage() {
                     </button>
                   </div>
                   <span className="muted" style={{ fontSize: 11.5 }}>
-                    画像サイズは8MBまで。
+                    推奨サイズ: 横900×縦300px程度の横長画像（ファイルサイズは8MBまで）。カード表示時にこの比率からはみ出た部分は自動でトリミングされます。
                   </span>
                 </form>
                 {store.logo_url && (
