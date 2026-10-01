@@ -1580,6 +1580,12 @@ th {
   pointer-events: none;
 }
 
+/* Lift the map and all seven labels together, preserving their alignment. */
+.ps-region-map-svg,
+.ps-region-hero__labels {
+  transform: translateY(-2.5%);
+}
+
 
 .ps-region-label {
   --region-color: var(--ps-gold);
