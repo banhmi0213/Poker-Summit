@@ -2,6 +2,8 @@ export const CATEGORY_LABEL: Record<string, string> = {
   amusement: "アミューズメントポーカー",
   bar: "ポーカーバー",
   casino: "カジノバー",
+  ring: "リングのみ",
+  tournament: "トーナメントのみ",
   school: "ポーカースクール",
   other: "その他",
 };
@@ -10,21 +12,33 @@ export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(
   ([value, label]) => ({ value, label })
 );
 
+// 掲載のお申込み(/apply)フォームのカテゴリ選択肢のみを絞った版。既存店舗の
+// カテゴリ表示・編集(store-card.tsx, 管理画面の店舗編集など)は上の
+// CATEGORY_OPTIONS/CATEGORY_LABEL をそのまま使い続ける(2026/10、「掲載申込
+// だけやでカテゴリー変えるの」との指摘を受け、サイト全体ではなく申込み
+// フォームだけに変更範囲を限定)。
+export const APPLY_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
+  (c) => c.value !== "ring" && c.value !== "tournament"
+);
+
 export const CATEGORY_COLOR: Record<string, string> = {
   amusement: "#3987e5",
   bar: "#d95926",
   casino: "#199e70",
   school: "#c98500",
+  tournament: "#d55181",
+  ring: "#9085e9",
   other: "#8a8f98",
 };
 
-// その他 は専用アイコンを持たず、store-card.tsx のデフォルト(♠️)に
+// リングのみ / その他 は専用アイコンを持たず、store-card.tsx のデフォルト(♠️)に
 // フォールバックする(意図的に未設定)。
 export const CATEGORY_ICON: Record<string, string> = {
   amusement: "♠️",
   bar: "🍸",
   casino: "🎰",
   school: "🎓",
+  tournament: "🏆",
 };
 
 export const REGIONS = [
