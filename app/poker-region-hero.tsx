@@ -54,7 +54,7 @@ const PREF_LINE_BREAKS: Record<string, number[]> = {
   "近畿": [3, 3, 1],
   "中国": [3, 2],
   "四国": [2, 2],
-  "九州・沖縄": [3, 3, 2],
+  "九州・沖縄": [2, 2, 2, 2],
 };
 
 function chunkPrefs(prefs: string[], sizes: number[]): string[][] {
