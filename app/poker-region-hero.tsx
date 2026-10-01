@@ -31,13 +31,13 @@ const REGION_CLASS: Record<string, string> = {
 
 // Region tabs stay beside their matching colors on the map.
 const REGION_LABEL: Record<string, { leftPct: number; topPct: number }> = {
-  "北海道・東北": { leftPct: 69.2, topPct: 14.7 },
-  "関東": { leftPct: 64.5, topPct: 46.2 },
-  "中部": { leftPct: 43.5, topPct: 39.0 },
-  "近畿": { leftPct: 56.0, topPct: 61.5 },
-  "中国": { leftPct: 32.5, topPct: 56.8 },
-  "四国": { leftPct: 45.8, topPct: 75.8 },
-  "九州・沖縄": { leftPct: 21.0, topPct: 64.0 },
+  "北海道・東北": { leftPct: 70.0, topPct: 15.0 },
+  "関東": { leftPct: 64.0, topPct: 45.5 },
+  "中部": { leftPct: 43.0, topPct: 42.5 },
+  "近畿": { leftPct: 51.0, topPct: 61.0 },
+  "中国": { leftPct: 32.0, topPct: 56.0 },
+  "四国": { leftPct: 44.0, topPct: 72.5 },
+  "九州・沖縄": { leftPct: 23.5, topPct: 66.0 },
 };
 
 // Line-break groups for each region’s prefecture list under its tab, read
@@ -242,7 +242,7 @@ export function PokerRegionHero({
         preserveAspectRatio="xMidYMid meet"
         aria-label="7地方を選べる日本地図"
       >
-        <g transform="translate(14 8) rotate(5 838 506)">
+        <g transform="translate(14 -10) rotate(8 838 506)">
           <image
             href="/images/hero-map-reference.svg"
             x="392"
