@@ -34,9 +34,9 @@ const REGION_LABEL: Record<string, { leftPct: number; topPct: number }> = {
   "北海道・東北": { leftPct: 70.0, topPct: 15.0 },
   "関東": { leftPct: 64.0, topPct: 45.5 },
   "中部": { leftPct: 43.0, topPct: 42.5 },
-  "近畿": { leftPct: 51.0, topPct: 61.0 },
+  "近畿": { leftPct: 48.2, topPct: 60.0 },
   "中国": { leftPct: 32.0, topPct: 56.0 },
-  "四国": { leftPct: 44.0, topPct: 72.5 },
+  "四国": { leftPct: 41.5, topPct: 72.5 },
   "九州・沖縄": { leftPct: 23.5, topPct: 66.0 },
 };
 
