@@ -15,7 +15,7 @@ export function StoreSchedule({events}: {events: Event[]}) {
   const matches = events.filter(event => event.start_at && dateKey(event.start_at).startsWith(month) && (!selected || dateKey(event.start_at) === selected));
   function move(step: number) {const d = new Date(year, number-1+step, 1); setMonth(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`); setSelected(null);}
   return <section className={`sd-schedule ${expanded ? "is-expanded" : ""}`}>
-    <div className="sd-schedule-heading"><DetailIcon name="calendar" /><div><h2>月間スケジュール</h2><p>今月のイベント・トーナメント開催予定をご確認いただけます。</p></div></div>
+    <div className="sd-schedule-heading"><DetailIcon name="calendar" /><div><h2>トーナメント・イベント</h2><p>今月のイベント・トーナメント開催予定をご確認いただけます。</p></div></div>
     <div className="sd-calendar"><div className="sd-calendar-heading">{expanded && <button aria-label="前の月" onClick={() => move(-1)}>‹</button>}<strong>{year}年{number}月</strong>{expanded && <button aria-label="次の月" onClick={() => move(1)}>›</button>}</div>
       <div className="sd-calendar-days">{["日","月","火","水","木","金","土"].map(day => <span key={day}>{day}</span>)}
         {expanded && Array.from({length: offset}, (_,i) => <span key={`empty-${i}`} />)}
