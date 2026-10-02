@@ -19,9 +19,27 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
 
   const pref = String(formData.get("pref") ?? "").trim();
   const keyword = String(formData.get("keyword") ?? "").trim() || "ポーカー";
+  const excludeWordsRaw = String(formData.get("excludeKeywords") ?? "").trim();
 
   if (!pref) {
     throw new Error("都道府県を選んでください。");
+  }
+
+  // 除外ワードはカンマ/読点/スペース区切りで複数指定できる。店名に含まれて
+  // いたら取り込み対象から外す(大文字小文字は区別しない)。無関係な店が
+  // 混ざりやすいキーワードほど、運営側で「パチンコ」「風俗」等を指定して
+  // 弾けるようにするため(2026/10、「不要なものを弾くフィルタリング」要望)。
+  const excludeWords = excludeWordsRaw
+    ? excludeWordsRaw
+        .split(/[,、\s]+/)
+        .map((w) => w.trim())
+        .filter(Boolean)
+    : [];
+
+  function matchesExcludeWord(name: string): boolean {
+    if (excludeWords.length === 0) return false;
+    const lower = name.toLowerCase();
+    return excludeWords.some((w) => lower.includes(w.toLowerCase()));
   }
 
   const results = await searchPlaces(`${keyword} ${pref}`);
@@ -35,9 +53,13 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     .in("google_place_id", placeIds.length > 0 ? placeIds : ["-"]);
   const existingIds = new Set((existingRows ?? []).map((e) => e.google_place_id));
 
-  const candidates = results.filter(
-    (r) => !existingIds.has(r.placeId) && r.businessStatus !== "CLOSED_PERMANENTLY"
-  );
+  const afterDedup = results.filter((r) => !existingIds.has(r.placeId));
+  const afterClosed = afterDedup.filter((r) => r.businessStatus !== "CLOSED_PERMANENTLY");
+  const candidates = afterClosed.filter((r) => !matchesExcludeWord(r.name));
+
+  const skippedExisting = results.length - afterDedup.length;
+  const skippedClosed = afterDedup.length - afterClosed.length;
+  const skippedByFilter = afterClosed.length - candidates.length;
 
   let inserted = 0;
   const failures: string[] = [];
@@ -69,8 +91,11 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
   await logAdminAction(supabase, "store_import_google_places", "store", undefined, {
     pref,
     keyword,
+    excludeWords,
     found: results.length,
-    skippedExisting: results.length - candidates.length,
+    skippedExisting,
+    skippedClosed,
+    skippedByFilter,
     inserted,
     failures,
   });
@@ -88,7 +113,9 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
       pref,
       keyword,
       found: results.length,
-      skippedExisting: results.length - candidates.length,
+      skippedExisting,
+      skippedClosed,
+      skippedByFilter,
       inserted,
       failed: failures.length,
     }),
