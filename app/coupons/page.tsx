@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
@@ -111,19 +112,17 @@ export default async function CouponsPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <main className="container cp-page">
-        <div className="coupon-hero">
-          <img
-            className="coupon-hero__bg"
-            src="/images/poker-region-hero-bg.png"
-            alt=""
+        <h1 style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
+          <Image
+            src="/images/poker-coupons-banner.png"
+            alt="COUPONS & OFFERS — クーポンで、もっとポーカーを楽しもう。気になるお店の特典を、まとめてチェック。"
+            width={1140}
+            height={190}
+            priority
+            sizes="(max-width: 1180px) 100vw, 1140px"
+            style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
           />
-          <div className="coupon-hero__overlay" />
-          <div className="coupon-hero__content">
-            <span className="coupon-hero__eyebrow">COUPONS &amp; OFFERS</span>
-            <h1 className="coupon-hero__title">クーポンで、もっとポーカーを楽しもう。</h1>
-            <p className="coupon-hero__subtitle">気になるお店の特典を、まとめてチェック。</p>
-          </div>
-        </div>
+        </h1>
 
         <form className="cp-search" method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           <input type="hidden" name="sort" value={sort} />
