@@ -31,6 +31,9 @@ export async function updateStoreProfile(formData: FormData) {
   const nearestStation = String(formData.get("nearestStation") ?? "").trim();
   const description = String(formData.get("description") ?? "");
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const xUrl = String(formData.get("xUrl") ?? "").trim();
+  const instagramUrl = String(formData.get("instagramUrl") ?? "").trim();
   const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
 
   if (!name) {
@@ -95,6 +98,9 @@ export async function updateStoreProfile(formData: FormData) {
     nearestStation: nearestStation || null,
     description,
     lineUrl: lineUrl || null,
+    email: email || null,
+    xUrl: xUrl || null,
+    instagramUrl: instagramUrl || null,
     areaKeywords: areaKeywords || null,
   });
 
