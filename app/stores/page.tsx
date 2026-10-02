@@ -213,7 +213,6 @@ export default async function StoresPage({
           </a>
         )}
 
-        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: hasOrigin ? 4 : 16 }}>{pageHeading}</h1>
         {hasOrigin && (
           <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
             📍 現在地から近い順に表示しています
