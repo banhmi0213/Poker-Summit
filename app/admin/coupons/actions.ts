@@ -40,6 +40,7 @@ export async function createCouponByAdmin(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  const offerType = String(formData.get("offerType") ?? "").trim();
 
   if (!storeId) {
     throw new Error("店舗を選択してください。");
@@ -58,6 +59,7 @@ export async function createCouponByAdmin(formData: FormData) {
       code: code || null,
       valid_until: validUntil || null,
       usage_limit: usageLimit,
+      offer_type: offerType || null,
     })
     .select("id")
     .single();
@@ -81,6 +83,7 @@ export async function updateCouponByAdmin(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  const offerType = String(formData.get("offerType") ?? "").trim();
 
   if (!title) {
     throw new Error("クーポンのタイトルを入力してください。");
@@ -95,6 +98,7 @@ export async function updateCouponByAdmin(formData: FormData) {
       code: code || null,
       valid_until: validUntil || null,
       usage_limit: usageLimit,
+      offer_type: offerType || null,
     })
     .eq("id", couponId);
 
