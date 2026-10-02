@@ -196,7 +196,7 @@ export default async function StoresPage({
       <div className="container sl-page">
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>
-          <h1>全国のポーカースポットを探す</h1>
+          <h1>{isKnownRegion ? region : (PREF_REGION[pref]?.[0] ?? "全国")}のポーカースポットを探す</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
         {storeListBanner && (
