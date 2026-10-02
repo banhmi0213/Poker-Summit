@@ -139,6 +139,9 @@ export type InstantStoreFields = {
   description?: string | null;
   category?: string | null;
   lineUrl?: string | null;
+  email?: string | null;
+  xUrl?: string | null;
+  instagramUrl?: string | null;
   areaKeywords?: string | null;
   nearestStation?: string | null;
 };
@@ -149,6 +152,9 @@ const INSTANT_FIELD_COLUMNS: Record<keyof InstantStoreFields, string> = {
   description: "description",
   category: "category",
   lineUrl: "line_url",
+  email: "email",
+  xUrl: "x_url",
+  instagramUrl: "instagram_url",
   areaKeywords: "area_keywords",
   nearestStation: "nearest_station",
 };
