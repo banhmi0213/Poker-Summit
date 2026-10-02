@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
-import { searchPlaces, getPlacePhone } from "@/lib/google-places";
+import { searchPlaces, getPlaceDetails, guessCategory } from "@/lib/google-places";
 import { primaryRegionForPref } from "@/lib/constants";
 
 // Google Placesから見つけた候補は、いきなり公開(approved)にはせず常に
@@ -65,17 +65,21 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
   const failures: string[] = [];
 
   for (const c of candidates) {
-    // 電話番号はPlace Detailsを1件ずつ叩いて補完(ベストエフォート、
-    // 失敗してもnullのまま取り込みは続行)。
-    const tel = await getPlacePhone(c.placeId);
+    // 電話番号・市区町村はPlace Detailsを1件ずつ叩いて補完(ベストエフォート、
+    // 失敗してもnullのまま取り込みは続行)。カテゴリはGoogle Places側に
+    // 対応情報が無いため店名等から推測した下書き値を入れる。
+    const details = await getPlaceDetails(c.placeId);
+    const category = guessCategory(c.name, c.types);
 
     const { error } = await supabase.from("stores").insert({
       name: c.name,
       status: "pending",
+      category,
       pref,
       region: primaryRegionForPref(pref),
+      city: details.city,
       address: c.address,
-      tel,
+      tel: details.tel,
       lat: c.lat,
       lng: c.lng,
       google_place_id: c.placeId,
