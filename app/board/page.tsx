@@ -43,8 +43,9 @@ export default async function BoardPage({
   const category = searchParams.category ?? "";
   const q = searchParams.q?.trim() ?? "";
   // 並び替え(2026/10、「キーワード検索・新着順／更新順を追加してほしい」との
-  // 指示)。「updated」(既定、更新順)と「new」(新着順=作成日時順)の2択。
-  const sort = searchParams.sort === "new" ? "new" : "updated";
+  // 指示、その後「新着を先に持ってきて」との指示で既定を新着順に変更)。
+  // 「new」(既定、新着順=作成日時順)と「updated」(更新順)の2択。
+  const sort = searchParams.sort === "updated" ? "updated" : "new";
   // スレッド一覧のページ送り(2026/10、「100件でページ送りで」との指示)。
   // 1ページ100件固定。カテゴリ絞り込みと組み合わせても動くよう、ページ数は
   // 絞り込み後の件数から計算する。
@@ -64,16 +65,16 @@ export default async function BoardPage({
   if (category) countQuery = countQuery.eq("category", category);
   if (q) countQuery = countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
 
-  // スレッド一覧の並び順(2026/10、「スレッド一覧は更新があれば一番先頭に
-  // 来るように」との指示)。返信があるたびにcreateReply側でboard_posts.
-  // updated_atを更新しているので、作成日時(created_at)ではなく更新日時
-  // (updated_at、新規投稿時点ではcreated_atと同じ)でソートする。ただし
-  // sort=newが指定された場合は投稿日時(created_at)順に切り替える。
+  // スレッド一覧の並び順。既定は新着順(created_at、2026/10「新着を先に
+  // 持ってきて」との指示)。sort=updatedが指定された場合のみ更新日時
+  // (updated_at、返信があるたびにcreateReply側で更新している。新規投稿
+  // 時点ではcreated_atと同じ)に切り替える(2026/10「スレッド一覧は更新が
+  // あれば一番先頭に来るように」との旧指示を踏襲したオプションとして残す)。
   let query = supabase
     .from("board_posts")
     .select("id, title, author_name, created_at, updated_at, category, image_url")
     .eq("status", "visible")
-    .order(sort === "new" ? "created_at" : "updated_at", { ascending: false })
+    .order(sort === "updated" ? "updated_at" : "created_at", { ascending: false })
     .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
   if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
@@ -92,7 +93,7 @@ export default async function BoardPage({
     const params = new URLSearchParams();
     if (nextCategory) params.set("category", nextCategory);
     if (nextQ) params.set("q", nextQ);
-    if (nextSort && nextSort !== "updated") params.set("sort", nextSort);
+    if (nextSort && nextSort !== "new") params.set("sort", nextSort);
     if (nextPage > 1) params.set("page", String(nextPage));
     const qs = params.toString();
     return `/board${qs ? `?${qs}` : ""}`;
@@ -162,8 +163,8 @@ export default async function BoardPage({
               flex: "1 1 140px",
             }}
           >
-            <option value="updated">更新順</option>
             <option value="new">新着順</option>
+            <option value="updated">更新順</option>
           </select>
           <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
             検索
