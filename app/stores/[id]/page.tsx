@@ -356,14 +356,16 @@ export default async function StoreDetailPage({
         )}
         {jobs?.map((j) => (
           <div className="card sd-job-card" key={j.id}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-              <h3>{j.title}</h3>
-              {j.job_type && <span className="badge">{j.job_type}</span>}
-            </div>
+            <Link href={`/jobs/${j.id}`}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <h3>{j.title}</h3>
+                {j.job_type && <span className="badge">{j.job_type}</span>}
+              </div>
+              {j.salary && <p className="muted">{j.salary}</p>}
+            </Link>
             <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る ›</Link>
-            {j.salary && <p className="muted">{j.salary}</p>}
             {j.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{j.description}</p>}
-            <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+            <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
               <form
                 action={async () => {
                   "use server";
@@ -389,6 +391,11 @@ export default async function StoreDetailPage({
                   {appliedJobIds.has(j.id) ? "応募済み" : "応募する"}
                 </button>
               </form>
+              {phone && (
+                <a href={`tel:${phone}`} className="btn" style={{ fontSize: 12.5 }}>
+                  <DetailIcon name="phone" />電話をかける
+                </a>
+              )}
               <form
                 action={async () => {
                   "use server";
