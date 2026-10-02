@@ -2341,3 +2341,15 @@ th {
 .sd-gallery-main button { width:32px; height:32px; }
 .sd-gallery-prev { left:10px; } .sd-gallery-next { right:10px; }
 @media(max-width:760px) { .sd-menu-card { height:auto; min-height:122px; } }
+.sd-section h2 { line-height:20px; margin-bottom:6px !important; }
+.sd-menu-more { position:absolute; right:10px; bottom:9px; margin:0; }
+.sd-tab-overview .sd-event-filters button:first-child { display:none; }
+.sd-tab-overview .sd-event-copy > a > .muted { display:none; }
+.sd-tab-overview .sd-event-card { min-height:98px; }
+.sd-event-copy h3 { line-height:1.4; margin-bottom:3px; }
+.sd-tab-overview .sd-coupon-card { min-height:137px; }
+.sd-content-side #store-notices .card p { font-size:11.5px !important; line-height:1.5; }
+.sd-content-side #store-notices .card p.small { font-size:10px !important; }
+.sd-section .card:last-child { margin-bottom:0; }
+.sd-tab-overview .sd-content-main > .sd-tab-panel:last-child .sd-section,
+.sd-tab-overview .sd-content-side > .sd-tab-panel:last-child .sd-section { margin-bottom:0; }
