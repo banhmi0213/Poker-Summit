@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { toggleFavoriteJob, applyToJob } from "@/app/member-actions";
+import { toggleFavoriteJob, submitJobApplication } from "@/app/member-actions";
 import { reportJob } from "@/app/report-actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
@@ -16,8 +16,10 @@ function formatDate(value: string | null) {
 
 export default async function JobDetailPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { applyError?: string; applyDone?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -132,16 +134,9 @@ export default async function JobDetailPage({
               ✓ 応募済み
             </button>
           ) : j.status === "open" ? (
-            <form
-              action={async () => {
-                "use server";
-                await applyToJob(j.id, path);
-              }}
-            >
-              <button type="submit" className="btn primary">
-                この求人に応募する
-              </button>
-            </form>
+            <a href="#apply" className="btn primary">
+              この求人に応募する
+            </a>
           ) : (
             <button type="button" className="btn" disabled>
               募集終了
@@ -176,6 +171,38 @@ export default async function JobDetailPage({
             </button>
           </form>
         </div>
+
+        {searchParams.applyDone && (
+          <div className="card" style={{ marginTop: 18, background: "var(--good-soft)" }}>
+            <p style={{ fontSize: 13.5 }}>✓ 応募を受け付けました。店舗からの連絡をお待ちください。</p>
+          </div>
+        )}
+
+        {!appliedByMe && j.status === "open" && (
+          <div id="apply" className="card" style={{ marginTop: 18, scrollMarginTop: 20 }}>
+            <h2 style={{ fontSize: 16, marginBottom: 10 }}>この求人に応募する</h2>
+            {searchParams.applyError && <p className="err">{searchParams.applyError}</p>}
+            <form action={submitJobApplication}>
+              <input type="hidden" name="jobId" value={j.id} />
+              <input type="hidden" name="path" value={path} />
+              <div className="field">
+                <span className="muted">お名前 *</span>
+                <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
+              </div>
+              <div className="field">
+                <span className="muted">電話番号</span>
+                <input type="tel" name="tel" />
+              </div>
+              <div className="field">
+                <span className="muted">メッセージ（任意）</span>
+                <textarea name="message" rows={4} placeholder="志望動機やご質問があればご記入ください" />
+              </div>
+              <button type="submit" className="btn primary" style={{ width: "100%" }}>
+                応募を送信する
+              </button>
+            </form>
+          </div>
+        )}
 
         {jobDetailBanner && (
           <a
