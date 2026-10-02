@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateCouponByAdmin } from "../../actions";
+import { COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
 
 // 従来は /admin/coupons の一覧テーブル内(操作列、幅の狭いセル)に<details>で
 // インライン展開していたが、店舗管理・求人管理・イベント管理と同じ理由
@@ -16,7 +17,7 @@ export default async function AdminCouponEditPage({
   const { data: coupon } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, active, store_id, stores(name)"
+      "id, title, discount, description, code, valid_until, usage_limit, used_count, active, offer_type, store_id, stores(name)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -78,6 +79,18 @@ export default async function AdminCouponEditPage({
           <div className="field">
             <span className="muted">利用可能回数（空欄で無制限）</span>
             <input type="number" name="usageLimit" min={1} defaultValue={coupon.usage_limit ?? ""} />
+          </div>
+
+          <div className="field">
+            <span className="muted">特典タイプ（公開ページの絞り込みに使われます）</span>
+            <select name="offerType" defaultValue={coupon.offer_type ?? ""}>
+              <option value="">未設定</option>
+              {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="field" style={{ gridColumn: "1 / -1" }}>
