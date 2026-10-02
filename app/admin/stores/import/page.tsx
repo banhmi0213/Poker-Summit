@@ -15,6 +15,7 @@ export default async function AdminStoresImportPage() {
   const resultRaw = jar.get("import_result")?.value;
   let result: {
     pref: string;
+    area: string;
     keyword: string;
     found: number;
     skippedExisting: number;
@@ -55,7 +56,8 @@ export default async function AdminStoresImportPage() {
       {result && (
         <div className="card" style={{ borderColor: "var(--good)", marginBottom: 16 }}>
           <h3 style={{ marginBottom: 8 }}>
-            「{result.keyword}」× {result.pref} の検索結果
+            「{result.keyword}」× {result.pref}
+            {result.area && ` ${result.area}`} の検索結果
           </h3>
           <div style={{ fontSize: 13, lineHeight: 1.8 }}>
             検索でヒット: {result.found}件 ／ 取り込み済みのためスキップ: {result.skippedExisting}件 ／ 閉店済みのためスキップ:{" "}
@@ -90,6 +92,13 @@ export default async function AdminStoresImportPage() {
                 </optgroup>
               ))}
             </select>
+          </div>
+          <div className="field">
+            <span className="muted">エリア</span>
+            <input type="text" name="area" placeholder="例: 新宿、梅田" />
+            <span className="muted" style={{ fontSize: 11.5 }}>
+              都道府県内の駅名・繁華街名などで絞り込みたい場合に入力してください(任意)。
+            </span>
           </div>
           <div className="field">
             <span className="muted">検索キーワード</span>
