@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DetailIcon } from "./detail-icon";
 
@@ -8,6 +8,10 @@ type Panel = { id: string; label: string; content: ReactNode };
 
 export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedule?: ReactNode }) {
   const [active, setActive] = useState<number | null>(null);
+  useEffect(() => {
+    const show = (event: Event) => {const index = panels.findIndex(panel => panel.id === (event as CustomEvent).detail); if(index >= 0) {setActive(index); buttons.current[index]?.focus({preventScroll:true});}};
+    window.addEventListener("store-detail-tab",show); return () => window.removeEventListener("store-detail-tab",show);
+  }, [panels]);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   return (
     <div className="sd-tabbed-content">

@@ -16,6 +16,8 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { classifyDevice } from "@/lib/device";
 import { StorePhotoGallery } from "./store-photo-gallery";
+import { ReferenceSlice } from "./reference-slice";
+import { DetailTabLink } from "./detail-tab-link";
 import { StoreEventFilter } from "./store-event-filter";
 import { StoreSchedule } from "./store-schedule";
 import { DetailIcon } from "./detail-icon";
@@ -157,7 +159,7 @@ export default async function StoreDetailPage({
         <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>
         <div className="sd-title-row">
           <div className="sd-title"><h1>{store.name}</h1>
-            <span className="badge outline">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</span>
+            <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
             {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
           </div>
           <form action={async () => { "use server"; await toggleFavoriteStore(store.id, path); }}>
@@ -167,7 +169,7 @@ export default async function StoreDetailPage({
           </form>
         </div>
         <div className="sd-hero-grid">
-          <StorePhotoGallery key={store.id} photos={photos ?? []} name={store.name} />
+          <StorePhotoGallery key={store.id} photos={photos ?? []} name={store.name} reference={store.id === "b56daf2a-4ab1-4ad1-b317-a0387ab3391e"} />
           <aside className="sd-info">
             <dl className="sd-info-list">
               <div><dt><DetailIcon name="clock" />営業時間</dt><dd>{store.hours || "店舗にお問い合わせください"}</dd></div>
@@ -191,10 +193,16 @@ export default async function StoreDetailPage({
               <h2><DetailIcon name="menu" />料金・メニュー</h2>
               {menuItems && menuItems.length > 0 && <div className="sd-menu-grid">
                 {menuItems.map((item) => <article className="card sd-menu-card" key={item.id}>
+                  <ReferenceSlice region={[139,533,110,99]} alt="" className="sd-menu-thumb" />
                   <div className="sd-menu-copy"><h3>{item.name}</h3>
                   {item.price && <p className="sd-menu-price">{item.price}</p>}
                   {item.description && <p className="muted">{item.description}</p>}<MenuDetail name={item.name} price={item.price} description={item.description} /></div>
                 </article>)}
+                {!menuItems.some(item => /初めて|初心者/.test(item.name)) && <article className="card sd-menu-card">
+                  <ReferenceSlice region={[505,533,110,99]} alt="" className="sd-menu-thumb" />
+                  <div className="sd-menu-copy"><h3>初めての方へ</h3><p className="muted">ルール説明・遊び方のご案内</p><p className="muted">初めてのご来店については店舗にお問い合わせください。</p>
+                  <MenuDetail name="初めての方へ" description="初めてのご来店やルール説明をご希望の方は、店舗にお問い合わせください。開催予定の初心者向けイベントもご確認いただけます。" /></div>
+                </article>}
               </div>}
               {(!menuItems || menuItems.length === 0) && <><p className="sd-empty">料金・メニューは店舗にお問い合わせください。</p></>}
             </section>
@@ -212,11 +220,12 @@ export default async function StoreDetailPage({
         <StoreEventFilter dates={(events ?? []).map(ev => ev.start_at)}>{(events ?? []).map((ev) => (
           <div className="card sd-event-card" key={ev.id}>
             {ev.start_at && <div className="sd-event-date"><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit", timeZone: "Asia/Tokyo" })}</strong><span className="sd-weekday">{new Date(ev.start_at).toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" })}</span></div>}
-            <div className="sd-event-copy">{ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
-            <Link href={`/events/${ev.id}`}>
+            <div className="sd-event-copy">            <Link href={`/events/${ev.id}`}>
               <h3>{ev.title}</h3>
               {ev.location && <p className="muted">{ev.location}</p>}
             </Link>
+{ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
+
             <form
               action={async () => {
                 "use server";
@@ -242,22 +251,23 @@ export default async function StoreDetailPage({
             <>
 <section id="store-coupons" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          <DetailIcon name="ticket" />クーポン ({coupons?.length ?? 0})
+          <DetailIcon name="ticket" />クーポン ({coupons?.length ?? 0})<DetailTabLink id="coupons" />
         </h2>
         {(!coupons || coupons.length === 0) && (
           <p className="muted">現在利用可能なクーポンはありません。</p>
         )}
-        {coupons?.map((c) => {
+        {[...(coupons ?? [])].sort((a,b) => Number(b.title.includes("友達")) - Number(a.title.includes("友達"))).map((c) => {
           const limitReached =
             c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit;
           const alreadyUsed = usedCouponIds.has(c.id);
           return (
-            <div className="card" key={c.id}>
+            <div className="card sd-coupon-card" key={c.id}>
+              <ReferenceSlice region={[869,539,55,55]} alt="" className="sd-coupon-thumb" />
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                 <h3>{c.title}</h3>
                 {c.discount && <span className="badge">{c.discount}</span>}
               </div>
-              <Link className="sd-detail-link" href={`/coupons/${c.id}`}>クーポンの詳細を見る ›</Link>
+              <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る ›</Link>
               {c.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{c.description}</p>}
               <div className="muted" style={{ marginTop: 6 }}>
                 {c.code && <>クーポンコード: {c.code} </>}
@@ -296,7 +306,7 @@ export default async function StoreDetailPage({
         {notices && notices.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-              <DetailIcon name="notice" />お知らせ ({notices.length})
+              <DetailIcon name="notice" />お知らせ ({notices.length})<DetailTabLink id="notices" />
             </h2>
             {notices.map((n) => (
               <div className="card" key={n.id}>
@@ -325,7 +335,7 @@ export default async function StoreDetailPage({
           <p className="muted">現在募集中の求人はありません。</p>
         )}
         {jobs?.map((j) => (
-          <div className="card" key={j.id}>
+          <div className="card sd-job-card" key={j.id}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
               <h3>{j.title}</h3>
               {j.job_type && <span className="badge">{j.job_type}</span>}

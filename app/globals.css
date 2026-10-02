@@ -2259,3 +2259,76 @@ th {
 .sd-bottom-row #store-jobs .card > div:last-child { display:none !important; }
 .sd-job-selected { grid-column:1 / -1; }
 @media(max-width:760px) { .sd-bottom-row { grid-template-columns:1fr; } .sd-bottom-row .sd-schedule { grid-template-columns:1fr; } .sd-bottom-row .sd-schedule-toggle { grid-column:auto; } }
+/* Match the supplied 1277px-wide composition. */
+.sd-page { max-width:1060px; }
+.sd-title-row { margin-bottom:12px; }
+.sd-title .badge.outline { display:flex; align-items:center; gap:4px; }
+.sd-title .badge .sd-icon { width:14px; height:14px; }
+.sd-hero-grid { grid-template-columns:minmax(0,640fr) minmax(0,362fr); gap:18px; }
+.sd-reference-slice { position:relative; display:block; overflow:hidden; width:100%; }
+.sd-gallery-main > .sd-reference-slice { height:100%; }
+.sd-gallery-thumbs .sd-reference-slice { width:100%; height:100%; }
+.sd-gallery-thumbs .sd-reference-slice > img { object-fit:initial; }
+.sd-gallery-main { aspect-ratio:640/274; }
+.sd-gallery-thumbs button { aspect-ratio:150/79; }
+.sd-info { padding:6px 10px 10px; }
+.sd-info-list > div { padding:6px 0; line-height:20px; min-height:32px; }
+.sd-info-list dd { padding:0; font-size:11px; }
+.sd-info-list dt { align-self:stretch; }
+.sd-contact-actions { margin:8px 0; }
+.sd-map { height:171px; }
+.sd-tabs { margin-top:9px; }
+.sd-tabs button { padding:13px 6px; }
+.sd-content-grid { grid-template-columns:minmax(0,695fr) minmax(0,310fr); gap:15px; }
+.sd-content-side { padding-left:15px; }
+.sd-menu-thumb { flex:0 0 110px; width:110px; border-radius:4px; height:99px; }
+.sd-menu-card { min-height:122px; padding:10px !important; background:white !important; gap:12px; }
+.sd-menu-card h3 { margin-bottom:5px; }
+.sd-menu-copy { min-width:0; flex:1; }
+.sd-menu-more { padding:5px 17px !important; font-size:11px !important; }
+.sd-menu-price { line-height:1.55; margin:2px 0; font-size:11px; }
+.sd-tab-overview #store-menu { margin-bottom:16px; }
+.sd-event-filters { margin:-32px 0 10px; min-height:26px; padding-left:210px; gap:7px; }
+.sd-event-filters button { padding:5px 13px; }
+.sd-event-filters select { max-width:116px; }
+.sd-event-copy h3 { font-size:13px !important; }
+.sd-event-copy form { margin-top:5px !important; }
+.sd-event-card { min-height:96px; padding:9px !important; gap:12px; }
+.sd-event-date { min-width:62px; padding:8px 3px; }
+.sd-event-date strong { font-size:21px; }
+.sd-see-all { margin-left:auto; background:none; border:0; cursor:pointer; padding:0; font-weight:500; font-size:10px; color:#666; }
+.sd-coupon-thumb { width:55px; height:55px; float:left; margin:0 12px 6px 0; border-radius:4px; }
+.sd-coupon-card { min-height:154px; }
+.sd-coupon-card > div:first-of-type { display:block !important; }
+.sd-coupon-card .badge { display:block; padding:0; background:none; color:#555; border:0; font-size:12px; }
+.sd-coupon-card h3 { margin-bottom:4px; font-size:13px !important; }
+.sd-coupon-card .sd-coupon-detail { display:none; }
+.sd-coupon-card > .muted { clear:both; font-size:10px !important; }
+.sd-coupon-card form { clear:both; }
+.sd-tab-overview .sd-coupon-card:not(:first-of-type) { display:none; }
+.sd-tab-overview #store-notices .card:not(:first-of-type) { display:none; }
+.sd-tab-overview #store-notices .card { min-height:78px; }
+.sd-bottom-row { grid-template-columns:minmax(0,3.1fr) minmax(0,1.2fr); gap:10px; padding:8px 12px; }
+.sd-bottom-row .sd-schedule { grid-template-columns:1.4fr .85fr auto; align-items:center; gap:12px; }
+.sd-bottom-row .sd-schedule-toggle { grid-column:auto; padding:8px; font-size:10px; }
+.sd-bottom-row .sd-schedule-heading { gap:12px; }
+.sd-bottom-row .sd-schedule-heading p { font-size:9px; }
+.sd-bottom-row .sd-schedule h2 { font-size:14px; }
+.sd-bottom-row .sd-calendar { border-left:1px solid #ece5d5; padding-left:13px; }
+.sd-bottom-row .sd-job-panel { border-left:1px solid #e6dcbf; padding-left:14px; }
+.sd-bottom-row #store-jobs { display:flex; align-items:center; gap:15px; }
+.sd-bottom-row #store-jobs h2 { font-size:11px !important; margin:0 !important; white-space:nowrap; }
+.sd-bottom-row #store-jobs .sd-job-card { border:0; background:none; padding:0; }
+.sd-bottom-row #store-jobs .badge, .sd-bottom-row #store-jobs .sd-detail-link, .sd-bottom-row #store-jobs .card > p:not(.muted), .sd-bottom-row #store-jobs .card:not(:first-of-type) { display:none; }
+.sd-bottom-row #store-jobs .card h3 { font-size:11px; margin:0; }
+.sd-bottom-row #store-jobs .card .muted { font-size:9px; margin-top:4px; }
+@media(max-width:760px) {
+ .sd-hero-grid,.sd-content-grid,.sd-bottom-row { grid-template-columns:1fr; }
+ .sd-info-list dd { font-size:13px; }
+ .sd-gallery-main { aspect-ratio:640/274; }
+ .sd-event-filters { margin:0 0 10px; padding:0; justify-content:flex-start; }
+ .sd-menu-thumb { flex-basis:100px; width:100px; height:90px; }
+ .sd-bottom-row .sd-schedule { grid-template-columns:1fr; }
+ .sd-bottom-row .sd-calendar,.sd-bottom-row .sd-job-panel { border:0; padding-left:0; }
+ .sd-bottom-row .sd-schedule-toggle { grid-column:auto; }
+}
