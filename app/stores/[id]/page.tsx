@@ -195,12 +195,12 @@ export default async function StoreDetailPage({
                 {menuItems.map((item) => <article className="card sd-menu-card" key={item.id}>
                   <ReferenceSlice region={[139,533,110,99]} alt="" className="sd-menu-thumb" />
                   <div className="sd-menu-copy"><h3>{item.name}</h3>
-                  {item.price && <p className="sd-menu-price">{item.price}</p>}
+                  {item.price && <p className="sd-menu-price">{String(item.price).replace(/\u3000/g, "\n")}</p>}
                   {item.description && <p className="muted">{item.description}</p>}<MenuDetail name={item.name} price={item.price} description={item.description} /></div>
                 </article>)}
                 {!menuItems.some(item => /初めて|初心者/.test(item.name)) && <article className="card sd-menu-card">
                   <ReferenceSlice region={[505,533,110,99]} alt="" className="sd-menu-thumb" />
-                  <div className="sd-menu-copy"><h3>初めての方へ</h3><p className="muted">ルール説明・遊び方のご案内</p><p className="muted">初めてのご来店については店舗にお問い合わせください。</p>
+                  <div className="sd-menu-copy"><h3>初めての方へ</h3><p className="muted">ルール説明・遊び方のご案内</p><p className="muted">初心者の方も安心して<br />お楽しみいただけます</p>
                   <MenuDetail name="初めての方へ" description="初めてのご来店やルール説明をご希望の方は、店舗にお問い合わせください。開催予定の初心者向けイベントもご確認いただけます。" /></div>
                 </article>}
               </div>}
@@ -226,6 +226,7 @@ export default async function StoreDetailPage({
             </Link>
 {ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
 
+            <Link className="btn sd-event-detail" href={`/events/${ev.id}`}>詳細を見る ›</Link>
             <form
               action={async () => {
                 "use server";
@@ -273,6 +274,7 @@ export default async function StoreDetailPage({
                 {c.code && <>クーポンコード: {c.code} </>}
                 {c.valid_until && <>(有効期限: {c.valid_until})</>}
               </div>
+              <Link className="btn primary sd-coupon-view" href={`/coupons/${c.id}`}>クーポンを見る</Link>
               <form
                 action={async () => {
                   "use server";
