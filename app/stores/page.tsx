@@ -1,3 +1,4 @@
+import { paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
@@ -21,6 +22,7 @@ export default async function StoresPage({
     area?: string;
     lat?: string;
     lng?: string;
+    page?: string;
   };
 }) {
   const q = searchParams.q?.trim() ?? "";
@@ -183,6 +185,11 @@ export default async function StoresPage({
     });
   }
 
+  const pagination = paginateStores(displayStores, searchParams.page);
+  const pageNumbers = Array.from({ length: pagination.totalPages }, (_, index) => index + 1)
+    .filter(page => page === 1 || page === pagination.totalPages || Math.abs(page - pagination.page) <= 2);
+  const pageHref = (page: number) => storePageHref(searchParams, page);
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
@@ -323,7 +330,7 @@ export default async function StoresPage({
             gap: 14,
           }}
         >
-          {displayStores.map((s) => (
+          {pagination.items.map((s) => (
             <StoreListCard
               key={s.id}
               store={s}
@@ -337,6 +344,16 @@ export default async function StoresPage({
             />
           ))}
         </div>
+        {pagination.totalPages > 0 && (
+          <nav aria-label="店舗一覧のページ切り替え" style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 26 }}>
+            {pagination.page > 1 ? <Link className="chip" href={pageHref(pagination.page - 1)} rel="prev">‹ 前へ</Link> : <span className="chip" aria-disabled="true" style={{ opacity: 0.4 }}>‹ 前へ</span>}
+            {pageNumbers.map((page, index) => <span key={page} style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+              {index > 0 && page - pageNumbers[index - 1] > 1 && <span aria-hidden="true">…</span>}
+              <Link className={`chip ${page === pagination.page ? "active" : ""}`} href={pageHref(page)} aria-label={`${page}ページ目`} aria-current={page === pagination.page ? "page" : undefined}>{page}</Link>
+            </span>)}
+            {pagination.page < pagination.totalPages ? <Link className="chip" href={pageHref(pagination.page + 1)} rel="next">次へ ›</Link> : <span className="chip" aria-disabled="true" style={{ opacity: 0.4 }}>次へ ›</span>}
+          </nav>
+        )}
       </div>
       <PortalFooter />
       <BottomTabs active="stores" />
