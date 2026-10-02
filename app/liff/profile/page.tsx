@@ -15,6 +15,7 @@ type Store = {
   address: string | null;
   tel: string | null;
   hours: string | null;
+  nearest_station: string | null;
   description: string | null;
   line_url: string | null;
   area_keywords: string | null;
@@ -32,6 +33,7 @@ type FormState = {
   address: string;
   tel: string;
   hours: string;
+  nearestStation: string;
   description: string;
   lineUrl: string;
   areaKeywords: string;
@@ -46,6 +48,7 @@ function toForm(store: Store): FormState {
     address: store.address ?? "",
     tel: store.tel ?? "",
     hours: store.hours ?? "",
+    nearestStation: store.nearest_station ?? "",
     description: store.description ?? "",
     lineUrl: store.line_url ?? "",
     areaKeywords: store.area_keywords ?? "",
@@ -60,6 +63,7 @@ const FIELD_LABEL: Record<keyof FormState, string> = {
   address: "住所",
   tel: "電話番号",
   hours: "営業時間",
+  nearestStation: "最寄り駅",
   description: "店舗説明文",
   lineUrl: "LINE URL",
   areaKeywords: "エリアキーワード",
@@ -123,6 +127,7 @@ export default function LiffProfilePage() {
           address: form.address,
           tel: form.tel,
           hours: form.hours,
+          nearestStation: form.nearestStation,
           description: form.description,
           lineUrl: form.lineUrl || null,
           areaKeywords: form.areaKeywords || null,
@@ -239,6 +244,14 @@ export default function LiffProfilePage() {
           <div className="field">
             <span className="muted">営業時間</span>
             <input type="text" value={form.hours} onChange={(e) => update("hours", e.target.value)} />
+          </div>
+          <div className="field">
+            <span className="muted">最寄り駅</span>
+            <input
+              type="text"
+              value={form.nearestStation}
+              onChange={(e) => update("nearestStation", e.target.value)}
+            />
           </div>
           <div className="field">
             <span className="muted">店舗説明文</span>
