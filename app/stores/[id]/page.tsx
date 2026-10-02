@@ -190,15 +190,15 @@ export default async function StoreDetailPage({
           { id: "menu", label: "料金・メニュー", content: (
             <>
 <section id="store-menu" className="sd-section">
-              <h2><DetailIcon name="menu" />料金・メニュー</h2>
+              <h2><DetailIcon name="menu" />料金・メニュー{menuItems && menuItems.length > 1 && <DetailTabLink id="menu" />}</h2>
               {menuItems && menuItems.length > 0 && <div className="sd-menu-grid">
-                {menuItems.map((item) => <article className="card sd-menu-card" key={item.id}>
+                {menuItems.map((item) => <article className={`card sd-menu-card ${/初めて|初心者/.test(item.name) ? "sd-beginner-guide" : ""}`} key={item.id}>
                   <ReferenceSlice region={[139,533,110,99]} alt="" className="sd-menu-thumb" />
                   <div className="sd-menu-copy"><h3>{item.name}</h3>
                   {item.price && <p className="sd-menu-price">{String(item.price).replace(/\u3000/g, "\n")}</p>}
                   {item.description && <p className="muted">{item.description}</p>}<MenuDetail name={item.name} price={item.price} description={item.description} /></div>
                 </article>)}
-                {!menuItems.some(item => /初めて|初心者/.test(item.name)) && <article className="card sd-menu-card">
+                {!menuItems.some(item => /初めて|初心者/.test(item.name)) && <article className="card sd-menu-card sd-beginner-guide">
                   <ReferenceSlice region={[505,533,110,99]} alt="" className="sd-menu-thumb" />
                   <div className="sd-menu-copy"><h3>初めての方へ</h3><p className="muted">ルール説明・遊び方のご案内</p><p className="muted">初心者の方も安心して<br />お楽しみいただけます</p>
                   <MenuDetail name="初めての方へ" description="初めてのご来店やルール説明をご希望の方は、店舗にお問い合わせください。開催予定の初心者向けイベントもご確認いただけます。" /></div>
