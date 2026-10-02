@@ -1,3 +1,4 @@
+import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -112,7 +113,8 @@ export default async function CouponsPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <main className="container cp-page">
-        <h1 className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
+        <CompactPortalBanner image="/images/compact-coupons.jpg" eyebrow="COUPONS & OFFERS" title="クーポンで、もっとポーカーを楽しもう。" subtitle="気になるお店の特典を、まとめてチェック。" detail="" />
+        <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
           <picture>
             <source media="(min-width: 861px)" srcSet="/images/poker-coupons-banner-desktop.jpg" />
           <Image

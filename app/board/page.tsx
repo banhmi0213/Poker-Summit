@@ -1,3 +1,4 @@
+import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
@@ -113,7 +114,8 @@ export default async function BoardPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 className="portal-banner" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
+        <CompactPortalBanner image="/images/compact-community.jpg" eyebrow="POKER SUMMIT COMMUNITY" title="サミット｜情報交換" subtitle="ポーカーの話題で、つながろう。" detail="雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略" />
+        <h1 className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <picture>
             <source media="(min-width: 861px)" srcSet="/images/summit-community-beige-banner.jpg" />
           <Image

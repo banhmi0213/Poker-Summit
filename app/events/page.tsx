@@ -1,3 +1,4 @@
+import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
@@ -55,7 +56,8 @@ export default async function EventsPage({ searchParams }: {
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container ep-page">
-      <h1 className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
+      <CompactPortalBanner image="/images/compact-events.jpg" eyebrow="TOURNAMENTS & EVENTS" title="トーナメント・イベントを探す" subtitle="次の挑戦も、はじめての一歩も。" detail="" />
+        <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
         <Image
           src="/images/poker-events-banner.jpg"
           alt="TOURNAMENTS & EVENTS — トーナメント・イベントを探す。次の挑戦も、はじめての一歩も。"
