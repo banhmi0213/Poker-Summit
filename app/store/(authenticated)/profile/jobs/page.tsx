@@ -5,6 +5,13 @@ import { createJob, toggleJobStatus, updateJob, deleteJob } from "../jobs-action
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
 import { storeHasJobsAddon } from "@/lib/store-addons";
 
+const GENDER_LABEL: Record<string, string> = { male: "男性", female: "女性" };
+const DEALER_EXPERIENCE_LABEL: Record<string, string> = {
+  none: "ディーラー経験なし",
+  under_1y: "ディーラー経験あり（1年未満）",
+  over_1y: "ディーラー経験あり（1年以上）",
+};
+
 // 以前は/store/profile 1ページの中の1セクションだった求人管理を、独立した
 // ページへ分離(2026/09/30)。「求人を押したのにクーポンまで出てくる」との
 // 指摘を受け、各メニュー項目を完全に別ページにする構成へ揃えた。
@@ -69,11 +76,25 @@ export default async function StoreJobsPage() {
     jobIds.length
       ? supabase
           .from("job_applications")
-          .select("job_id, name, tel, message, applied_at")
+          .select(
+            "job_id, name, tel, message, age, gender, dealer_experience, address, interview_date, motivation, applied_at"
+          )
           .in("job_id", jobIds)
           .order("applied_at", { ascending: false })
       : Promise.resolve({
-          data: [] as { job_id: string; name: string | null; tel: string | null; message: string | null; applied_at: string }[],
+          data: [] as {
+            job_id: string;
+            name: string | null;
+            tel: string | null;
+            message: string | null;
+            age: number | null;
+            gender: string | null;
+            dealer_experience: string | null;
+            address: string | null;
+            interview_date: string | null;
+            motivation: string | null;
+            applied_at: string;
+          }[],
         }),
     jobIds.length
       ? supabase.from("favorite_jobs").select("job_id").in("job_id", jobIds)
@@ -84,7 +105,18 @@ export default async function StoreJobsPage() {
   const jobFavoriteCounts: Record<string, number> = {};
   const jobApplicants: Record<
     string,
-    { name: string | null; tel: string | null; message: string | null; applied_at: string }[]
+    {
+      name: string | null;
+      tel: string | null;
+      message: string | null;
+      age: number | null;
+      gender: string | null;
+      dealer_experience: string | null;
+      address: string | null;
+      interview_date: string | null;
+      motivation: string | null;
+      applied_at: string;
+    }[]
   > = {};
   appRows?.forEach((r) => {
     jobApplicantCounts[r.job_id] = (jobApplicantCounts[r.job_id] ?? 0) + 1;
@@ -92,6 +124,12 @@ export default async function StoreJobsPage() {
       name: r.name,
       tel: r.tel,
       message: r.message,
+      age: r.age,
+      gender: r.gender,
+      dealer_experience: r.dealer_experience,
+      address: r.address,
+      interview_date: r.interview_date,
+      motivation: r.motivation,
       applied_at: r.applied_at,
     });
   });
@@ -199,13 +237,39 @@ export default async function StoreJobsPage() {
                         {new Date(a.applied_at).toLocaleString("ja-JP")}
                       </span>
                     </div>
+                    <p className="muted small" style={{ marginTop: 4 }}>
+                      {[
+                        a.age ? `${a.age}歳` : null,
+                        a.gender ? GENDER_LABEL[a.gender] ?? a.gender : null,
+                        a.dealer_experience ? DEALER_EXPERIENCE_LABEL[a.dealer_experience] ?? a.dealer_experience : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" ・ ") || "年齢・性別・ディーラー経験の入力なし"}
+                    </p>
                     {a.tel && (
                       <p className="muted small" style={{ marginTop: 4 }}>
                         <a href={`tel:${String(a.tel).replace(/[^+0-9]/g, "")}`}>{a.tel}</a>
                       </p>
                     )}
+                    {a.address && (
+                      <p className="muted small" style={{ marginTop: 4 }}>📍 {a.address}</p>
+                    )}
+                    {a.interview_date && (
+                      <p className="muted small" style={{ marginTop: 4 }}>
+                        面接希望日: {new Date(a.interview_date).toLocaleDateString("ja-JP")}
+                      </p>
+                    )}
                     {a.message && (
-                      <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{a.message}</p>
+                      <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>
+                        <span className="muted small">メッセージ（PR）: </span>
+                        {a.message}
+                      </p>
+                    )}
+                    {a.motivation && (
+                      <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>
+                        <span className="muted small">志望動機: </span>
+                        {a.motivation}
+                      </p>
                     )}
                   </div>
                 ))}
