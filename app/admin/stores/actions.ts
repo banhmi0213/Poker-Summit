@@ -191,6 +191,7 @@ export async function updateStoreByAdmin(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim();
   const tel = String(formData.get("tel") ?? "").trim();
   const hours = String(formData.get("hours") ?? "").trim();
+  const nearestStation = String(formData.get("nearestStation") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
 
@@ -234,6 +235,7 @@ export async function updateStoreByAdmin(formData: FormData) {
       address: address || null,
       tel: tel || null,
       hours: hours || null,
+      nearest_station: nearestStation || null,
       description: description || null,
       area_keywords: areaKeywords || null,
       lat: coords?.lat ?? null,
