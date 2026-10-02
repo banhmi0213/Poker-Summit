@@ -2357,3 +2357,6 @@ th {
 .sd-menu-grid .sd-menu-card:first-child { order:0; }
 .sd-menu-grid .sd-beginner-guide { order:1; }
 .sd-tab-overview .sd-menu-card:not(:first-child):not(.sd-beginner-guide) { display:none; }
+@media(max-width:760px) {
+ .sd-tabs button { white-space:normal; line-height:1.4; min-width:0; }
+}
