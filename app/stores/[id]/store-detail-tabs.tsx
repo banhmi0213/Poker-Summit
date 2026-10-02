@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { DetailIcon } from "./detail-icon";
+import { StoreDetailViewContext } from "./detail-tab-link";
 
 type Panel = { id: string; label: string; content: ReactNode };
 
@@ -14,6 +15,7 @@ export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedul
   }, [panels]);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   return (
+    <StoreDetailViewContext.Provider value={active !== null}>
     <div className="sd-tabbed-content">
       <div className="sd-tabs" role="tablist" aria-label="店舗情報の各項目">
         {panels.map((panel, index) => (
@@ -38,6 +40,9 @@ export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedul
           </button>
         ))}
       </div>
+      {active !== null && <div style={{ display: "flex", justifyContent: "flex-end", margin: "12px 0 0" }}>
+        <button type="button" className="sd-see-all" onClick={() => { setActive(null); buttons.current[0]?.focus({ preventScroll: true }); }}>‹ 戻る</button>
+      </div>}
       <div className={active === null ? "sd-content-grid sd-tab-overview" : "sd-tab-selected"}>
         {[0, 1].map((column) => (
           <div key={column}
@@ -61,5 +66,6 @@ export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedul
         </div>
       </div>
     </div>
+    </StoreDetailViewContext.Provider>
   );
 }
