@@ -162,11 +162,29 @@ export default async function StoreDetailPage({
             <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
             {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
           </div>
+          <div className="sd-store-contact-bar" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
+            {/* Link wiring is intentionally deferred: replace these disabled buttons
+                with anchors when the store's contact URLs are connected. */}
+            <div aria-label="店舗の連絡先・SNS" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button type="button" disabled aria-label="メール（リンク準備中）" data-store-contact="email" style={{ border: 0, padding: 0, background: "transparent", color: "#63a5ac", width: 28, height: 28 }}>
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M3 4h18a2 2 0 0 1 2 2v1l-11 7L1 7V6a2 2 0 0 1 2-2Zm-2 5.4 10.5 6.7a1 1 0 0 0 1 0L23 9.4V18a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2Z"/></svg>
+              </button>
+              <button type="button" disabled aria-label="LINE（リンク準備中）" data-store-contact="line" style={{ border: 0, padding: 0, background: "transparent", width: 28, height: 28 }}>
+                <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="#06c755"/><path d="M23 12.4c0-4.1-4-7.4-9-7.4S5 8.3 5 12.4c0 3.7 3.2 6.8 7.5 7.3.3.1.8.3.7.8l-.3 1.7c-.1.5.3.7.7.4C19 19.2 23 16.2 23 12.4Z" fill="white"/><text x="14" y="14" textAnchor="middle" fontSize="5.4" fontWeight="800" fontFamily="Arial,sans-serif" fill="#06c755">LINE</text></svg>
+              </button>
+              <button type="button" disabled aria-label="X（リンク準備中）" data-store-contact="x" style={{ border: 0, padding: 0, background: "transparent", color: "#222", width: 28, height: 28 }}>
+                <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.3l-4.9-7.4L5.3 22H2.2l8.2-9.4L2.9 2h6.5l4.4 6.7L18.9 2ZM17.8 20h1.7L8.3 4H6.5Z"/></svg>
+              </button>
+              <button type="button" disabled aria-label="Instagram（リンク準備中）" data-store-contact="instagram" style={{ border: 0, padding: 0, background: "transparent", width: 28, height: 28 }}>
+                <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><defs><linearGradient id="store-instagram-gradient" x1="0" y1="1" x2="1" y2="0"><stop stopColor="#f6b94c"/><stop offset=".45" stopColor="#ed4264"/><stop offset="1" stopColor="#8951c8"/></linearGradient></defs><rect x="1" y="1" width="26" height="26" rx="7" fill="url(#store-instagram-gradient)"/><rect x="6" y="6" width="16" height="16" rx="5" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="14" cy="14" r="4" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="19.5" cy="8.5" r="1.2" fill="white"/></svg>
+              </button>
+            </div>
           <form action={async () => { "use server"; await toggleFavoriteStore(store.id, path); }}>
             <button type="submit" className={`btn sd-favorite ${isFavoriteStore ? "is-active" : ""}`}>
               {isFavoriteStore ? "♥ お気に入り済み" : "♡ お気に入りに追加"}
             </button>
           </form>
+          </div>
         </div>
         <div className="sd-hero-grid">
           <StorePhotoGallery key={store.id} photos={photos ?? []} name={store.name} reference={store.id === "b56daf2a-4ab1-4ad1-b317-a0387ab3391e"} />
