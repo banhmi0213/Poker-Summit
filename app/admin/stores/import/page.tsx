@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { importStoresFromGooglePlaces } from "./actions";
-import { PREF_OPTIONS } from "@/lib/constants";
+import { PREF_OPTIONS, REGIONS, primaryRegionForPref } from "@/lib/constants";
 
 // Google Placesから店舗候補を検索して取り込む運営向けツール(2026/10、
 // 「店舗は地方どっかAPIで入れようと思ってる」との相談を受けて追加)。
@@ -78,10 +78,16 @@ export default async function AdminStoresImportPage() {
               <option value="" disabled>
                 選択してください
               </option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
+              {REGIONS.map((region) => (
+                <optgroup key={region} label={region}>
+                  {PREF_OPTIONS.filter((p) => primaryRegionForPref(p) === region).map(
+                    (p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    )
+                  )}
+                </optgroup>
               ))}
             </select>
           </div>
