@@ -70,18 +70,40 @@ export async function toggleFavoriteJob(jobId: string, path: string) {
   revalidatePath(path);
 }
 
-export async function applyToJob(jobId: string, path: string) {
+// 以前はボタン一発で即「応募済み」になる仕様だったが、「応募押したらすぐに
+// 応募済みになるから応募フォームを作成設置」との指摘を受け、お名前・電話
+// 番号・メッセージを入力してから送信する応募フォーム経由に変更
+// (2026/10)。求人詳細ページ(/jobs/[id])の応募フォームから呼ばれる。
+export async function submitJobApplication(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  const { error } = await supabase
-    .from("job_applications")
-    .insert({ user_id: user.id, job_id: jobId });
+  const jobId = String(formData.get("jobId") ?? "");
+  const path = String(formData.get("path") ?? "/jobs");
+  const name = String(formData.get("name") ?? "").trim();
+  const tel = String(formData.get("tel") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+
+  if (!jobId) {
+    redirect(path + "?applyError=" + encodeURIComponent("求人情報が正しくありません。"));
+  }
+  if (!name) {
+    redirect(path + "?applyError=" + encodeURIComponent("お名前を入力してください。") + "#apply");
+  }
+
+  const { error } = await supabase.from("job_applications").insert({
+    user_id: user.id,
+    job_id: jobId,
+    name,
+    tel: tel || null,
+    message: message || null,
+  });
 
   if (error && !error.message.includes("duplicate")) {
-    throw new Error(error.message);
+    redirect(path + "?applyError=" + encodeURIComponent(error.message) + "#apply");
   }
 
   revalidatePath(path);
+  redirect(path + "?applyDone=1");
 }
 
 export async function joinEvent(eventId: string, path: string) {
