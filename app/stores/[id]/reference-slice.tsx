@@ -1,7 +1,5 @@
-import type { CSSProperties } from "react";
-/** Display an asset region from the user-supplied design without altering it. */
+/** Display a region of the supplied design at any size without altering the source. */
 export function ReferenceSlice({region,alt,className=""}: {region: readonly [number,number,number,number]; alt: string; className?: string}) {
   const [x,y,width,height]=region;
-  const style: CSSProperties = {width:`${1277/width*100}%`, maxWidth:"none", height:"auto", left:`${-x/width*100}%`, top:`${-y/height*100}%`, position:"absolute"};
-  return <span className={`sd-reference-slice ${className}`} style={{aspectRatio:`${width}/${height}`}}><img src="/store-detail-reference.png" alt={alt} style={style} /></span>;
+  return <svg className={`sd-reference-slice ${className}`} viewBox={`${x} ${y} ${width} ${height}`} preserveAspectRatio="xMidYMid slice" style={{aspectRatio:`${width}/${height}`}} role={alt ? "img" : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : true}><image href="/store-detail-reference.png" width="1277" height="875" /></svg>;
 }
