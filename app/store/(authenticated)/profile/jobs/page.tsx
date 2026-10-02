@@ -67,8 +67,14 @@ export default async function StoreJobsPage() {
 
   const [{ data: appRows }, { data: jobFavRows }] = await Promise.all([
     jobIds.length
-      ? supabase.from("job_applications").select("job_id").in("job_id", jobIds)
-      : Promise.resolve({ data: [] as { job_id: string }[] }),
+      ? supabase
+          .from("job_applications")
+          .select("job_id, name, tel, message, applied_at")
+          .in("job_id", jobIds)
+          .order("applied_at", { ascending: false })
+      : Promise.resolve({
+          data: [] as { job_id: string; name: string | null; tel: string | null; message: string | null; applied_at: string }[],
+        }),
     jobIds.length
       ? supabase.from("favorite_jobs").select("job_id").in("job_id", jobIds)
       : Promise.resolve({ data: [] as { job_id: string }[] }),
@@ -76,8 +82,18 @@ export default async function StoreJobsPage() {
 
   const jobApplicantCounts: Record<string, number> = {};
   const jobFavoriteCounts: Record<string, number> = {};
+  const jobApplicants: Record<
+    string,
+    { name: string | null; tel: string | null; message: string | null; applied_at: string }[]
+  > = {};
   appRows?.forEach((r) => {
     jobApplicantCounts[r.job_id] = (jobApplicantCounts[r.job_id] ?? 0) + 1;
+    (jobApplicants[r.job_id] ??= []).push({
+      name: r.name,
+      tel: r.tel,
+      message: r.message,
+      applied_at: r.applied_at,
+    });
   });
   jobFavRows?.forEach((r) => {
     jobFavoriteCounts[r.job_id] = (jobFavoriteCounts[r.job_id] ?? 0) + 1;
@@ -169,6 +185,33 @@ export default async function StoreJobsPage() {
               </button>
             </form>
           </div>
+          {(jobApplicants[j.id]?.length ?? 0) > 0 && (
+            <details style={{ marginTop: 10 }}>
+              <summary className="muted small" style={{ cursor: "pointer" }}>
+                応募者一覧（{jobApplicants[j.id].length}件）
+              </summary>
+              <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
+                {jobApplicants[j.id].map((a, i) => (
+                  <div key={i} className="card" style={{ background: "var(--surface-2)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <strong>{a.name || "（お名前未入力）"}</strong>
+                      <span className="muted small">
+                        {new Date(a.applied_at).toLocaleString("ja-JP")}
+                      </span>
+                    </div>
+                    {a.tel && (
+                      <p className="muted small" style={{ marginTop: 4 }}>
+                        <a href={`tel:${String(a.tel).replace(/[^+0-9]/g, "")}`}>{a.tel}</a>
+                      </p>
+                    )}
+                    {a.message && (
+                      <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{a.message}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
           <details style={{ marginTop: 10 }}>
             <summary className="muted small" style={{ cursor: "pointer" }}>
               編集
