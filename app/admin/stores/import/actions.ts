@@ -18,6 +18,7 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
   const supabase = await createClient();
 
   const pref = String(formData.get("pref") ?? "").trim();
+  const area = String(formData.get("area") ?? "").trim();
   const keyword = String(formData.get("keyword") ?? "").trim() || "ポーカー";
   const excludeWordsRaw = String(formData.get("excludeKeywords") ?? "").trim();
 
@@ -42,7 +43,12 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     return excludeWords.some((w) => lower.includes(w.toLowerCase()));
   }
 
-  const results = await searchPlaces(`${keyword} ${pref}`);
+  // エリア(駅名・繁華街名など)が指定されていれば都道府県名に加えて検索
+  // クエリへ組み込み、より狭い範囲でヒットしやすくする(2026/10、「新宿と
+  // 梅田、各都道府県の下に」との要望)。取り込む店舗データ側のpref/regionは
+  // 引き続き都道府県セレクトの値をそのまま使う(エリアは検索クエリの絞り
+  // 込みにのみ使い、店舗データとしては保存しない)。
+  const results = await searchPlaces(area ? `${keyword} ${area} ${pref}` : `${keyword} ${pref}`);
 
   // 既に取り込み済み(google_place_id一致)のものは除外し、同じ都道府県・
   // キーワードで再検索しても重複登録しないようにする。
@@ -94,6 +100,7 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
 
   await logAdminAction(supabase, "store_import_google_places", "store", undefined, {
     pref,
+    area,
     keyword,
     excludeWords,
     found: results.length,
@@ -115,6 +122,7 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     "import_result",
     JSON.stringify({
       pref,
+      area,
       keyword,
       found: results.length,
       skippedExisting,
