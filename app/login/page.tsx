@@ -43,6 +43,9 @@ export default function LoginPage({
         <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
           店舗の方は<Link href="/store/login">こちらから店舗管理ログイン</Link>
         </p>
+        <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
+          運営の方は<Link href="/admin-login">こちらから総合管理ログイン</Link>
+        </p>
       </div>
     </div>
   );
