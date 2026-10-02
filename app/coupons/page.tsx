@@ -106,7 +106,7 @@ export default async function CouponsPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container">
+      <main className="container cp-page">
         <div className="coupon-hero">
           <img
             className="coupon-hero__bg"
@@ -121,7 +121,7 @@ export default async function CouponsPage({
           </div>
         </div>
 
-        <form method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <form className="cp-search" method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           <input type="hidden" name="sort" value={sort} />
           {onlyAvailable && <input type="hidden" name="onlyAvailable" value="1" />}
           <input
@@ -237,7 +237,7 @@ export default async function CouponsPage({
 
         {list.length === 0 && <div className="empty">条件に合うクーポンが見つかりませんでした。</div>}
 
-        <div
+        <div className="cp-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
@@ -253,7 +253,7 @@ export default async function CouponsPage({
                   {c.banner_image_url ? (
                     <CouponBannerLightbox imageUrl={c.banner_image_url} alt={c.title} />
                   ) : (
-                    <span className="coupon-card__media-fallback">🎟️</span>
+                    <div className="coupon-card__media-fallback"><span>POKER SUMMIT</span><strong>{c.discount || c.title}</strong><small>店舗で使える特典クーポン</small></div>
                   )}
                 </div>
                 <div className="coupon-card__body">
@@ -288,7 +288,7 @@ export default async function CouponsPage({
           })}
         </div>
 
-        <div className="card" style={{ marginTop: 28 }}>
+        <div className="card cp-guide" style={{ marginTop: 28 }}>
           <h2 style={{ fontSize: 15, marginBottom: 4 }}>クーポンの使い方</h2>
           <p className="muted small" style={{ marginBottom: 4 }}>かんたん3ステップで特典を利用できます。</p>
           <div className="coupon-steps">
@@ -320,7 +320,7 @@ export default async function CouponsPage({
             </div>
           </div>
         </div>
-      </div>
+      </main>
       <PortalFooter />
       <BottomTabs />
     </div>
