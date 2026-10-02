@@ -39,6 +39,10 @@ export async function createCoupon(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  // 特典タイプ(2026/10、「チップと検索欄を実際にクーポンを絞り込める機能に
+  // する」との指示でcoupons.offer_typeを新設)。COUPON_OFFER_TYPE_OPTIONS
+  // のいずれかか、未設定(空文字→null)。
+  const offerType = String(formData.get("offerType") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
 
   if (!title) {
@@ -61,6 +65,7 @@ export async function createCoupon(formData: FormData) {
     code: code || null,
     valid_until: validUntil || null,
     usage_limit: usageLimit,
+    offer_type: offerType || null,
     banner_image_url: bannerImageUrl,
     banner_storage_path: bannerStoragePath,
   });
@@ -107,6 +112,7 @@ export async function updateCoupon(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
+  const offerType = String(formData.get("offerType") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
 
@@ -128,6 +134,7 @@ export async function updateCoupon(formData: FormData) {
     code: code || null,
     valid_until: validUntil || null,
     usage_limit: usageLimit,
+    offer_type: offerType || null,
   };
 
   let oldPathToRemove: string | null = null;
