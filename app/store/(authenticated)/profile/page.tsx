@@ -262,6 +262,15 @@ export default async function StoreProfilePage() {
                 disabled={Boolean(pendingAddressRequest)}
               />
               <div className="field">
+                <span className="muted">最寄り駅</span>
+                <input
+                  type="text"
+                  name="nearestStation"
+                  placeholder="例: 梅田駅 徒歩5分"
+                  defaultValue={store.nearest_station ?? ""}
+                />
+              </div>
+              <div className="field">
                 <span className="muted">電話番号</span>
                 <input type="text" name="tel" defaultValue={store.tel ?? ""} />
               </div>
