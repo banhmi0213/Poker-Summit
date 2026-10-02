@@ -26,8 +26,24 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/system", label: "システム" },
 ];
 
+// /admin/stores と /admin/stores/import のように一方が他方のURLの接頭辞に
+// なっているリンクが複数あるため、単純な startsWith だけで判定すると
+// 例えば /admin/stores/import を開いた時に「店舗管理」「店舗取込(Google)」
+// の両方が同時に点灯してしまう(2026/10、「選んでる欄だけ色つくように」
+// との指摘で発覚)。ここでは現在地にマッチする候補の中から最もhrefが長い
+// (＝最も具体的な)ものだけを選び、1つだけactiveにする。
+function matchesPath(href: string, pathname: string | null): boolean {
+  if (!pathname) return false;
+  if (href === "/admin") return pathname === "/admin";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
+
+  const activeHref = ADMIN_LINKS.filter((l) => matchesPath(l.href, pathname)).sort(
+    (a, b) => b.href.length - a.href.length
+  )[0]?.href;
 
   return (
     <nav className="app-sidebar">
@@ -36,8 +52,7 @@ export function AdminSidebar() {
         <small>管理画面</small>
       </div>
       {ADMIN_LINKS.map((l) => {
-        const active =
-          l.href === "/admin" ? pathname === "/admin" : pathname?.startsWith(l.href);
+        const active = l.href === activeHref;
         return (
           <Link
             key={l.href}
