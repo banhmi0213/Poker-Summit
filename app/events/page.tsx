@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
@@ -54,10 +55,17 @@ export default async function EventsPage({ searchParams }: {
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container ep-page">
-      <div className="ep-hero">
-        <ReferenceSlice region={[200,70,480,240]} alt="" className="ep-hero-image" />
-        <div className="ep-hero-copy"><span>TOURNAMENTS &amp; EVENTS</span><h1>トーナメント・イベントを探す</h1><p>次の挑戦も、はじめての一歩も。</p></div>
-      </div>
+      <h1 style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
+        <Image
+          src="/images/poker-events-banner.jpg"
+          alt="TOURNAMENTS & EVENTS — トーナメント・イベントを探す。次の挑戦も、はじめての一歩も。"
+          width={2172}
+          height={724}
+          priority
+          sizes="(max-width: 1180px) 100vw, 1140px"
+          style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
+        />
+      </h1>
       <form method="get" className="ep-search">
         {kind !== "すべて" && <input type="hidden" name="kind" value={kind} />}
         <label className="ep-keyword">フリーワード<input name="q" defaultValue={q} placeholder="キーワードで検索" /></label>
