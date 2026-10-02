@@ -15,6 +15,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { classifyDevice } from "@/lib/device";
+import { StorePhotoGallery } from "./store-photo-gallery";
 
 export default async function StoreDetailPage({
   params,
@@ -131,147 +132,144 @@ export default async function StoreDetailPage({
     usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
   }
 
+  const mapQuery = [store.address, store.pref, store.city, store.name].filter(Boolean).join(" ");
+  const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
+  const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container">
-        <Link href="/stores" className="breadcrumb">
-          ← 店舗を探すに戻る
-        </Link>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 10,
-            marginBottom: 6,
-          }}
-        >
-          <h1 style={{ fontSize: 24 }}>{store.name}</h1>
-          <form
-            action={async () => {
-              "use server";
-              await toggleFavoriteStore(store.id, path);
-            }}
-          >
-            <button
-              type="submit"
-              className={`store-fav-btn-inline ${isFavoriteStore ? "active" : ""}`}
-              aria-label="お気に入り"
-            >
-              {isFavoriteStore ? "♥" : "♡"}
-            </button>
-          </form>
-        </div>
-        <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-          {store.category && (
-            <span className="badge">
-              {CATEGORY_LABEL[store.category] ?? store.category}
-            </span>
-          )}
-          <span className="badge outline">
-            📍 {[store.pref, store.city].filter(Boolean).join("")}
-          </span>
-        </div>
-        <p className="muted" style={{ marginBottom: 12 }}>
-          {[store.region, store.pref, store.city].filter(Boolean).join(" / ")}
-        </p>
-
-        <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-          <Link href="/contact" className="btn primary">
-            📩 お問い合わせ
-          </Link>
-          <form
-            action={async () => {
-              "use server";
-              await reportStore(store.id, path);
-            }}
-          >
-            <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-              この店舗を通報する
-            </button>
-          </form>
-        </div>
-
-        {photos && photos.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              overflowX: "auto",
-              marginBottom: 16,
-              paddingBottom: 4,
-            }}
-          >
-            {photos.map((p) => (
-              <img
-                key={p.id}
-                src={p.url}
-                alt={store.name}
-                style={{
-                  height: 140,
-                  borderRadius: 10,
-                  flex: "0 0 auto",
-                  objectFit: "cover",
-                }}
-              />
-            ))}
+      <main className="container sd-page">
+        <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>
+        <div className="sd-title-row">
+          <div className="sd-title"><h1>{store.name}</h1>
+            <span className="badge outline">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</span>
+            {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
           </div>
-        )}
-
-        <div className="card">
-          {store.description && <p style={{ marginBottom: 12 }}>{store.description}</p>}
-          <table>
-            <tbody>
-              {store.address && (
-                <tr>
-                  <th style={{ width: 110 }}>住所</th>
-                  <td>{store.address}</td>
-                </tr>
-              )}
-              {store.tel && (
-                <tr>
-                  <th>電話番号</th>
-                  <td>{store.tel}</td>
-                </tr>
-              )}
-              {store.hours && (
-                <tr>
-                  <th>営業時間</th>
-                  <td>{store.hours}</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <form action={async () => { "use server"; await toggleFavoriteStore(store.id, path); }}>
+            <button type="submit" className={`btn sd-favorite ${isFavoriteStore ? "is-active" : ""}`}>
+              {isFavoriteStore ? "♥ お気に入り済み" : "♡ お気に入りに追加"}
+            </button>
+          </form>
         </div>
-
-        {menuItems && menuItems.length > 0 && (
-          <>
-            <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-              料金・メニュー
-            </h2>
-            <div className="card">
-              <table>
-                <tbody>
-                  {menuItems.map((it) => (
-                    <tr key={it.id}>
-                      <th style={{ width: 130, verticalAlign: "top" }}>{it.name}</th>
-                      <td>
-                        <div style={{ fontWeight: 700 }}>{it.price}</div>
-                        {it.description && (
-                          <div className="muted" style={{ fontSize: 12.5, marginTop: 2 }}>
-                            {it.description}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="sd-hero-grid">
+          <StorePhotoGallery key={store.id} photos={photos ?? []} name={store.name} />
+          <aside className="sd-info">
+            <dl className="sd-info-list">
+              <div><dt>営業時間</dt><dd>{store.hours || "店舗にお問い合わせください"}</dd></div>
+              <div><dt>住所</dt><dd>{store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録"}</dd></div>
+              <div><dt>電話番号</dt><dd>{store.tel ? <a href={`tel:${phone}`}>{store.tel}</a> : "未登録"}</dd></div>
+            </dl>
+            <div className="sd-contact-actions">
+              <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="btn primary">地図・経路を見る</a>
+              {phone ? <a href={`tel:${phone}`} className="btn">電話をかける</a> : <Link href="/contact" className="btn">お問い合わせ</Link>}
             </div>
-          </>
+            {store.address && <iframe className="sd-map" title={store.name + "の所在地"}
+              src={"https://maps.google.com/maps?q=" + encodeURIComponent(store.address) + "&output=embed"}
+              loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
+          </aside>
+        </div>
+        <nav className="sd-tabs" aria-label="店舗情報の各項目">
+          <a href="#store-menu">料金・メニュー</a><a href="#store-events">イベント</a>
+          <a href="#store-coupons">クーポン</a><a href="#store-notices">お知らせ</a><a href="#store-jobs">求人</a>
+        </nav>
+        {store.description && <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>}
+        <div className="sd-content-grid">
+          <div className="sd-content-main">
+            <section id="store-menu" className="sd-section">
+              <h2>料金・メニュー</h2>
+              {menuItems && menuItems.length > 0 && <div className="sd-menu-grid">
+                {menuItems.map((item) => <article className="card sd-menu-card" key={item.id}>
+                  <h3>{item.name}</h3>
+                  {item.price && <p className="sd-menu-price">{item.price}</p>}
+                  {item.description && <p className="muted">{item.description}</p>}
+                </article>)}
+              </div>}
+              {(!menuItems || menuItems.length === 0) && <><p className="sd-empty">料金・メニューは店舗にお問い合わせください。</p></>}
+            </section>
+            <section id="store-events" className="sd-section">
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+          イベント ({events?.length ?? 0})
+        </h2>
+        {(!events || events.length === 0) && (
+          <p className="muted">開催予定のイベントはありません。</p>
         )}
+        {events?.map((ev) => (
+          <div className="card sd-event-card" key={ev.id}>
+            {ev.start_at && <div className="sd-event-date"><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit", timeZone: "Asia/Tokyo" })}</strong><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></div>}
+            <Link href={`/events/${ev.id}`}>
+              <h3>{ev.title}</h3>
+              {ev.location && <p className="muted">{ev.location}</p>}
+            </Link>
+            <form
+              action={async () => {
+                "use server";
+                await joinEvent(ev.id, path);
+              }}
+              style={{ marginTop: 8 }}
+            >
+              <button
+                type="submit"
+                className={`btn ${joinedEventIds.has(ev.id) ? "primary" : ""}`}
+                style={{ fontSize: 12.5 }}
+              >
+                {joinedEventIds.has(ev.id) ? "参加予定" : "参加予定にする"}
+              </button>
+            </form>
+          </div>
+        ))}
 
+            </section>
+          </div>
+          <aside className="sd-content-side">
+            <section id="store-coupons" className="sd-section">
+        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
+          クーポン ({coupons?.length ?? 0})
+        </h2>
+        {(!coupons || coupons.length === 0) && (
+          <p className="muted">現在利用可能なクーポンはありません。</p>
+        )}
+        {coupons?.map((c) => {
+          const limitReached =
+            c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit;
+          const alreadyUsed = usedCouponIds.has(c.id);
+          return (
+            <div className="card" key={c.id}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <h3>{c.title}</h3>
+                {c.discount && <span className="badge">{c.discount}</span>}
+              </div>
+              {c.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{c.description}</p>}
+              <div className="muted" style={{ marginTop: 6 }}>
+                {c.code && <>クーポンコード: {c.code} </>}
+                {c.valid_until && <>(有効期限: {c.valid_until})</>}
+              </div>
+              <form
+                action={async () => {
+                  "use server";
+                  await useCoupon(c.id, path);
+                }}
+                style={{ marginTop: 8 }}
+              >
+                <button
+                  type="submit"
+                  className={`btn ${alreadyUsed ? "" : "primary"}`}
+                  disabled={alreadyUsed || (limitReached && !alreadyUsed)}
+                >
+                  {alreadyUsed
+                    ? "✓ 使用済みです"
+                    : limitReached
+                    ? "利用上限に達しました"
+                    : "クーポンを使う"}
+                </button>
+              </form>
+            </div>
+          );
+        })}
+
+
+            </section>
+            <section id="store-notices" className="sd-section">
         {notices && notices.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
@@ -289,8 +287,12 @@ export default async function StoreDetailPage({
           </>
         )}
 
+
+              {(!notices || notices.length === 0) && <><h2>お知らせ (0)</h2><p className="sd-empty">現在のお知らせはありません。</p></>}
+            </section>
+            <section id="store-jobs" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          この店舗の求人 ({jobs?.length ?? 0})
+          求人情報 ({jobs?.length ?? 0})
         </h2>
         {(!jobs || jobs.length === 0) && (
           <p className="muted">現在募集中の求人はありません。</p>
@@ -343,80 +345,17 @@ export default async function StoreDetailPage({
           </div>
         ))}
 
-        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          この店舗のクーポン ({coupons?.length ?? 0})
-        </h2>
-        {(!coupons || coupons.length === 0) && (
-          <p className="muted">現在利用可能なクーポンはありません。</p>
-        )}
-        {coupons?.map((c) => {
-          const limitReached =
-            c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit;
-          const alreadyUsed = usedCouponIds.has(c.id);
-          return (
-            <div className="card" key={c.id}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <h3>{c.title}</h3>
-                {c.discount && <span className="badge">{c.discount}</span>}
-              </div>
-              {c.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{c.description}</p>}
-              <div className="muted" style={{ marginTop: 6 }}>
-                {c.code && <>クーポンコード: {c.code} </>}
-                {c.valid_until && <>(有効期限: {c.valid_until})</>}
-              </div>
-              <form
-                action={async () => {
-                  "use server";
-                  await useCoupon(c.id, path);
-                }}
-                style={{ marginTop: 8 }}
-              >
-                <button
-                  type="submit"
-                  className={`btn ${alreadyUsed ? "" : "primary"}`}
-                  disabled={alreadyUsed || (limitReached && !alreadyUsed)}
-                >
-                  {alreadyUsed
-                    ? "✓ 使用済みです"
-                    : limitReached
-                    ? "利用上限に達しました"
-                    : "クーポンを使う"}
-                </button>
-              </form>
-            </div>
-          );
-        })}
 
-        <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          この店舗のイベント ({events?.length ?? 0})
-        </h2>
-        {(!events || events.length === 0) && (
-          <p className="muted">開催予定のイベントはありません。</p>
-        )}
-        {events?.map((ev) => (
-          <div className="card" key={ev.id}>
-            <Link href={`/events/${ev.id}`}>
-              <h3>{ev.title}</h3>
-              {ev.location && <p className="muted">{ev.location}</p>}
-            </Link>
-            <form
-              action={async () => {
-                "use server";
-                await joinEvent(ev.id, path);
-              }}
-              style={{ marginTop: 8 }}
-            >
-              <button
-                type="submit"
-                className={`btn ${joinedEventIds.has(ev.id) ? "primary" : ""}`}
-                style={{ fontSize: 12.5 }}
-              >
-                {joinedEventIds.has(ev.id) ? "参加予定" : "参加予定にする"}
-              </button>
-            </form>
-          </div>
-        ))}
-      </div>
+            </section>
+          </aside>
+        </div>
+        <div className="sd-store-support">
+          <Link href="/contact" className="btn">お問い合わせ</Link>
+          <form action={async () => { "use server"; await reportStore(store.id, path); }}>
+            <button type="submit" className="btn">店舗情報の問題を報告</button>
+          </form>
+        </div>
+      </main>
       <PortalFooter />
       <BottomTabs active="stores" />
     </div>
