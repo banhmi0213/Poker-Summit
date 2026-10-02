@@ -115,7 +115,6 @@ export default async function CouponsPage({
         <h1 className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
           <picture>
             <source media="(min-width: 861px)" srcSet="/images/poker-coupons-banner-desktop.jpg" />
-          </picture>
           <Image
             src="/images/poker-coupons-banner.png"
             alt="COUPONS & OFFERS — クーポンで、もっとポーカーを楽しもう。気になるお店の特典を、まとめてチェック。"
@@ -126,6 +125,7 @@ export default async function CouponsPage({
             sizes="(max-width: 1180px) 100vw, 1140px"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
           />
+          </picture>
         </h1>
 
         <form className="cp-search" method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
