@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from("stores")
       .select(
-        "id, name, category, region, pref, city, address, tel, hours, description, line_url, area_keywords, status"
+        "id, name, category, region, pref, city, address, tel, hours, nearest_station, description, line_url, area_keywords, status"
       )
       .eq("id", storeId)
       .single(),
