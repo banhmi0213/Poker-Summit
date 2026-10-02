@@ -363,6 +363,9 @@ export default async function StoreDetailPage({
               {j.salary && <p className="muted">{j.salary}</p>}
             </Link>
             <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る ›</Link>
+            <Link href={`/jobs/${j.id}`} className="btn" style={{ fontSize: 12.5, marginTop: 8, display: "inline-flex" }}>
+              詳細を見る
+            </Link>
             {j.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{j.description}</p>}
             <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
               <form
