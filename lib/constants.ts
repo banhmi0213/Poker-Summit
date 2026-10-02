@@ -227,6 +227,13 @@ export const BOARD_CATEGORIES = [
 
 export const EVENT_CATEGORIES = ["大会", "体験会", "講座", "交流会"];
 
+// クーポンの「特典タイプ」(2026/10、「チップと検索欄を実際にクーポンを
+// 絞り込める機能にする」との指示)。coupons.offer_typeにこのラベルを
+// そのまま保存する(JOB_TYPE_OPTIONS/BOARD_CATEGORIESと同じパターン)。
+// 既存クーポンはoffer_type未設定(NULL)のままで問題なく、一覧では
+// 「すべて」にのみ表示される。
+export const COUPON_OFFER_TYPE_OPTIONS = ["初回来店", "参加費割引", "ドリンク", "友達紹介"];
+
 export const INQUIRY_CATEGORIES = [
   "掲載について",
   "広告掲載について",
