@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "../coupons-actions";
+import { COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
 
 // /store/profile 1ページの中の1セクションだったクーポン管理を、独立した
 // ページへ分離(2026/09/30)。バナー画像はファイルアップロード対応
@@ -59,6 +60,17 @@ export default async function StoreCouponsPage() {
             <textarea name="description" rows={3} />
           </div>
           <div className="field">
+            <span className="muted">特典タイプ（任意・一覧の絞り込みに使われます）</span>
+            <select name="offerType" defaultValue="">
+              <option value="">未設定</option>
+              {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
             <span className="muted">クーポンコード</span>
             <input type="text" name="code" />
           </div>
@@ -86,6 +98,11 @@ export default async function StoreCouponsPage() {
             <h3>{c.title}</h3>
             <span className="badge">{c.active ? "公開中" : "停止中"}</span>
           </div>
+          {c.offer_type && (
+            <span className="badge outline" style={{ marginTop: 4 }}>
+              {c.offer_type}
+            </span>
+          )}
           {c.banner_image_url && (
             <img
               src={c.banner_image_url}
@@ -140,6 +157,17 @@ export default async function StoreCouponsPage() {
               <div className="field">
                 <span className="muted">説明</span>
                 <textarea name="description" rows={3} defaultValue={c.description ?? ""} />
+              </div>
+              <div className="field">
+                <span className="muted">特典タイプ（任意・一覧の絞り込みに使われます）</span>
+                <select name="offerType" defaultValue={c.offer_type ?? ""}>
+                  <option value="">未設定</option>
+                  {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="field">
                 <span className="muted">クーポンコード</span>
