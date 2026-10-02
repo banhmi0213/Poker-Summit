@@ -113,15 +113,15 @@ export default async function BoardPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ margin: "0 0 20px" }}>
+        <h1 style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
-            src="/images/summit-community-banner.png"
+            src="/images/summit-community-banner.jpg"
             alt="サミット｜情報交換 — ポーカーの話題で、つながろう。雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略"
-            width={737}
-            height={307}
+            width={2048}
+            height={682}
             priority
             sizes="(max-width: 1200px) 100vw, 1200px"
-            style={{ display: "block", width: "100%", height: "auto", borderRadius: 12 }}
+            style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
           />
         </h1>
 
