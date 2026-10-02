@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import {
   applyInstantStoreFieldsUpdate,
@@ -102,4 +103,62 @@ export async function updateStoreProfile(formData: FormData) {
   revalidatePath("/store/profile");
   revalidatePath(`/stores/${storeId}`);
   revalidatePath("/admin/stores");
+}
+
+// ---------------------------------------------------------------------------
+// 店舗管理画面の「LINE・メールの登録をお願いします」アナウンスから呼ばれる
+// 2つのアクション(2026/10、「全店舗有料掲載店にはLINE、メールアドレスの
+// 登録をお願いします的な」との指示を受けて追加)。
+// どちらも、store_contracts/store_link_codes への直接の書き込み権限が
+// ない店舗オーナー自身のセッションから呼べるよう、security definer RPC
+// (update_my_store_contact_email() / issue_my_store_line_link_code())
+// を介している。RLS参照はそれぞれのRPCのコメントを参照。
+// ---------------------------------------------------------------------------
+
+export async function updateMyStoreContactEmail(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("ログインが必要です。");
+  }
+
+  const contactEmail = String(formData.get("contactEmail") ?? "").trim();
+  if (!contactEmail) {
+    throw new Error("メールアドレスを入力してください。");
+  }
+
+  const { error } = await supabase.rpc("update_my_store_contact_email", {
+    p_email: contactEmail,
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+}
+
+// LINE連携用ワンタイムコードを店舗オーナー自身が再発行する。発行結果
+// (コード)は画面に表示する必要があるため、member-actions.ts の
+// applyError/applyDone と同じく、クエリパラメータ経由で/store/profileに
+// 戻す。
+export async function issueMyStoreLineLinkCode() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("ログインが必要です。");
+  }
+
+  const { data: code, error } = await supabase.rpc("issue_my_store_line_link_code");
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/store/profile");
+  redirect(`/store/profile?lineCode=${encodeURIComponent(String(code))}#notify-banner`);
 }
