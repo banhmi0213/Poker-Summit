@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
@@ -48,6 +49,20 @@ export default async function NewsPage() {
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
+
+      <div className="container" style={{ paddingBottom: 0 }}>
+        <div style={{ height: 190, overflow: "hidden", borderRadius: 10 }}>
+          <Image
+            src="/images/poker-news-banner.jpg"
+            alt="お知らせ — 店舗とサイトからの最新情報をお届け。店舗のお知らせ・イベント情報・サイト更新"
+            width={2171}
+            height={724}
+            priority
+            sizes="(max-width: 1180px) 100vw, 1140px"
+            style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
+          />
+        </div>
+      </div>
 
       {/* TOPページと同じ「現在表示中の都道府県」検出・切り替え UI */}
       <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
