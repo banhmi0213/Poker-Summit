@@ -1,7 +1,7 @@
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
-import { updateStoreProfile } from "./actions";
+import { updateStoreProfile, updateMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
 import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
 import { PhotoGallery } from "./photo-gallery";
@@ -16,7 +16,11 @@ import {
 // 分離済み(2026/09/30、store-sidebar.tsxを参照)。店舗写真だけは「店舗写真
 // を消して店舗管理に画像を入れれるようにして」との指示により、独立ページ
 // にはせず、この店舗管理(基本情報)ページの中にとどめている(2026/09/30)。
-export default async function StoreProfilePage() {
+export default async function StoreProfilePage({
+  searchParams,
+}: {
+  searchParams: { lineCode?: string };
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -56,6 +60,8 @@ export default async function StoreProfilePage() {
   let favoriteCount = 0;
   let totalViews = 0;
   let jobFavoriteCount = 0;
+  let unreadApplicationCount = 0;
+  let activeContract: { contact_email: string | null } | null = null;
 
   if (store) {
     const [
@@ -65,6 +71,7 @@ export default async function StoreProfilePage() {
       { count: favCount },
       { count: viewCount },
       { data: storeJobIds },
+      { data: contractRow },
     ] = await Promise.all([
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("store_id", store.id),
       supabase
@@ -82,6 +89,15 @@ export default async function StoreProfilePage() {
         .select("*", { count: "exact", head: true })
         .eq("store_id", store.id),
       supabase.from("jobs").select("id").eq("store_id", store.id),
+      // 「全店舗有料掲載店にはLINE、メールアドレスの登録をお願いします」の
+      // アナウンス判定用(2026/10)。ステータスactiveの契約が無い店舗には
+      // そもそもこのアナウンスは出さない(=有料掲載していない店舗は対象外)。
+      supabase
+        .from("store_contracts")
+        .select("contact_email")
+        .eq("store_id", store.id)
+        .eq("status", "active")
+        .maybeSingle(),
     ]);
 
     totalJobCount = totalJobs ?? 0;
@@ -90,18 +106,34 @@ export default async function StoreProfilePage() {
     totalCouponUses = (couponsForStats ?? []).reduce((sum, c) => sum + (c.used_count ?? 0), 0);
     favoriteCount = favCount ?? 0;
     totalViews = viewCount ?? 0;
+    activeContract = contractRow;
 
     // 「求人のお気に入り数も店舗管理画面でわかるように」との要望により
     // 追加(2026/09/30)。この店舗の全求人を通算したお気に入り数。
     const jobIdList = (storeJobIds ?? []).map((j) => j.id);
     if (jobIdList.length) {
-      const { count: jobFavCount } = await supabase
-        .from("favorite_jobs")
-        .select("*", { count: "exact", head: true })
-        .in("job_id", jobIdList);
+      const [{ count: jobFavCount }, { count: unreadCount }] = await Promise.all([
+        supabase
+          .from("favorite_jobs")
+          .select("*", { count: "exact", head: true })
+          .in("job_id", jobIdList),
+        // 「求人通知のLINE、メールやけど店管理画面でアナウンス出るように
+        // しよか」との指示を受けて追加(2026/10)。viewed_by_store_atが
+        // nullの応募=店舗管理画面(求人管理)でまだ確認していない新着応募。
+        supabase
+          .from("job_applications")
+          .select("*", { count: "exact", head: true })
+          .in("job_id", jobIdList)
+          .is("viewed_by_store_at", null),
+      ]);
       jobFavoriteCount = jobFavCount ?? 0;
+      unreadApplicationCount = unreadCount ?? 0;
     }
   }
+
+  const needsLineLink = Boolean(store) && !store?.line_user_id;
+  const needsContactEmail = Boolean(store) && Boolean(activeContract) && !activeContract?.contact_email;
+  const showRegistrationBanner = Boolean(activeContract) && (needsLineLink || needsContactEmail);
 
   return (
     <>
@@ -122,6 +154,82 @@ export default async function StoreProfilePage() {
             <h1 style={{ fontSize: 20 }}>{store.name}</h1>
             <span className="badge">{STORE_STATUS_LABEL[store.status] ?? store.status}</span>
           </div>
+
+          {/* 新着応募アナウンス(2026/10、「求人通知のLINE、メールやけど
+              店管理画面でアナウンス出るようにしよか」との指示を受けて追加)。
+              求人管理ページ(/store/profile/jobs)を開くと既読になり消える。 */}
+          {unreadApplicationCount > 0 && (
+            <div
+              className="card"
+              style={{ marginBottom: 16, background: "var(--good-soft)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}
+            >
+              <p style={{ fontSize: 13.5, fontWeight: 700 }}>
+                📩 新しい応募が{unreadApplicationCount}件届いています。
+              </p>
+              <a href="/store/profile/jobs" className="btn primary" style={{ fontSize: 12.5 }}>
+                求人管理で確認する
+              </a>
+            </div>
+          )}
+
+          {/* LINE・メール登録のお願いアナウンス(2026/10、「全店舗有料掲載店
+              にはLINE、メールアドレスの登録をお願いします的な」との指示を
+              受けて追加)。ステータスactiveの契約がある店舗(=有料掲載店)
+              のみ対象で、LINE未連携・契約メール未登録のいずれかがあれば
+              表示する。 */}
+          {showRegistrationBanner && (
+            <div id="notify-banner" className="card" style={{ marginBottom: 16, scrollMarginTop: 20 }}>
+              <p style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 8 }}>
+                🔔 LINE・メールアドレスのご登録をお願いします
+              </p>
+              <p className="muted small" style={{ marginBottom: 12 }}>
+                求人への応募や運営からのお知らせを、LINE・メールで受け取れるようにするため、未登録の項目のご登録をお願いします。
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {needsContactEmail && (
+                  <form action={updateMyStoreContactEmail}>
+                    <div className="field">
+                      <span className="muted">連絡先メールアドレス(未登録)</span>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <input
+                          type="email"
+                          name="contactEmail"
+                          required
+                          placeholder="例: info@example.com"
+                          style={{ flex: "1 1 240px" }}
+                        />
+                        <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
+                          登録する
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
+                {needsLineLink && (
+                  <div>
+                    <span className="muted" style={{ display: "block", marginBottom: 6 }}>
+                      LINE公式アカウント(未連携)
+                    </span>
+                    {searchParams.lineCode ? (
+                      <p style={{ fontSize: 13.5 }}>
+                        連携コード: <strong style={{ fontSize: 18, letterSpacing: 2 }}>{searchParams.lineCode}</strong>
+                        <br />
+                        <span className="muted small">
+                          LINE公式アカウントの店舗用メニューから、このコードを入力して連携してください(24時間有効・1回限り)。
+                        </span>
+                      </p>
+                    ) : (
+                      <form action={issueMyStoreLineLinkCode}>
+                        <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                          LINE連携コードを発行する
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div
             style={{
