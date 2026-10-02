@@ -4,6 +4,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS, CATEGORY_LABEL, COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
+import { PrefAreaSelect } from "@/app/pref-area-select";
 import { CouponBannerLightbox } from "./coupon-banner-lightbox";
 
 function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
@@ -26,10 +27,11 @@ function truncate(text: string, max: number) {
 export default async function CouponsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; pref?: string; offerType?: string; sort?: string; onlyAvailable?: string };
+  searchParams: { q?: string; pref?: string; area?: string; offerType?: string; sort?: string; onlyAvailable?: string };
 }) {
   const q = searchParams.q?.trim() ?? "";
   const pref = searchParams.pref ?? "";
+  const area = pref ? searchParams.area ?? "" : "";
   const offerType = searchParams.offerType ?? "";
   // 並び替え。既定は「有効期限が近い順」(expiry)、もう一方は「新着順」(new)。
   const sort = searchParams.sort === "new" ? "new" : "expiry";
@@ -53,6 +55,7 @@ export default async function CouponsPage({
     const params = new URLSearchParams();
     if (nextQ) params.set("q", nextQ);
     if (nextPref) params.set("pref", nextPref);
+    if (area && nextPref === pref) params.set("area", area);
     if (nextOfferType) params.set("offerType", nextOfferType);
     if (nextSort && nextSort !== "expiry") params.set("sort", nextSort);
     if (nextOnlyAvailable) params.set("onlyAvailable", "1");
@@ -68,7 +71,7 @@ export default async function CouponsPage({
   const { data: rawCoupons } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, status)"
+      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
     )
     .eq("active", true);
 
@@ -76,6 +79,7 @@ export default async function CouponsPage({
     (c: any) => c.stores?.status === "approved" || c.stores?.status === "listed"
   );
   if (pref) coupons = coupons.filter((c: any) => c.stores?.pref === pref);
+  if (area) coupons = coupons.filter((c: any) => [c.stores?.city, c.stores?.address].some(value => value?.includes(area)));
   if (offerType) coupons = coupons.filter((c: any) => c.offer_type === offerType);
   if (q) {
     coupons = coupons.filter(
@@ -138,44 +142,8 @@ export default async function CouponsPage({
               flex: "2 1 220px",
             }}
           />
-          <select
-            name="pref"
-            defaultValue={pref}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border-strong)",
-              background: "var(--surface-2)",
-              fontSize: 13,
-              flex: "1 1 160px",
-            }}
-          >
-            <option value="">エリア: 全国</option>
-            {PREF_OPTIONS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <select
-            name="offerType"
-            defaultValue={offerType}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border-strong)",
-              background: "var(--surface-2)",
-              fontSize: 13,
-              flex: "1 1 160px",
-            }}
-          >
-            <option value="">特典タイプ: すべて</option>
-            {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+          {offerType && <input type="hidden" name="offerType" value={offerType} />}
+          <PrefAreaSelect prefOptions={PREF_OPTIONS} prefLabel="都道府県" initialPref={pref} initialArea={area} />
           <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
             検索
           </button>
@@ -210,6 +178,7 @@ export default async function CouponsPage({
           <form method="get" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <input type="hidden" name="q" value={q} />
             <input type="hidden" name="pref" value={pref} />
+            <input type="hidden" name="area" value={area} />
             <input type="hidden" name="offerType" value={offerType} />
             <select
               name="sort"
