@@ -18,6 +18,8 @@ export default async function AdminStoresImportPage() {
     keyword: string;
     found: number;
     skippedExisting: number;
+    skippedClosed: number;
+    skippedByFilter: number;
     inserted: number;
     failed: number;
   } | null = null;
@@ -56,7 +58,8 @@ export default async function AdminStoresImportPage() {
             「{result.keyword}」× {result.pref} の検索結果
           </h3>
           <div style={{ fontSize: 13, lineHeight: 1.8 }}>
-            検索でヒット: {result.found}件 ／ 取り込み済みのためスキップ: {result.skippedExisting}件 ／{" "}
+            検索でヒット: {result.found}件 ／ 取り込み済みのためスキップ: {result.skippedExisting}件 ／ 閉店済みのためスキップ:{" "}
+            {result.skippedClosed}件 ／ 除外ワードでスキップ: {result.skippedByFilter}件 ／{" "}
             <strong>新規に承認待ちで追加: {result.inserted}件</strong>
             {result.failed > 0 && <> ／ 登録失敗: {result.failed}件</>}
           </div>
@@ -87,6 +90,13 @@ export default async function AdminStoresImportPage() {
             <input type="text" name="keyword" defaultValue="ポーカー" />
             <span className="muted" style={{ fontSize: 11.5 }}>
               未入力の場合は「ポーカー」で検索します。「雀荘」「カジノバー」など別のキーワードでも検索できます。
+            </span>
+          </div>
+          <div className="field">
+            <span className="muted">除外キーワード</span>
+            <input type="text" name="excludeKeywords" placeholder="例: パチンコ, 風俗, 閉店" />
+            <span className="muted" style={{ fontSize: 11.5 }}>
+              店名にここで指定した単語が含まれる候補は取り込みません。カンマ・読点・スペース区切りで複数指定できます(任意)。
             </span>
           </div>
           <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
