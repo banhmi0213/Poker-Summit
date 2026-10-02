@@ -2551,3 +2551,21 @@ th {
   .compact-portal-banner__photo { min-width:0; line-height:0; }
   .compact-portal-banner__photo img { display:block; width:100%; height:auto; object-fit:contain; }
 }
+
+/* Compact mobile banners follow the desktop left/right composition. */
+@media(max-width:860px) {
+  .compact-portal-banner { display:grid; grid-template-columns:58% 42%; min-height:180px; align-items:stretch; }
+  .compact-portal-banner__copy { padding:16px 14px; justify-content:center; gap:7px; }
+  .compact-portal-banner__eyebrow { font-size:8px; letter-spacing:1px; line-height:1.5; }
+  .compact-portal-banner h1 { font-size:18px; line-height:1.5; }
+  .compact-portal-banner p { font-size:11px; line-height:1.6; }
+  .compact-portal-banner small { font-size:10px; line-height:1.6; }
+  .compact-portal-banner__photo { display:flex; align-items:center; justify-content:center; min-width:0; }
+  .compact-portal-banner__photo img { width:100%; height:auto; object-fit:contain; }
+}
+@media(min-width:600px) and (max-width:860px) {
+  .compact-portal-banner { grid-template-columns:1fr 1fr; }
+  .compact-portal-banner__copy { padding:20px 24px; }
+  .compact-portal-banner h1 { font-size:24px; }
+  .compact-portal-banner p { font-size:13px; }
+}
