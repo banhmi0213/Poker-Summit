@@ -6,7 +6,6 @@ import { CATEGORY_LABEL } from "@/lib/constants";
 import {
   toggleFavoriteStore,
   toggleFavoriteJob,
-  applyToJob,
   joinEvent,
   useCoupon,
 } from "@/app/member-actions";
@@ -376,21 +375,13 @@ export default async function StoreDetailPage({
                   {favoriteJobIds.has(j.id) ? "★ お気に入り済み" : "☆ お気に入り"}
                 </button>
               </form>
-              <form
-                action={async () => {
-                  "use server";
-                  await applyToJob(j.id, path);
-                }}
-              >
-                <button
-                  type="submit"
-                  className={`btn ${appliedJobIds.has(j.id) ? "" : "primary"}`}
-                  style={{ fontSize: 12.5 }}
-                  disabled={appliedJobIds.has(j.id)}
-                >
-                  {appliedJobIds.has(j.id) ? "応募済み" : "応募する"}
-                </button>
-              </form>
+              {appliedJobIds.has(j.id) ? (
+                <span className="badge good">✓ 応募済み</span>
+              ) : (
+                <Link href={`/jobs/${j.id}#apply`} className="btn primary" style={{ fontSize: 12.5 }}>
+                  応募する
+                </Link>
+              )}
               {phone && (
                 <a href={`tel:${phone}`} className="btn" style={{ fontSize: 12.5 }}>
                   <DetailIcon name="phone" />電話をかける
