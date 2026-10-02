@@ -16,6 +16,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { classifyDevice } from "@/lib/device";
 import { StorePhotoGallery } from "./store-photo-gallery";
+import { StoreDetailTabs } from "./store-detail-tabs";
 
 export default async function StoreDetailPage({
   params,
@@ -169,14 +170,10 @@ export default async function StoreDetailPage({
               loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
           </aside>
         </div>
-        <nav className="sd-tabs" aria-label="店舗情報の各項目">
-          <a href="#store-menu">料金・メニュー</a><a href="#store-events">イベント</a>
-          <a href="#store-coupons">クーポン</a><a href="#store-notices">お知らせ</a><a href="#store-jobs">求人</a>
-        </nav>
-        {store.description && <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>}
-        <div className="sd-content-grid">
-          <div className="sd-content-main">
-            <section id="store-menu" className="sd-section">
+        <StoreDetailTabs key={store.id} panels={[
+          { id: "menu", label: "料金・メニュー", content: (
+            <>{store.description && <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>}
+<section id="store-menu" className="sd-section">
               <h2>料金・メニュー</h2>
               {menuItems && menuItems.length > 0 && <div className="sd-menu-grid">
                 {menuItems.map((item) => <article className="card sd-menu-card" key={item.id}>
@@ -187,7 +184,11 @@ export default async function StoreDetailPage({
               </div>}
               {(!menuItems || menuItems.length === 0) && <><p className="sd-empty">料金・メニューは店舗にお問い合わせください。</p></>}
             </section>
-            <section id="store-events" className="sd-section">
+            </>
+          ) },
+          { id: "events", label: "イベント", content: (
+            <>
+<section id="store-events" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
           イベント ({events?.length ?? 0})
         </h2>
@@ -220,9 +221,11 @@ export default async function StoreDetailPage({
         ))}
 
             </section>
-          </div>
-          <aside className="sd-content-side">
-            <section id="store-coupons" className="sd-section">
+            </>
+          ) },
+          { id: "coupons", label: "クーポン", content: (
+            <>
+<section id="store-coupons" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
           クーポン ({coupons?.length ?? 0})
         </h2>
@@ -269,7 +272,11 @@ export default async function StoreDetailPage({
 
 
             </section>
-            <section id="store-notices" className="sd-section">
+            </>
+          ) },
+          { id: "notices", label: "お知らせ", content: (
+            <>
+<section id="store-notices" className="sd-section">
         {notices && notices.length > 0 && (
           <>
             <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
@@ -290,7 +297,11 @@ export default async function StoreDetailPage({
 
               {(!notices || notices.length === 0) && <><h2>お知らせ (0)</h2><p className="sd-empty">現在のお知らせはありません。</p></>}
             </section>
-            <section id="store-jobs" className="sd-section">
+            </>
+          ) },
+          { id: "jobs", label: "求人", content: (
+            <>
+<section id="store-jobs" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
           求人情報 ({jobs?.length ?? 0})
         </h2>
@@ -347,8 +358,9 @@ export default async function StoreDetailPage({
 
 
             </section>
-          </aside>
-        </div>
+            </>
+          ) },
+        ]} />
         <div className="sd-store-support">
           <Link href="/contact" className="btn">お問い合わせ</Link>
           <form action={async () => { "use server"; await reportStore(store.id, path); }}>
