@@ -57,7 +57,7 @@ const FIELD_LABEL: Record<keyof FormState, string> = {
   category: "カテゴリ",
   pref: "都道府県",
   city: "市区町村",
-  address: "住所（番地以降）",
+  address: "住所",
   tel: "電話番号",
   hours: "営業時間",
   description: "店舗説明文",
@@ -223,12 +223,13 @@ export default function LiffProfilePage() {
             />
           </div>
           <div className="field">
-            <span className="muted">住所（番地以降）</span>
+            <span className="muted">住所</span>
             <input
               type="text"
               value={form.address}
               onChange={(e) => update("address", e.target.value)}
               disabled={addressLocked}
+              placeholder="都道府県・市区町村を含めた住所全体"
             />
           </div>
           <div className="field">
