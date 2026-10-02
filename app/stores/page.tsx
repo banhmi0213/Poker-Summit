@@ -7,7 +7,7 @@ import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
-import { StoreCard } from "@/app/store-card";
+import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect } from "@/app/pref-area-select";
 
 export default async function StoresPage({
@@ -21,8 +21,10 @@ export default async function StoresPage({
     area?: string;
     lat?: string;
     lng?: string;
+    sort?: string;
   };
 }) {
+  const sort = searchParams.sort === "name" ? "name" : "new";
   const q = searchParams.q?.trim() ?? "";
   const category = searchParams.category ?? "";
   const pref = searchParams.pref ?? "";
@@ -142,6 +144,15 @@ export default async function StoresPage({
     pickBanner(supabase, "store_list", { pref, region }),
   ]);
 
+  // One batch, using the same photo order as the store detail page.
+  const storeIds = (stores ?? []).map(s => s.id);
+  const { data: photos } = storeIds.length
+    ? await supabase.from("store_photos").select("store_id, url")
+        .in("store_id", storeIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
+    : { data: [] };
+  const coverPhotos = new Map<string, string>();
+  (photos ?? []).forEach(photo => { if (!coverPhotos.has(photo.store_id)) coverPhotos.set(photo.store_id, photo.url); });
+
   let favoriteStoreIds = new Set<string>();
   if (user) {
     const { data: favs } = await supabase
@@ -174,10 +185,25 @@ export default async function StoresPage({
     });
   }
 
+  if (!hasOrigin && sort === "name") displayStores.sort((a, b) => a.name.localeCompare(b.name, "ja"));
+  function regionHref(nextRegion: string) {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (category) params.set("category", category);
+    if (nextRegion) params.set("region", nextRegion);
+    if (sort === "name") params.set("sort", sort);
+    return `/stores${params.size ? `?${params}` : ""}`;
+  }
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container">
+      <div className="container sl-page">
+        <section className="sl-hero" aria-label="店舗検索">
+          <span>FIND YOUR POKER SPOT</span>
+          <h1>全国のポーカースポットを探す</h1>
+          <p>看板から見つける、あなたの次の一軒。</p>
+        </section>
         {storeListBanner && (
           <a
             href={`/go/banner/${storeListBanner.id}`}
@@ -199,7 +225,7 @@ export default async function StoresPage({
           </a>
         )}
 
-        <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: hasOrigin ? 4 : 16 }}>{pageHeading}</h1>
+        <h1 className="sl-mobile-heading" style={{ fontSize: 22, marginTop: 20, marginBottom: hasOrigin ? 4 : 16 }}>{pageHeading}</h1>
         {hasOrigin && (
           <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
             📍 現在地から近い順に表示しています
@@ -207,6 +233,7 @@ export default async function StoresPage({
         )}
 
         <form
+          className={`sl-search ${pref ? "sl-search--pref" : ""}`}
           method="get"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
@@ -215,6 +242,8 @@ export default async function StoresPage({
               region filter (the region chips, the prefecture map) don't lose
               it when the visitor refines with a keyword or category. */}
           <input type="hidden" name="region" value={region} />
+          <input type="hidden" name="sort" value={sort} />
+          <div className="sl-search-labels" aria-hidden="true"><span>店名・キーワード</span><span>{pref ? "エリア" : prefFieldLabel}</span>{!pref && <span>エリア</span>}<span>店舗タイプ</span><span /></div>
           {/* Carry the "現在地から探す" origin through a keyword/category
               refinement on this page too, so the distance sort doesn't reset
               just because the visitor narrowed the results further. */}
@@ -298,11 +327,24 @@ export default async function StoresPage({
           </button>
         </form>
 
+        <nav className="sl-region-tabs" aria-label="地方から探す">
+          {["", ...REGIONS].map(r => <Link key={r} href={regionHref(r)} className={`chip ${region === r ? "active" : ""}`}>{r || "全国"}</Link>)}
+        </nav>
+        <div className="sl-results-bar">
+          <div><h2>店舗一覧</h2><span>{displayStores.length}件の店舗が見つかりました</span></div>
+          {!hasOrigin && <form method="get" className="sl-sort">
+            {Object.entries({ q, category, pref, region, area }).map(([name, value]) => <input key={name} type="hidden" name={name} value={value} />)}
+            <label>並び替え <select name="sort" defaultValue={sort}><option value="new">新着順</option><option value="name">店名順</option></select></label>
+            <button className="btn" type="submit">適用</button>
+          </form>}
+        </div>
+
         {displayStores.length === 0 && (
           <p className="muted">条件に一致する店舗はありません。</p>
         )}
 
         <div
+          className="sl-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
@@ -310,9 +352,10 @@ export default async function StoresPage({
           }}
         >
           {displayStores.map((s) => (
-            <StoreCard
+            <StoreListCard
               key={s.id}
               store={s}
+              coverPhoto={coverPhotos.get(s.id)}
               isFavorite={favoriteStoreIds.has(s.id)}
               distanceKm={s.distanceKm}
               favoriteAction={async () => {
