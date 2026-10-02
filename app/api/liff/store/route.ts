@@ -15,6 +15,7 @@ type StoreUpdateBody = {
   address?: string;
   tel?: string;
   hours?: string;
+  nearestStation?: string;
   description?: string;
   lineUrl?: string | null;
   areaKeywords?: string | null;
@@ -102,6 +103,7 @@ export async function PATCH(req: NextRequest) {
       category: body.category,
       tel: body.tel,
       hours: body.hours,
+      nearestStation: body.nearestStation,
       description: body.description,
       lineUrl: body.lineUrl,
       areaKeywords: body.areaKeywords,
