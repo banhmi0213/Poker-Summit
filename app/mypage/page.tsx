@@ -5,7 +5,6 @@ import { signOut } from "@/app/login/actions";
 import {
   toggleFavoriteStore,
   toggleFavoriteJob,
-  applyToJob,
   leaveEvent,
 } from "@/app/member-actions";
 import { PortalHeader } from "@/app/portal-header";
@@ -197,16 +196,9 @@ export default async function MyPage({
                     {appliedJobIds.has(j.id) ? (
                       <span className="badge good">✓ 応募済み</span>
                     ) : j.status === "open" ? (
-                      <form
-                        action={async () => {
-                          "use server";
-                          await applyToJob(j.id, "/mypage?tab=favJobs");
-                        }}
-                      >
-                        <button type="submit" className="btn primary" style={{ fontSize: 12 }}>
-                          応募する
-                        </button>
-                      </form>
+                      <Link href={`/jobs/${j.id}#apply`} className="btn primary" style={{ fontSize: 12 }}>
+                        応募する
+                      </Link>
                     ) : (
                       <span className="badge outline">募集終了</span>
                     )}
