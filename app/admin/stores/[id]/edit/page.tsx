@@ -80,24 +80,24 @@ export default async function AdminStoreEditPage({
           </div>
 
           <div className="field">
-            <span className="muted">地方</span>
-            <select name="region" defaultValue={store.region ?? ""}>
-              <option value="">未設定</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="field">
             <span className="muted">都道府県</span>
             <select name="pref" defaultValue={store.pref ?? ""}>
               <option value="">未設定</option>
               {PREF_OPTIONS.map((p) => (
                 <option key={p} value={p}>
                   {p}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <span className="muted">地方</span>
+            <select name="region" defaultValue={store.region ?? ""}>
+              <option value="">未設定</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
                 </option>
               ))}
             </select>
