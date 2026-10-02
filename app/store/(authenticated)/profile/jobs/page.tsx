@@ -72,6 +72,18 @@ export default async function StoreJobsPage() {
 
   const jobIds = (jobs ?? []).map((j) => j.id);
 
+  // 店舗管理画面トップ(/store/profile)の「新着応募」アナウンスは
+  // viewed_by_store_at が null の応募件数で判定しているため、この求人管理
+  // ページを開いたタイミングでまとめて既読にする(2026/10、「求人通知の
+  // LINE、メールやけど店管理画面でアナウンス出るようにしよか」との指示を
+  // 受けて追加)。job_applicationsには店舗オーナー向けのUPDATEポリシーが
+  // ないため、既読フラグだけを更新するsecurity definer RPC経由で行う
+  // (mark_job_applications_viewed_for_my_store()参照)。失敗してもページ
+  // 表示自体は止めない。
+  if (jobIds.length) {
+    await supabase.rpc("mark_job_applications_viewed_for_my_store");
+  }
+
   const [{ data: appRows }, { data: jobFavRows }] = await Promise.all([
     jobIds.length
       ? supabase
