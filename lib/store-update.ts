@@ -140,6 +140,7 @@ export type InstantStoreFields = {
   category?: string | null;
   lineUrl?: string | null;
   areaKeywords?: string | null;
+  nearestStation?: string | null;
 };
 
 const INSTANT_FIELD_COLUMNS: Record<keyof InstantStoreFields, string> = {
@@ -149,6 +150,7 @@ const INSTANT_FIELD_COLUMNS: Record<keyof InstantStoreFields, string> = {
   category: "category",
   lineUrl: "line_url",
   areaKeywords: "area_keywords",
+  nearestStation: "nearest_station",
 };
 
 // Applies whichever of tel/hours/description/category/lineUrl/areaKeywords
