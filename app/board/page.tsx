@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { createPost } from "./actions";
 import { PortalHeader } from "@/app/portal-header";
@@ -112,9 +113,17 @@ export default async function BoardPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <div className="section-head" style={{ marginBottom: 16 }}>
-          <h1 style={{ fontSize: 22 }}>サミット（情報交換）</h1>
-        </div>
+        <h1 style={{ margin: "0 0 20px" }}>
+          <Image
+            src="/images/summit-community-banner.png"
+            alt="サミット｜情報交換 — ポーカーの話題で、つながろう。雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略"
+            width={737}
+            height={307}
+            priority
+            sizes="(max-width: 1200px) 100vw, 1200px"
+            style={{ display: "block", width: "100%", height: "auto", borderRadius: 12 }}
+          />
+        </h1>
 
         <div className="chip-row" style={{ marginBottom: 18 }}>
           <Link href={buildHref({ category: "", page: 1 })} className={`chip ${!category ? "active" : ""}`}>
