@@ -27,7 +27,7 @@ export default async function JobDetailPage({
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, title, job_type, salary, description, status, posted_at, banner_image_url, store_id, stores(id, name, category, pref, city, status)"
+      "id, title, job_type, salary, description, status, posted_at, banner_image_url, store_id, stores(id, name, category, pref, city, tel, status)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -66,6 +66,7 @@ export default async function JobDetailPage({
     .eq("job_id", j.id);
 
   const jobDetailBanner = await pickBanner(supabase, "job_detail", { pref: j.stores?.pref });
+  const phone = j.stores?.tel ? String(j.stores.tel).replace(/[^+0-9]/g, "") : "";
 
   return (
     <div>
@@ -159,6 +160,11 @@ export default async function JobDetailPage({
           <Link href={`/stores/${j.stores.id}`} className="btn">
             この店舗のページを見る
           </Link>
+          {phone && (
+            <a href={`tel:${phone}`} className="btn primary">
+              電話をかける
+            </a>
+          )}
           <form
             action={async () => {
               "use server";
