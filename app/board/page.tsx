@@ -38,9 +38,13 @@ const PAGE_SIZE = 100;
 export default async function BoardPage({
   searchParams,
 }: {
-  searchParams: { category?: string; page?: string };
+  searchParams: { category?: string; page?: string; q?: string; sort?: string };
 }) {
   const category = searchParams.category ?? "";
+  const q = searchParams.q?.trim() ?? "";
+  // 並び替え(2026/10、「キーワード検索・新着順／更新順を追加してほしい」との
+  // 指示)。「updated」(既定、更新順)と「new」(新着順=作成日時順)の2択。
+  const sort = searchParams.sort === "new" ? "new" : "updated";
   // スレッド一覧のページ送り(2026/10、「100件でページ送りで」との指示)。
   // 1ページ100件固定。カテゴリ絞り込みと組み合わせても動くよう、ページ数は
   // 絞り込み後の件数から計算する。
@@ -58,27 +62,38 @@ export default async function BoardPage({
     .select("id", { count: "exact", head: true })
     .eq("status", "visible");
   if (category) countQuery = countQuery.eq("category", category);
+  if (q) countQuery = countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
 
   // スレッド一覧の並び順(2026/10、「スレッド一覧は更新があれば一番先頭に
   // 来るように」との指示)。返信があるたびにcreateReply側でboard_posts.
   // updated_atを更新しているので、作成日時(created_at)ではなく更新日時
-  // (updated_at、新規投稿時点ではcreated_atと同じ)でソートする。
+  // (updated_at、新規投稿時点ではcreated_atと同じ)でソートする。ただし
+  // sort=newが指定された場合は投稿日時(created_at)順に切り替える。
   let query = supabase
     .from("board_posts")
     .select("id, title, author_name, created_at, updated_at, category, image_url")
     .eq("status", "visible")
-    .order("updated_at", { ascending: false })
+    .order(sort === "new" ? "created_at" : "updated_at", { ascending: false })
     .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
+  if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
   query = query.range(from, to);
 
   const [{ count: totalCount }, { data: posts }] = await Promise.all([countQuery, query]);
   const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
-  function pageHref(p: number) {
+  function buildHref(
+    overrides: { category?: string; q?: string; sort?: string; page?: number } = {}
+  ) {
+    const nextCategory = overrides.category !== undefined ? overrides.category : category;
+    const nextQ = overrides.q !== undefined ? overrides.q : q;
+    const nextSort = overrides.sort !== undefined ? overrides.sort : sort;
+    const nextPage = overrides.page !== undefined ? overrides.page : page;
     const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (p > 1) params.set("page", String(p));
+    if (nextCategory) params.set("category", nextCategory);
+    if (nextQ) params.set("q", nextQ);
+    if (nextSort && nextSort !== "updated") params.set("sort", nextSort);
+    if (nextPage > 1) params.set("page", String(nextPage));
     const qs = params.toString();
     return `/board${qs ? `?${qs}` : ""}`;
   }
@@ -101,19 +116,59 @@ export default async function BoardPage({
         </div>
 
         <div className="chip-row" style={{ marginBottom: 18 }}>
-          <Link href="/board" className={`chip ${!category ? "active" : ""}`}>
+          <Link href={buildHref({ category: "", page: 1 })} className={`chip ${!category ? "active" : ""}`}>
             すべて
           </Link>
           {BOARD_CATEGORIES.map((c) => (
             <Link
               key={c}
-              href={`/board?category=${encodeURIComponent(c)}`}
+              href={buildHref({ category: c, page: 1 })}
               className={`chip ${category === c ? "active" : ""}`}
             >
               {c}
             </Link>
           ))}
         </div>
+
+        {/* キーワード検索・並び替え(2026/10、「投稿が増えたときに備えて検索と
+            並び替えがあると便利」との指示)。カテゴリ絞り込み(チップ)は維持した
+            まま検索・並び替えできるよう、現在のcategoryを隠しフィールドで
+            引き継ぐ。送信時はページ指定を持たないので自然に1ページ目に戻る。 */}
+        <form method="get" style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
+          <input type="hidden" name="category" value={category} />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="キーワードで検索"
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "2 1 220px",
+            }}
+          />
+          <select
+            name="sort"
+            defaultValue={sort}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 6,
+              border: "1px solid var(--border-strong)",
+              background: "var(--surface-2)",
+              fontSize: 13,
+              flex: "1 1 140px",
+            }}
+          >
+            <option value="updated">更新順</option>
+            <option value="new">新着順</option>
+          </select>
+          <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
+            検索
+          </button>
+        </form>
 
         {user ? (
           <div className="card">
@@ -159,21 +214,32 @@ export default async function BoardPage({
           // 会員登録が必要」との指示)。一覧自体は誰でも見れるが、投稿フォーム
           // はログイン済みの人にしか表示しない(サーバー側の強制はcreatePost
           // 側のrequireUser()で行う。こちらはUIのみ)。
-          <div className="card" style={{ textAlign: "center", padding: 20 }}>
-            <p style={{ fontWeight: 700, marginBottom: 4 }}>
-              投稿には会員登録（無料）が必要です
-            </p>
-            <p className="muted small" style={{ marginBottom: 14 }}>
-              会員登録すると、スレッドの投稿・閲覧・コメントのほか、お気に入り登録・求人応募・クーポン利用・イベント参加登録もできるようになります。
-            </p>
-            <Link href="/signup" className="btn primary">
-              ログイン / 会員登録（無料）
+          // 2026/10、「投稿一覧より目立っている。テキストとボタンを横並び
+          // にする程度で十分」との指示により、中央寄せの大きいカードから
+          // 1行の案内バー(テキスト+ボタン)に縮小した。
+          <div
+            className="card"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              flexWrap: "wrap",
+              padding: "10px 14px",
+              marginBottom: 16,
+            }}
+          >
+            <p style={{ fontSize: 13, margin: 0 }}>投稿には無料会員登録が必要です</p>
+            <Link href="/signup" className="btn primary" style={{ fontSize: 12.5, padding: "6px 14px" }}>
+              ログイン / 会員登録
             </Link>
           </div>
         )}
 
         {(!posts || posts.length === 0) && (
-          <div className="empty">まだ投稿がありません。</div>
+          <div className="empty">
+            {q || category ? "該当する投稿が見つかりませんでした。" : "まだ投稿がありません。"}
+          </div>
         )}
 
         {posts?.map((p) => (
@@ -186,8 +252,12 @@ export default async function BoardPage({
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
-                  <span className="muted">{p.author_name}</span>
-                  <span className="muted">・ {formatDate(p.created_at)}</span>
+                  {/* 投稿者名・日時のコントラスト向上(2026/10、「薄い文字を
+                      少し濃くすると読みやすくなる」との指示)。--mutedは
+                      コントラスト比が低いため、サイト全体の.mutedは変えず
+                      このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
+                  <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
+                  <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>
                   <span className="muted">💬 {replyCounts[p.id] ?? 0}</span>
                 </div>
               </div>
@@ -222,7 +292,7 @@ export default async function BoardPage({
             }}
           >
             {page > 1 ? (
-              <Link href={pageHref(page - 1)} className="btn" style={{ padding: "6px 14px" }}>
+              <Link href={buildHref({ page: page - 1 })} className="btn" style={{ padding: "6px 14px" }}>
                 ← 前へ
               </Link>
             ) : (
@@ -234,7 +304,7 @@ export default async function BoardPage({
               {page} / {totalPages} ページ
             </span>
             {page < totalPages ? (
-              <Link href={pageHref(page + 1)} className="btn" style={{ padding: "6px 14px" }}>
+              <Link href={buildHref({ page: page + 1 })} className="btn" style={{ padding: "6px 14px" }}>
                 次へ →
               </Link>
             ) : (
