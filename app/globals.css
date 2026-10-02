@@ -2058,7 +2058,7 @@ th {
 .sd-hero-grid { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); gap:22px; align-items:start; }
 .sd-gallery { min-width:0; }
 .sd-gallery-main { position:relative; aspect-ratio: 2 / 1; overflow:hidden; border-radius:12px; background:var(--surface-2); }
-.sd-gallery-main > img { display:block; width:100%; height:100%; object-fit:cover; }
+.sd-gallery-main > img { display:block; width:100%; height:100%; object-fit:contain; }
 .sd-gallery-main button { position:absolute; top:50%; transform:translateY(-50%); width:38px; height:38px; border:0; border-radius:50%; background:rgba(255,255,255,.94); color:var(--accent-text); font-size:30px; line-height:1; cursor:pointer; }
 .sd-gallery-prev { left:12px; } .sd-gallery-next { right:12px; }
 .sd-gallery-count { position:absolute; bottom:10px; right:12px; padding:3px 9px; border-radius:20px; background:rgba(0,0,0,.55); color:#fff; font-size:12px; }
