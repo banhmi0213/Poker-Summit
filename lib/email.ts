@@ -136,6 +136,86 @@ Poker Summit運営事務局`;
 }
 
 // ---------------------------------------------------------------------------
+// お問い合わせ・掲載申込の運営宛て通知メール(2026/10追加、「問い合わせ、
+// 掲載申込があったらメール届くように設定しておいて」との指示を受けて追加)。
+// app/contact/actions.ts の submitInquiry()、app/apply/actions.ts の
+// submitApplication()/startPaidApplication() から、新規insert成功直後に
+// 呼ばれる。宛先は site_settings.notify_email(管理画面「通知設定」で設定、
+// 現状 info@pokersummit.jp)。notify_inquiry/notify_new_listing がONの
+// ときだけ呼び出し元で呼ばれる想定(フラグ判定は呼び出し側で行う)。
+// ベストエフォート: 呼び出し側でtry/catchし、送信失敗(RESEND_API_KEY
+// 未設定・notify_email未設定含む)で申込・問い合わせ受付自体は止めない
+// こと(sendJobApplicationNotificationEmail()と同じ方針)。
+// ---------------------------------------------------------------------------
+export async function sendInquiryNotificationEmail(params: {
+  to: string;
+  name: string;
+  email: string;
+  tel?: string | null;
+  subject?: string | null;
+  category?: string | null;
+  message: string;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `Poker Summitに新しいお問い合わせがありました。
+
+お名前: ${params.name}
+メールアドレス: ${params.email}
+電話番号: ${params.tel || "(未記入)"}
+カテゴリ: ${params.category || "(未選択)"}
+件名: ${params.subject || "(未記入)"}
+
+本文:
+${params.message}
+
+管理画面の「お問い合わせ」からご確認ください。
+${siteUrl}/admin/inquiries
+
+Poker Summit運営事務局`;
+
+  await sendEmail({
+    to: params.to,
+    subject: `【Poker Summit】新しいお問い合わせがあります(${params.name} 様)`,
+    text,
+  });
+}
+
+export async function sendListingApplicationNotificationEmail(params: {
+  to: string;
+  companyName: string;
+  contactName: string;
+  email: string;
+  tel?: string | null;
+  pref?: string | null;
+  category?: string | null;
+  message?: string | null;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `Poker Summitに新しい掲載申込がありました。
+
+店舗名・会社名: ${params.companyName}
+ご担当者名: ${params.contactName}
+メールアドレス: ${params.email}
+電話番号: ${params.tel || "(未記入)"}
+エリア: ${params.pref || "(未選択)"}
+カテゴリ: ${params.category || "(未選択)"}
+
+備考:
+${params.message || "(なし)"}
+
+管理画面の「掲載申込」からご確認ください。
+${siteUrl}/admin/listing-applications
+
+Poker Summit運営事務局`;
+
+  await sendEmail({
+    to: params.to,
+    subject: `【Poker Summit】新しい掲載申込があります(${params.companyName} 様)`,
+    text,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // 管理画面からの店舗への一斉メール配信(2026/10/01追加)
 //
 // 宛先ごとにtry/catchし、一部の宛先への送信失敗が他の宛先への送信を止めない
