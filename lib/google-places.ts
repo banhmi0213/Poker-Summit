@@ -18,6 +18,7 @@ export type PlaceCandidate = {
   lat: number | null;
   lng: number | null;
   businessStatus: string | null;
+  types: string[];
 };
 
 function getApiKey(): string {
@@ -65,6 +66,7 @@ export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
         lat: r.geometry?.location?.lat ?? null,
         lng: r.geometry?.location?.lng ?? null,
         businessStatus: r.business_status ?? null,
+        types: r.types ?? [],
       });
     }
 
@@ -76,23 +78,60 @@ export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
   return results;
 }
 
-// Text Search のレスポンスには電話番号が含まれないため、取り込み確定時に
-// Place Detailsを1件ずつ叩いて電話番号だけ補完する(fieldsを絞ることで
-// 課金対象データを最小限にする)。失敗してもnullを返すだけで取り込み自体は
-// 止めない(lib/geocode.tsと同じベストエフォート方針)。
-export async function getPlacePhone(placeId: string): Promise<string | null> {
+export type PlaceDetails = {
+  tel: string | null;
+  city: string | null;
+};
+
+// Text Search のレスポンスには電話番号・市区町村(住所の構成要素)が
+// 含まれないため、取り込み確定時にPlace Detailsを1件ずつ叩いて補完する
+// (fieldsを絞ることで課金対象データを最小限にする)。失敗してもnullの
+// ままにするだけで取り込み自体は止めない(lib/geocode.tsと同じ
+// ベストエフォート方針)。市区町村はaddress_componentsの中から
+// locality(市区町村)→sublocality_level_1(東京23区などlocalityが
+// 無いケース)→administrative_area_level_2(郡など)の優先順で拾う
+// (2026/10、「市区町村が反映されてない」との指摘を受けて追加)。
+export async function getPlaceDetails(placeId: string): Promise<PlaceDetails> {
   try {
     const apiKey = getApiKey();
     const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
     url.searchParams.set("key", apiKey);
     url.searchParams.set("place_id", placeId);
     url.searchParams.set("language", "ja");
-    url.searchParams.set("fields", "formatted_phone_number");
+    url.searchParams.set("fields", "formatted_phone_number,address_component");
 
     const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
     const data = await res.json();
-    return data.result?.formatted_phone_number ?? null;
+
+    const components: Array<{ long_name: string; types: string[] }> =
+      data.result?.address_components ?? [];
+    const byType = (type: string) =>
+      components.find((c) => c.types?.includes(type))?.long_name ?? null;
+    const city =
+      byType("locality") ?? byType("sublocality_level_1") ?? byType("administrative_area_level_2");
+
+    return {
+      tel: data.result?.formatted_phone_number ?? null,
+      city,
+    };
   } catch {
-    return null;
+    return { tel: null, city: null };
   }
+}
+
+// Google PlacesにはCATEGORY_LABEL(アミューズメントポーカー/ポーカーバー/
+// カジノバー/リングのみ/トーナメントのみ/ポーカースクール/その他)に対応
+// する情報が無いため、店名とGoogleのtypesからベストエフォートで推測する。
+// あくまで下書きなので、違っていれば承認時に運営が直し、必要なければ
+// 「その他」のままでよい(2026/10、「カテゴリも」との指摘を受けて追加)。
+export function guessCategory(name: string, types: string[]): string {
+  const n = name.toLowerCase();
+  if (n.includes("スクール") || n.includes("school") || n.includes("教室")) return "school";
+  if (n.includes("カジノ") || n.includes("casino")) return "casino";
+  if (n.includes("アミューズメント") || n.includes("amusement")) return "amusement";
+  if (n.includes("トーナメント") || n.includes("tournament") || n.includes("大会")) return "tournament";
+  if (n.includes("バー") || n.includes("bar") || types.includes("bar") || types.includes("night_club")) {
+    return "bar";
+  }
+  return "other";
 }
