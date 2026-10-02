@@ -2332,3 +2332,195 @@ th {
  .sd-bottom-row .sd-calendar,.sd-bottom-row .sd-job-panel { border:0; padding-left:0; }
  .sd-bottom-row .sd-schedule-toggle { grid-column:auto; }
 }
+
+/* クーポン一覧ページの再デザイン(2026/10、提供されたモックアップに
+   合わせて「上からバナー・検索枠・タブ・クーポンの使い方」の構成に変更)。 */
+
+.coupon-hero {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 220px;
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  isolation: isolate;
+}
+.coupon-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+}
+.coupon-hero__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    rgba(16, 11, 3, 0.92) 0%,
+    rgba(16, 11, 3, 0.78) 38%,
+    rgba(16, 11, 3, 0.42) 70%,
+    rgba(16, 11, 3, 0.18) 100%
+  );
+}
+.coupon-hero__content {
+  position: relative;
+  z-index: 2;
+  padding: 30px 26px;
+  color: #fdf6e3;
+  max-width: 640px;
+}
+.coupon-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+.coupon-hero__eyebrow::after {
+  content: "";
+  width: 46px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.8;
+}
+.coupon-hero__title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 8px;
+  color: #fdf6e3;
+}
+.coupon-hero__subtitle {
+  font-size: 13.5px;
+  color: rgba(253, 246, 227, 0.82);
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .coupon-hero { min-height: 170px; }
+  .coupon-hero__content { padding: 20px 18px; }
+  .coupon-hero__title { font-size: 20px; }
+}
+
+/* クーポンカードの画像は店舗ごとにサイズ・比率がバラバラ(正方形/縦長など)
+   なため、固定比率の枠 + object-fit:contain で、どんな比率でも広告全体を
+   切らずに表示する。枠の余白はダークな中立色で埋め、どの店舗の広告が来ても
+   一覧の見た目が揃うようにしている。 */
+.coupon-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.coupon-card__media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(155deg, #241a08 0%, #140d04 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.coupon-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.coupon-card__media-fallback {
+  font-size: 38px;
+  opacity: 0.85;
+}
+.coupon-card__zoom {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(16, 11, 3, 0.62);
+  color: #fdf6e3;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+}
+.coupon-card__zoom:hover { background: rgba(16, 11, 3, 0.8); }
+.coupon-card__body { padding: 13px 15px 15px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.coupon-card__store { font-size: 13px; color: var(--text-2); }
+.coupon-card__meta-line { font-size: 12px; color: var(--text-2); }
+.coupon-card__cta { margin-top: 10px; text-align: center; }
+
+.coupon-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(10, 7, 2, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  cursor: zoom-out;
+}
+.coupon-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+.coupon-lightbox__close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(253, 246, 227, 0.14);
+  color: #fdf6e3;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.coupon-lightbox__close:hover { background: rgba(253, 246, 227, 0.26); }
+
+.coupon-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.coupon-step { display: flex; align-items: center; gap: 12px; flex: 1 1 200px; min-width: 200px; }
+.coupon-step__num {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--accent-gradient);
+  color: var(--accent-ink);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.coupon-step__icon { font-size: 18px; flex-shrink: 0; }
+.coupon-step__title { font-weight: 700; font-size: 13.5px; }
+.coupon-step__desc { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.coupon-step__arrow { font-size: 18px; color: var(--border-strong); flex-shrink: 0; align-self: center; }
+@media (max-width: 760px) {
+  .coupon-step__arrow { display: none; }
+}
