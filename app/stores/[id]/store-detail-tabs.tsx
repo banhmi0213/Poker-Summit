@@ -10,7 +10,29 @@ export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
   return (
     <div className="sd-tabbed-content">
       <div className="sd-tabs" role="tablist" aria-label="店舗情報の各項目">
-        <div className={active === null ? "sd-content-grid sd-tab-overview" : "sd-tab-selected"}>
+        {panels.map((panel, index) => (
+          <button key={panel.id} type="button" role="tab"
+            id={"tab-" + panel.id} aria-controls={"panel-" + panel.id}
+            aria-selected={active === index}
+            tabIndex={active === index || (active === null && index === 0) ? 0 : -1}
+            ref={(element) => { buttons.current[index] = element; }}
+            onClick={() => setActive(index)}
+            onKeyDown={(event) => {
+              let next = index;
+              if (event.key === "ArrowRight") next = (index + 1) % panels.length;
+              else if (event.key === "ArrowLeft") next = (index + panels.length - 1) % panels.length;
+              else if (event.key === "Home") next = 0;
+              else if (event.key === "End") next = panels.length - 1;
+              else return;
+              event.preventDefault();
+              setActive(next);
+              buttons.current[next]?.focus({ preventScroll: true });
+            }}>
+            {panel.label}
+          </button>
+        ))}
+      </div>
+      <div className={active === null ? "sd-content-grid sd-tab-overview" : "sd-tab-selected"}>
         {[0, 1].map((column) => (
           <div key={column}
             className={active === null ? (column === 0 ? "sd-content-main" : "sd-content-side") : ""}
