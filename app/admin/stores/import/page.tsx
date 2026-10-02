@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { importStoresFromGooglePlaces } from "./actions";
-import { PREF_OPTIONS, REGIONS, primaryRegionForPref } from "@/lib/constants";
+import { ImportPrefAreaSelect } from "./pref-area-select";
 
 // Google Placesから店舗候補を検索して取り込む運営向けツール(2026/10、
 // 「店舗は地方どっかAPIで入れようと思ってる」との相談を受けて追加)。
@@ -74,32 +74,7 @@ export default async function AdminStoresImportPage() {
           action={importStoresFromGooglePlaces}
           style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360 }}
         >
-          <div className="field">
-            <span className="muted">都道府県 *</span>
-            <select name="pref" required defaultValue="">
-              <option value="" disabled>
-                選択してください
-              </option>
-              {REGIONS.map((region) => (
-                <optgroup key={region} label={region}>
-                  {PREF_OPTIONS.filter((p) => primaryRegionForPref(p) === region).map(
-                    (p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    )
-                  )}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">エリア</span>
-            <input type="text" name="area" placeholder="例: 新宿、梅田" />
-            <span className="muted" style={{ fontSize: 11.5 }}>
-              都道府県内の駅名・繁華街名などで絞り込みたい場合に入力してください(任意)。
-            </span>
-          </div>
+          <ImportPrefAreaSelect />
           <div className="field">
             <span className="muted">検索キーワード</span>
             <input type="text" name="keyword" defaultValue="ポーカー" />
