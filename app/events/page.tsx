@@ -3,143 +3,81 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
-import { PREF_OPTIONS, EVENT_CATEGORIES } from "@/lib/constants";
+import { PREF_OPTIONS } from "@/lib/constants";
+import { PrefAreaSelect } from "@/app/pref-area-select";
+import { ReferenceSlice } from "@/app/stores/[id]/reference-slice";
 
-function formatDate(value: string | null) {
-  if (!value) return "";
-  const d = new Date(value);
-  return d.toLocaleString("ja-JP", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const kinds = ["すべて", "トーナメント", "イベント", "その他"];
+function eventKind(e: any) {
+  if (/大会|トーナメント|tournament/i.test(e.category ?? "")) return "トーナメント";
+  if (/体験|講座|交流|イベント/.test(e.category ?? "")) return "イベント";
+  if (/トーナメント|tournament/i.test(e.title ?? "")) return "トーナメント";
+  return "その他";
 }
-
-export default async function EventsPage({
-  searchParams,
-}: {
-  searchParams: { pref?: string; category?: string };
+function japanDate(value: string) {
+  return new Date(value).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
+}
+export default async function EventsPage({ searchParams }: {
+  searchParams: { q?: string; pref?: string; area?: string; date?: string; category?: string; kind?: string };
 }) {
+  const q = searchParams.q?.trim() ?? "";
   const pref = searchParams.pref ?? "";
-  const category = searchParams.category ?? "";
-
+  const area = pref ? searchParams.area ?? "" : "";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date ?? "") ? searchParams.date! : "";
+  const kind = kinds.includes(searchParams.kind ?? "") ? searchParams.kind! : "すべて";
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  let query = supabase
-    .from("events")
-    .select("id, title, location, description, start_at, end_at, category, store_id, stores(name, pref)")
-    .eq("status", "published");
-
-  if (category) query = query.eq("category", category);
-
-  const { data: rawEvents } = await query;
-  let events = rawEvents ?? [];
-  if (pref) events = events.filter((e: any) => e.stores?.pref === pref);
-
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data } = await supabase.from("events").select("*, stores(name, pref, city, address)").eq("status", "published");
+  let events = (data ?? []).filter((e: any) => {
+    if (pref && e.stores?.pref !== pref && e.pref !== pref) return false;
+    if (area && ![e.stores?.city, e.stores?.address, e.location].some(v => v?.includes(area))) return false;
+    if (q && ![e.title, e.description, e.location, e.stores?.name].some(v => v?.toLowerCase().includes(q.toLowerCase()))) return false;
+    if (date && (!e.start_at || japanDate(e.start_at) !== date)) return false;
+    if (searchParams.category && e.category !== searchParams.category) return false;
+    return kind === "すべて" || eventKind(e) === kind;
+  });
   const now = new Date().toISOString();
-  const upcoming = events
-    .filter((e: any) => !e.start_at || e.start_at >= now)
-    .sort((a: any, b: any) => (a.start_at ?? "").localeCompare(b.start_at ?? ""));
-  const past = events
-    .filter((e: any) => e.start_at && e.start_at < now)
-    .sort((a: any, b: any) => (b.start_at ?? "").localeCompare(a.start_at ?? ""));
-  const list = [...upcoming, ...past];
-
-  return (
-    <div>
-      <PortalHeader userEmail={user?.email} />
-      <div className="container">
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>トーナメント・イベント</h1>
-
-        <form
-          method="get"
-          style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
-        >
-          <select
-            name="pref"
-            defaultValue={pref}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border-strong)",
-              background: "var(--surface-2)",
-              fontSize: 13,
-              flex: "1 1 160px",
-            }}
-          >
-            <option value="">都道府県: すべて</option>
-            {PREF_OPTIONS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-          <select
-            name="category"
-            defaultValue={category}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 6,
-              border: "1px solid var(--border-strong)",
-              background: "var(--surface-2)",
-              fontSize: 13,
-              flex: "1 1 160px",
-            }}
-          >
-            <option value="">カテゴリ: すべて</option>
-            {EVENT_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
-            検索
-          </button>
-        </form>
-
-        {list.length === 0 && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: 14,
-          }}
-        >
-          {list.map((e: any) => {
-            const isPast = e.start_at && e.start_at < now;
-            return (
-              <Link
-                href={`/events/${e.id}`}
-                key={e.id}
-                style={{ display: "block", opacity: isPast ? 0.62 : 1, height: "100%" }}
-              >
-                <div
-                  className="card"
-                  style={{ height: "100%", minHeight: 170, display: "flex", flexDirection: "column" }}
-                >
-                  <div className="meta" style={{ marginBottom: 6 }}>
-                    {e.start_at && <span className="badge accent">{formatDate(e.start_at)}</span>}
-                    {e.category && <span className="badge outline">{e.category}</span>}
-                    {isPast && <span className="badge outline">終了</span>}
-                  </div>
-                  <h3>{e.title}</h3>
-                  {e.stores?.name && <div className="muted">{e.stores.name}</div>}
-                  {e.location && <div className="muted">{e.location}</div>}
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+  events = [...events].sort((a: any,b: any) => {
+    const pastA = !!a.start_at && a.start_at < now, pastB = !!b.start_at && b.start_at < now;
+    if (pastA !== pastB) return pastA ? 1 : -1;
+    return pastA ? (b.start_at ?? "").localeCompare(a.start_at ?? "") : (a.start_at ?? "").localeCompare(b.start_at ?? "");
+  });
+  function tabHref(nextKind: string) {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (pref) params.set("pref", pref);
+    if (area) params.set("area", area);
+    if (date) params.set("date", date);
+    if (nextKind !== "すべて") params.set("kind", nextKind);
+    return "/events" + (params.size ? "?" + params.toString() : "");
+  }
+  return <div>
+    <PortalHeader userEmail={user?.email} />
+    <main className="container ep-page">
+      <div className="ep-hero">
+        <ReferenceSlice region={[129,58,640,274]} alt="" className="ep-hero-image" />
+        <div className="ep-hero-copy"><span>TOURNAMENTS &amp; EVENTS</span><h1>トーナメント・イベントを探す</h1><p>次の挑戦も、はじめての一歩も。</p></div>
       </div>
-      <PortalFooter />
-      <BottomTabs />
-    </div>
-  );
+      <form method="get" className="ep-search">
+        {kind !== "すべて" && <input type="hidden" name="kind" value={kind} />}
+        <label className="ep-keyword">フリーワード<input name="q" defaultValue={q} placeholder="キーワードで検索" /></label>
+        <div className="ep-location"><div className="ep-field-labels"><span>都道府県</span><span>エリア</span></div><div className="ep-location-selects"><PrefAreaSelect prefOptions={PREF_OPTIONS} prefLabel="都道府県" initialPref={pref} initialArea={area} /></div></div>
+        <label>開催日<input name="date" type="date" defaultValue={date} /></label>
+        <button type="submit" className="btn primary">検索</button>
+      </form>
+      <nav className="ep-kind-tabs" aria-label="イベントの種類">{kinds.map(label => <Link key={label} href={tabHref(label)} className={kind === label ? "active" : ""} aria-current={kind === label ? "page" : undefined}>{label}</Link>)}</nav>
+      <div className="ep-list-heading"><h2>開催予定のイベント</h2><span>{events.length}件</span></div>
+      {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
+      <div className="ep-grid">{events.map((e: any) => {
+        const isPast = !!e.start_at && e.start_at < now;
+        return <Link key={e.id} href={`/events/${e.id}`} className="ep-card" style={{opacity:isPast ? .62 : 1}}>
+          <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <><ReferenceSlice region={[129,58,640,274]} alt="" /><strong>{e.title}</strong></>}</div>
+          <div className="ep-card-body"><div className="ep-date">{e.start_at ? <><strong>{new Date(e.start_at).toLocaleDateString("ja-JP",{month:"2-digit",day:"2-digit",timeZone:"Asia/Tokyo"})}</strong><span>{new Date(e.start_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tokyo"})}</span></> : <span>日時未定</span>}</div>
+            <div className="ep-card-copy"><h3>{e.title}</h3>{e.stores?.name && <p>{e.stores.name}</p>}<p>{[e.stores?.pref,e.stores?.city].filter(Boolean).join("・") || e.location}</p><div className="ep-card-meta"><span>{eventKind(e)}</span>{isPast && <span>終了</span>}<b>詳細を見る ›</b></div></div>
+          </div>
+        </Link>;
+      })}</div>
+    </main>
+    <PortalFooter /><BottomTabs />
+  </div>;
 }
