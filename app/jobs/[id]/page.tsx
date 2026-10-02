@@ -7,7 +7,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import { pickBanner } from "@/lib/banners";
-import { ApplicantAttributesFields } from "./applicant-attributes";
+import { AgeField, GenderField, DealerExperienceField } from "./applicant-attributes";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -171,31 +171,33 @@ export default async function JobDetailPage({
             <form action={submitJobApplication}>
               <input type="hidden" name="jobId" value={j.id} />
               <input type="hidden" name="path" value={path} />
-              <ApplicantAttributesFields />
               <div className="card">
                 <div className="field">
                   <span className="muted">お名前 *</span>
                   <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
                 </div>
+                <AgeField />
+                <GenderField />
+                <div className="field">
+                  <span className="muted">住所</span>
+                  <input type="text" name="address" />
+                </div>
                 <div className="field">
                   <span className="muted">電話番号</span>
                   <input type="tel" name="tel" />
                 </div>
+                <DealerExperienceField />
                 <div className="field">
-                  <span className="muted">メッセージ（PR）</span>
-                  <textarea name="message" rows={4} placeholder="自己PRやアピールポイントがあればご記入ください" />
-                </div>
-                <div className="field">
-                  <span className="muted">住所</span>
-                  <input type="text" name="address" />
+                  <span className="muted">志望動機</span>
+                  <textarea name="motivation" rows={4} placeholder="志望動機をご記入ください" />
                 </div>
                 <div className="field">
                   <span className="muted">面接希望日</span>
                   <input type="date" name="interviewDate" />
                 </div>
                 <div className="field">
-                  <span className="muted">志望動機</span>
-                  <textarea name="motivation" rows={4} placeholder="志望動機をご記入ください" />
+                  <span className="muted">メッセージ（PR）</span>
+                  <textarea name="message" rows={4} placeholder="自己PRやアピールポイントがあればご記入ください" />
                 </div>
                 <button type="submit" className="btn primary" style={{ width: "100%" }}>
                   応募を送信する
