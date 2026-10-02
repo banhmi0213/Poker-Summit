@@ -2,9 +2,11 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
+import { DetailIcon } from "./detail-icon";
+
 type Panel = { id: string; label: string; content: ReactNode };
 
-export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
+export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedule?: ReactNode }) {
   const [active, setActive] = useState<number | null>(null);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   return (
@@ -13,10 +15,10 @@ export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
         {panels.map((panel, index) => (
           <button key={panel.id} type="button" role="tab"
             id={"tab-" + panel.id} aria-controls={"panel-" + panel.id}
-            aria-selected={active === index}
+            aria-selected={active === index || (active === null && index === 0)}
             tabIndex={active === index || (active === null && index === 0) ? 0 : -1}
             ref={(element) => { buttons.current[index] = element; }}
-            onClick={() => setActive(index)}
+            onClick={() => setActive(index === 0 ? null : index)}
             onKeyDown={(event) => {
               let next = index;
               if (event.key === "ArrowRight") next = (index + 1) % panels.length;
@@ -28,7 +30,7 @@ export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
               setActive(next);
               buttons.current[next]?.focus({ preventScroll: true });
             }}>
-            {panel.label}
+            <DetailIcon name={(["menu", "calendar", "ticket", "notice", "briefcase"] as const)[index]} />{panel.label}
           </button>
         ))}
       </div>
@@ -38,7 +40,7 @@ export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
             className={active === null ? (column === 0 ? "sd-content-main" : "sd-content-side") : ""}
             hidden={active !== null && (column === 0 ? active >= 2 : active < 2)}>
             {panels.map((panel, index) => {
-              if ((column === 0) !== (index < 2)) return null;
+              if (index === 4 || (column === 0) !== (index < 2)) return null;
               return (
                 <div key={panel.id} role="tabpanel" id={"panel-" + panel.id}
                   aria-labelledby={"tab-" + panel.id} hidden={active !== null && active !== index}
@@ -49,6 +51,10 @@ export function StoreDetailTabs({ panels }: { panels: Panel[] }) {
             })}
           </div>
         ))}
+        <div className={active === null ? "sd-bottom-row" : "sd-job-selected"} hidden={active !== null && active !== 4}>
+          {active === null && schedule}
+          <div role="tabpanel" id="panel-jobs" aria-labelledby="tab-jobs" className="sd-job-panel">{panels[4]?.content}</div>
+        </div>
       </div>
     </div>
   );
