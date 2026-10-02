@@ -4,6 +4,49 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createFincodeCustomer, createFincodeCardRegistration, createFincodePlan } from "@/lib/fincode";
+import { sendListingApplicationNotificationEmail } from "@/lib/email";
+
+// 運営への掲載申込通知メール(2026/10、「問い合わせ、掲載申込があったら
+// メール届くように設定しておいて」との指示を受けて追加)。submitApplication()
+// とstartPaidApplication()の両方のinsert成功直後から呼ばれる。site_settings
+// のnotify_new_listingがONかつnotify_emailが設定されているときだけ送る。
+// ベストエフォート: 呼び出し側でtry/catchし、失敗しても申込受付自体は
+// 止めないこと(sendInquiryNotificationEmail()と同じ方針)。
+async function notifyNewListingApplication(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  params: {
+    companyName: string;
+    contactName: string;
+    email: string;
+    tel: string;
+    pref: string;
+    category: string;
+    message: string;
+  }
+) {
+  try {
+    const { data: notifySettings } = await supabase
+      .from("site_settings")
+      .select("notify_email, notify_new_listing")
+      .eq("id", true)
+      .maybeSingle();
+
+    if (notifySettings?.notify_new_listing && notifySettings.notify_email) {
+      await sendListingApplicationNotificationEmail({
+        to: notifySettings.notify_email,
+        companyName: params.companyName,
+        contactName: params.contactName,
+        email: params.email,
+        tel: params.tel,
+        pref: params.pref,
+        category: params.category,
+        message: params.message,
+      });
+    }
+  } catch {
+    // ベストエフォート: 通知失敗で申込受付自体は止めない
+  }
+}
 
 export async function submitApplication(formData: FormData) {
       const supabase = await createClient();
@@ -51,6 +94,16 @@ export async function submitApplication(formData: FormData) {
   if (error) {
           redirect(`/apply?error=${encodeURIComponent(error.message)}`);
   }
+
+  await notifyNewListingApplication(supabase, {
+    companyName,
+    contactName,
+    email,
+    tel,
+    pref,
+    category,
+    message,
+  });
 
   redirect("/apply?done=1");
 }
@@ -139,6 +192,16 @@ export async function startPaidApplication(formData: FormData) {
           redirect(`/apply?error=${encodeURIComponent(insertError?.message ?? "申込みに失敗しました。")}`);
           return;
   }
+
+  await notifyNewListingApplication(supabase, {
+    companyName,
+    contactName,
+    email,
+    tel,
+    pref,
+    category,
+    message,
+  });
 
   // redirect()はNext.js内部で例外を投げて実現される仕組みなので、
   // try/catchの中では絶対に呼ばない(catchでもみ消してしまう)。
