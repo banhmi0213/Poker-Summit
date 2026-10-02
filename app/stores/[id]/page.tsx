@@ -133,8 +133,17 @@ export default async function StoreDetailPage({
     usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
   }
 
-  const mapQuery = [store.address, store.pref, store.city, store.name].filter(Boolean).join(" ");
+  // 住所の承認時に運営側で自動取得済みの緯度経度(store.lat/lng)があれば、
+  // それを使って地図を組み立てる方が、住所テキストを都度あいまい検索する
+  // より実際の店舗位置に近い(2026/10、店舗管理画面で記載した情報が公開
+  // ページにしっかり反映されるように、とのご指摘を受けて対応)。緯度経度が
+  // まだ無い店舗(新規登録直後など)は、従来どおり住所テキストで検索する。
+  const hasCoords = store.lat != null && store.lng != null;
+  const mapQuery = hasCoords
+    ? `${store.lat},${store.lng}`
+    : [store.address, store.pref, store.city, store.name].filter(Boolean).join(" ");
   const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
+  const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : store.address;
   const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
 
   return (
@@ -165,8 +174,8 @@ export default async function StoreDetailPage({
               <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="btn primary">地図・経路を見る</a>
               {phone ? <a href={`tel:${phone}`} className="btn">電話をかける</a> : <Link href="/contact" className="btn">お問い合わせ</Link>}
             </div>
-            {store.address && <iframe className="sd-map" title={store.name + "の所在地"}
-              src={"https://maps.google.com/maps?q=" + encodeURIComponent(store.address) + "&output=embed"}
+            {mapEmbedQuery && <iframe className="sd-map" title={store.name + "の所在地"}
+              src={"https://maps.google.com/maps?q=" + encodeURIComponent(mapEmbedQuery) + "&output=embed"}
               loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
           </aside>
         </div>
