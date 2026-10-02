@@ -27,6 +27,7 @@ export async function updateStoreProfile(formData: FormData) {
   const address = String(formData.get("address") ?? "");
   const tel = String(formData.get("tel") ?? "");
   const hours = String(formData.get("hours") ?? "");
+  const nearestStation = String(formData.get("nearestStation") ?? "").trim();
   const description = String(formData.get("description") ?? "");
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
   const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
@@ -90,6 +91,7 @@ export async function updateStoreProfile(formData: FormData) {
     category: category || null,
     tel,
     hours,
+    nearestStation: nearestStation || null,
     description,
     lineUrl: lineUrl || null,
     areaKeywords: areaKeywords || null,
