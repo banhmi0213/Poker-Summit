@@ -2,12 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { toggleFavoriteJob, submitJobApplication } from "@/app/member-actions";
-import { reportJob } from "@/app/report-actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import { pickBanner } from "@/lib/banners";
+import { ApplicantAttributesFields } from "./applicant-attributes";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -129,19 +129,20 @@ export default async function JobDetailPage({
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+          {phone && (
+            <a href={`tel:${phone}`} className="btn primary">
+              電話をかける
+            </a>
+          )}
           {appliedByMe ? (
             <button type="button" className="btn" disabled>
               ✓ 応募済み
             </button>
-          ) : j.status === "open" ? (
-            <a href="#apply" className="btn primary">
-              この求人に応募する
-            </a>
-          ) : (
+          ) : j.status !== "open" ? (
             <button type="button" className="btn" disabled>
               募集終了
             </button>
-          )}
+          ) : null}
           <form
             action={async () => {
               "use server";
@@ -155,21 +156,6 @@ export default async function JobDetailPage({
           <Link href={`/stores/${j.stores.id}`} className="btn">
             この店舗のページを見る
           </Link>
-          {phone && (
-            <a href={`tel:${phone}`} className="btn primary">
-              電話をかける
-            </a>
-          )}
-          <form
-            action={async () => {
-              "use server";
-              await reportJob(j.id, path);
-            }}
-          >
-            <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-              通報
-            </button>
-          </form>
         </div>
 
         {searchParams.applyDone && (
@@ -179,27 +165,42 @@ export default async function JobDetailPage({
         )}
 
         {!appliedByMe && j.status === "open" && (
-          <div id="apply" className="card" style={{ marginTop: 18, scrollMarginTop: 20 }}>
+          <div id="apply" style={{ marginTop: 18, scrollMarginTop: 20 }}>
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>この求人に応募する</h2>
             {searchParams.applyError && <p className="err">{searchParams.applyError}</p>}
             <form action={submitJobApplication}>
               <input type="hidden" name="jobId" value={j.id} />
               <input type="hidden" name="path" value={path} />
-              <div className="field">
-                <span className="muted">お名前 *</span>
-                <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
+              <ApplicantAttributesFields />
+              <div className="card">
+                <div className="field">
+                  <span className="muted">お名前 *</span>
+                  <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
+                </div>
+                <div className="field">
+                  <span className="muted">電話番号</span>
+                  <input type="tel" name="tel" />
+                </div>
+                <div className="field">
+                  <span className="muted">メッセージ（PR）</span>
+                  <textarea name="message" rows={4} placeholder="自己PRやアピールポイントがあればご記入ください" />
+                </div>
+                <div className="field">
+                  <span className="muted">住所</span>
+                  <input type="text" name="address" />
+                </div>
+                <div className="field">
+                  <span className="muted">面接希望日</span>
+                  <input type="date" name="interviewDate" />
+                </div>
+                <div className="field">
+                  <span className="muted">志望動機</span>
+                  <textarea name="motivation" rows={4} placeholder="志望動機をご記入ください" />
+                </div>
+                <button type="submit" className="btn primary" style={{ width: "100%" }}>
+                  応募を送信する
+                </button>
               </div>
-              <div className="field">
-                <span className="muted">電話番号</span>
-                <input type="tel" name="tel" />
-              </div>
-              <div className="field">
-                <span className="muted">メッセージ（任意）</span>
-                <textarea name="message" rows={4} placeholder="志望動機やご質問があればご記入ください" />
-              </div>
-              <button type="submit" className="btn primary" style={{ width: "100%" }}>
-                応募を送信する
-              </button>
             </form>
           </div>
         )}
