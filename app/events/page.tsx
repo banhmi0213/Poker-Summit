@@ -55,7 +55,7 @@ export default async function EventsPage({ searchParams }: {
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container ep-page">
-      <h1 style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
+      <h1 className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
         <Image
           src="/images/poker-events-banner.jpg"
           alt="TOURNAMENTS & EVENTS — トーナメント・イベントを探す。次の挑戦も、はじめての一歩も。"

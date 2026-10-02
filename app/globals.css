@@ -2451,3 +2451,14 @@ th {
 .ep-card-meta b { margin-left:auto; color:#a17a27; font-size:10px; }
 @media(max-width:900px) { .ep-search { flex-wrap:wrap; } .ep-search .ep-keyword { flex:1 1 100%; } .ep-location { flex:2 1 55%; } .ep-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:600px) { .ep-hero-copy { left:18px; right:18px; top:35px; } .ep-hero-copy h1 { font-size:23px; } .ep-search { margin-top:16px; padding:12px; } .ep-location { flex:1 1 100%; } .ep-search > label { flex:1 1 60%; } .ep-grid { grid-template-columns:1fr; } .ep-kind-tabs a { padding:6px 16px; } }
+
+/* Desktop banners retain their original proportions; mobile stays unchanged. */
+@media (min-width: 861px) {
+  .portal-banner {
+    height: auto !important;
+    aspect-ratio: 3 / 1;
+    line-height: 0;
+  }
+  .portal-banner > picture { display: block; width: 100%; height: 100%; }
+  .portal-banner img { object-fit: contain !important; }
+}

@@ -112,12 +112,16 @@ export default async function CouponsPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <main className="container cp-page">
-        <h1 style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
+        <h1 className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
+          <picture>
+            <source media="(min-width: 861px)" srcSet="/images/poker-coupons-banner-desktop.jpg" />
+          </picture>
           <Image
             src="/images/poker-coupons-banner.png"
             alt="COUPONS & OFFERS — クーポンで、もっとポーカーを楽しもう。気になるお店の特典を、まとめてチェック。"
             width={1140}
             height={190}
+            quality={95}
             priority
             sizes="(max-width: 1180px) 100vw, 1140px"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}

@@ -52,12 +52,13 @@ export default async function JobsPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container">
-        <h1 style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
+        <h1 className="portal-banner" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
             src="/images/poker-careers-banner.jpg"
             alt="求人を探す — ポーカーの世界で、働こう。好きな空間で、あなたらしい仕事を。ディーラー・フロアスタッフ・バーテンダー"
             width={2172}
             height={724}
+            quality={95}
             priority
             sizes="(max-width: 1180px) 100vw, 1140px"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}

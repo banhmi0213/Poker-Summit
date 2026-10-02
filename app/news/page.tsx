@@ -51,12 +51,13 @@ export default async function NewsPage() {
       <PortalHeader userEmail={user?.email} />
 
       <div className="container" style={{ paddingBottom: 0 }}>
-        <div style={{ height: 190, overflow: "hidden", borderRadius: 10 }}>
+        <div className="portal-banner" style={{ height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
             src="/images/poker-news-banner.jpg"
             alt="お知らせ — 店舗とサイトからの最新情報をお届け。店舗のお知らせ・イベント情報・サイト更新"
             width={2171}
             height={724}
+            quality={95}
             priority
             sizes="(max-width: 1180px) 100vw, 1140px"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
