@@ -2353,3 +2353,7 @@ th {
 .sd-section .card:last-child { margin-bottom:0; }
 .sd-tab-overview .sd-content-main > .sd-tab-panel:last-child .sd-section,
 .sd-tab-overview .sd-content-side > .sd-tab-panel:last-child .sd-section { margin-bottom:0; }
+.sd-menu-grid .sd-menu-card { order:2; }
+.sd-menu-grid .sd-menu-card:first-child { order:0; }
+.sd-menu-grid .sd-beginner-guide { order:1; }
+.sd-tab-overview .sd-menu-card:not(:first-child):not(.sd-beginner-guide) { display:none; }
