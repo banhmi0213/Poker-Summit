@@ -47,6 +47,15 @@ export async function updateSession(request: NextRequest) {
   const isStorePath = pathname.startsWith("/store/") && pathname !== "/store/login";
   const isStoreScope = isStorePath || pathname === "/store/login";
 
+  // 総合管理画面(/admin配下)も同様に、未ログイン時は専用の管理ログイン
+  // 画面(/admin-login)へ飛ばす(2026/10、「adminは専用のログイン画面
+  // 作って」との指示)。"/admin"始まりの文字列一致だと"/admin-login"自体も
+  // ここに含まれてしまい、未ログイン→/admin-loginへリダイレクト→
+  // /admin-login自体もこの条件に一致して再度リダイレクト…という無限ループ
+  // になるため、"/admin"完全一致 または "/admin/"始まりだけを対象にし、
+  // "/admin-login"はこの判定に含めない(/store/loginの除外と同じ考え方)。
+  const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
+
   // /store/* 配下は店舗用Cookieだけを見る(会員セッションの有無は無関係)。
   // それ以外(会員・管理者向けの/admin, /mypage, /account等)はデフォルトの
   // Cookieだけを見る。片方のセッション有無がもう片方の判定に影響しない
@@ -59,13 +68,13 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
-    (pathname.startsWith("/admin") ||
+    (isAdminPath ||
       isStorePath ||
       pathname.startsWith("/mypage") ||
       pathname.startsWith("/account"))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = isStorePath ? "/store/login" : "/login";
+    url.pathname = isStorePath ? "/store/login" : isAdminPath ? "/admin-login" : "/login";
     url.searchParams.set("next", pathname);
     const response = NextResponse.redirect(url);
     pendingCookies.forEach(({ name, value, options }) =>
@@ -75,7 +84,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   const maintenanceExempt =
-    pathname.startsWith("/admin") ||
+    isAdminPath ||
+    pathname === "/admin-login" ||
     pathname.startsWith("/store/") ||
     pathname === "/login" ||
     pathname === "/maintenance" ||
