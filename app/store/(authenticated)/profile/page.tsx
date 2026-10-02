@@ -386,9 +386,29 @@ export default async function StoreProfilePage({
                 <span className="muted">営業時間</span>
                 <HoursInput initialValue={store.hours} />
               </div>
-              <div className="field">
-                <span className="muted">LINE公式アカウントURL</span>
-                <input type="text" name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 12,
+                }}
+              >
+                <div className="field">
+                  <span className="muted">メールアドレス</span>
+                  <input type="email" name="email" placeholder="例: info@example.com" defaultValue={store.email ?? ""} />
+                </div>
+                <div className="field">
+                  <span className="muted">LINE公式アカウントURL</span>
+                  <input type="text" name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
+                </div>
+                <div className="field">
+                  <span className="muted">Xアカウント</span>
+                  <input type="text" name="xUrl" placeholder="https://x.com/..." defaultValue={store.x_url ?? ""} />
+                </div>
+                <div className="field">
+                  <span className="muted">Instagram</span>
+                  <input type="text" name="instagramUrl" placeholder="https://instagram.com/..." defaultValue={store.instagram_url ?? ""} />
+                </div>
               </div>
               <div className="field">
                 <span className="muted">検索キーワード（検索用・任意）</span>
