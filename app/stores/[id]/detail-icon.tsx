@@ -12,5 +12,6 @@ const paths: Record<IconName, string> = {
   trophy: "M7 3h10v7a5 5 0 0 1-10 0V3Z M7 5H3v3a4 4 0 0 0 5 4 M17 5h4v3a4 4 0 0 1-5 4 M12 15v6 M8 21h8",
 };
 export function DetailIcon({name}: {name: IconName}) {
+  if (name === "menu") return <svg className="sd-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.2 2.2a.8.8 0 0 1 1.6 0V7h1.4V2.2a.8.8 0 0 1 1.6 0V7h1.4V2.2a.8.8 0 0 1 1.6 0v5.2c0 2-1.2 3.5-2.7 4V21a1.4 1.4 0 0 1-2.8 0v-9.6c-1.5-.5-2.7-2-2.7-4V2.2Zm15.5-.7c.8 0 1.3.5 1.3 1.3V21a1.4 1.4 0 0 1-2.8 0v-7.4h-2.1c-.7 0-1.1-.5-1.1-1.2 0-4.3 1.8-10.9 4.7-10.9Z" /></svg>;
   return <svg className="sd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>;
 }
