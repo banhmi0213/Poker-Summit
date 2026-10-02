@@ -1,3 +1,4 @@
+import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import { paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -194,6 +195,12 @@ export default async function StoresPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container sl-page">
+        <div className="store-mobile-banner">
+          <CompactPortalBanner image="/images/poker-store-finder-banner.jpg"
+            eyebrow="FIND YOUR POKER SPOT"
+            title={`${isKnownRegion ? region : (PREF_REGION[pref]?.[0] ?? "全国")}のポーカースポットを探す`}
+            subtitle="看板から見つける、あなたの次の一軒。" />
+        </div>
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>
           <h1>{isKnownRegion ? region : (PREF_REGION[pref]?.[0] ?? "全国")}のポーカースポットを探す</h1>

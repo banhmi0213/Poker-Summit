@@ -2536,3 +2536,18 @@ th {
   .sl-hero h1 { font-size:clamp(22px,2.15vw,29px); line-height:1.4; overflow-wrap:anywhere; text-shadow:0 1px 2px #76552344; }
   .sl-hero p { font-size:14px; color:#493117; line-height:1.6; margin:0; }
 }
+
+/* Mobile uses the same copy and photos without compressing either. */
+.store-mobile-banner { display:none; }
+@media(max-width:860px) {
+  .portal-banner--mobile { display:none; }
+  .store-mobile-banner { display:block; }
+  .compact-portal-banner { display:flex; flex-direction:column; margin:0 0 20px; border-radius:10px; overflow:hidden; background:linear-gradient(110deg,#cfad72,#e6cca1 55%,#e6cca1); }
+  .compact-portal-banner__copy { min-width:0; padding:20px; display:flex; flex-direction:column; gap:8px; }
+  .compact-portal-banner__eyebrow { font-size:10px; letter-spacing:1.8px; line-height:1.4; color:#513619; }
+  .compact-portal-banner h1 { margin:0; color:white; font-family:"Noto Serif JP","Yu Mincho",serif; font-size:22px; line-height:1.5; overflow-wrap:anywhere; text-wrap:balance; text-shadow:0 1px 2px #76552344; }
+  .compact-portal-banner p { margin:0; color:#493117; font-size:13px; line-height:1.7; }
+  .compact-portal-banner small { color:#493117; font-size:11px; line-height:1.7; }
+  .compact-portal-banner__photo { min-width:0; line-height:0; }
+  .compact-portal-banner__photo img { display:block; width:100%; height:auto; object-fit:contain; }
+}
