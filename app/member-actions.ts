@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { pushLineMessage } from "@/lib/line";
+import { sendJobApplicationNotificationEmail } from "@/lib/email";
 
 async function requireUser() {
   const supabase = await createClient();
@@ -116,6 +118,43 @@ export async function submitJobApplication(formData: FormData) {
 
   if (error && !error.message.includes("duplicate")) {
     redirect(path + "?applyError=" + encodeURIComponent(error.message) + "#apply");
+  }
+
+  // 新規応募(重複エラーではない=初回の応募)の場合のみ、店舗オーナーへ
+  // LINEとメールで通知する(2026/10、「応募がきたら店舗オーナーにLINEと
+  // メールで連絡が飛ぶようにして」との指示を受けて追加)。
+  // 宛先は get_job_notification_target() RPC(security definer)経由で
+  // 取得する — ここで使っている supabase クライアントは応募者自身の
+  // セッションで、store_contracts へのSELECT権限を持たない(管理者/
+  // 店舗オーナーのみ。RLS参照)ため。
+  // 通知はベストエフォート: LINE未連携・メール未設定・送信失敗のいずれ
+  // でも応募受付自体は止めない(pushLineMessage()・
+  // sendJobApplicationNotificationEmail()と同じ方針)。
+  if (!error) {
+    try {
+      const { data: target } = await supabase
+        .rpc("get_job_notification_target", { p_job_id: jobId })
+        .maybeSingle();
+
+      if (target) {
+        if (target.line_user_id) {
+          await pushLineMessage(
+            target.line_user_id,
+            `【Poker Summit】求人「${target.job_title}」に応募がありました。\n応募者: ${name}\n店舗管理画面の「求人管理」からご確認ください。`
+          );
+        }
+        if (target.contact_email) {
+          await sendJobApplicationNotificationEmail({
+            to: target.contact_email,
+            storeName: target.store_name,
+            jobTitle: target.job_title,
+            applicantName: name,
+          });
+        }
+      }
+    } catch {
+      // ベストエフォート: 通知失敗で応募受付自体は止めない
+    }
   }
 
   revalidatePath(path);
