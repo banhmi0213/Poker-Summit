@@ -98,6 +98,44 @@ await sendEmail({
 }
 
 // ---------------------------------------------------------------------------
+// 求人応募の通知メール(2026/10追加、「応募がきたら店舗オーナーにLINEと
+// メールで連絡が飛ぶようにして」との指示を受けて追加)。
+// app/member-actions.ts の submitJobApplication() から、新規応募(重複
+// エラーではない)の直後に呼ばれる。宛先は get_job_notification_target()
+// RPC(security definer。store_contracts.contact_email、ステータスactive
+// の契約のみ)経由で取得したもの。
+// ベストエフォート: 呼び出し側でtry/catchし、送信失敗(RESEND_API_KEY
+// 未設定・宛先未設定含む)で応募受付自体は止めないこと
+// (sendStoreCredentialsEmail()と同じ方針。lib/line.ts の pushLineMessage()
+// も同時に呼ばれる)。
+// ---------------------------------------------------------------------------
+export async function sendJobApplicationNotificationEmail(params: {
+  to: string;
+  storeName: string;
+  jobTitle: string;
+  applicantName: string;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} 様
+
+Poker Summitの求人「${params.jobTitle}」に新しい応募がありました。
+
+応募者名: ${params.applicantName}
+
+応募者の詳細(年齢・性別・ディーラー経験・連絡先等)は、店舗管理画面の
+「求人管理」からご確認ください。
+${siteUrl}/store/profile/jobs
+
+Poker Summit運営事務局`;
+
+  await sendEmail({
+    to: params.to,
+    subject: `【Poker Summit】求人「${params.jobTitle}」に応募がありました`,
+    text,
+  });
+}
+
+// ---------------------------------------------------------------------------
 // 管理画面からの店舗への一斉メール配信(2026/10/01追加)
 //
 // 宛先ごとにtry/catchし、一部の宛先への送信失敗が他の宛先への送信を止めない
