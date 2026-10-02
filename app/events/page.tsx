@@ -55,7 +55,7 @@ export default async function EventsPage({ searchParams }: {
     <PortalHeader userEmail={user?.email} />
     <main className="container ep-page">
       <div className="ep-hero">
-        <ReferenceSlice region={[129,58,640,274]} alt="" className="ep-hero-image" />
+        <ReferenceSlice region={[200,70,480,240]} alt="" className="ep-hero-image" />
         <div className="ep-hero-copy"><span>TOURNAMENTS &amp; EVENTS</span><h1>トーナメント・イベントを探す</h1><p>次の挑戦も、はじめての一歩も。</p></div>
       </div>
       <form method="get" className="ep-search">
@@ -71,7 +71,7 @@ export default async function EventsPage({ searchParams }: {
       <div className="ep-grid">{events.map((e: any) => {
         const isPast = !!e.start_at && e.start_at < now;
         return <Link key={e.id} href={`/events/${e.id}`} className="ep-card" style={{opacity:isPast ? .62 : 1}}>
-          <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <><ReferenceSlice region={[129,58,640,274]} alt="" /><strong>{e.title}</strong></>}</div>
+          <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <><ReferenceSlice region={[200,70,480,240]} alt="" /><strong>{e.title}</strong></>}</div>
           <div className="ep-card-body"><div className="ep-date">{e.start_at ? <><strong>{new Date(e.start_at).toLocaleDateString("ja-JP",{month:"2-digit",day:"2-digit",timeZone:"Asia/Tokyo"})}</strong><span>{new Date(e.start_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tokyo"})}</span></> : <span>日時未定</span>}</div>
             <div className="ep-card-copy"><h3>{e.title}</h3>{e.stores?.name && <p>{e.stores.name}</p>}<p>{[e.stores?.pref,e.stores?.city].filter(Boolean).join("・") || e.location}</p><div className="ep-card-meta"><span>{eventKind(e)}</span>{isPast && <span>終了</span>}<b>詳細を見る ›</b></div></div>
           </div>
