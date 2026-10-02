@@ -32,7 +32,7 @@ export default async function CouponDetailPage({
   const { data: coupon } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, store_id, stores(id, name, status)"
+      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, stores(id, name, status)"
     )
     .eq("id", params.id)
     .eq("active", true)
@@ -65,10 +65,35 @@ export default async function CouponDetailPage({
           ← クーポン一覧に戻る
         </Link>
         <div className="card" style={{ textAlign: "center", padding: 28 }}>
-          <div style={{ fontSize: 40 }}>🎟️</div>
+          {/* バナー画像はobject-fit: containで全体を表示する(2026/10、
+              「各店舗ごとにクーポン画像サイズが違う事への対応」との指示。
+              正方形・縦長どちらでも切らずに収まるよう、枠はcontain+背景色)。 */}
+          {c.banner_image_url ? (
+            <div
+              style={{
+                width: "100%",
+                maxHeight: 260,
+                borderRadius: 10,
+                overflow: "hidden",
+                background: "var(--surface-2)",
+                marginBottom: 14,
+              }}
+            >
+              <img
+                src={c.banner_image_url}
+                alt={c.title}
+                style={{ width: "100%", maxHeight: 260, objectFit: "contain" }}
+              />
+            </div>
+          ) : (
+            <div style={{ fontSize: 40 }}>🎟️</div>
+          )}
           <h1 style={{ fontSize: 19, margin: "10px 0 2px" }}>{c.title}</h1>
           <p className="muted small">{c.stores?.name}</p>
-          <div style={{ marginTop: 6 }}>{statusBadge(status)}</div>
+          <div style={{ marginTop: 6, display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
+            {statusBadge(status)}
+            {c.offer_type && <span className="badge outline">{c.offer_type}</span>}
+          </div>
           {c.description && <p style={{ margin: "14px 0" }}>{c.description}</p>}
           {c.discount && (
             <p style={{ fontWeight: 700, color: "var(--accent-text)" }}>{c.discount}</p>
