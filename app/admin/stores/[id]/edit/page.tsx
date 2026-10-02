@@ -25,7 +25,7 @@ export default async function AdminStoreEditPage({
   const { data: store } = await supabase
     .from("stores")
     .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status"
+      "id, name, category, region, pref, city, address, tel, hours, nearest_station, description, area_keywords, status"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -111,6 +111,16 @@ export default async function AdminStoreEditPage({
           <div className="field">
             <span className="muted">住所</span>
             <input type="text" name="address" defaultValue={store.address ?? ""} />
+          </div>
+
+          <div className="field">
+            <span className="muted">最寄り駅</span>
+            <input
+              type="text"
+              name="nearestStation"
+              placeholder="例: 梅田駅 徒歩5分"
+              defaultValue={store.nearest_station ?? ""}
+            />
           </div>
 
           <div className="field">
