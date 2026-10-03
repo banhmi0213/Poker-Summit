@@ -13,3 +13,10 @@
 @media(max-width:860px){.hero{height:auto;min-height:180px}.hero>.heroCopy{padding:16px 14px;gap:7px}.hero span{font-size:8px;letter-spacing:1px;line-height:1.5}.hero h1{font-size:18px;line-height:1.5}.hero p{font-size:11px;line-height:1.6}.hero>.heroPhoto{align-self:stretch;height:100%;min-height:180px}}
 @media(min-width:600px) and (max-width:860px){.hero>.heroCopy{padding:20px 24px}.hero h1{font-size:24px}.hero p{font-size:13px}}
 @media(max-width:599px){.hero{min-height:160px}.hero>.heroCopy{padding:14px 12px;gap:6px}.hero h1{font-size:clamp(16px,4.5vw,18px);line-height:1.45}.hero span{letter-spacing:.6px}.hero>.heroPhoto{min-height:160px}}
+
+/* SVG intrinsic height must not enlarge the grid row beyond the banner. */
+.hero{grid-template-rows:minmax(0,1fr);align-items:stretch}
+.hero>.heroCopy{min-height:0;align-self:stretch}
+.hero>.heroPhoto{height:auto;min-height:0;align-self:stretch;overflow:hidden}
+.heroPhoto svg{position:absolute;inset:0;width:100%;height:100%}
+@media(max-width:860px){.hero{grid-template-rows:auto}.hero>.heroPhoto{height:auto;min-height:0}}
