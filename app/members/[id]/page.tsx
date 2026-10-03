@@ -26,7 +26,7 @@ export default async function MemberProfilePage({
 }) {
   const supabase = await createClient();
 
-  const [{ data: { user } }, { data: profile }, { data: posts }] = await Promise.all([
+  const [{ data: { user } }, { data: profile }, { data: posts }, { data: replies }] = await Promise.all([
     supabase.auth.getUser(),
     supabase
       .from("profiles")
@@ -40,19 +40,31 @@ export default async function MemberProfilePage({
       .eq("status", "visible")
       .order("created_at", { ascending: false })
       .limit(POSTS_LIMIT),
+    // 返信だけしかしていない会員の存在確認用(2026/10、「アイコン押したら
+    // これ(404)」との報告を受けて追加)。投稿が1件もなくてもコメント
+    // (board_replies)だけで参加している会員はいるので、投稿だけを見て
+    // いると本人が実在するのに404になってしまっていた。
+    supabase
+      .from("board_replies")
+      .select("author_name")
+      .eq("author_user_id", params.id)
+      .eq("status", "visible")
+      .limit(1),
   ]);
 
-  // profilesに行がなく、投稿も1件もない場合は、このuser_idが実在する会員か
-  // どうかそもそも確認できないため404にする(auth.usersはサーバー側からも
-  // 直接は引けない。/account/profileを一度も保存していない会員は
-  // profiles行が無いので、投稿さえあれば存在確認として扱う)。
-  if (!profile && (!posts || posts.length === 0)) {
+  // profilesに行がなく、投稿・返信も1件もない場合は、このuser_idが実在する
+  // 会員かどうかそもそも確認できないため404にする(auth.usersはサーバー側
+  // からも直接は引けない。/account/profileを一度も保存していない会員は
+  // profiles行が無いので、投稿か返信さえあれば存在確認として扱う)。
+  if (!profile && (!posts || posts.length === 0) && (!replies || replies.length === 0)) {
     notFound();
   }
 
   // 表示名はprofiles.display_name(/account/profile保存時にミラーされる)を
-  // 優先し、未設定なら本人の投稿に残っているauthor_nameにフォールバックする。
-  const fallbackName = posts?.find((p: any) => p.author_name)?.author_name as string | undefined;
+  // 優先し、未設定なら本人の投稿・返信に残っているauthor_nameにフォールバックする。
+  const fallbackName =
+    (posts?.find((p: any) => p.author_name)?.author_name as string | undefined) ||
+    (replies?.find((r: any) => r.author_name)?.author_name as string | undefined);
   const displayName = profile?.display_name || fallbackName || "名無しの会員";
 
   return (
