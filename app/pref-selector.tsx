@@ -37,7 +37,7 @@ export function PrefSelector({
 
   return (
     <div className="ps-pref-selector" aria-label="現在表示中の都道府県">
-      <span className="ps-pref-selector__label">現在の表示地域</span>
+      <span className="ps-pref-selector__label">現在の地域</span>
       <select
         className="ps-pref-selector__select"
         aria-label="現在の表示地域"
