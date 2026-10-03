@@ -42,7 +42,30 @@ async function mapWithConcurrency<T, R>(
 // 選んだ分まとめてOR検索→結果を合算」との要望)。同じ店が複数キーワードで
 // ヒットした場合はgoogle_place_idで1件にまとめる(既に取り込み済みの店舗は
 // もちろん、再検索で別キーワード経由でも二重に取り込まない)。
+// 「Application error: a server-side exception has occurred」はNext.jsの
+// 汎用エラー画面で、実際の例外メッセージが表示されない(サーバーログでしか
+// 追えない)。このセッションからはVercelのログ/イベントAPIへのアクセス権が
+// 無く(403)原因究明ができなかったため、一時的にここで例外を捕まえて
+// import_errorクッキーに積み、画面側(page.tsx)でそのまま表示するように
+// している(2026/10、北海道検索のクラッシュ調査用)。原因が判明して
+// 安定稼働を確認できたら、このtry/catchごと元に戻してよい。
 export async function importStoresFromGooglePlaces(formData: FormData) {
+  try {
+    await runImport(formData);
+  } catch (err) {
+    const jar = await cookies();
+    const message =
+      err instanceof Error ? `${err.name}: ${err.message}\n${(err.stack ?? "").slice(0, 1500)}` : String(err);
+    jar.set("import_error", message.slice(0, 2000), {
+      httpOnly: true,
+      maxAge: 300,
+      path: "/admin/stores/import",
+    });
+  }
+  redirect("/admin/stores/import");
+}
+
+async function runImport(formData: FormData) {
   const supabase = await createClient();
 
   const pref = String(formData.get("pref") ?? "").trim();
@@ -223,6 +246,4 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     }),
     { httpOnly: true, maxAge: 60 * 60 * 24 * 90, path: "/admin/stores/import" }
   );
-
-  redirect("/admin/stores/import");
 }
