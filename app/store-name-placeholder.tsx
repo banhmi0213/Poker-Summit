@@ -19,7 +19,7 @@ export function StoreNamePlaceholder({ name }: { name: string }) {
   {detail && <span className="auto-store-name-detail">{detail}</span>}<small>POKER SUMMIT</small>
  </div></div>;
 }
-export function StoreFallbackLogo() { return <img className="store-fallback-finger" src="/images/summit-finger.svg" alt="Poker Summit" />; }
+export function StoreFallbackLogo() { return <img className="store-fallback-finger" src="/images/summit-finger-clean.png" alt="Poker Summit" />; }
 
 export function StoreDisplayName({ name }: { name: string }) {
  const match = name.match(/^(.+?)[（(](.+)[）)]$/);
