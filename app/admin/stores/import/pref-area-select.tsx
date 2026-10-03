@@ -14,8 +14,13 @@ import { AREA_OPTIONS, PREF_OPTIONS, REGIONS, primaryRegionForPref } from "@/lib
 // AREA_OPTIONSの各都道府県の最後の要素は「その他◯◯」という/stores側の
 // 絞り込み専用の受け皿ラベルであり、実在する地名ではないため、Google
 // Places検索のキーワードに使うとノイズになる。ここでは一覧から除外する。
-export function ImportPrefAreaSelect() {
-  const [pref, setPref] = useState("");
+//
+// initialPrefは前回検索した都道府県(cookie経由、page.tsx側で読み込み)。
+// 都道府県を選び直すまでは前回の値を引き継ぎ、エリアを選ぶだけで次の
+// 検索に進めるようにする(2026/10、「都道府県を選んだ場合は検索後また
+// 都道府県から選ばなあかんくなる」との指摘を受けて追加)。
+export function ImportPrefAreaSelect({ initialPref = "" }: { initialPref?: string }) {
+  const [pref, setPref] = useState(initialPref);
   const areaOptions = pref
     ? (AREA_OPTIONS[pref] ?? []).filter((a) => !a.startsWith("その他"))
     : [];
