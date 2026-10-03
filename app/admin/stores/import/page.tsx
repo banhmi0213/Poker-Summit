@@ -22,6 +22,9 @@ export default async function AdminStoresImportPage() {
 
   const jar = await cookies();
 
+  // 原因調査用の一時的なエラー表示(actions.tsのtry/catch参照)。
+  const importError = jar.get("import_error")?.value ?? null;
+
   const resultRaw = jar.get("import_result")?.value;
   let result: {
     pref: string;
@@ -89,6 +92,23 @@ export default async function AdminStoresImportPage() {
           の一覧で中身を確認してから、1件ずつ承認・却下・削除してください。
         </p>
       </div>
+
+      {importError && (
+        <div className="card" style={{ borderColor: "var(--bad, #c33)", marginBottom: 16 }}>
+          <h3 style={{ marginBottom: 8 }}>検索中にエラーが発生しました</h3>
+          <pre
+            style={{
+              fontSize: 12,
+              lineHeight: 1.6,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              margin: 0,
+            }}
+          >
+            {importError}
+          </pre>
+        </div>
+      )}
 
       {result && (
         <div className="card" style={{ borderColor: "var(--good)", marginBottom: 16 }}>
