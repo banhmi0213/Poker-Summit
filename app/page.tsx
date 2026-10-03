@@ -10,6 +10,7 @@ import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
 import { PrefAreaSelect } from "./pref-area-select";
+import styles from "./home-search.module.css";
 import { PokerRegionHero } from "./poker-region-hero";
 import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
@@ -101,7 +102,6 @@ export default async function HomePage({
       data: { user },
     },
     { data: settings },
-    { data: banners },
     statsResults,
     { data: memberCountRaw },
     featuredStoresAll,
@@ -112,14 +112,6 @@ export default async function HomePage({
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
-    supabase
-      .from("banners")
-      .select("id, title, image_url, link_url")
-      .eq("position", "top")
-      .eq("active", true)
-      .or(`starts_at.is.null,starts_at.lte.${now}`)
-      .or(`ends_at.is.null,ends_at.gte.${now}`)
-      .order("sort_order", { ascending: true }),
     Promise.all([
       supabase
         .from("stores")
@@ -260,45 +252,7 @@ export default async function HomePage({
         </div>
       )}
 
-      {banners && banners.length > 0 && (
-        <div className="container">
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              maxWidth: 760,
-              margin: "20px auto 0",
-            }}
-          >
-            {banners.map((b) => {
-              const content = (
-                <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                  {b.image_url ? (
-                    <img
-                      src={b.image_url}
-                      alt={b.title}
-                      style={{ width: "100%", display: "block" }}
-                    />
-                  ) : (
-                    <div style={{ padding: 16 }}>{b.title}</div>
-                  )}
-                </div>
-              );
-              return b.link_url ? (
-                <a href={`/go/banner/${b.id}`} key={b.id} target="_blank" rel="noreferrer">
-                  {content}
-                </a>
-              ) : (
-                <div key={b.id}>{content}</div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <PokerRegionHero
-        searchControls={
+      <div className={`ps-region-hero__search ${styles.search}`}>
           <form method="get" action="/stores" className="search-box">
             {/* Same /stores search this site already runs — only the fields
                 shown have changed (pref/area/category are now all visible,
@@ -341,7 +295,9 @@ export default async function HomePage({
               🔍 検索する
             </button>
           </form>
-        }
+      </div>
+
+      <PokerRegionHero
         stats={{
           storeCount: totalStoreCount ?? 0,
           jobCount: openJobCount ?? 0,

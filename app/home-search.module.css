@@ -1,0 +1,4 @@
+.search.search{position:relative;inset:auto;z-index:1;width:calc(100% - 40px);max-width:1140px;margin:12px auto 6px;container-type:inline-size}
+.search.search :global(.search-box){padding:8px 0;max-width:none}
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#f8f5ee!important;backdrop-filter:none;-webkit-backdrop-filter:none}
+@media(max-width:767px){.search.search{width:calc(100% - 24px);margin:12px auto 8px}.search.search :global(.search-box){padding:0}}

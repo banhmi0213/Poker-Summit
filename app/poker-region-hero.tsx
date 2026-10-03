@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { PREF_REGION, REGIONS } from "@/lib/constants";
 import { REFERENCE_MAP_HITS } from "./region-map-paths";
 
@@ -11,7 +10,6 @@ type Stats = {
 };
 
 type Props = {
-  searchControls: ReactNode;
   stats: Stats;
   backgroundSrc?: string;
 };
@@ -162,7 +160,7 @@ function formatCount(value: number) {
 }
 
 /**
- * TOP page hero: 7-region tappable map + consolidated search/stats panel.
+ * TOP page hero: 7-region tappable map + statistics panel.
  * Visual spec (colors, layout, spacing, copy, map position) is fixed by the
  * approved comp/GPT code — see the .ps-region-hero rules in globals.css.
  * This component only wires that spec to real data/geometry:
@@ -187,7 +185,6 @@ function formatCount(value: number) {
  *    /stores search form passed in unchanged (no new search logic here).
  */
 export function PokerRegionHero({
-  searchControls,
   stats,
   backgroundSrc = "/images/poker-region-hero-bg.png",
 }: Props) {
@@ -233,8 +230,6 @@ export function PokerRegionHero({
           <div key={line}>{line}</div>
         ))}
       </div>
-
-      <div className="ps-region-hero__search">{searchControls}</div>
 
       <svg
         className="ps-region-map-svg"
