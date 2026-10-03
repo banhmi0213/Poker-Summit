@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode, type CSSProperties } from "react";
+import styles from "./home-search.module.css";
 import { AREA_OPTIONS } from "@/lib/constants";
 
 const selectStyle = {
@@ -66,5 +67,21 @@ export function PrefAreaSelect({
         ))}
       </select>
     </>
+  );
+}
+/** Keep mobile search filters collapsed until the keyword field is used. */
+export function ExpandableSearchForm({ children, className = "search-box", style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <form method="get" action="/stores" className={`${className} ${styles.collapsible}`} style={style}
+      data-filters-expanded={expanded ? "true" : "false"}
+      onFocusCapture={(event) => {
+        if (event.target instanceof HTMLInputElement && event.target.name === "q") setExpanded(true);
+      }}
+      onClickCapture={(event) => {
+        if (event.target instanceof HTMLInputElement && event.target.name === "q") setExpanded(true);
+      }}>
+      {children}
+    </form>
   );
 }
