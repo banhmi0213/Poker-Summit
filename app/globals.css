@@ -2697,3 +2697,6 @@ th {
 .generic-store-finger img { width:100%; height:100%; object-fit:contain; }
 .generic-store-finger + div { padding-top:25px!important; }
 @media(min-width:861px) { .home-grid-four .auto-store-name-inner { padding:14px 10px; } .home-grid-four .auto-store-name strong { font-size:21px; } .home-grid-four .auto-store-name-medium strong { font-size:18px; } .home-grid-four .auto-store-name-long strong { font-size:16px; } }
+
+.store-display-name-detail { display:block; font-size:10px; font-weight:500; line-height:1.45; overflow-wrap:anywhere; text-wrap:balance; }
+@media(min-width:861px) { .home-grid-four .home-store-copy { padding:40px 12px 12px; } .home-grid-four .home-store-copy h3 { font-size:14px; } }

@@ -1,4 +1,4 @@
-import { StoreNamePlaceholder, StoreFallbackLogo } from "@/app/store-name-placeholder";
+import { StoreNamePlaceholder, StoreFallbackLogo, StoreDisplayName } from "@/app/store-name-placeholder";
 import Link from "next/link";
 import { CATEGORY_LABEL } from "@/lib/constants";
 
@@ -12,7 +12,7 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
       <div className="home-store-photo">{coverPhoto ? <img src={coverPhoto} alt={`${store.name}の店舗写真`} loading="lazy" /> : <StoreNamePlaceholder name={store.name} />}{rank && <b className="home-rank">{rank}</b>}</div>
       <div className="home-store-copy">
         <div className="home-store-logo">{store.logo_url ? <img src={store.logo_url} alt="" loading="lazy" /> : <StoreFallbackLogo />}</div>
-        <h3>{store.name}</h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
+        <h3><StoreDisplayName name={store.name} /></h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
         {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
         <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
       </div>

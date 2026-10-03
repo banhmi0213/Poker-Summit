@@ -1,4 +1,4 @@
-import { StoreNamePlaceholder, StoreFallbackLogo } from "@/app/store-name-placeholder";
+import { StoreNamePlaceholder, StoreFallbackLogo, StoreDisplayName } from "@/app/store-name-placeholder";
 import Link from "next/link";
 import { CATEGORY_LABEL } from "@/lib/constants";
 
@@ -41,7 +41,7 @@ export function StoreCard({
         <div className="generic-store-cover">{coverPhoto || store.logo_url ? <img src={coverPhoto || store.logo_url!} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
         {!store.logo_url && <div className="generic-store-finger"><StoreFallbackLogo /></div>}
         <div style={{ padding: 14 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{store.name}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
           {store.category && (
             <span className="badge" style={{ marginBottom: 6 }}>
               {CATEGORY_LABEL[store.category] ?? store.category}

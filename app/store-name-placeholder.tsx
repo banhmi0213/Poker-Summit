@@ -8,3 +8,8 @@ export function StoreNamePlaceholder({ name }: { name: string }) {
   </div>;
 }
 export function StoreFallbackLogo() { return <img className="store-fallback-finger" src="/images/summit-finger.svg" alt="Poker Summit" />; }
+
+export function StoreDisplayName({ name }: { name: string }) {
+ const match = name.match(/^(.+?)[（(](.+)[）)]$/);
+ return <>{match ? <>{match[1].trim()}<span className="store-display-name-detail">（{match[2]}）</span></> : name}</>;
+}
