@@ -60,12 +60,21 @@ export async function setStoreRecommended(id: string, recommended: boolean) {
   if (recommended) {
     const { data: store, error: storeError } = await supabase
       .from("stores")
-      .select("pref, is_recommended")
+      .select("pref, status, is_recommended")
       .eq("id", id)
       .single();
 
     if (storeError) {
       throw new Error(storeError.message);
+    }
+
+    // 承認(または掲載済み)していない店舗をPICK UPにできてしまうと、審査前の
+    // 店舗が公開サイトのPICK UP枠に出てしまう恐れがある上、「承認」ボタンを
+    // 押し忘れたままPICK UPだけONにしてしまい、本人は公開済みのつもりでも
+    // 実際には一覧に出ない、という事故が起きた(2026/10)。管理画面側のボタン
+    // 無効化に加えて、サーバー側でも弾く。
+    if (store.status !== "approved" && store.status !== "listed") {
+      throw new Error("この店舗はまだ承認されていません。先に「承認」してください。");
     }
 
     if (store.pref && !store.is_recommended) {
