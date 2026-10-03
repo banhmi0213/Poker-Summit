@@ -2610,7 +2610,7 @@ th {
 .home-store-card .store-fav-btn { top:10px; right:10px; z-index:2; background:white; }
 .home-event-photo { height:146px; background:#f6f1e7; }
 .home-event-photo img { width:100%; height:100%; object-fit:contain; }
-.home-event-placeholder { height:100%; padding:22px; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(120deg,#263c30,#102b23); color:#e8d5a2; gap:8px; }
+.home-event-placeholder { height:100%; padding:22px; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(120deg,#d1b16f,#f0e2c5); color:#513b1b; gap:8px; }
 .home-event-placeholder span { font-family:Georgia,serif; font-size:10px; letter-spacing:2px; }
 .home-event-placeholder strong { font-family:"Yu Mincho",serif; font-size:22px; line-height:1.4; }
 .home-event-body { display:grid; grid-template-columns:60px 1fr; padding:12px; gap:12px; }
@@ -2621,7 +2621,7 @@ th {
 .home-coupon-card { display:grid; grid-template-columns:42% 1fr; gap:12px; min-width:0; padding:8px; border:1px solid #eee9df; border-radius:8px; color:inherit; background:white; }
 .home-coupon-image { display:flex; min-width:0; min-height:132px; align-items:center; background:#f6f1e6; border-radius:5px; overflow:hidden; }
 .home-coupon-image > img { width:100%; height:132px; object-fit:contain; }
-.home-coupon-image > div { width:100%; height:100%; min-height:132px; padding:14px 9px; display:flex; flex-direction:column; justify-content:center; text-align:center; gap:9px; color:#e7d5a1; background:linear-gradient(130deg,#353528,#111b18); }
+.home-coupon-image > div { width:100%; height:100%; min-height:132px; padding:14px 9px; display:flex; flex-direction:column; justify-content:center; text-align:center; gap:9px; color:#513b1b; background:linear-gradient(130deg,#d1b16f,#f0e2c5); }
 .home-coupon-image strong { font-size:18px; line-height:1.35; overflow-wrap:anywhere; }
 .home-coupon-image span { font-family:Georgia,serif; font-size:9px; letter-spacing:1px; }
 .home-coupon-copy { min-width:0; padding:3px 0; display:flex; flex-direction:column; }

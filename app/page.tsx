@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   CATEGORY_OPTIONS,
   PREF_OPTIONS,
-  REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
 import { PortalHeader } from "./portal-header";
@@ -385,11 +384,16 @@ export default async function HomePage({
             <div className="home-coupon-copy"><h3>{c.title}</h3><p>{c.stores?.name}</p><p className="home-location">📍 {[c.stores?.pref,c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
           </Link>)}</div>
         </section>
-        <nav className="home-region-nav" aria-label="地方から店舗を探す"><h2>🗺️ 全国の店舗をエリアから探す</h2><div>{REGIONS.map(r => <Link key={r} href={`/stores?region=${encodeURIComponent(r)}`}>{r} <span>→</span></Link>)}</div></nav>
+
         <section className="home-section home-summit">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る →</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
+        </section>
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング{currentPref ? `（${currentPref}）` : ""}</h2></div>
+          {!rankedStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだお気に入りされた店舗がありません。` : "まだお気に入りされた店舗がありません。"}</p>}
+          <div className="home-grid home-grid-three">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 新着求人</h2><Link href="/jobs">すべての求人を見る →</Link></div>
@@ -399,11 +403,6 @@ export default async function HomePage({
             <h3>{j.title}</h3><p>{j.stores?.name}</p><p className="home-location">📍 {[j.stores?.pref,j.stores?.city].filter(Boolean).join(" ")}</p>
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
-        </section>
-        <section className="home-section">
-          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング{currentPref ? `（${currentPref}）` : ""}</h2></div>
-          {!rankedStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだお気に入りされた店舗がありません。` : "まだお気に入りされた店舗がありません。"}</p>}
-          <div className="home-grid home-grid-three">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
       </main>
 
