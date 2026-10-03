@@ -126,7 +126,14 @@ export default async function MyPage({
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
               <Avatar name={name} url={avatarUrl} size={56} />
               <div>
-                <div style={{ fontWeight: 800, fontSize: 19 }}>{name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <div style={{ fontWeight: 800, fontSize: 19 }}>{name}</div>
+                  {/* ハンドルネーム・都道府県の編集導線(2026/10、「変更できやん
+                      ね、修正欄がない」との指摘を受けて追加)。 */}
+                  <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
+                    編集
+                  </Link>
+                </div>
                 <div className="muted small">
                   📍 {pref || "未設定"} {joinedAt && `・ ${joinedAt}に登録`}
                 </div>
