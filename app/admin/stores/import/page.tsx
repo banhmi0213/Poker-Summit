@@ -35,13 +35,19 @@ export default async function AdminStoresImportPage() {
     }
   }
 
-  // 検索キーワード(タブ・自由入力)・除外ワードは、前回の入力内容を次回も
-  // 引き継ぐ(2026/10、「検索ワード、除外ワード入れたら消えるのやめてほしい」
-  // との指摘を受けて追加)。まだ1度も検索していない場合のみ、除外ワードは
-  // デフォルト値(パチンコ・風俗・閉店)を初期表示し、タブは「ポーカー」を
-  // 初期選択する。
+  // 都道府県・検索キーワード(タブ・自由入力)・除外ワードは、前回の入力内容を
+  // 次回も引き継ぐ(2026/10、「検索ワード、除外ワード入れたら消えるのやめて
+  // ほしい」「都道府県を選び直すまでは前回の都道府県を引き継いでほしい、
+  // エリア選ぶだけでサクサクいけるから」との指摘を受けて追加)。まだ1度も
+  // 検索していない場合のみ、除外ワードはデフォルト値(パチンコ・風俗・閉店)を
+  // 初期表示し、タブは「ポーカー」を初期選択する。
   const formStateRaw = jar.get("import_form_state")?.value;
-  let formState: { keyword: string; excludeKeywords: string; keywordTabs: string[] } | null = null;
+  let formState: {
+    pref: string;
+    keyword: string;
+    excludeKeywords: string;
+    keywordTabs: string[];
+  } | null = null;
   if (formStateRaw) {
     try {
       formState = JSON.parse(formStateRaw);
@@ -49,6 +55,7 @@ export default async function AdminStoresImportPage() {
       formState = null;
     }
   }
+  const defaultPref = formState?.pref ?? "";
   const defaultKeyword = formState?.keyword ?? "";
   const defaultExcludeKeywords = formState ? formState.excludeKeywords : DEFAULT_EXCLUDE_KEYWORDS;
   const selectedTabs = formState?.keywordTabs ?? ["ポーカー"];
@@ -112,7 +119,7 @@ export default async function AdminStoresImportPage() {
           action={importStoresFromGooglePlaces}
           style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 420 }}
         >
-          <ImportPrefAreaSelect />
+          <ImportPrefAreaSelect initialPref={defaultPref} />
           <div className="field">
             <span className="muted">検索キーワード</span>
             <KeywordTabs selected={selectedTabs} />
