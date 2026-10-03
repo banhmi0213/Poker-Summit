@@ -40,6 +40,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     <PortalHeader userEmail={user?.email}/>
     <main className={`container ${styles.page}`}>
       <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>
+      {e.banner_image_url && <div className={styles.topBanner}><img src={e.banner_image_url} alt={e.title}/></div>}
           <div className={styles.heading}><h1>{e.title}</h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>
       <div className={styles.layout}>
         <article className={styles.content}>
@@ -48,7 +49,6 @@ export default async function EventDetailPage({ params }: { params: { id: string
           </div>
           <nav className={styles.sections} aria-label="イベント詳細の項目"><a href="#overview">大会概要</a><a href="#structure">ストラクチャー</a><a href="#access">会場・アクセス</a></nav>
           <section id="overview" className={styles.section}><h2>大会概要</h2>
-            {e.banner_image_url && <img className={styles.banner} src={e.banner_image_url} alt={e.title}/>}
             <p className={styles.description}>{e.description || "大会の詳細は主催店舗へお問い合わせください。"}</p>
             <dl className={styles.details}><div><dt>イベント種別</dt><dd>{e.category || "未登録"}</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div>{e.end_at && <div><dt>終了予定</dt><dd>{date(e.end_at)} {date(e.end_at,true)}</dd></div>}<div><dt>主催店舗</dt><dd>{store?.name || "未登録"}</dd></div></dl>
           </section>
