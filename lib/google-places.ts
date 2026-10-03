@@ -34,6 +34,10 @@ function getApiKey(): string {
 // Text Search (Legacy) は1ページ最大20件、next_page_tokenで最大60件まで
 // 追跡できる。Googleの仕様上、トークン発行直後は少し待たないと
 // INVALID_REQUESTになることがあるため、ページ間に短い待機を入れる。
+//
+// 2026/10追記: 北海道検索の全滅原因はGoogle側のINVALID_REQUEST(pagetoken
+// 未有効化)だった。2ページ目以降でこれが出てもキーワード全体を失敗させず、
+// 1回だけ再試行して打ち切る(初回ページの失敗のみ例外を投げる)。
 export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
   const apiKey = getApiKey();
   const results: PlaceCandidate[] = [];
@@ -50,11 +54,24 @@ export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
       url.searchParams.set("query", query);
     }
 
-    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
-    const data = await res.json();
+    let res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    let data = await res.json();
+
+    if (page > 0 && data.status === "INVALID_REQUEST") {
+      // pagetoken発行直後でまだ有効化されていない可能性があるので、もう少し
+      // 待ってから1回だけ再試行する。
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+      data = await res.json();
+    }
 
     if (data.status !== "OK" && data.status !== "ZERO_RESULTS") {
-      throw new Error(`Google Places API error: ${data.status} ${data.error_message ?? ""}`);
+      if (page === 0) {
+        throw new Error(`Google Places API error: ${data.status} ${data.error_message ?? ""}`);
+      }
+      // 2ページ目以降の失敗はそのキーワードの取りこぼしで済ませ、検索全体は
+      // 失敗させない(ここまでに集まった分だけ返す)。
+      break;
     }
 
     for (const r of data.results ?? []) {
