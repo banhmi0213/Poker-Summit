@@ -30,7 +30,7 @@ export default async function MemberProfilePage({
     supabase.auth.getUser(),
     supabase
       .from("profiles")
-      .select("user_id, display_name, avatar_url, role, bio, pref, pref_public")
+      .select("user_id, display_name, avatar_url, role, bio, pref, pref_public, email_public, public_email")
       .eq("user_id", params.id)
       .maybeSingle(),
     supabase
@@ -93,6 +93,7 @@ export default async function MemberProfilePage({
             {profile?.pref_public !== false && profile?.pref && (
               <div className="muted small">📍 {profile.pref}</div>
             )}
+            {profile?.email_public === true && profile.public_email && <div className="muted small" style={{ marginTop: 6, overflowWrap: "anywhere" }}>✉ <a href={`mailto:${profile.public_email}`}>{profile.public_email}</a></div>}
           </div>
         </div>
 

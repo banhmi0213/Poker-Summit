@@ -27,6 +27,7 @@ export async function updateProfile(formData: FormData) {
   // 都道府県の公開設定(2026/10追加、「会員登録時都道府県を非公開にできる
   // ように」との指示。登録後もここで切り替えられるようにする)。
   const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
+  const emailPublic = formData.get("emailPublic") === "public";
   const role = String(formData.get("role") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
 
@@ -57,6 +58,8 @@ export async function updateProfile(formData: FormData) {
     bio: bio || null,
     pref: pref || null,
     pref_public: prefPublic,
+    email_public: emailPublic,
+    public_email: emailPublic ? (user.email ?? null) : null,
     updated_at: new Date().toISOString(),
   });
 
@@ -67,6 +70,8 @@ export async function updateProfile(formData: FormData) {
   // サミット一覧・詳細、会員プロフィールページの役職表示にも反映させる。
   revalidatePath("/mypage");
   revalidatePath("/board");
+  revalidatePath(`/members/${user.id}`);
+  revalidatePath("/account/profile");
 
   redirect("/account/profile?done=1");
 }

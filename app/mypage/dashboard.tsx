@@ -12,6 +12,7 @@ import { uploadAvatar, removeAvatar } from "@/app/mypage/actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { AccountIcon } from "./account-icon";
 import { ProfileEditor } from "./profile-editor";
 import styles from "./profile-layout.module.css";
 import { Avatar } from "@/app/avatar";
@@ -89,7 +90,7 @@ export async function MyPageContent({
   // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("avatar_url, pref_public, role, bio")
+    .select("avatar_url, pref_public, role, bio, email_public")
     .eq("user_id", user.id)
     .maybeSingle();
   const avatarUrl = myProfile?.avatar_url ?? null;
@@ -158,16 +159,16 @@ export async function MyPageContent({
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div className={styles.accountActions}>
               <Link href="/account/password" className="btn" style={{ fontSize: 12.5 }}>
-                パスワード変更
+                <AccountIcon kind="lock" /> パスワード変更
               </Link>
               <Link href="/account/delete" className="btn" style={{ fontSize: 12.5 }}>
-                退会
+                <AccountIcon kind="user" /> 退会
               </Link>
               <form action={signOut}>
                 <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  ログアウト
+                  <AccountIcon kind="logout" /> ログアウト
                 </button>
               </form>
             </div>
@@ -209,7 +210,7 @@ export async function MyPageContent({
           </div>
 
           <div className="muted small" style={{ marginTop: 10 }}>
-            ✉️ {user.email}
+            ✉️ {user.email} <span style={{ fontSize: 11, marginLeft: 8 }}>（{myProfile?.email_public === true ? "公開" : "非公開"}）</span>
           </div>
         </div>
 
@@ -422,7 +423,7 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit && <ProfileEditor name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} role={myProfile?.role || ""} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} />}
+        {profileEdit && <ProfileEditor name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={myProfile?.role || ""} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} />}
         </div>
       </div>
       <PortalFooter />

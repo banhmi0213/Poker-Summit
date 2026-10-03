@@ -22,3 +22,6 @@
 .success{color:#73551e;font-size:13px;background:#fcf4da;padding:10px;border-radius:6px}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.editor{max-width:none}.field{grid-template-columns:140px minmax(0,1fr)}}
 @media(max-width:500px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.account{padding:16px}.field{grid-template-columns:1fr;gap:6px}.field input,.field select,.field textarea{font-size:16px}.page{padding-top:18px}}
+.accountActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;align-self:flex-start}
+.accountActions form{display:flex;margin:0}
+.accountActions :global(.btn){display:inline-flex;align-items:center;justify-content:center;gap:6px;height:42px;min-height:42px;box-sizing:border-box;padding:0 14px!important;line-height:1!important;white-space:nowrap;background:#fff!important;border:1px solid #ddd3c2!important;border-radius:9px!important;color:#5a4121!important;box-shadow:0 1px 2px #4d35100a}
