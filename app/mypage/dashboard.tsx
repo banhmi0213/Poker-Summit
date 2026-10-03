@@ -243,7 +243,7 @@ export async function MyPageContent({
               href={`/mypage?tab=${t.key}`}
               className={styles.tile}
             >
-              {<><span>{t.label.replace(/\(\d+\)$/, "")}</span><small>{[favStores.length, favJobs.length, applications?.length ?? 0, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small><b aria-hidden="true">›</b></>}
+              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▣", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, applications?.length ?? 0, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
             </Link>
           ))}
         </div>
