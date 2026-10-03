@@ -359,6 +359,9 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
         </section>
+        <section className={styles.promoGrid} aria-label="おすすめコンテンツ">
+          <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.jpg" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>
+        </section>
       </main>
 
       <div className="cta-banner">

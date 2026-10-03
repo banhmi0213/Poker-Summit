@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   typescript: {
     // Build logs aren't reachable from this deploy pipeline yet; don't let a
     // type mismatch block shipping while we dial that in.
