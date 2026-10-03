@@ -41,28 +41,13 @@ export default async function StoreJobsPage() {
     );
   }
 
-  // 求人掲載アドオン(月額11,000円/1件)を契約していない店舗には、求人
-  // 管理画面を触らせない(2026/09/30、「求人はアドオンしてないと触れない
-  // ようにして」との指示)。
+  // 求人掲載アドオン(月額11,000円/1件)の契約有無。以前はこれが false の場合
+  // ページ全体(既存求人の一覧・編集・削除まで)を丸ごと隠していたが、それだと
+  // 管理側が代理掲載した求人をオーナーが一切管理できなくなってしまうバグが
+  // あったため、「新規に求人を掲載する」フォームの部分だけ契約案内に差し替える
+  // 形に変更(2026/10、「店舗管理画面でも求人は見えるようにして求人だそうとし
+  // たら契約のアナウンスを出して」との指示)。
   const hasJobsAddon = await storeHasJobsAddon(supabase, store.id);
-  if (!hasJobsAddon) {
-    return (
-      <div>
-        <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-          ← 店舗管理に戻る
-        </Link>
-        <h1 style={{ fontSize: 20, marginBottom: 16 }}>求人管理</h1>
-        <div className="card">
-          <p style={{ fontWeight: 700, marginBottom: 6 }}>
-            求人機能は「求人掲載」アドオンのご契約が必要です
-          </p>
-          <p className="muted small">
-            月額11,000円（求人1件につき）でご利用いただけます。ご契約は運営までお問い合わせください。
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const { data: jobs } = await supabase
     .from("jobs")
@@ -156,41 +141,52 @@ export default async function StoreJobsPage() {
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>求人管理</h1>
 
-      <div className="card">
-        <form action={createJob} encType="multipart/form-data">
-          <input type="hidden" name="storeId" value={store.id} />
-          <div className="field">
-            <span className="muted">求人タイトル</span>
-            <input type="text" name="title" required />
-          </div>
-          <div className="field">
-            <span className="muted">雇用形態</span>
-            <select name="jobType" defaultValue="">
-              <option value="">選択してください</option>
-              {JOB_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">給与</span>
-            <input type="text" name="salary" placeholder="例: 時給1300円〜" />
-          </div>
-          <div className="field">
-            <span className="muted">仕事内容</span>
-            <textarea name="description" rows={3} />
-          </div>
-          <div className="field">
-            <span className="muted">バナー画像（任意）</span>
-            <input type="file" name="bannerImage" accept="image/*" capture="environment" />
-          </div>
-          <button type="submit" className="btn primary">
-            求人を掲載する
-          </button>
-        </form>
-      </div>
+      {hasJobsAddon ? (
+        <div className="card">
+          <form action={createJob} encType="multipart/form-data">
+            <input type="hidden" name="storeId" value={store.id} />
+            <div className="field">
+              <span className="muted">求人タイトル</span>
+              <input type="text" name="title" required />
+            </div>
+            <div className="field">
+              <span className="muted">雇用形態</span>
+              <select name="jobType" defaultValue="">
+                <option value="">選択してください</option>
+                {JOB_TYPE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <span className="muted">給与</span>
+              <input type="text" name="salary" placeholder="例: 時給1300円〜" />
+            </div>
+            <div className="field">
+              <span className="muted">仕事内容</span>
+              <textarea name="description" rows={3} />
+            </div>
+            <div className="field">
+              <span className="muted">バナー画像（任意）</span>
+              <input type="file" name="bannerImage" accept="image/*" capture="environment" />
+            </div>
+            <button type="submit" className="btn primary">
+              求人を掲載する
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="card">
+          <p style={{ fontWeight: 700, marginBottom: 6 }}>
+            新しく求人を掲載するには「求人掲載」アドオンのご契約が必要です
+          </p>
+          <p className="muted small">
+            月額11,000円（求人1件につき）でご利用いただけます。ご契約は運営までお問い合わせください。
+          </p>
+        </div>
+      )}
 
       {jobs?.map((j) => (
         <div className="card" key={j.id}>
