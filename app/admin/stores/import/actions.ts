@@ -79,6 +79,19 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     return excludeWords.some((w) => lower.includes(w.toLowerCase()));
   }
 
+  // Google Places Text Searchは厳密な都道府県フィルタではなく「関連度」で
+  // 返してくるため、特に複数キーワードOR検索で候補数が増えると、選んだ
+  // 都道府県と全く違う場所の店が紛れ込むことがある(2026/10、「全国の店舗に
+  // 他の地方店舗が反映されてない」の調査で、岩手県検索のはずが長野市・
+  // 甲府市・奈良市などの店が混ざっているのを発見)。返ってきた住所
+  // (formatted_address)に選択した都道府県名が含まれているかで簡易チェック
+  // する。住所自体が取れなかった候補は判定不能なので、誤って弾かないよう
+  // そのまま通す(運営側の目視確認に委ねる)。
+  function matchesPref(address: string | null): boolean {
+    if (!address) return true;
+    return address.includes(pref);
+  }
+
   // エリア(駅名・繁華街名など)が指定されていれば都道府県名に加えて検索
   // クエリへ組み込み、より狭い範囲でヒットしやすくする(2026/10、「新宿と
   // 梅田、各都道府県の下に」との要望)。取り込む店舗データ側のpref/regionは
@@ -111,11 +124,13 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
   const existingIds = new Set((existingRows ?? []).map((e) => e.google_place_id));
 
   const afterDedup = results.filter((r) => !existingIds.has(r.placeId));
-  const afterClosed = afterDedup.filter((r) => r.businessStatus !== "CLOSED_PERMANENTLY");
+  const afterPrefMatch = afterDedup.filter((r) => matchesPref(r.address));
+  const afterClosed = afterPrefMatch.filter((r) => r.businessStatus !== "CLOSED_PERMANENTLY");
   const candidates = afterClosed.filter((r) => !matchesExcludeWord(r.name));
 
   const skippedExisting = results.length - afterDedup.length;
-  const skippedClosed = afterDedup.length - afterClosed.length;
+  const skippedWrongPref = afterDedup.length - afterPrefMatch.length;
+  const skippedClosed = afterPrefMatch.length - afterClosed.length;
   const skippedByFilter = afterClosed.length - candidates.length;
 
   // Place Detailsの取得(電話番号・市区町村の補完)も候補数だけ外部APIを
@@ -160,6 +175,7 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     excludeWords,
     found: results.length,
     skippedExisting,
+    skippedWrongPref,
     skippedClosed,
     skippedByFilter,
     inserted,
@@ -183,6 +199,7 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
       excludeWords,
       found: results.length,
       skippedExisting,
+      skippedWrongPref,
       skippedClosed,
       skippedByFilter,
       inserted,
