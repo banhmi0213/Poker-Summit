@@ -2582,3 +2582,84 @@ th {
   .compact-portal-banner__photo > picture { display:flex; align-items:center; height:100%; }
   .compact-portal-banner__photo img { width:100%; height:auto; aspect-ratio:1; object-fit:contain; }
 }
+
+/* Home portal: readable photographic cards and compact editorial lists. */
+.home-feed { max-width:1180px; padding:0 20px; margin:0 auto 40px; }
+.home-section { margin:26px 0; }
+.home-section-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:12px; }
+.home-section-head h2 { margin:0; font-size:18px; line-height:1.5; color:#2d291f; }
+.home-section-head h2 > span { margin-right:5px; }
+.home-section-head > a { flex-shrink:0; color:#99742f; font-size:12px; font-weight:600; }
+.home-grid { display:grid; gap:16px; }
+.home-grid-three { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.home-store-card,.home-event-card,.home-job-card { position:relative; min-width:0; border:1px solid #e9e5dc; border-radius:9px; overflow:hidden; background:white; color:inherit; transition:box-shadow .2s,transform .2s; }
+.home-store-card:hover,.home-event-card:hover,.home-job-card:hover { box-shadow:0 6px 20px #5e461516; transform:translateY(-2px); }
+.home-store-card > a { display:block; color:inherit; }
+.home-store-photo { position:relative; height:164px; display:flex; align-items:center; justify-content:center; background:linear-gradient(120deg,#e9dfc6,#f5efe1); }
+.home-store-photo > img { width:100%; height:100%; object-fit:contain; background:#faf8f3; }
+.home-store-photo > span { color:#a58b52; font-family:Georgia,serif; font-size:19px; letter-spacing:3px; }
+.home-rank { position:absolute; top:12px; left:12px; background:#b49448; color:white; border-radius:50%; width:30px; height:30px; display:grid; place-items:center; }
+.home-store-copy { position:relative; min-height:126px; padding:12px 14px 12px 108px; }
+.home-store-logo { position:absolute; left:14px; top:-30px; width:80px; height:80px; border:3px solid white; border-radius:6px; display:grid; place-items:center; background:#f8f3e5; box-shadow:0 2px 5px #0000000d; color:#a88a42; font-size:40px; }
+.home-store-logo img { width:100%; height:100%; object-fit:contain; border-radius:3px; }
+.home-feed h3 { margin:0 0 5px; font-size:14px; line-height:1.5; font-weight:700; overflow-wrap:anywhere; }
+.home-feed p { margin:0 0 5px; font-size:12px; line-height:1.6; color:#817968; }
+.home-location { font-size:11px!important; }
+.home-tag { display:inline-block; color:#9b7937; background:#fcf2d9; border-radius:20px; padding:3px 9px; font-size:10px; line-height:1.4; }
+.home-card-cta { display:block; margin-top:8px; color:#98732d; text-align:right; font-size:11px; font-weight:600; }
+.home-store-card .store-fav-btn { top:10px; right:10px; z-index:2; background:white; }
+.home-event-photo { height:146px; background:#f6f1e7; }
+.home-event-photo img { width:100%; height:100%; object-fit:contain; }
+.home-event-placeholder { height:100%; padding:22px; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(120deg,#263c30,#102b23); color:#e8d5a2; gap:8px; }
+.home-event-placeholder span { font-family:Georgia,serif; font-size:10px; letter-spacing:2px; }
+.home-event-placeholder strong { font-family:"Yu Mincho",serif; font-size:22px; line-height:1.4; }
+.home-event-body { display:grid; grid-template-columns:60px 1fr; padding:12px; gap:12px; }
+.home-event-date { padding-right:10px; border-right:1px solid #ede8db; }
+.home-event-date strong { display:block; font-size:20px; line-height:1.4; }
+.home-event-date span { display:block; font-size:11px; margin-top:4px; color:#6e6859; }
+.home-event-copy { min-width:0; }
+.home-coupon-card { display:grid; grid-template-columns:42% 1fr; gap:12px; min-width:0; padding:8px; border:1px solid #eee9df; border-radius:8px; color:inherit; background:white; }
+.home-coupon-image { display:flex; min-width:0; min-height:132px; align-items:center; background:#f6f1e6; border-radius:5px; overflow:hidden; }
+.home-coupon-image > img { width:100%; height:132px; object-fit:contain; }
+.home-coupon-image > div { width:100%; height:100%; min-height:132px; padding:14px 9px; display:flex; flex-direction:column; justify-content:center; text-align:center; gap:9px; color:#e7d5a1; background:linear-gradient(130deg,#353528,#111b18); }
+.home-coupon-image strong { font-size:18px; line-height:1.35; overflow-wrap:anywhere; }
+.home-coupon-image span { font-family:Georgia,serif; font-size:9px; letter-spacing:1px; }
+.home-coupon-copy { min-width:0; padding:3px 0; display:flex; flex-direction:column; }
+.home-coupon-copy small { color:#9b9281; font-size:10px; }
+.home-coupon-copy .home-card-cta { margin-top:auto; padding-top:7px; }
+.home-region-nav { display:flex; align-items:center; gap:18px; border-top:1px solid #ede7d9; border-bottom:1px solid #ede7d9; padding:16px 0; margin:26px 0; }
+.home-region-nav h2 { flex-shrink:0; font-size:14px; margin:0; }
+.home-region-nav > div { display:flex; flex-wrap:wrap; gap:7px; }
+.home-region-nav a { display:flex; gap:12px; align-items:center; border:1px solid #e9e1cf; border-radius:20px; background:#faf7ef; color:#99732d; font-size:11px; font-weight:600; padding:7px 12px; }
+.home-post-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:30px; }
+.home-post { display:flex; gap:11px; align-items:center; padding:11px 5px; border-bottom:1px solid #eee9de; color:inherit; min-width:0; }
+.home-post > div { flex:1; min-width:0; }
+.home-post h3 { font-size:13px; margin:0 0 2px; }
+.home-post p { font-size:10px; margin:0; color:#a19887; }
+.home-post-icon,.home-post > b { color:#b0985b; }
+.home-job-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+.home-job-card { padding:16px; display:flex; flex-direction:column; }
+.home-job-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:12px; }
+.home-job-logo { display:grid; place-items:center; width:42px; height:42px; background:#f8f3e8; border:1px solid #eee6d5; border-radius:6px; color:#a78a44; font-size:24px; }
+.home-job-logo img { width:100%; height:100%; object-fit:contain; border-radius:5px; }
+.home-job-salary { font-size:17px; color:#957027; line-height:1.5; margin:10px 0; }
+.home-job-card .home-card-cta { margin-top:auto; padding-top:10px; border-top:1px solid #f0ebe0; }
+@media(max-width:1000px) { .home-region-nav { flex-direction:column; align-items:flex-start; gap:12px; } .home-store-copy { padding-left:88px; } .home-store-logo { width:62px; height:62px; left:12px; } }
+@media(max-width:860px) { .home-grid-three { grid-template-columns:repeat(2,minmax(0,1fr)); } .home-job-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:560px) {
+ .home-feed { padding:0 20px; }
+ .home-section { margin:24px 0; }
+ .home-section-head { gap:10px; align-items:flex-start; }
+ .home-section-head h2 { font-size:16px; }
+ .home-section-head > a { font-size:10px; padding-top:4px; }
+ .home-grid-three,.home-job-grid,.home-post-grid { grid-template-columns:1fr; }
+ .home-store-photo { height:164px; }
+ .home-store-copy { padding-left:108px; min-height:118px; }
+ .home-store-logo { width:80px; height:80px; left:14px; }
+ .home-event-photo { height:auto; min-height:132px; }
+ .home-event-photo img { display:block; height:auto; max-height:220px; }
+ .home-coupon-card { grid-template-columns:35% 1fr; padding:10px; }
+ .home-coupon-image,.home-coupon-image > img,.home-coupon-image > div { min-height:120px; }
+ .home-region-nav a { padding:8px 13px; font-size:12px; }
+ .home-job-card { padding:16px; }
+}

@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
-  CATEGORY_LABEL,
-  CATEGORY_COLOR,
   CATEGORY_OPTIONS,
   PREF_OPTIONS,
+  REGIONS,
 } from "@/lib/constants";
 import { toggleFavoriteStore } from "./member-actions";
 import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
-import { StoreCard } from "./store-card";
+import { HomeStoreCard } from "./home-store-card";
 import { PrefAreaSelect } from "./pref-area-select";
 import { PokerRegionHero } from "./poker-region-hero";
 import { PrefSelector } from "./pref-selector";
@@ -89,7 +88,7 @@ export default async function HomePage({
     // same batch, and Postgres doesn't guarantee a stable order for ties.
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
-    .limit(4);
+    .limit(6);
 
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
@@ -137,10 +136,10 @@ export default async function HomePage({
     featuredStoresQuery,
     supabase
       .from("jobs")
-      .select("id, title, job_type, salary, store_id, stores(name, category)")
+      .select("id, title, job_type, salary, store_id, stores(name, category, pref, city, logo_url)")
       .eq("status", "open")
       .order("posted_at", { ascending: false })
-      .limit(3),
+      .limit(4),
     // 「更新された順にTOPページにも来るように」との指示(2026/10)。/board
     // 一覧と同じく、返信があるたびに更新されるboard_posts.updated_atで
     // ソートする(新規投稿時点ではcreated_atと同じ値)。/boardと同じくid
@@ -153,20 +152,20 @@ export default async function HomePage({
       .eq("status", "visible")
       .order("updated_at", { ascending: false })
       .order("id", { ascending: false })
-      .limit(4),
+      .limit(8),
     supabase
       .from("events")
-      .select("id, title, location, start_at, end_at, store_id, stores(name)")
+      .select("id, title, location, start_at, end_at, category, banner_image_url, store_id, stores(name, pref, city)")
       .eq("status", "published")
       .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`)
       .order("start_at", { ascending: true })
       .limit(8),
     supabase
       .from("coupons")
-      .select("id, title, discount, valid_until, store_id, stores(name, category)")
+      .select("id, title, discount, valid_until, banner_image_url, store_id, stores(name, category, pref, city)")
       .eq("active", true)
       .order("created_at", { ascending: false })
-      .limit(4),
+      .limit(3),
   ]);
 
   const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
@@ -217,6 +216,17 @@ export default async function HomePage({
     .filter((s) => s.favoriteCount > 0)
     .sort((a, b) => b.favoriteCount - a.favoriteCount)
     .slice(0, 10);
+
+  const photoStoreIds = [...new Set([
+    ...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id),
+    ...displayEvents.map((e: any) => e.store_id).filter(Boolean),
+  ])];
+  const { data: homePhotos } = photoStoreIds.length
+    ? await supabase.from("store_photos").select("store_id, url")
+      .in("store_id", photoStoreIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
+    : { data: [] };
+  const homeCoverPhotos = new Map<string, string>();
+  (homePhotos ?? []).forEach(photo => { if (!homeCoverPhotos.has(photo.store_id)) homeCoverPhotos.set(photo.store_id, photo.url); });
 
   // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
@@ -347,214 +357,55 @@ export default async function HomePage({
         <PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />
       </div>
 
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>
-            🏆 PICK UP店舗{currentPref ? `（${currentPref}）` : ""}
-          </h2>
-          <Link href="/stores/featured" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {featuredStores.length === 0 && (
-          <p className="muted">
-            {currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}
-          </p>
-        )}
-        <div className="grid cols-4">
-          {featuredStores.map((s) => (
-            <StoreCard
-              key={s.id}
-              store={s}
-              isFavorite={favoriteStoreIds.has(s.id)}
-              favoriteAction={async () => {
-                "use server";
-                await toggleFavoriteStore(s.id, "/");
-              }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>
-            {isEventsLive ? "🔥本日 開催中のトーナメント・イベント" : "📅 開催予定のトーナメント・イベント"}
-          </h2>
-          <Link href="/events" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {displayEvents.length === 0 && (
-          <p className="muted">現在開催予定のイベントはありません。</p>
-        )}
-        {displayEvents.length > 0 && (
-          <div className="grid cols-3">
-            {displayEvents.map((ev: any) => {
-              const status = getEventStatus(ev, now);
-              return (
-                <Link href={`/events/${ev.id}`} key={ev.id} className="card" style={{ display: "block" }}>
-                  {status === "live" && (
-                    <span className="badge accent" style={{ marginBottom: 6 }}>
-                      🔥 開催中
-                    </span>
-                  )}
-                  {status === "soon" && (
-                    <span className="badge warning" style={{ marginBottom: 6 }}>
-                      ⏰ まもなく
-                    </span>
-                  )}
-                  {status === "upcoming" && (
-                    <span className="badge" style={{ marginBottom: 6 }}>
-                      📅 開催予定
-                    </span>
-                  )}
-                  <div style={{ fontWeight: 700, marginTop: 4, marginBottom: 4 }}>{ev.title}</div>
-                  <div className="muted" style={{ fontSize: 12.5 }}>
-                    {[ev.stores?.name, ev.location].filter(Boolean).join(" ・ ")}
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>🎟️ 人気のクーポン</h2>
-          <Link href="/coupons" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {(!popularCoupons || popularCoupons.length === 0) && (
-          <p className="muted">現在利用可能なクーポンはありません。</p>
-        )}
-        {popularCoupons && popularCoupons.length > 0 && (
-          <div className="grid cols-4">
-            {popularCoupons.map((c: any) => (
-              <Link
-                href={`/stores/${c.store_id}`}
-                key={c.id}
-                className="card"
-                style={{ padding: 0, overflow: "hidden", display: "block" }}
-              >
-                <div
-                  style={{
-                    background: CATEGORY_COLOR[c.stores?.category ?? ""] ?? "#c98500",
-                    height: 60,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 26,
-                  }}
-                >
-                  🎟️
-                </div>
-                <div style={{ padding: 14 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{c.title}</div>
-                  <div className="muted" style={{ fontSize: 12.5 }}>
-                    {c.stores?.name} ・ {formatDate(c.valid_until)}まで
-                  </div>
-                  {c.discount && (
-                    <span className="badge" style={{ marginTop: 6 }}>
-                      {c.discount}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>
-            🏅 店舗ランキング{currentPref ? `（${currentPref}）` : ""}
-          </h2>
-        </div>
-        {rankedStores.length === 0 && (
-          <p className="muted">
-            {currentPref
-              ? `${currentPref}にはまだお気に入りされた店舗がありません。`
-              : "まだお気に入りされた店舗がありません。"}
-          </p>
-        )}
-        {rankedStores.length > 0 && (
-          <div className="grid cols-4">
-            {rankedStores.map((s, idx) => (
-              <StoreCard
-                key={s.id}
-                store={s}
-                isFavorite={favoriteStoreIds.has(s.id)}
-                rank={idx + 1}
-                favoriteAction={async () => {
-                  "use server";
-                  await toggleFavoriteStore(s.id, "/");
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>💬 盛り上がっているサミット</h2>
-          <Link href="/board" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {(!latestPosts || latestPosts.length === 0) && (
-          <p className="muted">まだ投稿がありません。</p>
-        )}
-        {latestPosts && latestPosts.length > 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {latestPosts.map((p) => (
-              <Link href={`/board/${p.id}`} key={p.id} className="card" style={{ display: "block" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{p.title}</div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  {p.author_name} ・ {formatDateTime(p.created_at)} ・ 💬 {replyCounts[p.id] ?? 0}
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="section">
-        <div className="section-head" style={{ marginBottom: 12 }}>
-          <h2 style={{ fontSize: 18 }}>💼 新着求人</h2>
-          <Link href="/jobs" className="see-all">
-            すべて見る →
-          </Link>
-        </div>
-        {(!latestJobs || latestJobs.length === 0) && (
-          <p className="muted">現在募集中の求人はありません。</p>
-        )}
-        {latestJobs && latestJobs.length > 0 && (
-          <div className="grid cols-3">
-            {latestJobs.map((j: any) => (
-              <Link href={`/stores/${j.store_id}`} key={j.id} className="card" style={{ display: "block" }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                  {j.stores?.category && (
-                    <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
-                  )}
-                  {j.job_type && <span className="badge">{j.job_type}</span>}
-                </div>
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>{j.title}</div>
-                <div className="muted" style={{ fontSize: 12.5 }}>{j.stores?.name}</div>
-                {j.salary && (
-                  <div style={{ marginTop: 6, fontWeight: 700, color: "var(--accent-text)", fontSize: 13 }}>
-                    {j.salary}
-                  </div>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <main className="home-feed">
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>🏆</span> PICK UP店舗{currentPref ? `（${currentPref}）` : ""}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
+          {!featuredStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}</p>}
+          <div className="home-grid home-grid-three">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+        </section>
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "本日 開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのイベントを見る →</Link></div>
+          {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
+          <div className="home-grid home-grid-three">{displayEvents.map((ev: any) => {
+            const status = getEventStatus(ev, now);
+            const photo = ev.banner_image_url || homeCoverPhotos.get(ev.store_id);
+            return <Link className="home-event-card" href={`/events/${ev.id}`} key={ev.id}>
+              <div className="home-event-photo">{photo ? <img src={photo} alt={ev.title} loading="lazy" /> : <div className="home-event-placeholder"><span>POKER SUMMIT</span><strong>{ev.title}</strong></div>}</div>
+              <div className="home-event-body"><div className="home-event-date">{ev.start_at ? <><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month:"2-digit", day:"2-digit", timeZone:"Asia/Tokyo" })}</strong><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit", timeZone:"Asia/Tokyo" })}</span></> : <span>日時未定</span>}</div>
+                <div className="home-event-copy"><h3>{ev.title}</h3><p>{ev.stores?.name}</p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る ›</span></div>
+              </div>
+            </Link>;
+          })}</div>
+        </section>
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href="/coupons">すべてのクーポンを見る →</Link></div>
+          {!popularCoupons?.length && <p className="muted">現在利用可能なクーポンはありません。</p>}
+          <div className="home-grid home-grid-three">{popularCoupons?.map((c: any) => <Link href={`/stores/${c.store_id}`} className="home-coupon-card" key={c.id}>
+            <div className="home-coupon-image">{c.banner_image_url ? <img src={c.banner_image_url} alt={c.title} loading="lazy" /> : <div><span>COUPON</span><strong>{c.discount || "店舗特典"}</strong><span>POKER SUMMIT</span></div>}</div>
+            <div className="home-coupon-copy"><h3>{c.title}</h3><p>{c.stores?.name}</p><p className="home-location">📍 {[c.stores?.pref,c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
+          </Link>)}</div>
+        </section>
+        <nav className="home-region-nav" aria-label="地方から店舗を探す"><h2>🗺️ 全国の店舗をエリアから探す</h2><div>{REGIONS.map(r => <Link key={r} href={`/stores?region=${encodeURIComponent(r)}`}>{r} <span>→</span></Link>)}</div></nav>
+        <section className="home-section home-summit">
+          <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る →</Link></div>
+          {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
+          <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
+        </section>
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>💼</span> 新着求人</h2><Link href="/jobs">すべての求人を見る →</Link></div>
+          {!latestJobs?.length && <p className="muted">現在募集中の求人はありません。</p>}
+          <div className="home-grid home-job-grid">{latestJobs?.map((j: any) => <Link href={`/stores/${j.store_id}`} className="home-job-card" key={j.id}>
+            <div className="home-job-top"><div className="home-job-logo">{j.stores?.logo_url ? <img src={j.stores.logo_url} alt="" loading="lazy" /> : "♠"}</div><span className="home-tag">{j.job_type || "求人募集中"}</span></div>
+            <h3>{j.title}</h3><p>{j.stores?.name}</p><p className="home-location">📍 {[j.stores?.pref,j.stores?.city].filter(Boolean).join(" ")}</p>
+            {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
+          </Link>)}</div>
+        </section>
+        <section className="home-section">
+          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング{currentPref ? `（${currentPref}）` : ""}</h2></div>
+          {!rankedStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだお気に入りされた店舗がありません。` : "まだお気に入りされた店舗がありません。"}</p>}
+          <div className="home-grid home-grid-three">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+        </section>
+      </main>
 
       <div className="cta-banner">
         <div className="cta-banner-inner">
