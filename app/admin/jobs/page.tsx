@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { setJobStatus, deleteJob, createJobByAdmin } from "./actions";
-import { JOB_TYPE_OPTIONS } from "@/lib/constants";
+import { setJobStatus, deleteJob } from "./actions";
 
 export default async function AdminJobsPage({
   searchParams,
@@ -59,53 +58,14 @@ export default async function AdminJobsPage({
     <div>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>求人管理（全店舗）</h1>
 
-      <details className="card" style={{ marginBottom: 16 }}>
-        <summary style={{ cursor: "pointer", fontWeight: 700 }}>＋ 求人を掲載</summary>
-        <form
-          action={createJobByAdmin}
-          style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}
-        >
-          <div className="field">
-            <span className="muted">店舗 *</span>
-            <select name="storeId" required defaultValue="">
-              <option value="" disabled>
-                選択してください
-              </option>
-              {allStores?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">求人タイトル *</span>
-            <input type="text" name="title" required />
-          </div>
-          <div className="field">
-            <span className="muted">雇用形態</span>
-            <select name="jobType" defaultValue="">
-              <option value="">未設定</option>
-              {JOB_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">給与</span>
-            <input type="text" name="salary" />
-          </div>
-          <div className="field">
-            <span className="muted">仕事内容</span>
-            <textarea name="description" rows={3} />
-          </div>
-          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-            掲載する
-          </button>
-        </form>
-      </details>
+      {/*
+        以前はここに「＋ 求人を掲載」フォーム(admin側が任意の店舗を選んで代理で
+        求人を作成する機能)があったが、求人掲載アドオンを契約していない店舗にも
+        公開求人を作れてしまい、かつ店舗オーナー側の管理画面からは見えない
+        (アドオン未契約だと丸ごと隠れる実装だった)という不整合があったため撤廃
+        (2026/10、「そもそも代理で出すんもやめよか」との指示)。既存求人の
+        ステータス変更・削除・編集(moderation)は運営業務として引き続きここで行う。
+      */}
 
       <form style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <input
