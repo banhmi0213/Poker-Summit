@@ -40,6 +40,7 @@ export function PrefSelector({
       <span className="ps-pref-selector__label">現在の表示地域</span>
       <select
         className="ps-pref-selector__select"
+        aria-label="現在の表示地域"
         value={currentPref ?? ALL_PREF_SENTINEL}
         onChange={handleChange}
         disabled={isPending}

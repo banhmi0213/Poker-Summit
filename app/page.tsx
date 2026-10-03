@@ -234,7 +234,7 @@ export default async function HomePage({
 
   return (
     <div>
-      <PortalHeader userEmail={user?.email} />
+      <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
 
       {settings?.announcement && (
         <div className="container" style={{ paddingBottom: 0 }}>
@@ -310,10 +310,6 @@ export default async function HomePage({
           upgrades currentPref from IP-guess to a real geo result. Skipped
           once a manual choice or a still-fresh geo result already exists. */}
       <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
-
-      <div className="container" style={{ paddingTop: 0, paddingBottom: 0 }}>
-        <PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />
-      </div>
 
       <main className="home-feed">
         <section className="home-section">

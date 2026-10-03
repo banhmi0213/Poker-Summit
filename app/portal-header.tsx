@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import styles from "./header-region.module.css";
 
 const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
   { href: "/stores", label: "店舗を探す" },
@@ -8,7 +10,7 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
   { href: "/jobs", label: "求人を探す" },
 ];
 
-export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
+export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string | null; regionSelector?: ReactNode }) {
   // 会員登録・ログインは別々の窓(ボタン)にする(2026/09/30、1つのボタンに
   // まとめたが「2窓にして」との指摘で再度分離)。店舗ログインは会員とは
   // 別のアカウント体系(ログインID/パスワード)なので、常に別の色付き
@@ -35,7 +37,7 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
   );
 
   return (
-    <nav className="portal-nav">
+    <nav className={`portal-nav ${styles.header}`}>
       <input type="checkbox" id="mobile-nav-toggle" className="nav-toggle" />
       <div className="portal-nav-inner">
         <Link href="/" className="portal-logo">
@@ -58,8 +60,10 @@ export function PortalHeader({ userEmail }: { userEmail?: string | null }) {
         </div>
         <div className="portal-auth-actions">
           {memberLinks}
+          {regionSelector && <div className={styles.desktop}>{regionSelector}</div>}
           {storeLoginLink}
         </div>
+        {regionSelector && <div className={styles.mobile}>{regionSelector}</div>}
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
           ☰
         </label>
