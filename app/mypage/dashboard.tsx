@@ -135,12 +135,12 @@ export async function MyPageContent({
   return (
     <div>
       <PortalHeader userEmail={user.email} />
-      <div className={`container ${profileEdit ? styles.page : ""}`}>
-        <div className={profileEdit ? styles.layout : undefined}>
-        <section className={profileEdit ? styles.overview : undefined}>
+      <div className={`container ${styles.page}`}>
+        <div className={styles.layout}>
+        <section className={styles.overview}>
         <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>
 
-        <div className={`card ${profileEdit ? styles.account : ""}`} style={profileEdit ? undefined : { maxWidth: 680, marginBottom: 24 }}>
+        {profileEdit ? (<div className={`card ${profileEdit ? styles.account : ""}`} style={profileEdit ? undefined : { maxWidth: 680, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
               <Avatar name={name} url={avatarUrl} size={profileEdit ? 72 : 56} />
@@ -212,21 +212,43 @@ export async function MyPageContent({
           <div className="muted small" style={{ marginTop: 10 }}>
             ✉️ {user.email} <span style={{ fontSize: 11, marginLeft: 8 }}>（{myProfile?.email_public === true ? "公開" : "非公開"}）</span>
           </div>
-        </div>
+        </div>) : (
+          <div className={styles.summary}>
+            <div className={styles.identity}>
+              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
+              {myProfile?.bio && <p className={styles.bio}>{myProfile.bio}</p>}
+              {myProfile?.role && <span className={styles.role}>♠ {myProfile.role}</span>}
+            </div>
+            <dl className={styles.memberFacts}>
+              <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
+              <div><dt>▦ 登録日</dt><dd>{joinedAt || "未設定"}</dd></div>
+              <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
+              <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
+            </dl>
+            <div className={styles.summaryActions}>
+              <Link href="/account/profile" className="btn">プロフィール編集</Link>
+              <div className={styles.accountActions}>
+                <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
+                <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>
+                <form action={signOut}><button type="submit" className="btn"><AccountIcon kind="logout" /> ログアウト</button></form>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <div className={profileEdit ? styles.tiles : "chip-row"} style={profileEdit ? undefined : { maxWidth: 680, marginBottom: 20 }}>
+        <div className={styles.tiles}>
           {tabs.map((t) => (
             <Link
               key={t.key}
               href={`/mypage?tab=${t.key}`}
-              className={profileEdit ? styles.tile : `chip ${tab === t.key ? "active" : ""}`}
+              className={styles.tile}
             >
-              {profileEdit ? <><span>{t.label.replace(/\(\d+\)$/, "")}</span><small>{[favStores.length, favJobs.length, applications?.length ?? 0, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small><b aria-hidden="true">›</b></> : t.label}
+              {<><span>{t.label.replace(/\(\d+\)$/, "")}</span><small>{[favStores.length, favJobs.length, applications?.length ?? 0, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small><b aria-hidden="true">›</b></>}
             </Link>
           ))}
         </div>
 
-        {(!profileEdit || searchParams.tab) && <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 10 }}>
+        {searchParams.tab && <div style={{ maxWidth: 680, display: "flex", flexDirection: "column", gap: 10 }}>
           {tab === "favorites" &&
             (favStores.length === 0 ? (
               <p className="muted small">
@@ -423,7 +445,27 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit && <ProfileEditor name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={myProfile?.role || ""} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} />}
+        {profileEdit ? <ProfileEditor name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={myProfile?.role || ""} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
+          <section className={styles.infoPanel}>
+            <h2>♟ プロフィール</h2>
+            <dl>
+              <div><dt>ハンドルネーム</dt><dd>{name}</dd></div>
+              <div><dt>都道府県</dt><dd>{pref || "未設定"}</dd></div>
+              <div><dt>都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
+              <div><dt>メールの公開設定</dt><dd>{myProfile?.email_public === true ? "公開" : "非公開"}</dd></div>
+              <div><dt>役職</dt><dd>{myProfile?.role || "未設定"}</dd></div>
+              <div><dt>フリーメッセージ</dt><dd className={styles.message}>{myProfile?.bio || "未設定"}</dd></div>
+            </dl>
+          </section>
+          <section className={styles.infoPanel}>
+            <h2>▥ 活動情報</h2>
+            <dl>
+              <div><dt>参加予定のイベント</dt><dd>{rsvpEvents.length} 件</dd></div>
+              <div><dt>投稿数</dt><dd>{myPosts?.length ?? 0} 件</dd></div>
+              <div><dt>応募した求人</dt><dd>{applications?.length ?? 0} 件</dd></div>
+            </dl>
+          </section>
+        </aside>}
         </div>
       </div>
       <PortalFooter />
