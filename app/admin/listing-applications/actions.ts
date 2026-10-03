@@ -24,6 +24,11 @@ export async function approveApplication(id: string) {
       category: application.category,
       pref: application.pref,
       tel: application.tel,
+      // 契約なしで承認される無料掲載のケースはstore_contractsが作られず
+      // トリガー(sync_store_email_from_contract)経由の反映が効かないため、
+      // ここで直接stores.emailに引き継ぐ(2026/10、「取り込んだ店舗のメールを
+      // まとめて保管したい」との相談を受けて追加)。
+      email: application.email || null,
       status: "pending",
       source_application_id: application.id,
     })
