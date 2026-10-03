@@ -7,9 +7,11 @@ import {
   toggleFavoriteJob,
   leaveEvent,
 } from "@/app/member-actions";
+import { uploadAvatar, removeAvatar } from "@/app/mypage/actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { Avatar } from "@/app/avatar";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -74,6 +76,17 @@ export default async function MyPage({
       .order("created_at", { ascending: false }),
   ]);
 
+  // アイコン画像(2026/10、「会員マイページにアイコンを設定できるように
+  // して」との指示)。display_name/prefと違いuser_metadataではなく
+  // profilesテーブルに持たせている(他人の投稿者アイコンを一覧でまとめて
+  // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("avatar_url")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const avatarUrl = myProfile?.avatar_url ?? null;
+
   const appliedJobIds = new Set((applications ?? []).map((a: any) => a.jobs?.id));
   const usedCouponIds = new Set((couponUseRows ?? []).map((r: any) => r.coupon_id));
   const unusedCoupons = (allActiveCoupons ?? []).filter(
@@ -110,10 +123,13 @@ export default async function MyPage({
 
         <div className="card" style={{ maxWidth: 680, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 19 }}>{name}</div>
-              <div className="muted small">
-                📍 {pref || "未設定"} {joinedAt && `・ ${joinedAt}に登録`}
+            <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+              <Avatar name={name} url={avatarUrl} size={56} />
+              <div>
+                <div style={{ fontWeight: 800, fontSize: 19 }}>{name}</div>
+                <div className="muted small">
+                  📍 {pref || "未設定"} {joinedAt && `・ ${joinedAt}に登録`}
+                </div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -130,7 +146,42 @@ export default async function MyPage({
               </form>
             </div>
           </div>
-          <hr style={{ border: "none", borderTop: "1px solid var(--grid)" }} />
+
+          {/* アイコン画像の設定(2026/10、「会員マイページにアイコンを設定
+              できるようにして、画像をアップロードしてサミット投稿一覧の
+              丸い所に出るように」との指示)。 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+              padding: "10px 0",
+              borderTop: "1px solid var(--grid)",
+              borderBottom: "1px solid var(--grid)",
+            }}
+          >
+            <span className="muted small" style={{ marginRight: 2 }}>
+              アイコン画像
+            </span>
+            <form action={uploadAvatar} encType="multipart/form-data" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <input type="file" name="avatar" accept="image/*" required style={{ fontSize: 12.5 }} />
+              <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                アップロード
+              </button>
+            </form>
+            {avatarUrl && (
+              <form action={removeAvatar}>
+                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                  削除
+                </button>
+              </form>
+            )}
+            <span className="muted" style={{ fontSize: 11.5, width: "100%" }}>
+              サミット（掲示板）の投稿一覧・詳細に表示されます（5MBまで）。
+            </span>
+          </div>
+
           <div className="muted small" style={{ marginTop: 10 }}>
             ✉️ {user.email}
           </div>
