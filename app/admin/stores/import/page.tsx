@@ -5,6 +5,14 @@ import { importStoresFromGooglePlaces } from "./actions";
 import { ImportPrefAreaSelect } from "./pref-area-select";
 import { KeywordTabs, DEFAULT_EXCLUDE_KEYWORDS } from "./keyword-tabs";
 
+// 北海道のような候補数の多い都道府県だと、検索(キーワード数×ページング待機)+
+// Place Details取得+DB insertの合計がデフォルトの実行時間上限に収まらず、
+// 「Application error: a server-side exception has occurred」で落ちることが
+// あった(2026/10、北海道の「取りこぼし確認」検索で発生)。このページ配下の
+// Server Action(importStoresFromGooglePlaces)にも同じ上限が適用されるため、
+// cronの/api/cron/apply-scheduled-contract-changesと同様に明示的に延長する。
+export const maxDuration = 60;
+
 // Google Placesから店舗候補を検索して取り込む運営向けツール(2026/10、
 // 「店舗は地方どっかAPIで入れようと思ってる」との相談を受けて追加)。
 // 取り込みは必ずstatus="pending"止まりで、公開は/admin/storesの通常の
