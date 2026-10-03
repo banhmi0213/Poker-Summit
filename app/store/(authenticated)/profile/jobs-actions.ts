@@ -26,8 +26,18 @@ async function getOwnedStoreId(storeId: string) {
     throw new Error("この店舗を編集する権限がありません。");
   }
 
-  // 求人掲載アドオン契約がない店舗は、フォームを直接叩かれても操作でき
-  // ないようサーバー側でも弾く(2026/09/30)。
+  return supabase;
+}
+
+// 求人の新規掲載だけ、求人掲載アドオンの契約有無をサーバー側でも弾く
+// (2026/10、「店舗管理画面でも求人は見えるようにして求人だそうとしたら契約の
+// アナウンスを出して」との指示を受けて変更。以前はgetOwnedStoreId自体がアドオン
+// 判定も行っていたため、既存求人の編集・削除・募集終了/再開まで一緒にブロック
+// されてしまっていた。既存求人の管理はオーナー確認のみとし、新規作成時のみ
+// このチェックを通す)。
+async function getOwnedStoreIdForCreate(storeId: string) {
+  const supabase = await getOwnedStoreId(storeId);
+
   const hasAddon = await storeHasJobsAddon(supabase, storeId);
   if (!hasAddon) {
     throw new Error(
@@ -40,7 +50,7 @@ async function getOwnedStoreId(storeId: string) {
 
 export async function createJob(formData: FormData) {
   const storeId = String(formData.get("storeId") ?? "");
-  const supabase = await getOwnedStoreId(storeId);
+  const supabase = await getOwnedStoreIdForCreate(storeId);
 
   const title = String(formData.get("title") ?? "").trim();
   const jobType = String(formData.get("jobType") ?? "").trim();
