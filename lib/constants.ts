@@ -274,3 +274,18 @@ export const JOBS_ADDON_ID = "a1000000-0000-4000-8000-000000000001";
 // 10枚にして」との指示)。"use server"ファイル(photos-actions.ts)は非同期
 // 関数以外をexportできないため、この定数はここ(lib/constants.ts)に置く。
 export const MAX_STORE_PHOTOS = 10;
+
+// 会員プロフィールの「役職」プルダウン(2026/10、「マイページプロフィール
+// 編集の都道府県の下にプルタブで役職を設置」との指示)。profiles.roleに
+// このラベルをそのまま保存する(JOB_TYPE_OPTIONS/BOARD_CATEGORIESと同じ
+// パターン)。サミット(掲示板)のアイコン横・名前の上と、会員プロフィール
+// ページ(/members/[id])に表示する。
+export const MEMBER_ROLE_OPTIONS = [
+  "ポーカープレイヤー",
+  "一般人",
+  "ディーラー",
+  "フリーディーラー",
+  "自由人",
+  "インフルエンサー",
+  "YouTuber",
+];
