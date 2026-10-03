@@ -367,10 +367,27 @@ export default async function AdminStoresPage({
                       await setStoreRecommended(s.id, !s.is_recommended);
                     }}
                   >
-                    <button type="submit" className="btn" style={{ fontSize: 12, padding: "5px 8px" }}>
+                    <button
+                      type="submit"
+                      className="btn"
+                      style={{ fontSize: 12, padding: "5px 8px" }}
+                      disabled={!s.is_recommended && s.status !== "approved" && s.status !== "listed"}
+                      title={
+                        !s.is_recommended && s.status !== "approved" && s.status !== "listed"
+                          ? "先に「承認」してから注目にできます"
+                          : undefined
+                      }
+                    >
                       {s.is_recommended ? "注目を解除" : "注目にする"}
                     </button>
                   </form>
+                  {/* 承認前のPICK UP押し忘れ事故(2026/10)を防ぐため、未承認
+                      店舗はボタン自体を無効化している。理由を一言添える。 */}
+                  {!s.is_recommended && s.status !== "approved" && s.status !== "listed" && (
+                    <span className="muted" style={{ fontSize: 11 }}>
+                      承認後に設定できます
+                    </span>
+                  )}
                 </div>
               </td>
               <td>
