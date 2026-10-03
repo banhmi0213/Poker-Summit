@@ -54,6 +54,16 @@ export default function SignupPage({
                 ))}
               </select>
             </div>
+            {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
+                できるようにして」との指示)。他の会員から見える会員プロフィール
+                ページ(/members/[id])に出すかどうかを選べる。 */}
+            <div className="field">
+              <span className="muted">都道府県の公開設定</span>
+              <select name="prefPublic" defaultValue="public">
+                <option value="public">公開（他の会員にも表示）</option>
+                <option value="private">非公開（自分だけに表示）</option>
+              </select>
+            </div>
             <div className="field">
               <span className="muted">メールアドレス</span>
               <input type="email" name="email" required autoComplete="email" />
