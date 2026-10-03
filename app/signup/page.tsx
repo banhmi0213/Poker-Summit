@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { signUp } from "./actions";
 import { PREF_OPTIONS } from "@/lib/constants";
+import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
 
 export default function SignupPage({
   searchParams,
@@ -10,7 +13,12 @@ export default function SignupPage({
   const params = searchParams;
 
   return (
-    <div className="container" style={{ maxWidth: 380, paddingTop: 60 }}>
+    <div>
+      <PortalHeader />
+      <div className="container" style={{ maxWidth: 380 }}>
+      <Link href="/" className="breadcrumb">
+        ← トップに戻る
+      </Link>
       <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
         <div className="brand wordmark">
           <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
@@ -87,6 +95,9 @@ export default function SignupPage({
           </p>
         </div>
       )}
+      </div>
+      <PortalFooter />
+      <BottomTabs />
     </div>
   );
 }
