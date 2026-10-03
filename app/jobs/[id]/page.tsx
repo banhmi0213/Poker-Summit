@@ -186,6 +186,10 @@ export default async function JobDetailPage({
                   <span className="muted">電話番号</span>
                   <input type="tel" name="tel" />
                 </div>
+                <div className="field">
+                  <span className="muted">メールアドレス</span>
+                  <input type="email" name="email" defaultValue={user?.email ?? ""} />
+                </div>
                 <DealerExperienceField />
                 <div className="field">
                   <span className="muted">志望動機</span>
