@@ -7,6 +7,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
+import { Avatar } from "@/app/avatar";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -17,22 +18,6 @@ function formatDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function avatarColor(name: string) {
-  const colors = [
-    "#3987e5",
-    "#d95926",
-    "#199e70",
-    "#c98500",
-    "#d55181",
-    "#1fae1f",
-    "#9085e9",
-    "#e66767",
-  ];
-  let h = 0;
-  for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % colors.length;
-  return colors[h];
 }
 
 const PAGE_SIZE = 100;
@@ -74,7 +59,7 @@ export default async function BoardPage({
   // あれば一番先頭に来るように」との旧指示を踏襲したオプションとして残す)。
   let query = supabase
     .from("board_posts")
-    .select("id, title, author_name, created_at, updated_at, category, image_url")
+    .select("id, title, author_name, author_user_id, created_at, updated_at, category, image_url")
     .eq("status", "visible")
     .order(sort === "updated" ? "updated_at" : "created_at", { ascending: false })
     .order("id", { ascending: false });
@@ -108,6 +93,20 @@ export default async function BoardPage({
   const replyCounts: Record<string, number> = {};
   replyRows?.forEach((r) => {
     replyCounts[r.post_id] = (replyCounts[r.post_id] ?? 0) + 1;
+  });
+
+  // 投稿者のアイコン画像(2026/10、「会員マイページにアイコンを設定できる
+  // ようにして、丸いイニシャルの所に出るように」との指示)。この一覧に出る
+  // 投稿の投稿者ぶんだけまとめて1回で引く(1件ずつ引くとN+1になるため)。
+  const authorUserIds = Array.from(
+    new Set((posts ?? []).map((p) => p.author_user_id).filter((id): id is string => Boolean(id)))
+  );
+  const { data: authorProfiles } = authorUserIds.length
+    ? await supabase.from("profiles").select("user_id, avatar_url").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; avatar_url: string | null }[] };
+  const avatarByUserId: Record<string, string | null> = {};
+  authorProfiles?.forEach((p) => {
+    avatarByUserId[p.user_id] = p.avatar_url;
   });
 
   return (
@@ -262,9 +261,10 @@ export default async function BoardPage({
         {posts?.map((p) => (
           <Link href={`/board/${p.id}`} key={p.id} style={{ display: "block" }}>
             <div className="card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <div className="avatar" style={{ background: avatarColor(p.author_name) }}>
-                {p.author_name.slice(0, 1)}
-              </div>
+              <Avatar
+                name={p.author_name}
+                url={p.author_user_id ? avatarByUserId[p.author_user_id] : null}
+              />
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
