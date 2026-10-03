@@ -16,3 +16,8 @@
 @media(max-width:767px){
   .collapsible[data-filters-expanded="false"] select{display:none}
 }
+
+/* iOS keeps focused search controls at the page's current zoom at 16px. */
+@media(max-width:767px){
+  .collapsible.collapsible input[type="text"],.collapsible.collapsible select{font-size:16px!important;min-height:48px;box-sizing:border-box}
+}
