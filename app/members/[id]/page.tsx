@@ -30,7 +30,7 @@ export default async function MemberProfilePage({
     supabase.auth.getUser(),
     supabase
       .from("profiles")
-      .select("user_id, display_name, avatar_url, role, bio")
+      .select("user_id, display_name, avatar_url, role, bio, pref, pref_public")
       .eq("user_id", params.id)
       .maybeSingle(),
     supabase
@@ -75,6 +75,12 @@ export default async function MemberProfilePage({
               </div>
             )}
             <div style={{ fontWeight: 800, fontSize: 20 }}>{displayName}</div>
+            {/* 都道府県(2026/10追加)。本人がpref_publicをfalseにしていたら
+                他の会員には出さない(「会員登録時都道府県を非公開にできる
+                ように」との指示)。 */}
+            {profile?.pref_public !== false && profile?.pref && (
+              <div className="muted small">📍 {profile.pref}</div>
+            )}
           </div>
         </div>
 
