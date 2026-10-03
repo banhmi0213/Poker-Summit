@@ -102,11 +102,15 @@ export default async function BoardPage({
     new Set((posts ?? []).map((p) => p.author_user_id).filter((id): id is string => Boolean(id)))
   );
   const { data: authorProfiles } = authorUserIds.length
-    ? await supabase.from("profiles").select("user_id, avatar_url").in("user_id", authorUserIds)
-    : { data: [] as { user_id: string; avatar_url: string | null }[] };
+    ? await supabase.from("profiles").select("user_id, avatar_url, role").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; avatar_url: string | null; role: string | null }[] };
   const avatarByUserId: Record<string, string | null> = {};
+  // 投稿者の役職(2026/10、「サミットアイコン横の名前の上に役職を表示」
+  // との指示)。profiles.roleをアイコンと同じく1回でまとめて引く。
+  const roleByUserId: Record<string, string | null> = {};
   authorProfiles?.forEach((p) => {
     avatarByUserId[p.user_id] = p.avatar_url;
+    roleByUserId[p.user_id] = p.role;
   });
 
   return (
@@ -258,43 +262,60 @@ export default async function BoardPage({
           </div>
         )}
 
-        {posts?.map((p) => (
-          <Link href={`/board/${p.id}`} key={p.id} style={{ display: "block" }}>
-            <div className="card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <Avatar
-                name={p.author_name}
-                url={p.author_user_id ? avatarByUserId[p.author_user_id] : null}
-              />
-              <div style={{ flex: 1 }}>
+        {posts?.map((p) => {
+          const role = p.author_user_id ? roleByUserId[p.author_user_id] : null;
+          return (
+            <div className="card" key={p.id} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              {/* アイコンだけ投稿詳細ではなく投稿者のプロフィールへ
+                  (2026/10、「サミットからアイコン押したらプロフィールが
+                  見れるように」との指示)。Next.jsのLinkは入れ子にできない
+                  ため、カード全体を囲んでいた1本のLinkをやめ、アイコン用
+                  とタイトル/画像用でLinkを分けている。 */}
+              {p.author_user_id ? (
+                <Link href={`/members/${p.author_user_id}`} style={{ flexShrink: 0 }}>
+                  <Avatar name={p.author_name} url={avatarByUserId[p.author_user_id]} />
+                </Link>
+              ) : (
+                <Avatar name={p.author_name} url={null} />
+              )}
+              <Link href={`/board/${p.id}`} style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
-                <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
+                <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2, alignItems: "center" }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
                   {/* 投稿者名・日時のコントラスト向上(2026/10、「薄い文字を
                       少し濃くすると読みやすくなる」との指示)。--mutedは
                       コントラスト比が低いため、サイト全体の.mutedは変えず
                       このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
-                  <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
+                  <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25 }}>
+                    {role && (
+                      <span style={{ color: "var(--accent)", fontSize: 10.5, fontWeight: 700 }}>
+                        {role}
+                      </span>
+                    )}
+                    <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
+                  </span>
                   <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>
                   <span className="muted">💬 {replyCounts[p.id] ?? 0}</span>
                 </div>
-              </div>
+              </Link>
               {p.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={p.image_url}
-                  alt=""
-                  style={{
-                    width: 56,
-                    height: 56,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    flexShrink: 0,
-                  }}
-                />
+                <Link href={`/board/${p.id}`} style={{ flexShrink: 0 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={p.image_url}
+                    alt=""
+                    style={{
+                      width: 56,
+                      height: 56,
+                      objectFit: "cover",
+                      borderRadius: 8,
+                    }}
+                  />
+                </Link>
               )}
             </div>
-          </Link>
-        ))}
+          );
+        })}
 
         {totalPages > 1 && (
           <div
