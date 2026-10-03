@@ -191,12 +191,19 @@ export async function importStoresFromGooglePlaces(formData: FormData) {
     { httpOnly: true, maxAge: 60, path: "/admin/stores/import" }
   );
 
-  // 検索キーワード(タブ・自由入力)・除外ワードの入力値は、次回アクセス時も
-  // 保持する(2026/10、「検索ワード、除外ワード入れたら消えるのやめてほしい」
-  // との指摘を受けて追加)。import_resultと違い、こちらは長期間保持する。
+  // 検索キーワード(タブ・自由入力)・除外ワード・都道府県の入力値は、次回
+  // アクセス時も保持する(2026/10、「検索ワード、除外ワード入れたら消える
+  // のやめてほしい」「都道府県を選び直すまでは前回の都道府県を引き継いで
+  // ほしい、エリア選ぶだけでサクサクいけるから」との指摘を受けて追加)。
+  // import_resultと違い、こちらは長期間保持する。
   jar.set(
     "import_form_state",
-    JSON.stringify({ keyword: freeKeyword, excludeKeywords: excludeWordsRaw, keywordTabs: tabKeywords }),
+    JSON.stringify({
+      pref,
+      keyword: freeKeyword,
+      excludeKeywords: excludeWordsRaw,
+      keywordTabs: tabKeywords,
+    }),
     { httpOnly: true, maxAge: 60 * 60 * 24 * 90, path: "/admin/stores/import" }
   );
 
