@@ -77,7 +77,7 @@ export default async function HomePage({
   // 特定できている時だけ都道府県ごとのPICK UP契約の優先表示+ランダム埋めを
   // 適用する。都道府県未特定(全国表示)の場合は、47都道府県分をまとめて
   // 「10件の枠」として扱う意味がないため、従来通り注目店舗のみを新着順で
-  // 出す(どちらの経路でも最終的にホームの表示は.slice(0, 8)する)。
+  // 出す(どちらの経路でも最終的にホームの表示は.slice(0, 4)する)。
   const pickupStoresPromise: Promise<any[]> = currentPref
     ? getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT)
     : supabase
@@ -194,7 +194,7 @@ export default async function HomePage({
 
   // --- Featured stores: PICK UP契約店舗優先+空き枠ランダム埋め(上のコメント
   // 参照)。ホームのプレビュー枠は4列×2行=8件なので、ここで最終的に切る。
-  const featuredStores = (featuredStoresAll ?? []).slice(0, 8);
+  const featuredStores = (featuredStoresAll ?? []).slice(0, 4);
 
   // 「お気に入り数が多い上位10店舗」の店舗ランキングセクション用の集計
   // (2026/09/30)。件数自体は店舗オーナー側の画面にだけ出す仕様のため、
