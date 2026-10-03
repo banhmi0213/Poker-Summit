@@ -86,6 +86,7 @@ export async function submitJobApplication(formData: FormData) {
   const path = String(formData.get("path") ?? "/jobs");
   const name = String(formData.get("name") ?? "").trim();
   const tel = String(formData.get("tel") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
   const ageRaw = String(formData.get("age") ?? "").trim();
   const age = ageRaw ? Number(ageRaw) : null;
@@ -107,6 +108,7 @@ export async function submitJobApplication(formData: FormData) {
     job_id: jobId,
     name,
     tel: tel || null,
+    email: email || null,
     message: message || null,
     age: age && !Number.isNaN(age) ? age : null,
     gender: gender || null,
