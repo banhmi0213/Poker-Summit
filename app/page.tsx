@@ -87,7 +87,7 @@ export default async function HomePage({
     // same batch, and Postgres doesn't guarantee a stable order for ties.
     .order("created_at", { ascending: false })
     .order("id", { ascending: false })
-    .limit(6);
+    .limit(8);
 
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
@@ -172,10 +172,10 @@ export default async function HomePage({
 
   // --- Live vs upcoming events: prefer showing what's happening right now,
   // and only fall back to "coming up" events when nothing is live. ---
-  const liveEvents = (upcomingEvents ?? []).filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 3);
+  const liveEvents = (upcomingEvents ?? []).filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 4);
   const nextEvents = (upcomingEvents ?? [])
     .filter((ev: any) => !ev.start_at || ev.start_at > now)
-    .slice(0, 3);
+    .slice(0, 4);
   const isEventsLive = liveEvents.length > 0;
   const displayEvents = isEventsLive ? liveEvents : nextEvents;
 
@@ -360,12 +360,12 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> PICK UP店舗{currentPref ? `（${currentPref}）` : ""}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
           {!featuredStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}</p>}
-          <div className="home-grid home-grid-three">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <section className="home-section">
           <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "本日 開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのイベントを見る →</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
-          <div className="home-grid home-grid-three">{displayEvents.map((ev: any) => {
+          <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
             const status = getEventStatus(ev, now);
             const photo = ev.banner_image_url || homeCoverPhotos.get(ev.store_id);
             return <Link className="home-event-card" href={`/events/${ev.id}`} key={ev.id}>
@@ -393,7 +393,7 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング{currentPref ? `（${currentPref}）` : ""}</h2></div>
           {!rankedStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだお気に入りされた店舗がありません。` : "まだお気に入りされた店舗がありません。"}</p>}
-          <div className="home-grid home-grid-three">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 新着求人</h2><Link href="/jobs">すべての求人を見る →</Link></div>

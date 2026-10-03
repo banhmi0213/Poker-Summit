@@ -2663,3 +2663,20 @@ th {
  .home-region-nav a { padding:8px 13px; font-size:12px; }
  .home-job-card { padding:16px; }
 }
+
+/* Compact desktop cards for pickup, events and ranking. */
+.home-grid-four { grid-template-columns:repeat(4,minmax(0,1fr)); }
+@media(min-width:861px) {
+ .home-grid-four .home-store-photo { height:142px; }
+ .home-grid-four .home-store-photo > span { font-size:16px; letter-spacing:2px; }
+ .home-grid-four .home-store-copy { padding:11px 12px 12px 82px; min-height:122px; }
+ .home-grid-four .home-store-logo { left:12px; top:-24px; width:58px; height:58px; font-size:30px; }
+ .home-grid-four .home-event-photo { height:132px; }
+ .home-grid-four .home-event-placeholder { padding:16px; }
+ .home-grid-four .home-event-placeholder strong { font-size:19px; }
+ .home-grid-four .home-event-body { grid-template-columns:48px minmax(0,1fr); gap:9px; padding:11px; }
+ .home-grid-four .home-event-date { padding-right:7px; }
+ .home-grid-four .home-event-date strong { font-size:18px; }
+}
+@media(max-width:860px) { .home-grid-four { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:560px) { .home-grid-four { grid-template-columns:1fr; } }
