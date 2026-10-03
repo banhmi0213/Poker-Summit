@@ -47,3 +47,48 @@ export async function getPickupOccupancyByPref(
 
   return occupancy;
 }
+
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// 都道府県ごとのPICK UP表示順(2026/10、「PICKUPが埋まってない場合はランダム
+// で出す、契約で埋まった場合は10店舗をランダムに上位表示、一部だけ埋まって
+// る場合は契約店舗を優先的に上位表示して残り枠をランダム入れ替え」との指示
+// を受けて実装)。
+//
+// - 契約店舗(is_recommended=true)は必ず全件含め、並び順はアクセスのたびに
+//   シャッフルする(同じ店舗がいつも1位固定になるのを防ぐ)。
+// - 残り枠(limit - 契約数)は、同じ都道府県の非契約・承認済み店舗からランダム
+//   に抽選して埋める。リクエストのたびに選び直すので、非契約枠は自然に
+//   ローテーションする。
+// この1本のロジックで3パターンすべてをカバーする: 契約0件なら実質ランダムの
+// 店舗だけがlimit件、契約がlimit件に達していればその契約店舗だけがシャッフル
+// されて並ぶ、契約が一部だけなら契約店舗が優先(先頭)でその後ろがランダム。
+export async function getPrefPickupStores(
+  supabase: SupabaseClient,
+  pref: string,
+  limit: number = PICKUP_PER_PREF_LIMIT
+): Promise<any[]> {
+  const { data, error } = await supabase
+    .from("stores")
+    .select("*")
+    .in("status", ["approved", "listed"])
+    .eq("pref", pref);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const all = data ?? [];
+  const contracted = shuffle(all.filter((s: any) => s.is_recommended));
+  const others = shuffle(all.filter((s: any) => !s.is_recommended));
+
+  return [...contracted, ...others].slice(0, limit);
+}
