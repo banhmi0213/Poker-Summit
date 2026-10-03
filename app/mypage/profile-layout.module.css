@@ -1,7 +1,7 @@
 .page{max-width:1180px;padding-top:24px;padding-bottom:24px;color:#352919}
 .layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(340px,1fr);gap:18px;align-items:start}
 .overview{min-width:0}
-.overview h1{border-left:4px solid #c79a29;padding-left:18px;line-height:1.3}
+.page>h1{border-left:4px solid #c79a29;padding-left:18px;line-height:1.3}
 .account{padding:20px;border:1px solid #e5e1d8;border-radius:14px;background:#fff;margin-bottom:18px;box-shadow:none}
 .account :global(.btn){border-color:#ddd3c2;border-radius:9px;background:#fff;color:#5a4121}
 .account input[type=file]{max-width:100%;width:235px}

@@ -126,7 +126,6 @@ export async function MyPageContent({
   const tabs: { key: string; label: string }[] = [
     { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
     { key: "favJobs", label: `☆ お気に入り求人(${favJobs.length})` },
-    { key: "jobs", label: `💼 応募した求人(${applications?.length ?? 0})` },
     { key: "coupons", label: `🎟️ クーポン` },
     { key: "events", label: `🏆 参加予定イベント(${rsvpEvents.length})` },
     { key: "posts", label: `💬 投稿(${myPosts?.length ?? 0})` },
@@ -136,9 +135,9 @@ export async function MyPageContent({
     <div>
       <PortalHeader userEmail={user.email} />
       <div className={`container ${styles.page}`}>
+        <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>
         <div className={styles.layout}>
         <section className={styles.overview}>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>
 
         {profileEdit ? (<div className={`card ${profileEdit ? styles.account : ""}`} style={profileEdit ? undefined : { maxWidth: 680, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
@@ -243,7 +242,7 @@ export async function MyPageContent({
               href={`/mypage?tab=${t.key}`}
               className={styles.tile}
             >
-              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▣", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, applications?.length ?? 0, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
+              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
             </Link>
           ))}
         </div>
@@ -461,8 +460,7 @@ export async function MyPageContent({
             <h2>▥ 活動情報</h2>
             <dl>
               <div><dt>参加予定のイベント</dt><dd>{rsvpEvents.length} 件</dd></div>
-              <div><dt>投稿数</dt><dd>{myPosts?.length ?? 0} 件</dd></div>
-              <div><dt>応募した求人</dt><dd>{applications?.length ?? 0} 件</dd></div>
+              <div><dt>サミット投稿数</dt><dd>{myPosts?.length ?? 0} 件</dd></div>
             </dl>
           </section>
         </aside>}
