@@ -40,10 +40,10 @@ export default async function EventDetailPage({ params }: { params: { id: string
     <PortalHeader userEmail={user?.email}/>
     <main className={`container ${styles.page}`}>
       <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>
+          <div className={styles.heading}><h1>{e.title}</h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>
       <div className={styles.layout}>
         <article className={styles.content}>
-          <div className={styles.heading}><h1>{e.title}</h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>
-          <div className={styles.facts}>
+          <div className={styles.facts} style={{ marginTop: 0 }}>
             {[['▦','開催日',date(e.start_at)],['◷','開始時間',date(e.start_at,true)],['♙','開催店舗',store?.name || '未登録'],['⌖','開催場所',location]].map(([icon,label,value]) => <div key={label}><b aria-hidden="true">{icon}</b><span>{label}<strong>{value}</strong></span></div>)}
           </div>
           <nav className={styles.sections} aria-label="イベント詳細の項目"><a href="#overview">大会概要</a><a href="#structure">ストラクチャー</a><a href="#access">会場・アクセス</a></nav>
