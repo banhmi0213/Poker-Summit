@@ -2,3 +2,13 @@
 .search.search :global(.search-box){padding:8px 0;max-width:none}
 .search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#f8f5ee!important;backdrop-filter:none;-webkit-backdrop-filter:none}
 @media(max-width:767px){.search.search{width:calc(100% - 24px);margin:12px auto 8px}.search.search :global(.search-box){padding:0}}
+
+/* TOP feed: stronger headings and legible secondary copy on cream/white. */
+.readable.readable :global(.home-section-head) h2{font-weight:800;color:#302316}
+.readable.readable h3{font-weight:800;color:#302316}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#514536}
+.readable.readable :global(.home-event-date) span{color:#514536;font-weight:600}
+.readable.readable :global(.home-card-cta),.readable.readable :global(.home-section-head)>a{color:#78521a;font-weight:700}
+.readable.readable :global(.home-tag){color:#76521b;font-weight:600}
+.readable.readable :global(.home-job-salary){color:#654718;font-weight:800}
+.readable.readable :global(.home-post) p{color:#514536}
