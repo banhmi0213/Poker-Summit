@@ -85,11 +85,15 @@ export default async function BoardPostPage({
     )
   );
   const { data: authorProfiles } = authorUserIds.length
-    ? await supabase.from("profiles").select("user_id, avatar_url").in("user_id", authorUserIds)
-    : { data: [] as { user_id: string; avatar_url: string | null }[] };
+    ? await supabase.from("profiles").select("user_id, avatar_url, role").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; avatar_url: string | null; role: string | null }[] };
   const avatarByUserId: Record<string, string | null> = {};
+  // 投稿者・返信者の役職(2026/10、「サミットアイコン横の名前の上に役職を
+  // 表示」との指示)。board/page.tsxと同じくavatar_urlと一緒にまとめて引く。
+  const roleByUserId: Record<string, string | null> = {};
   authorProfiles?.forEach((p) => {
     avatarByUserId[p.user_id] = p.avatar_url;
+    roleByUserId[p.user_id] = p.role;
   });
 
   function pageHref(p: number) {
@@ -132,9 +136,24 @@ export default async function BoardPostPage({
             </form>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
-            <Avatar name={post.author_name} url={post.author_user_id ? avatarByUserId[post.author_user_id] : null} />
-            <div className="muted">
-              {post.author_name} ・ {formatDate(post.created_at)}
+            {/* アイコンから投稿者のプロフィールへ(2026/10、「サミットから
+                アイコン押したらプロフィールが見れるように」との指示)。 */}
+            {post.author_user_id ? (
+              <Link href={`/members/${post.author_user_id}`}>
+                <Avatar name={post.author_name} url={avatarByUserId[post.author_user_id]} />
+              </Link>
+            ) : (
+              <Avatar name={post.author_name} url={null} />
+            )}
+            <div>
+              {post.author_user_id && roleByUserId[post.author_user_id] && (
+                <div style={{ color: "var(--accent)", fontSize: 11, fontWeight: 700 }}>
+                  {roleByUserId[post.author_user_id]}
+                </div>
+              )}
+              <div className="muted">
+                {post.author_name} ・ {formatDate(post.created_at)}
+              </div>
             </div>
           </div>
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{post.body}</p>
@@ -165,7 +184,13 @@ export default async function BoardPostPage({
 
         {replies?.map((r) => (
           <div className="card" key={r.id} style={{ display: "flex", gap: 10 }}>
-            <Avatar name={r.author_name} url={r.author_user_id ? avatarByUserId[r.author_user_id] : null} />
+            {r.author_user_id ? (
+              <Link href={`/members/${r.author_user_id}`} style={{ flexShrink: 0 }}>
+                <Avatar name={r.author_name} url={avatarByUserId[r.author_user_id]} />
+              </Link>
+            ) : (
+              <Avatar name={r.author_name} url={null} />
+            )}
             <div style={{ flex: 1 }}>
               <div
                 style={{
@@ -175,11 +200,18 @@ export default async function BoardPostPage({
                   gap: 10,
                 }}
               >
-                <div style={{ fontWeight: 700, fontSize: 13.5 }}>
-                  {r.author_name}{" "}
-                  <span className="muted small" style={{ fontWeight: 400 }}>
-                    {formatDate(r.created_at)}
-                  </span>
+                <div>
+                  {r.author_user_id && roleByUserId[r.author_user_id] && (
+                    <div style={{ color: "var(--accent)", fontSize: 10.5, fontWeight: 700 }}>
+                      {roleByUserId[r.author_user_id]}
+                    </div>
+                  )}
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>
+                    {r.author_name}{" "}
+                    <span className="muted small" style={{ fontWeight: 400 }}>
+                      {formatDate(r.created_at)}
+                    </span>
+                  </div>
                 </div>
                 <form
                   action={async () => {
