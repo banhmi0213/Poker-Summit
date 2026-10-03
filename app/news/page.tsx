@@ -37,7 +37,7 @@ export default async function NewsPage() {
 
   let noticesQuery = supabase
     .from("store_notices")
-    .select("id, title, body, created_at, pref, store_id, stores(name, category)")
+    .select("id, title, body, created_at, pref, store_id, image_url, stores(name, category)")
     .eq("status", "published");
   if (currentPref) noticesQuery = noticesQuery.eq("pref", currentPref);
   noticesQuery = noticesQuery
@@ -93,6 +93,13 @@ export default async function NewsPage() {
                 {n.pref && <span className="badge outline">{n.pref}</span>}
               </div>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{n.title}</div>
+              {n.image_url && (
+                <img
+                  src={n.image_url}
+                  alt=""
+                  style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginBottom: 6, objectFit: "cover" }}
+                />
+              )}
               {n.body && (
                 <p className="muted" style={{ fontSize: 13.5, marginBottom: 6, whiteSpace: "pre-wrap" }}>
                   {n.body}
