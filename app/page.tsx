@@ -15,6 +15,7 @@ import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
+import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
@@ -71,23 +72,25 @@ export default async function HomePage({
   // can be filtered by it, same as /stores/featured already does.
   const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
 
-  // featuredStoresQuery is built as a variable (rather than inline in the
-  // Promise.all below) purely so the currentPref filter can be attached
-  // conditionally, matching the pattern already used on /stores/featured.
-  let featuredStoresQuery = supabase
-    .from("stores")
-    .select("id, name, category, pref, city, description, created_at, logo_url")
-    .in("status", ["approved", "listed"])
-    .eq("is_recommended", true);
-  if (currentPref) {
-    featuredStoresQuery = featuredStoresQuery.eq("pref", currentPref);
-  }
-  featuredStoresQuery = featuredStoresQuery
-    // Secondary sort by id: created_at alone ties for rows inserted in the
-    // same batch, and Postgres doesn't guarantee a stable order for ties.
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
-    .limit(8);
+  // PICK UP店舗の取得(2026/10に「埋まってない分はランダムで出す」仕様へ変更
+  // — ロジック本体は lib/contracts.ts の getPrefPickupStores 参照)。都道府県が
+  // 特定できている時だけ都道府県ごとのPICK UP契約の優先表示+ランダム埋めを
+  // 適用する。都道府県未特定(全国表示)の場合は、47都道府県分をまとめて
+  // 「10件の枠」として扱う意味がないため、従来通り注目店舗のみを新着順で
+  // 出す(どちらの経路でも最終的にホームの表示は.slice(0, 8)する)。
+  const pickupStoresPromise: Promise<any[]> = currentPref
+    ? getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT)
+    : supabase
+        .from("stores")
+        .select("id, name, category, pref, city, description, created_at, logo_url")
+        .in("status", ["approved", "listed"])
+        .eq("is_recommended", true)
+        // Secondary sort by id: created_at alone ties for rows inserted in the
+        // same batch, and Postgres doesn't guarantee a stable order for ties.
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(8)
+        .then((r) => r.data ?? []);
 
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
@@ -101,7 +104,7 @@ export default async function HomePage({
     { data: banners },
     statsResults,
     { data: memberCountRaw },
-    { data: featuredStoresRaw },
+    featuredStoresAll,
     { data: latestJobs },
     { data: latestPosts },
     { data: upcomingEvents },
@@ -132,7 +135,7 @@ export default async function HomePage({
     // queryable through PostgREST directly (no PII exposed here, just a
     // count), so this goes through a SECURITY DEFINER RPC.
     supabase.rpc("public_member_count"),
-    featuredStoresQuery,
+    pickupStoresPromise,
     supabase
       .from("jobs")
       .select("id, title, job_type, salary, store_id, stores(name, category, pref, city, logo_url)")
@@ -189,9 +192,9 @@ export default async function HomePage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
-  // --- Featured stores: admin-curated (is_recommended flag in the store
-  // management screen), already filtered/ordered/limited server-side above.
-  const featuredStores = featuredStoresRaw ?? [];
+  // --- Featured stores: PICK UP契約店舗優先+空き枠ランダム埋め(上のコメント
+  // 参照)。ホームのプレビュー枠は4列×2行=8件なので、ここで最終的に切る。
+  const featuredStores = (featuredStoresAll ?? []).slice(0, 8);
 
   // 「お気に入り数が多い上位10店舗」の店舗ランキングセクション用の集計
   // (2026/09/30)。件数自体は店舗オーナー側の画面にだけ出す仕様のため、
