@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateProfile } from "./actions";
-import { PREF_OPTIONS } from "@/lib/constants";
+import { PREF_OPTIONS, MEMBER_ROLE_OPTIONS } from "@/lib/constants";
 
 export default async function ProfilePage({
   searchParams,
@@ -20,6 +20,18 @@ export default async function ProfilePage({
   const params = searchParams;
   const currentName = (user.user_metadata as any)?.display_name || "";
   const currentPref = (user.user_metadata as any)?.pref || "";
+
+  // 役職・フリーメッセージ(2026/10、「都道府県の下にプルタブで役職を
+  // 設置、フリーメッセージをつけて」との指示)。他の会員からも見える
+  // 情報なので、auth.updateUser()のuser_metadataではなく、他人からも
+  // 読めるprofilesテーブル(avatar_urlと同じ場所)に保存する。
+  const { data: myProfile } = await supabase
+    .from("profiles")
+    .select("role, bio")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const currentRole = myProfile?.role || "";
+  const currentBio = myProfile?.bio || "";
 
   return (
     <div className="container" style={{ maxWidth: 400, paddingTop: 40 }}>
@@ -48,6 +60,27 @@ export default async function ProfilePage({
                 </option>
               ))}
             </select>
+          </div>
+          <div className="field">
+            <span>役職</span>
+            <select name="role" defaultValue={currentRole}>
+              <option value="">未設定</option>
+              {MEMBER_ROLE_OPTIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span>フリーメッセージ</span>
+            <textarea
+              name="bio"
+              rows={3}
+              defaultValue={currentBio}
+              placeholder="自己紹介やひとことをどうぞ"
+              maxLength={300}
+            />
           </div>
           <button type="submit" className="btn primary" style={{ width: "100%" }}>
             変更する
