@@ -112,6 +112,7 @@ export default async function CouponsPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <main className="container cp-page">
         <CompactPortalBanner image="/images/compact-coupons.jpg" eyebrow="COUPONS & OFFERS" title="クーポンで、もっとポーカーを楽しもう。" subtitle="気になるお店の特典を、まとめてチェック。" detail="" />
         <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>

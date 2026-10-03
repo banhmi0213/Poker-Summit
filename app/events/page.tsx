@@ -55,6 +55,7 @@ export default async function EventsPage({ searchParams }: {
   }
   return <div>
     <PortalHeader userEmail={user?.email} />
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
     <main className="container ep-page">
       <CompactPortalBanner image="/images/compact-events.jpg" eyebrow="TOURNAMENTS & EVENTS" title="トーナメント・イベントを探す" subtitle="次の挑戦も、はじめての一歩も。" detail="" />
         <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>

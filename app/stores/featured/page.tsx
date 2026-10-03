@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import { PortalHeader } from "@/app/portal-header";
@@ -55,6 +56,7 @@ export default async function FeaturedStoresPage() {
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <div className="container">
         <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>
           🏆 PICK UP店舗一覧{currentPref ? `（${currentPref}）` : "（全国）"}

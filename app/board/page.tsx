@@ -113,6 +113,7 @@ export default async function BoardPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <div className="container">
         <CompactPortalBanner image="/images/compact-community.jpg" eyebrow="POKER SUMMIT COMMUNITY" title="サミット｜情報交換" subtitle="ポーカーの話題で、つながろう。" detail="雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略" />
         <h1 className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
