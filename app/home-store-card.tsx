@@ -1,3 +1,4 @@
+import { StoreNamePlaceholder, StoreFallbackLogo } from "@/app/store-name-placeholder";
 import Link from "next/link";
 import { CATEGORY_LABEL } from "@/lib/constants";
 
@@ -8,9 +9,9 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
   return <article className="home-store-card">
     <form action={favoriteAction}><button type="submit" className={`store-fav-btn ${isFavorite ? "active" : ""}`} aria-label={`${store.name}をお気に入り${isFavorite ? "から解除" : "に追加"}`} aria-pressed={isFavorite}>{isFavorite ? "♥" : "♡"}</button></form>
     <Link href={`/stores/${store.id}`}>
-      <div className="home-store-photo">{coverPhoto ? <img src={coverPhoto} alt={`${store.name}の店舗写真`} loading="lazy" /> : <span>POKER SUMMIT</span>}{rank && <b className="home-rank">{rank}</b>}</div>
+      <div className="home-store-photo">{coverPhoto ? <img src={coverPhoto} alt={`${store.name}の店舗写真`} loading="lazy" /> : <StoreNamePlaceholder name={store.name} />}{rank && <b className="home-rank">{rank}</b>}</div>
       <div className="home-store-copy">
-        <div className="home-store-logo">{store.logo_url ? <img src={store.logo_url} alt="" loading="lazy" /> : <span>♠</span>}</div>
+        <div className="home-store-logo">{store.logo_url ? <img src={store.logo_url} alt="" loading="lazy" /> : <StoreFallbackLogo />}</div>
         <h3>{store.name}</h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
         {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
         <span className="home-card-cta">店舗詳細を見る <b>›</b></span>

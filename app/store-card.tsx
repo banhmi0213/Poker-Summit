@@ -1,11 +1,13 @@
+import { StoreNamePlaceholder, StoreFallbackLogo } from "@/app/store-name-placeholder";
 import Link from "next/link";
-import { CATEGORY_LABEL, CATEGORY_COLOR, CATEGORY_ICON } from "@/lib/constants";
+import { CATEGORY_LABEL } from "@/lib/constants";
 
 export function StoreCard({
   store,
   isFavorite,
   rank,
   favoriteAction,
+  coverPhoto,
 }: {
   store: {
     id: string;
@@ -16,12 +18,11 @@ export function StoreCard({
     description: string | null;
     logo_url?: string | null;
   };
+  coverPhoto?: string;
   isFavorite: boolean;
   rank?: number;
   favoriteAction: () => Promise<void>;
 }) {
-  const color = CATEGORY_COLOR[store.category ?? ""] ?? "#3987e5";
-  const icon = CATEGORY_ICON[store.category ?? ""] ?? "♠️";
   const desc = store.description ?? "";
 
   return (
@@ -37,28 +38,8 @@ export function StoreCard({
         </button>
       </form>
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>
-        <div
-          style={{
-            background: color,
-            height: 92,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 34,
-            color: "#fff",
-            overflow: "hidden",
-          }}
-        >
-          {store.logo_url ? (
-            <img
-              src={store.logo_url}
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            icon
-          )}
-        </div>
+        <div className="generic-store-cover">{coverPhoto || store.logo_url ? <img src={coverPhoto || store.logo_url!} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
+        {!store.logo_url && <div className="generic-store-finger"><StoreFallbackLogo /></div>}
         <div style={{ padding: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}>{store.name}</div>
           {store.category && (
