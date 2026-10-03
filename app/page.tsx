@@ -311,7 +311,7 @@ export default async function HomePage({
           once a manual choice or a still-fresh geo result already exists. */}
       <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
 
-      <main className="home-feed">
+      <main className={`home-feed ${styles.readable}`}>
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> PICK UP店舗{currentPref ? `（${currentPref}）` : ""}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
           {!featuredStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}</p>}
