@@ -75,7 +75,7 @@ export default async function StoresPage({
 
   let storesQuery = supabase
     .from("stores")
-    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url")
+    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url, banner_url")
     .in("status", ["approved", "listed"])
     // Secondary sort by id: created_at alone ties for rows inserted in the
     // same batch, and Postgres doesn't guarantee a stable order for ties.
