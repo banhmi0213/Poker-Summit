@@ -1,11 +1,13 @@
 import { randomUUID } from "crypto";
 
-// 求人・クーポン・イベントのバナー画像アップロード共通処理(2026/09/30新設)。
-// 「求人、クーポン、イベントは画像添付もできるように」との要望を受け、
-// 既存の店舗写真(store-photos バケット)と同じ仕組みを使い、
-// {storeId}/banners/{jobs|coupons|events}/{uuid}.ext というパスに保存する。
-// バケットのRLSポリシーはパスの最初のフォルダ(=storeId)だけを見て
-// 所有者を判定しているので、この配下ならどんなサブパスでも許可される。
+// 求人・クーポン・イベント・料金メニュー・お知らせの画像アップロード共通処理
+// (2026/09/30新設、2026/10に料金メニュー・お知らせ分を追加)。
+// 「求人、クーポン、イベントは画像添付もできるように」「料金・メニューに
+// 画像アップロード欄追加」「お知らせに画像アップロード欄追加」との要望を
+// 受け、既存の店舗写真(store-photos バケット)と同じ仕組みを使い、
+// {storeId}/banners/{jobs|coupons|events|menu|notices}/{uuid}.ext という
+// パスに保存する。バケットのRLSポリシーはパスの最初のフォルダ(=storeId)
+// だけを見て所有者を判定しているので、この配下ならどんなサブパスでも許可される。
 const PHOTOS_BUCKET = "store-photos";
 const MAX_BANNER_BYTES = 8 * 1024 * 1024; // 8MB
 
@@ -21,7 +23,7 @@ function extFromFile(file: File): string {
 export async function uploadBannerImage(
   supabase: any,
   storeId: string,
-  subfolder: "jobs" | "coupons" | "events",
+  subfolder: "jobs" | "coupons" | "events" | "menu" | "notices",
   file: File
 ): Promise<{ url: string; path: string }> {
   if (!(file instanceof File) || file.size === 0) {
