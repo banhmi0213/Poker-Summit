@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { useCoupon } from "@/app/member-actions";
+import { setFavoriteCoupon } from "@/app/coupons/favorite-actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -45,18 +45,14 @@ export default async function CouponDetailPage({
     notFound();
   }
 
-  const path = `/coupons/${c.id}`;
   const status = couponStatus(c);
 
-  let usedByMe = false;
+  let isFavorite = false;
   if (user) {
-    const { data: use } = await supabase
-      .from("coupon_uses")
-      .select("coupon_id")
-      .eq("user_id", user.id)
-      .eq("coupon_id", c.id)
-      .maybeSingle();
-    usedByMe = !!use;
+    const { data: favorite, error } = await supabase.from("favorite_coupons")
+      .select("coupon_id").eq("user_id", user.id).eq("coupon_id", c.id).maybeSingle();
+    if (error) throw new Error("お気に入りを読み込めませんでした。");
+    isFavorite = !!favorite;
   }
 
   return (
@@ -89,32 +85,14 @@ export default async function CouponDetailPage({
             </section>
             {c.code && <div className={styles.code}>クーポンコード <strong>{c.code}</strong></div>}
             <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>店頭でこの画面をご提示ください。</h2><p>利用条件をご確認のうえ、お店でクーポン画面を提示して特典をお受け取りください。</p></div></div>
-          {usedByMe ? (
-            <button type="button" className="btn" style={{ marginTop: 16, width: "100%" }} disabled>
-              ✓ 使用済みです
-            </button>
-          ) : status === "expired" ? (
-            <button type="button" className="btn" style={{ marginTop: 16, width: "100%" }} disabled>
-              有効期限が切れています
-            </button>
-          ) : status === "exhausted" ? (
-            <button type="button" className="btn" style={{ marginTop: 16, width: "100%" }} disabled>
-              利用上限に達しました
-            </button>
-          ) : (
-            <form
-              action={async () => {
-                "use server";
-                await useCoupon(c.id, path);
-              }}
-              style={{ marginTop: 16 }}
-            >
-              <button type="submit" className="btn primary" style={{ width: "100%" }}>
-                このクーポンを使う
+            <form action={async () => {
+              "use server";
+              await setFavoriteCoupon(c.id, !isFavorite);
+            }} className={styles.favoriteForm}>
+              <button type="submit" className={styles.favoriteButton} aria-pressed={isFavorite}>
+                <span aria-hidden="true">{isFavorite ? "★" : "☆"}</span> {isFavorite ? "お気に入り保存済み・解除" : "お気に入りに保存"}
               </button>
             </form>
-          )}
-
           </div>
         </section>
         <section className={styles.how}>

@@ -7,6 +7,7 @@ import {
   toggleFavoriteJob,
   leaveEvent,
 } from "@/app/member-actions";
+import { setFavoriteCoupon } from "@/app/coupons/favorite-actions";
 import { uploadAvatar, removeAvatar } from "@/app/mypage/actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
@@ -41,6 +42,7 @@ export default async function MyPage({
   const [
     { data: favStoreRows },
     { data: favJobRows },
+    { data: favCouponRows, error: favCouponError },
     { data: applications },
     { data: participations },
     { data: couponUseRows },
@@ -52,6 +54,7 @@ export default async function MyPage({
       .from("favorite_jobs")
       .select("jobs(id, title, status, store_id, stores(name, pref))")
       .eq("user_id", user.id),
+    supabase.from("favorite_coupons").select("coupons(id, title, discount, valid_until, active, stores(name))").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase
       .from("job_applications")
       .select("applied_at, jobs(id, title, status, store_id, stores(name, pref))")
@@ -93,6 +96,9 @@ export default async function MyPage({
     (c: any) => !usedCouponIds.has(c.id) && (c.usage_limit == null || (c.used_count ?? 0) < c.usage_limit)
   );
   const usedCoupons = (allActiveCoupons ?? []).filter((c: any) => usedCouponIds.has(c.id));
+
+  if (favCouponError) throw new Error("お気に入りクーポンを読み込めませんでした。");
+  const favCoupons = (favCouponRows ?? []).map((r: any) => r.coupons).filter(Boolean);
 
   const favStores = (favStoreRows ?? []).map((r: any) => r.stores).filter(Boolean);
   const favJobs = (favJobRows ?? []).map((r: any) => r.jobs).filter(Boolean);
@@ -300,6 +306,18 @@ export default async function MyPage({
 
           {tab === "coupons" && (
             <>
+              <h3 style={{ fontSize: 14.5 }}>☆ お気に入り ({favCoupons.length})</h3>
+              {favCoupons.length === 0 ? <p className="muted small" style={{ marginBottom: 22 }}>保存したクーポンはありません。</p> : favCoupons.map((c: any) => (
+                <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}>{c.title}</Link> : <strong>{c.title}（掲載終了）</strong>}
+                    <div className="muted small">{c.stores?.name} ・ 期限 {c.valid_until ?? "なし"}</div>
+                  </div>
+                  <form action={async () => { "use server"; await setFavoriteCoupon(c.id, false); }}>
+                    <button type="submit" className="btn" style={{ fontSize: 12 }}>解除</button>
+                  </form>
+                </div>
+              ))}
               <h3 style={{ fontSize: 14.5 }}>未使用 ({unusedCoupons.length})</h3>
               {unusedCoupons.length === 0 ? (
                 <p className="muted small" style={{ marginBottom: 22 }}>
