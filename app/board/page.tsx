@@ -44,6 +44,12 @@ export default async function BoardPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  // 新規投稿フォームのお名前欄、デフォルトは会員名(2026/10、「名前欄には
+  // 会員名をデフォで」との指示)。マイページ側(dashboard.tsx)と同じく
+  // user_metadata.display_nameを使う。未入力のまま送信した場合は
+  // createPost側で従来どおり「匿名」になる(欄を空にして投稿すれば
+  // 匿名投稿も引き続き可能)。
+  const authorDisplayName = (user?.user_metadata as any)?.display_name || "";
 
   let countQuery = supabase
     .from("board_posts")
@@ -195,8 +201,8 @@ export default async function BoardPage({
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
             <form action={createPost}>
               <div className="field">
-                <span className="muted">お名前（未入力の場合は匿名）</span>
-                <input type="text" name="authorName" placeholder="匿名" />
+                <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
+                <input type="text" name="authorName" defaultValue={authorDisplayName} placeholder="匿名" />
               </div>
               <div className="field">
                 <span className="muted">カテゴリ</span>
@@ -270,7 +276,7 @@ export default async function BoardPage({
                   (2026/10、「サミットからアイコン押したらプロフィールが
                   見れるように」との指示)。Next.jsのLinkは入れ子にできない
                   ため、カード全体を囲んでいた1本のLinkをやめ、アイコン用
-                  とタイトル/画像用でLinkを分けている。 */}
+                  とタイトル/画像用でLinkを分けでいる。 */}
               {p.author_user_id ? (
                 <Link href={`/members/${p.author_user_id}`} style={{ flexShrink: 0 }}>
                   <Avatar name={p.author_name} url={avatarByUserId[p.author_user_id]} />
