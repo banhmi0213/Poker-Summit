@@ -1,7 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateProfile } from "./actions";
 import { PREF_OPTIONS, MEMBER_ROLE_OPTIONS } from "@/lib/constants";
+import { PortalHeader } from "@/app/portal-header";
+import { PortalFooter } from "@/app/portal-footer";
+import { BottomTabs } from "@/app/bottom-tabs";
 
 export default async function ProfilePage({
   searchParams,
@@ -40,68 +44,83 @@ export default async function ProfilePage({
       : (user.user_metadata as any)?.pref_public !== false;
 
   return (
-    <div className="container" style={{ maxWidth: 400, paddingTop: 40 }}>
-      <h1 style={{ fontSize: 20, marginBottom: 16 }}>プロフィール編集</h1>
-      <div className="card">
-        {params.error && <p className="err">{params.error}</p>}
-        {params.done && (
-          <p className="muted" style={{ marginBottom: 12, color: "var(--good)" }}>
-            プロフィールを変更しました。
-          </p>
-        )}
-        <form action={updateProfile}>
-          <div className="field">
-            <span>ハンドルネーム</span>
-            <input type="text" name="name" defaultValue={currentName} autoComplete="nickname" />
-          </div>
-          <div className="field">
-            <span>都道府県</span>
-            <select name="pref" defaultValue={currentPref} required>
-              <option value="" disabled>
-                選択してください
-              </option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+    <div>
+      {/* プロフィール編集画面に戻る導線がなかったので、サイト共通の
+          ヘッダー・フッター(マイページなど他のページと同じ)を追加し、
+          見出しの横に戻る矢印リンクを置く(2026/10、「プロフィール編集
+          画面にプロフィールにもどるをつけて」「プの横に左矢印とヘッダー
+          とフッターでいい」との指示)。 */}
+      <PortalHeader userEmail={user.email} />
+      <div className="container" style={{ maxWidth: 400, paddingTop: 40 }}>
+        <h1 style={{ fontSize: 20, marginBottom: 16 }}>
+          <Link href="/mypage" className="muted" style={{ marginRight: 8, textDecoration: "none" }}>
+            ←
+          </Link>
+          プロフィール編集
+        </h1>
+        <div className="card">
+          {params.error && <p className="err">{params.error}</p>}
+          {params.done && (
+            <p className="muted" style={{ marginBottom: 12, color: "var(--good)" }}>
+              プロフィールを変更しました。
+            </p>
+          )}
+          <form action={updateProfile}>
+            <div className="field">
+              <span>ハンドルネーム</span>
+              <input type="text" name="name" defaultValue={currentName} autoComplete="nickname" />
+            </div>
+            <div className="field">
+              <span>都道府県</span>
+              <select name="pref" defaultValue={currentPref} required>
+                <option value="" disabled>
+                  選択してください
                 </option>
-              ))}
-            </select>
-          </div>
-          {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
-              できるようにして」との指示。登録後もここで切り替えられるように)。 */}
-          <div className="field">
-            <span>都道府県の公開設定</span>
-            <select name="prefPublic" defaultValue={currentPrefPublic ? "public" : "private"}>
-              <option value="public">公開（他の会員にも表示）</option>
-              <option value="private">非公開（自分だけに表示）</option>
-            </select>
-          </div>
-          <div className="field">
-            <span>役職</span>
-            <select name="role" defaultValue={currentRole}>
-              <option value="">未設定</option>
-              {MEMBER_ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span>フリーメッセージ</span>
-            <textarea
-              name="bio"
-              rows={3}
-              defaultValue={currentBio}
-              placeholder="自己紹介やひとことをどうぞ"
-              maxLength={300}
-            />
-          </div>
-          <button type="submit" className="btn primary" style={{ width: "100%" }}>
-            変更する
-          </button>
-        </form>
+                {PREF_OPTIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
+                できるようにして」との指示。登録後もここで切り替えられるように)。 */}
+            <div className="field">
+              <span>都道府県の公開設定</span>
+              <select name="prefPublic" defaultValue={currentPrefPublic ? "public" : "private"}>
+                <option value="public">公開（他の会員にも表示）</option>
+                <option value="private">非公開（自分だけに表示）</option>
+              </select>
+            </div>
+            <div className="field">
+              <span>役職</span>
+              <select name="role" defaultValue={currentRole}>
+                <option value="">未設定</option>
+                {MEMBER_ROLE_OPTIONS.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <span>フリーメッセージ</span>
+              <textarea
+                name="bio"
+                rows={3}
+                defaultValue={currentBio}
+                placeholder="自己紹介やひとことをどうぞ"
+                maxLength={300}
+              />
+            </div>
+            <button type="submit" className="btn primary" style={{ width: "100%" }}>
+              変更する
+            </button>
+          </form>
+        </div>
       </div>
+      <PortalFooter />
+      <BottomTabs active="mypage" />
     </div>
   );
 }
