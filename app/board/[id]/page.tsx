@@ -35,6 +35,10 @@ export default async function BoardPostPage({
   // スレッド一覧(/board)は誰でも見れるが、スレッド詳細(本文・コメント)の
   // 閲覧は会員登録必須にする(2026/10、「サミット観覧には会員登録が必要」
   // との指示)。未ログインならここでログイン画面へ誘導する。
+  // 返信フォームのお名前欄、デフォルトは会員名(2026/10、「名前欄には会員名
+  // をデフォで」との指示、/board一覧の新規投稿フォームと同じ対応)。
+  const authorDisplayName = (user?.user_metadata as any)?.display_name || "";
+
   if (!user) {
     redirect(`/login?next=/board/${params.id}`);
   }
@@ -285,8 +289,8 @@ export default async function BoardPostPage({
           <form action={createReply} encType="multipart/form-data">
             <input type="hidden" name="postId" value={post.id} />
             <div className="field">
-              <span className="muted">お名前（未入力の場合は匿名）</span>
-              <input type="text" name="authorName" placeholder="匿名" />
+              <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
+              <input type="text" name="authorName" defaultValue={authorDisplayName} placeholder="匿名" />
             </div>
             <div className="field">
               <span className="muted">返信内容 *</span>
