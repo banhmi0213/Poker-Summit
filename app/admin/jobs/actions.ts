@@ -29,41 +29,11 @@ export async function deleteJob(id: string) {
   revalidatePath("/admin/jobs");
 }
 
-export async function createJobByAdmin(formData: FormData) {
-  const supabase = await createClient();
-
-  const storeId = String(formData.get("storeId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  const jobType = String(formData.get("jobType") ?? "").trim();
-  const salary = String(formData.get("salary") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
-
-  if (!storeId) {
-    throw new Error("店舗を選択してください。");
-  }
-  if (!title) {
-    throw new Error("求人タイトルを入力してください。");
-  }
-
-  const { data, error } = await supabase
-    .from("jobs")
-    .insert({
-      store_id: storeId,
-      title,
-      job_type: jobType || null,
-      salary: salary || null,
-      description: description || null,
-    })
-    .select("id")
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  await logAdminAction(supabase, "job_create", "job", data?.id, { storeId, title });
-  revalidatePath("/admin/jobs");
-}
+// 以前は admin が任意の店舗を選んで代理で求人を作成する createJobByAdmin が
+// ここにあったが、求人掲載アドオン未契約の店舗にも公開求人を作れてしまい、かつ
+// 店舗オーナー側からは管理できない不整合があったため撤廃(2026/10、「そもそも
+// 代理で出すんもやめよか」との指示)。既存求人の編集・ステータス変更・削除
+// (moderation)は引き続きここで提供する。
 
 export async function updateJobByAdmin(formData: FormData) {
   const supabase = await createClient();
