@@ -27,11 +27,17 @@ export default async function ProfilePage({
   // 読めるprofilesテーブル(avatar_urlと同じ場所)に保存する。
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("role, bio")
+    .select("role, bio, pref_public")
     .eq("user_id", user.id)
     .maybeSingle();
   const currentRole = myProfile?.role || "";
   const currentBio = myProfile?.bio || "";
+  // 都道府県の公開設定(2026/10追加)。profilesに未保存(初回編集前)なら
+  // signup時にuser_metadataへ入れた値、それも無ければ公開扱いをデフォルトにする。
+  const currentPrefPublic =
+    typeof myProfile?.pref_public === "boolean"
+      ? myProfile.pref_public
+      : (user.user_metadata as any)?.pref_public !== false;
 
   return (
     <div className="container" style={{ maxWidth: 400, paddingTop: 40 }}>
@@ -59,6 +65,15 @@ export default async function ProfilePage({
                   {p}
                 </option>
               ))}
+            </select>
+          </div>
+          {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
+              できるようにして」との指示。登録後もここで切り替えられるように)。 */}
+          <div className="field">
+            <span>都道府県の公開設定</span>
+            <select name="prefPublic" defaultValue={currentPrefPublic ? "public" : "private"}>
+              <option value="public">公開（他の会員にも表示）</option>
+              <option value="private">非公開（自分だけに表示）</option>
             </select>
           </div>
           <div className="field">
