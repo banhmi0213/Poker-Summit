@@ -4,6 +4,7 @@ import { AddressFields } from "./address-fields";
 import { updateStoreProfile, updateMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
 import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
+import { uploadStoreBanner, deleteStoreBanner } from "./banner-actions";
 import { PhotoGallery } from "./photo-gallery";
 import {
   STORE_STATUS_LABEL,
@@ -262,9 +263,84 @@ export default async function StoreProfilePage({
           </div>
 
           <div className="card" id="profile-info" style={{ scrollMarginTop: 20 }}>
+            {/* 店舗カード上部の看板画像(2026/10、「店舗管理画面に画像
+                アップロードを２つに」との指示を受けて、ロゴ画像1枚兼用
+                だったものを看板とロゴに分離)。店舗カード上部の写真枠
+                (約270×142px)にそのまま表示される。 */}
             <div style={{ marginBottom: 20 }}>
               <span className="muted" style={{ display: "block", marginBottom: 8 }}>
-                ロゴ画像（店舗カードのピンク帯に表示されます）
+                店舗看板（店舗カード上部に表示されます）
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+                {store.banner_url ? (
+                  <img
+                    src={store.banner_url}
+                    alt=""
+                    style={{
+                      width: 160,
+                      height: 84,
+                      objectFit: "cover",
+                      borderRadius: 10,
+                      border: "1px solid var(--border-strong)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 160,
+                      height: 84,
+                      borderRadius: 10,
+                      background: "var(--surface-2)",
+                      border: "1px solid var(--border-strong)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 11,
+                      textAlign: "center",
+                      padding: 4,
+                    }}
+                    className="muted"
+                  >
+                    未設定
+                  </div>
+                )}
+                <form
+                  action={uploadStoreBanner}
+                  encType="multipart/form-data"
+                  style={{ display: "flex", flexDirection: "column", gap: 6 }}
+                >
+                  <input type="hidden" name="storeId" value={store.id} />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <input type="file" name="banner" accept="image/*" required />
+                    <button type="submit" className="btn">
+                      {store.banner_url ? "変更する" : "アップロードする"}
+                    </button>
+                  </div>
+                  <span className="muted" style={{ fontSize: 11.5 }}>
+                    推奨サイズ: 横900×縦470px程度の横長画像（ファイルサイズは8MBまで）。カード表示時にこの比率からはみ出た部分は自動でトリミングされます。
+                  </span>
+                </form>
+                {store.banner_url && (
+                  <form
+                    action={async () => {
+                      "use server";
+                      await deleteStoreBanner(store.id);
+                    }}
+                  >
+                    <button type="submit" className="btn">
+                      削除
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
+            {/* 左下の小さいロゴ枠(約58×58px)用の画像。店舗カード看板の
+                左下に重ねて表示される(従来からのlogo_url/logo-actions.ts
+                をそのまま使用)。 */}
+            <div style={{ marginBottom: 20 }}>
+              <span className="muted" style={{ display: "block", marginBottom: 8 }}>
+                ロゴ画像（店舗カード左下の丸枠に表示されます）
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 {store.logo_url ? (
@@ -274,9 +350,11 @@ export default async function StoreProfilePage({
                     style={{
                       width: 88,
                       height: 88,
-                      objectFit: "cover",
+                      objectFit: "contain",
                       borderRadius: 10,
                       border: "1px solid var(--border-strong)",
+                      background: "var(--surface-2)",
+                      padding: 6,
                     }}
                   />
                 ) : (
@@ -312,7 +390,7 @@ export default async function StoreProfilePage({
                     </button>
                   </div>
                   <span className="muted" style={{ fontSize: 11.5 }}>
-                    推奨サイズ: 横900×縦300px程度の横長画像（ファイルサイズは8MBまで）。カード表示時にこの比率からはみ出た部分は自動でトリミングされます。
+                    推奨サイズ: 正方形（例: 300×300px程度、ファイルサイズは8MBまで）。
                   </span>
                 </form>
                 {store.logo_url && (
