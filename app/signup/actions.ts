@@ -8,6 +8,8 @@ export async function signUp(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
+  // 都道府県の公開設定(2026/10追加)。未指定時は従来通り公開扱い。
+  const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
 
   if (!email || !password) {
     redirect(`/signup?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
@@ -22,7 +24,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      data: { display_name: name || undefined, pref: pref || undefined },
+      data: { display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic },
     },
   });
 
