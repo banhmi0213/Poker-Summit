@@ -5,6 +5,7 @@ import { createReply, reportPost, reportReply } from "../actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { Avatar } from "@/app/avatar";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -15,22 +16,6 @@ function formatDate(value: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function avatarColor(name: string) {
-  const colors = [
-    "#3987e5",
-    "#d95926",
-    "#199e70",
-    "#c98500",
-    "#d55181",
-    "#1fae1f",
-    "#9085e9",
-    "#e66767",
-  ];
-  let h = 0;
-  for (const ch of String(name)) h = (h * 31 + ch.charCodeAt(0)) % colors.length;
-  return colors[h];
 }
 
 const PAGE_SIZE = 100;
@@ -56,7 +41,7 @@ export default async function BoardPostPage({
 
   const { data: post } = await supabase
     .from("board_posts")
-    .select("id, title, body, author_name, created_at, category, image_url")
+    .select("id, title, body, author_name, author_user_id, created_at, category, image_url")
     .eq("id", params.id)
     .eq("status", "visible")
     .maybeSingle();
@@ -80,7 +65,7 @@ export default async function BoardPostPage({
       .eq("status", "visible"),
     supabase
       .from("board_replies")
-      .select("id, body, author_name, created_at, image_url")
+      .select("id, body, author_name, author_user_id, created_at, image_url")
       .eq("post_id", params.id)
       .eq("status", "visible")
       .order("created_at", { ascending: true })
@@ -89,6 +74,23 @@ export default async function BoardPostPage({
   ]);
 
   const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
+
+  // 投稿者・返信者のアイコン画像(2026/10、board/page.tsxと同じ理由で
+  // まとめて1回で引く)。スレッド本文の投稿者 + このページの返信者ぶん。
+  const authorUserIds = Array.from(
+    new Set(
+      [post.author_user_id, ...(replies ?? []).map((r) => r.author_user_id)].filter(
+        (id): id is string => Boolean(id)
+      )
+    )
+  );
+  const { data: authorProfiles } = authorUserIds.length
+    ? await supabase.from("profiles").select("user_id, avatar_url").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; avatar_url: string | null }[] };
+  const avatarByUserId: Record<string, string | null> = {};
+  authorProfiles?.forEach((p) => {
+    avatarByUserId[p.user_id] = p.avatar_url;
+  });
 
   function pageHref(p: number) {
     return p > 1 ? `/board/${params.id}?page=${p}` : `/board/${params.id}`;
@@ -130,9 +132,7 @@ export default async function BoardPostPage({
             </form>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
-            <div className="avatar" style={{ background: avatarColor(post.author_name) }}>
-              {post.author_name.slice(0, 1)}
-            </div>
+            <Avatar name={post.author_name} url={post.author_user_id ? avatarByUserId[post.author_user_id] : null} />
             <div className="muted">
               {post.author_name} ・ {formatDate(post.created_at)}
             </div>
@@ -165,9 +165,7 @@ export default async function BoardPostPage({
 
         {replies?.map((r) => (
           <div className="card" key={r.id} style={{ display: "flex", gap: 10 }}>
-            <div className="avatar" style={{ background: avatarColor(r.author_name) }}>
-              {r.author_name.slice(0, 1)}
-            </div>
+            <Avatar name={r.author_name} url={r.author_user_id ? avatarByUserId[r.author_user_id] : null} />
             <div style={{ flex: 1 }}>
               <div
                 style={{
