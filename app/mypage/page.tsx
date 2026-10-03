@@ -85,10 +85,16 @@ export default async function MyPage({
   // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
   const { data: myProfile } = await supabase
     .from("profiles")
-    .select("avatar_url")
+    .select("avatar_url, pref_public")
     .eq("user_id", user.id)
     .maybeSingle();
   const avatarUrl = myProfile?.avatar_url ?? null;
+  // 都道府県の公開設定(2026/10追加)。profiles未保存ならsignup時の
+  // user_metadataの値、それも無ければ公開扱い。
+  const prefPublic =
+    typeof myProfile?.pref_public === "boolean"
+      ? myProfile.pref_public
+      : (user.user_metadata as any)?.pref_public !== false;
 
   const appliedJobIds = new Set((applications ?? []).map((a: any) => a.jobs?.id));
   const usedCouponIds = new Set((couponUseRows ?? []).map((r: any) => r.coupon_id));
@@ -141,7 +147,8 @@ export default async function MyPage({
                   </Link>
                 </div>
                 <div className="muted small">
-                  📍 {pref || "未設定"} {joinedAt && `・ ${joinedAt}に登録`}
+                  📍 {pref || "未設定"}
+                  {pref && !prefPublic && "（非公開）"} {joinedAt && `・ ${joinedAt}に登録`}
                 </div>
               </div>
             </div>
