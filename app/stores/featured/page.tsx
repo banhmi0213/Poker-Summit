@@ -5,37 +5,43 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreCard } from "@/app/store-card";
 import { getCurrentPref } from "@/lib/current-pref";
+import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
 
 // The "すべて見る →" destination from the home page's 🏆PICK UP店舗 section.
-// Shows every admin-curated recommended store (stores.is_recommended = true,
-// set from the 店舗管理 admin screen) — not the general /stores directory.
 // Filtered by the site-wide "現在表示中の都道府県" (see lib/current-pref.ts)
 // rather than a URL param, so it always stays in sync with the same
-// cookie-backed state the TOP page's PICK UP section uses. The "最大10店舗/
-// 都道府県" cap and PICK UP's future 公平なランダム表示 ordering are deferred
-// future work — this page still shows the full unlimited list.
+// cookie-backed state the TOP page's PICK UP section uses.
+//
+// 都道府県が特定できている時は、PICK UP契約店舗(stores.is_recommended=true)
+// を優先的に上位表示しつつ、契約が「都道府県ごと最大10店舗」に満たない分は
+// 非契約の承認済み店舗からランダムに抽選して埋める(2026/10、「PICKUPが
+// 埋まってない場合はランダムで出す」との指示。ロジック本体は
+// lib/contracts.ts の getPrefPickupStores 参照)。都道府県未特定(全国表示)の
+// 場合は47都道府県分を1つの10件枠として扱う意味がないため、従来通り
+// 契約店舗のみを新着順で無制限に表示する。
 export default async function FeaturedStoresPage() {
   const supabase = await createClient();
   const { pref: currentPref } = await getCurrentPref();
 
-  let storesQuery = supabase
-    .from("stores")
-    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url")
-    .in("status", ["approved", "listed"])
-    .eq("is_recommended", true);
-  if (currentPref) storesQuery = storesQuery.eq("pref", currentPref);
-  storesQuery = storesQuery
-    // Secondary sort by id: created_at alone ties for rows inserted in the
-    // same batch, and Postgres doesn't guarantee a stable order for ties.
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false });
+  const storesPromise: Promise<any[]> = currentPref
+    ? getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT)
+    : supabase
+        .from("stores")
+        .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url")
+        .in("status", ["approved", "listed"])
+        .eq("is_recommended", true)
+        // Secondary sort by id: created_at alone ties for rows inserted in the
+        // same batch, and Postgres doesn't guarantee a stable order for ties.
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .then((r) => r.data ?? []);
 
   const [
     {
       data: { user },
     },
-    { data: stores },
-  ] = await Promise.all([supabase.auth.getUser(), storesQuery]);
+    stores,
+  ] = await Promise.all([supabase.auth.getUser(), storesPromise]);
 
   let favoriteStoreIds = new Set<string>();
   if (user) {
