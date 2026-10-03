@@ -83,7 +83,7 @@ export default async function StoreDetailPage({
         .order("created_at", { ascending: false }),
       supabase
         .from("store_notices")
-        .select("id, title, body, created_at")
+        .select("id, title, body, created_at, image_url")
         .eq("store_id", store.id)
         .eq("status", "published")
         .order("created_at", { ascending: false }),
@@ -95,7 +95,7 @@ export default async function StoreDetailPage({
         .order("created_at", { ascending: true }),
       supabase
         .from("store_menu_items")
-        .select("id, name, price, description")
+        .select("id, name, price, description, image_url")
         .eq("store_id", store.id)
         .eq("status", "published")
         .order("sort_order", { ascending: true })
@@ -218,7 +218,7 @@ export default async function StoreDetailPage({
               <h2><DetailIcon name="menu" />料金・メニュー{menuItems && menuItems.length > 1 && <DetailTabLink id="menu" />}</h2>
               {menuItems && menuItems.length > 0 && <div className="sd-menu-grid">
                 {menuItems.map((item) => <article className={`card sd-menu-card ${/初めて|初心者/.test(item.name) ? "sd-beginner-guide" : ""}`} key={item.id}>
-                  <ReferenceSlice region={[139,533,110,99]} alt="" className="sd-menu-thumb" />
+                  {item.image_url ? <img src={item.image_url} alt="" className="sd-menu-thumb" style={{ objectFit: "cover" }} /> : <ReferenceSlice region={[139,533,110,99]} alt="" className="sd-menu-thumb" />}
                   <div className="sd-menu-copy"><h3>{item.name}</h3>
                   {item.price && <p className="sd-menu-price">{String(item.price).replace(/\u3000/g, "\n")}</p>}
                   {item.description && <p className="muted">{item.description}</p>}<MenuDetail name={item.name} price={item.price} description={item.description} /></div>
@@ -338,6 +338,13 @@ export default async function StoreDetailPage({
             {notices.map((n) => (
               <div className="card" key={n.id}>
                 <h3>{n.title}</h3>
+                {n.image_url && (
+                  <img
+                    src={n.image_url}
+                    alt=""
+                    style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginTop: 8, objectFit: "cover" }}
+                  />
+                )}
                 {n.body && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{n.body}</p>}
                 <p className="muted small" style={{ marginTop: 6 }}>
                   {new Date(n.created_at).toLocaleDateString("ja-JP")}
