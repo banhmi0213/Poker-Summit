@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { importStoresFromGooglePlaces } from "./actions";
 import { ImportPrefAreaSelect } from "./pref-area-select";
+import { KeywordTabs, DEFAULT_EXCLUDE_KEYWORDS } from "./keyword-tabs";
 
 // Google Placesから店舗候補を検索して取り込む運営向けツール(2026/10、
 // 「店舗は地方どっかAPIで入れようと思ってる」との相談を受けて追加)。
@@ -12,11 +13,13 @@ export default async function AdminStoresImportPage() {
   const supabase = await createClient();
 
   const jar = await cookies();
+
   const resultRaw = jar.get("import_result")?.value;
   let result: {
     pref: string;
     area: string;
-    keyword: string;
+    keywords: string[];
+    excludeWords: string[];
     found: number;
     skippedExisting: number;
     skippedClosed: number;
@@ -31,6 +34,24 @@ export default async function AdminStoresImportPage() {
       result = null;
     }
   }
+
+  // 検索キーワード(タブ・自由入力)・除外ワードは、前回の入力内容を次回も
+  // 引き継ぐ(2026/10、「検索ワード、除外ワード入れたら消えるのやめてほしい」
+  // との指摘を受けて追加)。まだ1度も検索していない場合のみ、除外ワードは
+  // デフォルト値(パチンコ・風俗・閉店)を初期表示し、タブは「ポーカー」を
+  // 初期選択する。
+  const formStateRaw = jar.get("import_form_state")?.value;
+  let formState: { keyword: string; excludeKeywords: string; keywordTabs: string[] } | null = null;
+  if (formStateRaw) {
+    try {
+      formState = JSON.parse(formStateRaw);
+    } catch {
+      formState = null;
+    }
+  }
+  const defaultKeyword = formState?.keyword ?? "";
+  const defaultExcludeKeywords = formState ? formState.excludeKeywords : DEFAULT_EXCLUDE_KEYWORDS;
+  const selectedTabs = formState?.keywordTabs ?? ["ポーカー"];
 
   const { count: pendingImportedCount } = await supabase
     .from("stores")
@@ -56,7 +77,7 @@ export default async function AdminStoresImportPage() {
       {result && (
         <div className="card" style={{ borderColor: "var(--good)", marginBottom: 16 }}>
           <h3 style={{ marginBottom: 8 }}>
-            「{result.keyword}」× {result.pref}
+            「{result.keywords.join(" / ")}」× {result.pref}
             {result.area && ` ${result.area}`} の検索結果
           </h3>
           <div style={{ fontSize: 13, lineHeight: 1.8 }}>
@@ -65,37 +86,15 @@ export default async function AdminStoresImportPage() {
             <strong>新規に承認待ちで追加: {result.inserted}件</strong>
             {result.failed > 0 && <> ／ 登録失敗: {result.failed}件</>}
           </div>
+          {result.excludeWords && result.excludeWords.length > 0 && (
+            <div className="muted" style={{ fontSize: 11.5, marginTop: 6 }}>
+              除外ワード: {result.excludeWords.join(" / ")}
+            </div>
+          )}
         </div>
       )}
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ marginBottom: 10 }}>検索して取り込む</h3>
-        <form
-          action={importStoresFromGooglePlaces}
-          style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 360 }}
-        >
-          <ImportPrefAreaSelect />
-          <div className="field">
-            <span className="muted">検索キーワード</span>
-            <input type="text" name="keyword" defaultValue="ポーカー" />
-            <span className="muted" style={{ fontSize: 11.5 }}>
-              未入力の場合は「ポーカー」で検索します。「雀荘」「カジノバー」など別のキーワードでも検索できます。
-            </span>
-          </div>
-          <div className="field">
-            <span className="muted">除外キーワード</span>
-            <input type="text" name="excludeKeywords" placeholder="例: パチンコ, 風俗, 閉店" />
-            <span className="muted" style={{ fontSize: 11.5 }}>
-              店名にここで指定した単語が含まれる候補は取り込みません。カンマ・読点・スペース区切りで複数指定できます(任意)。
-            </span>
-          </div>
-          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-            検索して取り込む
-          </button>
-        </form>
-      </div>
-
-      <div className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span>
             現在、取り込み済み・承認待ちのままの店舗:{" "}
@@ -105,6 +104,39 @@ export default async function AdminStoresImportPage() {
             承認待ち一覧を見る
           </Link>
         </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginBottom: 10 }}>検索して取り込む</h3>
+        <form
+          action={importStoresFromGooglePlaces}
+          style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 420 }}
+        >
+          <ImportPrefAreaSelect />
+          <div className="field">
+            <span className="muted">検索キーワード</span>
+            <KeywordTabs selected={selectedTabs} />
+            <input
+              type="text"
+              name="keyword"
+              defaultValue={defaultKeyword}
+              placeholder="タブ以外のキーワードで検索したい場合はここに入力(任意)"
+            />
+            <span className="muted" style={{ fontSize: 11.5 }}>
+              上のタブは複数選択できます。選んだタブ＋ここに入力したキーワードをすべてOR検索し、結果を1つにまとめて取り込みます。何も選ばず未入力の場合は「ポーカー」で検索します。
+            </span>
+          </div>
+          <div className="field">
+            <span className="muted">除外キーワード</span>
+            <input type="text" name="excludeKeywords" defaultValue={defaultExcludeKeywords} />
+            <span className="muted" style={{ fontSize: 11.5 }}>
+              店名にここで指定した単語が含まれる候補は取り込みません。カンマ・読点・スペース区切りで複数指定できます。
+            </span>
+          </div>
+          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+            検索して取り込む
+          </button>
+        </form>
       </div>
     </div>
   );
