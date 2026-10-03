@@ -49,7 +49,7 @@ export default async function StoreMenuPage() {
       </p>
 
       <div className="card">
-        <form action={createMenuItem}>
+        <form action={createMenuItem} encType="multipart/form-data">
           <input type="hidden" name="storeId" value={store.id} />
           <div className="field">
             <span className="muted">項目名 *</span>
@@ -63,6 +63,10 @@ export default async function StoreMenuPage() {
             <span className="muted">補足（任意）</span>
             <textarea name="description" rows={2} placeholder="例: ドリンク1杯付き" />
           </div>
+          <div className="field">
+            <span className="muted">画像（任意）</span>
+            <input type="file" name="image" accept="image/*" capture="environment" />
+          </div>
           <button type="submit" className="btn primary">
             追加する
           </button>
@@ -75,6 +79,13 @@ export default async function StoreMenuPage() {
             <h3>{it.name}</h3>
             <span className="badge">{it.status === "published" ? "公開中" : "非公開"}</span>
           </div>
+          {it.image_url && (
+            <img
+              src={it.image_url}
+              alt=""
+              style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginTop: 8, objectFit: "cover" }}
+            />
+          )}
           <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4 }}>{it.price}</div>
           {it.description && (
             <p className="muted" style={{ marginTop: 6, fontSize: 13.5 }}>
@@ -107,7 +118,7 @@ export default async function StoreMenuPage() {
             <summary className="muted small" style={{ cursor: "pointer" }}>
               編集
             </summary>
-            <form action={updateMenuItem} style={{ marginTop: 10 }}>
+            <form action={updateMenuItem} encType="multipart/form-data" style={{ marginTop: 10 }}>
               <input type="hidden" name="storeId" value={store.id} />
               <input type="hidden" name="itemId" value={it.id} />
               <div className="field">
@@ -122,7 +133,17 @@ export default async function StoreMenuPage() {
                 <span className="muted">補足（任意）</span>
                 <textarea name="description" rows={2} defaultValue={it.description ?? ""} />
               </div>
-              <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
+              <div className="field">
+                <span className="muted">画像を差し替える（任意）</span>
+                <input type="file" name="image" accept="image/*" capture="environment" />
+              </div>
+              {it.image_url && (
+                <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                  <input type="checkbox" name="removeImage" />
+                  現在の画像を削除する
+                </label>
+              )}
+              <button type="submit" className="btn primary" style={{ fontSize: 12.5, marginTop: 10 }}>
                 更新する
               </button>
             </form>
