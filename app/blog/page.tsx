@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { BLOG_CATEGORIES, type BlogEntry } from "@/lib/blog";
+import { BLOG_CATEGORIES, blogArticleHref, type BlogEntry } from "@/lib/blog";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -14,7 +14,7 @@ function href(params: Params, change: Partial<Params>) {
   return `/blog${query.size ? `?${query}` : ""}`;
 }
 function Article({ entry, featured = false }: { entry: BlogEntry; featured?: boolean }) {
-  return <a href={entry.article_url} className={featured ? styles.featured : styles.article}>
+  return <a href={blogArticleHref(entry)} className={featured ? styles.featured : styles.article}>
     <div className={styles.photo}><img src={entry.image_url} alt={entry.title} loading="lazy" /></div>
     <div className={styles.copy}><span className={styles.badge}>{entry.category}</span><h3>{entry.title}</h3>{entry.summary && <p>{entry.summary}</p>}<div className={styles.meta}><time>{new Date(entry.created_at).toLocaleDateString("ja-JP", { timeZone:"Asia/Tokyo" })}</time><strong>記事を読む →</strong></div></div>
   </a>;
