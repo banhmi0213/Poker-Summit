@@ -62,6 +62,31 @@ export default async function StoreAnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .eq("store_id", store.id);
 
+  // 求人のお気に入り数・クーポン使用回数もアクセス統計で見られるように
+  // 追加(2026/10、「アクセス統計に求人お気に入り数、クーポン使用回数を
+  // 追加」との指示)。トップの店舗管理画面(page.tsx)に既にある集計と
+  // 同じやり方(求人IDを集めてfavorite_jobsを数える／coupons.used_countを
+  // 合計する)をこのページにも持ってくる。
+  const [{ data: storeJobIds }, { data: couponsForStats }] = await Promise.all([
+    supabase.from("jobs").select("id").eq("store_id", store.id),
+    supabase.from("coupons").select("used_count").eq("store_id", store.id),
+  ]);
+
+  let jobFavoriteCount = 0;
+  const jobIdList = (storeJobIds ?? []).map((j) => j.id);
+  if (jobIdList.length) {
+    const { count: jobFavCount } = await supabase
+      .from("favorite_jobs")
+      .select("*", { count: "exact", head: true })
+      .in("job_id", jobIdList);
+    jobFavoriteCount = jobFavCount ?? 0;
+  }
+
+  const totalCouponUses = (couponsForStats ?? []).reduce(
+    (sum, c) => sum + (c.used_count ?? 0),
+    0
+  );
+
   const avgViewsPerStore =
     totalStores && totalStores > 0
       ? Math.round(((sitewideViews ?? 0) / totalStores) * 10) / 10
@@ -134,6 +159,18 @@ export default async function StoreAnalyticsPage() {
           <div className="muted">お気に入り数</div>
           <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
             ♥ {favoriteCount ?? 0}
+          </div>
+        </div>
+        <div className="card">
+          <div className="muted">求人のお気に入り数（全求人合計）</div>
+          <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
+            ★ {jobFavoriteCount}
+          </div>
+        </div>
+        <div className="card">
+          <div className="muted">クーポン使用回数（全クーポン合計）</div>
+          <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
+            {totalCouponUses}
           </div>
         </div>
       </div>
