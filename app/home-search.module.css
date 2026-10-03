@@ -12,3 +12,7 @@
 .readable.readable :global(.home-tag){color:#76521b;font-weight:600}
 .readable.readable :global(.home-job-salary){color:#654718;font-weight:800}
 .readable.readable :global(.home-post) p{color:#514536}
+
+@media(max-width:767px){
+  .collapsible[data-filters-expanded="false"] select{display:none}
+}
