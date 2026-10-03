@@ -42,7 +42,7 @@ export const KEYWORD_TAB_OPTIONS = [
 ];
 
 export const DEFAULT_EXCLUDE_KEYWORDS =
-  "パチンコ, 風俗, 閉店, GiGO, namco, タイトーステーション, モーリーファンタジー, ダイナム, 万代, 万SAI堂, 快活CLUB, ソユー, コナミスポーツ, イオンモール, イオンタウン, ペットショップ, 大和ハウス, ビリヤード, スケートハウス, スロットハウス, パワーハウス, プラサカプコン, NPO法人, アミューズパーク, ジャムフレンドクラブ, GAME BANK, ゲームサロン, BiVi, トリニティ, showclub, GENTLEMENS CLUB, ガールズバー, girl's bar, tekute, スケート, ゲームアルファ, ビイ・ギャル, スナック, キャバクラ";
+  "パチンコ, パチスロ, 風俗, 閉店, GiGO, namco, タイトーステーション, モーリーファンタジー, ダイナム, 万代, 万SAI堂, 快活CLUB, ソユー, コナミスポーツ, イオンモール, イオンタウン, ペットショップ, 大和ハウス, ビリヤード, スケートハウス, スロットハウス, パワーハウス, プラサカプコン, NPO法人, アミューズパーク, ジャムフレンドクラブ, GAME BANK, ゲームサロン, BiVi, トリニティ, showclub, GENTLEMENS CLUB, ガールズバー, girl's bar, tekute, スケート, ゲームアルファ, ビイ・ギャル, スナック, キャバクラ";
 
 export function KeywordTabs({ selected }: { selected: string[] }) {
   return (
