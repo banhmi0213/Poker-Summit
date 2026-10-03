@@ -59,8 +59,8 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
           </Link>
         </div>
         <div className="portal-auth-actions">
-          {memberLinks}
           {regionSelector && <div className={styles.desktop}>{regionSelector}</div>}
+          {memberLinks}
           {storeLoginLink}
         </div>
         {regionSelector && <div className={styles.mobile}>{regionSelector}</div>}
