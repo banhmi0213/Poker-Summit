@@ -28,7 +28,7 @@ export default async function FeaturedStoresPage() {
     ? getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT)
     : supabase
         .from("stores")
-        .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url")
+        .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url, banner_url")
         .in("status", ["approved", "listed"])
         .eq("is_recommended", true)
         // Secondary sort by id: created_at alone ties for rows inserted in the
