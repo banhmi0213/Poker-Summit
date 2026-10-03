@@ -9,7 +9,7 @@ import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
-import { PrefAreaSelect } from "./pref-area-select";
+import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
 import { PokerRegionHero } from "./poker-region-hero";
 import { PrefSelector } from "./pref-selector";
@@ -253,7 +253,7 @@ export default async function HomePage({
       )}
 
       <div className={`ps-region-hero__search ${styles.search}`}>
-          <form method="get" action="/stores" className="search-box">
+          <ExpandableSearchForm>
             {/* Same /stores search this site already runs — only the fields
                 shown have changed (pref/area/category are now all visible,
                 matching the approved comp), no new search logic. */}
@@ -294,7 +294,7 @@ export default async function HomePage({
             <button type="submit" className="btn primary">
               🔍 検索する
             </button>
-          </form>
+          </ExpandableSearchForm>
       </div>
 
       <PokerRegionHero
