@@ -5,6 +5,8 @@ import { useCoupon } from "@/app/member-actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { CouponBannerLightbox } from "@/app/coupons/coupon-banner-lightbox";
+import styles from "./detail.module.css";
 
 function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -60,54 +62,33 @@ export default async function CouponDetailPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ maxWidth: 480 }}>
-        <Link href="/coupons" className="breadcrumb">
-          ← クーポン一覧に戻る
-        </Link>
-        <div className="card" style={{ textAlign: "center", padding: 28 }}>
-          {/* バナー画像はobject-fit: containで全体を表示する(2026/10、
-              「各店舗ごとにクーポン画像サイズが違う事への対応」との指示。
-              正方形・縦長どちらでも切らずに収まるよう、枠はcontain+背景色)。 */}
-          {c.banner_image_url ? (
-            <div
-              style={{
-                width: "100%",
-                maxHeight: 260,
-                borderRadius: 10,
-                overflow: "hidden",
-                background: "var(--surface-2)",
-                marginBottom: 14,
-              }}
-            >
-              <img
-                src={c.banner_image_url}
-                alt={c.title}
-                style={{ width: "100%", maxHeight: 260, objectFit: "contain" }}
-              />
+      <main className={`container ${styles.page}`}>
+        <nav className={styles.breadcrumb} aria-label="パンくず">
+          <Link href="/">TOP</Link><span>›</span><Link href="/coupons">クーポン一覧</Link><span>›</span><span>{c.title}</span>
+        </nav>
+        <section className={styles.panel}>
+          <div className={styles.visual}>
+            <div className={styles.banner}>
+              {c.banner_image_url ? <CouponBannerLightbox imageUrl={c.banner_image_url} alt={c.title} /> : <div className={styles.placeholder}><span>POKER SUMMIT</span><strong>{c.title}</strong><small>COUPON & OFFERS</small></div>}
             </div>
-          ) : (
-            <div style={{ fontSize: 40 }}>🎟️</div>
-          )}
-          <h1 style={{ fontSize: 19, margin: "10px 0 2px" }}>{c.title}</h1>
-          <p className="muted small">{c.stores?.name}</p>
-          <div style={{ marginTop: 6, display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap" }}>
-            {statusBadge(status)}
-            {c.offer_type && <span className="badge outline">{c.offer_type}</span>}
+            <div className={styles.store}>
+              <div><small>このクーポンが使える店舗</small><strong>{c.stores.name}</strong></div>
+              <Link href={`/stores/${c.store_id}`} className="btn">店舗ページを見る ›</Link>
+            </div>
           </div>
-          {c.description && <p style={{ margin: "14px 0" }}>{c.description}</p>}
-          {c.discount && (
-            <p style={{ fontWeight: 700, color: "var(--accent-text)" }}>{c.discount}</p>
-          )}
-          {c.code && (
-            <div className="badge accent" style={{ fontSize: 14, padding: "8px 16px", marginTop: 10 }}>
-              クーポンコード: {c.code}
-            </div>
-          )}
-          <p className="muted small" style={{ marginTop: 10 }}>
-            {c.valid_until ? `有効期限: ${c.valid_until}` : "有効期限なし"} ・ 利用済み {c.used_count ?? 0}
-            {c.usage_limit != null ? `/${c.usage_limit}` : ""}件
-          </p>
-
+          <div className={styles.info}>
+            <div className={styles.badges}>{c.offer_type && <span className="badge outline">{c.offer_type}</span>}{statusBadge(status)}</div>
+            <h1>{c.title}</h1>
+            {c.discount && <p className={styles.discount}>{c.discount}</p>}
+            <p className={styles.expiry}>▣ {c.valid_until ? `有効期限：${c.valid_until.replaceAll("-", ".")}` : "有効期限なし"}</p>
+            <p className={styles.note}>特典の内容・利用条件をご確認のうえ、ご利用ください。</p>
+            <section className={styles.conditions}>
+              <h2>ご利用条件</h2>
+              {c.description ? <p className={styles.description}>{c.description}</p> : <p className={styles.description}>詳しい利用条件は店舗へお問い合わせください。</p>}
+              <dl><div><dt>利用回数</dt><dd>お一人様1回</dd></div><div><dt>利用状況</dt><dd>{c.used_count ?? 0}件利用済み{c.usage_limit != null ? ` ／ 全体の上限${c.usage_limit}件` : ""}</dd></div></dl>
+            </section>
+            {c.code && <div className={styles.code}>クーポンコード <strong>{c.code}</strong></div>}
+            <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>店頭でこの画面をご提示ください。</h2><p>利用条件をご確認のうえ、お店でクーポン画面を提示して特典をお受け取りください。</p></div></div>
           {usedByMe ? (
             <button type="button" className="btn" style={{ marginTop: 16, width: "100%" }} disabled>
               ✓ 使用済みです
@@ -134,11 +115,19 @@ export default async function CouponDetailPage({
             </form>
           )}
 
-          <Link href={`/stores/${c.store_id}`} className="btn" style={{ marginTop: 10, display: "inline-flex" }}>
-            この店舗のページを見る
-          </Link>
-        </div>
-      </div>
+          </div>
+        </section>
+        <section className={styles.how}>
+          <h2>クーポンの使い方</h2>
+          <p>かんたん3ステップで特典を利用できます。</p>
+          <ol>
+            <li><span>1</span><div><h3>特典を探す</h3><p>お気に入りのお店のクーポンを見つけましょう。</p></div></li>
+            <li><span>2</span><div><h3>利用条件を確認</h3><p>有効期限や対象内容など、詳細をご確認ください。</p></div></li>
+            <li><span>3</span><div><h3>店頭で提示</h3><p>お店で画面を提示し、スタッフの案内に従ってご利用ください。</p></div></li>
+          </ol>
+        </section>
+        <Link href="/coupons" className={styles.back}>← クーポン一覧に戻る</Link>
+      </main>
       <PortalFooter />
       <BottomTabs />
     </div>
