@@ -4,3 +4,6 @@
 .header :global(.ps-pref-selector__select){width:94px;min-height:28px;padding:3px 8px;font-size:13px;background:transparent;border:0}
 @media(max-width:1100px){.desktop{display:none}.mobile{display:flex;align-items:center;margin-left:auto;flex-shrink:0}.header :global(.portal-nav-inner){gap:8px}.header :global(.portal-logo){min-width:0;max-width:calc(100% - 146px);flex-shrink:1}.header :global(.portal-logo) :global(.logo-img){max-width:100%;height:auto}.header :global(.nav-hamburger){flex-shrink:0}.header :global(.ps-pref-selector__select){width:94px;font-size:16px}}
 @media(min-width:1101px){.header :global(.ps-pref-selector){padding:2px 0;height:38px;box-sizing:border-box}.header :global(.ps-pref-selector__label){font-size:9px;line-height:10px;padding:0 6px}.header :global(.ps-pref-selector__select){width:82px;height:22px;min-height:0;padding:0 6px;line-height:20px;box-sizing:border-box}}
+.header.header :global(.portal-links) :global(.plink),.header.header :global(.mobile-nav-drawer) :global(.plink){font-weight:700;color:#3f2f1e}
+.header.header :global(.portal-links) :global(.plink) :global(.muted),.header.header :global(.mobile-nav-drawer) :global(.plink) :global(.muted){font-weight:600;color:#554330}
+.header.header :global(.portal-links) :global(.plink):hover,.header.header :global(.mobile-nav-drawer) :global(.plink):hover{color:#795519}
