@@ -10,7 +10,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreListCard } from "./store-list-card";
-import { PrefAreaSelect } from "@/app/pref-area-select";
+import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 
 export default async function StoresPage({
   searchParams,
@@ -233,8 +233,8 @@ export default async function StoresPage({
           </p>
         )}
 
-        <form
-          method="get"
+        <ExpandableSearchForm
+          className=""
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
           {/* region isn't its own dropdown here (only q / pref / category are),
@@ -323,7 +323,7 @@ export default async function StoresPage({
           <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
             検索
           </button>
-        </form>
+        </ExpandableSearchForm>
 
         {displayStores.length === 0 && (
           <p className="muted">条件に一致する店舗はありません。</p>
