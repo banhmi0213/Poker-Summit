@@ -43,7 +43,7 @@ export default async function StoreNoticesPage() {
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>お知らせ管理</h1>
 
       <div className="card">
-        <form action={createNotice}>
+        <form action={createNotice} encType="multipart/form-data">
           <input type="hidden" name="storeId" value={store.id} />
           <div className="field">
             <span className="muted">タイトル *</span>
@@ -52,6 +52,10 @@ export default async function StoreNoticesPage() {
           <div className="field">
             <span className="muted">本文</span>
             <textarea name="body" rows={3} />
+          </div>
+          <div className="field">
+            <span className="muted">画像（任意）</span>
+            <input type="file" name="image" accept="image/*" capture="environment" />
           </div>
           <button type="submit" className="btn primary">
             お知らせを掲載する
@@ -65,6 +69,13 @@ export default async function StoreNoticesPage() {
             <h3>{n.title}</h3>
             <span className="badge">{n.status === "published" ? "公開中" : "非公開"}</span>
           </div>
+          {n.image_url && (
+            <img
+              src={n.image_url}
+              alt=""
+              style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginTop: 8, objectFit: "cover" }}
+            />
+          )}
           {n.body && (
             <p className="muted" style={{ marginTop: 6, fontSize: 13.5 }}>
               {n.body}
@@ -96,7 +107,7 @@ export default async function StoreNoticesPage() {
             <summary className="muted small" style={{ cursor: "pointer" }}>
               編集
             </summary>
-            <form action={updateNotice} style={{ marginTop: 10 }}>
+            <form action={updateNotice} encType="multipart/form-data" style={{ marginTop: 10 }}>
               <input type="hidden" name="storeId" value={store.id} />
               <input type="hidden" name="noticeId" value={n.id} />
               <div className="field">
@@ -107,7 +118,17 @@ export default async function StoreNoticesPage() {
                 <span className="muted">本文</span>
                 <textarea name="body" rows={3} defaultValue={n.body ?? ""} />
               </div>
-              <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
+              <div className="field">
+                <span className="muted">画像を差し替える（任意）</span>
+                <input type="file" name="image" accept="image/*" capture="environment" />
+              </div>
+              {n.image_url && (
+                <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                  <input type="checkbox" name="removeImage" />
+                  現在の画像を削除する
+                </label>
+              )}
+              <button type="submit" className="btn primary" style={{ fontSize: 12.5, marginTop: 10 }}>
                 更新する
               </button>
             </form>
