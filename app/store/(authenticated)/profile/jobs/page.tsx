@@ -74,7 +74,7 @@ export default async function StoreJobsPage() {
       ? supabase
           .from("job_applications")
           .select(
-            "job_id, name, tel, message, age, gender, dealer_experience, address, interview_date, motivation, applied_at"
+            "job_id, name, tel, email, message, age, gender, dealer_experience, address, interview_date, motivation, applied_at"
           )
           .in("job_id", jobIds)
           .order("applied_at", { ascending: false })
@@ -83,6 +83,7 @@ export default async function StoreJobsPage() {
             job_id: string;
             name: string | null;
             tel: string | null;
+            email: string | null;
             message: string | null;
             age: number | null;
             gender: string | null;
@@ -105,6 +106,7 @@ export default async function StoreJobsPage() {
     {
       name: string | null;
       tel: string | null;
+      email: string | null;
       message: string | null;
       age: number | null;
       gender: string | null;
@@ -120,6 +122,7 @@ export default async function StoreJobsPage() {
     (jobApplicants[r.job_id] ??= []).push({
       name: r.name,
       tel: r.tel,
+      email: r.email,
       message: r.message,
       age: r.age,
       gender: r.gender,
@@ -257,6 +260,11 @@ export default async function StoreJobsPage() {
                     {a.tel && (
                       <p className="muted small" style={{ marginTop: 4 }}>
                         <a href={`tel:${String(a.tel).replace(/[^+0-9]/g, "")}`}>{a.tel}</a>
+                      </p>
+                    )}
+                    {a.email && (
+                      <p className="muted small" style={{ marginTop: 4 }}>
+                        <a href={`mailto:${a.email}`}>{a.email}</a>
                       </p>
                     )}
                     {a.address && (
