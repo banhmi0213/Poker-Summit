@@ -22,6 +22,7 @@ export default async function AdminStoresImportPage() {
     excludeWords: string[];
     found: number;
     skippedExisting: number;
+    skippedWrongPref: number;
     skippedClosed: number;
     skippedByFilter: number;
     inserted: number;
@@ -88,7 +89,8 @@ export default async function AdminStoresImportPage() {
             {result.area && ` ${result.area}`} の検索結果
           </h3>
           <div style={{ fontSize: 13, lineHeight: 1.8 }}>
-            検索でヒット: {result.found}件 ／ 取り込み済みのためスキップ: {result.skippedExisting}件 ／ 閉店済みのためスキップ:{" "}
+            検索でヒット: {result.found}件 ／ 取り込み済みのためスキップ: {result.skippedExisting}件 ／{" "}
+            都道府県不一致のためスキップ: {result.skippedWrongPref ?? 0}件 ／ 閉店済みのためスキップ:{" "}
             {result.skippedClosed}件 ／ 除外ワードでスキップ: {result.skippedByFilter}件 ／{" "}
             <strong>新規に承認待ちで追加: {result.inserted}件</strong>
             {result.failed > 0 && <> ／ 登録失敗: {result.failed}件</>}
