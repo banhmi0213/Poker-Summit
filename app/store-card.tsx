@@ -17,6 +17,7 @@ export function StoreCard({
     city: string | null;
     description: string | null;
     logo_url?: string | null;
+    banner_url?: string | null;
   };
   coverPhoto?: string;
   isFavorite: boolean;
@@ -24,6 +25,7 @@ export function StoreCard({
   favoriteAction: () => Promise<void>;
 }) {
   const desc = store.description ?? "";
+  const cover = store.banner_url || coverPhoto;
 
   return (
     <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
@@ -38,8 +40,8 @@ export function StoreCard({
         </button>
       </form>
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>
-        <div className="generic-store-cover">{coverPhoto || store.logo_url ? <img src={coverPhoto || store.logo_url!} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
-        {!store.logo_url && <div className="generic-store-finger"><StoreFallbackLogo /></div>}
+        <div className="generic-store-cover">{cover ? <img src={cover} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
+        <div className="generic-store-finger">{store.logo_url ? <img src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
         <div style={{ padding: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
           {store.category && (
