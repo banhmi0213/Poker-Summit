@@ -24,6 +24,9 @@ export async function updateProfile(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
+  // 都道府県の公開設定(2026/10追加、「会員登録時都道府県を非公開にできる
+  // ように」との指示。登録後もここで切り替えられるようにする)。
+  const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
   const role = String(formData.get("role") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
 
@@ -32,7 +35,7 @@ export async function updateProfile(formData: FormData) {
   }
 
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: name, pref },
+    data: { display_name: name, pref, pref_public: prefPublic },
   });
 
   if (error) {
@@ -42,11 +45,18 @@ export async function updateProfile(formData: FormData) {
   // display_nameもprofilesへミラーしておく(2026/10追加)。会員プロフィール
   // ページ(/members/[id])は他人のauth.users.user_metadataを直接読めない
   // ため、ここで公開テーブル側にも複製しておく必要がある。
+  // 都道府県・公開設定もprofilesへミラーする(2026/10追加)。公開設定を
+  // 他人から見える会員プロフィールページ(/members/[id])で判定するため、
+  // 公開/非公開のどちらでも値自体はprofilesに保存し、表示側でpref_public
+  // を見て出し分ける(非公開時にここで値を落とすと本人の編集画面にも
+  // 復元できなくなるため)。
   const { error: profileError } = await supabase.from("profiles").upsert({
     user_id: user.id,
     display_name: name || null,
     role: role || null,
     bio: bio || null,
+    pref: pref || null,
+    pref_public: prefPublic,
     updated_at: new Date().toISOString(),
   });
 
