@@ -456,7 +456,7 @@ async function OverviewTab({
 
   let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, favs: favByStore.get(s.id) ?? 0 }));
   if (q) storeRows = storeRows.filter((r: any) => r.s.name.includes(q));
-  if (category) storeRows = storeRows.filter((r: any) => r.s.category === category);
+  if (category && category !== "other") storeRows = storeRows.filter((r: any) => r.s.category === category);
   storeRows.sort((a: any, b: any) => {
     if (sort === "name") return a.s.name.localeCompare(b.s.name, "ja");
     if (sort === "likes") return b.favs - a.favs;
@@ -546,9 +546,9 @@ async function OverviewTab({
           <input type="hidden" name="tab" value="overview" />
           <input type="hidden" name="period" value={filters.period} />
           <input type="text" name="q" defaultValue={q} placeholder="店舗名で検索" style={{ maxWidth: 220 }} />
-          <select name="category" defaultValue={category}>
+          <select name="category" defaultValue={category === "other" ? "" : category}>
             <option value="">カテゴリ: すべて</option>
-            {CATEGORY_OPTIONS.map((c) => (
+            {CATEGORY_OPTIONS.filter((c) => c.value !== "other").map((c) => (
               <option key={c.value} value={c.value}>
                 {c.label}
               </option>
@@ -625,7 +625,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
   const favByStore = new Map<string, number>();
   (favs ?? []).forEach((f: any) => favByStore.set(f.store_id, (favByStore.get(f.store_id) ?? 0) + 1));
 
-  const rows = CATEGORY_OPTIONS.map((c) => {
+  const rows = CATEGORY_OPTIONS.filter((c) => c.value !== "other").map((c) => {
     const inCat = (stores ?? []).filter((s: any) => s.category === c.value);
     const views = inCat.reduce((a: number, s: any) => a + (viewsByStore.get(s.id) ?? 0), 0);
     const likes = inCat.reduce((a: number, s: any) => a + (favByStore.get(s.id) ?? 0), 0);
