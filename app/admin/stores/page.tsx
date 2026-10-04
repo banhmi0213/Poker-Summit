@@ -26,13 +26,12 @@ import {
 export default async function AdminStoresPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; region?: string; pref?: string; area?: string };
+  searchParams: { q?: string; status?: string; region?: string; area?: string };
 }) {
   const supabase = await createClient();
   const q = searchParams.q?.trim() ?? "";
   const status = searchParams.status ?? "all";
   const region = REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
-  const pref = PREF_OPTIONS.includes(searchParams.pref ?? "") ? searchParams.pref! : "";
   const area = searchParams.area?.trim() ?? "";
 
   let query = supabase
@@ -57,7 +56,6 @@ export default async function AdminStoresPage({
   if (region) {
     query = query.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
   }
-  if (pref) query = query.eq("pref", pref);
   if (area) {
     const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
     const pattern = `"%${escaped}%"`;
@@ -261,68 +259,7 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">都道府県</span>
-            <select name="pref" defaultValue="">
-              <option value="">未設定</option>
-              {PREF_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">市区町村</span>
-            <input type="text" name="city" />
-          </div>
-          <div className="field">
-            <span className="muted">住所</span>
-            <input type="text" name="address" />
-          </div>
-          <div className="field">
-            <span className="muted">電話番号</span>
-            <input type="text" name="tel" />
-          </div>
-          <div className="field">
-            <span className="muted">営業時間</span>
-            <HoursInput initialValue="" />
-          </div>
-          <div className="field">
-            <span className="muted">紹介文</span>
-            <textarea name="description" rows={3} />
-          </div>
-          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-            追加する（即時掲載）
-          </button>
-        </form>
-      </details>
-
-      <form
-        method="get"
-        style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}
-      >
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="店舗名で検索"
-          style={{
-            padding: "8px 10px",
-            borderRadius: 6,
-            border: "1px solid var(--border-strong)",
-            background: "var(--surface-2)",
-            fontSize: 13,
-            width: 220,
-          }}
-        />
-        <select name="region" defaultValue={region} aria-label="地方" style={{ padding: "8px 10px", fontSize: 13, width: 150 }}>
-          <option value="">地方: すべて</option>
-          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <select name="pref" defaultValue={pref} aria-label="都道府県" style={{ padding: "8px 10px", fontSize: 13, width: 150 }}>
-          <option value="">都道府県: すべて</option>
-          {PREF_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <input name="area" defaultValue={area} aria-label="エリア" placeholder="エリア（市区町村・駅名など）" style={{ padding: "8px 10px", fontSize: 13, width: 220 }} />
+            <input name="area" defaultValue={area} aria-label="エリア" placeholder="エリア（市区町村・駅名など）" style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13, width: 220 }} />
         <select
           name="status"
           defaultValue={status}
