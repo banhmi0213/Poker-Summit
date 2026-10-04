@@ -58,7 +58,7 @@ export default async function CouponDetailPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <main className={`container ${styles.page}`}>
+      <main className={`container detail-readable ${styles.page}`}>
         <nav className={styles.breadcrumb} aria-label="パンくず">
           <Link href="/">TOP</Link><span>›</span><Link href="/coupons">クーポン一覧</Link><span>›</span><span>{c.title}</span>
         </nav>

@@ -2704,3 +2704,10 @@ th {
 /* Event cards stay readable, including completed events. */
 .ep-card,.ep-date,.ep-card-copy h3,.ep-card-copy p,.ep-list-heading>span{color:#493018;}
 .ep-card-meta>span,.ep-card-meta b{color:#684514;font-weight:600;}
+
+/* Readable text on public detail pages; preserve action/status backgrounds. */
+.detail-readable{--text:#302316;--text-2:#514536;--muted:#514536;--accent-text:#78521a;color:#302316;}
+.detail-readable :is(h1,h2,h3,h4){color:#302316;font-weight:800;}
+.detail-readable :is(.muted,.info-row .k,.sd-empty,.sd-weekday,.sd-schedule p,.sd-calendar-days>span,.sd-see-all){color:#514536;}
+.detail-readable :is(.breadcrumb,.sd-detail-link){color:#78521a;}
+.detail-readable input::placeholder,.detail-readable textarea::placeholder{color:#665744;opacity:1;}

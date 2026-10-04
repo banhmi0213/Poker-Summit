@@ -154,7 +154,7 @@ export default async function StoreDetailPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <main className="container sd-page">
+      <main className="container sd-page detail-readable">
         <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>
         <div className="sd-title-row">
           <div className="sd-title"><h1>{store.name}</h1>

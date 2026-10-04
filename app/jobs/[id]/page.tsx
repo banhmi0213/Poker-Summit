@@ -73,7 +73,7 @@ export default async function JobDetailPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ maxWidth: 640 }}>
+      <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/jobs" className="breadcrumb">
           ← 求人一覧に戻る
         </Link>

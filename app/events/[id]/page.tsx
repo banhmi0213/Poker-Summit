@@ -39,7 +39,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const mapQuery = [e.location,store?.address,store?.name].filter(Boolean).join(" ");
   return <div>
     <PortalHeader userEmail={user?.email}/>
-    <main className={`container ${styles.page}`}>
+    <main className={`container detail-readable ${styles.page}`}>
       <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>
       <div className={styles.topBanner}>{e.banner_image_url ? <img src={e.banner_image_url} alt={e.title}/> : <EventSign title={e.title} category={e.category} startAt={e.start_at} venue={e.stores?.name || e.location} hero />}</div>
           <div className={styles.heading}><h1>{e.title}</h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>

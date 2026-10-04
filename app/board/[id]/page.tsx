@@ -107,7 +107,7 @@ export default async function BoardPostPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ maxWidth: 640 }}>
+      <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/board" className="breadcrumb">
           ← スレッド一覧に戻る
         </Link>
@@ -151,7 +151,7 @@ export default async function BoardPostPage({
             )}
             <div>
               {post.author_user_id && roleByUserId[post.author_user_id] && (
-                <div style={{ color: "var(--accent)", fontSize: 11, fontWeight: 700 }}>
+                <div style={{ color: "var(--accent-text)", fontSize: 11, fontWeight: 700 }}>
                   {roleByUserId[post.author_user_id]}
                 </div>
               )}
@@ -206,7 +206,7 @@ export default async function BoardPostPage({
               >
                 <div>
                   {r.author_user_id && roleByUserId[r.author_user_id] && (
-                    <div style={{ color: "var(--accent)", fontSize: 10.5, fontWeight: 700 }}>
+                    <div style={{ color: "var(--accent-text)", fontSize: 10.5, fontWeight: 700 }}>
                       {roleByUserId[r.author_user_id]}
                     </div>
                   )}
