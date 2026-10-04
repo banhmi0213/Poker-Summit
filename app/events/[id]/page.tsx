@@ -8,6 +8,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreNamePlaceholder } from "@/app/store-name-placeholder";
 import styles from "./detail.module.css";
+import { EventSign } from "@/app/event-sign";
 
 function date(value: string | null, time = false) {
   if (!value) return "未定";
@@ -40,7 +41,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     <PortalHeader userEmail={user?.email}/>
     <main className={`container ${styles.page}`}>
       <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>
-      {e.banner_image_url && <div className={styles.topBanner}><img src={e.banner_image_url} alt={e.title}/></div>}
+      <div className={styles.topBanner}>{e.banner_image_url ? <img src={e.banner_image_url} alt={e.title}/> : <EventSign title={e.title} category={e.category} startAt={e.start_at} venue={e.stores?.name || e.location} hero />}</div>
           <div className={styles.heading}><h1>{e.title}</h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>
       <div className={styles.layout}>
         <article className={styles.content}>
@@ -62,7 +63,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <p className={styles.help}>※ 参加予定の登録は予約確定ではありません。</p>
           </section>
           {store && <section className={styles.panel}><h2>♙ 主催店舗</h2><h3>{store.name}</h3><Link href={`/stores/${store.id}`} className={styles.storeCover}>{store.banner_url || store.logo_url ? <img src={store.banner_url || store.logo_url} alt={store.name}/> : <StoreNamePlaceholder name={store.name}/>}</Link><Link className={styles.outline} href={`/stores/${store.id}`}>店舗ページを見る ›</Link></section>}
-          {!!otherEvents?.length && <section className={styles.related}><header><h2>この店舗のその他のイベント</h2><Link href="/events">すべて見る ›</Link></header>{otherEvents.map((ev:any)=><Link className={styles.relatedItem} key={ev.id} href={`/events/${ev.id}`}>{ev.banner_image_url ? <img src={ev.banner_image_url} alt=""/> : <div className={styles.eventFallback}>POKER<br/>SUMMIT</div>}<div><small>{date(ev.start_at)} {date(ev.start_at,true)} {ev.category}</small><strong>{ev.title}</strong><span>{store?.name}</span></div></Link>)}</section>}
+          {!!otherEvents?.length && <section className={styles.related}><header><h2>この店舗のその他のイベント</h2><Link href="/events">すべて見る ›</Link></header>{otherEvents.map((ev:any)=><Link className={styles.relatedItem} key={ev.id} href={`/events/${ev.id}`}>{ev.banner_image_url ? <img src={ev.banner_image_url} alt=""/> : <div className={styles.eventFallback}><EventSign title={ev.title} category={ev.category} compact /></div>}<div><small>{date(ev.start_at)} {date(ev.start_at,true)} {ev.category}</small><strong>{ev.title}</strong><span>{store?.name}</span></div></Link>)}</section>}
         </aside>
       </div>
     </main><PortalFooter/><BottomTabs/>

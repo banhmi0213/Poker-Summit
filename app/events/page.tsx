@@ -7,7 +7,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS } from "@/lib/constants";
 import { PrefAreaSelect } from "@/app/pref-area-select";
-import { ReferenceSlice } from "@/app/stores/[id]/reference-slice";
+import { EventSign } from "@/app/event-sign";
 
 const kinds = ["すべて", "トーナメント", "イベント", "その他"];
 function eventKind(e: any) {
@@ -77,12 +77,12 @@ export default async function EventsPage({ searchParams }: {
         <button type="submit" className="btn primary">検索</button>
       </form>
       <nav className="ep-kind-tabs" aria-label="イベントの種類">{kinds.map(label => <Link key={label} href={tabHref(label)} className={kind === label ? "active" : ""} aria-current={kind === label ? "page" : undefined}>{label}</Link>)}</nav>
-      <div className="ep-list-heading"><h2>開催予定のイベント</h2><span>{events.length}件</span></div>
+      <div className="ep-list-heading"><h2>開催予定のトーナメント・イベント</h2><span>{events.length}件</span></div>
       {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
       <div className="ep-grid">{events.map((e: any) => {
         const isPast = !!e.start_at && e.start_at < now;
         return <Link key={e.id} href={`/events/${e.id}`} className="ep-card" style={{opacity:isPast ? .62 : 1}}>
-          <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <><ReferenceSlice region={[200,70,480,240]} alt="" /><strong>{e.title}</strong></>}</div>
+          <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <EventSign title={e.title} category={e.category} startAt={e.start_at} venue={e.stores?.name || e.location} />}</div>
           <div className="ep-card-body"><div className="ep-date">{e.start_at ? <><strong>{new Date(e.start_at).toLocaleDateString("ja-JP",{month:"2-digit",day:"2-digit",timeZone:"Asia/Tokyo"})}</strong><span>{new Date(e.start_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tokyo"})}</span></> : <span>日時未定</span>}</div>
             <div className="ep-card-copy"><h3>{e.title}</h3>{e.stores?.name && <p>{e.stores.name}</p>}<p>{[e.stores?.pref,e.stores?.city].filter(Boolean).join("・") || e.location}</p><div className="ep-card-meta"><span>{eventKind(e)}</span>{isPast && <span>終了</span>}<b>詳細を見る ›</b></div></div>
           </div>
