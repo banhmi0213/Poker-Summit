@@ -2700,3 +2700,7 @@ th {
 
 .store-display-name-detail { display:block; font-size:10px; font-weight:500; line-height:1.45; overflow-wrap:anywhere; text-wrap:balance; }
 @media(min-width:861px) { .home-grid-four .home-store-copy { padding:40px 12px 12px; } .home-grid-four .home-store-copy h3 { font-size:14px; } }
+
+/* Event cards stay readable, including completed events. */
+.ep-card,.ep-date,.ep-card-copy h3,.ep-card-copy p,.ep-list-heading>span{color:#493018;}
+.ep-card-meta>span,.ep-card-meta b{color:#684514;font-weight:600;}
