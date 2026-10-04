@@ -29,7 +29,7 @@ import {
 // があった(2026/10、「全店舗数が合っていない」との指摘)。店舗数が1000件を
 // 超えた今、一覧をページ分割し、取得件数をこのページサイズに揃えることで
 // 「ヘッダーの件数」と「実際に表示されている行数」を常に一致させる。
-const PAGE_SIZE = 100;
+const PAGE_SIZE = 20;
 
 export default async function AdminStoresPage({
   searchParams,
@@ -42,43 +42,70 @@ export default async function AdminStoresPage({
   const region = REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
   const area = searchParams.area?.trim() ?? "";
   const pageParam = parseInt(searchParams.page ?? "1", 10);
-  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+  const requestedPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
-  let query = supabase
-    .from("stores")
-    .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
-      { count: "exact" }
-    )
-    // Secondary sort by id: created_at alone ties for rows inserted in the
-    // same batch (dummy seed data today, bulk Places-API imports later), and
-    // Postgres doesn't guarantee a stable order for ties — without this the
-    // row order can visibly shuffle between page loads.
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false });
+  // 検索条件(ステータス/フリーワード/地方/エリア)だけを適用したクエリを都度
+  // 組み立てるヘルパー。件数だけを数える問い合わせと、実データを取る
+  // 問い合わせ(.range()込み)の2回で使う。Supabaseのクエリビルダーは一度
+  // awaitすると使い回せないため、関数化して2回呼び出す形にしている。
+  const buildFilteredQuery = () => {
+    let q0 = supabase
+      .from("stores")
+      .select(
+        "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
+        { count: "exact" }
+      )
+      // Secondary sort by id: created_at alone ties for rows inserted in the
+      // same batch (dummy seed data today, bulk Places-API imports later), and
+      // Postgres doesn't guarantee a stable order for ties — without this the
+      // row order can visibly shuffle between page loads.
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
 
-  if (status !== "all") {
-    query = query.eq("status", status);
-  }
-  if (q) {
-    query = query.ilike("name", `%${q}%`);
-  }
+    if (status !== "all") {
+      q0 = q0.eq("status", status);
+    }
+    if (q) {
+      q0 = q0.ilike("name", `%${q}%`);
+    }
+    if (region) {
+      q0 = q0.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
+    }
+    if (area) {
+      const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
+      const pattern = `"%${escaped}%"`;
+      q0 = q0.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
+    }
+    return q0;
+  };
 
-  if (region) {
-    query = query.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
-  }
-  if (area) {
-    const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
-    const pattern = `"%${escaped}%"`;
-    query = query.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
-  }
+  // 先に件数だけ(head: true、データは取らない)確認し、ページ番号を実際の
+  // 総ページ数の範囲に収める。これをしないと、総ページ数より大きい
+  // ?page=999 のようなURLを直接開いた際に.range()の開始位置がデータ件数を
+  // 超えてSupabase側がエラーを返し、画面が壊れてしまう(2026/10指摘)。
+  const { count: countOnly } = await buildFilteredQuery().range(0, 0);
+  const totalPages = Math.max(1, Math.ceil((countOnly ?? 0) / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
 
-  query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-
-  const { data: stores, count: storeCount, error: storeError } = await query;
-  const totalPages = Math.max(1, Math.ceil((storeCount ?? 0) / PAGE_SIZE));
+  const {
+    data: stores,
+    count: storeCount,
+    error: storeError,
+  } = await buildFilteredQuery().range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
   const rangeStart = (storeCount ?? 0) === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, storeCount ?? 0);
+
+  // 検索条件を何も指定していない(初期表示)ときのヘッダー件数は、却下・
+  // 承認待ちも含む生の全件数ではなく「サイトに掲載中の店舗数」だけを出す
+  // (2026/10、「表示はサイトに載せてる店舗数だけでいいねん」との指摘)。
+  // 検索・絞り込みをしている時は、従来通りその条件に一致した件数を見せる。
+  const isUnfiltered = !q && !region && !area && status === "all";
+  const { count: listedCount } = isUnfiltered
+    ? await supabase
+        .from("stores")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["approved", "listed"])
+    : { count: null as number | null };
 
   // 検索条件を保ったままページ番号だけ差し替えたリンク先を作る
   // (ページネーションの前後移動・ページ番号リンク用)。
@@ -370,9 +397,22 @@ export default async function AdminStoresPage({
       <p role="status" style={{ margin: "0 0 16px", fontSize: 14 }}>
         {storeError ? (
           "店舗数を取得できませんでした。再度検索してください。"
+        ) : isUnfiltered ? (
+          <>
+            掲載店舗：
+            <strong style={{ fontSize: 20, margin: "0 4px" }}>
+              {(listedCount ?? 0).toLocaleString("ja-JP")}
+            </strong>
+            店舗
+            <span className="muted" style={{ marginLeft: 12 }}>
+              （承認待ち・却下を含む管理中の全店舗は{(storeCount ?? 0).toLocaleString("ja-JP")}件 / 一覧は
+              {rangeStart.toLocaleString("ja-JP")}〜{rangeEnd.toLocaleString("ja-JP")}件目を表示・{page}ページ目
+              全{totalPages}ページ中）
+            </span>
+          </>
         ) : (
           <>
-            {q || region || area || status !== "all" ? "検索結果" : "全店舗"}：
+            検索結果：
             <strong style={{ fontSize: 20, margin: "0 4px" }}>
               {(storeCount ?? 0).toLocaleString("ja-JP")}
             </strong>
