@@ -45,15 +45,15 @@ export default async function AdminStoresPage({
   const requestedPage = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
   // 検索条件(ステータス/フリーワード/地方/エリア)だけを適用したクエリを都度
-  // 組み立てるヘルパー。件数だけを数える問い合わせと、実データを取る
-  // 問い合わせ(.range()込み)の2回で使う。Supabaseのクエリビルダーは一度
-  // awaitすると使い回せないため、関数化して2回呼び出す形にしている。
-  const buildFilteredQuery = () => {
+  // 組み立てるヘルパー。件数だけを数える問い合わせ(head: true)と、実データを
+  // 取る問い合わせ(.range()込み)の2回で使う。Supabaseのクエリビルダーは
+  // 一度awaitすると使い回せないため、関数化して2回呼び出す形にしている。
+  const buildFilteredQuery = (opts: { head?: boolean } = {}) => {
     let q0 = supabase
       .from("stores")
       .select(
         "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
-        { count: "exact" }
+        { count: "exact", head: opts.head ?? false }
       )
       // Secondary sort by id: created_at alone ties for rows inserted in the
       // same batch (dummy seed data today, bulk Places-API imports later), and
@@ -79,11 +79,11 @@ export default async function AdminStoresPage({
     return q0;
   };
 
-  // 先に件数だけ(head: true、データは取らない)確認し、ページ番号を実際の
-  // 総ページ数の範囲に収める。これをしないと、総ページ数より大きい
+  // 先に件数だけ(head: true、データ本体は取らない)確認し、ページ番号を
+  // 実際の総ページ数の範囲に収める。これをしないと、総ページ数より大きい
   // ?page=999 のようなURLを直接開いた際に.range()の開始位置がデータ件数を
   // 超えてSupabase側がエラーを返し、画面が壊れてしまう(2026/10指摘)。
-  const { count: countOnly } = await buildFilteredQuery().range(0, 0);
+  const { count: countOnly } = await buildFilteredQuery({ head: true });
   const totalPages = Math.max(1, Math.ceil((countOnly ?? 0) / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
 
@@ -95,16 +95,37 @@ export default async function AdminStoresPage({
   const rangeStart = (storeCount ?? 0) === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, storeCount ?? 0);
 
-  // 検索条件を何も指定していない(初期表示)ときのヘッダー件数は、却下・
-  // 承認待ちも含む生の全件数ではなく「サイトに掲載中の店舗数」だけを出す
-  // (2026/10、「表示はサイトに載せてる店舗数だけでいいねん」との指摘)。
-  // 検索・絞り込みをしている時は、従来通りその条件に一致した件数を見せる。
-  const isUnfiltered = !q && !region && !area && status === "all";
-  const { count: listedCount } = isUnfiltered
-    ? await supabase
-        .from("stores")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["approved", "listed"])
+  // ヘッダー件数は「サイトに掲載中の店舗数」だけを出す(2026/10、「表示は
+  // サイトに載せてる店舗数だけでいいねん」との指摘)。最初はフリーワード・
+  // 地方・エリアでの絞り込み時にこれが適用されておらず、却下・承認待ちも
+  // 含む生の件数が出てしまっていた(「地方で検索したときの店舗数も合って
+  // いない」との指摘) ため、フリーワード/地方/エリアの条件は保ったまま
+  // ステータスだけ掲載中(approved/listed)に固定して数える形に修正。
+  // ただしステータスで明示的に絞り込んでいる時(「承認待ち」「却下」等)は、
+  // その指定ステータスに一致する件数をそのまま見せる方が自然なため、
+  // 掲載中件数への置き換えは行わない。
+  const showListedCount = status === "all";
+  const buildListedCountQuery = () => {
+    let q0 = supabase
+      .from("stores")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["approved", "listed"]);
+
+    if (q) {
+      q0 = q0.ilike("name", `%${q}%`);
+    }
+    if (region) {
+      q0 = q0.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
+    }
+    if (area) {
+      const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
+      const pattern = `"%${escaped}%"`;
+      q0 = q0.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
+    }
+    return q0;
+  };
+  const { count: listedCount } = showListedCount
+    ? await buildListedCountQuery()
     : { count: null as number | null };
 
   // 検索条件を保ったままページ番号だけ差し替えたリンク先を作る
@@ -397,7 +418,7 @@ export default async function AdminStoresPage({
       <p role="status" style={{ margin: "0 0 16px", fontSize: 14 }}>
         {storeError ? (
           "店舗数を取得できませんでした。再度検索してください。"
-        ) : isUnfiltered ? (
+        ) : showListedCount ? (
           <>
             掲載店舗：
             <strong style={{ fontSize: 20, margin: "0 4px" }}>
@@ -405,10 +426,12 @@ export default async function AdminStoresPage({
             </strong>
             店舗
             <span className="muted" style={{ marginLeft: 12 }}>
-              （承認待ち・却下を含む管理中の全店舗は{(storeCount ?? 0).toLocaleString("ja-JP")}件 / 一覧は
+              （承認待ち・却下を含めると{(storeCount ?? 0).toLocaleString("ja-JP")}件 / 一覧は
               {rangeStart.toLocaleString("ja-JP")}〜{rangeEnd.toLocaleString("ja-JP")}件目を表示・{page}ページ目
               全{totalPages}ページ中）
             </span>
+            {region && <span className="muted" style={{ marginLeft: 12 }}>地方：{region}</span>}
+            {area && <span className="muted" style={{ marginLeft: 12 }}>エリア：{area}</span>}
           </>
         ) : (
           <>
