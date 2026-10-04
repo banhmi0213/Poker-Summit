@@ -50,7 +50,7 @@ export function AdminSidebar() {
     <nav className="app-sidebar">
       <div className="brand wordmark">
         <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
-        <small>管理画面</small>
+        <small>総合管理画面</small>
       </div>
       {ADMIN_LINKS.map((l) => {
         const active = l.href === activeHref;
