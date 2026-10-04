@@ -1,5 +1,7 @@
 "use server";
 
+import { parseEventDates } from "@/lib/event-dates";
+
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
@@ -37,6 +39,7 @@ export async function createEvent(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
+  const eventDates = parseEventDates(startAt,endAt);
   const category = String(formData.get("category") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
 
@@ -57,8 +60,8 @@ export async function createEvent(formData: FormData) {
     title,
     location: location || null,
     description: description || null,
-    start_at: startAt || null,
-    end_at: endAt || null,
+    start_at: eventDates.start_at,
+    end_at: eventDates.end_at,
     category: category || null,
     banner_image_url: bannerImageUrl,
     banner_storage_path: bannerStoragePath,
@@ -73,6 +76,8 @@ export async function createEvent(formData: FormData) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -91,6 +96,8 @@ export async function toggleEventStatus(eventId: string, storeId: string, status
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -104,6 +111,7 @@ export async function updateEvent(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
+  const eventDates = parseEventDates(startAt,endAt);
   const category = String(formData.get("category") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
@@ -123,8 +131,8 @@ export async function updateEvent(formData: FormData) {
     title,
     location: location || null,
     description: description || null,
-    start_at: startAt || null,
-    end_at: endAt || null,
+    start_at: eventDates.start_at,
+    end_at: eventDates.end_at,
     category: category || null,
   };
 
@@ -157,6 +165,8 @@ export async function updateEvent(formData: FormData) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -186,5 +196,7 @@ export async function deleteEvent(eventId: string, storeId: string) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath(`/stores/${storeId}`);
 }

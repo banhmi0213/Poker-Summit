@@ -1,15 +1,10 @@
 import Link from "next/link";
+import { toEventLocalInput } from "@/lib/event-dates";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateEventByAdmin } from "../../actions";
 import { EVENT_CATEGORIES, PREF_OPTIONS } from "@/lib/constants";
 
-function toDatetimeLocal(value: string | null) {
-  if (!value) return "";
-  const d = new Date(value);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 // 従来は /admin/events の一覧テーブル内(操作列、幅の狭いセル)に<details>で
 // インライン展開していたが、店舗管理・求人管理と同じ理由(2026/09/30)で
@@ -96,13 +91,13 @@ export default async function AdminEventEditPage({
           </div>
 
           <div className="field">
-            <span className="muted">開始日時</span>
-            <input type="datetime-local" name="startAt" defaultValue={toDatetimeLocal(event.start_at)} />
+            <span className="muted">開始日時（日本時間）</span>
+            <input type="datetime-local" name="startAt" defaultValue={toEventLocalInput(event.start_at)} />
           </div>
 
           <div className="field">
-            <span className="muted">終了日時</span>
-            <input type="datetime-local" name="endAt" defaultValue={toDatetimeLocal(event.end_at)} />
+            <span className="muted">終了日時（日本時間）</span>
+            <input type="datetime-local" name="endAt" defaultValue={toEventLocalInput(event.end_at)} />
           </div>
 
           <div className="field" style={{ gridColumn: "1 / -1" }}>

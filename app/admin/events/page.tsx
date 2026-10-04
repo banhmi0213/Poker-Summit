@@ -5,7 +5,7 @@ import { EVENT_CATEGORIES, PREF_OPTIONS } from "@/lib/constants";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
-  return new Date(value).toLocaleString("ja-JP");
+  return new Date(value).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
 }
 
 export default async function AdminEventsPage({
@@ -108,11 +108,11 @@ export default async function AdminEventsPage({
             <input type="text" name="location" />
           </div>
           <div className="field">
-            <span className="muted">開始日時</span>
+            <span className="muted">開始日時（日本時間）</span>
             <input type="datetime-local" name="startAt" />
           </div>
           <div className="field">
-            <span className="muted">終了日時</span>
+            <span className="muted">終了日時（日本時間）</span>
             <input type="datetime-local" name="endAt" />
           </div>
           <div className="field">

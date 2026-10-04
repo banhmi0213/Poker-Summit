@@ -1,5 +1,7 @@
 "use server";
 
+import { parseEventDates } from "@/lib/event-dates";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +17,8 @@ export async function setEventStatus(id: string, status: string) {
 
   await logAdminAction(supabase, `event_status_${status}`, "event", id);
   revalidatePath("/admin/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
 }
 
 export async function deleteEvent(id: string) {
@@ -27,6 +31,8 @@ export async function deleteEvent(id: string) {
 
   await logAdminAction(supabase, "event_delete", "event", id);
   revalidatePath("/admin/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
 }
 
 export async function createEventByAdmin(formData: FormData) {
@@ -38,6 +44,7 @@ export async function createEventByAdmin(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
+  const eventDates = parseEventDates(startAt,endAt);
   const category = String(formData.get("category") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
 
@@ -52,8 +59,8 @@ export async function createEventByAdmin(formData: FormData) {
       title,
       location: location || null,
       description: description || null,
-      start_at: startAt || null,
-      end_at: endAt || null,
+      start_at: eventDates.start_at,
+      end_at: eventDates.end_at,
       category: category || null,
       pref: pref || null,
     })
@@ -66,6 +73,8 @@ export async function createEventByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "event_create", "event", data?.id, { title });
   revalidatePath("/admin/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath("/events");
 }
 
@@ -78,6 +87,7 @@ export async function updateEventByAdmin(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
+  const eventDates = parseEventDates(startAt,endAt);
   const category = String(formData.get("category") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
 
@@ -91,8 +101,8 @@ export async function updateEventByAdmin(formData: FormData) {
       title,
       location: location || null,
       description: description || null,
-      start_at: startAt || null,
-      end_at: endAt || null,
+      start_at: eventDates.start_at,
+      end_at: eventDates.end_at,
       category: category || null,
       pref: pref || null,
     })
@@ -104,6 +114,8 @@ export async function updateEventByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "event_edit", "event", eventId);
   revalidatePath("/admin/events");
+  revalidatePath("/events", "layout");
+  revalidatePath("/");
   revalidatePath("/events");
 
   // 独立した編集ページ(/admin/events/[id]/edit)から呼ばれるようになったので、

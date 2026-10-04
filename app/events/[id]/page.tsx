@@ -46,18 +46,18 @@ export default async function EventDetailPage({ params }: { params: { id: string
       <div className={styles.layout}>
         <article className={styles.content}>
           <div className={styles.facts} style={{ marginTop: 0 }}>
-            {[['▦','開催日',date(e.start_at)],['◷','開始時間',date(e.start_at,true)],['♙','開催店舗',store?.name || '未登録'],['⌖','開催場所',location]].map(([icon,label,value]) => <div key={label}><b aria-hidden="true">{icon}</b><span>{label}<strong>{value}</strong></span></div>)}
+            {[['▦','開始日時',`${date(e.start_at)} ${date(e.start_at,true)}`],['◷','終了日時',e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : '未定'],['♙','開催店舗',store?.name || '未登録'],['⌖','開催場所',location]].map(([icon,label,value]) => <div key={label}><b aria-hidden="true">{icon}</b><span>{label}<strong>{value}</strong></span></div>)}
           </div>
           <nav className={styles.sections} aria-label="イベント詳細の項目"><a href="#overview">大会概要</a><a href="#structure">ストラクチャー</a><a href="#access">会場・アクセス</a></nav>
           <section id="overview" className={styles.section}><h2>大会概要</h2>
             <p className={styles.description}>{e.description || "大会の詳細は主催店舗へお問い合わせください。"}</p>
-            <dl className={styles.details}><div><dt>イベント種別</dt><dd>{e.category || "未登録"}</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div>{e.end_at && <div><dt>終了予定</dt><dd>{date(e.end_at)} {date(e.end_at,true)}</dd></div>}<div><dt>主催店舗</dt><dd>{store?.name || "未登録"}</dd></div></dl>
+            <dl className={styles.details}><div><dt>イベント種別</dt><dd>{e.category || "未登録"}</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div><div><dt>主催店舗</dt><dd>{store?.name || "未登録"}</dd></div></dl>
           </section>
           <section id="structure" className={styles.section}><h2>ストラクチャー</h2><div className={styles.notice}>ブラインド・スタートスタック・レイトレジストなどの情報は、大会概要または主催店舗の案内をご確認ください。</div></section>
           <section id="access" className={styles.section}><h2>⌖ 会場・アクセス</h2><div className={styles.access}><div><strong>{store?.name || location}</strong><p>{store?.address || location}</p>{store?.nearest_station && <p>最寄駅：{store.nearest_station}</p>}</div>{mapQuery && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer" className={styles.outline}>⌖ 地図・経路を見る ↗</a>}</div></section>
         </article>
         <aside className={styles.sidebar}>
-          <section className={styles.panel}><h2>♟ 参加情報</h2><dl className={styles.participation}><div><dt>参加費</dt><dd>主催店舗にご確認ください</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div></dl>
+          <section className={styles.panel}><h2>♟ 参加情報</h2><dl className={styles.participation}><div><dt>参加費</dt><dd>主催店舗にご確認ください</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div></dl>
             {isPast ? <p className={styles.notice}>このイベントは終了しました。{joined && "参加予定に登録していました。"}</p> : user ? <form action={async()=>{"use server"; if(joined) await leaveEvent(e.id,path); else await joinEvent(e.id,path);}}><button className={styles.primary} type="submit">{joined ? "✓ 参加予定を取消" : "▦ 参加予定に追加"}</button></form> : <Link className={styles.primary} href={`/login?next=${encodeURIComponent(path)}`}>▦ ログインして参加予定に追加</Link>}
             {user ? <form action={async()=>{"use server"; await setFavoriteEvent(e.id,!saved);}}><button className={styles.outline} type="submit" aria-pressed={saved}>{saved ? "★ お気に入り登録済み" : "☆ お気に入り"}</button></form> : <Link className={styles.outline} href={`/login?next=${encodeURIComponent(path)}`}>☆ お気に入り</Link>}
             <p className={styles.help}>※ 参加予定の登録は予約確定ではありません。</p>

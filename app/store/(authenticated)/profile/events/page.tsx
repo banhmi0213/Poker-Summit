@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { toEventLocalInput } from "@/lib/event-dates";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createEvent, toggleEventStatus, updateEvent, deleteEvent } from "../events-actions";
@@ -67,11 +68,11 @@ export default async function StoreEventsPage() {
             <input type="text" name="location" />
           </div>
           <div className="field">
-            <span className="muted">開始日時</span>
+            <span className="muted">開始日時（日本時間）</span>
             <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="startAt" />
           </div>
           <div className="field">
-            <span className="muted">終了日時</span>
+            <span className="muted">終了日時（日本時間）</span>
             <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="endAt" />
           </div>
           <div className="field">
@@ -160,12 +161,12 @@ export default async function StoreEventsPage() {
                   <input type="text" name="location" defaultValue={ev.location ?? ""} />
                 </div>
                 <div className="field">
-                  <span className="muted">開始日時</span>
-                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="startAt" defaultValue={ev.start_at ? ev.start_at.slice(0, 16) : ""} />
+                  <span className="muted">開始日時（日本時間）</span>
+                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="startAt" defaultValue={toEventLocalInput(ev.start_at)} />
                 </div>
                 <div className="field">
-                  <span className="muted">終了日時</span>
-                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="endAt" defaultValue={ev.end_at ? ev.end_at.slice(0, 16) : ""} />
+                  <span className="muted">終了日時（日本時間）</span>
+                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="endAt" defaultValue={toEventLocalInput(ev.end_at)} />
                 </div>
                 <div className="field">
                   <span className="muted">イベント詳細</span>
