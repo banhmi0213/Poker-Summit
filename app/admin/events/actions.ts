@@ -42,7 +42,7 @@ export async function createEventByAdmin(formData: FormData) {
   const pref = String(formData.get("pref") ?? "").trim();
 
   if (!title) {
-    throw new Error("イベント名を入力してください。");
+    throw new Error("トーナメント・イベント名を入力してください。");
   }
 
   const { data, error } = await supabase
@@ -82,7 +82,7 @@ export async function updateEventByAdmin(formData: FormData) {
   const pref = String(formData.get("pref") ?? "").trim();
 
   if (!title) {
-    throw new Error("イベント名を入力してください。");
+    throw new Error("トーナメント・イベント名を入力してください。");
   }
 
   const { error } = await supabase

@@ -78,7 +78,7 @@ export default async function AdminEventsPage({
             </select>
           </div>
           <div className="field">
-            <span className="muted">イベント名 *</span>
+            <span className="muted">トーナメント・イベント名 *</span>
             <input type="text" name="title" required />
           </div>
           <div className="field">

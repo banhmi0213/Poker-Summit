@@ -41,7 +41,7 @@ export async function createEvent(formData: FormData) {
   const bannerFile = formData.get("bannerImage");
 
   if (!title) {
-    throw new Error("イベント名を入力してください。");
+    throw new Error("トーナメント・イベント名を入力してください。");
   }
 
   let bannerImageUrl: string | null = null;
@@ -109,7 +109,7 @@ export async function updateEvent(formData: FormData) {
   const removeBanner = formData.get("removeBanner") === "on";
 
   if (!title) {
-    throw new Error("イベント名を入力してください。");
+    throw new Error("トーナメント・イベント名を入力してください。");
   }
 
   const { data: current } = await supabase

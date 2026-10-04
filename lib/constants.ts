@@ -225,7 +225,7 @@ export const BOARD_CATEGORIES = [
   "攻略・戦略",
 ];
 
-export const EVENT_CATEGORIES = ["大会", "体験会", "講座", "交流会"];
+export const EVENT_CATEGORIES = ["トーナメント", "大会", "体験会", "講座", "交流会"];
 
 // クーポンの「特典タイプ」(2026/10、「チップと検索欄を実際にクーポンを
 // 絞り込める機能にする」との指示)。coupons.offer_typeにこのラベルを

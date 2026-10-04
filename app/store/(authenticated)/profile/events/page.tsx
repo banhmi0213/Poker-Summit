@@ -59,7 +59,7 @@ export default async function StoreEventsPage() {
         <form action={createEvent} encType="multipart/form-data">
           <input type="hidden" name="storeId" value={store.id} />
           <div className="field">
-            <span className="muted">イベント名 *</span>
+            <span className="muted">トーナメント・イベント名 *</span>
             <input type="text" name="title" required />
           </div>
           <div className="field">
@@ -152,7 +152,7 @@ export default async function StoreEventsPage() {
                 <input type="hidden" name="storeId" value={store.id} />
                 <input type="hidden" name="eventId" value={ev.id} />
                 <div className="field">
-                  <span className="muted">イベント名 *</span>
+                  <span className="muted">トーナメント・イベント名 *</span>
                   <input type="text" name="title" required defaultValue={ev.title} />
                 </div>
                 <div className="field">

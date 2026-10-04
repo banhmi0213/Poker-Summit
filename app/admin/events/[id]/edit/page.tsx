@@ -62,7 +62,7 @@ export default async function AdminEventEditPage({
           <input type="hidden" name="eventId" value={event.id} />
 
           <div className="field">
-            <span className="muted">イベント名 *</span>
+            <span className="muted">トーナメント・イベント名 *</span>
             <input type="text" name="title" defaultValue={event.title} required />
           </div>
 
