@@ -239,20 +239,9 @@ export default async function AdminStoresPage({
             <span className="muted">カテゴリ</span>
             <select name="category" defaultValue="">
               <option value="">未設定</option>
-              {CATEGORY_OPTIONS.map((c) => (
+              {CATEGORY_OPTIONS.filter((c) => c.value !== "other").map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">地方</span>
-            <select name="region" defaultValue="">
-              <option value="">未設定</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
                 </option>
               ))}
             </select>
@@ -264,6 +253,17 @@ export default async function AdminStoresPage({
               {PREF_OPTIONS.map((p) => (
                 <option key={p} value={p}>
                   {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">地方</span>
+            <select name="region" defaultValue="">
+              <option value="">未設定</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
                 </option>
               ))}
             </select>

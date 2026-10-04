@@ -69,9 +69,9 @@ export default async function AdminStoreEditPage({
 
           <div className="field">
             <span className="muted">カテゴリ</span>
-            <select name="category" defaultValue={store.category ?? ""}>
+            <select name="category" defaultValue={store.category === "other" ? "" : store.category ?? ""}>
               <option value="">未設定</option>
-              {CATEGORY_OPTIONS.map((c) => (
+              {CATEGORY_OPTIONS.filter((c) => c.value !== "other").map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
