@@ -196,11 +196,9 @@ export default async function StoresPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
-          {(pref || region || area) && (
-            <Link href="/stores" style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
-              ← 店舗を探す
-            </Link>
-          )}
+          <Link href={pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
+            {pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
+          </Link>
         </nav>
         <div className="store-mobile-banner">
           <CompactPortalBanner image="/images/poker-store-finder-banner.jpg"
