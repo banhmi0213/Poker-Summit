@@ -68,11 +68,11 @@ export default async function StoreEventsPage() {
           </div>
           <div className="field">
             <span className="muted">開始日時</span>
-            <input type="datetime-local" name="startAt" />
+            <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="startAt" />
           </div>
           <div className="field">
             <span className="muted">終了日時</span>
-            <input type="datetime-local" name="endAt" />
+            <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="endAt" />
           </div>
           <div className="field">
             <span className="muted">イベント詳細</span>
@@ -161,11 +161,11 @@ export default async function StoreEventsPage() {
                 </div>
                 <div className="field">
                   <span className="muted">開始日時</span>
-                  <input type="datetime-local" name="startAt" defaultValue={ev.start_at ? ev.start_at.slice(0, 16) : ""} />
+                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="startAt" defaultValue={ev.start_at ? ev.start_at.slice(0, 16) : ""} />
                 </div>
                 <div className="field">
                   <span className="muted">終了日時</span>
-                  <input type="datetime-local" name="endAt" defaultValue={ev.end_at ? ev.end_at.slice(0, 16) : ""} />
+                  <input type="datetime-local" style={{ width: 260, maxWidth: "100%", alignSelf: "flex-start", boxSizing: "border-box" }} name="endAt" defaultValue={ev.end_at ? ev.end_at.slice(0, 16) : ""} />
                 </div>
                 <div className="field">
                   <span className="muted">イベント詳細</span>
