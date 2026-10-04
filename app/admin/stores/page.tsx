@@ -20,16 +20,20 @@ import {
   CATEGORY_OPTIONS,
   REGIONS,
   PREF_OPTIONS,
+  PREF_REGION,
 } from "@/lib/constants";
 
 export default async function AdminStoresPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string };
+  searchParams: { q?: string; status?: string; region?: string; pref?: string; area?: string };
 }) {
   const supabase = await createClient();
   const q = searchParams.q?.trim() ?? "";
   const status = searchParams.status ?? "all";
+  const region = REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
+  const pref = PREF_OPTIONS.includes(searchParams.pref ?? "") ? searchParams.pref! : "";
+  const area = searchParams.area?.trim() ?? "";
 
   let query = supabase
     .from("stores")
@@ -48,6 +52,16 @@ export default async function AdminStoresPage({
   }
   if (q) {
     query = query.ilike("name", `%${q}%`);
+  }
+
+  if (region) {
+    query = query.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
+  }
+  if (pref) query = query.eq("pref", pref);
+  if (area) {
+    const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
+    const pattern = `"%${escaped}%"`;
+    query = query.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
   }
 
   const { data: stores } = await query;
@@ -300,6 +314,15 @@ export default async function AdminStoresPage({
             width: 220,
           }}
         />
+        <select name="region" defaultValue={region} aria-label="地方" style={{ padding: "8px 10px", fontSize: 13, width: 150 }}>
+          <option value="">地方: すべて</option>
+          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <select name="pref" defaultValue={pref} aria-label="都道府県" style={{ padding: "8px 10px", fontSize: 13, width: 150 }}>
+          <option value="">都道府県: すべて</option>
+          {PREF_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <input name="area" defaultValue={area} aria-label="エリア" placeholder="エリア（市区町村・駅名など）" style={{ padding: "8px 10px", fontSize: 13, width: 220 }} />
         <select
           name="status"
           defaultValue={status}
