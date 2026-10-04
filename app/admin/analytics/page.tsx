@@ -480,6 +480,7 @@ async function OverviewTab({
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
+        <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
         <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
