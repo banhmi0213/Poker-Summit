@@ -429,8 +429,12 @@ async function OverviewTab({
       .gte("created_at", since.toISOString()),
     supabase.from("favorite_stores").select("*", { count: "exact", head: true }),
     supabase.from("favorite_jobs").select("*", { count: "exact", head: true }),
-    supabase.from("stores").select("*", { count: "exact", head: true }),
-    supabase.from("stores").select("id, name, category, pref, status").order("name", { ascending: true }),
+    supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
+    supabase
+      .from("stores")
+      .select("id, name, category, pref, status")
+      .in("status", ["approved", "listed"])
+      .order("name", { ascending: true }),
     supabase.from("favorite_stores").select("store_id"),
   ]);
 
