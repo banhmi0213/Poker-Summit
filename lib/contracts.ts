@@ -73,14 +73,16 @@ function shuffle<T>(arr: T[]): T[] {
 // されて並ぶ、契約が一部だけなら契約店舗が優先(先頭)でその後ろがランダム。
 export async function getPrefPickupStores(
   supabase: SupabaseClient,
-  pref: string,
+  pref: string | null,
   limit: number = PICKUP_PER_PREF_LIMIT
 ): Promise<any[]> {
-  const { data, error } = await supabase
+  // A null prefecture applies the same priority and refill rules nationwide.
+  let query = supabase
     .from("stores")
     .select("*")
-    .in("status", ["approved", "listed"])
-    .eq("pref", pref);
+    .in("status", ["approved", "listed"]);
+  if (pref) query = query.eq("pref", pref);
+  const { data, error } = await query;
 
   if (error) {
     throw new Error(error.message);

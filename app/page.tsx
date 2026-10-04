@@ -74,25 +74,9 @@ export default async function HomePage({
   // can be filtered by it, same as /stores/featured already does.
   const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
 
-  // PICK UP店舗の取得(2026/10に「埋まってない分はランダムで出す」仕様へ変更
-  // — ロジック本体は lib/contracts.ts の getPrefPickupStores 参照)。都道府県が
-  // 特定できている時だけ都道府県ごとのPICK UP契約の優先表示+ランダム埋めを
-  // 適用する。都道府県未特定(全国表示)の場合は、47都道府県分をまとめて
-  // 「10件の枠」として扱う意味がないため、従来通り注目店舗のみを新着順で
-  // 出す(どちらの経路でも最終的にホームの表示は.slice(0, 4)する)。
-  const pickupStoresPromise: Promise<any[]> = currentPref
-    ? getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT)
-    : supabase
-        .from("stores")
-        .select("id, name, category, pref, city, description, created_at, logo_url, banner_url")
-        .in("status", ["approved", "listed"])
-        .eq("is_recommended", true)
-        // Secondary sort by id: created_at alone ties for rows inserted in the
-        // same batch, and Postgres doesn't guarantee a stable order for ties.
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(8)
-        .then((r) => r.data ?? []);
+  // Nationwide and prefecture views share randomized recommended priority
+  // and refill up to ten stores. The home preview displays the first four.
+  const pickupStoresPromise = getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT);
 
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
