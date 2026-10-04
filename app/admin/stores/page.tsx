@@ -328,7 +328,7 @@ export default async function AdminStoresPage({
             <th>カテゴリ</th>
             <th>エリア</th>
             <th>ステータス</th>
-            <th>注目</th>
+            <th>PICK UP</th>
             <th>オーナー</th>
             <th>LINE連携</th>
             <th>操作</th>
@@ -359,7 +359,7 @@ export default async function AdminStoresPage({
               <td>
                 <div style={{ display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
                   <span className={`badge ${s.is_recommended ? "" : "outline"}`}>
-                    {s.is_recommended ? "注目中" : "通常"}
+                    {s.is_recommended ? "PICK UP中" : "通常"}
                   </span>
                   <form
                     action={async () => {
@@ -374,11 +374,11 @@ export default async function AdminStoresPage({
                       disabled={!s.is_recommended && s.status !== "approved" && s.status !== "listed"}
                       title={
                         !s.is_recommended && s.status !== "approved" && s.status !== "listed"
-                          ? "先に「承認」してから注目にできます"
+                          ? "先に「承認」してからPICK UPにできます"
                           : undefined
                       }
                     >
-                      {s.is_recommended ? "注目を解除" : "注目にする"}
+                      {s.is_recommended ? "PICK UPを解除" : "PICK UPにする"}
                     </button>
                   </form>
                   {/* 承認前のPICK UP押し忘れ事故(2026/10)を防ぐため、未承認
