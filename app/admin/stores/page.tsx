@@ -37,7 +37,8 @@ export default async function AdminStoresPage({
   let query = supabase
     .from("stores")
     .select(
-      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at"
+      "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
+      { count: "exact" }
     )
     // Secondary sort by id: created_at alone ties for rows inserted in the
     // same batch (dummy seed data today, bulk Places-API imports later), and
@@ -62,7 +63,7 @@ export default async function AdminStoresPage({
     query = query.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
   }
 
-  const { data: stores } = await query;
+  const { data: stores, count: storeCount, error: storeError } = await query;
 
   const { data: logins } = await supabase.rpc("admin_list_store_logins");
   const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
@@ -337,6 +338,23 @@ export default async function AdminStoresPage({
           検索
         </button>
       </form>
+
+      <p role="status" style={{ margin: "0 0 16px", fontSize: 14 }}>
+        {storeError ? (
+          "店舗数を取得できませんでした。再度検索してください。"
+        ) : (
+          <>
+            {q || region || area || status !== "all" ? "検索結果" : "全店舗"}：
+            <strong style={{ fontSize: 20, margin: "0 4px" }}>
+              {(storeCount ?? 0).toLocaleString("ja-JP")}
+            </strong>
+            店舗
+            {region && <span className="muted" style={{ marginLeft: 12 }}>地方：{region}</span>}
+            {area && <span className="muted" style={{ marginLeft: 12 }}>エリア：{area}</span>}
+            {status !== "all" && <span className="muted" style={{ marginLeft: 12 }}>ステータス：{STATUS_LABEL[status] ?? status}</span>}
+          </>
+        )}
+      </p>
 
       <table>
         <thead>
