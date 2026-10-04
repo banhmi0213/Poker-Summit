@@ -23,16 +23,26 @@ import {
   PREF_REGION,
 } from "@/lib/constants";
 
+// 店舗管理一覧を無制限に全件取得すると、Supabase/PostgREST側のデフォルト
+// 行数上限(1000件)に当たってしまい、ヘッダーの件数表示(count: "exact"、
+// この上限の影響を受けない)とテーブルに実際に並ぶ行数がずれて見える不具合
+// があった(2026/10、「全店舗数が合っていない」との指摘)。店舗数が1000件を
+// 超えた今、一覧をページ分割し、取得件数をこのページサイズに揃えることで
+// 「ヘッダーの件数」と「実際に表示されている行数」を常に一致させる。
+const PAGE_SIZE = 100;
+
 export default async function AdminStoresPage({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; region?: string; area?: string };
+  searchParams: { q?: string; status?: string; region?: string; area?: string; page?: string };
 }) {
   const supabase = await createClient();
   const q = searchParams.q?.trim() ?? "";
   const status = searchParams.status ?? "all";
   const region = REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
   const area = searchParams.area?.trim() ?? "";
+  const pageParam = parseInt(searchParams.page ?? "1", 10);
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
 
   let query = supabase
     .from("stores")
@@ -63,7 +73,25 @@ export default async function AdminStoresPage({
     query = query.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
   }
 
+  query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+
   const { data: stores, count: storeCount, error: storeError } = await query;
+  const totalPages = Math.max(1, Math.ceil((storeCount ?? 0) / PAGE_SIZE));
+  const rangeStart = (storeCount ?? 0) === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, storeCount ?? 0);
+
+  // 検索条件を保ったままページ番号だけ差し替えたリンク先を作る
+  // (ページネーションの前後移動・ページ番号リンク用)。
+  const buildPageHref = (p: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (status !== "all") params.set("status", status);
+    if (region) params.set("region", region);
+    if (area) params.set("area", area);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `/admin/stores?${qs}` : "/admin/stores";
+  };
 
   const { data: logins } = await supabase.rpc("admin_list_store_logins");
   const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
@@ -349,6 +377,10 @@ export default async function AdminStoresPage({
               {(storeCount ?? 0).toLocaleString("ja-JP")}
             </strong>
             店舗
+            <span className="muted" style={{ marginLeft: 12 }}>
+              （{rangeStart.toLocaleString("ja-JP")}〜{rangeEnd.toLocaleString("ja-JP")}件目を表示 / {page}
+              ページ目 全{totalPages}ページ中）
+            </span>
             {region && <span className="muted" style={{ marginLeft: 12 }}>地方：{region}</span>}
             {area && <span className="muted" style={{ marginLeft: 12 }}>エリア：{area}</span>}
             {status !== "all" && <span className="muted" style={{ marginLeft: 12 }}>ステータス：{STATUS_LABEL[status] ?? status}</span>}
@@ -571,6 +603,43 @@ export default async function AdminStoresPage({
           ))}
         </tbody>
       </table>
+
+      {totalPages > 1 && (
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            justifyContent: "center",
+            flexWrap: "wrap",
+            marginTop: 16,
+          }}
+        >
+          <Link
+            href={buildPageHref(Math.max(1, page - 1))}
+            aria-disabled={page <= 1}
+            className="btn"
+            style={{ fontSize: 13, pointerEvents: page <= 1 ? "none" : undefined, opacity: page <= 1 ? 0.5 : 1 }}
+          >
+            ← 前へ
+          </Link>
+          <span className="muted" style={{ fontSize: 13 }}>
+            {page} / {totalPages}
+          </span>
+          <Link
+            href={buildPageHref(Math.min(totalPages, page + 1))}
+            aria-disabled={page >= totalPages}
+            className="btn"
+            style={{
+              fontSize: 13,
+              pointerEvents: page >= totalPages ? "none" : undefined,
+              opacity: page >= totalPages ? 0.5 : 1,
+            }}
+          >
+            次へ →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
