@@ -33,10 +33,14 @@ export default async function AdminContractsPage({
   const q = searchParams.q?.trim() ?? "";
   const status = searchParams.status ?? "all";
 
+  // store_contracts から plans への外部キーは plan_id と pending_plan_id の
+  // 2本あるため、plans(...) だけだと PostgREST がどちらで結合するか決められず
+  // エラー(PGRST201、HTTP 300)になる。現在のプラン(plan_id)側の外部キーを
+  // 明示する。店舗側のプラン画面(/store/profile/plan)も同じ理由で明示している。
   let query = supabase
     .from("store_contracts")
     .select(
-      "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, current_period_end, pending_plan_id, pending_plan_effective_at, created_at, stores!inner(id, name, pref, region, tel), plans(name, monthly_fee), store_contract_addons(addon_id)"
+      "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, current_period_end, pending_plan_id, pending_plan_effective_at, created_at, stores!inner(id, name, pref, region, tel), plans!store_contracts_plan_id_fkey(name, monthly_fee), store_contract_addons(addon_id)"
     )
     .order("created_at", { ascending: false });
 

@@ -36,7 +36,7 @@ export default async function StorePlanPage() {
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, plans(id, name, monthly_fee, description), store_contract_addons(addon_id)"
+          "id, status, plan_id, current_period_end, fincode_customer_id, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(addon_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),

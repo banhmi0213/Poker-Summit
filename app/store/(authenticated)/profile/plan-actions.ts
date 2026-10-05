@@ -33,7 +33,7 @@ export async function requestPlanChange(formData: FormData) {
 
   const { data: contract } = await supabase
     .from("store_contracts")
-    .select("id, plan_id, plans(monthly_fee), store_contract_addons(addon_id)")
+    .select("id, plan_id, plans!store_contracts_plan_id_fkey(monthly_fee), store_contract_addons(addon_id)")
     .eq("store_id", storeId)
     .maybeSingle();
 
