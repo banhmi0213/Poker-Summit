@@ -339,7 +339,60 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">地方</span>
-            <RegionAreaFilters key={`${region}:${area}`} initialRegion={region} initialArea={area} />
+            <select name="region" defaultValue="">
+              <option value="">未設定</option>
+              {REGIONS.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <span className="muted">市区町村</span>
+            <input type="text" name="city" />
+          </div>
+          <div className="field">
+            <span className="muted">住所</span>
+            <input type="text" name="address" />
+          </div>
+          <div className="field">
+            <span className="muted">電話番号</span>
+            <input type="text" name="tel" />
+          </div>
+          <div className="field">
+            <span className="muted">営業時間</span>
+            <HoursInput initialValue="" />
+          </div>
+          <div className="field">
+            <span className="muted">紹介文</span>
+            <textarea name="description" rows={3} />
+          </div>
+          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
+            追加する（即時掲載）
+          </button>
+        </form>
+      </details>
+
+      <form
+        method="get"
+        style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}
+      >
+        <input
+          type="text"
+          name="q"
+          defaultValue={q}
+          placeholder="店舗名で検索"
+          style={{
+            padding: "8px 10px",
+            borderRadius: 6,
+            border: "1px solid var(--border-strong)",
+            background: "var(--surface-2)",
+            fontSize: 13,
+            width: 220,
+          }}
+        />
+        <RegionAreaFilters key={`${region}:${area}`} initialRegion={region} initialArea={area} />
         <select
           name="status"
           defaultValue={status}
