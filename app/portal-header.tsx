@@ -57,7 +57,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
           <Link href="/news" className="plink">
             お知らせ
           </Link>
-          <Link href="/#blog" className="plink">BLOG</Link>
+          <Link href="/blog" className="plink">BLOG</Link>
           <Link href="/major-tournaments" className="plink">国内外大型大会</Link>
         </div>
         <div className="portal-auth-actions">
@@ -80,7 +80,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
         <Link href="/news" className="plink">
           お知らせ
         </Link>
-          <Link href="/#blog" className="plink">BLOG</Link>
+          <Link href="/blog" className="plink">BLOG</Link>
           <Link href="/major-tournaments" className="plink">国内外大型大会</Link>
         {memberLinks}
         {storeLoginLink}
