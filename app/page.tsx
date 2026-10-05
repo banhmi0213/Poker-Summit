@@ -18,6 +18,9 @@ import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
+import { getTopBanners } from "@/lib/banners";
+import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
+import { headers } from "next/headers";
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
@@ -94,6 +97,7 @@ export default async function HomePage({
     { data: latestPosts },
     { data: upcomingEvents },
     { data: popularCoupons },
+    topBannerRows,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
@@ -145,7 +149,22 @@ export default async function HomePage({
       .eq("active", true)
       .order("created_at", { ascending: false })
       .limit(3),
+    getTopBanners(supabase),
   ]);
+
+  // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
+  const siteHost = headers().get("host") ?? "";
+  const topBanners: HomeBanner[] = topBannerRows.map((b) => {
+    let external = false;
+    if (b.link_url) {
+      try {
+        external = new URL(b.link_url, `https://${siteHost || "localhost"}`).host !== siteHost;
+      } catch {
+        external = false;
+      }
+    }
+    return { id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
+  });
 
   const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
     statsResults;
@@ -302,6 +321,11 @@ export default async function HomePage({
           {!featuredStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
+        {topBanners.length > 0 && (
+          <div className="home-section">
+            <HomeBannerSlider banners={topBanners} />
+          </div>
+        )}
         <section className="home-section">
           <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る →</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}

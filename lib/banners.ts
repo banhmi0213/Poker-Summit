@@ -58,3 +58,45 @@ export async function pickBanner(
 
   return picked;
 }
+// 管理画面の「表示位置」プルダウン・一覧表示で使う選択肢。値はbanners.position
+// のCHECK制約('top'|'sidebar'|'footer'|'store_list'|'job_list'|'job_detail')
+// と一致させること。
+export const BANNER_POSITIONS = [
+  { value: "top", label: "TOPページ（開催予定イベントの上）" },
+  { value: "sidebar", label: "サイドバー" },
+  { value: "footer", label: "フッター" },
+  { value: "store_list", label: "店舗一覧" },
+  { value: "job_list", label: "求人一覧" },
+  { value: "job_detail", label: "求人詳細" },
+] as const;
+
+export type BannerPosition = (typeof BANNER_POSITIONS)[number]["value"];
+
+export const BANNER_POSITION_LABEL: Record<string, string> = Object.fromEntries(
+  BANNER_POSITIONS.map((p) => [p.value, p.label])
+);
+
+export const BANNER_BUCKET = "banners";
+
+/**
+ * TOPページのバナースライダー用。position='top'で画像があり、scope未設定
+ * (全国向け)のものだけを表示順に返す。掲載期間外の行は公開RLSで返らないが、
+ * 管理者でログインしているとRLS上は全行が見えてしまうため、active・掲載
+ * 期間もここで明示的に絞る(pickBannerと同じ方針)。
+ */
+export async function getTopBanners(supabase: SupabaseClient): Promise<PickedBanner[]> {
+  const now = new Date().toISOString();
+  const { data } = await supabase
+    .from("banners")
+    .select("id, title, image_url, link_url")
+    .eq("position", "top")
+    .eq("active", true)
+    .is("scope", null)
+    .not("image_url", "is", null)
+    .neq("image_url", "")
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gte.${now}`)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  return (data ?? []) as PickedBanner[];
+}
