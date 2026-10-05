@@ -8,4 +8,8 @@
 .header.header :global(.portal-links) :global(.plink) :global(.muted),.header.header :global(.mobile-nav-drawer) :global(.plink) :global(.muted){font-weight:600;color:#554330}
 .header.header :global(.portal-links) :global(.plink):hover,.header.header :global(.mobile-nav-drawer) :global(.plink):hover{color:#795519}
 
-@media(min-width:1101px){.header :global(.portal-nav-inner){max-width:1600px;flex-wrap:wrap}.header :global(.portal-links){flex-shrink:0}}
+@media(min-width:1101px){.header :global(.portal-nav-inner){flex-wrap:wrap}.header :global(.portal-links){flex-shrink:0}}
+
+/* Match the TOP search form edges. */
+.header :global(.portal-nav-inner){width:calc(100% - 40px);max-width:1140px;padding:12px 0;box-sizing:border-box}
+@media(max-width:767px){.header :global(.portal-nav-inner){width:calc(100% - 24px)}}
