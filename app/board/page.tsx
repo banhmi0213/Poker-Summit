@@ -8,6 +8,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
+import { MemberRoleBadge } from "@/app/member-role-badge";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -292,12 +293,8 @@ export default async function BoardPage({
                       少し濃くすると読みやすくなる」との指示)。--mutedは
                       コントラスト比が低いため、サイト全体の.mutedは変えず
                       このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
-                  <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25 }}>
-                    {role && (
-                      <span style={{ color: "var(--accent)", fontSize: 10.5, fontWeight: 700 }}>
-                        {role}
-                      </span>
-                    )}
+                  <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25, minWidth: 0, maxWidth: "100%" }}>
+                    <MemberRoleBadge role={role} />
                     <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
                   </span>
                   <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>

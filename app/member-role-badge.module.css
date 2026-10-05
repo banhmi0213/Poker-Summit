@@ -1,0 +1,21 @@
+/* 会員の役職バッジ(サミットの投稿者名の上)。店舗カードの「ポーカーバー」
+   等のカテゴリタグ(.home-tag)と同じ薄いベージュ地・茶系文字のピル型。
+   長い役職は1行で省略し、スマホ幅でも折り返さない・はみ出さない。 */
+.badge {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  align-self: flex-start;
+  box-sizing: border-box;
+  margin-bottom: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fcf2d9;
+  color: #76521b;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

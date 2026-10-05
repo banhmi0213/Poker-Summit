@@ -6,6 +6,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
+import { MemberRoleBadge } from "@/app/member-role-badge";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -149,12 +150,8 @@ export default async function BoardPostPage({
             ) : (
               <Avatar name={post.author_name} url={null} />
             )}
-            <div>
-              {post.author_user_id && roleByUserId[post.author_user_id] && (
-                <div style={{ color: "var(--accent-text)", fontSize: 11, fontWeight: 700 }}>
-                  {roleByUserId[post.author_user_id]}
-                </div>
-              )}
+            <div style={{ minWidth: 0 }}>
+              <MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} />
               <div className="muted">
                 {post.author_name} ・ {formatDate(post.created_at)}
               </div>
@@ -195,7 +192,7 @@ export default async function BoardPostPage({
             ) : (
               <Avatar name={r.author_name} url={null} />
             )}
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
                   display: "flex",
@@ -204,12 +201,8 @@ export default async function BoardPostPage({
                   gap: 10,
                 }}
               >
-                <div>
-                  {r.author_user_id && roleByUserId[r.author_user_id] && (
-                    <div style={{ color: "var(--accent-text)", fontSize: 10.5, fontWeight: 700 }}>
-                      {roleByUserId[r.author_user_id]}
-                    </div>
-                  )}
+                <div style={{ minWidth: 0 }}>
+                  <MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} />
                   <div style={{ fontWeight: 700, fontSize: 13.5 }}>
                     {r.author_name}{" "}
                     <span className="muted small" style={{ fontWeight: 400 }}>
