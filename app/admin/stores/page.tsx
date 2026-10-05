@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { RegionAreaFilters } from "./region-area-filters";
 import { cookies } from "next/headers";
 import { HoursInput } from "@/app/hours-input";
 import { createClient } from "@/lib/supabase/server";
@@ -71,7 +72,9 @@ export default async function AdminStoresPage({
     if (region) {
       q0 = q0.in("pref", PREF_OPTIONS.filter((p) => PREF_REGION[p]?.includes(region)));
     }
-    if (area) {
+    if (PREF_OPTIONS.includes(area)) {
+      q0 = q0.eq("pref", area);
+    } else if (area) {
       const escaped = area.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`).replace(/"/g, '\\"');
       const pattern = `"%${escaped}%"`;
       q0 = q0.or(`city.ilike.${pattern},address.ilike.${pattern},area_keywords.ilike.${pattern}`);
@@ -336,64 +339,7 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">地方</span>
-            <select name="region" defaultValue="">
-              <option value="">未設定</option>
-              {REGIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <span className="muted">市区町村</span>
-            <input type="text" name="city" />
-          </div>
-          <div className="field">
-            <span className="muted">住所</span>
-            <input type="text" name="address" />
-          </div>
-          <div className="field">
-            <span className="muted">電話番号</span>
-            <input type="text" name="tel" />
-          </div>
-          <div className="field">
-            <span className="muted">営業時間</span>
-            <HoursInput initialValue="" />
-          </div>
-          <div className="field">
-            <span className="muted">紹介文</span>
-            <textarea name="description" rows={3} />
-          </div>
-          <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
-            追加する（即時掲載）
-          </button>
-        </form>
-      </details>
-
-      <form
-        method="get"
-        style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}
-      >
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="店舗名で検索"
-          style={{
-            padding: "8px 10px",
-            borderRadius: 6,
-            border: "1px solid var(--border-strong)",
-            background: "var(--surface-2)",
-            fontSize: 13,
-            width: 220,
-          }}
-        />
-        <select name="region" defaultValue={region} aria-label="地方" style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13, width: 150 }}>
-          <option value="">地方: すべて</option>
-          {REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <input name="area" defaultValue={area} aria-label="エリア" placeholder="エリア（市区町村・駅名など）" style={{ padding: "8px 10px", borderRadius: 6, border: "1px solid var(--border-strong)", background: "var(--surface-2)", fontSize: 13, width: 220 }} />
+            <RegionAreaFilters key={`${region}:${area}`} initialRegion={region} initialArea={area} />
         <select
           name="status"
           defaultValue={status}
