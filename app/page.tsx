@@ -364,7 +364,7 @@ export default async function HomePage({
           </Link>)}</div>
         </section>
         <section className={styles.promoGrid} aria-label="おすすめコンテンツ">
-          <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.jpg" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>
+          <Link id="blog" href="/blog" className={styles.promoBanner} style={{ scrollMarginTop: 100 }}><img src="/images/blog-promo-square.jpg" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>
         </section>
       </main>
 

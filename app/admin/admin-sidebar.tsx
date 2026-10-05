@@ -16,6 +16,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/coupons", label: "クーポン管理" },
   { href: "/admin/board", label: "掲示板管理" },
   { href: "/admin/blog", label: "BLOG管理" },
+  { href: "/admin/major-tournaments", label: "国内外大型大会" },
   { href: "/admin/reports", label: "通報管理" },
   { href: "/admin/banners", label: "バナー管理" },
   { href: "/admin/members", label: "会員管理" },
