@@ -5,6 +5,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
+import styles from "@/app/mypage/profile-layout.module.css";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -26,7 +27,7 @@ export default async function MemberProfilePage({
 }) {
   const supabase = await createClient();
 
-  const [{ data: { user } }, { data: profile }, { data: posts }, { data: replies }] = await Promise.all([
+  const [{ data: { user } }, { data: profile }, { data: posts, count: postCount }, { data: replies, count: replyCount }] = await Promise.all([
     supabase.auth.getUser(),
     supabase
       .from("profiles")
@@ -35,7 +36,7 @@ export default async function MemberProfilePage({
       .maybeSingle(),
     supabase
       .from("board_posts")
-      .select("id, title, created_at, category, author_name")
+      .select("id, title, created_at, category, author_name", { count: "exact" })
       .eq("author_user_id", params.id)
       .eq("status", "visible")
       .order("created_at", { ascending: false })
@@ -46,7 +47,7 @@ export default async function MemberProfilePage({
     // いると本人が実在するのに404になってしまっていた。
     supabase
       .from("board_replies")
-      .select("author_name")
+      .select("author_name", { count: "exact" })
       .eq("author_user_id", params.id)
       .eq("status", "visible")
       .limit(1),
@@ -70,42 +71,35 @@ export default async function MemberProfilePage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ maxWidth: 640, paddingTop: 20 }}>
-        <Link href="/board" className="breadcrumb">
-          ← サミットに戻る
-        </Link>
-
-        <div className="card" style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
-          <Avatar name={displayName} url={profile?.avatar_url ?? null} size={72} />
-          <div style={{ flex: 1, minWidth: 180 }}>
-            {profile?.role && (
-              <div
-                className="badge outline"
-                style={{ display: "inline-block", marginBottom: 6, color: "var(--accent)", borderColor: "var(--accent)" }}
-              >
-                {profile.role}
+      <div className={`container ${styles.page}`}>
+        <Link href="/board" className="breadcrumb">← サミットに戻る</Link>
+        <div className={styles.layout}>
+          <section className={styles.overview}>
+            <div className={styles.summary}>
+              <div className={styles.identity}>
+                <div className={styles.identityTop}>
+                  <Avatar name={displayName} url={profile?.avatar_url ?? null} size={84} />
+                  <div>
+                    <strong className={styles.memberName}>{displayName}</strong>
+                    <p className="muted small">📍 {profile?.pref_public === false ? "非公開" : profile?.pref || "未設定"}</p>
+                  </div>
+                </div>
+                <p className={styles.bio}>{profile?.bio || "フリーメッセージは未設定です。"}</p>
+                {profile?.role && <span className={styles.role}>♠ {profile.role}</span>}
               </div>
-            )}
-            <div style={{ fontWeight: 800, fontSize: 20 }}>{displayName}</div>
-            {/* 都道府県(2026/10追加)。本人がpref_publicをfalseにしていたら
-                他の会員には出さない(「会員登録時都道府県を非公開にできる
-                ように」との指示)。 */}
-            {profile?.pref_public !== false && profile?.pref && (
-              <div className="muted small">📍 {profile.pref}</div>
-            )}
-            {profile?.email_public === true && profile.public_email && <div className="muted small" style={{ marginTop: 6, overflowWrap: "anywhere" }}>✉ <a href={`mailto:${profile.public_email}`}>{profile.public_email}</a></div>}
-          </div>
-        </div>
-
-        {profile?.bio && (
-          <div className="card" style={{ marginTop: 14 }}>
-            <h2 style={{ fontSize: 14, marginBottom: 8 }}>ひとこと</h2>
-            <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7, margin: 0 }}>{profile.bio}</p>
-          </div>
-        )}
-
-        <h2 style={{ fontSize: 16, marginTop: 20, marginBottom: 10 }}>
-          サミットへの投稿 ({posts?.length ?? 0})
+              <dl className={styles.memberFacts}>
+                <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{profile?.email_public === true && profile.public_email ? <a href={`mailto:${profile.public_email}`}>{profile.public_email}</a> : "非公開"}</dd></div>
+                <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
+                <div><dt>♙ 都道府県の公開設定</dt><dd>{profile?.pref_public === false ? "非公開" : "公開（他の会員にも表示）"}</dd></div>
+              </dl>
+              {user?.id === params.id && <div className={styles.summaryActions}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/mypage" className="btn">マイページへ</Link></div>}
+            </div>
+            <div className={styles.tiles}>
+              <a href="#member-posts" className={styles.tile}><span className={styles.menuIcon} aria-hidden="true">▧</span><span className={styles.menuText}><strong>サミットへの投稿</strong><small>{postCount ?? posts?.length ?? 0} 件</small></span><b aria-hidden="true">›</b></a>
+              <div className={styles.tile}><span className={styles.menuIcon} aria-hidden="true">▤</span><span className={styles.menuText}><strong>コメント</strong><small>{replyCount ?? replies?.length ?? 0} 件</small></span></div>
+            </div>
+        <h2 id="member-posts" style={{ fontSize: 16, marginTop: 20, marginBottom: 10 }}>
+          サミットへの投稿 ({postCount ?? posts?.length ?? 0})
         </h2>
         {(!posts || posts.length === 0) && (
           <p className="muted small">まだ投稿がありません。</p>
@@ -121,6 +115,28 @@ export default async function MemberProfilePage({
             </div>
           </Link>
         ))}
+          </section>
+          <aside className={styles.sidePanels}>
+            <section className={styles.infoPanel}>
+              <h2>♟ プロフィール</h2>
+              <dl>
+                <div><dt>ハンドルネーム</dt><dd>{displayName}</dd></div>
+                <div><dt>都道府県</dt><dd>{profile?.pref_public === false ? "非公開" : profile?.pref || "未設定"}</dd></div>
+                <div><dt>都道府県の公開設定</dt><dd>{profile?.pref_public === false ? "非公開" : "公開（他の会員にも表示）"}</dd></div>
+                <div><dt>メールの公開設定</dt><dd>{profile?.email_public === true ? "公開" : "非公開"}</dd></div>
+                <div><dt>役職</dt><dd>{profile?.role || "未設定"}</dd></div>
+                <div><dt>フリーメッセージ</dt><dd className={styles.message}>{profile?.bio || "未設定"}</dd></div>
+              </dl>
+            </section>
+            <section className={styles.infoPanel}>
+              <h2>▥ 活動情報</h2>
+              <dl>
+                <div><dt>サミット投稿数</dt><dd>{postCount ?? posts?.length ?? 0} 件</dd></div>
+                <div><dt>コメント数</dt><dd>{replyCount ?? replies?.length ?? 0} 件</dd></div>
+              </dl>
+            </section>
+          </aside>
+        </div>
       </div>
       <PortalFooter />
       <BottomTabs active="board" />
