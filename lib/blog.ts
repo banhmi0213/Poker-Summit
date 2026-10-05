@@ -3,7 +3,7 @@ export type BlogBlock = { type: "paragraph" | "heading" | "image"; text?: string
 export type BlogStore = { id: string; name: string; pref: string | null; city: string | null; banner_url: string | null };
 export type BlogEntry = {
   id: string; title: string; summary: string; category: string;
-  article_url: string | null; image_url: string; image_path: string; image_alt?: string;
+  meta_description?: string; article_url: string | null; image_url: string; image_path: string; image_alt?: string;
   content_mode: "internal" | "external"; body: BlogBlock[]; related_store_ids: string[];
   active: boolean; featured: boolean; created_at: string;
 };

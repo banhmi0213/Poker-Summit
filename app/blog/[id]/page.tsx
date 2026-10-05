@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
@@ -7,6 +8,13 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { ArticleContent } from "../article-content";
 import styles from "../article.module.css";
+export async function generateMetadata({ params, searchParams }: { params: { id: string }; searchParams: { preview?: string } }): Promise<Metadata> {
+ if (!/^[0-9a-f-]{36}$/i.test(params.id) || searchParams.preview === "1") return { robots: { index: false, follow: false } };
+ const supabase = await createClient();
+ const { data, error } = await supabase.from("blog_entries").select("title,summary,meta_description").eq("id", params.id).eq("active", true).maybeSingle();
+ if (error || !data) return { robots: { index: false, follow: false } };
+ return { title: `${data.title} | Poker Summit`, description: data.meta_description?.trim() || data.summary?.trim() || undefined };
+}
 export default async function BlogArticlePage({ params, searchParams }: { params:{id:string}; searchParams:{preview?:string} }) {
  if (!/^[0-9a-f-]{36}$/i.test(params.id)) notFound();
  const supabase = await createClient();

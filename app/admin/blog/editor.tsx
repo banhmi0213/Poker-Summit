@@ -38,6 +38,7 @@ export function BlogEditor({entry,stores}: {entry?:BlogEntry;stores:BlogStore[]}
  <label className="field">タイトル *<input name="title" required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)}/></label>
  <label className="field">カテゴリ<select name="category" value={category} onChange={e=>setCategory(e.target.value)}>{BLOG_CATEGORIES.map(c=><option key={c}>{c}</option>)}</select></label>
  <label className="field">サブタイトル<textarea name="summary" rows={3} maxLength={600} value={summary} onChange={e=>setSummary(e.target.value)}/></label>
+ <label className="field">メタディスクリプション（検索結果用の説明文）<textarea name="metaDescription" rows={3} maxLength={300} defaultValue={entry?.meta_description || ""} placeholder="この記事の内容を簡潔に説明してください"/><small>検索結果向けの説明文です。空欄の場合はサブタイトルを使用します。</small></label>
  <label className="field">記事の形式<select name="contentMode" value={mode} onChange={e=>setMode(e.target.value as "internal"|"external")}><option value="internal">サイト内の記事</option><option value="external">外部の記事URL</option></select></label>
  {mode === "external" && <label className="field">記事URL *<input name="articleUrl" type="url" required maxLength={2048} placeholder="https://..." defaultValue={entry?.article_url || ""}/></label>}
  <div hidden={mode !== "internal"}><h3>記事本文</h3><p className={styles.help}>文章・見出し・写真を追加し、上下ボタンで並べ替えできます。</p>

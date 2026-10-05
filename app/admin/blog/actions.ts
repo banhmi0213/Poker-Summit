@@ -18,6 +18,8 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  const imageAlt=String(formData.get("imageAlt") || "").trim();
  if(imageAlt.length>300) return {error:"メイン画像のALTは300文字以内で入力してください。"};
  const summary=String(formData.get("summary") || "").trim();
+ const metaDescription=String(formData.get("metaDescription") || "").trim();
+ if(metaDescription.length>300) return {error:"メタディスクリプションは300文字以内で入力してください。"};
  const category=String(formData.get("category") || "");
  const mode=String(formData.get("contentMode") || "internal");
  const active=formData.get("intent") === "publish";
@@ -67,7 +69,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    else if(active&&mode==="internal")throw Error("本文の写真を添付するか、空の写真ブロックを削除してください。");
   }
   if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()))throw Error("公開する記事の本文を入力してください。");
-  const values={title,summary,category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
+  const values={title,summary,meta_description:metaDescription,category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
   const query=id?supabase.from("blog_entries").update(values).eq("id",id):supabase.from("blog_entries").insert(values);
   const {data:saved,error}=await query.select("id").single();
   if(error||!saved)throw Error("記事を保存できませんでした。もう一度お試しください。");
