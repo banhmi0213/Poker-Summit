@@ -100,3 +100,25 @@ export async function getTopBanners(supabase: SupabaseClient): Promise<PickedBan
     .order("created_at", { ascending: true });
   return (data ?? []) as PickedBanner[];
 }
+
+// 自サイトとして扱うホスト(2026/10)。本番の独自ドメインと、以前から使って
+// いるVercelのドメインのどちらのURLで登録されたリンクでも同じタブで開く。
+const OWN_SITE_HOSTS = new Set(["pokersummit.jp", "www.pokersummit.jp", "poker-summit.vercel.app"]);
+
+/**
+ * バナーのリンク先が外部サイトか(true なら target="_blank" で開く)。
+ * 相対URL、自サイトのドメイン、いま表示しているホスト(プレビューやローカル
+ * 開発)へのリンクは内部扱い。URLとして解釈できない値は外部扱いにしない。
+ */
+export function isExternalBannerLink(linkUrl: string | null | undefined, requestHost: string): boolean {
+  if (!linkUrl) return false;
+  const current = requestHost.toLowerCase();
+  try {
+    const url = new URL(linkUrl, `https://${current || "localhost"}`);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    const host = url.host.toLowerCase();
+    return host !== current && !OWN_SITE_HOSTS.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}

@@ -18,7 +18,7 @@ import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
-import { getTopBanners } from "@/lib/banners";
+import { getTopBanners, isExternalBannerLink } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { headers } from "next/headers";
 
@@ -153,16 +153,11 @@ export default async function HomePage({
   ]);
 
   // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
+  // 本番ドメイン(pokersummit.jp / www付き)とpoker-summit.vercel.appは同じ
+  // サイトとして扱う(lib/banners.ts の isExternalBannerLink)。
   const siteHost = headers().get("host") ?? "";
   const topBanners: HomeBanner[] = topBannerRows.map((b) => {
-    let external = false;
-    if (b.link_url) {
-      try {
-        external = new URL(b.link_url, `https://${siteHost || "localhost"}`).host !== siteHost;
-      } catch {
-        external = false;
-      }
-    }
+    const external = isExternalBannerLink(b.link_url, siteHost);
     return { id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
   });
 
