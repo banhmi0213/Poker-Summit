@@ -15,6 +15,8 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  const id = String(formData.get("id") || "");
  if(id && !uuid.test(id)) return {error:"記事が見つかりません。"};
  const title=String(formData.get("title") || "").trim();
+ const imageAlt=String(formData.get("imageAlt") || "").trim();
+ if(imageAlt.length>300) return {error:"メイン画像のALTは300文字以内で入力してください。"};
  const summary=String(formData.get("summary") || "").trim();
  const category=String(formData.get("category") || "");
  const mode=String(formData.get("contentMode") || "internal");
@@ -25,7 +27,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  let articleUrl:string|null=null;
  if(mode === "external") {try {const url=new URL(String(formData.get("articleUrl") || "").trim());if(!["https:","http:"].includes(url.protocol)||url.username||url.password||url.href.length>2048)throw Error();articleUrl=url.href;}catch{return {error:"記事URLは https:// または http:// で入力してください。"};}}
  let input:BlogBlock[];
- try {const raw=String(formData.get("body") || "[]");if(raw.length>150000)throw Error();const parsed=JSON.parse(raw);if(!Array.isArray(parsed)||parsed.length>100)throw Error();input=parsed;for(const b of input){if(!b||typeof b!=="object"||!["paragraph","heading","image"].includes(b.type))throw Error();if(b.type!=="image"&&(typeof b.text!=="string"||b.text.length>(b.type === "heading" ? 200 : 20000)))throw Error();if(b.caption!==undefined&&(typeof b.caption!=="string"||b.caption.length>300))throw Error();if(b.uploadKey!==undefined&&(typeof b.uploadKey!=="string"||!/^[a-zA-Z0-9_-]{1,80}$/.test(b.uploadKey)))throw Error();}}catch{return {error:"本文の形式を確認してください。本文は100ブロック、合計約10万文字以内です。"};}
+ try {const raw=String(formData.get("body") || "[]");if(raw.length>150000)throw Error();const parsed=JSON.parse(raw);if(!Array.isArray(parsed)||parsed.length>100)throw Error();input=parsed;for(const b of input){if(!b||typeof b!=="object"||!["paragraph","heading","image"].includes(b.type))throw Error();if(b.type!=="image"&&(typeof b.text!=="string"||b.text.length>(b.type === "heading" ? 200 : 20000)))throw Error();if(b.alt!==undefined&&(typeof b.alt!=="string"||b.alt.length>300))throw Error();if(b.caption!==undefined&&(typeof b.caption!=="string"||b.caption.length>300))throw Error();if(b.uploadKey!==undefined&&(typeof b.uploadKey!=="string"||!/^[a-zA-Z0-9_-]{1,80}$/.test(b.uploadKey)))throw Error();}}catch{return {error:"本文の形式を確認してください。本文は100ブロック、合計約10万文字以内です。"};}
  const storeIds=[...new Set(formData.getAll("storeIds").map(String))];
  if(storeIds.length>20 || storeIds.some(s=>!uuid.test(s))) return {error:"関連店舗は20店舗以内で選択してください。"};
  if(storeIds.length){const {data,error}=await supabase.from("stores").select("id").in("id",storeIds);if(error||data?.length!==storeIds.length)return {error:"関連店舗が見つかりません。選択し直してください。"};}
@@ -61,11 +63,11 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    let stored:BlogBlock|undefined;
    if(newFile instanceof File&&newFile.size>0){const image=await upload(newFile);stored={type:"image",url:image.url,path:image.path};}
    else if(typeof b.path==="string")stored=previousPhotos.get(b.path);
-   if(stored)body.push({type:"image",url:stored.url,path:stored.path,caption:b.caption || "",uploadKey:b.uploadKey});
+   if(stored)body.push({type:"image",url:stored.url,path:stored.path,caption:b.caption || "",alt:b.alt?.trim() || "",uploadKey:b.uploadKey});
    else if(active&&mode==="internal")throw Error("本文の写真を添付するか、空の写真ブロックを削除してください。");
   }
   if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()))throw Error("公開する記事の本文を入力してください。");
-  const values={title,summary,category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,image_url:imageUrl,image_path:imagePath,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
+  const values={title,summary,category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
   const query=id?supabase.from("blog_entries").update(values).eq("id",id):supabase.from("blog_entries").insert(values);
   const {data:saved,error}=await query.select("id").single();
   if(error||!saved)throw Error("記事を保存できませんでした。もう一度お試しください。");

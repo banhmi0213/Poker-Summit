@@ -20,7 +20,7 @@ export default async function AdminBlogPage() {
     {!data?.length && <p>まだ記事は登録されていません。</p>}
     {(data as BlogEntry[] || []).map(entry => <details key={entry.id} className="card" style={{ marginBottom:12 }}>
       <summary style={{ cursor:"pointer", fontWeight:700 }}>{entry.active ? "公開中" : "下書き"}｜{entry.title} {entry.featured ? "［ピックアップ］" : ""}</summary>
-      <div style={{ marginTop:16 }}><img src={entry.image_url} alt={entry.title} style={{ display:"block", width:280, maxWidth:"100%", height:"auto", marginBottom:16 }} /><BlogEditor entry={entry} stores={(stores || []) as BlogStore[]} /></div>
+      <div style={{ marginTop:16 }}><img src={entry.image_url} alt={entry.image_alt || entry.title} style={{ display:"block", width:280, maxWidth:"100%", height:"auto", marginBottom:16 }} /><BlogEditor entry={entry} stores={(stores || []) as BlogStore[]} /></div>
     </details>)}
   </div>;
 }
