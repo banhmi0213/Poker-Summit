@@ -7,3 +7,5 @@
 .header.header :global(.portal-links) :global(.plink),.header.header :global(.mobile-nav-drawer) :global(.plink){font-weight:700;color:#3f2f1e}
 .header.header :global(.portal-links) :global(.plink) :global(.muted),.header.header :global(.mobile-nav-drawer) :global(.plink) :global(.muted){font-weight:600;color:#554330}
 .header.header :global(.portal-links) :global(.plink):hover,.header.header :global(.mobile-nav-drawer) :global(.plink):hover{color:#795519}
+
+@media(min-width:1101px){.header :global(.portal-nav-inner){max-width:1600px;flex-wrap:wrap}.header :global(.portal-links){flex-shrink:0}}
