@@ -19,6 +19,7 @@ const STORE_LINKS: { href: string; label: string }[] = [
   // 配置(2026/09/30)。
   { href: "/store/profile/menu", label: "料金・メニュー" },
   { href: "/store/profile/jobs", label: "求人" },
+  { href: "/store/profile/dealers", label: "ディーラー" },
   { href: "/store/profile/coupons", label: "クーポン" },
   { href: "/store/profile/events", label: "トーナメント・イベント" },
   { href: "/store/profile/notices", label: "お知らせ" },

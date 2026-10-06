@@ -153,7 +153,7 @@ export async function MyPageContent({
                   <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
                     編集
                   </Link>
-                  <Link href="/account/profile?dealer=1#profile-editor-title" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
+                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
                 </div>
                 <div className="muted small">
                   📍 {pref || "未設定"}
@@ -228,7 +228,7 @@ export async function MyPageContent({
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/profile?dealer=1#profile-editor-title" className="btn">ディーラー登録</Link></div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link></div>
               <div className={styles.accountActions}>
                 <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
                 <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>
