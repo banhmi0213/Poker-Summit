@@ -187,28 +187,10 @@ export default async function HomePage({
   // 参照)。ホームのプレビュー枠は4列×2行=8件なので、ここで最終的に切る。
   const featuredStores = (featuredStoresAll ?? []).slice(0, 4);
 
-  // 「お気に入り数が多い上位10店舗」の店舗ランキングセクション用の集計
-  // (2026/09/30)。件数自体は店舗オーナー側の画面にだけ出す仕様のため、
-  // ここでは並び順(ランキング)にしか使わず、♥ボタンには表示しない。
-  const { data: allFavStoreRows } = await supabase.from("favorite_stores").select("store_id");
-  const favoriteStoreCounts: Record<string, number> = {};
-  allFavStoreRows?.forEach((r) => {
-    favoriteStoreCounts[r.store_id] = (favoriteStoreCounts[r.store_id] ?? 0) + 1;
-  });
-
-  // PICK UP店舗と同じく、現在選択中の都道府県(currentPref)に合わせて
-  // ランキングも絞り込む(2026/09/30)。
-  let rankableStoresQuery = supabase
-    .from("stores")
-    .select("id, name, category, pref, city, description, logo_url, banner_url")
-    .in("status", ["approved", "listed"]);
-  if (currentPref) rankableStoresQuery = rankableStoresQuery.eq("pref", currentPref);
-  const { data: rankableStores } = await rankableStoresQuery;
-  const rankedStores = (rankableStores ?? [])
-    .map((s) => ({ ...s, favoriteCount: favoriteStoreCounts[s.id] ?? 0 }))
-    .filter((s) => s.favoriteCount > 0)
-    .sort((a, b) => b.favoriteCount - a.favoriteCount)
-    .slice(0, 10);
+  // TOP ranks stores nationwide, independent of the visitor location.
+  const { data: rankingRows, error: rankingError } = await supabase.rpc("public_store_rankings");
+  if (rankingError) throw rankingError;
+  const rankedStores = rankingRows ?? [];
 
   const photoStoreIds = [...new Set([
     ...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id),
@@ -350,8 +332,8 @@ export default async function HomePage({
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング{currentPref ? `（${currentPref}）` : ""}</h2></div>
-          {!rankedStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだお気に入りされた店舗がありません。` : "まだお気に入りされた店舗がありません。"}</p>}
+          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2></div>
+          {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <section className="home-section">

@@ -47,6 +47,8 @@ export async function toggleFavoriteStore(storeId: string, path: string) {
   }
 
   revalidatePath(path);
+  revalidatePath("/");
+  revalidatePath("/stores");
 }
 
 export async function toggleFavoriteJob(jobId: string, path: string) {

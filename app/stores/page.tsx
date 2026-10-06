@@ -9,6 +9,7 @@ import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { HomeStoreCard } from "@/app/home-store-card";
 import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 
@@ -139,14 +140,21 @@ export default async function StoresPage({
     },
     { data: stores },
     storeListBanner,
+    rankingResult,
   ] = await Promise.all([
     supabase.auth.getUser(),
     storesQuery,
     pickBanner(supabase, "store_list", { pref, region }),
+    pref || isKnownRegion
+      ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
+      : Promise.resolve({ data: [], error: null }),
   ]);
 
+  if (rankingResult.error) throw rankingResult.error;
+  const rankedStores = rankingResult.data ?? [];
+
   // One batch, using the same photo order as the store detail page.
-  const storeIds = (stores ?? []).map(s => s.id);
+  const storeIds = [...new Set([...(stores ?? []).map(s => s.id), ...rankedStores.map((s: any) => s.id)])];
   const { data: photos } = storeIds.length
     ? await supabase.from("store_photos").select("store_id, url")
         .in("store_id", storeIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
@@ -365,6 +373,19 @@ export default async function StoresPage({
             </span>)}
             {pagination.page < pagination.totalPages ? <Link className="chip" href={pageHref(pagination.page + 1)} rel="next">次へ ›</Link> : <span className="chip" aria-disabled="true" style={{ opacity: 0.4 }}>次へ ›</span>}
           </nav>
+        )}
+
+        {(pref || isKnownRegion) && (
+          <section className="home-section" style={{ marginTop: 36 }}>
+            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2></div>
+            {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
+            <div className="home-grid home-grid-four">{rankedStores.map((s: any, index: number) => (
+              <HomeStoreCard key={s.id} store={s} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => {
+                "use server";
+                await toggleFavoriteStore(s.id, "/stores");
+              }} />
+            ))}</div>
+          </section>
         )}
       </div>
       <PortalFooter />
