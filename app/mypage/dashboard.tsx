@@ -90,6 +90,7 @@ export async function MyPageContent({
   // して」との指示)。display_name/prefと違いuser_metadataではなく
   // profilesテーブルに持たせている(他人の投稿者アイコンを一覧でまとめて
   // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
+  const { data: dealerProfile } = await supabase.from("dealer_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
   const { data: myProfile } = await supabase
     .from("profiles")
     .select("avatar_url, pref_public, role, bio, email_public")
@@ -153,7 +154,7 @@ export async function MyPageContent({
                   <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
                     編集
                   </Link>
-                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
+                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>{dealerProfile && <Link href="/spot-jobs" className="btn" style={{ fontSize: 12 }}>スポット勤務を探す</Link>}
                 </div>
                 <div className="muted small">
                   📍 {pref || "未設定"}
@@ -228,7 +229,7 @@ export async function MyPageContent({
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link></div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link>{dealerProfile && <Link href="/spot-jobs" className="btn">スポット勤務を探す</Link>}</div>
               <div className={styles.accountActions}>
                 <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
                 <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>

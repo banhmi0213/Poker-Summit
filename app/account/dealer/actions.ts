@@ -21,7 +21,7 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
  const years = Number(yearsRaw);
  const appeal = String(form.get("appeal") ?? "").trim();
  const dates = [...new Set(form.getAll("availableDates").map(String))].sort();
- if (dates.length > 366 || dates.some(d => !/^\\d{4}-\\d{2}-\\d{2}$/.test(d) || !Number.isFinite(Date.parse(d+"T00:00:00Z")) || new Date(d+"T00:00:00Z").toISOString().slice(0,10) !== d)) return { error: "希望勤務日を確認してください。" };
+ if (dates.length > 366 || dates.some(d => !/^\d{4}-\d{2}-\d{2}$/.test(d) || !Number.isFinite(Date.parse(d+"T00:00:00Z")) || new Date(d+"T00:00:00Z").toISOString().slice(0,10) !== d)) return { error: "希望勤務日を確認してください。" };
  const type = String(form.get("dealerType") ?? "");
  if (!name || name.length > 100 || !ageRaw || !Number.isInteger(age) || age < 0 || age > 120 || !PREF_OPTIONS.includes(pref) || !address || address.length > 300 || !games.length || games.some(g => !DEALER_GAMES.includes(g)) || !yearsRaw || !Number.isFinite(years) || years < 0 || years > 80 || appeal.length > 3000 || !["ディーラー", "フリーディーラー"].includes(type)) return { error: "入力内容を確認してください。" };
  const { data: current, error: currentError } = await supabase.from("dealer_profiles").select("photo_url").eq("user_id", user.id).maybeSingle();
