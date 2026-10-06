@@ -52,8 +52,6 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  if(storeIds.length){const {data,error}=await supabase.from("stores").select("id").in("id",storeIds);if(error||data?.length!==storeIds.length)return {error:"関連店舗が見つかりません。選択し直してください。"};}
  let previous:{image_url:string;image_path:string;body:BlogBlock[];published_at:string|null}|null=null;
  if(id){const {data,error}=await supabase.from("blog_entries").select("image_url,image_path,body,published_at").eq("id",id).single();if(error||!data)return {error:"記事が見つかりません。再読み込みしてください。"};previous=data;}
- const files=Array.from(formData.values()).filter((v):v is File=>v instanceof File&&v.size>0);
- if(files.reduce((n,f)=>n+f.size,0)>3*1024*1024)return {error:"1回の添付画像は合計3MB以内にしてください。写真を分けて保存できます。"};
  const uploaded:string[]=[];
  async function upload(file:File){
   if(file.size>3*1024*1024)throw Error("画像は1枚3MB以内で添付してください。");
