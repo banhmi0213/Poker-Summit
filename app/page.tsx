@@ -190,7 +190,7 @@ export default async function HomePage({
   // TOP ranks stores nationwide, independent of the visitor location.
   const { data: rankingRows, error: rankingError } = await supabase.rpc("public_store_rankings");
   if (rankingError) throw rankingError;
-  const rankedStores = rankingRows ?? [];
+  const rankedStores = (rankingRows ?? []).slice(0, 4);
 
   const photoStoreIds = [...new Set([
     ...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id),
@@ -332,7 +332,7 @@ export default async function HomePage({
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2></div>
+          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る →</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>

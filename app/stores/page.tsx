@@ -151,7 +151,7 @@ export default async function StoresPage({
   ]);
 
   if (rankingResult.error) throw rankingResult.error;
-  const rankedStores = rankingResult.data ?? [];
+  const rankedStores = (rankingResult.data ?? []).slice(0, 4);
 
   // One batch, using the same photo order as the store detail page.
   const storeIds = [...new Set([...(stores ?? []).map(s => s.id), ...rankedStores.map((s: any) => s.id)])];
@@ -377,7 +377,7 @@ export default async function StoresPage({
 
         {(pref || isKnownRegion) && (
           <section className="home-section" style={{ marginTop: 36 }}>
-            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2></div>
+            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る →</Link></div>
             {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
             <div className="home-grid home-grid-four">{rankedStores.map((s: any, index: number) => (
               <HomeStoreCard key={s.id} store={s} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => {
