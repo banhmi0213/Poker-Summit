@@ -19,7 +19,7 @@ export default async function Page({params}:{params:{id:string}}){
  const mapQuery=[e.venue,e.location].filter(Boolean).join(" ");
  return <div><PortalHeader userEmail={user?.email}/><main className="mt-sample">
  <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
- <article><header className="mt-hero"><img src="/images/poker-store-finder-banner.jpg" alt="" className="mt-hero-image"/>
+ <article><header className="mt-hero"><div className="mt-hero-photo" role="img" aria-label="ポーカー大会の会場"/>
  <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1>{e.title}</h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>
  <div className="mt-facts"><div><small>開催期間</small><strong>{period}</strong></div><div><small>開催エリア</small><strong>{e.location||"未定"}</strong></div><div><small>会場</small><strong>{e.venue||"未定"}</strong></div><div><small>開催区分</small><strong>{e.scope}大会</strong></div></div>
  <nav className="mt-section-nav" aria-label="大会詳細のメニュー"><a href="#tournament-overview">大会概要</a><a href="#tournament-schedule">スケジュール</a><a href="#tournament-venue">会場・アクセス</a></nav>
@@ -88,5 +88,16 @@ export default async function Page({params}:{params:{id:string}}){
 
 .mt-official-link{margin-top:22px;border-top:1px solid #e7dfd2;padding-top:18px;display:flex;flex-direction:column;gap:8px;font-size:13px}
 .mt-official-link a{color:#8a6520;text-decoration:underline;overflow-wrap:anywhere}
+
+.mt-hero{min-height:190px;background:linear-gradient(110deg,#cfad70,#e6cea2);border-radius:12px}
+.mt-hero:after{display:none}
+.mt-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;background:url('/images/major-tournament-banner.jpg') 99% 50% / 202% auto no-repeat}
+.mt-hero-content{width:50%;box-sizing:border-box;padding:26px 30px;color:#563814}
+.mt-hero .mt-eyebrow{color:#8b6427;font-size:9px;margin-bottom:10px}
+.mt-tag{color:#755321;border-color:#b59050;background:rgba(255,255,255,.25);font-size:10px;padding:4px 10px}
+.mt-hero h1{font-size:28px;line-height:1.35;margin:10px 0;color:#fff}
+.mt-hero-meta{color:#563814;font-size:11px;line-height:1.7;gap:5px 16px;margin-top:12px}
+@media(max-width:900px){.mt-hero h1{font-size:26px}}
+@media(max-width:600px){.mt-hero{min-height:200px}.mt-hero-content{padding:20px 16px}.mt-hero h1{font-size:22px}.mt-hero .mt-eyebrow{font-size:7px;line-height:1.6}.mt-hero-photo{background-size:auto 155%;background-position:99% 50%}.mt-hero-meta{font-size:10px;gap:4px}}
 `}</style></div>;
 }
