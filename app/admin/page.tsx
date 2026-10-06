@@ -179,6 +179,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const tabs: { key: string; label: string }[] = [
     { key: "overview", label: "全体アクセス" },
     { key: "category", label: "カテゴリー" },
+    { key: "blog", label: "BLOG記事" },
     { key: "banner", label: "バナー効果" },
     { key: "issues", label: "異常・要対応" },
   ];
@@ -289,6 +290,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       {tab === "category" && (
         <CategoryTab supabase={supabase} since={since} scope={scope} storeId={searchParams.storeId} />
       )}
+      {tab === "blog" && <BlogAnalyticsTab supabase={supabase} since={since} />}
       {tab === "banner" && <BannerTab supabase={supabase} since={since} />}
       {tab === "issues" && <IssuesTab issues={issues} />}
       {(tab === "overview" || !tab) && (
@@ -660,6 +662,71 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
                 <td className="tabular">{r.count}</td>
                 <td className="tabular">{r.views.toLocaleString()}</td>
                 <td className="tabular">{r.likes.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+async function BlogAnalyticsTab({ supabase, since }: any) {
+  const now = new Date();
+  const today = new Date(now); today.setHours(0, 0, 0, 0);
+  const seven = new Date(now); seven.setDate(seven.getDate() - 6); seven.setHours(0, 0, 0, 0);
+  const thirty = new Date(now); thirty.setDate(thirty.getDate() - 29); thirty.setHours(0, 0, 0, 0);
+
+  const [{ data: entries }, { data: views }] = await Promise.all([
+    supabase.from("blog_entries").select("id,title,slug,category,active,published_at").order("published_at", { ascending: false }),
+    supabase.from("page_views").select("blog_entry_id,created_at").not("blog_entry_id", "is", null),
+  ]);
+
+  const rows = (entries ?? []).map((entry: any) => {
+    const articleViews = (views ?? []).filter((v: any) => v.blog_entry_id === entry.id);
+    const countSince = (date: Date) => articleViews.filter((v: any) => new Date(v.created_at) >= date).length;
+    return { entry, total: articleViews.length, today: countSince(today), seven: countSince(seven), thirty: countSince(thirty), period: articleViews.filter((v: any) => new Date(v.created_at) >= since).length };
+  }).sort((a: any, b: any) => b.period - a.period || b.total - a.total);
+
+  const total = rows.reduce((n: number, r: any) => n + r.total, 0);
+  const todayTotal = rows.reduce((n: number, r: any) => n + r.today, 0);
+  const sevenTotal = rows.reduce((n: number, r: any) => n + r.seven, 0);
+  const thirtyTotal = rows.reduce((n: number, r: any) => n + r.thirty, 0);
+  const top = rows.filter((r: any) => r.entry.active).slice(0, 5);
+
+  return (
+    <div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 18 }}>
+        <StatTile label="BLOG累計PV" value={total.toLocaleString()} />
+        <StatTile label="今日のPV" value={todayTotal.toLocaleString()} />
+        <StatTile label="過去7日PV" value={sevenTotal.toLocaleString()} />
+        <StatTile label="過去30日PV" value={thirtyTotal.toLocaleString()} />
+      </div>
+      <div className="card" style={{ marginBottom: 18 }}>
+        <h3>人気記事 TOP5（選択期間）</h3>
+        {top.length === 0 && <p className="muted small">まだBLOG閲覧データがありません。</p>}
+        {top.map((r: any, i: number) => (
+          <div key={r.entry.id} style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "9px 0", borderBottom: "1px solid var(--border)" }}>
+            <span>{i + 1}. <Link href={`/blog/${r.entry.slug || r.entry.id}`}>{r.entry.title}</Link></span>
+            <strong className="tabular">{r.period.toLocaleString()} PV</strong>
+          </div>
+        ))}
+      </div>
+      <div className="card">
+        <h3>記事別アクセス状況</h3>
+        <table>
+          <thead><tr><th>記事</th><th>カテゴリ</th><th>状態</th><th>今日</th><th>7日</th><th>30日</th><th>累計</th></tr></thead>
+          <tbody>
+            {rows.length === 0 && <tr><td colSpan={7} className="muted">記事がありません。</td></tr>}
+            {rows.map((r: any) => (
+              <tr key={r.entry.id}>
+                <td><Link href={`/admin/blog?edit=${r.entry.id}`}>{r.entry.title}</Link></td>
+                <td>{r.entry.category}</td>
+                <td><span className={`badge ${r.entry.active ? "good" : "outline"}`}>{r.entry.active ? "公開中" : "下書き"}</span></td>
+                <td className="tabular">{r.today.toLocaleString()}</td>
+                <td className="tabular">{r.seven.toLocaleString()}</td>
+                <td className="tabular">{r.thirty.toLocaleString()}</td>
+                <td className="tabular"><strong>{r.total.toLocaleString()}</strong></td>
               </tr>
             ))}
           </tbody>
