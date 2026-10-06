@@ -23,7 +23,7 @@ export function BlogEditor({entry,stores,articles=[]}: {entry?:BlogEntry;stores:
  const [search,setSearch] = useState("");
  const [preview,setPreview] = useState(false);
  const [relatedArticles,setRelatedArticles] = useState<string[]>(entry?.related_article_ids || []);
- const [references,setReferences] = useState(entry?.references || []);
+ const [references,setReferences] = useState(entry?.reference_sources || []);
  const urls = useRef<string[]>([]);
  useEffect(() => () => urls.current.forEach(url => URL.revokeObjectURL(url)),[]);
  useEffect(() => {if(state.body) setBlocks(state.body);if(state.imageUrl) setImage(state.imageUrl);},[state]);
@@ -68,10 +68,11 @@ export function BlogEditor({entry,stores,articles=[]}: {entry?:BlogEntry;stores:
  <label className="field">画像の権利情報<textarea name="imageRights" rows={3} maxLength={1000} defaultValue={entry?.image_rights || ""} placeholder="自社制作／AI生成／提供元／引用条件など"/></label>
  <fieldset className={styles.related}><legend>参考資料</legend>{references.map((r,i)=><div key={i} className={styles.referenceRow}><input value={r.label} onChange={e=>setReferences(old=>old.map((x,n)=>n===i?{...x,label:e.target.value}:x))} placeholder="資料名"/><input type="url" value={r.url||""} onChange={e=>setReferences(old=>old.map((x,n)=>n===i?{...x,url:e.target.value}:x))} placeholder="https://..."/><button type="button" onClick={()=>setReferences(old=>old.filter((_,n)=>n!==i))}>削除</button></div>)}<button type="button" className="btn" onClick={()=>setReferences(old=>[...old,{label:"",url:""}])}>＋参考資料</button></fieldset>
  <h3 className={styles.sectionTitle}>7. 公開設定</h3>
+ <label className="field">公開状態<select name="visibility" defaultValue={entry?.visibility || (entry?.active ? "published" : "draft")}><option value="draft">下書き（管理画面のみ）</option><option value="published">公開</option><option value="private">非公開（管理画面のみ）</option></select></label>
  <label className={styles.featured}><input type="checkbox" name="includeInSitemap" defaultChecked={entry?.include_in_sitemap !== false}/> サイトマップに掲載</label>
  <label className={styles.featured}><input type="checkbox" name="featured" defaultChecked={entry?.featured || false}/> ピックアップに表示</label>
  <div className={styles.buttons}><button type="button" className="btn" onClick={()=>setPreview(!preview)}>{preview ? "プレビューを閉じる" : "保存前にプレビュー"}</button>{(state.id || entry?.id) && <Link className="btn" href={`/blog/${state.id || entry?.id}?preview=1`} target="_blank">保存済みの記事を見る ↗</Link>}</div>
- {preview && <div className={styles.preview}><h3>保存前プレビュー</h3><ArticleContent title={title} category={category} summary={summary} image={image} imageAlt={imageAlt} body={mode === "internal" ? blocks : []} stores={related}/>{mode === "external" && <p>記事を読むと、入力した外部URLへ移動します。</p>}</div>}
- <Submit/>{state.error && <p role="alert" className="err">{state.error}</p>}{state.success && <p role="status">{state.success} {!entry && <a href="/admin/blog">続けて新しい記事を作成 →</a>}</p>}
+ {preview && <div className={styles.preview}><h3>保存前プレビュー</h3><ArticleContent title={title} category={category} summary={summary} image={image} imageAlt={imageAlt} body={mode === "internal" ? blocks : []} stores={related} references={references}/>{mode === "external" && <p>記事を読むと、入力した外部URLへ移動します。</p>}</div>}
+ <p className={styles.help}>「下書き保存」は公開状態を下書きにして保存します。「公開して保存」は公開状態を公開にして保存します。非公開を選んだ場合はどちらのボタンでも一般公開されません。</p><Submit/>{state.error && <p role="alert" className="err">{state.error}</p>}{state.success && <p role="status">{state.success} {!entry && <a href="/admin/blog">続けて新しい記事を作成 →</a>}</p>}
  </form>;
 }
