@@ -11,7 +11,7 @@ export type BlogEntry = {
  author_name?: string; author_profile?: string; published_at?: string | null; updated_at?: string; created_at: string;
  article_url: string | null; image_url: string; image_path: string; image_alt?: string; image_rights?: string;
  content_mode: "internal" | "external"; body: BlogBlock[]; related_store_ids: string[]; related_article_ids?: string[];
- show_toc?: boolean; show_breadcrumbs?: boolean; include_in_sitemap?: boolean; references?: {label:string;url?:string}[];
+ show_toc?: boolean; show_breadcrumbs?: boolean; include_in_sitemap?: boolean; visibility?: "draft"|"published"|"private"; reference_sources?: {label:string;url?:string}[];
  active: boolean; featured: boolean;
 };
 export function blogArticleHref(entry: Pick<BlogEntry,"id" | "slug" | "content_mode" | "article_url">) {
