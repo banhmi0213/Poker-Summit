@@ -1,11 +1,12 @@
 "use client";
 import { useFormState, useFormStatus } from "react-dom";
+import { WorkDates } from "./work-dates";
 import { saveDealer } from "./actions";
 import { DEALER_GAMES, type DealerProfile } from "@/lib/dealers";
 import { PREF_OPTIONS } from "@/lib/constants";
 import styles from "./dealer.module.css";
 function Submit(){const { pending }=useFormStatus();return <button className="btn primary" type="submit" disabled={pending}>{pending ? "保存中…" : "保存する"}</button>;}
-export function DealerForm({ profile, address, photo }: { profile: DealerProfile | null; address: string; photo: string | null }) {
+export function DealerForm({ profile, address, photo, today }: { profile: DealerProfile | null; address: string; photo: string | null; today: string }) {
  const [state, action]=useFormState(saveDealer,{ error: "" });
  return <form action={action} className={styles.card}>
  {state.error && <p className="err" role="alert">{state.error}</p>}
@@ -22,6 +23,7 @@ export function DealerForm({ profile, address, photo }: { profile: DealerProfile
  <label className={styles.field+" "+styles.wide}>住所（市区町村・番地など） *<input name="address" defaultValue={address} maxLength={300} autoComplete="street-address" required /></label>
  <fieldset className={styles.games+" "+styles.wide}><legend>対応可能なゲーム種目 *（複数選択）</legend>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={profile?.games.includes(g) ?? false} />{g}</label>)}</fieldset>
  <label className={styles.field}>経験年数 *<input name="years" type="number" min={0} max={80} step={0.1} defaultValue={profile?.experience_years ?? ""} required /><span className={styles.hint}>半年の場合は0.5年と入力できます。</span></label>
+ <WorkDates initialDates={profile?.available_dates ?? []} today={today} />
  <label className={styles.field+" "+styles.wide}>アピールポイント<textarea name="appeal" rows={7} maxLength={3000} defaultValue={profile?.appeal ?? ""} placeholder="得意なゲーム、ディーラー経験などを記載してください。" /></label>
  <label className={styles.wide}><input type="checkbox" name="published" defaultChecked={profile?.published ?? true} /> 店舗アカウントにプロフィールを表示する<p className={styles.hint}>一般会員には表示されません。チェックを外すと本人だけが閲覧できます。</p></label>
  </div><div className={styles.actions}><Submit /></div></form>;
