@@ -36,7 +36,7 @@ export default function Page({searchParams}:{searchParams:{scope?:string;q?:stri
 
 .ml-hero{min-height:190px;background:linear-gradient(110deg,#cfad70,#e6cea2)}
 .ml-hero:after{display:none}
-.ml-hero>.ml-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;max-width:none;padding:0;z-index:0;background-image:url('/images/major-tournament-banner.png');background-size:202% auto;background-position:99% 50%;background-repeat:no-repeat}
+.ml-hero>.ml-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;max-width:none;padding:0;z-index:0;background-image:url('/images/major-tournament-banner.jpg');background-size:202% auto;background-position:99% 50%;background-repeat:no-repeat}
 .ml-hero>.ml-hero-copy{width:50%;max-width:none;box-sizing:border-box;padding:28px 30px}
 .ml-hero h1{font-size:28px;line-height:1.4;margin:12px 0}
 .ml-hero p{font-size:14px;font-weight:400;margin:0}
