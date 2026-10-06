@@ -24,7 +24,7 @@ export default async function Page({params}:{params:{id:string}}){
  <div className="mt-facts"><div><small>開催期間</small><strong>{period}</strong></div><div><small>開催エリア</small><strong>{e.location||"未定"}</strong></div><div><small>会場</small><strong>{e.venue||"未定"}</strong></div><div><small>開催区分</small><strong>{e.scope}大会</strong></div></div>
  <nav className="mt-section-nav" aria-label="大会詳細のメニュー"><a href="#tournament-overview">大会概要</a><a href="#tournament-schedule">スケジュール</a><a href="#tournament-venue">会場・アクセス</a></nav>
  <div className="mt-columns"><div>
- <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p></section>
+ <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p>{officialUrl&&<div className="mt-official-link"><strong>公式サイト</strong><a href={officialUrl} target="_blank" rel="noopener noreferrer">{officialUrl} ↗</a></div>}</section>
  <section id="tournament-schedule" className="mt-panel"><div className="mt-heading"><span>EVENT SCHEDULE</span><h2>大会スケジュール</h2></div><p className="mt-caption">時刻は開催地の現地時間です。</p><div className="mt-schedule-text">{e.schedule||"スケジュールは準備中です。"}</div></section>
  <section id="tournament-venue" className="mt-panel"><div className="mt-heading"><span>VENUE & ACCESS</span><h2>会場・アクセス</h2></div><div className="mt-venue"><div className="mt-venue-mark" aria-hidden="true">⌖</div><div><h3>{e.venue||"会場未定"}</h3>{e.location&&<p>{e.location}</p>}</div></div>
  {e.venue&&<a className="mt-map-link" href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery)} target="_blank" rel="noopener noreferrer">Googleマップで会場を探す ↗</a>}</section>
@@ -85,5 +85,8 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-map-link{display:inline-block;margin-top:20px;border:1px solid #dfcfaa;border-radius:7px;background:#faf6ed;padding:12px 16px;font-size:12px;color:#795a28}
 .mt-official{background:#fff;color:#795a28;border-color:#d9c5a4}
 @media(max-width:600px){.mt-hero h1{font-size:30px}.mt-facts strong{font-size:14px}.mt-schedule-text{font-size:13px;padding:16px}.mt-section-nav{flex-wrap:wrap}}
+
+.mt-official-link{margin-top:22px;border-top:1px solid #e7dfd2;padding-top:18px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.mt-official-link a{color:#8a6520;text-decoration:underline;overflow-wrap:anywhere}
 `}</style></div>;
 }

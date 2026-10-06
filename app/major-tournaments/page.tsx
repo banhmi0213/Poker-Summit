@@ -18,7 +18,7 @@ export default async function Page({searchParams}:{searchParams:{scope?:string;q
  <div className="ml-toolbar"><nav aria-label="大会の開催区分">{["","国内","海外"].map(v=><Link key={v} href={href(v)} className={scope===v?"ml-tab ml-active":"ml-tab"} aria-current={scope===v?"page":undefined}>{v||"すべて"}<small>{v?entries.filter(e=>e.scope===v).length:entries.length}</small></Link>)}</nav>
  <form method="get" action="/major-tournaments"><input type="hidden" name="scope" value={scope}/><label className="ml-sr" htmlFor="ml-q">大会名・国・都市を検索</label><input id="ml-q" name="q" defaultValue={q} placeholder="大会名・国・都市で検索"/><label className="ml-sr" htmlFor="ml-month">開催月</label><select id="ml-month" name="month" defaultValue={month}><option value="">開催月：すべて</option>{months.map(m=><option key={m} value={m}>{m.slice(0,4)}年{Number(m.slice(5))}月</option>)}</select><button type="submit">検索</button></form></div>
  <div className="ml-list-heading"><div><span className="ml-eyebrow">UPCOMING TOURNAMENTS</span><h2>{scope?scope+"の大会":"開催予定の大会"}<small>{results.length}件</small></h2></div><span>開催日順</span></div>
- <div className="ml-grid">{results.map(e=><article className="ml-card" key={e.id}><div className={"ml-cover "+(e.scope==="海外"?"ml-overseas":"")}><span className="ml-scope">{e.scope==="海外"?"海外大会":"国内大会"}</span><div><h3>{e.title}</h3><span>{e.location}</span></div></div><div className="ml-body"><div className="ml-date"><span aria-hidden="true">▦</span>{e.date}</div><p className="ml-venue">⌖ {e.location} / {e.venue}</p><p className="ml-description">{e.text}</p><Link className="ml-detail" href={`/major-tournaments/${e.id}`}>詳細・スケジュールを見る <span>→</span></Link></div></article>)}</div>
+ <div className="ml-grid">{results.map(e=><article className="ml-card" key={e.id}><div className={"ml-cover "+(e.scope==="海外"?"ml-overseas":"")}><span className="ml-scope">{e.scope==="海外"?"海外大会":"国内大会"}</span><div><h3>{e.title}</h3><small>POKER SUMMIT</small><span>{e.location}</span></div></div><div className="ml-body"><div className="ml-date"><span aria-hidden="true">▦</span>{e.date}</div><p className="ml-venue">⌖ {e.location} / {e.venue}</p><p className="ml-description">{e.text}</p><Link className="ml-detail" href={`/major-tournaments/${e.id}`}>詳細・スケジュールを見る <span>→</span></Link></div></article>)}</div>
  {error?<div className="ml-empty"><p className="err">大会情報を読み込めませんでした。時間をおいて再度お試しください。</p></div>:!results.length&&<div className="ml-empty"><h3>{entries.length?"条件に合う大会がありません。":"大会情報は準備中です。"}</h3>{entries.length>0&&<><p>開催区分や検索キーワードを変更してください。</p><Link href="/major-tournaments">条件をクリア →</Link></>}</div>}
  <section className="ml-guide"><div><span className="ml-eyebrow">YOUR NEXT POKER TRIP</span><h2>行きたい大会が見つかったら。</h2><p>詳細ページでスケジュール・参加費・会場を確認。<br/>海外大会の時刻は、開催地の現地時間で掲載します。</p></div></section>
  </main><PortalFooter/><BottomTabs/><style>{`
@@ -39,5 +39,14 @@ export default async function Page({searchParams}:{searchParams:{scope?:string;q
 .ml-hero h1{font-size:28px;line-height:1.4;margin:12px 0}
 .ml-hero p{font-size:14px;font-weight:400;margin:0}
 @media(max-width:600px){.ml-hero{min-height:180px}.ml-hero>.ml-hero-copy{padding:22px 16px}.ml-hero h1{font-size:23px}.ml-hero .ml-eyebrow{font-size:7px;line-height:1.6}.ml-hero p{font-size:12px;line-height:1.7}.ml-hero>.ml-hero-photo{background-size:auto 155%;background-position:99% 50%}}
+
+.ml-cover{height:195px;margin:9px;border:1px solid #b58a31;border-radius:9px;background:linear-gradient(155deg,#ead8ae 0%,#fff8e6 58%,#dec38a 100%);display:flex;align-items:center;justify-content:center;text-align:center}
+.ml-cover:after{inset:auto -10% -35% -10%;height:65%;background:rgba(255,255,255,.25);transform:rotate(-12deg);pointer-events:none}
+.ml-cover.ml-overseas:after{background:rgba(255,255,255,.25)}
+.ml-cover>div{position:relative;bottom:auto;left:auto;right:auto;width:100%;padding:36px 18px 22px;box-sizing:border-box;color:#563814}
+.ml-cover h3{color:#563814;font-size:24px;line-height:1.35;overflow-wrap:anywhere;margin:12px 0}
+.ml-cover small{display:block;font-size:8px;letter-spacing:.24em;color:#a27b35;margin:8px 0}
+.ml-cover>div>span{color:#8a6b3b}
+.ml-scope{top:10px;left:10px}
 `}</style></div>;
 }
