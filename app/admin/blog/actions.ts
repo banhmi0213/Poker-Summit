@@ -30,7 +30,9 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  if(authorName.length>120||authorProfile.length>1000)return {error:"著者名・プロフィールが長すぎます。"};
  const imageRights=String(formData.get("imageRights")||"").trim(); if(imageRights.length>1000)return {error:"画像の権利情報は1000文字以内で入力してください。"};
  let canonicalUrl:string|null=null; const canonicalRaw=String(formData.get("canonicalUrl")||"").trim(); if(canonicalRaw){try{const u=new URL(canonicalRaw);if(!["http:","https:"].includes(u.protocol))throw Error();canonicalUrl=u.href}catch{return {error:"canonical URLを確認してください。"}}}
- const publishedRaw=String(formData.get("publishedAt")||"").trim(); const publishedAt=publishedRaw?new Date(publishedRaw).toISOString():null;
+ const publishedRaw=String(formData.get("publishedAt")||"").trim();
+ let publishedAt:string|null=null;
+ if(publishedRaw){const d=new Date(publishedRaw);if(Number.isNaN(d.getTime()))return {error:"公開日時を確認してください。"};publishedAt=d.toISOString();}
  let references:{label:string;url?:string}[]=[]; try{const x=JSON.parse(String(formData.get("references")||"[]"));if(!Array.isArray(x)||x.length>30)throw Error();references=x.map((r:any)=>({label:String(r.label||"").trim().slice(0,300),url:String(r.url||"").trim().slice(0,2048)})).filter((r:any)=>r.label||r.url);for(const r of references)if(r.url){const u=new URL(r.url);if(!["http:","https:"].includes(u.protocol))throw Error();}}catch{return {error:"参考資料の入力内容を確認してください。"}}
  const relatedArticleIds=[...new Set(formData.getAll("relatedArticleIds").map(String))]; if(relatedArticleIds.length>12||relatedArticleIds.some(x=>!uuid.test(x)))return {error:"関連記事は12件以内で選択してください。"};
  const intent=String(formData.get("intent"));
@@ -48,8 +50,8 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  const storeIds=[...new Set(formData.getAll("storeIds").map(String))];
  if(storeIds.length>20 || storeIds.some(s=>!uuid.test(s))) return {error:"関連店舗は20店舗以内で選択してください。"};
  if(storeIds.length){const {data,error}=await supabase.from("stores").select("id").in("id",storeIds);if(error||data?.length!==storeIds.length)return {error:"関連店舗が見つかりません。選択し直してください。"};}
- let previous:{image_url:string;image_path:string;body:BlogBlock[]}|null=null;
- if(id){const {data,error}=await supabase.from("blog_entries").select("image_url,image_path,body").eq("id",id).single();if(error||!data)return {error:"記事が見つかりません。再読み込みしてください。"};previous=data;}
+ let previous:{image_url:string;image_path:string;body:BlogBlock[];published_at:string|null}|null=null;
+ if(id){const {data,error}=await supabase.from("blog_entries").select("image_url,image_path,body,published_at").eq("id",id).single();if(error||!data)return {error:"記事が見つかりません。再読み込みしてください。"};previous=data;}
  const files=Array.from(formData.values()).filter((v):v is File=>v instanceof File&&v.size>0);
  if(files.reduce((n,f)=>n+f.size,0)>3*1024*1024)return {error:"1回の添付画像は合計3MB以内にしてください。写真を分けて保存できます。"};
  const uploaded:string[]=[];
@@ -84,7 +86,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    else if(active&&mode==="internal")throw Error("本文の写真を添付するか、空の写真ブロックを削除してください。");
   }
   if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()||(b.items?.some(x=>x.trim()))||(b.rows?.some(r=>r.some(x=>x.trim())))))throw Error("公開する記事の本文を入力してください。");
-  const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
+  const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||previous?.published_at||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
   const query=id?supabase.from("blog_entries").update(values).eq("id",id):supabase.from("blog_entries").insert(values);
   const {data:saved,error}=await query.select("id").single();
   if(error||!saved)throw Error("記事を保存できませんでした。もう一度お試しください。");
