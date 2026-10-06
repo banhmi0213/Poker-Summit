@@ -99,3 +99,23 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
   return {success:active?"記事を公開して保存しました。":"下書きを保存しました。",id:saved.id,body,imageUrl};
  }catch(e){if(!committed && uploaded.length)await supabase.storage.from("blog-images").remove(uploaded);return {error:e instanceof Error?e.message:"保存できませんでした。"};}
 }
+
+export async function deleteBlogEntry(formData:FormData):Promise<void> {
+ const supabase = await createClient();
+ const {data:{user}} = await supabase.auth.getUser();
+ if(!user) throw new Error("管理者ログインが必要です。");
+ const {data:admin,error:authError} = await supabase.rpc("is_admin");
+ if(authError || admin !== true) throw new Error("運営権限がありません。");
+ const id=String(formData.get("id")||"");
+ const confirmTitle=String(formData.get("confirmTitle")||"").trim();
+ if(!uuid.test(id)) throw new Error("記事が見つかりません。");
+ const {data:entry,error}=await supabase.from("blog_entries").select("id,title,slug,image_path,body").eq("id",id).single();
+ if(error||!entry) throw new Error("記事が見つかりません。");
+ if(confirmTitle!==entry.title) throw new Error("削除確認のため記事タイトルを正確に入力してください。");
+ const paths=[entry.image_path,...(Array.isArray(entry.body)?entry.body:[]).map((b:BlogBlock)=>b.path)].filter((p):p is string=>!!p);
+ const {error:deleteError}=await supabase.from("blog_entries").delete().eq("id",id);
+ if(deleteError) throw new Error("記事を削除できませんでした。");
+ if(paths.length) await supabase.storage.from("blog-images").remove([...new Set(paths)]);
+ await logAdminAction(supabase,"blog_delete","blog",id,{title:entry.title});
+ revalidatePath("/admin/blog");revalidatePath("/blog");revalidatePath(`/blog/${id}`);if(entry.slug)revalidatePath(`/blog/${entry.slug}`);revalidatePath("/");
+}
