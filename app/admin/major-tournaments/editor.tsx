@@ -32,16 +32,6 @@ export function TournamentEditor({entry}:{entry?:{id:string;title:string;scope:s
  <label className="wide">公式URL<input type="url" name="official_url" maxLength={2048} defaultValue={entry?.official_url} placeholder="https://"/></label>
  {state.error&&<p className="err" role="alert">{state.error}</p>}{state.success&&<p role="status">{state.success}{!entry&&" 次の大会を入力できます。"}</p>}
  <div className="wide"><p className="hint">下書きでは未完成の内容も保存できます。公開する前に、日程とスケジュールをご確認ください。</p><Buttons/></div>
- <style jsx>{`
- .tournament-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 24px;padding:26px;align-items:start}
- .tournament-editor label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:14px;font-weight:600;color:#49351e}
- .wide,.tournament-editor>p{grid-column:1/-1}
- .tournament-editor input:not([type="hidden"]),.tournament-editor select,.tournament-editor textarea{display:block;width:100%;max-width:none;box-sizing:border-box;margin:0;border:1px solid #d9c5a4;border-radius:7px;background:#faf7ef;padding:11px 13px;font:inherit;font-weight:400;color:#382b1e;min-height:44px}
- .tournament-editor textarea{resize:vertical;line-height:1.8;min-height:180px}
- .tournament-editor textarea[name="schedule"]{min-height:320px}
- .tournament-editor input:focus,.tournament-editor select:focus,.tournament-editor textarea:focus{outline:2px solid #cba43c;outline-offset:2px}
- .hint{font-size:12px;line-height:1.7;color:#8a7758;margin:0 0 14px}
- @media(max-width:700px){.tournament-editor{grid-template-columns:minmax(0,1fr);padding:18px;gap:20px}.tournament-editor input:not([type="hidden"]),.tournament-editor select,.tournament-editor textarea{font-size:16px}}
- `}</style>
+ 
  </form>;
 }

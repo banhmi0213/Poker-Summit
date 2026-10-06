@@ -1,0 +1,13 @@
+
+ .tournament-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 24px;padding:26px;align-items:start}
+ .tournament-editor label{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:14px;font-weight:600;color:#49351e}
+ .tournament-editor .wide,.tournament-editor>p{grid-column:1/-1}
+ .tournament-editor input:not([type="hidden"]),.tournament-editor select,.tournament-editor textarea{display:block;width:100%;max-width:none;box-sizing:border-box;margin:0;border:1px solid #d9c5a4;border-radius:7px;background:#faf7ef;padding:11px 13px;font:inherit;font-weight:400;color:#382b1e;min-height:44px}
+ .tournament-editor textarea{resize:vertical;line-height:1.8;min-height:180px}
+ .tournament-editor textarea[name="schedule"]{min-height:320px}
+ .tournament-editor input:focus,.tournament-editor select:focus,.tournament-editor textarea:focus{outline:2px solid #cba43c;outline-offset:2px}
+ .tournament-editor .hint{font-size:12px;line-height:1.7;color:#8a7758;margin:0 0 14px}
+ @media(max-width:700px){.tournament-editor{grid-template-columns:minmax(0,1fr);padding:18px;gap:20px}.tournament-editor input:not([type="hidden"]),.tournament-editor select,.tournament-editor textarea{font-size:16px}}
+ 
+
+.amt-list{margin-top:24px;scroll-margin-top:24px}.amt-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.amt-list-heading h2{font-size:18px;margin:0}.amt-list-heading h2 span{font-size:12px;font-weight:400;color:#796544;margin-left:8px}.amt-row{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid #e4dacc;border-radius:8px;background:#fff;padding:12px 14px;margin-bottom:8px}.amt-copy{min-width:0;flex:1}.amt-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.amt-title strong{font-size:14px;overflow-wrap:anywhere}.amt-copy p{margin:5px 0 0;line-height:1.5}.amt-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex-shrink:0}.amt-actions .btn{font-size:12px;padding:7px 10px}.amt-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:#796544}.amt-pagination nav{display:flex;align-items:center;gap:10px}.amt-pagination [aria-disabled]{opacity:.4}.amt-pagination .btn{font-size:12px} @media(max-width:700px){.amt-row{align-items:flex-start;flex-direction:column;gap:10px}.amt-actions{width:100%}.amt-pagination{justify-content:center}.amt-list-heading{align-items:flex-start;flex-wrap:wrap}}

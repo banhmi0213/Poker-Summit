@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./admin/major-tournaments/tournament.css";
 import { BackToTop } from "./back-to-top";
 
 export const metadata: Metadata = {
