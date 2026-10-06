@@ -7,18 +7,18 @@ function Paragraph({text=""}:{text?:string}) {
  const parts=text.split(/(https?:\/\/[^\s]+)/g);
  return <p>{parts.map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</p>;
 }
-export function ArticleContent({ title, category, summary, image, imageAlt, body, stores, authorName="", authorProfile="", publishedAt, updatedAt, showToc=true, references=[] }: {
+export function ArticleContent({ title, category, summary, image, imageAlt, body, stores, authorName="", authorProfile="", publishedAt, updatedAt, showToc=true, references=[], imageRights="" }: {
  title:string; category:string; summary:string; image:string; imageAlt?:string; body:BlogBlock[]; stores:BlogStore[];
- authorName?:string; authorProfile?:string; publishedAt?:string|null; updatedAt?:string; showToc?:boolean; references?:BlogEntry["references"];
+ authorName?:string; authorProfile?:string; publishedAt?:string|null; updatedAt?:string; showToc?:boolean; references?:BlogEntry["reference_sources"]; imageRights?:string;
 }) {
  const headings=body.map((b,i)=>({b,i})).filter(({b})=>b.type==="heading"||b.type==="heading3");
  const date=(v?:string|null)=>v?new Date(v).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}):"";
  return <article className={styles.article}>
-  {image && <div className={styles.cover}><img src={image} alt={imageAlt || title} /></div>}
   <header><span className={styles.category}>{category}</span><h1>{title || "記事タイトル"}</h1>{summary && <p className={styles.summary}>{summary}</p>}
    {(authorName||publishedAt) && <div className={styles.byline}>{authorName&&<span>著者：{authorName}</span>}{publishedAt&&<time>公開日：{date(publishedAt)}</time>}{updatedAt&&publishedAt&&date(updatedAt)!==date(publishedAt)&&<time>更新日：{date(updatedAt)}</time>}</div>}
    {authorProfile&&<p className={styles.authorProfile}>{authorProfile}</p>}
   </header>
+  {image && <figure className={styles.cover}><img src={image} alt={imageAlt || title} />{imageRights&&<figcaption className={styles.imageRights}>画像：{imageRights}</figcaption>}</figure>}
   {showToc&&headings.length>0&&<nav className={styles.toc} aria-label="目次"><strong>目次</strong><ol>{headings.map(({b,i})=><li key={i} className={b.type==="heading3"?styles.tocSub:undefined}><a href={`#${blogHeadingId(b.text||"",i)}`}>{b.text}</a></li>)}</ol></nav>}
   <div className={styles.body}>{body.map((block,i)=>{
    const id=blogHeadingId(block.text||"",i);
