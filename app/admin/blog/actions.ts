@@ -23,7 +23,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  const category=String(formData.get("category") || "");
  const mode=String(formData.get("contentMode") || "internal");
  const slugRaw=String(formData.get("slug")||"").trim().toLowerCase();
- const slug=slugRaw||id;
+ const slug=slugRaw||id||randomUUID();
  if(slug&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))return {error:"記事URLスラッグは半角英数字とハイフンで入力してください。"};
  const seoTitle=String(formData.get("seoTitle")||"").trim(); if(seoTitle.length>160)return {error:"SEOタイトルは160文字以内で入力してください。"};
  const authorName=String(formData.get("authorName")||"").trim(), authorProfile=String(formData.get("authorProfile")||"").trim();
@@ -33,8 +33,12 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  const publishedRaw=String(formData.get("publishedAt")||"").trim(); const publishedAt=publishedRaw?new Date(publishedRaw).toISOString():null;
  let references:{label:string;url?:string}[]=[]; try{const x=JSON.parse(String(formData.get("references")||"[]"));if(!Array.isArray(x)||x.length>30)throw Error();references=x.map((r:any)=>({label:String(r.label||"").trim().slice(0,300),url:String(r.url||"").trim().slice(0,2048)})).filter((r:any)=>r.label||r.url);for(const r of references)if(r.url){const u=new URL(r.url);if(!["http:","https:"].includes(u.protocol))throw Error();}}catch{return {error:"参考資料の入力内容を確認してください。"}}
  const relatedArticleIds=[...new Set(formData.getAll("relatedArticleIds").map(String))]; if(relatedArticleIds.length>12||relatedArticleIds.some(x=>!uuid.test(x)))return {error:"関連記事は12件以内で選択してください。"};
- const active=formData.get("intent") === "publish";
- if(!["draft","publish"].includes(String(formData.get("intent")))) return {error:"保存方法を選択してください。"};
+ const intent=String(formData.get("intent"));
+ const requestedVisibility=String(formData.get("visibility")||"draft");
+ if(!["draft","published","private"].includes(requestedVisibility))return {error:"公開状態を選択してください。"};
+ const visibility=requestedVisibility==="private"?"private":intent==="publish"?"published":"draft";
+ const active=visibility==="published";
+ if(!["draft","publish"].includes(intent)) return {error:"保存方法を選択してください。"};
  if(!title || title.length>160 || summary.length>600) return {error:"タイトルは160文字以内、紹介文は600文字以内で入力してください。"};
  if(!BLOG_CATEGORIES.some(c=>c===category) || !["internal","external"].includes(mode)) return {error:"カテゴリと記事形式を選択してください。"};
  let articleUrl:string|null=null;
@@ -79,8 +83,8 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    if(stored)body.push({type:"image",url:stored.url,path:stored.path,caption:b.caption || "",alt:b.alt?.trim() || "",uploadKey:b.uploadKey});
    else if(active&&mode==="internal")throw Error("本文の写真を添付するか、空の写真ブロックを削除してください。");
   }
-  if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()))throw Error("公開する記事の本文を入力してください。");
-  const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
+  if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()||(b.items?.some(x=>x.trim()))||(b.rows?.some(r=>r.some(x=>x.trim())))))throw Error("公開する記事の本文を入力してください。");
+  const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
   const query=id?supabase.from("blog_entries").update(values).eq("id",id):supabase.from("blog_entries").insert(values);
   const {data:saved,error}=await query.select("id").single();
   if(error||!saved)throw Error("記事を保存できませんでした。もう一度お試しください。");
@@ -89,7 +93,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
   const old=[previous?.image_path,...(Array.isArray(previous?.body)?previous.body:[]).map(b=>b.path)].filter((p):p is string=>!!p&&!keep.has(p));
   if(old.length)await supabase.storage.from("blog-images").remove([...new Set(old)]);
   await logAdminAction(supabase,id?"blog_update":"blog_create","blog",saved.id,{title,active});
-  revalidatePath("/admin/blog");revalidatePath("/blog");revalidatePath(`/blog/${saved.id}`);revalidatePath("/");
+  revalidatePath("/admin/blog");revalidatePath("/blog");revalidatePath(`/blog/${saved.id}`);revalidatePath(`/blog/${slug}`);revalidatePath("/");
   return {success:active?"記事を公開して保存しました。":"下書きを保存しました。",id:saved.id,body,imageUrl};
  }catch(e){if(!committed && uploaded.length)await supabase.storage.from("blog-images").remove(uploaded);return {error:e instanceof Error?e.message:"保存できませんでした。"};}
 }
