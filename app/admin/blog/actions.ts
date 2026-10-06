@@ -113,8 +113,9 @@ export async function deleteBlogEntry(formData:FormData):Promise<void> {
  if(error||!entry) throw new Error("記事が見つかりません。");
  if(confirmTitle!==entry.title) throw new Error("削除確認のため記事タイトルを正確に入力してください。");
  const paths=[entry.image_path,...(Array.isArray(entry.body)?entry.body:[]).map((b:BlogBlock)=>b.path)].filter((p):p is string=>!!p);
- const {error:deleteError}=await supabase.from("blog_entries").delete().eq("id",id);
- if(deleteError) throw new Error("記事を削除できませんでした。");
+ const {data:deleted,error:deleteError}=await supabase.from("blog_entries").delete().eq("id",id).select("id").maybeSingle();
+ if(deleteError) throw new Error("記事を削除できませんでした。もう一度お試しください。");
+ if(!deleted) throw new Error("記事を削除できませんでした。削除権限を確認してください。");
  if(paths.length) await supabase.storage.from("blog-images").remove([...new Set(paths)]);
  await logAdminAction(supabase,"blog_delete","blog",id,{title:entry.title});
  revalidatePath("/admin/blog");revalidatePath("/blog");revalidatePath(`/blog/${id}`);if(entry.slug)revalidatePath(`/blog/${entry.slug}`);revalidatePath("/");
