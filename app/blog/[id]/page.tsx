@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { classifyDevice } from "@/lib/device";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
 import { PortalHeader } from "@/app/portal-header";
@@ -29,6 +31,18 @@ export default async function BlogArticlePage({ params, searchParams }: { params
  const {data,error} = await query.maybeSingle();
  if (error || !data) notFound();
  const entry = data as BlogEntry;
+ // Public views only: admin previews should not inflate BLOG analytics.
+ if (!preview) {
+  const hdrs = await headers();
+  const referrer = hdrs.get("referer") ?? null;
+  const device = classifyDevice(hdrs.get("user-agent"));
+  supabase.from("page_views").insert({
+   path: `/blog/${entry.slug || entry.id}`,
+   blog_entry_id: entry.id,
+   referrer,
+   device,
+  }).then(() => {});
+ }
  let stores: BlogStore[] = [];
  let relatedArticles: BlogEntry[] = [];
  if (entry.related_store_ids?.length) {
