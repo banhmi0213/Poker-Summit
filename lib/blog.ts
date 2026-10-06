@@ -1,4 +1,17 @@
-export const BLOG_CATEGORIES = ["店舗紹介", "大会レポート", "初心者ガイド"] as const;
+export const BLOG_CATEGORIES = [
+ "初心者ガイド",
+ "ポーカー用語集",
+ "ルール・遊び方",
+ "ハンド・役",
+ "戦略の基礎",
+ "実践ノウハウ",
+ "トーナメント",
+ "大会レポート",
+ "店舗紹介",
+ "ポーカーニュース",
+ "イベント・キャンペーン",
+ "コラム・読み物"
+] as const;
 export type BlogBlock = {
  type: "paragraph" | "heading" | "heading3" | "image" | "list" | "table";
  text?: string; url?: string; path?: string; caption?: string; alt?: string; uploadKey?: string;

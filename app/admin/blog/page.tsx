@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BlogEditor } from "./editor";
+import { deleteBlogEntry } from "./actions";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
 
 export default async function AdminBlogPage() {
@@ -20,7 +21,7 @@ export default async function AdminBlogPage() {
     {!data?.length && <p>まだ記事は登録されていません。</p>}
     {(data as BlogEntry[] || []).map(entry => <details key={entry.id} className="card" style={{ marginBottom:12 }}>
       <summary style={{ cursor:"pointer", fontWeight:700 }}>{entry.active ? "公開中" : "下書き"}｜{entry.title} {entry.featured ? "［ピックアップ］" : ""}</summary>
-      <div style={{ marginTop:16 }}><img src={entry.image_url} alt={entry.image_alt || entry.title} style={{ display:"block", width:280, maxWidth:"100%", height:"auto", marginBottom:16 }} /><BlogEditor entry={entry} stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /></div>
+      <div style={{ marginTop:16 }}><img src={entry.image_url} alt={entry.image_alt || entry.title} style={{ display:"block", width:280, maxWidth:"100%", height:"auto", marginBottom:16 }} /><BlogEditor entry={entry} stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /><details style={{ marginTop:24, borderTop:"1px solid #ddd", paddingTop:16 }}><summary style={{ cursor:"pointer", fontWeight:700, color:"#b42318" }}>この記事を削除</summary><p style={{ margin:"12px 0" }}>削除すると記事本文とBLOG用に保存された画像も削除され、元に戻せません。確認のため記事タイトルを入力してください。</p><form action={deleteBlogEntry}><input type="hidden" name="id" value={entry.id}/><label className="field">記事タイトル<input name="confirmTitle" required autoComplete="off" placeholder={entry.title}/></label><button className="btn" style={{ borderColor:"#b42318", color:"#b42318" }}>完全に削除する</button></form></details></div>
     </details>)}
   </div>;
 }
