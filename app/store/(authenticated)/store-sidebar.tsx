@@ -12,22 +12,14 @@ import { usePathname } from "next/navigation";
 // して」との指示により独立ページにせず、店舗管理(店舗情報)ページの中に
 // 残しているため、ここには項目を作らない(2026/09/30)。
 const STORE_LINKS: { href: string; label: string }[] = [
-  { href: "/store/profile", label: "店舗管理" },
+  { href: "/store/profile", label: "店舗情報" },
   { href: "/store/profile/analytics", label: "アクセス統計" },
-  // 店舗独自の料金表(参加費・レイト等、運営利用料のプランとは別物)。
-  // 「料金・メニューな」「一覧に追加」との指示により新設、求人より上に
-  // 配置(2026/09/30)。
   { href: "/store/profile/menu", label: "料金・メニュー" },
-  { href: "/store/profile/jobs", label: "求人" },
-  { href: "/store/profile/dealers", label: "ディーラー" },
-  { href: "/store/profile/coupons", label: "クーポン" },
   { href: "/store/profile/events", label: "トーナメント・イベント" },
+  { href: "/store/profile/coupons", label: "クーポン" },
+  { href: "/store/profile/jobs", label: "求人" },
+  { href: "/store/profile/spot-jobs", label: "スポット求人" },
   { href: "/store/profile/notices", label: "お知らせ" },
-  // LINEリッチメニュー側にある「プラン・アップグレード」と同じ導線を、
-  // LINEを開いていないPCブラウザからも使えるようにするため新設
-  // (2026/09/30)。「プラン・アップグレードは一番下」との指示により
-  // 一覧の最後に配置(2026/09/30)。アドオン申請も同ページに追加した
-  // ため、ラベルを管理画面側の「プラン・アドオン管理」に揃えた(2026/10)。
   { href: "/store/profile/plan", label: "プラン・アドオン" },
 ];
 
