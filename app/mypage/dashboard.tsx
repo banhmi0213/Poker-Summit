@@ -31,9 +31,11 @@ function statusBadge(status: string) {
 export async function MyPageContent({
   searchParams,
   profileEdit = false,
+  dealerRegistration = false,
 }: {
   searchParams: { tab?: string; error?: string; done?: string };
   profileEdit?: boolean;
+  dealerRegistration?: boolean;
 }) {
   const supabase = await createClient();
   const {
@@ -151,6 +153,7 @@ export async function MyPageContent({
                   <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
                     編集
                   </Link>
+                  <Link href="/account/profile?dealer=1#profile-editor-title" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
                 </div>
                 <div className="muted small">
                   📍 {pref || "未設定"}
@@ -225,7 +228,7 @@ export async function MyPageContent({
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions}>
-              <Link href="/account/profile" className="btn">プロフィール編集</Link>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/profile?dealer=1#profile-editor-title" className="btn">ディーラー登録</Link></div>
               <div className={styles.accountActions}>
                 <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
                 <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>
@@ -444,7 +447,7 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit ? <ProfileEditor name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={myProfile?.role || ""} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
+        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
           <section className={styles.infoPanel}>
             <h2>♟ プロフィール</h2>
             <dl>
