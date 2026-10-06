@@ -3,6 +3,7 @@ import {createClient} from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+export const dynamic="force-dynamic";
 export const metadata={title:"国内外大型大会 | Poker Summit",description:"国内・海外の大型ポーカー大会の開催情報とスケジュール。開催地や日程で次の大会を探せます。"};
 export default async function Page({searchParams}:{searchParams:{scope?:string;q?:string;month?:string}}){
  const db=await createClient();
