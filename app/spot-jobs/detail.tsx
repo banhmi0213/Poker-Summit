@@ -7,8 +7,8 @@ import styles from './spot.module.css';
 export function SpotImage({url,name}:{url:string|null;name:string}) {
   return url?<img className={styles.image} src={url} alt={`${name}のスポット求人`}/>:<div className={styles.sign}>{name}<small>POKER SUMMIT</small></div>;
 }
-export function Restricted() {
-  return <div className={styles.box}><h1>スポット勤務を探す</h1><p>このページは登録済みディーラー専用です。</p><Link className={styles.button} href="/account/dealer">ディーラー登録・プロフィール</Link></div>;
+export function Restricted({loggedIn=true}:{loggedIn?:boolean}={}) {
+  return <div className={styles.box}><h1>スポット求人</h1><p>スポット求人は、ディーラー登録済みの会員のみ閲覧できます。</p><p className={styles.muted}>ディーラー登録をすると、募集内容の閲覧や勤務日の応募ができます。</p>{loggedIn?<Link className={styles.button+" "+styles.primary} href="/account/dealer/edit">ディーラー登録する</Link>:<div className={styles.buttons}><Link className={styles.button+" "+styles.primary} href="/login?next=%2Faccount%2Fdealer%2Fedit">ログインしてディーラー登録</Link><Link className={styles.button} href="/signup">会員登録する</Link></div>}</div>;
 }
 export function SpotDetail({job,image,date,owner=false}:{job:SpotJob;image:string|null;date?:string;owner?:boolean}) {
   const shifts=[...job.spot_job_shifts].sort((a,b)=>a.work_date.localeCompare(b.work_date));
