@@ -15,6 +15,9 @@ export default async function Page({params,searchParams}:{params:{id:string};sea
   if (error) throw new Error('求人を読み込めませんでした。');
   if (!data) notFound();
   const job=data as unknown as SpotJob;
+  const now=Date.now();
+  job.spot_job_shifts=job.spot_job_shifts.filter(s=>Date.parse(s.work_date+"T"+s.start_time+"+09:00")>now);
+  if (!job.spot_job_shifts.length) notFound();
   const image=await spotImage(db,job,job.stores?.banner_url||null);
   return <><PortalHeader userEmail={user.email}/><main className={styles.public}><SpotDetail job={job} image={image} date={searchParams.date}/></main><PortalFooter/></>;
 }

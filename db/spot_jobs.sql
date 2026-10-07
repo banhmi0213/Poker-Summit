@@ -44,13 +44,12 @@ create policy spot_shift_update on public.spot_job_shifts for update to authenti
 create policy spot_shift_delete on public.spot_job_shifts for delete to authenticated using(exists(select 1 from public.spot_jobs j join public.stores s on s.id=j.store_id where j.id=job_id and s.owner_user_id=(select auth.uid())));
 create function public.save_spot_job(p_id uuid,p_store_id uuid,p_games text[],p_duties text,p_requirements text,p_transport_type text,p_transport_limit integer,p_dress text,p_deadline timestamptz,p_image text,p_published boolean,p_shifts jsonb)
 returns uuid language plpgsql security invoker set search_path='' as $$
-declare v_id uuid; v_min_start timestamptz;
+declare v_id uuid;
 begin
  if auth.uid() is null or public.is_suspended() then raise exception '保存できません。'; end if;
  if not exists(select 1 from public.stores s where s.id=p_store_id and s.owner_user_id=auth.uid()) then raise exception '店舗が見つかりません。'; end if;
  if p_shifts is null or jsonb_typeof(p_shifts)<>'array' or jsonb_array_length(p_shifts) not between 1 and 90 then raise exception '勤務日を1〜90日選んでください。'; end if;
- select min((work_date+start_time) at time zone 'Asia/Tokyo') into v_min_start from jsonb_to_recordset(p_shifts) as x(work_date date,start_time time);
- if p_published and (p_deadline<=now() or p_deadline>v_min_start) then raise exception '応募締切は現在より後、最初の勤務開始以前で指定してください。'; end if;
+ if p_published and (p_deadline is null or p_deadline<=now()) then raise exception '応募締切は現在より後で指定してください。'; end if;
  if p_id is null then
  insert into public.spot_jobs(store_id,games,duties,requirements,transport_type,transport_limit,dress,deadline,image_path,published)
  values(p_store_id,p_games,p_duties,p_requirements,p_transport_type,p_transport_limit,p_dress,p_deadline,p_image,p_published) returning id into v_id;

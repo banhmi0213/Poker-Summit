@@ -53,7 +53,7 @@ export default function SpotEditor({job,today,image}:{job:SpotJob|null;today:str
       {field('6. 業務内容 *','duties',job?.duties||'',true)}{field('7. 応募条件（経験・スキル）','requirements',job?.requirements||'')}
       <label className={styles.field}>8. 交通費<select name="transport_type" value={transport} onChange={e=>setTransport(e.target.value)}><option value="none">支給なし</option><option value="full">全額支給</option><option value="limited">上限あり</option></select></label>{transport==='limited'&&<label className={styles.field}>交通費の上限（円）<input type="number" name="transport_limit" min="0" max="100000" required defaultValue={job?.transport_limit??''}/></label>}
       {field('9. 服装・持ち物','dress',job?.dress||'')}
-      <label className={styles.field}>10. 応募締切 *（日本時間）<input type="datetime-local" name="deadline" required defaultValue={job?new Date(Date.parse(job.deadline)+9*3600000).toISOString().slice(0,16):''}/><small className={styles.muted}>最初の勤務開始までに設定してください。</small></label>
+      <label className={styles.field}>10. 応募締切 *（日本時間）<input type="datetime-local" name="deadline" required defaultValue={job?new Date(Date.parse(job.deadline)+9*3600000).toISOString().slice(0,16):''}/><small className={styles.muted}>募集全体の締切を設定してください。各勤務日の募集は、その日の勤務開始時に終了します。</small></label>
       <label className={`${styles.field} ${styles.wide}`}>求人画像（任意）<input type="file" name="image" accept="image/jpeg,image/png,image/webp"/><small className={styles.muted}>JPEG・PNG・WebP、3MB以内。指定しない場合は店舗画像が自動で表示されます。</small></label>
       {image&&<div className={styles.wide}><img src={image} alt="現在の求人画像" className={styles.photoPreview}/>{job?.image_path&&<label className={styles.checks}><input type="checkbox" name="removeImage"/>専用画像を削除し、店舗画像に戻す</label>}</div>}
     </div>

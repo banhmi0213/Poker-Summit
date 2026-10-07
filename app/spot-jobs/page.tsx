@@ -16,7 +16,9 @@ export default async function Page({searchParams}:{searchParams:Params}) {
   if (!allowed) return <><PortalHeader userEmail={user.email}/><main className={styles.public}><Restricted/></main><PortalFooter/></>;
   const pref=PREF_OPTIONS.includes(searchParams.pref||'')?searchParams.pref!:'',game=DEALER_GAMES.includes(searchParams.game||'')?searchParams.game!:'',date=validDate(searchParams.date||'')?searchParams.date!:'';
   const page=Math.max(1,Math.min(10000,Number.parseInt(searchParams.page||'1',10)||1));
-  let query=db.from('spot_job_shifts').select('*,spot_jobs!inner(*,stores!inner(id,name,pref,city,address,banner_url))',{count:'exact'}).eq('spot_jobs.published',true).gt('spot_jobs.deadline',new Date().toISOString()).gte('work_date',japanToday());
+  const nowJst=new Date(Date.now()+9*3600000).toISOString();
+  const todayJst=nowJst.slice(0,10),timeJst=nowJst.slice(11,19);
+  let query=db.from('spot_job_shifts').select('*,spot_jobs!inner(*,stores!inner(id,name,pref,city,address,banner_url))',{count:'exact'}).eq('spot_jobs.published',true).gt('spot_jobs.deadline',new Date().toISOString()).or('work_date.gt.'+todayJst+',and(work_date.eq.'+todayJst+',start_time.gt.'+timeJst+')');
   if (pref) query=query.eq('spot_jobs.stores.pref',pref);
   if (game) query=query.contains('spot_jobs.games',[game]);
   if (date) query=query.eq('work_date',date);

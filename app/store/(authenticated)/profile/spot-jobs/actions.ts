@@ -39,8 +39,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
     if (!['none','full','limited'].includes(transport) || (transport==='limited' && (!value('transport_limit') || !Number.isInteger(limit) || Number(limit)<0 || Number(limit)>100000))) throw new Error('交通費の支給方法・上限を確認してください。');
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(deadlineRaw) || !validDate(deadlineRaw.slice(0,10)) || !validTime(deadlineRaw.slice(11))) throw new Error('応募締切を入力してください。');
     const deadline=Date.parse(deadlineRaw+':00+09:00');
-    const first=Math.min(...shifts.map(s=>Date.parse(s.work_date+'T'+s.start_time+':00+09:00')));
-    if (published && (deadline<=Date.now() || deadline>first)) throw new Error('公開する求人の応募締切は、現在より後・最初の勤務開始までに設定してください。');
+    if (published && deadline<=Date.now()) throw new Error('公開する求人の応募締切は、現在より後に設定してください。');
   } catch(e) { return {error:e instanceof Error?e.message:'勤務日を確認してください。'}; }
   let imagePath=form.get('removeImage')==='on'?null:current?.image_path??null;
   let uploaded:string|null=null;
