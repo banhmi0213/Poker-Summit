@@ -1,3 +1,4 @@
+import { JobTypeTabs } from "./job-type-tabs";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -68,6 +69,7 @@ export default async function JobsPage({
           />
         </h1>
 
+        <JobTypeTabs active="regular" />
         <form
           method="get"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
