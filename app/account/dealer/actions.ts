@@ -27,6 +27,9 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
  const { data: current, error: currentError } = await supabase.from("dealer_profiles").select("photo_url").eq("user_id", user.id).maybeSingle();
  if (currentError) return { error: "登録情報を読み込めませんでした。" };
  let photo = form.get("removePhoto") === "on" ? null : current?.photo_url ?? null;
+ let avatar = String(form.get("avatarKind") ?? "") || null;
+ if (avatar !== null && avatar !== "male" && avatar !== "female") return { error: "シルエットを選び直してください。" };
+ if (avatar) photo = null;
  let uploaded: string | null = null;
  const image = form.get("photo");
  if (image instanceof File && image.size > 0) {
@@ -36,8 +39,9 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
   const { error } = await supabase.storage.from("dealer-photos").upload(uploaded, image, { contentType: image.type });
   if (error) return { error: "写真をアップロードできませんでした。" };
   photo = uploaded;
+  avatar = null;
  }
- const { error } = await supabase.rpc("save_dealer_profile_with_dates", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates });
+ const { error } = await supabase.rpc("save_dealer_profile_with_avatar", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates, p_avatar: avatar });
  if (error) {
   if (uploaded) await supabase.storage.from("dealer-photos").remove([uploaded]);
   return { error: "保存できませんでした。もう一度お試しください。" };

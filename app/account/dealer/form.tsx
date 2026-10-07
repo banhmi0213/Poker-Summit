@@ -1,6 +1,7 @@
 "use client";
 import { useFormState, useFormStatus } from "react-dom";
 import { WorkDates } from "./work-dates";
+import { DealerPhotoField } from "./photo-field";
 import { saveDealer } from "./actions";
 import { DEALER_GAMES, type DealerProfile } from "@/lib/dealers";
 import { PREF_OPTIONS } from "@/lib/constants";
@@ -11,11 +12,7 @@ export function DealerForm({ profile, address, photo, today }: { profile: Dealer
  return <form action={action} className={styles.card}>
  {state.error && <p className="err" role="alert">{state.error}</p>}
  <div className={styles.fields}>
- <div className={styles.wide}><label className={styles.field}>プロフィール写真
- {photo && <img className={styles.photo} src={photo} alt="現在のプロフィール写真" />}
- <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" />
- <span className={styles.hint}>JPEG・PNG・WebP、3MB以内。写真は本人と店舗アカウントだけが閲覧できます。</span>
- </label>{profile?.photo_url && <label><input type="checkbox" name="removePhoto" /> 現在の写真を削除する</label>}</div>
+ <DealerPhotoField kind={profile?.avatar_kind ?? null} photo={photo} hasPhoto={Boolean(profile?.photo_url)} />
  <label className={styles.field}>氏名 *<input name="name" defaultValue={profile?.full_name ?? ""} maxLength={100} autoComplete="name" required /></label>
  <label className={styles.field}>年齢 *<input name="age" type="number" min={0} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
  <label className={styles.field}>ディーラー種別<select name="dealerType" defaultValue={profile?.dealer_type ?? "ディーラー"}><option>ディーラー</option><option>フリーディーラー</option></select></label>
