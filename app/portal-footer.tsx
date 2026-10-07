@@ -24,11 +24,20 @@ export async function PortalFooter() {
           <br />
         </>
       )}
-      <p style={{ maxWidth: 900, margin: "16px auto", padding: "0 16px", fontSize: 12, lineHeight: 1.8 }}>
-        本サービスはアミューズメントポーカーの情報ポータルです。金銭・物品を賭ける行為や換金サービスを提供しません。
-        国内アミューズメント店舗の掲載条件として、リアルマネーの賭けおよびチップ・ポイント等の換金を禁止しています。
-        決済対象は店舗掲載プラン・広告・アドオン等のサービス利用料金です。<a href="/terms#amusement-policy">詳しくは利用規約へ</a>
-      </p>
+      <div style={{ maxWidth: 900, margin: "20px auto", padding: "16px 20px", borderTop: "1px solid #ded5c5", borderBottom: "1px solid #ded5c5", textAlign: "left", fontSize: 13, lineHeight: 1.9 }}>
+        <p style={{ margin: "0 0 8px" }}>
+          本サービスはアミューズメントポーカーの情報ポータルです。金銭・物品を賭ける行為や換金サービスを提供しません。
+        </p>
+        <p style={{ margin: "0 0 8px" }}>
+          国内アミューズメント店舗の掲載条件として、リアルマネーの賭けおよびチップ・ポイント等の換金を禁止しています。
+        </p>
+        <p style={{ margin: 0 }}>
+          決済対象は店舗掲載プラン・広告・アドオン等のサービス利用料金です。
+        </p>
+        <div style={{ marginTop: 10, textAlign: "right" }}>
+          <a href="/terms#amusement-policy" style={{ display: "inline-block", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>詳しくは利用規約へ</a>
+        </div>
+      </div>
       <nav className="footer-links" aria-label="フッターリンク">
         <a href="/terms">利用規約</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
