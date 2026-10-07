@@ -17,7 +17,7 @@ export function MatchingConsentForm({ actor, next }: { actor: "store" | "dealer"
    <li>問題があれば運営へ相談する。運営は必要な記録を確認する場合がある。</li>
   </ul>
   <p style={{ fontSize: 12, lineHeight: 1.8 }}>運営は採用判断・契約締結・報酬支払いを代行しません。この同意は、相手方の個別の勤務条件への承諾とは別です。</p>
-  <p style={{ fontSize: 13 }}><Link href="/matching-guide" target="_blank" rel="noopener noreferrer">利用ガイドを読む</Link></p>
+  <p style={{ fontSize: 13 }}><Link href="/terms#dealer-matching" target="_blank" rel="noopener noreferrer">利用規約のマッチングルールを読む</Link></p>
   <input type="hidden" name="next" value={next} />
   <input type="hidden" name="termsVersion" value={TERMS_VERSION} /><input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} /><input type="hidden" name="rulesVersion" value={MATCHING_RULES_VERSION} />
   <label style={{ display: "flex", alignItems: "flex-start", gap: 9, margin: "20px 0", minHeight: 44, fontSize: 13, lineHeight: 1.8 }}><input type="checkbox" name="agree" value="yes" required style={{ marginTop: 5, flexShrink: 0 }} /><span><Link href="/terms" target="_blank" rel="noopener noreferrer">利用規約</Link>・<Link href="/privacy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</Link>と、上記の注意事項・外部誘導に関するルールを確認し、同意します。</span></label>

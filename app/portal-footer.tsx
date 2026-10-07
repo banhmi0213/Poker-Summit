@@ -27,8 +27,6 @@ export async function PortalFooter() {
       <nav className="footer-links" aria-label="フッターリンク">
         <a href="/terms">利用規約</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
-        <a href="/matching-guide">ディーラーマッチング利用ガイド</a>
-        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/privacy">プライバシーポリシー</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/disclaimer">免責事項</a>
