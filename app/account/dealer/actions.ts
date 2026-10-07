@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { DEALER_GAMES } from "@/lib/dealers";
+import { normalizeDealerPhone,validDealerContacts } from "@/lib/dealer-contacts";
 import { PREF_OPTIONS } from "@/lib/constants";
 export async function saveDealer(_previous: { error: string }, form: FormData): Promise<{ error: string }> {
  const supabase = await createClient();
@@ -16,6 +17,11 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
  const age = Number(ageRaw);
  const pref = String(form.get("pref") ?? "");
  const address = String(form.get("address") ?? "").trim();
+ const phone=normalizeDealerPhone(String(form.get("phone") ?? ""));
+ const contactType=String(form.get("contactType") ?? "email");
+ const contactValue=String(form.get("contactValue") ?? "").trim();
+ const disclose=form.get("contactDisclosureConsent")==="on";
+ if(!validDealerContacts(phone,contactType,contactValue,disclose)) return { error: "電話番号とLINEまたはメールアドレスを確認してください。開示に同意する場合は両方の入力が必要です。" };
  const games = [...new Set(form.getAll("games").map(String))];
  const yearsRaw = String(form.get("years") ?? "");
  const years = Number(yearsRaw);
@@ -41,7 +47,7 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
   photo = uploaded;
   avatar = null;
  }
- const { error } = await supabase.rpc("save_dealer_profile_with_avatar", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates, p_avatar: avatar });
+ const { error } = await supabase.rpc("save_dealer_profile_with_contacts", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates, p_avatar: avatar, p_phone: phone, p_contact_type: contactType, p_contact_value: contactValue, p_disclose: disclose });
  if (error) {
   if (uploaded) await supabase.storage.from("dealer-photos").remove([uploaded]);
   return { error: "保存できませんでした。もう一度お試しください。" };
@@ -53,3 +59,4 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
  revalidatePath("/store/profile/dealers", "layout");
  redirect("/account/dealer?done=1");
 }
+

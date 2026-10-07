@@ -1,3 +1,5 @@
+import { dealerReliability } from "@/lib/dealer-reliability";
+import { DealerReliabilityView } from "@/app/account/dealer/reliability";
 import { requireMatchingConsent } from "@/lib/matching-consent-server";
 import { matchingReturnWithQuery } from "@/lib/matching-return";
 import Link from "next/link";
@@ -17,7 +19,17 @@ export default async function DealerPage({params}:{params:{id:string}}){
  const [profile,address]=await Promise.all([supabase.from("dealer_profiles").select("*").eq("user_id",params.id).eq("published",true).maybeSingle(),supabase.from("dealer_addresses").select("address").eq("user_id",params.id).maybeSingle()]);
  if(profile.error||address.error)throw new Error("プロフィールを読み込めませんでした。");
  if(!profile.data)notFound();
+ const stats=await dealerReliability(supabase,[params.id]);
+ const {data:contracts,error:contractsError}=await supabase.from("dealer_matching_records").select("id").eq("dealer_user_id",params.id).in("status",["confirmed","completed"]);
+ if(contractsError)throw new Error("契約情報を読み込めませんでした。");
+ let contact: {phone:string;contact_type:string;contact_value:string}|null=null;
+ for(const contract of contracts ?? []){
+  const result=await supabase.rpc("get_matching_dealer_contacts",{p_record_id:contract.id});
+  if(result.error)throw new Error("連絡先を確認できませんでした。");
+  if(result.data?.length){contact=result.data[0];break;}
+ }
  const photo=profile.data.photo_url ? "/store/profile/dealers/"+params.id+"/photo" : null;
- return <main className={styles.page}><Link href="/store/profile/dealers">← ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/></main>;
+ return <main className={styles.page}><Link href="/store/profile/dealers">← ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerReliabilityView stats={stats[params.id]} /><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/><section className={styles.card}><h2 style={{fontSize:18}}>契約成立後の連絡先</h2>{contact ? <dl className={styles.facts}><div><dt>電話番号</dt><dd>{contact.phone}</dd></div><div><dt>{contact.contact_type==="line" ? "LINE" : "メールアドレス"}</dt><dd>{contact.contact_value}</dd></div></dl> : <p className={styles.hint}>双方が勤務条件を確定し、ディーラーが開示に同意した場合に、この店舗だけに表示されます。</p>}</section></main>;
 }
+
 

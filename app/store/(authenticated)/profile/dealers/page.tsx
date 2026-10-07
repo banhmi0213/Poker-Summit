@@ -1,3 +1,5 @@
+import { dealerReliability } from "@/lib/dealer-reliability";
+import { DealerReliabilityView } from "@/app/account/dealer/reliability";
 import { MatchingRulesNotice } from "@/app/matching/notice";
 import { requireMatchingConsent } from "@/lib/matching-consent-server";
 import { matchingReturnWithQuery } from "@/lib/matching-return";
@@ -33,6 +35,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  }
  const {data:profiles,error}=await query;
  if(error)throw new Error("ディーラー情報を読み込めませんでした。");
+ const stats=await dealerReliability(supabase,(profiles ?? []).map(p=>p.user_id));
  return <main className={styles.page}><h1 className={styles.heading}>フリーディーラーを探す</h1><p className={styles.hint}>最初は店舗所在地の都道府県を表示します。他県を探す場合は都道府県を変更してください。プロフィールは店舗アカウントだけが閲覧できます。</p>
  <MatchingRulesNotice />
  <form action="/store/profile/dealers" className={styles.searchForm}>
@@ -41,7 +44,8 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  <label className={styles.field}>勤務希望日<input type="date" name="date" defaultValue={date}/></label>
  <button className="btn primary" type="submit">検索</button><Link className="btn" href="/store/profile/dealers">条件を解除</Link></form>
  {!storePref&&<p className={styles.hint}>店舗の都道府県を自動判定できませんでした。店舗情報の所在地を確認してください。</p>}
- {!profiles?.length && <p>条件に一致するディーラーはいません。</p>}<div className={styles.list}>{profiles?.map(p=><Link key={p.user_id} href={"/store/profile/dealers/"+p.user_id}><DealerAvatar kind={p.avatar_kind} photo={p.photo_url ? "/store/profile/dealers/"+p.user_id+"/photo" : null} name={p.full_name} small /><h2>{p.full_name}</h2><span className={styles.tag}>{p.dealer_type}</span><p>{p.pref}・経験{p.experience_years}年</p><p>{p.games.join("／")}</p><strong>プロフィールを見る →</strong></Link>)}</div></main>;
+ {!profiles?.length && <p>条件に一致するディーラーはいません。</p>}<div className={styles.list}>{profiles?.map(p=><Link key={p.user_id} href={"/store/profile/dealers/"+p.user_id}><DealerAvatar kind={p.avatar_kind} photo={p.photo_url ? "/store/profile/dealers/"+p.user_id+"/photo" : null} name={p.full_name} small /><h2>{p.full_name}</h2><span className={styles.tag}>{p.dealer_type}</span><p>{p.pref}・経験{p.experience_years}年</p><p>{p.games.join("／")}</p><DealerReliabilityView stats={stats[p.user_id]} compact /><strong>プロフィールを見る →</strong></Link>)}</div></main>;
 }
+
 
 

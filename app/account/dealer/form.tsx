@@ -1,3 +1,4 @@
+import { useState } from "react";
 "use client";
 import { useFormState, useFormStatus } from "react-dom";
 import { WorkDates } from "./work-dates";
@@ -18,6 +19,17 @@ export function DealerForm({ profile, address, photo, today }: { profile: Dealer
  <label className={styles.field}>ディーラー種別<select name="dealerType" defaultValue={profile?.dealer_type ?? "ディーラー"}><option>ディーラー</option><option>フリーディーラー</option></select></label>
  <label className={styles.field}>住所（都道府県） *<select name="pref" defaultValue={profile?.pref ?? ""} required><option value="">選択してください</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
  <label className={styles.field+" "+styles.wide}>住所（市区町村・番地など） *<input name="address" defaultValue={address} maxLength={300} autoComplete="street-address" required /></label>
+ <section className={styles.wide} style={{ padding: 18, border: "1px solid #e2dacd", borderRadius: 10, background: "#faf7ef" }} aria-labelledby="dealer-private-contact-title">
+ <h2 id="dealer-private-contact-title" style={{ fontSize: 16, margin: "0 0 8px" }}>非公開情報</h2>
+ <p className={styles.hint} style={{ marginBottom: 16 }}>通常のプロフィールには表示されません。契約成立と開示への同意が確認された場合に、相手店舗にのみ公開します。</p>
+ <div className={styles.fields}>
+ <label className={styles.field}>電話番号<input name="phone" type="tel" autoComplete="tel" maxLength={30} defaultValue={contacts?.phone ?? ""} placeholder="例：090-1234-5678" /></label>
+ <label className={styles.field}>連絡方法<select name="contactType" value={contactType} onChange={e=>setContactType(e.target.value as "line"|"email")}><option value="line">LINE</option><option value="email">メールアドレス</option></select></label>
+ <label className={styles.field+" "+styles.wide}>{contactType==="line" ? "LINE IDまたは友だち追加URL" : "メールアドレス"}<input key={contactType} name="contactValue" type={contactType==="email" ? "email" : "text"} maxLength={254} autoComplete={contactType==="email" ? "email" : "off"} defaultValue={contacts?.contact_type===contactType ? contacts.contact_value : ""} placeholder={contactType==="email" ? "例：dealer@example.com" : "LINE IDまたは友だち追加URL"} /></label>
+ </div>
+ <label style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 16, fontSize: 13, lineHeight: 1.8 }}><input type="checkbox" name="contactDisclosureConsent" defaultChecked={Boolean(contacts?.disclosure_consented_at)} style={{ marginTop: 5 }} /><span>双方が勤務条件を確定した相手店舗への、電話番号とLINEまたはメールアドレスの開示に同意します。</span></label>
+ <p className={styles.hint}>同意しない場合は保存後も非公開です。一般会員や契約相手ではない店舗には公開しません。</p>
+ </section>
  <fieldset className={styles.games+" "+styles.wide}><legend>対応可能なゲーム種目 *（複数選択）</legend>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={profile?.games.includes(g) ?? false} />{g}</label>)}</fieldset>
  <label className={styles.field}>経験年数 *<input name="years" type="number" min={0} max={80} step={0.1} defaultValue={profile?.experience_years ?? ""} required /><span className={styles.hint}>半年の場合は0.5年と入力できます。</span></label>
  <WorkDates initialDates={profile?.available_dates ?? []} today={today} />
@@ -25,3 +37,4 @@ export function DealerForm({ profile, address, photo, today }: { profile: Dealer
  <label className={styles.wide}><input type="checkbox" name="published" defaultChecked={profile?.published ?? true} /> 店舗アカウントにプロフィールを表示する<p className={styles.hint}>一般会員には表示されません。チェックを外すと本人だけが閲覧できます。</p></label>
  </div><div className={styles.actions}><Submit /></div></form>;
 }
+
