@@ -14,6 +14,6 @@ export default async function DealerPage({params}:{params:{id:string}}){
  const [profile,address]=await Promise.all([supabase.from("dealer_profiles").select("*").eq("user_id",params.id).eq("published",true).maybeSingle(),supabase.from("dealer_addresses").select("address").eq("user_id",params.id).maybeSingle()]);
  if(profile.error||address.error)throw new Error("プロフィールを読み込めませんでした。");
  if(!profile.data)notFound();
- const photo=profile.data.photo_url ? (await supabase.storage.from("dealer-photos").createSignedUrl(profile.data.photo_url,300)).data?.signedUrl ?? null : null;
+ const photo=profile.data.photo_url ? "/store/profile/dealers/"+params.id+"/photo" : null;
  return <main className={styles.page}><Link href="/store/profile/dealers">← ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/></main>;
 }

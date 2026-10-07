@@ -30,6 +30,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   let shifts: SpotShift[];
   try {
     shifts=JSON.parse(value('shifts'));
+    if (Array.isArray(shifts)) shifts=shifts.map(s=>({...s,break_minutes:0}));
     validateShifts(shifts);
     if (!games.length || games.some(g=>!DEALER_GAMES.includes(g))) throw new Error('ゲーム種目を選択してください。');
     if (!duties || duties.length>3000 || requirements.length>3000 || dress.length>2000) throw new Error('業務内容を入力し、各項目の文字数を確認してください。');
