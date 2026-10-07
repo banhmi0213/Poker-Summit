@@ -4,6 +4,7 @@ import { PREF_OPTIONS } from "@/lib/constants";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 
 export default function SignupPage({
   searchParams,
@@ -86,6 +87,12 @@ export default function SignupPage({
                 autoComplete="new-password"
               />
             </div>
+            <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
+            <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "18px 0", fontSize: 13, lineHeight: 1.8, minHeight: 44 }}>
+              <input type="checkbox" name="legalConsent" value="agree" required style={{ marginTop: 5, flexShrink: 0 }} />
+              <span><Link href="/terms" target="_blank" rel="noopener noreferrer">利用規約</Link>および<Link href="/privacy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</Link>を確認し、同意します。</span>
+            </label>
             <button type="submit" className="btn primary" style={{ width: "100%" }}>
               登録する
             </button>

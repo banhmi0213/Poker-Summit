@@ -2,8 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 
 export async function signUp(formData: FormData) {
+  if (formData.get("legalConsent") !== "agree") {
+    redirect(`/signup?error=${encodeURIComponent("利用規約とプライバシーポリシーへの同意が必要です。")}`);
+  }
+  if (formData.get("termsVersion") !== TERMS_VERSION || formData.get("privacyVersion") !== PRIVACY_VERSION) {
+    redirect(`/signup?error=${encodeURIComponent("規約が更新されました。ページを更新して内容をご確認ください。")}`);
+  }
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -24,7 +31,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      data: { display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic },
+      data: { display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic, legal_consent: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION },
     },
   });
 
