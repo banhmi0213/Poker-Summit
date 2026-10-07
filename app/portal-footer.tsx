@@ -24,6 +24,11 @@ export async function PortalFooter() {
           <br />
         </>
       )}
+      <p style={{ maxWidth: 900, margin: "16px auto", padding: "0 16px", fontSize: 12, lineHeight: 1.8 }}>
+        本サービスはアミューズメントポーカーの情報ポータルです。金銭・物品を賭ける行為や換金サービスを提供しません。
+        国内アミューズメント店舗の掲載条件として、リアルマネーの賭けおよびチップ・ポイント等の換金を禁止しています。
+        決済対象は店舗掲載プラン・広告・アドオン等のサービス利用料金です。<a href="/terms#amusement-policy">詳しくは利用規約へ</a>
+      </p>
       <nav className="footer-links" aria-label="フッターリンク">
         <a href="/terms">利用規約</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
