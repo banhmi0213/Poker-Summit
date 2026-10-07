@@ -27,6 +27,8 @@ const ITEMS: { label: string; body: ReactNode }[] = [
     label: "連絡先（お問い合わせフォーム）",
     body: <a href="/contact">https://pokersummit.jp/contact</a>,
   },
+  { label: "サービスの内容・決済対象", body: "アミューズメントポーカーの情報ポータルにおける店舗掲載プラン・広告・アドオン等の提供です。本サービスでは金銭・物品を賭ける行為や換金サービスを提供しません。賭け金、換金可能なチップ・ポイント等の購入代金、賞金の原資および大会参加資金は、本サービスの決済対象ではありません。" },
+  { label: "アミューズメント目的・換金不可", body: <>国内アミューズメント店舗の掲載条件として、リアルマネーの賭け、金銭・物品の賭博行為およびチップ・ポイント等の現金その他換金性のあるものへの交換・買取り・換金のあっせんを禁止します。詳細は<a href="/terms#amusement-policy">利用規約</a>をご確認ください。</> },
   { label: "販売価格（役務対価）", body: "店舗向け月額プラン・広告・アドオン等の価格は、各プラン・サービスの申込画面に表示する税込価格によります。月額プランは、表示されたプラン料金と選択したアドオン料金の合計額を継続して請求します。店舗への報酬・賃金の支払いとは別の料金です。" },
   {
     label: "商品代金以外の必要料金",
@@ -53,7 +55,7 @@ export default function TokushohoPage() {
       <PortalHeader />
       <div className="container" style={{ maxWidth: 640 }}>
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>特定商取引法に基づく表記</h1>
-        <p style={{ fontSize: 12 }}>最終改定日：2026年10月7日</p>
+        <p style={{ fontSize: 12 }}>最終改定日：2026年10月8日</p>
         <div className="card">
           {ITEMS.map((item) => (
             <div key={item.label}>
