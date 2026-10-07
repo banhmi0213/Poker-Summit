@@ -138,7 +138,19 @@ export async function MyPageContent({
     <div>
       <PortalHeader userEmail={user.email} />
       <div className={`container ${styles.page}`}>
-        <h1 style={{ fontSize: 22, marginBottom: 16 }}>マイページ</h1>
+        <div className={styles.pageHeading}>
+          <h1 style={{ fontSize: 22, margin: 0 }}>マイページ</h1>
+          {dealerProfile && (
+            <Link href="/spot-jobs" className={styles.spotBanner}>
+              <span className={styles.dealerIcon} aria-hidden="true">
+                <span className={styles.backCard}><span>A</span><b>♦</b></span>
+                <span className={styles.frontCard}><span>A</span><b>♦</b></span>
+                <span className={styles.pokerChip}><span /></span>
+              </span>
+              <span className={styles.spotCopy}><small>空いている日に、ディーラーとして活躍。</small><strong>スポット求人を探す</strong></span>
+            </Link>
+          )}
+        </div>
         <div className={styles.layout}>
         <section className={styles.overview}>
 
@@ -154,7 +166,7 @@ export async function MyPageContent({
                   <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
                     編集
                   </Link>
-                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>{dealerProfile && <Link href="/spot-jobs" className="btn" style={{ fontSize: 12 }}>スポット勤務を探す</Link>}
+                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
                 </div>
                 <div className="muted small">
                   📍 {pref || "未設定"}
@@ -229,7 +241,7 @@ export async function MyPageContent({
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link>{dealerProfile && <Link href="/spot-jobs" className="btn">スポット勤務を探す</Link>}</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link></div>
               <div className={styles.accountActions}>
                 <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
                 <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>

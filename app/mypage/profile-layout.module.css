@@ -1,7 +1,7 @@
 .page{max-width:1180px;padding-top:24px;padding-bottom:24px;color:#352919}
 .layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(340px,1fr);gap:18px;align-items:start}
 .overview{min-width:0}
-.page>h1{border-left:4px solid #c79a29;padding-left:18px;line-height:1.3}
+.pageHeading h1{border-left:4px solid #c79a29;padding-left:18px;line-height:1.3}
 .account{padding:20px;border:1px solid #e5e1d8;border-radius:14px;background:#fff;margin-bottom:18px;box-shadow:none}
 .account :global(.btn){border-color:#ddd3c2;border-radius:9px;background:#fff;color:#5a4121}
 .account input[type=file]{max-width:100%;width:235px}
@@ -34,3 +34,20 @@
 @media(max-width:600px){.summary{grid-template-columns:1fr;padding:18px}.memberFacts{border-left:0;border-top:1px solid #e9e3d8;padding-left:0;padding-top:14px}.summaryActions{grid-column:auto}.identityTop{gap:14px}.memberName{font-size:20px}.infoPanel dl>div{grid-template-columns:minmax(110px,.9fr) minmax(0,1.2fr)}}
 
 .tile{flex-direction:row;align-items:center;gap:12px;min-height:72px}.menuIcon{font-size:30px;line-height:1;color:#d3a529;flex-shrink:0}.menuText{display:flex;flex-direction:column;gap:4px;min-width:0}.menuText strong{font-size:13px}
+
+.pageHeading{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:18px}
+.spotBanner{display:grid;grid-template-columns:50px minmax(0,1fr) 50px;align-items:center;gap:8px;text-align:center;background:linear-gradient(110deg,#efe0b7,#fbf5e6);border:1px solid #d8bd81;border-radius:11px;padding:13px 16px;width:400px;max-width:100%;box-sizing:border-box;color:#392609;text-decoration:none}
+.spotBanner::after{content:""}
+.spotBanner:hover{border-color:#b58a2d;background:linear-gradient(110deg,#e9d5a2,#f8efd9)}
+.spotCopy{display:flex;flex-direction:column;gap:5px;min-width:0;align-items:center;text-align:center}
+.spotCopy small{font-size:11px;color:#765629;line-height:1.5}
+.spotCopy strong{font-size:16px;font-weight:700;line-height:1.5}
+.dealerIcon{display:block;position:relative;flex-shrink:0;width:50px;height:48px}
+.backCard,.frontCard{position:absolute;display:block;width:25px;height:34px;border:1.5px solid #977020;border-radius:4px;background:#fffaf0;box-sizing:border-box;color:#77500f;box-shadow:0 1px 2px #68451212}
+.backCard>span,.frontCard>span{position:absolute;left:4px;top:1px;font-family:Georgia,serif;font-weight:700;font-size:10px;line-height:1.2}
+.backCard b,.frontCard b{position:absolute;left:6px;top:12px;font-size:17px;font-weight:400;line-height:1}
+.backCard{top:4px;left:18px;transform:rotate(18deg)}
+.frontCard{top:7px;left:5px;transform:rotate(-13deg)}
+.pokerChip{position:absolute;left:25px;top:27px;width:20px;height:20px;border:3px dashed #fff5d8;border-radius:50%;background:#bc9233;box-shadow:0 0 0 1.4px #977020;box-sizing:border-box;display:grid;place-items:center}
+.pokerChip>span{width:8px;height:8px;border:1px solid #fff5d8;border-radius:50%;box-sizing:border-box}
+@media(max-width:600px){.pageHeading{flex-wrap:wrap;gap:18px}.spotBanner{width:100%;grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;padding:13px 12px}.dealerIcon{transform:scale(.85);transform-origin:left center}.spotCopy small{max-width:200px}}
