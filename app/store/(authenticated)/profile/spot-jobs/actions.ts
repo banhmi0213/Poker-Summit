@@ -1,4 +1,5 @@
 "use server";
+import { requireMatchingConsent } from "@/lib/matching-consent-server";
 import { randomUUID } from 'crypto';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
@@ -14,6 +15,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   if (suspendError || suspended) return {error:'このアカウントでは保存できません。'};
   const {data:store,error:storeError} = await db.from('stores').select('id').eq('owner_user_id',user.id).limit(1).maybeSingle();
   if (storeError || !store) return {error:'店舗情報を確認できませんでした。'};
+  await requireMatchingConsent(db,user.id,"store","/store/profile/spot-jobs");
   const id = String(form.get('id') || '');
   if (id && !UUID.test(id)) return {error:'求人を確認できませんでした。'};
   let current: {image_path:string|null}|null = null;
@@ -74,3 +76,4 @@ export async function closeSpotJob(form:FormData) {
   revalidatePath('/store/profile/spot-jobs');
   redirect('/store/profile/spot-jobs?'+(error?'error=1':'closed=1'));
 }
+

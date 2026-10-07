@@ -1,3 +1,6 @@
+import { MatchingRulesNotice } from "@/app/matching/notice";
+import { requireMatchingConsent } from "@/lib/matching-consent-server";
+import { matchingReturnWithQuery } from "@/lib/matching-return";
 import Link from "next/link";
 import { notFound,redirect } from "next/navigation";
 import { createStoreClient } from "@/lib/supabase/store-server";
@@ -12,6 +15,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  if(!user)redirect("/store/login?next=/store/profile/dealers");
  const {data:owned,error:ownedError}=await supabase.from("stores").select("id,pref,address").eq("owner_user_id",user.id).limit(1).maybeSingle();
  if(ownedError||!owned)notFound();
+ await requireMatchingConsent(supabase,user.id,"store",matchingReturnWithQuery("/store/profile/dealers",searchParams));
  const storePref=PREF_OPTIONS.includes(owned.pref??"")?owned.pref:PREF_OPTIONS.find(p=>(owned.address??"").includes(p))??"";
  const pref=searchParams.pref===undefined?storePref:PREF_OPTIONS.includes(searchParams.pref)?searchParams.pref:searchParams.pref===""?"":storePref;
  const q=String(searchParams.q??"").trim().slice(0,100);
@@ -30,6 +34,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  const {data:profiles,error}=await query;
  if(error)throw new Error("ディーラー情報を読み込めませんでした。");
  return <main className={styles.page}><h1 className={styles.heading}>フリーディーラーを探す</h1><p className={styles.hint}>最初は店舗所在地の都道府県を表示します。他県を探す場合は都道府県を変更してください。プロフィールは店舗アカウントだけが閲覧できます。</p>
+ <MatchingRulesNotice />
  <form action="/store/profile/dealers" className={styles.searchForm}>
  <label className={styles.field}>都道府県<select name="pref" defaultValue={pref}><option value="">全国</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
  <label className={styles.field}>フリーワード<input type="search" name="q" defaultValue={q} maxLength={100} placeholder="氏名・ゲーム種目"/></label>
@@ -38,4 +43,5 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  {!storePref&&<p className={styles.hint}>店舗の都道府県を自動判定できませんでした。店舗情報の所在地を確認してください。</p>}
  {!profiles?.length && <p>条件に一致するディーラーはいません。</p>}<div className={styles.list}>{profiles?.map(p=><Link key={p.user_id} href={"/store/profile/dealers/"+p.user_id}><DealerAvatar kind={p.avatar_kind} photo={p.photo_url ? "/store/profile/dealers/"+p.user_id+"/photo" : null} name={p.full_name} small /><h2>{p.full_name}</h2><span className={styles.tag}>{p.dealer_type}</span><p>{p.pref}・経験{p.experience_years}年</p><p>{p.games.join("／")}</p><strong>プロフィールを見る →</strong></Link>)}</div></main>;
 }
+
 

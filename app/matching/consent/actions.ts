@@ -1,4 +1,6 @@
 "use server";
+import { redirect } from "next/navigation";
+import { matchingReturn } from "@/lib/matching-return";
 import { createClient } from "@/lib/supabase/server";
 import { createStoreClient } from "@/lib/supabase/store-server";
 import { TERMS_VERSION, PRIVACY_VERSION, MATCHING_RULES_VERSION } from "@/lib/legal";
@@ -12,5 +14,6 @@ export async function acceptMatchingRules(actor: "store" | "dealer", _previous: 
  if (authError || !user) return { error: "ログインし直してください。", done: false };
  const { error } = await supabase.rpc("record_matching_consent", { p_actor: actor });
  if (error) return { error: "同意を記録できませんでした。アカウントの利用資格を確認して、もう一度お試しください。", done: false };
- return { error: "", done: true };
+ redirect(matchingReturn(actor, String(form.get("next") ?? "")));
 }
+
