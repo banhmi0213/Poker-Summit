@@ -32,7 +32,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  return <main className={styles.page}><h1 className={styles.heading}>フリーディーラーを探す</h1><p className={styles.hint}>最初は店舗所在地の都道府県を表示します。他県を探す場合は都道府県を変更してください。プロフィールは店舗アカウントだけが閲覧できます。</p>
  <form action="/store/profile/dealers" className={styles.searchForm}>
  <label className={styles.field}>都道府県<select name="pref" defaultValue={pref}><option value="">全国</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
- <label className={styles.field}>フリーワード<input type="search" name="q" defaultValue={q} maxLength={100} placeholder="氏名・ゲーム種目・アピール文"/></label>
+ <label className={styles.field}>フリーワード<input type="search" name="q" defaultValue={q} maxLength={100} placeholder="氏名・ゲーム種目"/></label>
  <label className={styles.field}>勤務希望日<input type="date" name="date" defaultValue={date}/></label>
  <button className="btn primary" type="submit">検索</button><Link className="btn" href="/store/profile/dealers">条件を解除</Link></form>
  {!storePref&&<p className={styles.hint}>店舗の都道府県を自動判定できませんでした。店舗情報の所在地を確認してください。</p>}
