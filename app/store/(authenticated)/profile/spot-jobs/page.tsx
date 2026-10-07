@@ -38,7 +38,7 @@ export default async function Page({searchParams}:{searchParams:{edit?:string;sa
   const image=await spotImage(db,{image_path:job?.image_path||null,store_id:store.id},store.banner_url);
   return <main className={styles.manage}><div className={styles.heading}><h1>スポット求人</h1><Link className={styles.button} href="/store/profile/dealers">フリーディーラーを探す →</Link></div>
     <p className={styles.muted}>募集は登録済みディーラーにだけ表示されます。店舗情報・所在地は店舗情報から自動で反映されます。</p>
-    <div className={styles.buttons}><Link className={styles.button} href="/store/profile/spot-jobs/work">応募・勤務管理・レビュー</Link></div><MatchingRulesNotice />
+    <div className={styles.buttons}><Link className={styles.button+" "+styles.primary} href="/store/profile/spot-jobs/work">✓ 勤務完了・レビューはこちら</Link></div><p className={styles.muted}>応募確認・勤務条件の確定・勤務完了・レビュー・過去の勤務履歴は、こちらから確認できます。</p><MatchingRulesNotice />
     <div className={styles.box}><strong>{store.name}</strong><p className={styles.muted}>{store.pref} {store.city} {store.address}</p><Link href="/store/profile">店舗情報を編集する →</Link></div>
     {searchParams.saved&&<p className={styles.success} role="status">{job?'変更を保存しました。':'保存しました。続けて新しい求人を登録できます。'}</p>}{searchParams.closed&&<p className={styles.success} role="status">募集を停止しました。</p>}{searchParams.error&&<p className={styles.error} role="alert">処理できませんでした。もう一度お試しください。</p>}
     {job&&<div className={styles.buttons}><Link className={styles.button} href="/store/profile/spot-jobs">新しい求人を登録</Link><Link className={styles.button} href={'/store/profile/spot-jobs/'+job.id}>プレビュー</Link></div>}
