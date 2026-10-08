@@ -5,7 +5,7 @@ export function matchingReturn(actor: MatchingActor, candidate?: string): string
  if (!candidate || candidate.length > 3000 || !candidate.startsWith("/") || candidate.startsWith("//") || /[\\\u0000-\u001f\u007f]/.test(candidate)) return fallback;
  try {
   const url = new URL(candidate, "https://pokersummit.jp");
-  const pattern = actor === "store" ? /^\/store\/profile\/(?:spot-jobs\/work|spot-jobs|dealers)(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/i : /^(?:\/account\/dealer\/work|\/spot-jobs)(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/i;
+  const pattern = actor === "store" ? /^\/store\/profile\/(?:spot-jobs\/work|spot-jobs|dealers|dealer-chat)(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/i : /^(?:\/account\/dealer\/(?:work|chat)|\/spot-jobs)(?:\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})?$/i;
   if (url.origin !== "https://pokersummit.jp" || !pattern.test(url.pathname)) return fallback;
   const query = new URLSearchParams();
   for (const key of ["pref", "q", "game", "date", "page", "edit", "job", "record"]) {

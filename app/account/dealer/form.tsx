@@ -1,5 +1,5 @@
-import { useState } from "react";
 "use client";
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { WorkDates } from "./work-dates";
 import { DealerPhotoField } from "./photo-field";
@@ -8,7 +8,8 @@ import { DEALER_GAMES, type DealerProfile } from "@/lib/dealers";
 import { PREF_OPTIONS } from "@/lib/constants";
 import styles from "./dealer.module.css";
 function Submit(){const { pending }=useFormStatus();return <button className="btn primary" type="submit" disabled={pending}>{pending ? "保存中…" : "保存する"}</button>;}
-export function DealerForm({ profile, address, photo, today }: { profile: DealerProfile | null; address: string; photo: string | null; today: string }) {
+export function DealerForm({ profile, address, photo, today, contacts }: { contacts: {phone:string;contact_type:string;contact_value:string;disclosure_consented_at:string|null}|null; profile: DealerProfile | null; address: string; photo: string | null; today: string }) {
+ const [contactType,setContactType]=useState<"line"|"email">(contacts?.contact_type==="email"?"email":"line");
  const [state, action]=useFormState(saveDealer,{ error: "" });
  return <form action={action} className={styles.card}>
  {state.error && <p className="err" role="alert">{state.error}</p>}

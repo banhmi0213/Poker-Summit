@@ -14,7 +14,7 @@ export async function submitWork(_state:{error:string},form:FormData):Promise<{e
  if(!user)redirect((actor==="dealer"?"/login":"/store/login")+"?next="+encodeURIComponent(path));
  await requireMatchingConsent(db,user.id,actor,path);
  const operation=String(form.get("operation")||"");
- if(operation==="confirm"&&form.get("agreed")!=="on")return {error:"条件を確認してチェックを入れてください。"};
+ if(operation==="confirm"){const id=String(form.get("id")||"");if(!UUID.test(id))return {error:"勤務を確認してください。"};redirect((actor==="store"?"/store/profile/dealer-chat/":"/account/dealer/chat/")+id);}
  let error; let recordId="";
  if(operation==="request"){
   const job=String(form.get("job")||""),date=String(form.get("date")||"");
@@ -31,5 +31,6 @@ export async function submitWork(_state:{error:string},form:FormData):Promise<{e
  }
  if(error)return {error:"保存できませんでした。募集状況・勤務終了時刻・レビューの保存を確認し、ページを更新して再度お試しください。"};
  for(const p of ["/account/dealer","/store/profile/spot-jobs","/store/profile/dealers","/spot-jobs"])revalidatePath(p,"layout");
+ if(operation==="request")redirect("/account/dealer/chat/"+recordId);
  redirect(path+"?saved=1&record="+encodeURIComponent(recordId));
 }

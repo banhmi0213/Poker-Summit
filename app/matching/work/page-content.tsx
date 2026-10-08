@@ -40,7 +40,7 @@ export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";sear
  <details><summary>当時のスポット求人条件</summary><p>{j.games?.join("・")}</p><p className={styles.pre}>{j.duties||"条件の記録なし"}</p><p className={styles.pre}>応募条件：{j.requirements||"記載なし"}</p><p className={styles.pre}>服装・持ち物：{j.dress||"記載なし"}</p></details>
  {r.spot_job_id&&<p><Link href={path+"?job="+r.spot_job_id}>この求人の勤務履歴・レビュー</Link></p>}
  <p className={styles.muted}>条件確定：店舗 {r.store_confirmed_at?"確認済み":"未確認"} ／ ディーラー {r.dealer_confirmed_at?"確認済み":"未確認"}</p>
- {r.status==="pending"&&!selfConfirmed&&Date.parse(r.work_start)>Date.now()&&<WorkForm actor={actor} id={r.id} operation="confirm"/>}
+ <p><Link className={styles.button} href={(actor==="store"?"/store/profile/dealer-chat/":"/account/dealer/chat/")+r.id}>チャット・勤務条件の確認</Link></p>
  {r.status==="pending"&&selfConfirmed&&<p>相手の条件確定をお待ちください。</p>}
  {r.dealer_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>ディーラーから店舗へのレビュー</strong><p className={styles.pre}>{r.dealer_review}</p><small>{r.review_saved_at?date(r.review_saved_at):""}</small></div>}
  {!searchParams.job&&r.store_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>店舗からディーラーへのレビュー（勤務実績）</strong><p className={styles.pre}>{r.store_review}</p><small>{r.store_review_saved_at?date(r.store_review_saved_at):""}</small></div>}
