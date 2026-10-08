@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
+import { passwordPolicyError } from "@/lib/password-policy";
 
 export async function signUp(formData: FormData) {
   if (formData.get("legalConsent") !== "agree") {
@@ -22,8 +23,9 @@ export async function signUp(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
   }
 
-  if (password.length < 6) {
-    redirect(`/signup?error=${encodeURIComponent("パスワードは6文字以上で入力してください。")}`);
+  const passwordError = passwordPolicyError(password);
+  if (passwordError) {
+    redirect(`/signup?error=${encodeURIComponent(passwordError)}`);
   }
 
   const supabase = await createClient();

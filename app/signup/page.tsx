@@ -5,6 +5,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
+import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 
 export default function SignupPage({
   searchParams,
@@ -78,12 +79,14 @@ export default function SignupPage({
               <input type="email" name="email" required autoComplete="email" />
             </div>
             <div className="field">
-              <span className="muted">パスワード（6文字以上）</span>
+              <span className="muted">パスワード（{PASSWORD_RULE_LABEL}）</span>
               <input
                 type="password"
                 name="password"
                 required
-                minLength={6}
+                minLength={PASSWORD_MIN_LENGTH}
+                pattern={PASSWORD_INPUT_PATTERN}
+                title={PASSWORD_RULE_LABEL}
                 autoComplete="new-password"
               />
             </div>

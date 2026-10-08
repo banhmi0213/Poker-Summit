@@ -12,15 +12,8 @@ import {
   rejectStoreChangeRequest,
 } from "@/lib/store-update";
 import { PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
+import { generateStorePassword } from "@/lib/password-policy";
 
-function randomPassword(length = 10) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let out = "";
-  for (let i = 0; i < length; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
 
 function randomLoginId(storeId: string) {
   return `store-${storeId.slice(0, 8)}`;
@@ -272,7 +265,7 @@ export async function updateStoreByAdmin(formData: FormData) {
 export async function issueStoreLogin(storeId: string) {
   const supabase = await createClient();
   const loginId = randomLoginId(storeId);
-  const password = randomPassword();
+  const password = generateStorePassword();
 
   const { error } = await supabase.rpc("admin_issue_store_login", {
     p_store_id: storeId,
@@ -299,7 +292,7 @@ export async function issueStoreLogin(storeId: string) {
 
 export async function reissueStorePassword(storeId: string) {
   const supabase = await createClient();
-  const password = randomPassword();
+  const password = generateStorePassword();
 
   const { error } = await supabase.rpc("admin_reissue_store_password", {
     p_store_id: storeId,

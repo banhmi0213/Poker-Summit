@@ -2,15 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { passwordPolicyError } from "@/lib/password-policy";
 
 export async function changePassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
 
-  if (password.length < 6) {
-    redirect(
-      `/account/password?error=${encodeURIComponent("パスワードは6文字以上で入力してください。")}`
-    );
+  const passwordError = passwordPolicyError(password);
+  if (passwordError) {
+    redirect(`/account/password?error=${encodeURIComponent(passwordError)}`);
   }
 
   if (password !== passwordConfirm) {
