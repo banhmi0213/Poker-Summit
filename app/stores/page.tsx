@@ -240,6 +240,15 @@ export default async function StoresPage({
     .filter(page => page === 1 || page === pagination.totalPages || Math.abs(page - pagination.page) <= 2);
   const pageHref = (page: number) => storePageHref(searchParams, page);
 
+  // 見出しはページタイトル(generateMetadata)と同じ地名に揃える。
+  // 都道府県で絞っていればその都道府県(エリア指定があれば併記)、地方だけなら地方名、それ以外は全国。
+  const heroArea = pref && area && (AREA_OPTIONS[pref] ?? []).includes(area) && !area.startsWith("その他") ? area : "";
+  const heroPlace = pref
+    ? `${pref}${heroArea ? ` ${heroArea}` : ""}`
+    : isKnownRegion
+      ? region
+      : "全国";
+
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
@@ -252,12 +261,12 @@ export default async function StoresPage({
         <div className="store-mobile-banner">
           <CompactPortalBanner image="/images/poker-store-finder-banner.jpg"
             eyebrow="FIND YOUR POKER SPOT"
-            title={`${isKnownRegion ? region : (PREF_REGION[pref]?.[0] ?? "全国")}のポーカースポットを探す`}
+            title={`${heroPlace}のポーカースポットを探す`}
             subtitle="看板から見つける、あなたの次の一軒。" />
         </div>
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>
-          <h1>{isKnownRegion ? region : (PREF_REGION[pref]?.[0] ?? "全国")}のポーカースポットを探す</h1>
+          <h1>{heroPlace}のポーカースポットを探す</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
         {storeListBanner && (
