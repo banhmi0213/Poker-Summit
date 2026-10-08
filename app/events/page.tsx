@@ -8,6 +8,9 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS } from "@/lib/constants";
 import { PrefAreaSelect } from "@/app/pref-area-select";
 import { EventSign } from "@/app/event-sign";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "ポーカーのトーナメント・イベント情報", description: "全国のアミューズメントポーカー店で開催されるトーナメント・イベント情報。開催日・エリア・店舗から次に参加する大会を探せます。", path: "/events" });
 
 const kinds = ["すべて", "トーナメント", "イベント", "その他"];
 function eventKind(e: any) {

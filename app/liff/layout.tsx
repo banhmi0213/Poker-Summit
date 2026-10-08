@@ -1,3 +1,5 @@
+import { NOINDEX } from "@/lib/seo";
+export const metadata = NOINDEX;
 import { LiffProvider } from "./liff-provider";
 
 export default function LiffLayout({ children }: { children: React.ReactNode }) {

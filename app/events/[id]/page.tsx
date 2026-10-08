@@ -9,6 +9,70 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreNamePlaceholder } from "@/app/store-name-placeholder";
 import styles from "./detail.module.css";
 import { EventSign } from "@/app/event-sign";
+import type { Metadata } from "next";
+import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { JsonLd } from "@/lib/json-ld";
+
+const EVENT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function jstDate(value: string | null) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "numeric", day: "numeric" }).format(new Date(value));
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!EVENT_UUID.test(params.id)) return {};
+  const supabase = await createClient();
+  const { data } = await supabase.from("events").select("id,title,location,description,start_at,category,banner_image_url,stores(name,pref,city)").eq("id", params.id).eq("status", "published").maybeSingle();
+  const e = data as any;
+  if (!e) return {};
+  const venue = e.stores?.name || e.location || "";
+  const area = e.stores ? `${e.stores.pref ?? ""}${e.stores.city ?? ""}` : "";
+  const when = jstDate(e.start_at);
+  const title = pageTitle(`${e.title}${when ? `（${when}）` : ""}${venue ? `｜${venue}` : ""}`);
+  const lead = [when && `${when}開催`, area, venue && `${venue}の`].filter(Boolean).join(" ");
+  const description = clip(`${lead}${e.category || "ポーカーイベント"}「${e.title}」の詳細。${e.description ?? ""}`, 160);
+  const path = `/events/${e.id}`;
+  const image = e.banner_image_url || undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: e.title }] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+  };
+}
+
+function eventJsonLd(e: any) {
+  const store = e.stores;
+  const place: Record<string, unknown> = { "@type": "Place", name: store?.name || e.location || "会場未定" };
+  if (store) {
+    place.address = {
+      "@type": "PostalAddress",
+      addressCountry: "JP",
+      ...(store.pref ? { addressRegion: store.pref } : {}),
+      ...(store.city ? { addressLocality: store.city } : {}),
+      ...(store.address ? { streetAddress: store.address } : {}),
+    };
+  } else if (e.location) {
+    place.address = { "@type": "PostalAddress", addressCountry: "JP", streetAddress: e.location };
+  }
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: e.title,
+    url: absoluteUrl(`/events/${e.id}`),
+    startDate: e.start_at,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: place,
+  };
+  if (e.end_at) data.endDate = e.end_at;
+  if (e.description) data.description = clip(e.description, 500);
+  if (e.banner_image_url) data.image = [e.banner_image_url];
+  if (store?.name) data.organizer = { "@type": "Organization", name: store.name, url: absoluteUrl(`/stores/${store.id}`) };
+  return data;
+}
 
 function date(value: string | null, time = false) {
   if (!value) return "未定";
@@ -38,6 +102,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const location = e.location || [store?.pref,store?.city].filter(Boolean).join(" ") || "未定";
   const mapQuery = [e.location,store?.address,store?.name].filter(Boolean).join(" ");
   return <div>
+    {e.start_at && <JsonLd data={eventJsonLd(e)} />}
     <PortalHeader userEmail={user?.email}/>
     <main className={`container detail-readable ${styles.page}`}>
       <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>

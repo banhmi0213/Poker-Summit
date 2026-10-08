@@ -7,6 +7,30 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { CouponBannerLightbox } from "@/app/coupons/coupon-banner-lightbox";
 import styles from "./detail.module.css";
+import type { Metadata } from "next";
+import { SITE_NAME, clip, pageTitle } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) return {};
+  const supabase = await createClient();
+  const { data } = await supabase.from("coupons").select("id,title,discount,description,valid_until,banner_image_url,stores(name,pref,city,status)").eq("id", params.id).eq("active", true).maybeSingle();
+  const c = data as any;
+  if (!c || !c.stores || !["approved", "listed"].includes(c.stores.status)) return {};
+  const area = `${c.stores.pref ?? ""}${c.stores.city ?? ""}`;
+  const title = pageTitle(`${c.title}｜${c.stores.name}${area ? `（${area}）` : ""}のクーポン`);
+  const description = clip(`${c.stores.name}で使えるクーポン「${c.title}」${c.discount ? `（${c.discount}）` : ""}。${c.valid_until ? `有効期限：${c.valid_until.replaceAll("-", "/")}。` : ""}${c.description ?? ""}`, 160);
+  const path = `/coupons/${c.id}`;
+  const image = c.banner_image_url || undefined;
+  const expired = !!c.valid_until && c.valid_until < new Date().toISOString().slice(0, 10);
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: c.title }] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    ...(expired ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
   const today = new Date().toISOString().slice(0, 10);

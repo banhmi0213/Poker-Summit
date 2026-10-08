@@ -1,3 +1,5 @@
+import { NOINDEX } from "@/lib/seo";
+export const metadata = NOINDEX;
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";

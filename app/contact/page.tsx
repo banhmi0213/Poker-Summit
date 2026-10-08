@@ -5,6 +5,9 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { INQUIRY_CATEGORIES } from "@/lib/constants";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "お問い合わせ", description: "Poker Summitへのお問い合わせ窓口。店舗掲載・不具合・ご意見などはこちらから。", path: "/contact" });
 
 export default async function ContactPage({
   searchParams,

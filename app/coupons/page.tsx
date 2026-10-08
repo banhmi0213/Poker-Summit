@@ -8,6 +8,9 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS, CATEGORY_LABEL, COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
 import { PrefAreaSelect } from "@/app/pref-area-select";
 import { CouponBannerLightbox } from "./coupon-banner-lightbox";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "ポーカー店のクーポン・お得情報", description: "全国のアミューズメントポーカー店・ポーカーバーで使えるクーポンやキャンペーン情報。来店前にお得な特典をチェックできます。", path: "/coupons" });
 
 function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
   const today = new Date().toISOString().slice(0, 10);

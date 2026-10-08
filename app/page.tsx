@@ -21,6 +21,38 @@ import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
 import { getTopBanners, isExternalBannerLink } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { headers } from "next/headers";
+import type { Metadata } from "next";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
+import { JsonLd } from "@/lib/json-ld";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+const HOME_JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    name: SITE_NAME,
+    alternateName: `${SITE_NAME}｜${SITE_TAGLINE}`,
+    url: `${SITE_URL}/`,
+    description: SITE_DESCRIPTION,
+    inLanguage: "ja",
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/stores?q={search_term_string}` },
+      "query-input": "required name=search_term_string",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${SITE_URL}/#organization`,
+    name: "株式会社Give Rise",
+    url: `${SITE_URL}/`,
+    brand: { "@type": "Brand", name: SITE_NAME },
+  },
+];
 
 function formatDateTime(value: string | null) {
   if (!value) return "";
@@ -215,6 +247,7 @@ export default async function HomePage({
 
   return (
     <div>
+      <JsonLd data={HOME_JSON_LD} />
       <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
 
       {settings?.announcement && (
