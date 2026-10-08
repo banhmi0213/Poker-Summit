@@ -16,7 +16,7 @@ export function DealerForm({ profile, address, photo, today, contacts }: { conta
  <div className={styles.fields}>
  <DealerPhotoField kind={profile?.avatar_kind ?? null} photo={photo} hasPhoto={Boolean(profile?.photo_url)} />
  <label className={styles.field}>氏名 *<input name="name" defaultValue={profile?.full_name ?? ""} maxLength={100} autoComplete="name" required /></label>
- <label className={styles.field}>年齢（18歳以上） *<input name="age" type="number" min={18} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
+ <label className={styles.field}>年齢 *<input name="age" type="number" min={0} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
  <label className={styles.field}>ディーラー種別<select name="dealerType" defaultValue={profile?.dealer_type ?? "ディーラー"}><option>ディーラー</option><option>フリーディーラー</option></select></label>
  <label className={styles.field}>住所（都道府県） *<select name="pref" defaultValue={profile?.pref ?? ""} required><option value="">選択してください</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
  <label className={styles.field+" "+styles.wide}>住所（市区町村・番地など） *<input name="address" defaultValue={address} maxLength={300} autoComplete="street-address" required /></label>
