@@ -59,6 +59,7 @@ export function AdminSidebar() {
           <Link
             key={l.href}
             href={l.href}
+            prefetch={false}
             className={`side-link${active ? " active" : ""}`}
           >
             {l.label}
