@@ -1,3 +1,4 @@
+import { ManagementLoginForm } from "@/app/management-login-form";
 import Link from "next/link";
 import { storeSignIn } from "./actions";
 import { PortalHeader } from "@/app/portal-header";
@@ -35,7 +36,7 @@ export default function StoreLoginPage({
             店舗の掲載申込み・発行時にお伝えしたログインIDとパスワードでログインしてください。
           </p>
           {params.error && <p className="err">{params.error}</p>}
-          <form action={storeSignIn}>
+          <ManagementLoginForm action={storeSignIn}>
             <input type="hidden" name="next" value={next} />
             <div className="field">
               <span className="muted">ログインID</span>
@@ -52,14 +53,12 @@ export default function StoreLoginPage({
               <input
                 type="password"
                 name="password"
+                enterKeyHint="go"
                 required
                 autoComplete="current-password"
               />
             </div>
-            <button type="submit" className="btn primary" style={{ width: "100%" }}>
-              ログイン
-            </button>
-          </form>
+          </ManagementLoginForm>
           <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
             ログインIDが分からない場合は運営までお問い合わせください。
           </p>
