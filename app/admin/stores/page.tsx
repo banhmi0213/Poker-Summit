@@ -54,7 +54,7 @@ export default async function AdminStoresPage({
       .from("stores")
       .select(
         "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
-        { count: "exact", head: opts.head ?? false }
+        { count: opts.head ? "exact" : undefined, head: opts.head ?? false }
       )
       // Secondary sort by id: created_at alone ties for rows inserted in the
       // same batch (dummy seed data today, bulk Places-API imports later), and
@@ -92,9 +92,9 @@ export default async function AdminStoresPage({
 
   const {
     data: stores,
-    count: storeCount,
     error: storeError,
   } = await buildFilteredQuery().range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  const storeCount = countOnly;
   const rangeStart = (storeCount ?? 0) === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, storeCount ?? 0);
 
@@ -127,9 +127,20 @@ export default async function AdminStoresPage({
     }
     return q0;
   };
-  const { count: listedCount } = showListedCount
-    ? await buildListedCountQuery()
-    : { count: null as number | null };
+  const [
+    { count: listedCount },
+    { data: logins },
+    { data: pendingChangeRequests },
+  ] = await Promise.all([
+    showListedCount ? buildListedCountQuery() : Promise.resolve({ count: null as number | null }),
+    supabase.rpc("admin_list_store_logins"),
+    supabase
+      .from("store_change_requests")
+      .select("id, store_id, field, current_value, proposed_value, requested_by, requested_at, stores(name)")
+      .eq("status", "pending")
+      .order("requested_at", { ascending: true }),
+  ]);
+  const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
 
   // 検索条件を保ったままページ番号だけ差し替えたリンク先を作る
   // (ページネーションの前後移動・ページ番号リンク用)。
@@ -144,14 +155,6 @@ export default async function AdminStoresPage({
     return qs ? `/admin/stores?${qs}` : "/admin/stores";
   };
 
-  const { data: logins } = await supabase.rpc("admin_list_store_logins");
-  const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
-
-  const { data: pendingChangeRequests } = await supabase
-    .from("store_change_requests")
-    .select("id, store_id, field, current_value, proposed_value, requested_by, requested_at, stores(name)")
-    .eq("status", "pending")
-    .order("requested_at", { ascending: true });
 
   const jar = await cookies();
   const issuedRaw = jar.get("issued_credentials")?.value;
