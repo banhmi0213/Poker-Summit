@@ -5,6 +5,7 @@ import { useLiff } from "../liff-provider";
 import { liffFetch } from "../api-client";
 import { LiffBackLink } from "../liff-back-link";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
+import Link from "next/link";
 
 type Job = {
   id: string;
@@ -112,7 +113,14 @@ export default function LiffJobsPage() {
   return (
     <div>
       <LiffBackLink />
-      <h1 style={{ fontSize: 18, marginBottom: 12 }}>求人</h1>
+      <h1 style={{ fontSize: 18, marginBottom: 12 }}>求人・スポット求人</h1>
+      <nav aria-label="求人の種類" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+        <Link href="/liff/jobs" className="btn primary" aria-current="page" prefetch={false}>求人</Link>
+        <Link href="/store/profile/spot-jobs" className="btn" prefetch={false}>スポット求人</Link>
+      </nav>
+      <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
+        スポット求人の登録・編集、応募・勤務管理は「スポット求人」から開けます。店舗ログインが必要な場合は、ログイン後に表示されます。
+      </p>
 
       {error && <p style={{ color: "var(--critical)", fontSize: 13, marginBottom: 10 }}>{error}</p>}
 

@@ -18,7 +18,7 @@ type MeResponse = {
 const MENU = [
   { href: "/liff/profile", label: "店舗基本情報", desc: "営業時間・電話番号・説明文・住所・店名" },
   { href: "/liff/coupons", label: "クーポン", desc: "作成・編集" },
-  { href: "/liff/jobs", label: "求人", desc: "作成・編集・募集ON/OFF" },
+  { href: "/liff/jobs", label: "求人・スポット求人", desc: "求人の作成・編集／スポット求人・応募・勤務管理" },
   { href: "/liff/events", label: "トーナメント／イベント", desc: "作成・編集" },
   { href: "/liff/notices", label: "お知らせ", desc: "作成・編集・公開/非公開" },
   { href: "/liff/photos", label: "店舗写真", desc: "追加・削除" },
