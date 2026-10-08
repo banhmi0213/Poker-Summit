@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { changeStorePassword } from "../password-actions";
+import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 
 // app/account/password/page.tsx (会員・総合管理画面用)の店舗版。店舗用
 // Cookie(STORE_AUTH_COOKIE_NAME)のセッションに対してパスワードを変更する
@@ -37,12 +38,12 @@ export default async function StorePasswordPage({
         )}
         <form action={changeStorePassword}>
           <div className="field">
-            <span className="muted">新しいパスワード（6文字以上）</span>
-            <input type="password" name="password" required minLength={6} />
+            <span className="muted">新しいパスワード（{PASSWORD_RULE_LABEL}）</span>
+            <input type="password" name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />
           </div>
           <div className="field">
             <span className="muted">新しいパスワード（確認）</span>
-            <input type="password" name="passwordConfirm" required minLength={6} />
+            <input type="password" name="passwordConfirm" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
           </div>
           <button type="submit" className="btn primary" style={{ width: "100%" }}>
             変更する

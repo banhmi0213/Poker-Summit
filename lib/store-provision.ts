@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { generateStoreLinkCode } from "@/lib/store-update";
 import { sendStoreCredentialsEmail } from "@/lib/email";
+import { generateStorePassword } from "@/lib/password-policy";
 
 // ============================================================================
 // セルフサーブ申込み(listing_applications, plan_id付き)がfincodeの初回課金に
@@ -11,14 +12,6 @@ import { sendStoreCredentialsEmail } from "@/lib/email";
 // (admin_issue_store_login()とは別物。マイグレーション参照)。
 // ============================================================================
 
-function randomPassword(length = 10) {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-    let out = "";
-    for (let i = 0; i < length; i++) {
-        out += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return out;
-}
 
 function randomLoginId(storeId: string) {
     return `store-${storeId.slice(0, 8)}`;
@@ -86,7 +79,7 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
     }
 
 const loginId = randomLoginId(storeId);
-    const password = randomPassword();
+    const password = generateStorePassword();
 
 const { error: loginError } = await supabase.rpc("system_issue_store_login", {
     p_store_id: storeId,

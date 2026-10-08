@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
+import { passwordPolicyError } from "@/lib/password-policy";
 
 // 店舗用Cookie(STORE_AUTH_COOKIE_NAME)のセッションに対してパスワードを
 // 変更する。app/account/password/actions.ts (会員・総合管理画面用、
@@ -10,10 +11,9 @@ export async function changeStorePassword(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
 
-  if (password.length < 6) {
-    redirect(
-      `/store/profile/password?error=${encodeURIComponent("パスワードは6文字以上で入力してください。")}`
-    );
+  const passwordError = passwordPolicyError(password);
+  if (passwordError) {
+    redirect(`/store/profile/password?error=${encodeURIComponent(passwordError)}`);
   }
 
   if (password !== passwordConfirm) {
