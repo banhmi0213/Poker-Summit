@@ -1,3 +1,4 @@
+import { ManagementLoginForm } from "@/app/management-login-form";
 import Link from "next/link";
 import { adminSignIn } from "./actions";
 
@@ -29,7 +30,7 @@ export default function AdminLoginPage({
           運営アカウント(admin_users登録済み)のメールアドレスとパスワードでログインしてください。
         </p>
         {params.error && <p className="err">{params.error}</p>}
-        <form action={adminSignIn}>
+        <ManagementLoginForm action={adminSignIn}>
           <input type="hidden" name="next" value={next} />
           <div className="field">
             <span className="muted">メールアドレス</span>
@@ -40,14 +41,12 @@ export default function AdminLoginPage({
             <input
               type="password"
               name="password"
+              enterKeyHint="go"
               required
               autoComplete="current-password"
             />
           </div>
-          <button type="submit" className="btn primary" style={{ width: "100%" }}>
-            ログイン
-          </button>
-        </form>
+        </ManagementLoginForm>
         <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
           会員の方は<Link href="/login">こちらから会員ログイン</Link>
         </p>
