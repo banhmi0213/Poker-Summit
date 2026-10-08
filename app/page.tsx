@@ -338,7 +338,7 @@ export default async function HomePage({
           </div>
         )}
         <section className="home-section">
-          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る →</Link></div>
+          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> <ReadableName name={isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"} /></h2><Link href="/events">すべてのトーナメント・イベントを見る →</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
             const status = getEventStatus(ev, now);

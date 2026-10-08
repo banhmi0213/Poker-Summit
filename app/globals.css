@@ -2757,3 +2757,6 @@ th {
  .ep-list-heading h2 { min-width:0; flex:1; }
  .ep-list-heading > span { white-space:nowrap; }
 }
+
+.home-section-head h2:has(> .readable-name) { display:flex; align-items:flex-start; gap:5px; }
+.home-section-head h2 > .readable-name { flex:1; margin-right:0; }

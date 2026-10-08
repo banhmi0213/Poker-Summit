@@ -1,6 +1,6 @@
 // Preserve the registered name; expose word boundaries rather than cutting at a character count.
 const segmenter = new Intl.Segmenter("ja", { granularity: "word" });
-const suffix = /^(?:店|本店|支店|号店|会|大会|駅|前|町|区|市|県|府)$/;
+const suffix = /^(?:店|本店|支店|号店|会|大会|駅|前|町|区|市|県|府|の|を|に|で|と|へ|は|が|も|や)$/;
 const opening = /^[（(「『【\[＠@#＆&・\/／|｜]$/;
 const closing = /^[）)」』】\]、。，,.!！?？:：;；]$/;
 
@@ -9,7 +9,7 @@ export function nameParts(name: string): string[] {
   for (const { segment } of Array.from(segmenter.segment(name))) {
     const last = result.length - 1;
     if (last >= 0 && !/\s$/.test(result[last]) &&
-      (suffix.test(segment) || closing.test(segment) || opening.test(result[last]))) {
+      (suffix.test(segment) || closing.test(segment) || opening.test(result[last]) || (/^[ぁ-ゖー]+$/.test(segment) && /^[ぁ-ゖー]+$/.test(result[last])))) {
       result[last] += segment;
     } else {
       result.push(segment);
@@ -19,6 +19,12 @@ export function nameParts(name: string): string[] {
   for (let i = result.length - 2; i >= 0; i--) {
     if (opening.test(result[i]) && !/^\s/.test(result[i + 1])) {
       result.splice(i, 2, result[i] + result[i + 1]);
+    }
+  }
+  // Keep connected names such as トーナメント・イベント and Cafe&Bar together.
+  for (let i = result.length - 1; i >= 1; i--) {
+    if (/^[＆&・\/／|｜]/.test(result[i]) && !/\s/.test(result[i]) && !/\s$/.test(result[i-1])) {
+      result.splice(i-1, 2, result[i-1] + result[i]);
     }
   }
   return result;
