@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { pushLineMessage } from "@/lib/line";
 import { sendJobApplicationNotificationEmail } from "@/lib/email";
 
@@ -128,17 +129,20 @@ export async function submitJobApplication(formData: FormData) {
   // LINEとメールで通知する(2026/10、「応募がきたら店舗オーナーにLINEと
   // メールで連絡が飛ぶようにして」との指示を受けて追加)。
   // 宛先は get_job_notification_target() RPC(security definer)経由で
-  // 取得する — ここで使っている supabase クライアントは応募者自身の
-  // セッションで、store_contracts へのSELECT権限を持たない(管理者/
-  // 店舗オーナーのみ。RLS参照)ため。
+  // 取得する。この関数は店舗の契約メールアドレスとLINEの通知用IDを返すため、
+  // 応募者や未ログインの人が直接呼べると、求人IDだけで店舗の連絡先が
+  // 取れてしまう。そのためDB側では service_role だけに実行権限を与え
+  // (db/rpc_execute_hardening.sql)、ここでもサーバー内でのみ
+  // service_role クライアントで呼ぶ。取得した宛先は通知送信にだけ使い、
+  // 応募者への返り値やリダイレクト先には一切含めない。
   // 通知はベストエフォート: LINE未連携・メール未設定・送信失敗のいずれ
   // でも応募受付自体は止めない(pushLineMessage()・
   // sendJobApplicationNotificationEmail()と同じ方針)。
   if (!error) {
     try {
-      const { data: target } = await supabase
+      const { data: target } = await createServiceRoleClient()
         .rpc("get_job_notification_target", { p_job_id: jobId })
-        .maybeSingle();
+        .maybeSingle<{ store_name: string; job_title: string; line_user_id: string | null; contact_email: string | null }>();
 
       if (target) {
         if (target.line_user_id) {
