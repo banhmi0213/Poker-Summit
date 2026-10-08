@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -274,7 +275,7 @@ export async function MyPageContent({
               favStores.map((s: any) => (
                 <div className="card" key={s.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <Link href={`/stores/${s.id}`} style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800 }}>{s.name}</div>
+                    <div style={{ fontWeight: 800 }}><ReadableName name={s.name} /></div>
                     <div className="muted small">
                       📍 {s.pref}
                       {s.city}
@@ -303,9 +304,9 @@ export async function MyPageContent({
               favJobs.map((j: any) => (
                 <div className="card" key={j.id} style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                   <Link href={`/jobs/${j.id}`} style={{ flex: 1, minWidth: 160 }}>
-                    <div style={{ fontWeight: 800 }}>{j.title}</div>
+                    <div style={{ fontWeight: 800 }}><ReadableName name={j.title} /></div>
                     <div className="muted small">
-                      {j.stores?.name} ・ {j.stores?.pref}
+                      {j.stores?.name && <ReadableName name={j.stores.name} />} ・ {j.stores?.pref}
                     </div>
                   </Link>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -344,9 +345,9 @@ export async function MyPageContent({
                   <Link href={`/jobs/${j.id}`} key={j.id}>
                     <div className="card" style={{ display: "flex", alignItems: "center", gap: 14 }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 800 }}>{j.title}</div>
+                        <div style={{ fontWeight: 800 }}><ReadableName name={j.title} /></div>
                         <div className="muted small">
-                          {j.stores?.name} ・ {j.stores?.pref}
+                          {j.stores?.name && <ReadableName name={j.stores.name} />} ・ {j.stores?.pref}
                         </div>
                       </div>
                       {statusBadge(j.status)}
@@ -362,8 +363,8 @@ export async function MyPageContent({
               {favCoupons.length === 0 ? <p className="muted small" style={{ marginBottom: 22 }}>保存したクーポンはありません。</p> : favCoupons.map((c: any) => (
                 <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}>{c.title}</Link> : <strong>{c.title}（掲載終了）</strong>}
-                    <div className="muted small">{c.stores?.name} ・ 期限 {c.valid_until ?? "なし"}</div>
+                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}><ReadableName name={c.title} /></Link> : <strong><ReadableName name={c.title} />（掲載終了）</strong>}
+                    <div className="muted small">{c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}</div>
                   </div>
                   <form action={async () => { "use server"; await setFavoriteCoupon(c.id, false); }}>
                     <button type="submit" className="btn" style={{ fontSize: 12 }}>解除</button>
@@ -379,9 +380,9 @@ export async function MyPageContent({
                 unusedCoupons.map((c: any) => (
                   <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800 }}>{c.title}</div>
+                      <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
                       </div>
                     </Link>
                     <Link href={`/coupons/${c.id}`} className="btn primary" style={{ fontSize: 12 }}>
@@ -397,9 +398,9 @@ export async function MyPageContent({
                 usedCoupons.map((c: any) => (
                   <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 800 }}>{c.title}</div>
+                      <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
                       </div>
                     </Link>
                     <span className="badge good">✓ 使用済み</span>
@@ -418,7 +419,7 @@ export async function MyPageContent({
               rsvpEvents.map((ev: any) => (
                 <div className="card" key={ev.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <Link href={`/events/${ev.id}`} style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 800 }}>{ev.title}</div>
+                    <div style={{ fontWeight: 800 }}><ReadableName name={ev.title} /></div>
                     <div className="muted small">
                       {ev.location} ・ {ev.stores?.pref}
                     </div>

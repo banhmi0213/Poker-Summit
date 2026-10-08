@@ -8,8 +8,11 @@ export function nameParts(name: string): string[] {
   const result: string[] = [];
   for (const { segment } of Array.from(segmenter.segment(name))) {
     const last = result.length - 1;
+    const previous = (result[last] || "").replace(/^[（(「『【\[]+/, "");
+    const sameKana = (/^[ぁ-ゖー]+$/.test(segment) && /^[ぁ-ゖー]+$/.test(previous)) ||
+      (/^[ァ-ヶー]+$/.test(segment) && /^[ァ-ヶー]+$/.test(previous));
     if (last >= 0 && !/\s$/.test(result[last]) &&
-      (suffix.test(segment) || closing.test(segment) || opening.test(result[last]) || (/^[ぁ-ゖー]+$/.test(segment) && /^[ぁ-ゖー]+$/.test(result[last])))) {
+      (suffix.test(segment) || closing.test(segment) || opening.test(result[last]) || sameKana)) {
       result[last] += segment;
     } else {
       result.push(segment);

@@ -356,7 +356,7 @@ export default async function HomePage({
           {!popularCoupons?.length && <p className="muted">現在利用可能なクーポンはありません。</p>}
           <div className="home-grid home-grid-three">{popularCoupons?.map((c: any) => <Link href={`/stores/${c.store_id}`} className="home-coupon-card" key={c.id}>
             <div className="home-coupon-image">{c.banner_image_url ? <img src={c.banner_image_url} alt={c.title} loading="lazy" /> : <div><span>COUPON</span><strong>{c.discount || "店舗特典"}</strong><span>POKER SUMMIT</span></div>}</div>
-            <div className="home-coupon-copy"><h3>{c.title}</h3><p>{c.stores?.name}</p><p className="home-location">📍 {[c.stores?.pref,c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
+            <div className="home-coupon-copy"><h3><ReadableName name={c.title} /></h3><p><ReadableName name={c.stores?.name || ""} /></p><p className="home-location">📍 {[c.stores?.pref,c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
           </Link>)}</div>
         </section>
 
