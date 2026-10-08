@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -22,6 +23,126 @@ import { StoreSchedule } from "./store-schedule";
 import { DetailIcon } from "./detail-icon";
 import { MenuDetail } from "./menu-detail";
 import { StoreDetailTabs } from "./store-detail-tabs";
+import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { JsonLd } from "@/lib/json-ld";
+
+const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+type SeoStore = {
+  id: string;
+  name: string;
+  category: string | null;
+  pref: string | null;
+  city: string | null;
+  address: string | null;
+  tel: string | null;
+  description: string | null;
+  nearest_station: string | null;
+  lat: number | null;
+  lng: number | null;
+  logo_url: string | null;
+  banner_url: string | null;
+  x_url: string | null;
+  instagram_url: string | null;
+};
+
+function storeCategoryLabel(store: Pick<SeoStore, "category">) {
+  return (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
+}
+
+function storeArea(store: Pick<SeoStore, "pref" | "city">) {
+  return `${store.pref ?? ""}${store.city ?? ""}`;
+}
+
+function storeSeoDescription(store: SeoStore) {
+  const area = storeArea(store);
+  const station = store.nearest_station ? `（最寄り：${store.nearest_station}）` : "";
+  const lead = `${store.name}は${area || "日本"}${station}の${storeCategoryLabel(store)}。営業時間・アクセス・イベント・求人・クーポン情報を${SITE_NAME}でチェック。`;
+  const own = clip(store.description, 200);
+  return clip(own ? `${lead}${own}` : lead, 160);
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!STORE_UUID.test(params.id)) return {};
+  const supabase = await createClient();
+  const [{ data: store }, { data: photo }] = await Promise.all([
+    supabase
+      .from("stores")
+      .select("id,name,category,pref,city,address,tel,description,nearest_station,lat,lng,logo_url,banner_url,x_url,instagram_url")
+      .eq("id", params.id)
+      .in("status", ["approved", "listed"])
+      .maybeSingle<SeoStore>(),
+    supabase
+      .from("store_photos")
+      .select("url")
+      .eq("store_id", params.id)
+      .order("sort_order", { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  if (!store) return {};
+  const area = storeArea(store);
+  const title = pageTitle(`${store.name}${area ? `（${area}）` : ""}の${storeCategoryLabel(store)}`);
+  const description = storeSeoDescription(store);
+  const path = `/stores/${store.id}`;
+  const image = store.banner_url || photo?.url || store.logo_url || undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: {
+      title,
+      description,
+      url: path,
+      siteName: SITE_NAME,
+      locale: "ja_JP",
+      type: "website",
+      ...(image ? { images: [{ url: image, alt: store.name }] } : {}),
+    },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+  };
+}
+
+function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
+  const url = absoluteUrl(`/stores/${store.id}`);
+  const images = [store.banner_url, ...photos.map((p) => p.url), store.logo_url].filter((v): v is string => !!v);
+  const sameAs = [store.x_url, store.instagram_url].filter((v): v is string => !!v && /^https?:\/\//.test(v));
+  const business: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "EntertainmentBusiness",
+    "@id": `${url}#store`,
+    name: store.name,
+    url,
+    description: storeSeoDescription(store),
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "JP",
+      ...(store.pref ? { addressRegion: store.pref } : {}),
+      ...(store.city ? { addressLocality: store.city } : {}),
+      ...(store.address ? { streetAddress: store.address } : {}),
+    },
+  };
+  if (store.tel) business.telephone = store.tel;
+  if (images.length) business.image = Array.from(new Set(images)).slice(0, 5);
+  if (store.logo_url) business.logo = store.logo_url;
+  if (typeof store.lat === "number" && typeof store.lng === "number") {
+    business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
+  }
+  if (sameAs.length) business.sameAs = sameAs;
+
+  const crumbs = [
+    { name: "TOP", item: absoluteUrl("/") },
+    { name: "店舗を探す", item: absoluteUrl("/stores") },
+    ...(store.pref ? [{ name: store.pref, item: absoluteUrl(`/stores?pref=${encodeURIComponent(store.pref)}`) }] : []),
+    { name: store.name, item: url },
+  ];
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.item })),
+  };
+  return [business, breadcrumb];
+}
 
 export default async function StoreDetailPage({
   params,
@@ -153,6 +274,7 @@ export default async function StoreDetailPage({
 
   return (
     <div>
+      <JsonLd data={storeJsonLd(store as SeoStore, (photos ?? []) as { url: string }[])} />
       <PortalHeader userEmail={user?.email} />
       <main className="container sd-page detail-readable">
         <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>

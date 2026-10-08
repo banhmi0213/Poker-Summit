@@ -8,6 +8,69 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import { pickBanner } from "@/lib/banners";
 import { AgeField, GenderField, DealerExperienceField } from "./applicant-attributes";
+import type { Metadata } from "next";
+import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { JsonLd } from "@/lib/json-ld";
+
+const JOB_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EMPLOYMENT_TYPE: Record<string, string> = {
+  正社員: "FULL_TIME",
+  契約社員: "TEMPORARY",
+  パート: "PART_TIME",
+  アルバイト: "PART_TIME",
+  業務委託: "CONTRACTOR",
+};
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  if (!JOB_UUID.test(params.id)) return {};
+  const supabase = await createClient();
+  const { data } = await supabase.from("jobs").select("id,title,job_type,salary,description,status,banner_image_url,stores(name,category,pref,city,status)").eq("id", params.id).maybeSingle();
+  const j = data as any;
+  if (!j || !j.stores || !["approved", "listed"].includes(j.stores.status)) return {};
+  const area = `${j.stores.pref ?? ""}${j.stores.city ?? ""}`;
+  const kind = (j.stores.category && CATEGORY_LABEL[j.stores.category]) || "ポーカー店";
+  const title = pageTitle(`${j.title}｜${j.stores.name}${area ? `（${area}）` : ""}の求人`);
+  const head = [area && `${area}の${kind}`, `「${j.stores.name}」の`, j.job_type, "求人"].filter(Boolean).join("");
+  const description = clip(`${head}。${j.salary ? `給与：${j.salary}。` : ""}${j.description ?? ""}`, 160);
+  const path = `/jobs/${j.id}`;
+  const image = j.banner_image_url || undefined;
+  return {
+    title,
+    description,
+    alternates: { canonical: path },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: j.title }] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    // 募集終了の求人は検索結果に残さない
+    ...(j.status !== "open" ? { robots: { index: false, follow: true } } : {}),
+  };
+}
+
+function jobPostingJsonLd(j: any) {
+  const store = j.stores;
+  const posted = j.posted_at || j.created_at;
+  const description = [j.description, j.salary && `給与：${j.salary}`].filter(Boolean).join("\n\n") || j.title;
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: j.title,
+    description,
+    url: absoluteUrl(`/jobs/${j.id}`),
+    hiringOrganization: { "@type": "Organization", name: store.name, sameAs: absoluteUrl(`/stores/${store.id}`) },
+    jobLocation: {
+      "@type": "Place",
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "JP",
+        ...(store.pref ? { addressRegion: store.pref } : {}),
+        ...(store.city ? { addressLocality: store.city } : {}),
+        ...(store.address ? { streetAddress: store.address } : {}),
+      },
+    },
+  };
+  if (posted) data.datePosted = posted;
+  if (j.job_type && EMPLOYMENT_TYPE[j.job_type]) data.employmentType = EMPLOYMENT_TYPE[j.job_type];
+  return data;
+}
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -29,7 +92,7 @@ export default async function JobDetailPage({
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, title, job_type, salary, description, status, posted_at, banner_image_url, store_id, stores(id, name, category, pref, city, tel, status)"
+      "id, title, job_type, salary, description, status, posted_at, created_at, banner_image_url, store_id, stores(id, name, category, pref, city, address, tel, status)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -72,6 +135,7 @@ export default async function JobDetailPage({
 
   return (
     <div>
+      {j.status === "open" && <JsonLd data={jobPostingJsonLd(j)} />}
       <PortalHeader userEmail={user?.email} />
       <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/jobs" className="breadcrumb">

@@ -9,6 +9,9 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge } from "@/app/member-role-badge";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "ポーカー掲示板", description: "ポーカー好きが集まる掲示板。店舗情報、大会の話題、初心者の質問などを気軽に投稿・閲覧できます。", path: "/board" });
 
 function formatDate(value: string) {
   const d = new Date(value);

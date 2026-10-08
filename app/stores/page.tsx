@@ -12,6 +12,47 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { HomeStoreCard } from "@/app/home-store-card";
 import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
+import type { Metadata } from "next";
+import { CATEGORY_LABEL } from "@/lib/constants";
+import { SITE_NAME, pageTitle } from "@/lib/seo";
+
+type StoreListParams = { q?: string; category?: string; pref?: string; region?: string; area?: string; lat?: string; lng?: string; page?: string };
+
+// 都道府県・エリア・カテゴリで絞った一覧は「東京都のアミューズメントポーカー」等の
+// 検索に当てたいので、それぞれ固有のタイトルとcanonicalを持たせる。
+// キーワード検索・現在地検索の結果は無数に組み合わせがあるので検索結果に出さない。
+export function generateMetadata({ searchParams }: { searchParams: StoreListParams }): Metadata {
+  const pref = PREF_OPTIONS.includes(searchParams.pref ?? "") ? searchParams.pref! : "";
+  const region = !pref && REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
+  const areaParam = searchParams.area?.trim() ?? "";
+  const area = pref && areaParam && (AREA_OPTIONS[pref] ?? []).includes(areaParam) && !areaParam.startsWith("その他") ? areaParam : "";
+  const category = searchParams.category && CATEGORY_LABEL[searchParams.category] ? searchParams.category : "";
+  const page = Number(searchParams.page) > 1 ? Math.floor(Number(searchParams.page)) : 1;
+
+  const place = area ? `${pref} ${area}` : pref || (region ? `${region}エリア` : "全国");
+  const kind = category ? CATEGORY_LABEL[category] : "アミューズメントポーカー・ポーカーバー";
+  const base = `${place}の${kind}一覧`;
+  const title = pageTitle(page > 1 ? `${base}（${page}ページ目）` : base);
+  const description = `${place}の${kind}を探すなら${SITE_NAME}。営業時間・アクセス・最寄り駅、開催中のトーナメントやイベント、求人・クーポン情報まで店舗ごとにまとめてチェックできます。`;
+
+  const qs = new URLSearchParams();
+  if (pref) qs.set("pref", pref);
+  if (area) qs.set("area", area);
+  if (region) qs.set("region", region);
+  if (category) qs.set("category", category);
+  if (page > 1) qs.set("page", String(page));
+  const canonical = `/stores${qs.size ? `?${qs}` : ""}`;
+  const isSearch = !!searchParams.q?.trim() || !!searchParams.lat || !!searchParams.lng;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: { title, description, url: canonical, siteName: SITE_NAME, locale: "ja_JP", type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+    ...(isSearch ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 export default async function StoresPage({
   searchParams,

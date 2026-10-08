@@ -9,6 +9,9 @@ import { PrefSelector } from "@/app/pref-selector";
 import { PrefGeoDetector } from "@/app/pref-geo-detector";
 import { PREF_OPTIONS } from "@/lib/constants";
 import { getCurrentPref } from "@/lib/current-pref";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "お知らせ", description: "Poker Summitからのお知らせ・新着情報。", path: "/news" });
 
 function formatDateTime(value: string) {
   const d = new Date(value);

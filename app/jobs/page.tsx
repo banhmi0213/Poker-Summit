@@ -9,6 +9,9 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PREF_OPTIONS, JOB_TYPE_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
 import { pickBanner } from "@/lib/banners";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "ポーカー店の求人情報（ディーラー・スタッフ）", description: "全国のアミューズメントポーカー店・ポーカーバーの求人情報。ディーラーやホールスタッフなど、ポーカーに関わる仕事をエリアや職種から探せます。", path: "/jobs" });
 
 export default async function JobsPage({
   searchParams,

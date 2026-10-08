@@ -2,6 +2,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "運営会社", description: "Poker Summitを運営する株式会社Give Riseの会社概要。", path: "/company" });
 
 // フッターの「運営会社概要」リンク先(2026/10/01追加、2026/10/01に本文反映)。
 

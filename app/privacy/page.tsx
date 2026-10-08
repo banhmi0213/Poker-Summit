@@ -2,6 +2,9 @@ import type { CSSProperties } from "react";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "プライバシーポリシー", description: "Poker Summitにおける個人情報の取り扱いについて。", path: "/privacy" });
 
 // フッターの「プライバシーポリシー」リンク先(2026/10/01追加、2026/10/01に本文反映)。
 

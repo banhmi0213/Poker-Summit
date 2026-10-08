@@ -7,6 +7,8 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge } from "@/app/member-role-badge";
+import { NOINDEX } from "@/lib/seo";
+export const metadata = NOINDEX;
 
 function formatDate(value: string) {
   const d = new Date(value);

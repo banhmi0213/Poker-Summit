@@ -1,11 +1,22 @@
 import type { Metadata } from "next";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./admin/major-tournaments/tournament.css";
 import { BackToTop } from "./back-to-top";
 
 export const metadata: Metadata = {
-  title: "Poker Summit",
-  description: "全国のポーカースポットを探せるポータルサイト",
+  metadataBase: new URL(SITE_URL),
+  title: `${SITE_NAME}｜${SITE_TAGLINE}`,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    siteName: SITE_NAME,
+    locale: "ja_JP",
+    type: "website",
+    title: `${SITE_NAME}｜${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

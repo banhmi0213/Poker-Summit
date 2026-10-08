@@ -4,7 +4,8 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 export const dynamic="force-dynamic";
-export const metadata={title:"国内外大型大会 | Poker Summit",description:"国内・海外の大型ポーカー大会の開催情報とスケジュール。開催地や日程で次の大会を探せます。"};
+import {staticPageMetadata} from "@/lib/seo";
+export const metadata=staticPageMetadata({title:"国内外の大型ポーカー大会 日程・スケジュール",description:"国内・海外の大型ポーカー大会の開催情報とスケジュール。開催地や日程で次の大会を探せます。",path:"/major-tournaments"});
 export default async function Page({searchParams}:{searchParams:{scope?:string;q?:string;month?:string;page?:string}}){
  const db=await createClient();
  const [{data:{user}},{data,error}]=await Promise.all([db.auth.getUser(),db.from("major_tournaments").select("id,title,scope,location,venue,start_date,end_date,description").eq("active",true).order("start_date",{ascending:true,nullsFirst:false}).order("id",{ascending:true})]);

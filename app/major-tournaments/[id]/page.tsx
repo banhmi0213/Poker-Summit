@@ -5,7 +5,28 @@ import {PortalHeader} from "@/app/portal-header";
 import {PortalFooter} from "@/app/portal-footer";
 import {BottomTabs} from "@/app/bottom-tabs";
 export const dynamic="force-dynamic";
-export const metadata={title:"大会詳細・スケジュール | Poker Summit"};
+import type {Metadata} from "next";
+import {SITE_NAME,absoluteUrl,clip,pageTitle} from "@/lib/seo";
+import {JsonLd} from "@/lib/json-ld";
+export async function generateMetadata({params}:{params:{id:string}}):Promise<Metadata>{
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id))return {};
+ const db=await createClient();
+ const {data:e}=await db.from("major_tournaments").select("id,title,location,venue,start_date,end_date,description").eq("id",params.id).eq("active",true).maybeSingle();
+ if(!e)return {title:pageTitle("大会詳細・スケジュール")};
+ const d=(v:string|null)=>v?v.replaceAll("-","/"):"";
+ const period=d(e.start_date)+(e.end_date&&e.end_date!==e.start_date?"〜"+d(e.end_date):"");
+ const place=[e.location,e.venue].filter(Boolean).join(" ");
+ const title=pageTitle(`${e.title}${period?`（${period}）`:""} 日程・スケジュール`);
+ const description=clip(`${e.title}の開催情報。${period?`日程：${period}。`:""}${place?`会場：${place}。`:""}${e.description??""}`,160);
+ const path=`/major-tournaments/${e.id}`;
+ return {title,description,alternates:{canonical:path},openGraph:{title,description,url:path,siteName:SITE_NAME,locale:"ja_JP",type:"website"},twitter:{card:"summary",title,description}};
+}
+function tournamentJsonLd(e:any){
+ const data:Record<string,unknown>={"@context":"https://schema.org","@type":"Event",name:e.title,url:absoluteUrl(`/major-tournaments/${e.id}`),startDate:e.start_date,eventStatus:"https://schema.org/EventScheduled",eventAttendanceMode:"https://schema.org/OfflineEventAttendanceMode",location:{"@type":"Place",name:e.venue||e.location||"会場未定",address:e.location||e.venue||""}};
+ if(e.end_date)data.endDate=e.end_date;
+ if(e.description)data.description=clip(e.description,500);
+ return data;
+}
 export default async function Page({params}:{params:{id:string}}){
  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id))notFound();
  const db=await createClient();
@@ -17,7 +38,7 @@ export default async function Page({params}:{params:{id:string}}){
  const date=(value:string|null)=>value?value.replaceAll("-","/"):"未定";
  const period=date(e.start_date)+(e.end_date&&e.end_date!==e.start_date?" 〜 "+date(e.end_date):"");
  const mapQuery=[e.venue,e.location].filter(Boolean).join(" ");
- return <div><PortalHeader userEmail={user?.email}/><main className="mt-sample">
+ return <div>{e.start_date&&<JsonLd data={tournamentJsonLd(e)}/>}<PortalHeader userEmail={user?.email}/><main className="mt-sample">
  <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
  <article><header className="mt-hero"><div className="mt-hero-photo" role="img" aria-label="ポーカー大会の会場"/>
  <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1>{e.title}</h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>

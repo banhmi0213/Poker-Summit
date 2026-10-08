@@ -2,6 +2,9 @@ import type { CSSProperties, ReactNode } from "react";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { staticPageMetadata } from "@/lib/seo";
+
+export const metadata = staticPageMetadata({ title: "特定商取引法に基づく表記", description: "Poker Summitの特定商取引法に基づく表記。", path: "/tokushoho" });
 
 // フッターの「特定商取引法に基づく表記」リンク先(2026/10/01追加、
 // 2026/10/01に本文反映)。

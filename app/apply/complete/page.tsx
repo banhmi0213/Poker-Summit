@@ -1,4 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { NOINDEX } from "@/lib/seo";
+export const metadata = NOINDEX;
 
 // カード登録〜初回課金〜自動発行まで完了したあとの表示ページ。
 // app/apply/complete/callback/route.ts(fincodeのreturn_url)から303で

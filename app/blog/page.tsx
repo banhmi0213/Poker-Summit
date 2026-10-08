@@ -1,3 +1,4 @@
+import { staticPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BLOG_CATEGORIES, blogArticleHref, type BlogEntry } from "@/lib/blog";
@@ -6,7 +7,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import styles from "./blog.module.css";
 
-export const metadata = { title: "BLOG | Poker Summit", description: "店舗紹介・大会レポート・初心者ガイド。ポーカーの楽しみ方が、もっと広がる。" };
+export const metadata = staticPageMetadata({ title: "BLOG（ポーカー初心者ガイド・店舗紹介・大会レポート）", description: "店舗紹介・大会レポート・初心者ガイド。ポーカーの楽しみ方が、もっと広がる。", path: "/blog" });
 type Params = { category?: string; q?: string; page?: string; sort?: string };
 function href(params: Params, change: Partial<Params>) {
   const query = new URLSearchParams();
