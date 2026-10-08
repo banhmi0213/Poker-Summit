@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { setJobStatus, deleteJob } from "./actions";
@@ -105,7 +106,7 @@ export default async function AdminJobsPage({
       {(!jobs || jobs.length === 0) && <p className="muted">該当する求人はありません。</p>}
 
       {jobs && jobs.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗</th>
@@ -123,7 +124,7 @@ export default async function AdminJobsPage({
             {jobs.map((j: any) => (
               <tr key={j.id}>
                 <td>{j.stores?.name ?? ""}</td>
-                <td>{j.title}</td>
+                <td className="management-name"><ReadableName name={j.title} /></td>
                 <td>{j.job_type ?? ""}</td>
                 <td>{j.salary ?? ""}</td>
                 <td>
@@ -166,7 +167,7 @@ export default async function AdminJobsPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

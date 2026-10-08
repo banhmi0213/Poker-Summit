@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import { JobTypeTabs } from "./job-type-tabs";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
@@ -180,9 +181,9 @@ export default async function JobsPage({
                     )}
                     {j.job_type && <span className="badge outline">{j.job_type}</span>}
                   </div>
-                  <h3>{j.title}</h3>
+                  <h3><ReadableName name={j.title} /></h3>
                   <div className="muted">
-                    {j.stores?.name} ・ {j.stores?.pref}
+                    {j.stores?.name && <ReadableName name={j.stores.name} />} {j.stores?.pref}
                   </div>
                   {j.salary && (
                     <div style={{ fontWeight: 700, color: "var(--accent-text)", marginTop: 4 }}>

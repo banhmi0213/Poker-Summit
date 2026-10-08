@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { setCouponActive, deleteCoupon, createCouponByAdmin } from "./actions";
@@ -143,7 +144,7 @@ export default async function AdminCouponsPage({
       {(!coupons || coupons.length === 0) && <p className="muted">該当するクーポンはありません。</p>}
 
       {coupons && coupons.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗</th>
@@ -162,7 +163,7 @@ export default async function AdminCouponsPage({
               return (
                 <tr key={c.id}>
                   <td>{c.stores?.name ?? ""}</td>
-                  <td>{c.title}</td>
+                  <td className="management-name"><ReadableName name={c.title} /></td>
                   <td>{c.discount ?? ""}</td>
                   <td>{c.code ?? ""}</td>
                   <td>
@@ -214,7 +215,7 @@ export default async function AdminCouponsPage({
               );
             })}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

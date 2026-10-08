@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { setEventStatus, deleteEvent, createEventByAdmin } from "./actions";
@@ -148,7 +149,7 @@ export default async function AdminEventsPage({
       {events.length === 0 && <p className="muted">該当するイベントはありません。</p>}
 
       {events.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>タイトル</th>
@@ -166,11 +167,11 @@ export default async function AdminEventsPage({
               const isPast = ev.start_at && ev.start_at < now;
               return (
                 <tr key={ev.id}>
-                  <td>
-                    {ev.title}
+                  <td className="management-name">
+                    <ReadableName name={ev.title} />
                     {isPast && <span className="badge outline" style={{ marginLeft: 6 }}>終了</span>}
                   </td>
-                  <td>{ev.stores?.name ?? "Poker Summit事務局"}</td>
+                  <td className="management-name"><ReadableName name={ev.stores?.name ?? "Poker Summit事務局"} /></td>
                   <td>{ev.pref ?? ""}</td>
                   <td>{ev.category ?? ""}</td>
                   <td>{formatDateTime(ev.start_at)}</td>
@@ -218,7 +219,7 @@ export default async function AdminEventsPage({
               );
             })}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

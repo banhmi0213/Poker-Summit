@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { EventSign } from "./event-sign";
 import { createClient } from "@/lib/supabase/server";
@@ -345,7 +346,7 @@ export default async function HomePage({
             return <Link className="home-event-card" href={`/events/${ev.id}`} key={ev.id}>
               <div className="home-event-photo">{photo ? <img src={photo} alt={ev.title} loading="lazy" /> : <EventSign title={ev.title} category={ev.category} startAt={ev.start_at} venue={ev.stores?.name || ev.location} />}</div>
               <div className="home-event-body"><div className="home-event-date">{ev.start_at ? <><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month:"2-digit", day:"2-digit", timeZone:"Asia/Tokyo" })}</strong><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit", timeZone:"Asia/Tokyo" })}</span></> : <span>日時未定</span>}</div>
-                <div className="home-event-copy"><h3>{ev.title}</h3><p>{ev.stores?.name}</p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る ›</span></div>
+                <div className="home-event-copy"><h3><ReadableName name={ev.title} /></h3><p><ReadableName name={ev.stores?.name || ""} /></p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る ›</span></div>
               </div>
             </Link>;
           })}</div>
@@ -374,7 +375,7 @@ export default async function HomePage({
           {!latestJobs?.length && <p className="muted">現在募集中の求人はありません。</p>}
           <div className="home-grid home-job-grid">{latestJobs?.map((j: any) => <Link href={`/stores/${j.store_id}`} className="home-job-card" key={j.id}>
             <div className="home-job-top"><div className="home-job-logo">{j.stores?.logo_url ? <img src={j.stores.logo_url} alt="" loading="lazy" /> : "♠"}</div><span className="home-tag">{j.job_type || "求人募集中"}</span></div>
-            <h3>{j.title}</h3><p>{j.stores?.name}</p><p className="home-location">📍 {[j.stores?.pref,j.stores?.city].filter(Boolean).join(" ")}</p>
+            <h3><ReadableName name={j.title} /></h3><p><ReadableName name={j.stores?.name || ""} /></p><p className="home-location">📍 {[j.stores?.pref,j.stores?.city].filter(Boolean).join(" ")}</p>
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
         </section>

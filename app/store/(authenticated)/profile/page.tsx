@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
@@ -152,7 +153,7 @@ export default async function StoreProfilePage({
               marginBottom: 16,
             }}
           >
-            <h1 style={{ fontSize: 20 }}>{store.name}</h1>
+            <h1 style={{ fontSize: 20 }}><ReadableName name={store.name} /></h1>
             <span className="badge">{STORE_STATUS_LABEL[store.status] ?? store.status}</span>
           </div>
 

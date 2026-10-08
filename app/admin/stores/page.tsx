@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { RegionAreaFilters } from "./region-area-filters";
 import { cookies } from "next/headers";
@@ -453,7 +454,7 @@ export default async function AdminStoresPage({
         )}
       </p>
 
-      <table>
+      <div className="table-wrap"><table>
         <thead>
           <tr>
             <th>店舗名</th>
@@ -476,7 +477,7 @@ export default async function AdminStoresPage({
           )}
           {stores?.map((s) => (
             <tr key={s.id}>
-              <td>{s.name}</td>
+              <td className="management-name"><ReadableName name={s.name} /></td>
               <td>
                 <span className="badge outline">
                   {CATEGORY_LABEL[s.category ?? ""] ?? s.category ?? ""}
@@ -667,7 +668,7 @@ export default async function AdminStoresPage({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
 
       {totalPages > 1 && (
         <div

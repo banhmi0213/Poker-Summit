@@ -130,7 +130,7 @@ export default async function AdminContractsPage({
           <div style={{ fontWeight: 700, marginBottom: 8 }}>
             📒 プラン変更ログ(店舗管理画面・LINEリッチメニューから、店舗が自分でカード決済・直近{planRequests.length}件)
           </div>
-          <table>
+          <div className="table-wrap"><table>
             <thead>
               <tr>
                 <th>店舗名</th>
@@ -169,7 +169,7 @@ export default async function AdminContractsPage({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
 
@@ -178,7 +178,7 @@ export default async function AdminContractsPage({
           <div style={{ fontWeight: 700, marginBottom: 8 }}>
             📒 アドオン変更ログ(店舗管理画面から、店舗が自分でカード決済・直近{addonRequests.length}件)
           </div>
-          <table>
+          <div className="table-wrap"><table>
             <thead>
               <tr>
                 <th>店舗名</th>
@@ -216,7 +216,7 @@ export default async function AdminContractsPage({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
 
@@ -260,7 +260,7 @@ export default async function AdminContractsPage({
       )}
 
       {contracts && contracts.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名</th>
@@ -333,7 +333,7 @@ export default async function AdminContractsPage({
               );
             })}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   );

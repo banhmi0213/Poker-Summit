@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -279,7 +280,7 @@ export default async function StoreDetailPage({
       <main className="container sd-page detail-readable">
         <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>
         <div className="sd-title-row">
-          <div className="sd-title"><h1>{store.name}</h1>
+          <div className="sd-title"><h1><ReadableName name={store.name} /></h1>
             <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
             {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
           </div>
@@ -368,7 +369,7 @@ export default async function StoreDetailPage({
           <div className="card sd-event-card" key={ev.id}>
             {ev.start_at && <div className="sd-event-date"><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month: "2-digit", day: "2-digit", timeZone: "Asia/Tokyo" })}</strong><span className="sd-weekday">{new Date(ev.start_at).toLocaleDateString("ja-JP", { weekday: "short", timeZone: "Asia/Tokyo" })}</span></div>}
             <div className="sd-event-copy">            <Link href={`/events/${ev.id}`}>
-              <h3>{ev.title}</h3>
+              <h3><ReadableName name={ev.title} /></h3>
               {ev.location && <p className="muted">{ev.location}</p>}
             </Link>
 {ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
@@ -494,7 +495,7 @@ export default async function StoreDetailPage({
           <div className="card sd-job-card" key={j.id}>
             <Link href={`/jobs/${j.id}`}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <h3>{j.title}</h3>
+                <h3><ReadableName name={j.title} /></h3>
                 {j.job_type && <span className="badge">{j.job_type}</span>}
               </div>
               {j.salary && <p className="muted">{j.salary}</p>}

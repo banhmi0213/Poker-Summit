@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Image from "next/image";
 import Link from "next/link";
@@ -241,12 +242,12 @@ export default async function CouponsPage({
                     )}
                     {status !== "active" && statusBadge(status)}
                   </div>
-                  <h3>{c.title}</h3>
+                  <h3><ReadableName name={c.title} /></h3>
                   {c.discount && (
                     <div style={{ fontWeight: 700, color: "var(--accent-text)" }}>{c.discount}</div>
                   )}
                   <div className="coupon-card__store">
-                    {c.stores?.name}
+                    {c.stores?.name && <ReadableName name={c.stores.name} />}
                     {location && <>　{location}</>}
                   </div>
                   <div className="coupon-card__meta-line">

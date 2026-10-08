@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -167,7 +168,7 @@ export default async function JobDetailPage({
           </span>
         </div>
 
-        <h1 style={{ fontSize: 22 }}>{j.title}</h1>
+        <h1 style={{ fontSize: 22 }}><ReadableName name={j.title} /></h1>
         <p className="muted" style={{ marginTop: 6 }}>
           {j.stores?.name} ・ {j.stores?.pref}
           {j.stores?.city} ・ 掲載日 {formatDate(j.posted_at)}

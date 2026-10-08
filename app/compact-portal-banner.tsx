@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Image from "next/image";
 
 export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail }: {
@@ -14,7 +15,7 @@ export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail }:
   return <section className="compact-portal-banner" aria-label={title}>
     <div className="compact-portal-banner__copy">
       <span className="compact-portal-banner__eyebrow">{eyebrow}</span>
-      <h1>{title}</h1>
+      <h1><ReadableName name={title} /></h1>
       <p>{subtitle}</p>
       {detail && <small>{detail}</small>}
     </div>

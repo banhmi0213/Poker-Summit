@@ -108,6 +108,11 @@ export async function updateStoreProfile(formData: FormData) {
   // 反映する(LINE側 /api/liff/store の revalidate と揃える)。
   revalidatePath("/store/profile");
   revalidatePath(`/stores/${storeId}`);
+  revalidatePath("/");
+  revalidatePath("/stores", "layout");
+  revalidatePath("/events", "layout");
+  revalidatePath("/jobs", "layout");
+  revalidatePath("/coupons", "layout");
   revalidatePath("/admin/stores");
 }
 

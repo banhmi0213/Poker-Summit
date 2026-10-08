@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { toEventLocalInput } from "@/lib/event-dates";
 import { redirect } from "next/navigation";
@@ -105,7 +106,7 @@ export default async function StoreEventsPage() {
         return (
           <div className="card" key={ev.id}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-              <h3>{ev.title}</h3>
+              <h3><ReadableName name={ev.title} /></h3>
               <div style={{ display: "flex", gap: 6 }}>
                 {ev.category && <span className="badge outline">{ev.category}</span>}
                 {isPast && <span className="badge outline">終了</span>}

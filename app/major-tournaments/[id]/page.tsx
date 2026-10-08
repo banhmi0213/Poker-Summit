@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import {notFound} from "next/navigation";
 import {createClient} from "@/lib/supabase/server";
@@ -41,7 +42,7 @@ export default async function Page({params}:{params:{id:string}}){
  return <div>{e.start_date&&<JsonLd data={tournamentJsonLd(e)}/>}<PortalHeader userEmail={user?.email}/><main className="mt-sample">
  <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
  <article><header className="mt-hero"><div className="mt-hero-photo" role="img" aria-label="ポーカー大会の会場"/>
- <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1>{e.title}</h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>
+ <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1><ReadableName name={e.title} /></h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>
  <div className="mt-facts"><div><small>開催期間</small><strong>{period}</strong></div><div><small>開催エリア</small><strong>{e.location||"未定"}</strong></div><div><small>会場</small><strong>{e.venue||"未定"}</strong></div><div><small>開催区分</small><strong>{e.scope}大会</strong></div></div>
  <nav className="mt-section-nav" aria-label="大会詳細のメニュー"><a href="#tournament-overview">大会概要</a><a href="#tournament-schedule">スケジュール</a><a href="#tournament-venue">会場・アクセス</a></nav>
  <div className="mt-columns"><div>

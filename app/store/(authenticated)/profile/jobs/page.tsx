@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -194,7 +195,7 @@ export default async function StoreJobsPage() {
       {jobs?.map((j) => (
         <div className="card" key={j.id}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-            <h3>{j.title}</h3>
+            <h3><ReadableName name={j.title} /></h3>
             <div style={{ display: "flex", gap: 6 }}>
               <span className="badge outline">{j.job_type || "雇用形態未設定"}</span>
               <span className="badge">{j.status === "open" ? "募集中" : "終了"}</span>

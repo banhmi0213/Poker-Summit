@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -95,7 +96,7 @@ export default async function StoreCouponsPage() {
       {coupons?.map((c) => (
         <div className="card" key={c.id}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-            <h3>{c.title}</h3>
+            <h3><ReadableName name={c.title} /></h3>
             <span className="badge">{c.active ? "公開中" : "停止中"}</span>
           </div>
           {c.offer_type && (

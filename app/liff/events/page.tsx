@@ -1,4 +1,5 @@
 "use client";
+import { ReadableName } from "@/app/readable-name";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useLiff } from "../liff-provider";
@@ -229,7 +230,7 @@ function EventRow({
   return (
     <div className="card" style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-        <h3 style={{ fontSize: 14.5 }}>{event.title}</h3>
+        <h3 style={{ fontSize: 14.5 }}><ReadableName name={event.title} /></h3>
         <span className="badge">{event.status === "published" ? "公開中" : "非公開"}</span>
       </div>
       {event.location && <p className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>{event.location}</p>}

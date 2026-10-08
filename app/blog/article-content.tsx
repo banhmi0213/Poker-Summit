@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { blogHeadingId, type BlogBlock, type BlogEntry, type BlogStore } from "@/lib/blog";
 import { StoreNamePlaceholder } from "@/app/store-name-placeholder";
@@ -14,7 +15,7 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
  const headings=body.map((b,i)=>({b,i})).filter(({b})=>b.type==="heading"||b.type==="heading3");
  const date=(v?:string|null)=>v?new Date(v).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}):"";
  return <article className={styles.article}>
-  <header><span className={styles.category}>{category}</span><h1>{title || "記事タイトル"}</h1>{summary && <p className={styles.summary}>{summary}</p>}
+  <header><span className={styles.category}>{category}</span><h1><ReadableName name={title || "記事タイトル"} /></h1>{summary && <p className={styles.summary}>{summary}</p>}
    {(authorName||publishedAt) && <div className={styles.byline}>{authorName&&<span>著者：{authorName}</span>}{publishedAt&&<time>公開日：{date(publishedAt)}</time>}{updatedAt&&publishedAt&&date(updatedAt)!==date(publishedAt)&&<time>更新日：{date(updatedAt)}</time>}</div>}
    {authorProfile&&<p className={styles.authorProfile}>{authorProfile}</p>}
   </header>
@@ -30,6 +31,6 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
    return <Paragraph key={i} text={block.text}/>;
   })}</div>
   {!!references?.length&&<section className={styles.references}><h2>参考資料</h2><ul>{references.map((r,i)=><li key={i}>{r.url?<a href={r.url} target="_blank" rel="noopener noreferrer">{r.label||r.url}</a>:r.label}</li>)}</ul></section>}
-  {!!stores.length&&<section className={styles.related}><h2>この記事で紹介した店舗</h2><div>{stores.map(store=><Link key={store.id} href={`/stores/${store.id}`} className={styles.store}>{store.banner_url?<img src={store.banner_url} alt={store.name}/>:<StoreNamePlaceholder name={store.name}/>}<h3>{store.name}</h3><p>{[store.pref,store.city].filter(Boolean).join(" ")}</p><strong>店舗詳細を見る →</strong></Link>)}</div></section>}
+  {!!stores.length&&<section className={styles.related}><h2>この記事で紹介した店舗</h2><div>{stores.map(store=><Link key={store.id} href={`/stores/${store.id}`} className={styles.store}>{store.banner_url?<img src={store.banner_url} alt={store.name}/>:<StoreNamePlaceholder name={store.name}/>}<h3><ReadableName name={store.name} /></h3><p>{[store.pref,store.city].filter(Boolean).join(" ")}</p><strong>店舗詳細を見る →</strong></Link>)}</div></section>}
  </article>;
 }

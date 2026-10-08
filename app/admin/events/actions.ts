@@ -17,6 +17,8 @@ export async function setEventStatus(id: string, status: string) {
 
   await logAdminAction(supabase, `event_status_${status}`, "event", id);
   revalidatePath("/admin/events");
+  revalidatePath("/stores", "layout");
+  revalidatePath("/store/profile/events");
   revalidatePath("/events", "layout");
   revalidatePath("/");
 }
@@ -31,6 +33,8 @@ export async function deleteEvent(id: string) {
 
   await logAdminAction(supabase, "event_delete", "event", id);
   revalidatePath("/admin/events");
+  revalidatePath("/stores", "layout");
+  revalidatePath("/store/profile/events");
   revalidatePath("/events", "layout");
   revalidatePath("/");
 }
@@ -73,6 +77,8 @@ export async function createEventByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "event_create", "event", data?.id, { title });
   revalidatePath("/admin/events");
+  revalidatePath("/stores", "layout");
+  revalidatePath("/store/profile/events");
   revalidatePath("/events", "layout");
   revalidatePath("/");
   revalidatePath("/events");
@@ -114,6 +120,8 @@ export async function updateEventByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "event_edit", "event", eventId);
   revalidatePath("/admin/events");
+  revalidatePath("/stores", "layout");
+  revalidatePath("/store/profile/events");
   revalidatePath("/events", "layout");
   revalidatePath("/");
   revalidatePath("/events");

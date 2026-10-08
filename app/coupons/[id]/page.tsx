@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -92,13 +93,13 @@ export default async function CouponDetailPage({
               {c.banner_image_url ? <CouponBannerLightbox imageUrl={c.banner_image_url} alt={c.title} /> : <div className={styles.placeholder}><span>POKER SUMMIT</span><strong>{c.title}</strong><small>COUPON & OFFERS</small></div>}
             </div>
             <div className={styles.store}>
-              <div><small>このクーポンが使える店舗</small><strong>{c.stores.name}</strong></div>
+              <div><small>このクーポンが使える店舗</small><strong><ReadableName name={c.stores.name} /></strong></div>
               <Link href={`/stores/${c.store_id}`} className="btn">店舗ページを見る ›</Link>
             </div>
           </div>
           <div className={styles.info}>
             <div className={styles.badges}>{c.offer_type && <span className="badge outline">{c.offer_type}</span>}{statusBadge(status)}</div>
-            <h1>{c.title}</h1>
+            <h1><ReadableName name={c.title} /></h1>
             {c.discount && <p className={styles.discount}>{c.discount}</p>}
             <p className={styles.expiry}>▣ {c.valid_until ? `有効期限：${c.valid_until.replaceAll("-", ".")}` : "有効期限なし"}</p>
             <p className={styles.note}>特典の内容・利用条件をご確認のうえ、ご利用ください。</p>

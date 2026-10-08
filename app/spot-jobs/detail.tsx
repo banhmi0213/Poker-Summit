@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import Link from 'next/link';
 import {WorkForm} from '@/app/matching/work/form';
 import { MatchingRulesNotice } from '@/app/matching/notice';
@@ -16,7 +17,7 @@ export function SpotDetail({job,image,date,owner=false}:{job:SpotJob;image:strin
   const store=job.stores;
   const base=owner?'/store/profile/spot-jobs/':'/spot-jobs/';
   return <><Link href={owner?'/store/profile/spot-jobs':'/spot-jobs'}>← {owner?'スポット求人管理':'スポット勤務一覧'}に戻る</Link>
-    <div className={styles.box}><span className={styles.tag}>スポット勤務</span><h1 style={{fontSize:25}}>{store?.name}</h1><p className={styles.muted}>{store?.pref} {store?.city} {store?.address}</p><SpotImage url={image} name={store?.name||'店舗'}/>{owner&&<p className={styles.muted}>店舗向けプレビューです。公開中の求人だけが登録済みディーラーに表示されます。</p>}</div>
+    <div className={styles.box}><span className={styles.tag}>スポット勤務</span><h1 style={{fontSize:25}}><ReadableName name={store?.name || ""} /></h1><p className={styles.muted}>{store?.pref} {store?.city} {store?.address}</p><SpotImage url={image} name={store?.name||'店舗'}/>{owner&&<p className={styles.muted}>店舗向けプレビューです。公開中の求人だけが登録済みディーラーに表示されます。</p>}</div>
     <MatchingRulesNotice />
     {selected&&<div className={styles.summary}><div><small>勤務日</small><strong>{selected.work_date}</strong></div><div><small>勤務時間</small><strong>{shiftTime(selected)}</strong></div><div><small>時給</small><strong className={styles.wage}>¥{selected.hourly_wage.toLocaleString()}</strong></div><div><small>募集人数</small><strong>{selected.headcount}人</strong></div></div>}
     <div className={styles.detail}><div><section className={styles.box}><h2>業務内容</h2><p className={styles.pre}>{job.duties}</p><div className={styles.checks}>{job.games.map(g=><span className={styles.tag} key={g}>{g}</span>)}</div></section><section className={styles.box}><h2>応募条件</h2><p className={styles.pre}>{job.requirements||'特別な条件の記載なし'}</p></section><section className={styles.box}><h2>交通費・服装・持ち物</h2><p>交通費：{transportText(job)}</p><p className={styles.pre}>{job.dress||'服装・持ち物の指定なし'}</p></section></div>

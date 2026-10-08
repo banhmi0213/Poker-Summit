@@ -1,4 +1,5 @@
 "use client";
+import { ReadableName } from "@/app/readable-name";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -121,7 +122,7 @@ export default function LiffDashboardPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 20, marginBottom: 2 }}>{me.store.name}</h1>
+      <h1 style={{ fontSize: 20, marginBottom: 2 }}><ReadableName name={me.store.name} /></h1>
       <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
         {STORE_STATUS_LABEL[me.store.status] ?? me.store.status} ・ LINE連携メニュー
       </p>

@@ -1,3 +1,4 @@
+import { ReadableName } from "@/app/readable-name";
 import { staticPageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -17,7 +18,7 @@ function href(params: Params, change: Partial<Params>) {
 function Article({ entry, featured = false }: { entry: BlogEntry; featured?: boolean }) {
   return <a href={blogArticleHref(entry)} className={featured ? styles.featured : styles.article}>
     <div className={styles.photo}><img src={entry.image_url} alt={entry.image_alt || entry.title} loading="lazy" /></div>
-    <div className={styles.copy}><span className={styles.badge}>{entry.category}</span><h3>{entry.title}</h3>{entry.summary && <p>{entry.summary}</p>}<div className={styles.meta}><time>{new Date(entry.created_at).toLocaleDateString("ja-JP", { timeZone:"Asia/Tokyo" })}</time><strong>記事を読む →</strong></div></div>
+    <div className={styles.copy}><span className={styles.badge}>{entry.category}</span><h3><ReadableName name={entry.title} /></h3>{entry.summary && <p>{entry.summary}</p>}<div className={styles.meta}><time>{new Date(entry.created_at).toLocaleDateString("ja-JP", { timeZone:"Asia/Tokyo" })}</time><strong>記事を読む →</strong></div></div>
   </a>;
 }
 export default async function BlogPage({ searchParams }: { searchParams: Params }) {
