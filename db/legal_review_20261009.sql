@@ -7,7 +7,7 @@ AS $function$
  select private.chat_actor(p_record) is not null
  and exists(select 1 from public.dealer_chat_consents c where c.record_id=p_record and c.user_id=auth.uid() and c.version='2026-10-08-chat-v1')
  and exists(select 1 from public.user_legal_consents c where c.user_id=auth.uid() and c.scope='matching_'||private.chat_actor(p_record) and c.terms_version='2026-10-09' and c.privacy_version='2026-10-09' and c.rules_version='2026-10-09');
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private.capture_signup_legal_consent()
  RETURNS trigger
@@ -26,7 +26,7 @@ begin
  end if;
  return new;
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.record_matching_consent(p_actor text)
  RETURNS uuid
@@ -50,6 +50,6 @@ begin
   and privacy_version='2026-10-09' and rules_version='2026-10-09';
  return result;
 end;
-$function$
+$function$;
 
 alter table public.dealer_profiles add constraint dealer_profiles_adult_age check(age >=18);
