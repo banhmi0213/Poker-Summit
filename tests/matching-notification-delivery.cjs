@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),fs=require('fs'),ts=require('typescript'),Module=require('module'),path=require('path');
+let rows=[],saved=[],calls=[],http=200;
+const db={rpc:async(name,payload)=>{if(name==='claim_matching_notifications')return {data:rows};saved.push(payload);return {error:null};}};
+const original=Module._load;Module._load=function(request,parent,...rest){if(request==='server-only')return {};if(request==='@/lib/supabase/service-role')return {createServiceRoleClient:()=>db};return original.call(this,request,parent,...rest)};
+const file=path.resolve(__dirname,'../lib/matching-notification-delivery.ts'),moduleUnderTest=new Module(file,module);
+moduleUnderTest.filename=file;moduleUnderTest.paths=module.paths;moduleUnderTest._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,file);
+const {deliverMatchingNotifications,notificationText}=moduleUnderTest.exports;
+const originalFetch=global.fetch;global.fetch=async(url,options)=>{calls.push({url,options});return {ok:http>=200&&http<300,status:http};};
+const base={notification_id:'11111111-1111-4111-8111-111111111111',lock_token:'22222222-2222-4222-8222-222222222222',record_id:'33333333-3333-4333-8333-333333333333',recipient_actor:'store',kind:'message',recipient_email:'qa@example.invalid',line_user_id:'synthetic-line-user'};
+(async()=>{
+ process.env.LINE_CHANNEL_ACCESS_TOKEN='synthetic-token';process.env.RESEND_API_KEY='synthetic-email-token';
+ rows=[{...base,channel:'line'},{...base,channel:'email'}];let result=await deliverMatchingNotifications();assert.equal(result.sent,2);assert.equal(calls[0].options.headers['X-Line-Retry-Key'],base.notification_id);assert.equal(calls[1].options.headers['Idempotency-Key'],base.notification_id);assert(!JSON.parse(calls[0].options.body).messages[0].text.includes('チャットの実際の本文'));
+ assert(notificationText({...base,recipient_actor:'dealer',kind:'offer'}).text.includes('/account/dealer/chat/'));
+ assert(notificationText({...base,kind:'application'}).text.includes('/store/profile/dealer-chat/'));
+ rows=[{...base,channel:'line'}];http=409;result=await deliverMatchingNotifications();assert.equal(result.sent,1);
+ http=500;result=await deliverMatchingNotifications();assert.equal(result.pending,1);assert.equal(saved.at(-1).p_state,'pending');assert.equal(saved.at(-1).p_error,'provider_http_500');
+ delete process.env.LINE_CHANNEL_ACCESS_TOKEN;result=await deliverMatchingNotifications();assert.equal(result.pending,1);assert.equal(saved.at(-1).p_error,'configuration_missing');
+ rows=[{...base,channel:'line',line_user_id:null}];result=await deliverMatchingNotifications();assert.equal(result.skipped,1);
+ console.log('PASS: email/LINE routing, private-free text, retry keys, accepted retry, failed delivery, missing config and unlinked recipient');
+})().catch(e=>{console.error(e);process.exitCode=1}).finally(()=>{global.fetch=originalFetch;Module._load=original;delete process.env.LINE_CHANNEL_ACCESS_TOKEN;delete process.env.RESEND_API_KEY;});

@@ -1,4 +1,5 @@
 "use client";
+import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -41,7 +42,7 @@ export function StoreSidebar() {
             prefetch={false}
             className={`side-link${active ? " active" : ""}`}
           >
-            {l.label}
+            {l.label}{l.href==="/store/profile/spot-jobs"&&<NotificationBadge actor="store"/>}
           </Link>
         );
       })}

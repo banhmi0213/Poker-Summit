@@ -1,4 +1,5 @@
 "use server";
+import {kickMatchingNotifications} from "@/lib/matching-notification-kick";
 import {redirect} from "next/navigation";
 import {revalidatePath} from "next/cache";
 import {createClient} from "@/lib/supabase/server";
@@ -22,6 +23,7 @@ export async function chatAction(previous:ChatState,form:FormData):Promise<ChatS
  if(operation==="send"&&(!UUID.test(payload.nonce)||!payload.body.trim()||payload.body.length>2000))return {error:"メッセージは1〜2000文字で記載してください。",success:previous.success};
  const {error}=await db.rpc("dealer_chat_operation",{p_record:record,p_operation:operation,p_payload:payload});
  if(error)return {error:error.code==="P0001"?error.message:"保存できませんでした。ページを更新して再度お試しください。",success:previous.success};
+ if(operation==="send")await kickMatchingNotifications(record,db);
  revalidatePath(path);
  revalidatePath(actor==="store"?"/store/profile/spot-jobs/work":"/account/dealer/work");
  return {error:"",success:previous.success+1};
@@ -34,5 +36,13 @@ export async function offerAction(previous:ChatState,form:FormData):Promise<Chat
  await requireMatchingConsent(db,user.id,"store","/store/profile/dealers/"+dealer);
  const {data,error}=await db.rpc("offer_spot_work",{p_dealer:dealer,p_job:job,p_date:date});
  if(error||!UUID.test(String(data)))return {error:error?.code==="P0001"?error.message:"オファーを保存できませんでした。",success:previous.success};
+ await kickMatchingNotifications(String(data),db);
  redirect("/store/profile/dealer-chat/"+data);
+}
+
+export async function markNotificationsRead(actor:"store"|"dealer",record:string,events:string[]){
+ if(!["store","dealer"].includes(actor)||!UUID.test(record)||events.length>51||events.some(id=>!UUID.test(id)))return;
+ const db=actor==="store"?await createStoreClient():await createClient();
+ const {data:{user}}=await db.auth.getUser();if(!user)return;
+ await db.rpc("mark_matching_notifications",{p_record:record,p_events:events});
 }

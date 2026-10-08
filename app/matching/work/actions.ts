@@ -1,4 +1,5 @@
 "use server";
+import {kickMatchingNotifications} from "@/lib/matching-notification-kick";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -31,6 +32,6 @@ export async function submitWork(_state:{error:string},form:FormData):Promise<{e
  }
  if(error)return {error:"保存できませんでした。募集状況・勤務終了時刻・レビューの保存を確認し、ページを更新して再度お試しください。"};
  for(const p of ["/account/dealer","/store/profile/spot-jobs","/store/profile/dealers","/spot-jobs"])revalidatePath(p,"layout");
- if(operation==="request")redirect("/account/dealer/chat/"+recordId);
+ if(operation==="request"){await kickMatchingNotifications(recordId,db);redirect("/account/dealer/chat/"+recordId);}
  redirect(path+"?saved=1&record="+encodeURIComponent(recordId));
 }

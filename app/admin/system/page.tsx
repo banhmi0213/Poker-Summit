@@ -99,7 +99,7 @@ export default async function AdminSystemPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, marginBottom: 16 }}>システム情報</h1>
+      <h1 style={{ fontSize: 22, marginBottom: 16 }}>システム情報</h1><section className="card"><h2 style={{fontSize:16}}>応募・チャット通知の設定状況</h2><p>LINE通知：{process.env.LINE_CHANNEL_ACCESS_TOKEN ? "送信用トークン設定済み" : "送信用トークン未設定"}</p><p>メール通知：{process.env.RESEND_API_KEY ? "設定済み" : "未設定"}</p><p>通知の再試行：{process.env.CRON_SECRET ? "定期処理設定済み" : "定期処理用キー未設定"}</p><p className="muted">設定済み表示は実際の到着を保証しません。LINE連携・友だち追加・配信枠も必要です。</p></section>
 
       <div
         style={{

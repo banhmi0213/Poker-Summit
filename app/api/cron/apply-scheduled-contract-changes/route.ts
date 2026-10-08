@@ -1,3 +1,4 @@
+import {deliverMatchingNotifications} from "@/lib/matching-notification-delivery";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { applyContractBillingChange } from "@/lib/contracts-billing";
@@ -32,6 +33,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Retry the durable notification outbox without interfering with billing.
+  await deliverMatchingNotifications().catch(()=>undefined);
   const supabase = createServiceRoleClient();
   const nowIso = new Date().toISOString();
 
