@@ -1,5 +1,5 @@
 import { PendingSubmitButton } from "@/app/pending-submit-button";
-import { addonFeeFor, addonPriceLabel, isMajorArea, ORDER_STATUS_LABEL, type AddonRow } from "@/lib/addons";
+import { addonFeeFor, addonPriceLabel, ORDER_STATUS_LABEL, type AddonRow } from "@/lib/addons";
 import { purchaseAddonAction, cancelAddonAction } from "../addon-purchase-actions";
 
 type ContractAddon = {
@@ -71,7 +71,6 @@ export function AddonsSection({
       <h2 style={{ fontSize: 17, margin: "0 0 4px" }}>アドオン</h2>
       <p className="muted" style={{ fontSize: 12.5, margin: "0 0 14px", lineHeight: 1.7 }}>
         お支払いはクレジットカードまたは銀行振込（請求書）を選べます。銀行振込はご入金の確認後に有効になります。
-        {pref ? `地域PICKUPの料金は登録住所（${pref}）で自動で決まります。` : ""}
       </p>
 
       {!hasContract && <p className="err">有効な契約がないため、アドオンをお申し込みいただけません。</p>}
@@ -89,11 +88,6 @@ export function AddonsSection({
                 <strong style={{ fontSize: 14.5 }}>{a.name}</strong>
                 <span style={{ fontWeight: 700 }}>
                   {yen(fee)}/月
-                  {a.major_area_fee != null && (
-                    <span className="muted" style={{ fontSize: 11.5, fontWeight: 400 }}>
-                      （{isMajorArea(a, pref) ? "東京・大阪料金" : "東京・大阪以外の料金"}）
-                    </span>
-                  )}
                 </span>
               </div>
               {a.description && <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 8px", lineHeight: 1.7 }}>{a.description}</p>}
