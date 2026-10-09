@@ -65,7 +65,8 @@ function shuffle<T>(arr: T[]): T[] {
 //  - 全国TOPページPICKUP(アドオン)の契約店舗は必ず表示(先頭。並びはアクセスごとにシャッフル)
 //  - 足りない枠は、PICK UP契約のない店舗から抽選して埋める。抽選は月ごと(日本時間の月初めに
 //    入れ替わり、その月の間は同じ店舗)。契約が増えると抽選店舗が後ろから押し出される。
-// 地域PICK UP: その都道府県の地域PICKUP(アドオン)契約店舗だけを表示(抽選での穴埋めはしない)。
+// 地域PICK UP: その都道府県の地域PICKUP(アドオン)契約店舗を必ず表示し、足りない枠は
+//  その都道府県のPICK UP契約のない店舗から月ごとの抽選で埋める(全国と同じ考え方)。
 // ---------------------------------------------------------------------------
 export const NATIONAL_PICKUP_SLOTS = 10;
 
@@ -96,16 +97,25 @@ export async function getNationalPickupStores(supabase: SupabaseClient, limit: n
   return [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
 }
 
-export async function getRegionalPickupStores(supabase: SupabaseClient, pref: string | null): Promise<any[]> {
+export const REGIONAL_PICKUP_SLOTS = 10;
+
+/** 地域PICK UP: その都道府県の地域PICKUP契約店舗を必ず表示し、足りない枠は同じ都道府県の
+ *  PICK UP契約のない店舗から月ごとの抽選で埋める(契約が増えると抽選店舗と入れ替わる)。 */
+export async function getRegionalPickupStores(
+  supabase: SupabaseClient,
+  pref: string | null,
+  limit: number = REGIONAL_PICKUP_SLOTS
+): Promise<any[]> {
   if (!pref) return [];
-  const { data, error } = await supabase
-    .from("stores")
-    .select("*")
-    .in("status", ["approved", "listed"])
-    .eq("pref", pref)
-    .eq("is_recommended", true);
+  const { data, error } = await supabase.from("stores").select("*").in("status", ["approved", "listed"]).eq("pref", pref);
   if (error) throw new Error(error.message);
-  return shuffle(data ?? []);
+  const all = data ?? [];
+  const contracted = shuffle(all.filter((s: any) => s.is_recommended));
+  const month = jstMonthKey();
+  const drawn = all
+    .filter((s: any) => !s.is_recommended && !s.is_national_pickup)
+    .sort((a: any, b: any) => lotteryScore(`${month}:${pref}`, a.id) - lotteryScore(`${month}:${pref}`, b.id));
+  return [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
 }
 
 /** 旧API(互換): 全国PICK UPを返す */
