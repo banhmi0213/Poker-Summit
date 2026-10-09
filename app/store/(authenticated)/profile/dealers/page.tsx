@@ -8,6 +8,7 @@ import { notFound,redirect } from "next/navigation";
 import { createStoreClient } from "@/lib/supabase/store-server";
 import { PREF_OPTIONS } from "@/lib/constants";
 import { DEALER_GAMES } from "@/lib/dealers";
+import { DealerContractBadge } from "@/app/account/dealer/contract-status";
 import { DealerAvatar } from "@/app/account/dealer/avatar";
 import styles from "@/app/account/dealer/dealer.module.css";
 export const dynamic="force-dynamic";
@@ -23,7 +24,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  const q=String(searchParams.q??"").trim().slice(0,100);
  const rawDate=searchParams.date ?? "";
  const date=/^\d{4}-\d{2}-\d{2}$/.test(rawDate)&&Number.isFinite(Date.parse(rawDate+"T00:00:00Z"))&&new Date(rawDate+"T00:00:00Z").toISOString().slice(0,10)===rawDate ? rawDate : "";
- let query=supabase.from("dealer_profiles").select("user_id,full_name,pref,games,experience_years,dealer_type,available_dates,photo_url,avatar_kind").eq("published",true).order("updated_at",{ascending:false});
+ let query=supabase.from("dealer_profiles").select("user_id,full_name,pref,games,experience_years,dealer_type,available_dates,photo_url,avatar_kind,contract_status,available_regions,available_hours").eq("published",true).order("updated_at",{ascending:false});
  if(pref)query=query.eq("pref",pref);
  if(date)query=query.contains("available_dates",[date]);
  if(q){
@@ -44,7 +45,7 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  <label className={styles.field}>勤務希望日<input type="date" name="date" defaultValue={date}/></label>
  <button className="btn primary" type="submit">検索</button><Link className="btn" href="/store/profile/dealers">条件を解除</Link></form>
  {!storePref&&<p className={styles.hint}>店舗の都道府県を自動判定できませんでした。店舗情報の所在地を確認してください。</p>}
- {!profiles?.length && <p>条件に一致するディーラーはいません。</p>}<div className={styles.list}>{profiles?.map(p=><Link key={p.user_id} href={"/store/profile/dealers/"+p.user_id}><DealerAvatar kind={p.avatar_kind} photo={p.photo_url ? "/store/profile/dealers/"+p.user_id+"/photo" : null} name={p.full_name} small /><h2>{p.full_name}</h2><span className={styles.tag}>{p.dealer_type}</span><p>{p.pref}・経験{p.experience_years}年</p><p>{p.games.join("／")}</p><DealerReliabilityView stats={stats[p.user_id]} compact /><strong>プロフィールを見る →</strong></Link>)}</div></main>;
+ {!profiles?.length && <p>条件に一致するディーラーはいません。</p>}<div className={styles.list}>{profiles?.map(p=><Link key={p.user_id} href={"/store/profile/dealers/"+p.user_id}><DealerAvatar kind={p.avatar_kind} photo={p.photo_url ? "/store/profile/dealers/"+p.user_id+"/photo" : null} name={p.full_name} small /><h2>{p.full_name}</h2><div className={styles.tags}><span className={styles.tag}>{p.dealer_type}</span><DealerContractBadge status={p.contract_status} /></div><p>{p.pref}・経験{p.experience_years}年</p><dl className={styles.cardAvailability}><div><dt>対応可能地域</dt><dd>{p.available_regions || "未記載"}</dd></div><div><dt>対応可能時間</dt><dd>{p.available_hours || "未記載"}</dd></div></dl><p>{p.games.join("／")}</p><DealerReliabilityView stats={stats[p.user_id]} compact /><strong>プロフィールを見る →</strong></Link>)}</div></main>;
 }
 
 
