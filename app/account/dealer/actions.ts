@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { DEALER_GAMES, validDealerAvailability } from "@/lib/dealers";
 import { normalizeDealerPhone,validDealerContacts } from "@/lib/dealer-contacts";
+import { validDealerPrefectures } from "@/lib/dealer-regions";
 import { PREF_OPTIONS } from "@/lib/constants";
 export async function saveDealer(_previous: { error: string }, form: FormData): Promise<{ error: string }> {
  const supabase = await createClient();
@@ -30,9 +31,12 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
  if (dates.length > 366 || dates.some(d => !/^\d{4}-\d{2}-\d{2}$/.test(d) || !Number.isFinite(Date.parse(d+"T00:00:00Z")) || new Date(d+"T00:00:00Z").toISOString().slice(0,10) !== d)) return { error: "希望勤務日を確認してください。" };
  const type = String(form.get("dealerType") ?? "");
  const contractStatus = String(form.get("contractStatus") ?? "");
- const regions = String(form.get("availableRegions") ?? "").trim();
+ const prefs = [...new Set(form.getAll("availablePrefectures").map(String))];
+ const regionNote = String(form.get("regionNote") ?? "").trim();
+ if (!validDealerPrefectures(prefs, type === "フリーディーラー") || regionNote.length > 100) return { error: "対応可能な都道府県を選択してください。フリーディーラーは1つ以上の選択が必須です。" };
+ const regions = prefs.join("・") + (regionNote ? "（" + regionNote + "）" : "");
  const hours = String(form.get("availableHours") ?? "").trim();
- if (!validDealerAvailability(type, contractStatus, regions, hours)) return { error: "契約状況を選択してください。フリーディーラーは対応可能地域・対応可能時間の入力が必須です（地域300文字、時間500文字以内）。" };
+ if (!validDealerAvailability(type, contractStatus, regions, hours)) return { error: "受付状況を選択してください。フリーディーラーは対応可能地域・対応可能時間の入力が必須です（地域300文字、時間500文字以内）。" };
  if (!name || name.length > 100 || !ageRaw || !Number.isInteger(age) || age < 0 || age > 120 || !PREF_OPTIONS.includes(pref) || !address || address.length > 300 || !games.length || games.some(g => !DEALER_GAMES.includes(g)) || !yearsRaw || !Number.isFinite(years) || years < 0 || years > 80 || appeal.length > 3000 || !["ディーラー", "フリーディーラー"].includes(type)) return { error: "入力内容を確認してください。" };
  const { data: current, error: currentError } = await supabase.from("dealer_profiles").select("photo_url").eq("user_id", user.id).maybeSingle();
  if (currentError) return { error: "登録情報を読み込めませんでした。" };
@@ -51,7 +55,7 @@ export async function saveDealer(_previous: { error: string }, form: FormData): 
   photo = uploaded;
   avatar = null;
  }
- const { error } = await supabase.rpc("save_dealer_profile_with_availability", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates, p_avatar: avatar, p_phone: phone, p_contact_type: contactType, p_contact_value: contactValue, p_disclose: disclose, p_contract_status: contractStatus, p_regions: regions, p_hours: hours });
+ const { error } = await supabase.rpc("save_dealer_profile_with_regions", { p_name: name, p_age: age, p_pref: pref, p_address: address, p_games: games, p_years: years, p_appeal: appeal, p_photo: photo, p_type: type, p_published: form.get("published") === "on", p_dates: dates, p_avatar: avatar, p_phone: phone, p_contact_type: contactType, p_contact_value: contactValue, p_disclose: disclose, p_contract_status: contractStatus, p_regions: regions, p_hours: hours, p_prefectures: prefs, p_region_note: regionNote });
  if (error) {
   if (uploaded) await supabase.storage.from("dealer-photos").remove([uploaded]);
   return { error: "保存できませんでした。もう一度お試しください。" };
