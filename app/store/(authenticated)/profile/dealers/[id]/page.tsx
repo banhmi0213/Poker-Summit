@@ -1,3 +1,4 @@
+import {DealerReviews} from "@/app/account/dealer/reviews";
 import {OfferForm} from "@/app/matching/chat/forms";
 import { dealerReliability } from "@/lib/dealer-reliability";
 import { DealerReliabilityView } from "@/app/account/dealer/reliability";
@@ -9,7 +10,7 @@ import { createStoreClient } from "@/lib/supabase/store-server";
 import { DealerDetail } from "@/app/account/dealer/detail";
 import styles from "@/app/account/dealer/dealer.module.css";
 export const dynamic="force-dynamic";
-export default async function DealerPage({params}:{params:{id:string}}){
+export default async function DealerPage({params,searchParams}:{params:{id:string};searchParams:{reviews?:string}}){
  const supabase=await createStoreClient();
  const {data:{user}}=await supabase.auth.getUser();
  if(!user)redirect("/store/login?next=/store/profile/dealers");
@@ -33,7 +34,7 @@ export default async function DealerPage({params}:{params:{id:string}}){
  if(jobsError)throw new Error("募集を読み込めませんでした。");
  const options=(jobs||[]).flatMap(j=>(j.spot_job_shifts||[]).filter(s=>Date.parse(s.work_date+"T"+s.start_time+"+09:00")>Date.now()).map(s=>({value:j.id+"|"+s.work_date,label:s.work_date+" "+s.start_time.slice(0,5)+"〜"+s.end_time.slice(0,5)+"（日本時間）"}))).sort((a,b)=>a.label.localeCompare(b.label));
  const photo=profile.data.photo_url ? "/store/profile/dealers/"+params.id+"/photo" : null;
- return <main className={styles.page}><Link href="/store/profile/dealers">← ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerReliabilityView stats={stats[params.id]} /><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/><section className={styles.card}><h2 style={{fontSize:18}}>勤務をオファーする</h2>{options.length?<OfferForm dealer={params.id} options={options}/>:<p>オファーできる勤務日がありません。<Link href="/store/profile/spot-jobs">スポット求人を登録する</Link></p>}<p className={styles.hint}>既に応募・オファーがある勤務日は、同じチャットを開きます。</p></section><section className={styles.card}><h2 style={{fontSize:18}}>契約成立後の連絡先</h2>{contact ? <dl className={styles.facts}><div><dt>電話番号</dt><dd>{contact.phone}</dd></div><div><dt>{contact.contact_type==="line" ? "LINE" : "メールアドレス"}</dt><dd>{contact.contact_value}</dd></div></dl> : <p className={styles.hint}>双方が勤務条件を確定し、ディーラーが開示に同意した場合に、この店舗だけに表示されます。</p>}</section></main>;
+ return <main className={styles.page}><Link href="/store/profile/dealers">← ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerReliabilityView stats={stats[params.id]} /><DealerReviews db={supabase} id={params.id} page={parseInt(searchParams.reviews||"1",10)} path={"/store/profile/dealers/"+params.id}/><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/><section className={styles.card}><h2 style={{fontSize:18}}>勤務をオファーする</h2>{options.length?<OfferForm dealer={params.id} options={options}/>:<p>オファーできる勤務日がありません。<Link href="/store/profile/spot-jobs">スポット求人を登録する</Link></p>}<p className={styles.hint}>既に応募・オファーがある勤務日は、同じチャットを開きます。</p></section><section className={styles.card}><h2 style={{fontSize:18}}>契約成立後の連絡先</h2>{contact ? <dl className={styles.facts}><div><dt>電話番号</dt><dd>{contact.phone}</dd></div><div><dt>{contact.contact_type==="line" ? "LINE" : "メールアドレス"}</dt><dd>{contact.contact_value}</dd></div></dl> : <p className={styles.hint}>双方が勤務条件を確定し、ディーラーが開示に同意した場合に、この店舗だけに表示されます。</p>}</section></main>;
 }
 
 

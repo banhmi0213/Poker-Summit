@@ -1,3 +1,4 @@
+import {Stars} from "./stars";
 import Link from "next/link";
 import {notFound,redirect} from "next/navigation";
 import {createStoreClient} from "@/lib/supabase/store-server";
@@ -9,7 +10,7 @@ import {WorkForm} from "./form";
 import {UUID} from "@/lib/spot-jobs";
 import styles from "@/app/spot-jobs/spot.module.css";
 type Params={page?:string;job?:string;saved?:string;record?:string};
-type RecordRow={id:string;spot_job_id:string|null;work_start:string;work_end:string;status:string;store_confirmed_at:string|null;dealer_confirmed_at:string|null;store_completed_at:string|null;dealer_completed_at:string|null;dealer_review:string|null;review_saved_at:string|null;store_review:string|null;store_review_saved_at:string|null;job_snapshot:{store_name?:string;dealer_name?:string;hourly_wage?:number;games?:string[];duties?:string;requirements?:string;dress?:string;transport_type?:string;transport_limit?:number}};
+type RecordRow={id:string;spot_job_id:string|null;work_start:string;work_end:string;status:string;store_confirmed_at:string|null;dealer_confirmed_at:string|null;store_completed_at:string|null;dealer_completed_at:string|null;dealer_review:string|null;review_saved_at:string|null;store_review:string|null;store_review_saved_at:string|null;dealer_rating:number|null;store_rating:number|null;job_snapshot:{store_name?:string;dealer_name?:string;hourly_wage?:number;games?:string[];duties?:string;requirements?:string;dress?:string;transport_type?:string;transport_limit?:number}};
 const date=(s:string)=>new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(s));
 export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";searchParams:Params}){
  const path=actor==="dealer"?"/account/dealer/work":"/store/profile/spot-jobs/work";
@@ -42,13 +43,13 @@ export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";sear
  <p className={styles.muted}>条件確定：店舗 {r.store_confirmed_at?"確認済み":"未確認"} ／ ディーラー {r.dealer_confirmed_at?"確認済み":"未確認"}</p>
  <p><Link className={styles.button} href={(actor==="store"?"/store/profile/dealer-chat/":"/account/dealer/chat/")+r.id}>チャット・勤務条件の確認</Link></p>
  {r.status==="pending"&&selfConfirmed&&<p>相手の条件確定をお待ちください。</p>}
- {r.dealer_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>ディーラーから店舗へのレビュー</strong><p className={styles.pre}>{r.dealer_review}</p><small>{r.review_saved_at?date(r.review_saved_at):""}</small></div>}
- {!searchParams.job&&r.store_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>店舗からディーラーへのレビュー（勤務実績）</strong><p className={styles.pre}>{r.store_review}</p><small>{r.store_review_saved_at?date(r.store_review_saved_at):""}</small></div>}
- {r.status==="confirmed"&&ended&&!selfCompleted&&<WorkForm actor={actor} id={r.id} operation="review" review={selfReview}/>}
+ {r.dealer_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>ディーラーから店舗へのレビュー</strong><p><Stars rating={r.dealer_rating}/></p><p className={styles.pre}>{r.dealer_review}</p><small>{r.review_saved_at?date(r.review_saved_at):""}</small></div>}
+ {!searchParams.job&&r.store_review&&<div style={{background:"#faf7ef",padding:16,borderRadius:8,margin:"16px 0"}}><strong>店舗からディーラーへのレビュー（勤務実績）</strong><p><Stars rating={r.store_rating}/></p><p className={styles.pre}>{r.store_review}</p><small>{r.store_review_saved_at?date(r.store_review_saved_at):""}</small></div>}
+ {r.status==="confirmed"&&ended&&!selfCompleted&&<WorkForm actor={actor} id={r.id} operation="review" review={selfReview} rating={actor==="store"?r.store_rating:r.dealer_rating}/>}
  {searchParams.job&&actor==="store"&&<p className={styles.muted}>店舗からディーラーへのレビューはディーラーの勤務実績に保存されます。</p>}
  {r.status==="confirmed"&&ended&&!selfCompleted&&!!selfReviewSaved&&<div style={{marginTop:16}}><WorkForm actor={actor} id={r.id} operation="complete"/></div>}
  {r.status==="confirmed"&&!ended&&<p className={styles.muted}>勤務終了時刻を過ぎると完了確認できます。</p>}
- {r.status==="confirmed"&&ended&&!selfReviewSaved&&<p className={styles.muted}>レビューを保存すると「勤務完了」ボタンが表示されます。</p>}
+ {r.status==="confirmed"&&ended&&!selfReviewSaved&&<p className={styles.muted}>星評価とレビューを保存すると「勤務完了」ボタンが表示されます。</p>}
  {r.status==="confirmed"&&selfCompleted&&<p>あなたの完了確認は保存済みです。相手の完了確認がそろうと勤務完了になります。</p>}
  </section>;
  })}
