@@ -1,12 +1,32 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import {
   applyContractBillingChange,
   scheduleAddonRemovals,
   cancelScheduledAddonRemovals,
 } from "@/lib/contracts-billing";
+
+// server action の例外は Next.js の「Application error」画面になってしまうため、
+// ここで受け止めて、結果をページ上部のメッセージとして表示する(?ok= / ?error=)。
+function backToPlan(kind: "ok" | "error", message: string): never {
+  redirect(`/store/profile/plan?${kind}=${encodeURIComponent(message)}`);
+}
+
+async function settle(run: () => Promise<string>) {
+  let message = "";
+  let failed = false;
+  try {
+    message = await run();
+  } catch (e) {
+    failed = true;
+    message = e instanceof Error ? e.message : String(e);
+  }
+  revalidatePath("/store/profile/plan");
+  backToPlan(failed ? "error" : "ok", message || "変更を受け付けました。");
+}
 
 // ============================================================================
 // 店舗オーナーが自分でアドオン構成を変更する(2026/10、カード決済組み込み・
@@ -22,7 +42,7 @@ import {
 // failed=決済失敗 / canceled=予約取消)。
 // ============================================================================
 
-export async function requestAddonChange(formData: FormData) {
+async function requestAddonChangeImpl(formData: FormData): Promise<string> {
   const storeId = String(formData.get("storeId") ?? "");
   const addonIds = formData.getAll("addonIds").map(String).filter(Boolean);
   const note = String(formData.get("note") ?? "").trim();
@@ -60,8 +80,7 @@ export async function requestAddonChange(formData: FormData) {
 
   if (toAdd.length === 0 && toRemove.length === 0) {
     // 変更なし。
-    revalidatePath("/store/profile/plan");
-    return;
+    return "";
   }
 
   if (toAdd.length > 0) {
@@ -111,10 +130,10 @@ export async function requestAddonChange(formData: FormData) {
     });
   }
 
-  revalidatePath("/store/profile/plan");
+  return "";
 }
 
-export async function cancelAddonChangeRequest(requestId: string) {
+async function cancelAddonChangeRequestImpl(requestId: string): Promise<string> {
   const supabase = await createClient();
 
   const { data: request } = await supabase
@@ -136,5 +155,13 @@ export async function cancelAddonChangeRequest(requestId: string) {
     .eq("status", "pending");
   if (error) throw new Error(error.message);
 
-  revalidatePath("/store/profile/plan");
+  return "";
+}
+
+export async function requestAddonChange(formData: FormData) {
+  await settle(() => requestAddonChangeImpl(formData));
+}
+
+export async function cancelAddonChangeRequest(requestId: string) {
+  await settle(() => cancelAddonChangeRequestImpl(requestId));
 }
