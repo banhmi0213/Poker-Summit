@@ -246,6 +246,7 @@ export const STORE_STATUS_LABEL: Record<string, string> = {
   approved: "承認済み",
   rejected: "却下",
   listed: "掲載済み",
+  payment_suspended: "未入金で非公開",
 };
 
 // 店舗ログインID(例: "store-xxxxxxxx")をSupabase Auth上の実メールアドレスに

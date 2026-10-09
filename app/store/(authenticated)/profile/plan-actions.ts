@@ -34,12 +34,15 @@ export async function requestPlanChange(formData: FormData) {
 
   const { data: contract } = await supabase
     .from("store_contracts")
-    .select("id, plan_id, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id)")
+    .select("id, plan_id, billing_method, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id)")
     .eq("store_id", storeId)
     .maybeSingle();
 
   if (!contract) {
     throw new Error("この店舗にはまだ契約が登録されていません。運営にお問い合わせください。");
+  }
+  if ((contract as { billing_method?: string }).billing_method === "bank_transfer") {
+    throw new Error("銀行振込でご契約中のため、プランの変更はお問い合わせフォームからご連絡ください。");
   }
 
   const { data: requestedPlan } = await supabase

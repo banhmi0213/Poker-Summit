@@ -19,6 +19,8 @@ async function sendEmail(params: {
   to: string;
   subject: string;
   text: string;
+  attachments?: Array<{ filename: string; content: Uint8Array }>;
+  bcc?: string | null;
 }): Promise<void> {
   const apiKey = getResendApiKey();
   if (!apiKey) {
@@ -38,6 +40,15 @@ const res = await fetch("https://api.resend.com/emails", {
     to: [params.to],
     subject: params.subject,
     text: params.text,
+    ...(params.bcc ? { bcc: [params.bcc] } : {}),
+    ...(params.attachments?.length
+      ? {
+          attachments: params.attachments.map((a) => ({
+            filename: a.filename,
+            content: Buffer.from(a.content).toString("base64"),
+          })),
+        }
+      : {}),
   }),
 });
 
@@ -240,4 +251,112 @@ export async function sendBulkEmail(params: {
   }
 
   return { sent, failed };
+}
+
+// ---------------------------------------------------------------------------
+// 銀行振込の請求書メール(2026/10追加)。lib/bank-transfer.ts の sendInvoice() から。
+// 請求書PDFを添付し、運営(info@)にもBCCで控えを送る。
+// ---------------------------------------------------------------------------
+export async function sendInvoiceEmail(params: {
+  invoice: import("@/lib/bank-transfer").InvoiceRow;
+  settings: import("@/lib/bank-transfer").BillingSettings;
+  pdf: Uint8Array;
+  kind: "new" | "renewal" | "reminder";
+}): Promise<void> {
+  const { invoice, settings, pdf, kind } = params;
+  const { formatJpDate, cycleLabel } = await import("@/lib/bank-transfer");
+  const siteUrl = getSiteUrl();
+  const amount = `${invoice.total_amount.toLocaleString("ja-JP")}円（税込）`;
+  const due = formatJpDate(invoice.due_date);
+  const bank = settings.bank;
+  const bankText = bank
+    ? `${bank.bank} ${bank.branch}
+${bank.type} ${bank.number}
+口座名義: ${bank.holder}`
+    : "別途ご案内いたします。";
+
+  const lead =
+    kind === "new"
+      ? `このたびはPoker Summitへの掲載をお申し込みいただき、誠にありがとうございます。
+お申し込みいただいたプランの請求書をお送りいたします。
+ご入金を確認でき次第、店舗管理アカウントを発行し、ログイン情報をメールでお送りいたします。`
+      : kind === "renewal"
+        ? `いつもPoker Summitをご利用いただき、誠にありがとうございます。
+次回の契約期間分の請求書をお送りいたします。`
+        : `いつもPoker Summitをご利用いただき、誠にありがとうございます。
+お支払期限が明日（${due}）となっております請求書について、ご入金をまだ確認できておりません。
+お手数ですが、期限までにお振り込みをお願いいたします。
+（行き違いでお振り込み済みの場合はご容赦ください。）`;
+
+  const isNewApplication = !invoice.store_contract_id && !!invoice.listing_application_id;
+  const warning =
+    isNewApplication
+      ? "※お支払期限を過ぎてもご入金が確認できない場合、お申し込みを取り消させていただくことがあります。"
+      : "※お支払期限までにご入金が確認できない場合、期限の翌日に店舗ページの公開を停止いたします。ご入金の確認後、公開を再開いたします。";
+
+  const text = `${invoice.bill_to_name} 様
+
+${lead}
+
+■ ご請求内容
+請求書番号: ${invoice.invoice_number}
+プラン: ${invoice.plan_name}（${cycleLabel(invoice.months, invoice.discount_label)}）
+ご請求金額: ${amount}
+お支払期限: ${due}
+
+■ お振込先
+${bankText}
+
+※振込手数料はお客様のご負担にてお願いいたします。
+※ご依頼人名はお申し込み時の店舗名・会社名でお願いいたします。名義が異なる場合はご連絡ください。
+${warning}
+
+請求書（PDF）を添付しております。${isNewApplication ? "" : `店舗管理画面の「プラン・お支払い」からもダウンロードできます。
+${siteUrl}/store/profile/plan`}
+
+ご不明な点は ${FROM_ADDRESS.replace(/^.*<|>$/g, "")} までお問い合わせください。
+
+Poker Summit運営事務局`;
+
+  const subject =
+    kind === "reminder"
+      ? `【Poker Summit】お支払期限のお知らせ（請求書 ${invoice.invoice_number}）`
+      : `【Poker Summit】請求書のお送り（${invoice.invoice_number}）`;
+
+  await sendEmail({
+    to: invoice.bill_to_email,
+    subject,
+    text,
+    bcc: kind === "reminder" ? null : "info@pokersummit.jp",
+    attachments: [{ filename: `請求書_${invoice.invoice_number}.pdf`, content: pdf }],
+  });
+}
+
+// 未入金で店舗ページを非公開にしたときの通知(店舗宛て)。
+export async function sendSuspensionNoticeEmail(params: {
+  to: string;
+  name: string;
+  invoiceNumber: string;
+  amount: number;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.name} 様
+
+いつもPoker Summitをご利用いただき、誠にありがとうございます。
+請求書 ${params.invoiceNumber}（${params.amount.toLocaleString("ja-JP")}円）について、お支払期限までにご入金を確認できなかったため、店舗ページの公開を停止いたしました。
+
+ご入金を確認でき次第、公開を再開いたします。
+請求書は店舗管理画面の「プラン・お支払い」からダウンロードできます。
+${siteUrl}/store/profile/plan
+
+行き違いでお振り込み済みの場合や、ご不明な点がございましたら info@pokersummit.jp までご連絡ください。
+
+Poker Summit運営事務局`;
+
+  await sendEmail({
+    to: params.to,
+    subject: "【Poker Summit】店舗ページの公開を停止しました（未入金）",
+    text,
+    bcc: "info@pokersummit.jp",
+  });
 }

@@ -6,6 +6,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
+import { BILLING_CYCLES, discountFor, getBillingSettings, quote, type BillingSettings } from "@/lib/bank-transfer";
 
 export const metadata = staticPageMetadata({ title: "店舗掲載のお申し込み", description: "アミューズメントポーカー店・ポーカーバーの掲載お申し込み。Poker Summitに店舗情報・イベント・求人を掲載して集客につなげましょう。", path: "/apply" });
 
@@ -23,6 +24,7 @@ export default async function ApplyPage({
     .eq("id", true)
     .maybeSingle();
   const acceptingNew = settings?.listing_accept_new ?? true;
+  const billing = await getBillingSettings();
 
   const [{ data: plans }, { data: addons }] = await Promise.all([
     supabase
@@ -55,6 +57,47 @@ export default async function ApplyPage({
             <p className="muted">
               大変申し訳ございませんが、現在新規の掲載申込を一時的に停止しております。再開時期はお問い合わせよりご確認ください。
             </p>
+            <a href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
+              トップへ戻る
+            </a>
+          </div>
+        </div>
+        <PortalFooter />
+        <BottomTabs />
+      </div>
+    );
+  }
+
+  if (params.done === "transfer") {
+    return (
+      <div>
+        <PortalHeader />
+        <div className="container" style={{ maxWidth: 480 }}>
+          <Link href="/" className="breadcrumb">
+            ← トップに戻る
+          </Link>
+          <div className="brand wordmark" style={{ marginBottom: 20 }}>
+            <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+          </div>
+          <div className="card">
+            <h1 style={{ fontSize: 18, marginBottom: 8 }}>お申込みありがとうございます</h1>
+            <p style={{ fontSize: 14, lineHeight: 1.8 }}>
+              ご登録のメールアドレスに<strong>請求書（PDF）</strong>をお送りしました。
+              請求書に記載のお支払期限（{billing.dueDays}日以内）までに、下記口座へお振り込みください。
+            </p>
+            {billing.bank && (
+              <div className="card" style={{ background: "var(--surface-2)", margin: "12px 0", fontSize: 14, lineHeight: 1.8 }}>
+                <div className="muted" style={{ fontSize: 12 }}>お振込先</div>
+                <div>{billing.bank.bank} {billing.bank.branch}</div>
+                <div>{billing.bank.type} {billing.bank.number}</div>
+                <div>口座名義：{billing.bank.holder}</div>
+              </div>
+            )}
+            <ul className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
+              <li>振込手数料はお客様のご負担でお願いいたします。</li>
+              <li>ご入金を確認でき次第、店舗管理アカウントを発行し、ログイン情報をメールでお送りします。</li>
+              <li>メールが届かない場合は迷惑メールフォルダをご確認のうえ、info@pokersummit.jp までご連絡ください。</li>
+            </ul>
             <a href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
               トップへ戻る
             </a>
@@ -109,7 +152,7 @@ export default async function ApplyPage({
         <p className="muted" style={{ marginBottom: 20 }}>
           店舗・施設の掲載をご希望の方は、以下のフォームよりお申込みください。
         </p>
-        <PricingSection plans={plans ?? []} addons={addons ?? []} />
+        <PricingSection plans={plans ?? []} addons={addons ?? []} billing={billing} />
         <h2 style={{ fontSize: 16, margin: "24px 0 10px" }}>お申込みフォーム</h2>
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
@@ -158,19 +201,48 @@ export default async function ApplyPage({
             </div>
 
             {plans && plans.length > 0 && (
-              <div className="field">
-                <span className="muted">
-                  プランを選んでその場でお申込みの場合(クレジットカード登録へ進みます)
-                </span>
-                <select name="planId" defaultValue="">
-                  <option value="">選択しない(まずは問い合わせのみ)</option>
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}(月額{p.monthly_fee.toLocaleString()}円・税込)
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <>
+                <div className="field">
+                  <span className="muted">プランを選んでお申込みの場合</span>
+                  <select name="planId" defaultValue="">
+                    <option value="">選択しない(まずは問い合わせのみ)</option>
+                    {plans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}(月額{p.monthly_fee.toLocaleString()}円・税込)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <span className="muted">お支払い方法</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
+                    <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
+                      <input type="radio" name="billingMethod" value="bank_transfer" defaultChecked />
+                      銀行振込（請求書払い）
+                    </label>
+                    {billing.cardPaymentEnabled && (
+                      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
+                        <input type="radio" name="billingMethod" value="card" />
+                        クレジットカード（毎月の自動決済）
+                      </label>
+                    )}
+                  </div>
+                </div>
+                <div className="field">
+                  <span className="muted">お支払いサイクル（銀行振込の場合）</span>
+                  <select name="billingCycle" defaultValue="1">
+                    {BILLING_CYCLES.map((m) => {
+                      const d = discountFor(billing, m);
+                      const label = quote(0, m, d).label;
+                      return (
+                        <option key={m} value={m}>
+                          {m === 1 ? "毎月払い" : `${m}か月まとめ払い${label ? `（${label}）` : ""}`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </>
             )}
 
             <button
@@ -188,8 +260,14 @@ export default async function ApplyPage({
                 className="btn primary"
                 style={{ width: "100%" }}
               >
-                プランを選んでクレジットカード登録へ進む
+                選んだプランで申し込む
               </button>
+            )}
+            {plans && plans.length > 0 && (
+              <p className="muted" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.7 }}>
+                銀行振込の場合は、お申込み後に請求書（PDF）をメールでお送りします。ご入金の確認後に店舗管理アカウントを発行します。
+                {billing.cardPaymentEnabled ? "クレジットカードの場合はカード登録画面へ進みます。" : ""}
+              </p>
             )}
           </form>
         </div>
@@ -217,7 +295,8 @@ function featureLines(description: string | null) {
 // 辿れる店舗向けページで、一般会員向けのナビには出さない。決済審査では「販売する
 // サービスと価格が確認できること」が求められるため、内容・税込価格・請求と解約の
 // 条件をここで明示する。価格と内容は管理画面のプラン/アドオン設定(plans/addons)から表示。
-function PricingSection({ plans, addons }: { plans: PriceItem[]; addons: PriceItem[] }) {
+function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons: PriceItem[]; billing: BillingSettings }) {
+  const prepay = BILLING_CYCLES.filter((m) => m !== 1).map((m) => ({ months: m, discount: discountFor(billing, m) }));
   if (plans.length === 0 && addons.length === 0) return null;
   return (
     <section aria-labelledby="pricing-heading" style={{ marginBottom: 8 }}>
@@ -246,6 +325,37 @@ function PricingSection({ plans, addons }: { plans: PriceItem[]; addons: PriceIt
                 ))}
               </ul>
             )}
+            <div style={{ marginTop: 10, paddingTop: 8, borderTop: "1px solid rgba(0,0,0,0.08)", fontSize: 12.5, lineHeight: 1.8 }}>
+              {prepay.map(({ months, discount }) => {
+                const q = quote(plan.monthly_fee, months, discount);
+                return (
+                  <div key={months} style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "baseline" }}>
+                    <span>
+                      {months}か月まとめ払い
+                      {q.label && (
+                        <span className="badge" style={{ marginLeft: 6, fontSize: 10.5 }}>
+                          {q.label}
+                        </span>
+                      )}
+                    </span>
+                    <span>
+                      {q.discountAmount > 0 && (
+                        <s className="muted" style={{ marginRight: 6 }}>{yen(q.gross)}</s>
+                      )}
+                      <strong>{yen(q.total)}</strong>
+                      <span className="muted">（税込）</span>
+                    </span>
+                    {discount && (
+                      <span className="muted" style={{ width: "100%", fontSize: 11.5, marginTop: -2 }}>
+                        {discount.type === "free_months"
+                          ? `${months - discount.value}か月分の料金で${months === 12 ? "1年間" : `${months}か月間`}掲載`
+                          : `1か月あたり${yen(Math.floor(q.total / months))}`}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })}
@@ -275,10 +385,14 @@ function PricingSection({ plans, addons }: { plans: PriceItem[]; addons: PriceIt
       <div className="card" style={{ fontSize: 12.5, lineHeight: 1.8 }}>
         <h3 style={{ fontSize: 14, margin: "0 0 6px" }}>お支払いと契約について</h3>
         <ul style={{ margin: 0, paddingLeft: 20 }}>
-          <li>お支払いはクレジットカードによる月額の自動決済です。表示価格はすべて税込です。</li>
-          <li>契約は1か月単位で自動更新します。月額料金はプラン料金と選択したオプション料金の合計です。</li>
-          <li>プランのアップグレードやオプション追加はその場で決済し、ダウングレードやオプション解除は現在の契約期間の終了時に反映します。</li>
-          <li>解約・自動更新の停止は、更新日前に<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からご連絡ください。月額料金の日割り返金は原則行っておりません。</li>
+          <li>表示価格はすべて税込です。お支払いは銀行振込（請求書払い）{billing.cardPaymentEnabled ? "またはクレジットカードによる月額の自動決済" : ""}です。</li>
+          <li>銀行振込は「毎月払い」または「6か月・12か月のまとめ払い」をお選びいただけます。まとめ払いの割引は上記のとおりです。振込手数料はお客様のご負担となります。</li>
+          <li>銀行振込の場合、お申込み後に請求書（適格請求書）をメールでお送りします。お支払期限は請求書の発行から{billing.dueDays}日以内です。ご入金の確認後に掲載を開始します。</li>
+          <li>契約はお選びいただいた期間ごとに自動更新します。銀行振込の場合は契約期間が終わる7日前に次回分の請求書をお送りします。お支払期限までにご入金が確認できない場合、期限の翌日に店舗ページの公開を停止し、ご入金の確認後に再開します。</li>
+          {billing.cardPaymentEnabled && (
+            <li>クレジットカードの場合、プランのアップグレードはその場で決済し、ダウングレードは現在の契約期間の終了時に反映します。</li>
+          )}
+          <li>解約・自動更新の停止は、更新日前に<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からご連絡ください。お支払い済みの料金（まとめ払いを含む）の日割り・月割りでの返金は原則行っておりません。</li>
           <li>当サービスは賭博・換金を目的とした決済は一切行いません。お支払いの対象は店舗掲載・広告・オプション等のサービス利用料金です。</li>
         </ul>
         <p style={{ margin: "8px 0 0" }}>

@@ -72,11 +72,13 @@ export async function GET(req: NextRequest) {
     try {
       const { data: contract, error: contractFetchError } = await supabase
         .from("store_contracts")
-        .select("id, plan_id, pending_plan_id, pending_plan_effective_at, status")
+        .select("id, plan_id, pending_plan_id, pending_plan_effective_at, status, billing_method")
         .eq("id", storeContractId)
         .single();
       if (contractFetchError || !contract) throw new Error(contractFetchError?.message ?? "契約が見つかりません。");
       if (contract.status !== "active") continue;
+      // 銀行振込の契約はカード決済しない(次回分の請求書で切り替える。app/api/cron/bank-transfer)
+      if (contract.billing_method === "bank_transfer") continue;
 
       const planIsDue = !!contract.pending_plan_id && !!contract.pending_plan_effective_at && contract.pending_plan_effective_at <= nowIso;
       const finalPlanId = planIsDue ? (contract.pending_plan_id as string) : (contract.plan_id as string);

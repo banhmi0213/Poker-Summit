@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { requestPlanChange, cancelPlanChangeRequest } from "../plan-actions";
 import { requestAddonChange, cancelAddonChangeRequest } from "../addons-actions";
+import { cycleLabel, formatJpDate, getBillingSettings, isOverdue, isoToJstDate, todayJst, type InvoiceRow } from "@/lib/bank-transfer";
 
 // /store/profile 1ページの中の1セクションだったプラン・アップグレードを、
 // 独立したページへ分離(2026/09/30)。LINEリッチメニュー側の導線と同じ
@@ -36,7 +37,7 @@ export default async function StorePlanPage() {
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(addon_id)"
+          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(addon_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),
@@ -64,6 +65,21 @@ export default async function StorePlanPage() {
         .maybeSingle(),
     ]);
 
+  const isTransfer = (contract as any)?.billing_method === "bank_transfer";
+  const [{ data: invoiceRows }, billing] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("*")
+      .eq("store_id", store.id)
+      .neq("status", "canceled")
+      .order("issued_at", { ascending: false })
+      .limit(24),
+    getBillingSettings(),
+  ]);
+  const invoices = (invoiceRows ?? []) as InvoiceRow[];
+  const today = todayJst();
+  const unpaid = invoices.filter((i) => i.status === "unpaid");
+
   const currentAddonIds = ((contract as any)?.store_contract_addons ?? []).map(
     (a: { addon_id: string }) => a.addon_id
   ) as string[];
@@ -73,9 +89,90 @@ export default async function StorePlanPage() {
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
         ← 店舗管理に戻る
       </Link>
-      <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・アドオン</h1>
+      <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・お支払い</h1>
 
-      {contract && !contract.fincode_customer_id && (
+      {(contract as any)?.suspended_for_nonpayment_at && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
+          <div style={{ color: "#d1453b", fontSize: 13.5, fontWeight: 700 }}>
+            ⚠️ お支払期限までにご入金を確認できなかったため、店舗ページの公開を停止しています。
+          </div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>下記の請求書の金額をお振り込みください。ご入金の確認後、公開を再開します。</div>
+        </div>
+      )}
+
+      {(isTransfer || invoices.length > 0) && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <div className="muted">お支払い方法</div>
+          <div style={{ fontWeight: 700, fontSize: 15, marginTop: 2 }}>
+            {isTransfer ? `銀行振込（${cycleLabel((contract as any)?.billing_cycle_months ?? 1)}）` : "クレジットカード"}
+          </div>
+          {isTransfer && (
+            <p className="muted" style={{ fontSize: 12, margin: "4px 0 0", lineHeight: 1.7 }}>
+              契約期間が終わる7日前に次回分の請求書をメールでお送りします。お支払期限は請求書の発行から{billing.dueDays}日以内です（振込手数料はご負担ください）。
+            </p>
+          )}
+
+          {unpaid.length > 0 && billing.bank && (
+            <div className="card" style={{ background: "var(--surface-2)", marginTop: 12, fontSize: 13.5, lineHeight: 1.8 }}>
+              <div className="muted" style={{ fontSize: 12 }}>お振込先</div>
+              <div>
+                {billing.bank.bank} {billing.bank.branch}
+              </div>
+              <div>
+                {billing.bank.type} {billing.bank.number}　口座名義：{billing.bank.holder}
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 14 }}>
+            <span className="muted">請求書</span>
+            {invoices.length === 0 ? (
+              <p className="muted" style={{ fontSize: 12.5 }}>まだ請求書はありません。</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+                {invoices.map((inv) => {
+                  const overdue = isOverdue(inv, today);
+                  return (
+                    <div
+                      key={inv.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                        padding: "8px 0",
+                        borderTop: "1px solid rgba(0,0,0,0.08)",
+                        fontSize: 13,
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600 }}>
+                          {inv.plan_name}・{cycleLabel(inv.months, inv.discount_label)}
+                        </div>
+                        <div className="muted" style={{ fontSize: 11.5 }}>
+                          {inv.invoice_number}・発行 {formatJpDate(isoToJstDate(inv.issued_at))}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontWeight: 700 }}>{inv.total_amount.toLocaleString("ja-JP")}円</div>
+                        <div style={{ fontSize: 11.5, color: overdue ? "#d1453b" : undefined, fontWeight: overdue ? 700 : 400 }}>
+                          {inv.status === "paid" ? "お支払い済み" : `お支払期限 ${formatJpDate(inv.due_date)}${overdue ? "（期限超過）" : ""}`}
+                        </div>
+                      </div>
+                      <a className="btn" href={`/api/invoices/${inv.id}/pdf`} target="_blank" rel="noreferrer" style={{ fontSize: 12 }}>
+                        PDF
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {contract && !isTransfer && !contract.fincode_customer_id && (
         <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
           <div style={{ color: "#d1453b", fontSize: 13.5 }}>
             ⚠️ カード情報が登録されていないため、プラン・アドオンの変更に伴うカード決済ができません。運営にお問い合わせください。
@@ -172,6 +269,12 @@ export default async function StorePlanPage() {
                 予約を取り消す
               </button>
             </form>
+          </div>
+        ) : isTransfer ? (
+          <div className="card" style={{ background: "var(--surface-2)", fontSize: 13.5, lineHeight: 1.8 }}>
+            銀行振込でご契約中のため、プランやお支払いサイクル（毎月・6か月・12か月）の変更は
+            <a href="/contact" style={{ textDecoration: "underline", fontWeight: 600 }}>お問い合わせフォーム</a>
+            からご連絡ください。変更後の内容で請求書をお送りします。
           </div>
         ) : (
           <form action={requestPlanChange}>

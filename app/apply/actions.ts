@@ -6,6 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createFincodeCustomer, createFincodeCardRegistration, createFincodePlan } from "@/lib/fincode";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
+import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
 
 // 運営への掲載申込通知メール(2026/10、「問い合わせ、掲載申込があったら
 // メール届くように設定しておいて」との指示を受けて追加)。submitApplication()
@@ -152,6 +153,9 @@ export async function startPaidApplication(formData: FormData) {
       const category = String(formData.get("category") ?? "").trim();
       const message = String(formData.get("message") ?? "").trim();
       const planId = String(formData.get("planId") ?? "").trim();
+      const billingMethod = String(formData.get("billingMethod") ?? "card") === "bank_transfer" ? "bank_transfer" : "card";
+      const cycleRaw = Number(formData.get("billingCycle") ?? 1);
+      const billingCycle: BillingCycle = isBillingCycle(cycleRaw) ? cycleRaw : 1;
 
   if (!companyName || !contactName || !email) {
           redirect(
@@ -184,6 +188,16 @@ export async function startPaidApplication(formData: FormData) {
           }
   }
 
+  const billingSettings = await getBillingSettings(createServiceRoleClient());
+  if (billingMethod === "card") {
+          if (!billingSettings.cardPaymentEnabled) {
+                    redirect(`/apply?error=${encodeURIComponent("現在クレジットカードでのお申込みは受け付けておりません。銀行振込をお選びください。")}`);
+          }
+          if (billingCycle !== 1) {
+                    redirect(`/apply?error=${encodeURIComponent("6か月・12か月のまとめ払いは銀行振込でのお支払いのみとなります。")}`);
+          }
+  }
+
   const { data: application, error: insertError } = await supabase
         .from("listing_applications")
         .insert({
@@ -195,7 +209,9 @@ export async function startPaidApplication(formData: FormData) {
                   category: category || null,
                   message: message || null,
                   plan_id: planId,
-                  payment_status: "awaiting_card",
+                  payment_status: billingMethod === "bank_transfer" ? "awaiting_transfer" : "awaiting_card",
+                  billing_method: billingMethod,
+                  billing_cycle_months: billingCycle,
         })
         .select("id")
         .single();
@@ -214,6 +230,47 @@ export async function startPaidApplication(formData: FormData) {
     category,
     message,
   });
+
+  // 銀行振込: 請求書を発行してメールで送る。入金確認後に運営が店舗を発行する
+  // (総合管理「入金管理」→ lib/bank-transfer.ts confirmInvoicePayment)。
+  if (billingMethod === "bank_transfer") {
+          let invoiceFailed: string | null = null;
+          try {
+                    const invoice = await createInvoice({
+                              listingApplicationId: application.id,
+                              billToName: companyName,
+                              billToContact: contactName,
+                              billToEmail: email,
+                              plan: { id: plan!.id, name: plan!.name, monthly_fee: plan!.monthly_fee },
+                              months: billingCycle,
+                              settings: billingSettings,
+                    });
+                    try {
+                              await sendInvoice(invoice, billingSettings, "new");
+                    } catch (mailError) {
+                              const svc = createServiceRoleClient();
+                              await svc.from("audit_log").insert({
+                                        actor_user_id: null,
+                                        actor_email: null,
+                                        action: "invoice_email_failed",
+                                        target_type: "invoice",
+                                        target_id: invoice.id,
+                                        detail: { error: mailError instanceof Error ? mailError.message : String(mailError) },
+                              });
+                    }
+          } catch (e) {
+                    invoiceFailed = e instanceof Error ? e.message : String(e);
+          }
+          if (invoiceFailed) {
+                    const svc = createServiceRoleClient();
+                    await svc
+                      .from("listing_applications")
+                      .update({ payment_status: "failed", payment_note: `請求書の作成に失敗: ${invoiceFailed}` })
+                      .eq("id", application.id);
+                    redirect(`/apply?error=${encodeURIComponent("請求書の作成に失敗しました。お手数ですがお問い合わせフォームからご連絡ください。")}`);
+          }
+          redirect("/apply?done=transfer");
+  }
 
   // redirect()はNext.js内部で例外を投げて実現される仕組みなので、
   // try/catchの中では絶対に呼ばない(catchでもみ消してしまう)。
