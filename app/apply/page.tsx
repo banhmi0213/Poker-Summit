@@ -202,6 +202,8 @@ export default async function ApplyPage({
 
 type PriceItem = { id: string; name: string; monthly_fee: number; description: string | null };
 
+const LINK_STYLE = { textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 600 } as const;
+
 const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
 
 function featureLines(description: string | null) {
@@ -276,11 +278,11 @@ function PricingSection({ plans, addons }: { plans: PriceItem[]; addons: PriceIt
           <li>お支払いはクレジットカードによる月額の自動決済です。表示価格はすべて税込です。</li>
           <li>契約は1か月単位で自動更新します。月額料金はプラン料金と選択したオプション料金の合計です。</li>
           <li>プランのアップグレードやオプション追加はその場で決済し、ダウングレードやオプション解除は現在の契約期間の終了時に反映します。</li>
-          <li>解約・自動更新の停止は、更新日前に<a href="/contact">お問い合わせフォーム</a>からご連絡ください。月額料金の日割り返金は原則行っておりません。</li>
+          <li>解約・自動更新の停止は、更新日前に<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からご連絡ください。月額料金の日割り返金は原則行っておりません。</li>
           <li>当サービスは賭博・換金を目的とした決済は一切行いません。お支払いの対象は店舗掲載・広告・オプション等のサービス利用料金です。</li>
         </ul>
         <p style={{ margin: "8px 0 0" }}>
-          詳しくは<a href="/tokushoho">特定商取引法に基づく表記</a>と<a href="/terms">利用規約</a>をご確認ください。
+          詳しくは<a href="/tokushoho" style={LINK_STYLE}>特定商取引法に基づく表記</a>と<a href="/terms" style={LINK_STYLE}>利用規約</a>をご確認ください。
         </p>
       </div>
     </section>
