@@ -241,7 +241,7 @@ export async function purchaseAddons(params: {
   const [{ data: contract }, { data: store }, settings, { data: addonRows }] = await Promise.all([
     svc
       .from("store_contracts")
-      .select("id, status, plan_id, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method)")
+      .select("id, status, plan_id, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method, pending_removed_at)")
       .eq("store_id", params.storeId)
       .maybeSingle(),
     svc.from("stores").select("id, name, pref").eq("id", params.storeId).maybeSingle(),
@@ -259,7 +259,12 @@ export async function purchaseAddons(params: {
     throw new Error("契約の連絡先メールアドレスが未登録のため請求書を送れません。運営にお問い合わせください。");
   }
 
-  const current = (contract.store_contract_addons ?? []) as { id: string; addon_id: string; billing_method: string }[];
+  const current = (contract.store_contract_addons ?? []) as {
+    id: string;
+    addon_id: string;
+    billing_method: string;
+    pending_removed_at: string | null;
+  }[];
   const { addonSlotsLeft } = await import("@/lib/addons");
   const lines: Array<{ addon: AddonRow; quantity: number; unitPrice: number }> = [];
   for (const item of params.items) {
@@ -342,7 +347,10 @@ export async function purchaseAddons(params: {
 
   if (monthly.length) {
     const { applyContractBillingChange } = await import("@/lib/contracts-billing");
-    const cardAddonIds = current.filter((r) => (r.billing_method ?? "card") === "card").map((r) => r.addon_id);
+    // 解約予約中のものは、新しい期間には含めない(ここで外れる)
+    const cardAddonIds = current
+      .filter((r) => (r.billing_method ?? "card") === "card" && !r.pending_removed_at)
+      .map((r) => r.addon_id);
     const result = await applyContractBillingChange({
       storeContractId: contract.id,
       newPlanId: contract.plan_id,
