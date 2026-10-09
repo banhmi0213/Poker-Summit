@@ -38,6 +38,7 @@ export function AddonsSection({
   orders,
   canUseCard,
   hasContract,
+  planFee,
 }: {
   addons: AddonRow[];
   pref: string | null;
@@ -48,7 +49,16 @@ export function AddonsSection({
   orders: Order[];
   canUseCard: boolean;
   hasContract: boolean;
+  planFee: number;
 }) {
+  const cardRecurringBase =
+    planFee +
+    contractAddons
+      .filter((c) => (c.billing_method ?? "card") === "card" && !c.pending_removed_at)
+      .reduce((sum, c) => {
+        const a = addons.find((x) => x.id === c.addon_id);
+        return sum + (c.fee ?? (a ? addonFeeFor(a, pref) : 0));
+      }, 0);
   const mine = contractAddons
     .map((c) => ({ c, addon: addons.find((a) => a.id === c.addon_id) }))
     .filter((x) => !!x.addon);
@@ -116,7 +126,7 @@ export function AddonsSection({
       )}
 
       {hasContract ? (
-        <AddonPicker addons={pickerAddons} canUseCard={canUseCard} />
+        <AddonPicker addons={pickerAddons} canUseCard={canUseCard} cardRecurringBase={cardRecurringBase} />
       ) : (
         <p className="err">有効な契約がないため、アドオンをお申し込みいただけません。</p>
       )}

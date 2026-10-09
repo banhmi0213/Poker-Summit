@@ -18,7 +18,16 @@ export type PickerAddon = {
 const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
 
 // アドオンをまとめて選んで1回で申し込むフォーム(2026/10)。合計はその場で計算して表示。
-export function AddonPicker({ addons, canUseCard }: { addons: PickerAddon[]; canUseCard: boolean }) {
+export function AddonPicker({
+  addons,
+  canUseCard,
+  cardRecurringBase,
+}: {
+  addons: PickerAddon[];
+  canUseCard: boolean;
+  // カードで月額アドオンを足すと「プラン+カード払いの月額アドオン」をまとめて決済し直すので、その今の合計
+  cardRecurringBase: number;
+}) {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [qty, setQty] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<"card" | "bank_transfer">(canUseCard ? "card" : "bank_transfer");
@@ -140,6 +149,16 @@ export function AddonPicker({ addons, canUseCard }: { addons: PickerAddon[]; can
       <div className="card" style={{ background: "var(--surface-2)", fontSize: 13.5, lineHeight: 1.8 }}>
         {monthlyTotal > 0 && <div>月額アドオン：{yen(monthlyTotal)}/月</div>}
         {oneTimeTotal > 0 && <div>都度払い：{yen(oneTimeTotal)}</div>}
+        {anySelected && method === "card" && anyMonthly && cardRecurringBase > 0 && (
+          <div>現在のプラン等（カード払い分）：{yen(cardRecurringBase)}/月</div>
+        )}
+        {anySelected && (
+          <div style={{ fontWeight: 800, fontSize: 15.5, marginTop: 4, paddingTop: 4, borderTop: "1px solid rgba(0,0,0,0.12)" }}>
+            {method === "card" ? "今回のお支払い合計" : "ご請求合計"}：
+            {yen(monthlyTotal + oneTimeTotal + (method === "card" && anyMonthly ? cardRecurringBase : 0))}
+            <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
+          </div>
+        )}
         {!anySelected && <div className="muted">アドオンを選ぶと合計が表示されます。</div>}
         {anyMonthly && method === "card" && (
           <div className="muted" style={{ fontSize: 12 }}>

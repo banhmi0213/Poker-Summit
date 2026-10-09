@@ -356,6 +356,7 @@ export default async function StorePlanPage({
         orders={addonOrders}
         canUseCard={billing.cardPaymentEnabled && !!contract?.fincode_customer_id}
         hasContract={(contract as any)?.status === "active"}
+        planFee={((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0}
       />
     </div>
   );
