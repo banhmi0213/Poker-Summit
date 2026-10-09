@@ -33,7 +33,7 @@ values
   ('pickup_region', '地域PICKUP店舗表示', 11000, 22000,
    '登録住所の都道府県のPICK UP店舗として表示します（各都道府県10店舗限定）。', 'monthly', 10, 'pref', false, true, 20),
   ('top_banner', 'TOPページバナー', 110000, null,
-   'TOPページのメインバナーに店舗のバナーを掲載します。バナー画像は運営と調整のうえ設定します。', 'monthly', null, null, true, true, 30),
+   'TOPページのメインバナーに店舗のバナーを掲載します（3枠限定）。バナー画像は運営と調整のうえ設定します。', 'monthly', 3, 'national', true, true, 30),
   ('spot_job_credit', 'スポット求人1件掲載', 2200, null,
    'スポット求人を1件追加で掲載できます。ライトプランでも掲載でき、スタンダードプランの月間上限を超えた分にも使えます。', 'one_time', null, null, false, true, 40),
   ('article_or_video', '店舗紹介記事or店舗紹介動画作成', 11000, null,
