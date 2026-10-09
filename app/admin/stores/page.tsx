@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { CopyLoginField } from "./copy-login-field";
 import Link from "next/link";
 import { RegionAreaFilters } from "./region-area-filters";
 import { cookies } from "next/headers";
@@ -190,14 +191,8 @@ export default async function AdminStoresPage({
             {issuedStoreName ?? "店舗"} のログイン情報（この画面を閉じると二度と表示されません）
           </h3>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span className="muted" style={{ fontSize: 12 }}>ログインID</span>
-              <input readOnly value={issued.loginId} style={{ minWidth: 260 }} />
-            </label>
-            <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <span className="muted" style={{ fontSize: 12 }}>パスワード</span>
-              <input readOnly value={issued.password} style={{ minWidth: 160 }} />
-            </label>
+            <CopyLoginField label="ログインID" value={issued.loginId} width={260} />
+            <CopyLoginField label="パスワード" value={issued.password} width={160} />
           </div>
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             この内容を店舗にお伝えください。店舗管理ログイン（/store/login）のログインID欄にそのまま入力してもらいます。
