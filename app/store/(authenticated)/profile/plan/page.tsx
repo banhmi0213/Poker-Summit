@@ -3,7 +3,9 @@ import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { requestPlanChange, cancelPlanChangeRequest } from "../plan-actions";
-import { requestAddonChange, cancelAddonChangeRequest } from "../addons-actions";
+import { AddonsSection } from "./addons-section";
+import { getActiveAddons, addonSlotsLeft } from "@/lib/addons";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { cycleLabel, formatJpDate, getBillingSettings, isOverdue, isoToJstDate, todayJst, type InvoiceRow } from "@/lib/bank-transfer";
 
 // /store/profile 1ページの中の1セクションだったプラン・アップグレードを、
@@ -42,7 +44,7 @@ export default async function StorePlanPage({
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(addon_id)"
+          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),
@@ -84,6 +86,27 @@ export default async function StorePlanPage({
   const invoices = (invoiceRows ?? []) as InvoiceRow[];
   const today = todayJst();
   const unpaid = invoices.filter((i) => i.status === "unpaid");
+
+  const svc = createServiceRoleClient();
+  const [{ data: storeRow }, addonList, { data: creditRow }, { data: orderRows }] = await Promise.all([
+    supabase.from("stores").select("pref").eq("id", store.id).maybeSingle(),
+    getActiveAddons(supabase),
+    supabase.from("store_spot_credits").select("balance").eq("store_id", store.id).maybeSingle(),
+    supabase
+      .from("addon_orders")
+      .select("id, addon_name, quantity, total_amount, payment_method, status, invoice_id, created_at")
+      .eq("store_id", store.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+  const storePref = (storeRow?.pref as string | null) ?? null;
+  const contractAddons = ((contract as any)?.store_contract_addons ?? []) as any[];
+  const slotsLeft: Record<string, number | null> = {};
+  for (const a of addonList.filter((x) => x.billing_type === "monthly")) {
+    slotsLeft[a.id] = await addonSlotsLeft(svc, a, storePref, store.id);
+  }
+  const spotCredits = (creditRow?.balance as number | undefined) ?? 0;
+  const addonOrders = (orderRows ?? []) as any[];
 
   const currentAddonIds = ((contract as any)?.store_contract_addons ?? []).map(
     (a: { addon_id: string }) => a.addon_id
@@ -164,7 +187,7 @@ export default async function StorePlanPage({
                     >
                       <div>
                         <div style={{ fontWeight: 600 }}>
-                          {inv.plan_name}・{cycleLabel(inv.months, inv.discount_label)}
+                          {inv.kind === "addon" ? `アドオン：${inv.plan_name}` : `${inv.plan_name}・${cycleLabel(inv.months, inv.discount_label)}`}
                         </div>
                         <div className="muted" style={{ fontSize: 11.5 }}>
                           {inv.invoice_number}・発行 {formatJpDate(isoToJstDate(inv.issued_at))}
@@ -323,98 +346,17 @@ export default async function StorePlanPage({
         )}
       </div>
 
-      <div className="card" style={{ marginTop: 20 }}>
-        <div style={{ marginBottom: 12 }}>
-          <span className="muted">現在契約中のアドオン</span>
-          <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>
-            {currentAddonIds.length > 0
-              ? (allAddons ?? [])
-                  .filter((a) => currentAddonIds.includes(a.id))
-                  .map((a) => a.name)
-                  .join("、")
-              : "なし"}
-          </div>
-        </div>
-
-        <div style={{ marginTop: 20, marginBottom: 4 }}>
-          <span className="muted">アドオン一覧</span>
-        </div>
-
-        {pendingAddonRequest ? (
-          <div className="card" style={{ background: "var(--surface-2)", marginBottom: 12, marginTop: 10 }}>
-            <div style={{ fontSize: 13.5 }}>
-              ⏳ アドオンを「
-              {pendingAddonRequest.requested_addon_ids.length > 0
-                ? (allAddons ?? [])
-                    .filter((a) => pendingAddonRequest.requested_addon_ids.includes(a.id))
-                    .map((a) => a.name)
-                    .join("、")
-                : "なし"}
-              」の構成に変更するよう予約しています。
-              {contract?.current_period_end
-                ? `現在の契約期間が終わる ${new Date(contract.current_period_end).toLocaleDateString("ja-JP")} に反映されます。`
-                : "現在の契約期間が終わるタイミングで反映されます。"}
-            </div>
-            {pendingAddonRequest.note && (
-              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                メモ: {pendingAddonRequest.note}
-              </div>
-            )}
-            <form
-              action={async () => {
-                "use server";
-                await cancelAddonChangeRequest(pendingAddonRequest.id);
-              }}
-              style={{ marginTop: 8 }}
-            >
-              <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                予約を取り消す
-              </button>
-            </form>
-          </div>
-        ) : (
-          <form action={requestAddonChange} style={{ marginTop: 10 }}>
-            <input type="hidden" name="storeId" value={store.id} />
-            <div className="field">
-              <span className="muted">申し込みたいアドオン（複数選択可）</span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 8 }}>
-                {(allAddons ?? []).length === 0 && (
-                  <p className="muted" style={{ fontSize: 12.5 }}>
-                    現在申し込めるアドオンはありません。
-                  </p>
-                )}
-                {(allAddons ?? []).map((a) => (
-                  <label key={a.id} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13.5 }}>
-                    <input
-                      type="checkbox"
-                      name="addonIds"
-                      value={a.id}
-                      defaultChecked={currentAddonIds.includes(a.id)}
-                      style={{ marginTop: 3 }}
-                    />
-                    <span>
-                      <strong>{a.name}</strong>（¥{(a.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）
-                      {a.description && (
-                        <div className="muted" style={{ fontSize: 12 }}>
-                          {a.description}
-                        </div>
-                      )}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="field">
-              <span className="muted">運営への連絡事項（任意）</span>
-              <textarea name="note" rows={3} placeholder="例: 来月から求人アドオンを使いたいです" />
-            </div>
-            <PendingSubmitButton pendingLabel="処理中…">アドオン変更を申請する</PendingSubmitButton>
-            <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              アドオンの追加を含む変更は、送信時に新しい構成の合計金額でカード決済が即時実行され、成功次第すぐに反映されます。解除のみの変更は、現在の契約期間が終わるタイミングで反映されます。
-            </p>
-          </form>
-        )}
-      </div>
+      <AddonsSection
+        addons={addonList}
+        pref={storePref}
+        contractAddons={contractAddons}
+        contractPeriodEnd={(contract as any)?.current_period_end ?? null}
+        slotsLeft={slotsLeft}
+        spotCredits={spotCredits}
+        orders={addonOrders}
+        canUseCard={billing.cardPaymentEnabled && !!contract?.fincode_customer_id}
+        hasContract={(contract as any)?.status === "active"}
+      />
     </div>
   );
 }

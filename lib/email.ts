@@ -264,6 +264,7 @@ export async function sendInvoiceEmail(params: {
   kind: "new" | "renewal" | "reminder";
 }): Promise<void> {
   const { invoice, settings, pdf, kind } = params;
+  const isAddon = invoice.kind === "addon";
   const { formatJpDate, cycleLabel } = await import("@/lib/bank-transfer");
   const siteUrl = getSiteUrl();
   const amount = `${invoice.total_amount.toLocaleString("ja-JP")}円（税込）`;
@@ -275,8 +276,10 @@ ${bank.type} ${bank.number}
 口座名義: ${bank.holder}`
     : "別途ご案内いたします。";
 
-  const lead =
-    kind === "new"
+  const lead = isAddon && kind !== "reminder"
+    ? `いつもPoker Summitをご利用いただき、誠にありがとうございます。
+アドオン「${invoice.plan_name}」の請求書をお送りいたします。ご入金を確認でき次第、ご利用いただけるようになります。`
+    : kind === "new"
       ? `このたびはPoker Summitへの掲載をお申し込みいただき、誠にありがとうございます。
 お申し込みいただいたプランの請求書をお送りいたします。
 ご入金を確認でき次第、店舗管理アカウントを発行し、ログイン情報をメールでお送りいたします。`
@@ -289,8 +292,9 @@ ${bank.type} ${bank.number}
 （行き違いでお振り込み済みの場合はご容赦ください。）`;
 
   const isNewApplication = !invoice.store_contract_id && !!invoice.listing_application_id;
-  const warning =
-    isNewApplication
+  const warning = isAddon
+    ? "※お支払期限までにご入金が確認できない場合、お申し込み・アドオンのご利用を停止いたします。"
+    : isNewApplication
       ? "※お支払期限を過ぎてもご入金が確認できない場合、お申し込みを取り消させていただくことがあります。"
       : "※お支払期限までにご入金が確認できない場合、期限の翌日に店舗ページの公開を停止いたします。ご入金の確認後、公開を再開いたします。";
 
@@ -300,7 +304,7 @@ ${lead}
 
 ■ ご請求内容
 請求書番号: ${invoice.invoice_number}
-プラン: ${invoice.plan_name}（${cycleLabel(invoice.months, invoice.discount_label)}）
+${isAddon ? `内容: アドオン「${invoice.plan_name}」` : `プラン: ${invoice.plan_name}（${cycleLabel(invoice.months, invoice.discount_label)}）`}
 ご請求金額: ${amount}
 お支払期限: ${due}
 
@@ -423,4 +427,33 @@ Poker Summit運営事務局`;
         : "【Poker Summit】プラン変更の決済ができませんでした";
 
   await sendEmail({ to: params.to, subject, text, bcc: "info@pokersummit.jp" });
+}
+
+// アドオン注文(制作・設定が必要なもの)の運営宛て通知(2026/10)。
+export async function sendAddonOrderAdminEmail(params: {
+  storeName: string;
+  addonName: string;
+  quantity: number;
+  total: number;
+  paymentMethod: string;
+  note: string | null;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `アドオンのお申し込み（お支払い済み）がありました。対応をお願いします。
+
+店舗: ${params.storeName}
+アドオン: ${params.addonName}
+数量: ${params.quantity}
+金額: ${params.total.toLocaleString("ja-JP")}円（${params.paymentMethod === "card" ? "カード" : "銀行振込"}）
+店舗からの連絡事項: ${params.note || "（なし）"}
+
+総合管理「アドオン注文」から状況を更新してください。
+${siteUrl}/admin/addon-orders
+
+Poker Summit`;
+  await sendEmail({
+    to: "info@pokersummit.jp",
+    subject: `【Poker Summit】アドオン申込み: ${params.addonName}（${params.storeName}）`,
+    text,
+  });
 }

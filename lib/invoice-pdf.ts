@@ -155,7 +155,15 @@ export async function buildInvoicePdf(invoice: InvoiceRow, settings: BillingSett
   text(ctx, "金額（税込）", cols.amount, y, { size: 9.5, bold: true, align: "right" });
   y -= 26;
 
-  const rows: Array<{ item: string; sub?: string; qty: string; unit: string; amount: string }> = [
+  const rows: Array<{ item: string; sub?: string; qty: string; unit: string; amount: string }> = invoice.items?.length
+    ? invoice.items.map((it) => ({
+        item: it.label,
+        sub: it.sub ?? undefined,
+        qty: it.quantity,
+        unit: yen(it.unit_price),
+        amount: yen(it.amount),
+      }))
+    : [
     {
       item: `Poker Summit 店舗掲載料　${invoice.plan_name}`,
       sub: `対象期間：${invoicePeriodLabel(invoice)}（${cycleLabel(invoice.months)}）`,
@@ -236,8 +244,12 @@ export async function buildInvoicePdf(invoice: InvoiceRow, settings: BillingSett
     "・振込手数料はお客様のご負担にてお願いいたします。",
     "・ご依頼人名はお申し込み時の店舗名・会社名でお願いいたします。",
     `　名義が異なる場合は、お手数ですが ${ISSUER.email} までご連絡ください。`,
-    "・お支払期限までにご入金が確認できない場合、店舗ページの公開を停止いたします。",
-    "　ご入金の確認後、公開を再開いたします。",
+    ...(invoice.kind === "addon"
+      ? ["・お支払期限までにご入金が確認できない場合、お申し込み・アドオンのご利用を停止いたします。"]
+      : [
+          "・お支払期限までにご入金が確認できない場合、店舗ページの公開を停止いたします。",
+          "　ご入金の確認後、公開を再開いたします。",
+        ]),
   ];
   for (const line of notes) {
     text(ctx, line, L + 4, y, { size: 8.8 });

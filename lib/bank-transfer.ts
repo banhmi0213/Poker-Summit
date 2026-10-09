@@ -149,6 +149,10 @@ export type InvoiceRow = {
   paid_at: string | null;
   reminder_sent_at: string | null;
   overdue_notified_at: string | null;
+  kind?: "plan" | "addon";
+  items?: Array<{ label: string; sub?: string | null; quantity: string; unit_price: number; amount: number }> | null;
+  addon_order_id?: string | null;
+  store_contract_addon_id?: string | null;
 };
 
 export function isOverdue(invoice: Pick<InvoiceRow, "status" | "due_date">, today = todayJst()) {
@@ -223,6 +227,36 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
   const inv = invoice as InvoiceRow;
   if (inv.status === "canceled") throw new Error("取り消し済みの請求書です。");
   if (inv.status === "paid") return { alreadyPaid: true as const };
+
+  if (inv.kind === "addon") {
+    const { confirmAddonInvoice } = await import("@/lib/addon-orders");
+    await confirmAddonInvoice(inv);
+    const { error: paidErr } = await svc
+      .from("invoices")
+      .update({ status: "paid", paid_at: new Date().toISOString(), confirmed_by: adminUserId, confirmed_note: note || null })
+      .eq("id", inv.id)
+      .eq("status", "unpaid");
+    if (paidErr) throw new Error(paidErr.message);
+    if (inv.store_contract_id) {
+      await svc.from("billing_events").insert({
+        store_contract_id: inv.store_contract_id,
+        event_type: "success",
+        amount: inv.total_amount,
+        occurred_at: new Date().toISOString(),
+        source: "bank_transfer",
+        note: `請求書 ${inv.invoice_number}（アドオン: ${inv.plan_name}）`,
+      });
+    }
+    await svc.from("audit_log").insert({
+      actor_user_id: adminUserId,
+      actor_email: null,
+      action: "invoice_payment_confirmed",
+      target_type: "invoice",
+      target_id: inv.id,
+      detail: { invoiceNumber: inv.invoice_number, amount: inv.total_amount, kind: "addon" },
+    });
+    return { alreadyPaid: false as const, storeId: inv.store_id, contractId: inv.store_contract_id };
+  }
 
   const today = todayJst();
   const periodStart = inv.period_start ?? today;
@@ -334,6 +368,11 @@ export async function cancelInvoice(invoiceId: string, adminUserId: string | nul
   const svc = createServiceRoleClient();
   const { error } = await svc.from("invoices").update({ status: "canceled" }).eq("id", invoiceId).eq("status", "unpaid");
   if (error) throw new Error(error.message);
+  // アドオン注文の請求なら注文も取り消す
+  const { data: inv } = await svc.from("invoices").select("addon_order_id").eq("id", invoiceId).maybeSingle();
+  if (inv?.addon_order_id) {
+    await svc.from("addon_orders").update({ status: "canceled" }).eq("id", inv.addon_order_id).eq("status", "awaiting_payment");
+  }
   await svc.from("audit_log").insert({
     actor_user_id: adminUserId,
     actor_email: null,

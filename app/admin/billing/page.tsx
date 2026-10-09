@@ -128,11 +128,11 @@ export default async function AdminBillingPage({
                         <div style={{ fontWeight: 700, fontSize: 15 }}>
                           {inv.bill_to_name}
                           <span className="badge" style={{ marginLeft: 8, fontSize: 10.5 }}>
-                            {isNewApplication ? "新規申込み" : "契約更新・変更"}
+                            {inv.kind === "addon" ? "アドオン" : isNewApplication ? "新規申込み" : "契約更新・変更"}
                           </span>
                         </div>
                         <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                          {inv.invoice_number}・{inv.plan_name}・{cycleLabel(inv.months, inv.discount_label)}
+                          {inv.invoice_number}・{inv.plan_name}{inv.kind === "addon" ? "" : `・${cycleLabel(inv.months, inv.discount_label)}`}
                           {inv.bill_to_contact ? `・ご担当 ${inv.bill_to_contact}` : ""}・{inv.bill_to_email}
                         </div>
                         <div className="muted" style={{ fontSize: 12 }}>

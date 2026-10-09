@@ -137,7 +137,12 @@ export default async function ContractPlansPage() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
                       <span style={{ fontWeight: 700 }}>{a.name}</span>{" "}
-                      <span className="muted">（{formatYen(a.monthly_fee)}/月）</span>{" "}
+                      <span className="muted">
+                        （{a.major_area_fee != null ? `東京・大阪 ${formatYen(a.major_area_fee)}／その他 ` : ""}
+                        {formatYen(a.monthly_fee)}
+                        {a.billing_type === "one_time" ? "・都度払い" : "/月"}
+                        {a.capacity != null ? `・${a.capacity_scope === "pref" ? "各都道府県" : "全国"}${a.capacity}店舗まで` : ""}）
+                      </span>{" "}
                       <span className={`badge ${a.active ? "" : "outline"}`}>{a.active ? "有効" : "停止中"}</span>
                     </div>
                     <form
@@ -161,9 +166,21 @@ export default async function ContractPlansPage() {
                         <input type="text" name="name" defaultValue={a.name} required style={fieldStyle} />
                       </label>
                       <label>
-                        月額料金(円)
+                        {a.billing_type === "one_time" ? "料金(円・1回/1件)" : a.major_area_fee != null ? "月額料金(円・東京・大阪以外)" : "月額料金(円)"}
                         <input type="number" name="monthlyFee" defaultValue={a.monthly_fee} style={fieldStyle} />
                       </label>
+                      {a.code === "pickup_region" && (
+                        <label>
+                          東京・大阪の月額料金(円)
+                          <input type="number" name="majorAreaFee" defaultValue={a.major_area_fee ?? ""} style={fieldStyle} />
+                        </label>
+                      )}
+                      {a.billing_type !== "one_time" && a.code && (
+                        <label>
+                          {a.capacity_scope === "pref" ? "各都道府県の上限店舗数" : "全国の上限店舗数"}（空欄で無制限）
+                          <input type="number" name="capacity" defaultValue={a.capacity ?? ""} style={fieldStyle} />
+                        </label>
+                      )}
                       <label>
                         説明
                         <input type="text" name="description" defaultValue={a.description ?? ""} style={fieldStyle} />

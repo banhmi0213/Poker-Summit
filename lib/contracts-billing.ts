@@ -7,6 +7,7 @@ import {
   cancelFincodeSubscription,
 } from "@/lib/fincode";
 import { recordStoreHistory } from "@/lib/store-update";
+import { addonFeeFor } from "@/lib/addons";
 
 // ============================================================================
 // プラン・アドオンの「店舗が自分で決済して即時反映」機能(2026/10新設)。
@@ -78,12 +79,22 @@ export async function applyContractBillingChange(params: {
     .single();
   if (planError || !plan) throw new Error("プランが見つかりません。");
 
-  const { data: addons, error: addonsError } = params.newAddonIds.length
-    ? await supabase.from("addons").select("id, name, monthly_fee").in("id", params.newAddonIds)
-    : { data: [] as { id: string; name: string; monthly_fee: number }[], error: null };
+  // カードで払う月額アドオンだけがこの決済・サブスクの対象(振込で払うアドオンは別の請求書)。
+  // 地域PICKUPは店舗の都道府県で料金が変わる(lib/addons.ts addonFeeFor)。
+  const { data: storeRow } = await supabase.from("stores").select("pref").eq("id", contract.store_id).maybeSingle();
+  const pref = (storeRow?.pref as string | null) ?? null;
+  const { data: addonRows, error: addonsError } = params.newAddonIds.length
+    ? await supabase
+        .from("addons")
+        .select("id, name, monthly_fee, major_area_fee, major_area_prefs, billing_type")
+        .in("id", params.newAddonIds)
+    : { data: [] as any[], error: null };
   if (addonsError) throw new Error(addonsError.message);
+  const addons = ((addonRows ?? []) as any[])
+    .filter((a) => a.billing_type !== "one_time")
+    .map((a) => ({ ...a, fee: addonFeeFor(a, pref) as number }));
 
-  const addonFeeTotal = (addons ?? []).reduce((sum, a) => sum + (a.monthly_fee ?? 0), 0);
+  const addonFeeTotal = addons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
   const total = (plan.monthly_fee ?? 0) + addonFeeTotal;
 
   const cardId = await getDefaultCardId(contract.fincode_customer_id).catch(() => null);
@@ -130,7 +141,7 @@ export async function applyContractBillingChange(params: {
   // 失敗しても「失敗扱いで終わり」にはできない — 例外を投げず、できる
   // ところまでは反映してbilling_eventsに記録を残す。
   const fincodePlan = await createFincodePlan({
-    name: buildPlanLabel(plan.name, (addons ?? []).map((a) => a.name)),
+    name: buildPlanLabel(plan.name, addons.map((a) => a.name)),
     monthlyFee: total,
   });
   const subscription = await createFincodeSubscription({
@@ -175,11 +186,29 @@ export async function applyContractBillingChange(params: {
 
   // store_contract_addons を新しい構成に丸ごと置き換える(保留中の解除
   // 予約もここで全部クリアされる=新しい期間がまっさらにスタートする)。
-  await supabase.from("store_contract_addons").delete().eq("store_contract_id", contract.id);
-  if ((params.newAddonIds ?? []).length > 0) {
-    const { error: insertError } = await supabase.from("store_contract_addons").insert(
-      params.newAddonIds.map((addonId) => ({ store_contract_id: contract.id, addon_id: addonId }))
-    );
+  // 既にある行は残し(PICK UP表示が一瞬外れないように)、外れたものだけ消して、増えたものを足す。
+  const { data: existingRows } = await supabase
+    .from("store_contract_addons")
+    .select("id, addon_id")
+    .eq("store_contract_id", contract.id)
+    .eq("billing_method", "card");
+  const keepIds = new Set(addons.map((a) => a.id as string));
+  const existingIds = new Set(((existingRows ?? []) as any[]).map((r) => r.addon_id as string));
+  const removeRowIds = ((existingRows ?? []) as any[]).filter((r) => !keepIds.has(r.addon_id)).map((r) => r.id);
+  if (removeRowIds.length) await supabase.from("store_contract_addons").delete().in("id", removeRowIds);
+  await supabase
+    .from("store_contract_addons")
+    .update({ pending_removed_at: null })
+    .eq("store_contract_id", contract.id)
+    .eq("billing_method", "card");
+  for (const a of addons) {
+    if (existingIds.has(a.id)) {
+      await supabase.from("store_contract_addons").update({ fee: a.fee }).eq("store_contract_id", contract.id).eq("addon_id", a.id);
+      continue;
+    }
+    const { error: insertError } = await supabase
+      .from("store_contract_addons")
+      .insert({ store_contract_id: contract.id, addon_id: a.id, fee: a.fee, billing_method: "card" });
     if (insertError) throw new Error(insertError.message);
   }
 
@@ -189,7 +218,7 @@ export async function applyContractBillingChange(params: {
     amount: total,
     source: "contract_change",
     note: `プラン・アドオン変更の即時決済(${plan.name}${
-      (addons ?? []).length ? " + " + (addons ?? []).map((a) => a.name).join("、") : ""
+      addons.length ? " + " + addons.map((a) => a.name).join("、") : ""
     })`,
   });
 
