@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { requestPlanChange, cancelPlanChangeRequest } from "../plan-actions";
@@ -8,7 +9,11 @@ import { cycleLabel, formatJpDate, getBillingSettings, isOverdue, isoToJstDate, 
 // /store/profile 1ページの中の1セクションだったプラン・アップグレードを、
 // 独立したページへ分離(2026/09/30)。LINEリッチメニュー側の導線と同じ
 // 機能をPCの店舗管理画面からも使えるようにするため新設した機能。
-export default async function StorePlanPage() {
+export default async function StorePlanPage({
+  searchParams,
+}: {
+  searchParams?: { ok?: string; error?: string };
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -90,6 +95,17 @@ export default async function StorePlanPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・お支払い</h1>
+
+      {searchParams?.ok && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#2e7d32", background: "rgba(46, 125, 50, 0.08)", fontSize: 13.5 }}>
+          ✅ {searchParams.ok}
+        </div>
+      )}
+      {searchParams?.error && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)", color: "#d1453b", fontSize: 13.5 }}>
+          ⚠️ {searchParams.error}
+        </div>
+      )}
 
       {(contract as any)?.suspended_for_nonpayment_at && (
         <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
@@ -297,9 +313,9 @@ export default async function StorePlanPage() {
               <span className="muted">運営への連絡事項（任意）</span>
               <textarea name="note" rows={3} placeholder="例: 来月から求人枠を増やしたいです" />
             </div>
-            <button type="submit" className="btn primary">
+            <PendingSubmitButton pendingLabel="決済・変更の処理中…（画面を閉じずにお待ちください）">
               プラン変更を申請する
-            </button>
+            </PendingSubmitButton>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
               料金が上がるプランへの変更は、送信時にカード決済が即時実行され、成功次第すぐに反映されます(日割りなし・満額請求)。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映されます。
             </p>
@@ -392,9 +408,7 @@ export default async function StorePlanPage() {
               <span className="muted">運営への連絡事項（任意）</span>
               <textarea name="note" rows={3} placeholder="例: 来月から求人アドオンを使いたいです" />
             </div>
-            <button type="submit" className="btn primary">
-              アドオン変更を申請する
-            </button>
+            <PendingSubmitButton pendingLabel="処理中…">アドオン変更を申請する</PendingSubmitButton>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
               アドオンの追加を含む変更は、送信時に新しい構成の合計金額でカード決済が即時実行され、成功次第すぐに反映されます。解除のみの変更は、現在の契約期間が終わるタイミングで反映されます。
             </p>

@@ -1,9 +1,29 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { applyContractBillingChange, schedulePlanDowngrade, cancelScheduledPlanChange } from "@/lib/contracts-billing";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
+
+// server action の例外は Next.js の「Application error」画面になってしまうため、
+// ここで受け止めて、結果をページ上部のメッセージとして表示する(?ok= / ?error=)。
+function backToPlan(kind: "ok" | "error", message: string): never {
+  redirect(`/store/profile/plan?${kind}=${encodeURIComponent(message)}`);
+}
+
+async function settle(run: () => Promise<string>) {
+  let message = "";
+  let failed = false;
+  try {
+    message = await run();
+  } catch (e) {
+    failed = true;
+    message = e instanceof Error ? e.message : String(e);
+  }
+  revalidatePath("/store/profile/plan");
+  backToPlan(failed ? "error" : "ok", message || "変更を受け付けました。");
+}
 
 // ============================================================================
 // 店舗オーナーが自分でプランを変更する(2026/10、カード決済組み込み・
@@ -21,7 +41,7 @@ import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 // 反映済み / failed=決済失敗 / canceled=予約取消)。
 // ============================================================================
 
-export async function requestPlanChange(formData: FormData) {
+async function requestPlanChangeImpl(formData: FormData): Promise<string> {
   const storeId = String(formData.get("storeId") ?? "");
   const requestedPlanId = String(formData.get("requestedPlanId") ?? "");
   const note = String(formData.get("note") ?? "").trim();
@@ -51,6 +71,9 @@ export async function requestPlanChange(formData: FormData) {
     .eq("id", requestedPlanId)
     .maybeSingle();
   if (!requestedPlan) throw new Error("プランが見つかりません。");
+  if (requestedPlan.id === contract.plan_id) {
+    return "すでにこのプランでご契約中です。";
+  }
 
   // プレミアムプラン(PICK UP表示付き)は各都道府県10店舗まで。決済の前に空きを確認する。
   const currentHasPickup = !!(contract.plans as { pickup?: boolean } | null)?.pickup;
@@ -92,6 +115,8 @@ export async function requestPlanChange(formData: FormData) {
         charged_amount: result.chargedAmount,
         reviewed_at: new Date().toISOString(),
       });
+      revalidatePath("/store/profile/plan");
+      return `プランを変更しました（${(result.chargedAmount ?? 0).toLocaleString("ja-JP")}円を決済しました）。`;
     } catch (e) {
       await supabase.from("plan_change_requests").insert({
         store_id: storeId,
@@ -117,12 +142,13 @@ export async function requestPlanChange(formData: FormData) {
       status: "pending",
       payment_status: "scheduled",
     });
+    return "プランの変更を予約しました。現在の契約期間が終わるタイミングで切り替わります。";
   }
 
-  revalidatePath("/store/profile/plan");
+  return "";
 }
 
-export async function cancelPlanChangeRequest(requestId: string) {
+async function cancelPlanChangeRequestImpl(requestId: string): Promise<string> {
   const supabase = await createClient();
 
   const { data: request } = await supabase
@@ -144,5 +170,13 @@ export async function cancelPlanChangeRequest(requestId: string) {
     .eq("status", "pending");
   if (error) throw new Error(error.message);
 
-  revalidatePath("/store/profile/plan");
+  return "";
+}
+
+export async function requestPlanChange(formData: FormData) {
+  await settle(() => requestPlanChangeImpl(formData));
+}
+
+export async function cancelPlanChangeRequest(requestId: string) {
+  await settle(() => cancelPlanChangeRequestImpl(requestId));
 }
