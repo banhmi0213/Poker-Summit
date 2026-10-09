@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     .eq("id", params.id)
     .eq("store_id", storeId);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: error.message }, { status: error.code === "P0001" ? 400 : 500 });
 
   revalidatePath("/store/profile");
   revalidatePath(`/stores/${storeId}`);

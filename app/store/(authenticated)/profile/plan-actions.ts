@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { applyContractBillingChange, schedulePlanDowngrade, cancelScheduledPlanChange } from "@/lib/contracts-billing";
+import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 
 // ============================================================================
 // 店舗オーナーが自分でプランを変更する(2026/10、カード決済組み込み・
@@ -33,7 +34,7 @@ export async function requestPlanChange(formData: FormData) {
 
   const { data: contract } = await supabase
     .from("store_contracts")
-    .select("id, plan_id, plans!store_contracts_plan_id_fkey(monthly_fee), store_contract_addons(addon_id)")
+    .select("id, plan_id, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id)")
     .eq("store_id", storeId)
     .maybeSingle();
 
@@ -43,10 +44,19 @@ export async function requestPlanChange(formData: FormData) {
 
   const { data: requestedPlan } = await supabase
     .from("plans")
-    .select("id, monthly_fee")
+    .select("id, monthly_fee, pickup")
     .eq("id", requestedPlanId)
     .maybeSingle();
   if (!requestedPlan) throw new Error("プランが見つかりません。");
+
+  // プレミアムプラン(PICK UP表示付き)は各都道府県10店舗まで。決済の前に空きを確認する。
+  const currentHasPickup = !!(contract.plans as { pickup?: boolean } | null)?.pickup;
+  if (requestedPlan.pickup && !currentHasPickup) {
+    const { data: store } = await supabase.from("stores").select("pref").eq("id", storeId).maybeSingle();
+    if ((await pickupSlotsLeft(supabase, store?.pref ?? null, storeId)) <= 0) {
+      throw new Error(`${store?.pref ?? "この地域"}のプレミアムプラン（PICK UP枠・10店舗限定）は現在満枠です。空きが出るまでお待ちください。`);
+    }
+  }
 
   const currentFee = (contract.plans as { monthly_fee: number } | null)?.monthly_fee ?? 0;
   const currentAddonIds = ((contract.store_contract_addons ?? []) as { addon_id: string }[]).map(

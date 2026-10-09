@@ -37,7 +37,8 @@ export async function POST(req: NextRequest) {
     banner_image_url: body?.bannerImageUrl || null,
   });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  // プランの求人数上限(DBトリガー)に当たった場合は、その理由をそのまま返す
+  if (error) return NextResponse.json({ error: error.message }, { status: error.code === "P0001" ? 400 : 500 });
 
   revalidatePath("/store/profile");
   revalidatePath(`/stores/${storeId}`);

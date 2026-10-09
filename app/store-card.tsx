@@ -1,6 +1,8 @@
 import { StoreNamePlaceholder, StoreFallbackLogo, StoreDisplayName } from "@/app/store-name-placeholder";
 import Link from "next/link";
 import { CATEGORY_LABEL } from "@/lib/constants";
+import type { StoreDisplayFlags } from "@/lib/plan-entitlements";
+import { VerifiedStoreBadge, goldFrameClass } from "@/app/store-plan-badge";
 
 export function StoreCard({
   store,
@@ -8,6 +10,7 @@ export function StoreCard({
   rank,
   favoriteAction,
   coverPhoto,
+  flags,
 }: {
   store: {
     id: string;
@@ -23,12 +26,13 @@ export function StoreCard({
   isFavorite: boolean;
   rank?: number;
   favoriteAction: () => Promise<void>;
+  flags?: StoreDisplayFlags | null;
 }) {
   const desc = store.description ?? "";
   const cover = store.banner_url || coverPhoto;
 
   return (
-    <div className="card" style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+    <div className={`card${goldFrameClass(flags)}`} style={{ padding: 0, overflow: "hidden", position: "relative" }}>
       {rank ? <div className={`store-rank-badge ${rank <= 3 ? `top${rank}` : ""}`}>{rank}位</div> : null}
       <form action={favoriteAction}>
         <button
@@ -49,6 +53,7 @@ export function StoreCard({
               {CATEGORY_LABEL[store.category] ?? store.category}
             </span>
           )}
+          <VerifiedStoreBadge flags={flags} />
           <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
             📍 {[store.pref, store.city].filter(Boolean).join(" ")}
           </div>

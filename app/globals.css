@@ -2760,3 +2760,11 @@ th {
 
 .home-section-head h2:has(> .readable-name) { display:flex; align-items:flex-start; gap:5px; }
 .home-section-head h2 > .readable-name { flex:1; margin-right:0; }
+
+/* ---- 料金プランによる表示(2026/10): 優良店バッジ・プレミアムの金枠 ---- */
+.verified-store-badge { display:inline-flex; align-items:center; gap:3px; margin:4px 0 0 6px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:800; line-height:1.6; color:#6b4a0e; background:linear-gradient(135deg,#fff4d6,#f3d58a); border:1px solid #d4af37; vertical-align:middle; white-space:nowrap; }
+.verified-store-badge > span { color:#b8860b; font-size:10px; }
+.store-gold-frame { border:2px solid #d4af37 !important; box-shadow:0 0 0 3px rgba(212,175,55,.18), 0 4px 14px rgba(140,100,40,.14); }
+.store-gold-frame:hover { box-shadow:0 0 0 3px rgba(212,175,55,.3), 0 6px 20px rgba(140,100,40,.2); }
+.store-detail-badge-row { margin:6px 0 0; }
+.store-detail-badge-row .verified-store-badge { margin-left:0; font-size:12px; }

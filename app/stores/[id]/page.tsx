@@ -26,6 +26,8 @@ import { MenuDetail } from "./menu-detail";
 import { StoreDetailTabs } from "./store-detail-tabs";
 import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
 import { JsonLd } from "@/lib/json-ld";
+import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
+import { VerifiedStoreBadge } from "@/app/store-plan-badge";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -273,6 +275,8 @@ export default async function StoreDetailPage({
   const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : store.address;
   const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
 
+  const storeFlags = (await fetchStoreDisplayFlags(supabase, [store.id])).get(store.id);
+
   return (
     <div>
       <JsonLd data={storeJsonLd(store as SeoStore, (photos ?? []) as { url: string }[])} />
@@ -283,6 +287,7 @@ export default async function StoreDetailPage({
           <div className="sd-title"><h1><ReadableName name={store.name} /></h1>
             <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
             {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+            {storeFlags?.verifiedBadge && <span className="store-detail-badge-row"><VerifiedStoreBadge flags={storeFlags} /></span>}
           </div>
           <div className="sd-store-contact-bar" style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 12, flexWrap: "wrap" }}>
             {/* 店舗の連絡先・SNS(2026/10、店舗管理画面のメール・LINE・X・

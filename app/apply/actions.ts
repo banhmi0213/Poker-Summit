@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createFincodeCustomer, createFincodeCardRegistration, createFincodePlan } from "@/lib/fincode";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
+import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 
 // 運営への掲載申込通知メール(2026/10、「問い合わせ、掲載申込があったら
 // メール届くように設定しておいて」との指示を受けて追加)。submitApplication()
@@ -164,12 +165,23 @@ export async function startPaidApplication(formData: FormData) {
   // plan_idの実在確認は通常のRLSクライアントで(公開読み取り可のactiveプランのみ)。
   const { data: plan, error: planError } = await supabase
         .from("plans")
-        .select("id, name, monthly_fee, fincode_plan_id, active")
+        .select("id, name, monthly_fee, fincode_plan_id, active, pickup")
         .eq("id", planId)
         .maybeSingle();
 
   if (planError || !plan || !plan.active) {
           redirect(`/apply?error=${encodeURIComponent("選択されたプランが見つかりません。")}`);
+  }
+
+  // プレミアムプラン(PICK UP表示付き)は各都道府県10店舗まで。カード決済に
+  // 進む前に空きを確認する(満枠なら申込みを止める。最終判定はDBトリガー)。
+  if (plan.pickup) {
+          if (!pref) {
+                    redirect(`/apply?error=${encodeURIComponent("プレミアムプランをお申込みの場合は都道府県を選択してください。")}`);
+          }
+          if ((await pickupSlotsLeft(supabase, pref)) <= 0) {
+                    redirect(`/apply?error=${encodeURIComponent(`${pref}のプレミアムプラン（PICK UP枠・10店舗限定）は現在満枠のため、お申込みを受け付けておりません。`)}`);
+          }
   }
 
   const { data: application, error: insertError } = await supabase
