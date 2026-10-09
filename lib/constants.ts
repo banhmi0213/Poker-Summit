@@ -263,13 +263,6 @@ export const STORE_LOGIN_ID_DOMAIN = "login.poker-summit.jp";
 // ログアウトされなくなる。
 export const STORE_AUTH_COOKIE_NAME = "sb-store-auth-token";
 
-// 求人掲載アドオン(月額11,000円/1件)のID。addonsテーブルへ固定IDで
-// 登録済み(migration: add_jobs_listing_addon)。運営が管理画面でアドオン名
-// を編集しても求人機能のゲーティングが壊れないよう、名前ではなくこの
-// 固定IDで判定する(2026/09/30、「求人はアドオンしてないと触れないように
-// して」との指示)。
-export const JOBS_ADDON_ID = "a1000000-0000-4000-8000-000000000001";
-
 // 店舗写真の上限枚数(2026/09/30、「店舗写真をギャラリーに変更、上限を
 // 10枚にして」との指示)。"use server"ファイル(photos-actions.ts)は非同期
 // 関数以外をexportできないため、この定数はここ(lib/constants.ts)に置く。

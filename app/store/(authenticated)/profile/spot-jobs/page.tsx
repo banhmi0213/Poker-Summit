@@ -9,6 +9,7 @@ import {spotImage} from '@/lib/spot-jobs-server';
 import {UUID,japanToday,type SpotJob} from '@/lib/spot-jobs';
 import {closeSpotJob} from './actions';
 import SpotEditor from './editor';
+import { getStorePlan, spotMonthlyLimitOf, countSpotMatchesThisMonth } from '@/lib/plan-entitlements';
 import styles from '@/app/spot-jobs/spot.module.css';
 export const dynamic='force-dynamic';
 export default async function Page({searchParams}:{searchParams:{edit?:string;saved?:string;closed?:string;error?:string;page?:string}}) {
@@ -19,6 +20,10 @@ export default async function Page({searchParams}:{searchParams:{edit?:string;sa
   if (storeError) throw new Error('店舗を読み込めませんでした。');
   if (!store) return <main className={styles.manage}>このアカウントに紐づく店舗が見つかりません。</main>;
   await requireMatchingConsent(db,user.id,"store",matchingReturnWithQuery("/store/profile/spot-jobs",searchParams));
+  // 契約プランごとのスポット求人の上限(2026/10)。ライトは公開不可、スタンダードは月10件の成立まで、プレミアムは無制限。
+  const spotPlan=await getStorePlan(db,store.id);
+  const spotLimit=spotMonthlyLimitOf(spotPlan);
+  const spotMatchesThisMonth=spotLimit===null||spotLimit===0?0:await countSpotMatchesThisMonth(db,store.id);
   let job:SpotJob|null=null;
   if (searchParams.edit) {
     if (!UUID.test(searchParams.edit)) notFound();
@@ -39,6 +44,8 @@ export default async function Page({searchParams}:{searchParams:{edit?:string;sa
   const image=await spotImage(db,{image_path:job?.image_path||null,store_id:store.id},store.banner_url);
   return <main className={styles.manage}><div className={styles.heading}><h1>スポット求人</h1><Link className={styles.button} href="/store/profile/dealers">フリーディーラーを探す →</Link></div>
     <p className={styles.muted}>募集は登録済みディーラーにだけ表示されます。店舗情報・所在地は店舗情報から自動で反映されます。</p>
+    {spotLimit===0?<section className={styles.box} role="note"><strong>スポット求人の公開はスタンダードプラン以上でご利用いただけます</strong><p className={styles.muted}>スタンダードプラン（月額16,500円）は月10件の成立まで、プレミアムプラン（月額33,000円）は無制限でご利用いただけます。下書きの作成はこのまま行えます。</p><Link className={styles.button} href="/store/profile/plan">プランを確認・変更する →</Link></section>
+    :spotLimit!==null&&<p className={styles.muted}>ご契約プラン：{spotPlan?.planName}　／　今月の成立 {spotMatchesThisMonth}件（月{spotLimit}件まで）{spotMatchesThisMonth>=spotLimit&&<strong>　今月の上限に達しているため、新しい勤務は来月から確定できます。</strong>}</p>}
     <div className={styles.buttons}><Link className={styles.button+" "+styles.primary} href="/store/profile/dealer-chat">応募・オファーのチャット</Link><Link className={styles.button+" "+styles.primary} href="/store/profile/spot-jobs/work">✓ 勤務完了・レビューはこちら</Link></div><p className={styles.muted}>応募確認・勤務条件の確定・勤務完了・レビュー・過去の勤務履歴は、こちらから確認できます。</p><MatchingRulesNotice />
     <div className={styles.box}><strong><ReadableName name={store.name} /></strong><p className={styles.muted}>{store.pref} {store.city} {store.address}</p><Link href="/store/profile">店舗情報を編集する →</Link></div>
     {searchParams.saved&&<p className={styles.success} role="status">{job?'変更を保存しました。':'保存しました。続けて新しい求人を登録できます。'}</p>}{searchParams.closed&&<p className={styles.success} role="status">募集を停止しました。</p>}{searchParams.error&&<p className={styles.error} role="alert">処理できませんでした。もう一度お試しください。</p>}

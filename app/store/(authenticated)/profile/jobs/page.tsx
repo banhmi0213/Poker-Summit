@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "../jobs-actions";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
-import { storeHasJobsAddon } from "@/lib/store-addons";
+import { getStorePlan, jobLimitOf, limitLabel } from "@/lib/plan-entitlements";
 
 const GENDER_LABEL: Record<string, string> = { male: "男性", female: "女性" };
 const DEALER_EXPERIENCE_LABEL: Record<string, string> = {
@@ -48,7 +48,10 @@ export default async function StoreJobsPage() {
   // あったため、「新規に求人を掲載する」フォームの部分だけ契約案内に差し替える
   // 形に変更(2026/10、「店舗管理画面でも求人は見えるようにして求人だそうとし
   // たら契約のアナウンスを出して」との指示)。
-  const hasJobsAddon = await storeHasJobsAddon(supabase, store.id);
+  // 求人の掲載数は契約プランで決まる(2026/10、ライト0件/スタンダード3件/
+  // プレミアム無制限)。既存求人の一覧・編集・募集終了はプランに関係なく使える。
+  const storePlan = await getStorePlan(supabase, store.id);
+  const jobLimit = jobLimitOf(storePlan);
 
   const { data: jobs } = await supabase
     .from("jobs")
@@ -138,6 +141,9 @@ export default async function StoreJobsPage() {
     jobFavoriteCounts[r.job_id] = (jobFavoriteCounts[r.job_id] ?? 0) + 1;
   });
 
+  const openJobCount = (jobs ?? []).filter((j) => j.status === "open").length;
+  const canCreateJob = jobLimit === null || openJobCount < jobLimit;
+
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
@@ -145,7 +151,13 @@ export default async function StoreJobsPage() {
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>求人管理</h1>
 
-      {hasJobsAddon ? (
+      {jobLimit !== 0 && (
+        <p className="muted small" style={{ marginBottom: 12 }}>
+          ご契約プラン：{storePlan?.planName}　／　募集中の求人 {openJobCount}件（{limitLabel(jobLimit)}）
+        </p>
+      )}
+
+      {canCreateJob ? (
         <div className="card">
           <form action={createJob} encType="multipart/form-data">
             <input type="hidden" name="storeId" value={store.id} />
@@ -183,12 +195,28 @@ export default async function StoreJobsPage() {
         </div>
       ) : (
         <div className="card">
-          <p style={{ fontWeight: 700, marginBottom: 6 }}>
-            新しく求人を掲載するには「求人掲載」アドオンのご契約が必要です
-          </p>
-          <p className="muted small">
-            月額11,000円（求人1件につき）でご利用いただけます。ご契約は運営までお問い合わせください。
-          </p>
+          {jobLimit === 0 ? (
+            <>
+              <p style={{ fontWeight: 700, marginBottom: 6 }}>
+                求人の掲載はスタンダードプラン以上でご利用いただけます
+              </p>
+              <p className="muted small">
+                スタンダードプラン（月額16,500円）は求人3件まで、プレミアムプラン（月額33,000円）は無制限で掲載できます。
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ fontWeight: 700, marginBottom: 6 }}>
+                現在のプランで募集できる求人数（{jobLimit}件）に達しています
+              </p>
+              <p className="muted small">
+                新しく掲載する場合は、ほかの求人を募集終了にするか、プレミアムプラン（求人無制限）への変更をご検討ください。
+              </p>
+            </>
+          )}
+          <Link href="/store/profile/plan" className="btn" style={{ marginTop: 10, display: "inline-flex" }}>
+            プランを確認・変更する →
+          </Link>
         </div>
       )}
 

@@ -11,6 +11,7 @@ import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
+import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
 import { PokerRegionHero } from "./poker-region-hero";
@@ -233,6 +234,7 @@ export default async function HomePage({
     ? await supabase.from("store_photos").select("store_id, url")
       .in("store_id", photoStoreIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
     : { data: [] };
+  const homeStoreFlags = await fetchStoreDisplayFlags(supabase, [...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id)]);
   const homeCoverPhotos = new Map<string, string>();
   (homePhotos ?? []).forEach(photo => { if (!homeCoverPhotos.has(photo.store_id)) homeCoverPhotos.set(photo.store_id, photo.url); });
 
@@ -330,7 +332,7 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> PICK UP店舗{currentPref ? `（${currentPref}）` : ""}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
           {!featuredStores.length && <p className="muted">{currentPref ? `${currentPref}にはまだPICK UP店舗がありません。` : "まだ店舗がありません。"}</p>}
-          <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         {topBanners.length > 0 && (
           <div className="home-section">
@@ -368,7 +370,7 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る →</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
-          <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 新着求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
-import { storeHasJobsAddon } from "@/lib/store-addons";
+import { getStorePlan, jobLimitOf } from "@/lib/plan-entitlements";
 
 async function getOwnedStoreId(storeId: string) {
   const supabase = await createClient();
@@ -29,20 +29,27 @@ async function getOwnedStoreId(storeId: string) {
   return supabase;
 }
 
-// 求人の新規掲載だけ、求人掲載アドオンの契約有無をサーバー側でも弾く
-// (2026/10、「店舗管理画面でも求人は見えるようにして求人だそうとしたら契約の
-// アナウンスを出して」との指示を受けて変更。以前はgetOwnedStoreId自体がアドオン
-// 判定も行っていたため、既存求人の編集・削除・募集終了/再開まで一緒にブロック
-// されてしまっていた。既存求人の管理はオーナー確認のみとし、新規作成時のみ
-// このチェックを通す)。
+// 求人の新規掲載だけ、契約プランの求人数の上限をサーバー側でも先に確認する
+// (2026/10、求人掲載アドオンを廃止しプランに統合。ライト0件/スタンダード3件/
+// プレミアム無制限)。画像アップロード前に弾くためのもので、最終的な上限は
+// DBトリガー(db/plan_tiers.sql の jobs_enforce_plan_limit)が強制する。
+// 既存求人の編集・削除・募集終了はオーナー確認のみ。
 async function getOwnedStoreIdForCreate(storeId: string) {
   const supabase = await getOwnedStoreId(storeId);
 
-  const hasAddon = await storeHasJobsAddon(supabase, storeId);
-  if (!hasAddon) {
-    throw new Error(
-      "求人機能は「求人掲載」アドオンのご契約が必要です。運営にお問い合わせください。"
-    );
+  const limit = jobLimitOf(await getStorePlan(supabase, storeId));
+  if (limit === 0) {
+    throw new Error("求人の掲載はスタンダードプラン以上でご利用いただけます。");
+  }
+  if (limit !== null) {
+    const { count } = await supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", storeId)
+      .eq("status", "open");
+    if ((count ?? 0) >= limit) {
+      throw new Error(`現在のプランで同時に募集できる求人は${limit}件までです。ほかの求人を募集終了にするか、プランの変更をご検討ください。`);
+    }
   }
 
   return supabase;

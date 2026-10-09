@@ -7,6 +7,7 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreCard } from "@/app/store-card";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
+import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 
 // Same randomized recommended priority and ten-store refill as the TOP page,
 // scoped to the selected prefecture, or nationwide when none is selected.
@@ -22,6 +23,8 @@ export default async function FeaturedStoresPage() {
     },
     stores,
   ] = await Promise.all([supabase.auth.getUser(), storesPromise]);
+
+  const storeFlags = await fetchStoreDisplayFlags(supabase, (stores ?? []).map((s: { id: string }) => s.id));
 
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -61,6 +64,7 @@ export default async function FeaturedStoresPage() {
               key={s.id}
               store={s}
               isFavorite={favoriteStoreIds.has(s.id)}
+              flags={storeFlags.get(s.id)}
               favoriteAction={async () => {
                 "use server";
                 await toggleFavoriteStore(s.id, "/stores/featured");

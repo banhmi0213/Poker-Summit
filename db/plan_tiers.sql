@@ -265,3 +265,22 @@ revoke all on function private.enforce_spot_publish() from public, anon, authent
 revoke all on function private.enforce_spot_monthly_limit() from public, anon, authenticated;
 revoke all on function private.check_pickup_capacity() from public, anon, authenticated;
 revoke all on function private.sync_pickup_from_contract() from public, anon, authenticated;
+
+-- 8) プランの登録・求人掲載アドオンの廃止 ------------------------------------------
+-- 新プランはコードの本番反映後に active=true にする(機能より先に申込みできないように)。
+update public.plans
+   set name = 'ライトプラン', tier = 1, job_limit = 0, spot_monthly_limit = 0, list_priority = 0,
+       gold_frame = false, pickup = false, badge_after_days = null, sort_order = 1
+ where id = 'e58d84ef-f7b5-4762-b4f4-c487cf104481';
+
+insert into public.plans (name, monthly_fee, description, active, sort_order, tier, job_limit, spot_monthly_limit, list_priority, gold_frame, pickup, badge_after_days)
+values
+  ('スタンダードプラン', 16500,
+   E'ライトプランの全機能\n1か月以上の継続で優良店バッジを付与\n該当地域の店舗一覧で上位表示\n求人掲載（3件まで）\nスポット求人（月10件の成立まで）',
+   false, 2, 2, 3, 10, 1, false, false, 30),
+  ('プレミアムプラン', 33000,
+   E'ライトプランの全機能\n1か月以上の継続で優良店バッジを付与\n店舗カードを金枠で表示\n該当地域の店舗一覧で最上位表示\nPICK UP店舗として表示（各都道府県10店舗限定）\n求人・スポット求人ともに無制限',
+   false, 3, 3, null, null, 2, true, true, 30);
+
+delete from public.store_contract_addons where addon_id = 'a1000000-0000-4000-8000-000000000001';
+delete from public.addons where id = 'a1000000-0000-4000-8000-000000000001';

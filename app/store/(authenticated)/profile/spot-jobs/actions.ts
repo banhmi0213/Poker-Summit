@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { createStoreClient } from '@/lib/supabase/store-server';
 import { DEALER_GAMES } from '@/lib/dealers';
 import { UUID, validDate, validTime, validateShifts, type SpotShift } from '@/lib/spot-jobs';
+import { getStorePlan, spotMonthlyLimitOf } from '@/lib/plan-entitlements';
 
 export async function saveSpotJob(_state: { error: string }, form: FormData): Promise<{error:string}> {
   const db = await createStoreClient();
@@ -16,6 +17,10 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   const {data:store,error:storeError} = await db.from('stores').select('id').eq('owner_user_id',user.id).limit(1).maybeSingle();
   if (storeError || !store) return {error:'店舗情報を確認できませんでした。'};
   await requireMatchingConsent(db,user.id,"store","/store/profile/spot-jobs");
+  // スポット求人の公開はスタンダードプラン以上(2026/10)。最終的な判定はDBトリガー。
+  if (form.get('published')==='true' && spotMonthlyLimitOf(await getStorePlan(db,store.id))===0) {
+    return {error:'スポット求人の公開はスタンダードプラン以上でご利用いただけます。「公開しない」にすると下書きとして保存できます。'};
+  }
   const id = String(form.get('id') || '');
   if (id && !UUID.test(id)) return {error:'求人を確認できませんでした。'};
   let current: {image_path:string|null}|null = null;
@@ -55,7 +60,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   const {error}=await db.rpc('save_spot_job',{p_id:id||null,p_store_id:store.id,p_games:games,p_duties:duties,p_requirements:requirements,p_transport_type:transport,p_transport_limit:limit,p_dress:dress,p_deadline:deadlineRaw+':00+09:00',p_image:imagePath,p_published:published,p_shifts:shifts});
   if (error) {
     if (uploaded) await db.storage.from('spot-job-images').remove([uploaded]);
-    return {error:'保存できませんでした。入力内容を確認してもう一度お試しください。'};
+    return {error:error.code==='P0001'?error.message:'保存できませんでした。入力内容を確認してもう一度お試しください。'};
   }
   if (current?.image_path && current.image_path!==imagePath) await db.storage.from('spot-job-images').remove([current.image_path]);
   revalidatePath('/store/profile/spot-jobs','layout');
