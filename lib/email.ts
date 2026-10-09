@@ -360,3 +360,67 @@ Poker Summit運営事務局`;
     bcc: "info@pokersummit.jp",
   });
 }
+
+// ---------------------------------------------------------------------------
+// 店舗のプラン変更の確認メール(2026/10追加)。店舗管理画面の「プラン・お支払い」で
+// 変更したとき、契約の連絡先メールへ送り、運営(info@)にもBCCで控えを送る。
+// kind: changed=即時変更(決済済み) / scheduled=契約期間の終了時に変更予約 / failed=決済失敗
+// ---------------------------------------------------------------------------
+export async function sendPlanChangeEmail(params: {
+  to: string;
+  storeName: string;
+  kind: "changed" | "scheduled" | "failed";
+  fromPlan: string;
+  toPlan: string;
+  amount?: number | null;
+  effectiveDate?: string | null; // 表示用(例: 2026年11月9日)
+  periodEnd?: string | null; // 表示用
+  reason?: string | null;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const body =
+    params.kind === "changed"
+      ? `プランの変更が完了しました。
+
+変更前: ${params.fromPlan}
+変更後: ${params.toPlan}
+決済金額: ${(params.amount ?? 0).toLocaleString("ja-JP")}円（税込・クレジットカード）
+${params.periodEnd ? `新しい契約期間: ${params.periodEnd}まで（以降は毎月自動更新）\n` : ""}
+新しいプランの機能は、すでにご利用いただけます。`
+      : params.kind === "scheduled"
+        ? `プランの変更を予約しました。
+
+現在のプラン: ${params.fromPlan}
+変更後のプラン: ${params.toPlan}
+切り替え日: ${params.effectiveDate ?? "現在の契約期間の終了日"}
+
+切り替え日までは現在のプランのままご利用いただけます。切り替え日に新しい料金で決済されます。
+予約の取り消しは、店舗管理画面の「プラン・お支払い」から行えます。`
+        : `プランの変更手続きで、決済が完了しませんでした。プランは変更されていません。
+
+現在のプラン: ${params.fromPlan}
+変更しようとしたプラン: ${params.toPlan}
+${params.reason ? `理由: ${params.reason}\n` : ""}
+お手数ですが、カード情報をご確認のうえ再度お試しいただくか、運営までお問い合わせください。`;
+
+  const text = `${params.storeName} 様
+
+いつもPoker Summitをご利用いただき、誠にありがとうございます。
+${body}
+
+店舗管理画面「プラン・お支払い」
+${siteUrl}/store/profile/plan
+
+ご不明な点は info@pokersummit.jp までお問い合わせください。
+
+Poker Summit運営事務局`;
+
+  const subject =
+    params.kind === "changed"
+      ? `【Poker Summit】プラン変更完了のお知らせ（${params.toPlan}）`
+      : params.kind === "scheduled"
+        ? `【Poker Summit】プラン変更予約のお知らせ（${params.toPlan}）`
+        : "【Poker Summit】プラン変更の決済ができませんでした";
+
+  await sendEmail({ to: params.to, subject, text, bcc: "info@pokersummit.jp" });
+}
