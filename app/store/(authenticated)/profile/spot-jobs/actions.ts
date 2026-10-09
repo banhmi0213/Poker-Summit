@@ -39,6 +39,8 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   }
   const value = (key:string) => String(form.get(key)||'').trim();
   const games = [...new Set(form.getAll('games').map(String))];
+  const contractType=value('contract_type'),paymentMethod=value('payment_method'),paymentDate=value('payment_date'),contractNotes=value('contract_notes');
+  if(!['employment','contract'].includes(contractType)||!['bank','cash'].includes(paymentMethod)||!paymentDate||paymentDate.length>100||!contractNotes||contractNotes.length>2000)return {error:'契約形態・支払方法・支払日・その他の合意事項を入力してください（事項がない場合は「なし」）。'};
   const duties=value('duties'), requirements=value('requirements'), dress=value('dress');
   const transport=value('transport_type'), limit=transport==='limited'?Number(value('transport_limit')):null;
   const deadlineRaw=value('deadline'), published=form.get('published')==='true';
@@ -65,7 +67,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
     if (error) return {error:'画像をアップロードできませんでした。'};
     imagePath=uploaded;
   }
-  const {error}=await db.rpc('save_spot_job',{p_id:id||null,p_store_id:store.id,p_games:games,p_duties:duties,p_requirements:requirements,p_transport_type:transport,p_transport_limit:limit,p_dress:dress,p_deadline:deadlineRaw+':00+09:00',p_image:imagePath,p_published:published,p_shifts:shifts});
+  const {error}=await db.rpc('save_spot_job_with_terms',{p_id:id||null,p_store_id:store.id,p_games:games,p_duties:duties,p_requirements:requirements,p_transport_type:transport,p_transport_limit:limit,p_dress:dress,p_deadline:deadlineRaw+':00+09:00',p_image:imagePath,p_published:published,p_shifts:shifts,p_terms:{contract_type:contractType,payment_method:paymentMethod,payment_date:paymentDate,notes:contractNotes}});
   if (error) {
     if (uploaded) await db.storage.from('spot-job-images').remove([uploaded]);
     return {error:error.code==='P0001'?error.message:'保存できませんでした。入力内容を確認してもう一度お試しください。'};
