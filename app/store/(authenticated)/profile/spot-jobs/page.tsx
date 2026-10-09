@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { NotificationBadge } from "@/app/matching/chat/notification-badge";
 import { MatchingRulesNotice } from "@/app/matching/notice";
 import { requireMatchingConsent } from "@/lib/matching-consent-server";
 import { matchingReturnWithQuery } from "@/lib/matching-return";
@@ -46,7 +47,7 @@ export default async function Page({searchParams}:{searchParams:{edit?:string;sa
     <p className={styles.muted}>募集は登録済みディーラーにだけ表示されます。店舗情報・所在地は店舗情報から自動で反映されます。</p>
     {spotLimit===0?<section className={styles.box} role="note"><strong>スポット求人の公開はスタンダードプラン以上でご利用いただけます</strong><p className={styles.muted}>スタンダードプラン（月額16,500円）は月10件の成立まで、プレミアムプラン（月額33,000円）は無制限でご利用いただけます。下書きの作成はこのまま行えます。</p><Link className={styles.button} href="/store/profile/plan">プランを確認・変更する →</Link></section>
     :spotLimit!==null&&<p className={styles.muted}>ご契約プラン：{spotPlan?.planName}　／　今月の成立 {spotMatchesThisMonth}件（月{spotLimit}件まで）{spotMatchesThisMonth>=spotLimit&&<strong>　今月の上限に達しているため、新しい勤務は来月から確定できます。</strong>}</p>}
-    <div className={styles.buttons}><Link className={styles.button+" "+styles.primary} href="/store/profile/dealer-chat">応募・オファーのチャット</Link><Link className={styles.button+" "+styles.primary} href="/store/profile/spot-jobs/work">✓ 勤務完了・レビューはこちら</Link></div><p className={styles.muted}>応募確認・勤務条件の確定・勤務完了・レビュー・過去の勤務履歴は、こちらから確認できます。</p><MatchingRulesNotice />
+    <div className={styles.buttons}><Link className={styles.button+" "+styles.primary} href="/store/profile/dealer-chat">応募・オファーのチャット<NotificationBadge actor="store" label /> →</Link><Link className={styles.button+" "+styles.primary} href="/store/profile/spot-jobs/work">✓ 勤務完了・レビューはこちら</Link></div><p className={styles.muted}>左メニューの赤い数字は、未読の応募・メッセージの件数です。「応募・オファーのチャット」から確認できます。</p><p className={styles.muted}>勤務条件の確定・勤務完了・レビュー・過去の勤務履歴は、こちらから確認できます。</p><MatchingRulesNotice />
     <div className={styles.box}><strong><ReadableName name={store.name} /></strong><p className={styles.muted}>{store.pref} {store.city} {store.address}</p><Link href="/store/profile">店舗情報を編集する →</Link></div>
     {searchParams.saved&&<p className={styles.success} role="status">{job?'変更を保存しました。':'保存しました。続けて新しい求人を登録できます。'}</p>}{searchParams.closed&&<p className={styles.success} role="status">募集を停止しました。</p>}{searchParams.error&&<p className={styles.error} role="alert">処理できませんでした。もう一度お試しください。</p>}
     {job&&<div className={styles.buttons}><Link className={styles.button} href="/store/profile/spot-jobs">新しい求人を登録</Link><Link className={styles.button} href={'/store/profile/spot-jobs/'+job.id}>プレビュー</Link></div>}
