@@ -20,8 +20,9 @@ import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
-import { getTopBanners, isExternalBannerLink } from "@/lib/banners";
+import { getTopBanners, getHomeSectionBanners, isExternalBannerLink } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
+import { HomeSectionBanners } from "./home-section-banners";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
@@ -134,6 +135,10 @@ export default async function HomePage({
     { data: upcomingEvents },
     { data: popularCoupons },
     topBannerRows,
+    couponBannerRows,
+    communityBannerRows,
+    rankingBannerRows,
+    jobsBannerRows,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
@@ -186,6 +191,10 @@ export default async function HomePage({
       .order("created_at", { ascending: false })
       .limit(3),
     getTopBanners(supabase),
+    getHomeSectionBanners(supabase, "home_coupon"),
+    getHomeSectionBanners(supabase, "home_community", 4),
+    getHomeSectionBanners(supabase, "home_ranking"),
+    getHomeSectionBanners(supabase, "home_jobs"),
   ]);
 
   // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
@@ -196,6 +205,15 @@ export default async function HomePage({
     const external = isExternalBannerLink(b.link_url, siteHost);
     return { id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
   });
+
+  const sectionBanners = (rows: typeof couponBannerRows): HomeBanner[] => rows.map((b) => ({
+    id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url,
+    external: isExternalBannerLink(b.link_url, siteHost),
+  }));
+  const couponBanners = sectionBanners(couponBannerRows);
+  const communityBanners = sectionBanners(communityBannerRows);
+  const rankingBanners = sectionBanners(rankingBannerRows);
+  const jobsBanners = sectionBanners(jobsBannerRows);
 
   const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
     statsResults;
@@ -362,6 +380,7 @@ export default async function HomePage({
             </Link>;
           })}</div>
         </section>
+        {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href="/coupons">すべてのクーポンを見る →</Link></div>
           {!popularCoupons?.length && <p className="muted">現在利用可能なクーポンはありません。</p>}
@@ -371,16 +390,19 @@ export default async function HomePage({
           </Link>)}</div>
         </section>
 
+        {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
         <section className="home-section home-summit">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る →</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
+        {rankingBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る →</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
+        {jobsBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={jobsBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 新着求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
           {!latestJobs?.length && <p className="muted">現在募集中の求人はありません。</p>}
