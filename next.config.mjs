@@ -4,7 +4,7 @@ const nextConfig = {
     serverActions: { bodySizeLimit: "4mb" },
     // 請求書PDF(lib/invoice-pdf.ts)で使う日本語フォント。fs で読むので明示的に同梱する。
     outputFileTracingIncludes: {
-      "/**/*": ["./assets/fonts/BIZUDPGothic-*.ttf"],
+      "/**/*": ["./assets/fonts/BIZUDPGothic-Regular-jis.ttf"],
     },
     serverComponentsExternalPackages: ["pdf-lib", "@pdf-lib/fontkit"],
   },

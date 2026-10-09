@@ -2,6 +2,10 @@
 // 記載事項: 発行者の名称・登録番号 / 取引年月日(対象期間) / 取引内容 /
 // 税率ごとの合計額と税率 / 税率ごとの消費税額 / 宛名。
 // フォントは assets/fonts の BIZ UDPゴシック(SIL Open Font License)を埋め込む。
+// pdf-lib(fontkit)のサブセット化は日本語フォントで一部の文字が消える不具合があるため使わない。
+// 代わりに JIS第1・第2水準+記号に絞り、ヒンティングを外したフォント(約2MB)を丸ごと埋め込む
+// (作り方: pyftsubset --text-file=<JIS X 0208+cp932の文字> --no-hinting --layout-features='')。
+// 太字は同じフォントを少しずらして重ね描きする。
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -18,15 +22,13 @@ import {
   type InvoiceRow,
 } from "@/lib/bank-transfer";
 
-let fontCache: Promise<[Uint8Array, Uint8Array]> | null = null;
+let fontCache: Promise<Uint8Array> | null = null;
 
-function loadFonts() {
+function loadFont() {
   if (!fontCache) {
-    const dir = path.join(process.cwd(), "assets", "fonts");
-    fontCache = Promise.all([
-      readFile(path.join(dir, "BIZUDPGothic-Regular.ttf")),
-      readFile(path.join(dir, "BIZUDPGothic-Bold.ttf")),
-    ]).then(([r, b]) => [new Uint8Array(r), new Uint8Array(b)] as [Uint8Array, Uint8Array]);
+    fontCache = readFile(path.join(process.cwd(), "assets", "fonts", "BIZUDPGothic-Regular-jis.ttf")).then(
+      (b) => new Uint8Array(b)
+    );
     fontCache.catch(() => {
       fontCache = null;
     });
@@ -42,7 +44,7 @@ const LINE = rgb(0.78, 0.78, 0.82);
 const HEAD_BG = rgb(0.93, 0.94, 0.96);
 const ACCENT = rgb(0.72, 0.53, 0.04);
 
-type Ctx = { page: PDFPage; regular: PDFFont; bold: PDFFont };
+type Ctx = { page: PDFPage; font: PDFFont };
 
 function text(
   ctx: Ctx,
@@ -51,11 +53,17 @@ function text(
   y: number,
   opts: { size?: number; bold?: boolean; color?: ReturnType<typeof rgb>; align?: "left" | "right" | "center" } = {}
 ) {
-  const font = opts.bold ? ctx.bold : ctx.regular;
+  const font = ctx.font;
   const size = opts.size ?? 10;
   const width = font.widthOfTextAtSize(value, size);
   const dx = opts.align === "right" ? -width : opts.align === "center" ? -width / 2 : 0;
-  ctx.page.drawText(value, { x: x + dx, y, size, font, color: opts.color ?? INK });
+  const color = opts.color ?? INK;
+  ctx.page.drawText(value, { x: x + dx, y, size, font, color });
+  if (opts.bold) {
+    // 擬似太字(同じ文字を少しずらして重ねる)
+    const shift = Math.max(0.25, size * 0.035);
+    ctx.page.drawText(value, { x: x + dx + shift, y, size, font, color });
+  }
   return width;
 }
 
@@ -72,17 +80,16 @@ export function invoicePeriodLabel(invoice: Pick<InvoiceRow, "period_start" | "p
 }
 
 export async function buildInvoicePdf(invoice: InvoiceRow, settings: BillingSettings): Promise<Uint8Array> {
-  const [regularBytes, boldBytes] = await loadFonts();
+  const fontBytes = await loadFont();
   const doc = await PDFDocument.create();
   doc.registerFontkit(fontkit);
-  const regular = await doc.embedFont(regularBytes, { subset: true });
-  const bold = await doc.embedFont(boldBytes, { subset: true });
+  const font = await doc.embedFont(fontBytes, { subset: false });
   doc.setTitle(`請求書 ${invoice.invoice_number}`);
   doc.setAuthor(ISSUER.name);
   doc.setCreator("Poker Summit");
 
   const page = doc.addPage([595.28, 841.89]); // A4
-  const ctx: Ctx = { page, regular, bold };
+  const ctx: Ctx = { page, font };
   const L = 50;
   const R = 545;
   let y = 790;
@@ -108,11 +115,17 @@ export async function buildInvoicePdf(invoice: InvoiceRow, settings: BillingSett
 
   // 発行者(右)
   let iy = nameY - 30;
-  const IX = 345;
+  const IX = 340;
   text(ctx, ISSUER.name, IX, iy, { size: 11.5, bold: true });
   iy -= 15;
-  text(ctx, ISSUER.address, IX, iy, { size: 8 });
-  iy -= 12;
+  // 住所は長いので「郵便番号+番地」と「建物名」の2行に分ける
+  const [postal, street, ...building] = ISSUER.address.split(" ");
+  text(ctx, `${postal} ${street ?? ""}`.trim(), IX, iy, { size: 8 });
+  iy -= 11;
+  if (building.length) {
+    text(ctx, building.join(" "), IX, iy, { size: 8 });
+    iy -= 12;
+  }
   text(ctx, `TEL ${ISSUER.tel}`, IX, iy, { size: 8 });
   iy -= 12;
   text(ctx, ISSUER.email, IX, iy, { size: 8 });
