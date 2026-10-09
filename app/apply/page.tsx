@@ -329,7 +329,7 @@ function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons
               {prepay.map(({ months, discount }) => {
                 const q = quote(plan.monthly_fee, months, discount);
                 return (
-                  <div key={months} style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+                  <div key={months} style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "baseline" }}>
                     <span>
                       {months}か月まとめ払い
                       {q.label && (
@@ -345,6 +345,13 @@ function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons
                       <strong>{yen(q.total)}</strong>
                       <span className="muted">（税込）</span>
                     </span>
+                    {discount && (
+                      <span className="muted" style={{ width: "100%", fontSize: 11.5, marginTop: -2 }}>
+                        {discount.type === "free_months"
+                          ? `${months - discount.value}か月分の料金で${months === 12 ? "1年間" : `${months}か月間`}掲載`
+                          : `1か月あたり${yen(Math.floor(q.total / months))}`}
+                      </span>
+                    )}
                   </div>
                 );
               })}
