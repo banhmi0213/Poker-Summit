@@ -12,10 +12,9 @@ export function DealerReliabilityView({ stats, compact=false }: { stats?: Dealer
    <div><dt>総勤務回数</dt><dd>{stats.completed}回</dd></div>
    <div><dt>勤務率</dt><dd>{rate(stats.completed)}</dd></div>
    <div><dt>キャンセル率</dt><dd>{rate(stats.cancellations)}</dd></div>
-   <div><dt>無言キャンセル率</dt><dd>{rate(stats.no_shows)}</dd></div>
   </dl>
   {compact&&stats.latest_review&&<blockquote className={styles.excerpt}><strong>{stats.latest_review.store_name}</strong><p>{stats.latest_review.review.slice(0,100)}{stats.latest_review.review.length>100?"…":""}</p></blockquote>}
-  <p className={styles.note}>集計対象：{stats.total}件{!compact && <> ／ キャンセル {stats.cancellations}件（うち無言 {stats.no_shows}件）</>}</p>
-  {!compact && <p className={styles.note}>勤務率は勤務完了件数を集計対象件数で割った割合です。本サイトで双方が確定した勤務のうち、勤務完了・本人都合のキャンセル・確認済みの無言キャンセルを集計します。無言キャンセルはキャンセル率にも含みます。店舗都合・確認中・未確定の勤務は対象外です。星評価・レビューは双方の勤務完了後に反映します。過去の星評価なしのレビューは平均に含めません。</p>}
+  <p className={styles.note}>集計対象：{stats.total}件{!compact && <> ／ キャンセル {stats.cancellations}件</>}</p>
+  {!compact && <p className={styles.note}>勤務率は勤務完了件数を集計対象件数で割った割合です。本サイトで双方が確定した勤務のうち、勤務完了やディーラー都合のキャンセルの確定済み記録を集計します。店舗都合・確認中・未確定の勤務は対象外です。星評価・レビューは双方の勤務完了後に反映します。過去の星評価なしのレビューは平均に含めません。</p>}
  </section>;
 }
