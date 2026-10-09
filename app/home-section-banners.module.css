@@ -2,6 +2,7 @@
 .wide { display: grid; grid-template-columns: minmax(0, 1fr); }
 .four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .banner { display: block; overflow: hidden; border-radius: 10px; min-width: 0; line-height: 0; }
-.banner img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; object-fit: cover; }
+.banner img { display: block; width: 100%; height: auto; aspect-ratio: 10 / 1; object-fit: cover; object-position: center; }
 .four .banner img { aspect-ratio: 3 / 2; }
+@media (max-width: 720px) { .wide .banner img { aspect-ratio: 6 / 1; } }
 @media (max-width: 720px) { .four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
