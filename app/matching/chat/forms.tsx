@@ -7,7 +7,6 @@ import {chatAction,offerAction,markNotificationsRead} from "./actions";
 import styles from "./chat.module.css";
 export type Terms={revision:number;contract_type:string;payment_method:string;payment_date:string;notes:string};
 function Submit({children}:{children:ReactNode}){const {pending}=useFormStatus();return <button className={styles.primary} disabled={pending} type="submit">{pending?"保存中…":children}</button>;}
-export function LiveChat(){const router=useRouter();useEffect(()=>{const timer=setInterval(()=>{if(document.visibilityState==="visible")router.refresh();},15000);return ()=>clearInterval(timer);},[router]);return null;}
 export function ChatForm({actor,record,operation,children,button,reset=false}:{actor:"store"|"dealer";record:string;operation:string;children:ReactNode;button:string;reset?:boolean}){
  const [state,action]=useFormState(chatAction,{error:"",success:0});const router=useRouter(),form=useRef<HTMLFormElement>(null);const [nonce,setNonce]=useState("");
  useEffect(()=>setNonce(crypto.randomUUID()),[]);
