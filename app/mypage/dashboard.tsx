@@ -168,7 +168,7 @@ export async function MyPageContent({
                   <Link href="/account/profile" className="muted small" style={{ textDecoration: "underline" }}>
                     編集
                   </Link>
-                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>{dealerProfile && <Link href="/account/dealer/chat" className="btn primary">応募・チャット<NotificationBadge actor="dealer"/></Link>}{dealerProfile && <Link href="/account/dealer/work" className="btn primary">✓ 勤務完了・レビュー</Link>}
+                  <Link href="/account/dealer" className="btn" style={{ fontSize: 12 }}>ディーラー登録</Link>
                 </div>
                 <div className="muted small">
                   📍 {pref || "未設定"}
@@ -242,13 +242,24 @@ export async function MyPageContent({
               <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
-            <div className={styles.summaryActions}>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/account/dealer" className="btn">ディーラー登録</Link>{dealerProfile && <Link href="/account/dealer/chat" className="btn primary">応募・チャット<NotificationBadge actor="dealer"/></Link>}{dealerProfile && <Link href="/account/dealer/work" className="btn primary">✓ 勤務完了・レビュー</Link>}</div>
-              <div className={styles.accountActions}>
-                <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
-                <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>
-                <form action={signOut}><button type="submit" className="btn"><AccountIcon kind="logout" /> ログアウト</button></form>
+            <div className={styles.summaryActions} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <Link href="/account/profile" className="btn">プロフィール編集</Link>
+                  <Link href="/account/dealer" className="btn">ディーラー登録</Link>
+                </div>
+                <div className={styles.accountActions}>
+                  <Link href="/account/password" className="btn"><AccountIcon kind="lock" /> パスワード変更</Link>
+                  <Link href="/account/delete" className="btn"><AccountIcon kind="user" /> 退会</Link>
+                  <form action={signOut}><button type="submit" className="btn"><AccountIcon kind="logout" /> ログアウト</button></form>
+                </div>
               </div>
+              {dealerProfile && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                  <Link href="/account/dealer/work" className="btn">✓ 勤務完了・レビュー</Link>
+                  <Link href="/account/dealer/chat" className="btn">応募・チャット<NotificationBadge actor="dealer"/></Link>
+                </div>
+              )}
             </div>
           </div>
         )}
