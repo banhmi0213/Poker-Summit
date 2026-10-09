@@ -30,8 +30,11 @@ type ListingApplicationRow = {
 
 export async function provisionPaidStoreFromApplication(params: {
     application: ListingApplicationRow;
-    fincodeCustomerId: string;
-    fincodeSubscriptionId: string;
+    // カード(fincode)で申し込んだ場合
+    fincodeCustomerId?: string | null;
+    fincodeSubscriptionId?: string | null;
+    // 銀行振込で申し込み、運営が入金を確認した場合(lib/bank-transfer.ts)
+    billing?: { method: "bank_transfer"; cycleMonths: number; currentPeriodEndIso: string };
 }): Promise<{ storeId: string; loginId: string; password: string; lineCode: string }> {
     const supabase = createServiceRoleClient();
     const { application } = params;
@@ -60,6 +63,7 @@ if (storeError || !store) {
 // 期間追跡を開始する)。
 const periodEnd = new Date();
 periodEnd.setMonth(periodEnd.getMonth() + 1);
+const isTransfer = params.billing?.method === "bank_transfer";
 
 const { error: contractError } = await supabase.from("store_contracts").insert({
     store_id: storeId,
@@ -68,11 +72,13 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
     contact_name: application.contact_name,
     contact_email: application.email,
     contact_tel: application.tel,
-    fincode_customer_id: params.fincodeCustomerId,
-    fincode_subscription_id: params.fincodeSubscriptionId,
+    fincode_customer_id: params.fincodeCustomerId ?? null,
+    fincode_subscription_id: params.fincodeSubscriptionId ?? null,
     last_billing_status: "success",
     last_billing_at: new Date().toISOString(),
-    current_period_end: periodEnd.toISOString(),
+    current_period_end: isTransfer ? params.billing!.currentPeriodEndIso : periodEnd.toISOString(),
+    billing_method: isTransfer ? "bank_transfer" : "card",
+    billing_cycle_months: isTransfer ? params.billing!.cycleMonths : 1,
 });
     if (contractError) {
         throw new Error(contractError.message);

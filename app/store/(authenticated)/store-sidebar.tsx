@@ -21,7 +21,7 @@ const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile/jobs", label: "求人" },
   { href: "/store/profile/spot-jobs", label: "スポット求人" },
   { href: "/store/profile/notices", label: "お知らせ" },
-  { href: "/store/profile/plan", label: "プラン・アドオン" },
+  { href: "/store/profile/plan", label: "プラン・お支払い" },
 ];
 
 export function StoreSidebar() {
