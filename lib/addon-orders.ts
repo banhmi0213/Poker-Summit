@@ -46,31 +46,44 @@ export async function loadAddon(addonId: string): Promise<AddonRow | null> {
   return (data as AddonRow | null) ?? null;
 }
 
-/** 振込のアドオン請求書(1件)。月額は1か月分、都度は数量分。 */
+export type AddonInvoiceLine = {
+  addonName: string;
+  unitPrice: number;
+  quantity: number;
+  monthly: boolean;
+};
+
+/** 振込のアドオン請求書。複数のアドオンを1枚にまとめられる。月額は1か月分、都度は数量分。 */
 export async function createAddonInvoice(params: {
   storeId: string;
   storeContractId: string | null;
   billToName: string;
   billToContact: string | null;
   billToEmail: string;
-  addonName: string;
-  unitPrice: number;
-  quantity: number;
-  monthly: boolean;
+  lines: AddonInvoiceLine[];
   periodStart?: string | null; // 月額の更新分: 'YYYY-MM-DD'
   addonOrderId?: string | null;
   storeContractAddonId?: string | null;
 }): Promise<InvoiceRow> {
   const svc = createServiceRoleClient();
   const settings = await getBillingSettings(svc);
-  const total = params.unitPrice * params.quantity;
+  if (!params.lines.length) throw new Error("請求する内容がありません。");
+  const total = params.lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const periodStart = params.periodStart ?? null;
   const periodEnd = periodStart ? addDays(addMonths(periodStart, 1), -1) : null;
-  const sub = params.monthly
-    ? periodStart
-      ? `対象期間：${periodStart.replace(/-/g, "/")}〜${periodEnd!.replace(/-/g, "/")}（1か月）`
-      : "対象期間：ご入金確認日から1か月（以降は毎月ご請求）"
-    : null;
+  const items = params.lines.map((l) => ({
+    label: `Poker Summit アドオン　${l.addonName}`,
+    sub: l.monthly
+      ? periodStart
+        ? `対象期間：${periodStart.replace(/-/g, "/")}〜${periodEnd!.replace(/-/g, "/")}（1か月）`
+        : "対象期間：ご入金確認日から1か月（以降は毎月ご請求）"
+      : null,
+    quantity: l.monthly ? "1か月" : String(l.quantity),
+    unit_price: l.unitPrice,
+    amount: l.unitPrice * l.quantity,
+  }));
+  const title =
+    params.lines.length === 1 ? params.lines[0].addonName : `${params.lines[0].addonName} ほか${params.lines.length - 1}件`;
   const { data, error } = await svc
     .from("invoices")
     .insert({
@@ -81,8 +94,8 @@ export async function createAddonInvoice(params: {
       bill_to_contact: params.billToContact,
       bill_to_email: params.billToEmail,
       plan_id: null,
-      plan_name: params.addonName,
-      monthly_fee: params.unitPrice,
+      plan_name: title,
+      monthly_fee: params.lines.length === 1 ? params.lines[0].unitPrice : total,
       months: 1,
       discount_label: null,
       discount_amount: 0,
@@ -91,15 +104,7 @@ export async function createAddonInvoice(params: {
       period_start: periodStart,
       period_end: periodEnd,
       due_date: addDays(todayJst(), settings.dueDays),
-      items: [
-        {
-          label: `Poker Summit アドオン　${params.addonName}`,
-          sub,
-          quantity: params.monthly ? "1か月" : String(params.quantity),
-          unit_price: params.unitPrice,
-          amount: total,
-        },
-      ],
+      items,
       addon_order_id: params.addonOrderId ?? null,
       store_contract_addon_id: params.storeContractAddonId ?? null,
     })
@@ -107,7 +112,7 @@ export async function createAddonInvoice(params: {
     .single();
   if (error || !data) throw new Error(error?.message ?? "請求書を作成できませんでした。");
   try {
-    await sendInvoice(data as InvoiceRow, settings, periodStart ? "renewal" : "renewal");
+    await sendInvoice(data as InvoiceRow, settings, "renewal");
   } catch (e) {
     await svc.from("audit_log").insert({
       actor_user_id: null,
@@ -190,13 +195,18 @@ export async function fulfillPaidAddonOrder(orderId: string) {
   }
 }
 
-/** 振込の請求書(kind='addon')の入金を確認したとき(lib/bank-transfer.ts confirmInvoicePayment から)。 */
+/** 振込の請求書(kind=addon)の入金を確認したとき(lib/bank-transfer.ts confirmInvoicePayment から)。 */
 export async function confirmAddonInvoice(inv: InvoiceRow & { addon_order_id?: string | null; store_contract_addon_id?: string | null }) {
   const svc = createServiceRoleClient();
-  if (inv.addon_order_id) {
-    await svc.from("addon_orders").update({ paid_at: new Date().toISOString() }).eq("id", inv.addon_order_id);
-    await fulfillPaidAddonOrder(inv.addon_order_id);
-    return;
+  // 申込み分: この請求書に紐づく注文をまとめて有効化
+  const { data: orders } = await svc.from("addon_orders").select("id, status").eq("invoice_id", inv.id);
+  const orderIds = new Set<string>(
+    ((orders ?? []) as { id: string; status: string }[]).filter((o) => o.status === "awaiting_payment").map((o) => o.id)
+  );
+  if (inv.addon_order_id) orderIds.add(inv.addon_order_id);
+  for (const id of orderIds) {
+    await svc.from("addon_orders").update({ paid_at: new Date().toISOString() }).eq("id", id);
+    await fulfillPaidAddonOrder(id);
   }
   if (inv.store_contract_addon_id) {
     // 月額アドオンの更新分: 期間を1か月延ばす
@@ -213,26 +223,30 @@ export async function confirmAddonInvoice(inv: InvoiceRow & { addon_order_id?: s
   }
 }
 
-/** 店舗のアドオン購入(店舗管理画面から)。戻り値は画面に出すメッセージ。 */
-export async function purchaseAddon(params: {
+/**
+ * 店舗のアドオン購入(店舗管理画面から、複数まとめて)。戻り値は画面に出すメッセージ。
+ *  カード: 月額はプラン+カード払いの月額アドオンの合計で決済し直してサブスクを差し替え(既存の方式)、
+ *          都度払いは合計額を1回で決済。
+ *  振込:   選んだものを1枚の請求書にまとめ、入金確認で全部有効化。
+ */
+export async function purchaseAddons(params: {
   storeId: string;
-  addonId: string;
-  quantity: number;
+  items: Array<{ addonId: string; quantity: number }>;
   paymentMethod: "card" | "bank_transfer";
   note: string | null;
 }): Promise<string> {
   const svc = createServiceRoleClient();
-  const addon = await loadAddon(params.addonId);
-  if (!addon || !addon.active || !addon.code) throw new Error("このアドオンは現在お申し込みいただけません。");
+  if (!params.items.length) throw new Error("お申し込みするアドオンを選んでください。");
 
-  const [{ data: contract }, { data: store }, settings] = await Promise.all([
+  const [{ data: contract }, { data: store }, settings, { data: addonRows }] = await Promise.all([
     svc
       .from("store_contracts")
-      .select("id, status, plan_id, billing_method, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method)")
+      .select("id, status, plan_id, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method)")
       .eq("store_id", params.storeId)
       .maybeSingle(),
     svc.from("stores").select("id, name, pref").eq("id", params.storeId).maybeSingle(),
     getBillingSettings(svc),
+    svc.from("addons").select(ADDON_COLUMNS).in("id", params.items.map((i) => i.addonId)),
   ]);
   if (!contract || contract.status !== "active") throw new Error("有効な契約がありません。運営にお問い合わせください。");
   if (!store) throw new Error("店舗が見つかりません。");
@@ -241,138 +255,159 @@ export async function purchaseAddon(params: {
   if (method === "card") {
     if (!settings.cardPaymentEnabled) throw new Error("現在クレジットカードでのお支払いは受け付けておりません。銀行振込をお選びください。");
     if (!contract.fincode_customer_id) throw new Error("カードが登録されていないため、銀行振込をお選びください。");
-  }
-  if (!contract.contact_email && method === "bank_transfer") {
+  } else if (!contract.contact_email) {
     throw new Error("契約の連絡先メールアドレスが未登録のため請求書を送れません。運営にお問い合わせください。");
   }
 
-  const unitPrice = addonFeeFor(addon, store.pref);
-  const quantity = addon.billing_type === "monthly" ? 1 : Math.max(1, Math.min(addon.code === "spot_job_credit" ? 50 : 5, Math.floor(params.quantity || 1)));
-  const total = unitPrice * quantity;
-  const current = ((contract.store_contract_addons ?? []) as { id: string; addon_id: string; billing_method: string }[]);
-
-  if (addon.billing_type === "monthly") {
-    if (current.some((r) => r.addon_id === addon.id)) throw new Error(`「${addon.name}」はすでにご契約中です。`);
-    // 枠の確認(最終的な判定はDBトリガー)
-    const { addonSlotsLeft } = await import("@/lib/addons");
-    const left = await addonSlotsLeft(svc, addon, store.pref ?? null, params.storeId);
-    if (left !== null && left <= 0) {
-      throw new Error(
-        addon.capacity_scope === "pref"
-          ? `${store.pref ?? "この地域"}の「${addon.name}」は満枠（${addon.capacity}店舗）です。空きが出るまでお待ちください。`
-          : `「${addon.name}」は満枠（全国${addon.capacity}店舗）です。空きが出るまでお待ちください。`
-      );
+  const current = (contract.store_contract_addons ?? []) as { id: string; addon_id: string; billing_method: string }[];
+  const { addonSlotsLeft } = await import("@/lib/addons");
+  const lines: Array<{ addon: AddonRow; quantity: number; unitPrice: number }> = [];
+  for (const item of params.items) {
+    const addon = ((addonRows ?? []) as AddonRow[]).find((a) => a.id === item.addonId);
+    if (!addon || !addon.active || !addon.code) throw new Error("お申し込みいただけないアドオンが含まれています。");
+    if (addon.billing_type === "monthly") {
+      if (current.some((r) => r.addon_id === addon.id)) throw new Error(`「${addon.name}」はすでにご契約中です。`);
+      const left = await addonSlotsLeft(svc, addon, store.pref ?? null, params.storeId);
+      if (left !== null && left <= 0) {
+        throw new Error(
+          addon.capacity_scope === "pref"
+            ? `${store.pref ?? "この地域"}の「${addon.name}」は満枠です。空きが出るまでお待ちください。`
+            : `「${addon.name}」は満枠です。空きが出るまでお待ちください。`
+        );
+      }
+      const { data: pending } = await svc
+        .from("addon_orders")
+        .select("id")
+        .eq("store_id", params.storeId)
+        .eq("addon_id", addon.id)
+        .eq("status", "awaiting_payment")
+        .limit(1);
+      if (pending?.length) throw new Error(`「${addon.name}」は入金待ちのお申し込みがあります。請求書のお振り込みをお願いします。`);
     }
-    const { data: pending } = await svc
+    const quantity =
+      addon.billing_type === "monthly"
+        ? 1
+        : Math.max(1, Math.min(addon.code === "spot_job_credit" ? 50 : 5, Math.floor(item.quantity || 1)));
+    lines.push({ addon, quantity, unitPrice: addonFeeFor(addon, store.pref) });
+  }
+
+  const insertOrder = async (l: (typeof lines)[number], extra: Record<string, unknown>) => {
+    const { data, error } = await svc
       .from("addon_orders")
+      .insert({
+        store_id: params.storeId,
+        store_contract_id: contract.id,
+        addon_id: l.addon.id,
+        addon_code: l.addon.code,
+        addon_name: l.addon.name,
+        billing_type: l.addon.billing_type,
+        quantity: l.quantity,
+        unit_price: l.unitPrice,
+        total_amount: l.unitPrice * l.quantity,
+        payment_method: method,
+        note: params.note,
+        ...extra,
+      })
       .select("id")
-      .eq("store_id", params.storeId)
-      .eq("addon_id", addon.id)
-      .eq("status", "awaiting_payment")
-      .limit(1);
-    if (pending?.length) throw new Error(`「${addon.name}」は入金待ちのお申し込みがあります。請求書のお振り込みをお願いします。`);
-  }
+      .single();
+    if (error || !data) throw new Error(error?.message ?? "お申し込みを作成できませんでした。");
+    return data.id as string;
+  };
 
-  // カード: 月額はプラン+カード払いの月額アドオンの合計で即時決済し、サブスクを差し替える(既存の方式)
-  if (method === "card" && addon.billing_type === "monthly") {
-    const { applyContractBillingChange } = await import("@/lib/contracts-billing");
-    const cardAddonIds = current.filter((r) => (r.billing_method ?? "card") === "card").map((r) => r.addon_id);
-    const result = await applyContractBillingChange({
-      storeContractId: contract.id,
-      newPlanId: contract.plan_id,
-      newAddonIds: [...cardAddonIds, addon.id],
-      resolvesPendingPlan: false,
-    });
-    await svc.from("addon_orders").insert({
-      store_id: params.storeId,
-      store_contract_id: contract.id,
-      addon_id: addon.id,
-      addon_code: addon.code,
-      addon_name: addon.name,
-      billing_type: "monthly",
-      quantity: 1,
-      unit_price: unitPrice,
-      total_amount: result.chargedAmount,
-      payment_method: "card",
-      status: addon.needs_fulfillment ? "paid" : "completed",
-      note: params.note,
-      paid_at: new Date().toISOString(),
-      completed_at: addon.needs_fulfillment ? null : new Date().toISOString(),
-    });
-    if (addon.needs_fulfillment) await notifyAdmin(store.name, addon.name, 1, unitPrice, "card", params.note);
-    return `「${addon.name}」を追加しました（プランと合わせて${result.chargedAmount.toLocaleString("ja-JP")}円を決済し、契約期間を今日から1か月に更新しました）。`;
-  }
-
-  // 注文を作る
-  const { data: order, error: orderError } = await svc
-    .from("addon_orders")
-    .insert({
-      store_id: params.storeId,
-      store_contract_id: contract.id,
-      addon_id: addon.id,
-      addon_code: addon.code,
-      addon_name: addon.name,
-      billing_type: addon.billing_type,
-      quantity,
-      unit_price: unitPrice,
-      total_amount: total,
-      payment_method: method,
-      status: "awaiting_payment",
-      note: params.note,
-    })
-    .select("*")
-    .single();
-  if (orderError || !order) throw new Error(orderError?.message ?? "お申し込みを作成できませんでした。");
-
+  // ---- 銀行振込: 1枚の請求書にまとめる ----
   if (method === "bank_transfer") {
+    const orderIds: string[] = [];
+    for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
     const invoice = await createAddonInvoice({
       storeId: params.storeId,
       storeContractId: contract.id,
       billToName: store.name,
       billToContact: contract.contact_name,
       billToEmail: contract.contact_email!,
-      addonName: addon.name,
-      unitPrice,
-      quantity,
-      monthly: addon.billing_type === "monthly",
-      addonOrderId: order.id,
+      lines: lines.map((l) => ({
+        addonName: l.addon.name,
+        unitPrice: l.unitPrice,
+        quantity: l.quantity,
+        monthly: l.addon.billing_type === "monthly",
+      })),
     });
-    await svc.from("addon_orders").update({ invoice_id: invoice.id }).eq("id", order.id);
-    return `「${addon.name}」の請求書（${total.toLocaleString("ja-JP")}円）をメールでお送りしました。ご入金の確認後に${
-      addon.billing_type === "monthly" ? "有効になります" : addon.code === "spot_job_credit" ? "掲載枠が追加されます" : "運営からご連絡します"
-    }。`;
+    await svc.from("addon_orders").update({ invoice_id: invoice.id }).in("id", orderIds);
+    return `請求書（${invoice.total_amount.toLocaleString("ja-JP")}円）をメールでお送りしました。ご入金の確認後にご利用いただけます。`;
   }
 
-  // カード・都度払い
-  const { getDefaultCardId, chargeFincodeCardOnce } = await import("@/lib/fincode");
-  const cardId = await getDefaultCardId(contract.fincode_customer_id!).catch(() => null);
-  if (!cardId) {
-    await svc.from("addon_orders").update({ status: "canceled", admin_note: "カード情報を確認できず決済できませんでした" }).eq("id", order.id);
-    throw new Error("カード情報が確認できませんでした。銀行振込をお選びいただくか、運営にお問い合わせください。");
+  // ---- カード ----
+  const messages: string[] = [];
+  const monthly = lines.filter((l) => l.addon.billing_type === "monthly");
+  const oneTime = lines.filter((l) => l.addon.billing_type === "one_time");
+
+  if (monthly.length) {
+    const { applyContractBillingChange } = await import("@/lib/contracts-billing");
+    const cardAddonIds = current.filter((r) => (r.billing_method ?? "card") === "card").map((r) => r.addon_id);
+    const result = await applyContractBillingChange({
+      storeContractId: contract.id,
+      newPlanId: contract.plan_id,
+      newAddonIds: [...cardAddonIds, ...monthly.map((l) => l.addon.id)],
+      resolvesPendingPlan: false,
+    });
+    const nowIso = new Date().toISOString();
+    for (const l of monthly) {
+      await insertOrder(l, {
+        status: l.addon.needs_fulfillment ? "paid" : "completed",
+        paid_at: nowIso,
+        completed_at: l.addon.needs_fulfillment ? null : nowIso,
+      });
+      if (l.addon.needs_fulfillment) await notifyAdmin(store.name, l.addon.name, 1, l.unitPrice, "card", params.note);
+    }
+    messages.push(
+      `月額アドオン（${monthly.map((l) => l.addon.name).join("、")}）を追加しました。プランと合わせて${result.chargedAmount.toLocaleString(
+        "ja-JP"
+      )}円を決済し、契約期間を今日から1か月に更新しました。`
+    );
   }
-  const orderId = ("a" + order.id.replace(/-/g, "").slice(0, 12) + Date.now().toString(36) + Math.random().toString(36).slice(2, 7)).slice(0, 30);
-  const charge = await chargeFincodeCardOnce({ orderId, customerId: contract.fincode_customer_id!, cardId, amount: total }).catch(
-    (e: unknown) => ({ status: "ERROR", error_code: e instanceof Error ? e.message : String(e) }) as any
-  );
-  if (charge.status !== "CAPTURED") {
-    await svc
-      .from("addon_orders")
-      .update({ status: "canceled", fincode_order_id: orderId, admin_note: `カード決済失敗: ${charge.status} ${charge.error_code ?? ""}` })
-      .eq("id", order.id);
-    throw new Error("カード決済が完了しませんでした。カード情報をご確認いただくか、銀行振込をお選びください。");
+
+  if (oneTime.length) {
+    const total = oneTime.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+    const orderIds: string[] = [];
+    for (const l of oneTime) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
+    const { getDefaultCardId, chargeFincodeCardOnce } = await import("@/lib/fincode");
+    const cardId = await getDefaultCardId(contract.fincode_customer_id!).catch(() => null);
+    const fincodeOrderId = (
+      "a" +
+      orderIds[0].replace(/-/g, "").slice(0, 12) +
+      Date.now().toString(36) +
+      Math.random().toString(36).slice(2, 7)
+    ).slice(0, 30);
+    const charge: any = cardId
+      ? await chargeFincodeCardOnce({ orderId: fincodeOrderId, customerId: contract.fincode_customer_id!, cardId, amount: total }).catch(
+          (e: unknown) => ({ status: "ERROR", error_code: e instanceof Error ? e.message : String(e) })
+        )
+      : { status: "NO_CARD" };
+    if (charge.status !== "CAPTURED") {
+      await svc
+        .from("addon_orders")
+        .update({ status: "canceled", fincode_order_id: fincodeOrderId, admin_note: `カード決済失敗: ${charge.status} ${charge.error_code ?? ""}` })
+        .in("id", orderIds);
+      const failMsg = "都度払いのアドオンはカード決済が完了しませんでした。カード情報をご確認いただくか、銀行振込をお選びください。";
+      if (messages.length) return `${messages.join(" ")} ※${failMsg}`;
+      throw new Error(failMsg);
+    }
+    await svc.from("addon_orders").update({ fincode_order_id: fincodeOrderId, paid_at: new Date().toISOString() }).in("id", orderIds);
+    await svc.from("billing_events").insert({
+      store_contract_id: contract.id,
+      event_type: "success",
+      amount: total,
+      source: "contract_change",
+      note: `アドオン購入(${oneTime.map((l) => `${l.addon.name}×${l.quantity}`).join("、")})`,
+    });
+    for (const id of orderIds) await fulfillPaidAddonOrder(id);
+    messages.push(
+      `${oneTime.map((l) => (l.quantity > 1 ? `${l.addon.name}×${l.quantity}` : l.addon.name)).join("、")}をお申し込みいただきました（${total.toLocaleString(
+        "ja-JP"
+      )}円を決済しました）。`
+    );
   }
-  await svc.from("addon_orders").update({ fincode_order_id: orderId, paid_at: new Date().toISOString() }).eq("id", order.id);
-  await svc.from("billing_events").insert({
-    store_contract_id: contract.id,
-    event_type: "success",
-    amount: total,
-    source: "contract_change",
-    note: `アドオン購入(${addon.name} ×${quantity})`,
-  });
-  await fulfillPaidAddonOrder(order.id);
-  return addon.code === "spot_job_credit"
-    ? `スポット求人の掲載枠を${quantity}件追加しました（${total.toLocaleString("ja-JP")}円を決済しました）。`
-    : `「${addon.name}」をお申し込みいただきました（${total.toLocaleString("ja-JP")}円を決済しました）。運営から日程などのご連絡をいたします。`;
+
+  return messages.join(" ");
 }
 
 async function notifyAdmin(storeName: string, addonName: string, quantity: number, total: number, paymentMethod: string, note: string | null) {

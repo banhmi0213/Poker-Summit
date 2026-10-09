@@ -214,10 +214,7 @@ export async function GET(req: NextRequest) {
         billToName: store?.name ?? "店舗",
         billToContact: contract.contact_name,
         billToEmail: contract.contact_email,
-        addonName: addon?.name ?? "アドオン",
-        unitPrice: a.fee ?? addon?.monthly_fee ?? 0,
-        quantity: 1,
-        monthly: true,
+        lines: [{ addonName: addon?.name ?? "アドオン", unitPrice: a.fee ?? addon?.monthly_fee ?? 0, quantity: 1, monthly: true }],
         periodStart,
         storeContractAddonId: a.id,
       });
