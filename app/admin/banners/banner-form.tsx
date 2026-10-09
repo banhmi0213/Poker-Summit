@@ -100,6 +100,7 @@ export function BannerForm({ banner }: { banner?: EditableBanner }) {
   }
 
   const shownImage = preview ?? banner?.image_url ?? null;
+  const slimPosition = ["home_coupon", "home_ranking", "home_jobs"].includes(position);
 
   return (
     <form ref={formRef} action={action} className={styles.form}>
@@ -111,7 +112,7 @@ export function BannerForm({ banner }: { banner?: EditableBanner }) {
       </label>
 
       <div className="field">
-        <span className="muted">画像ファイル（JPEG・PNG・WebP／3MBまで。推奨 1200×400px）</span>
+        <span className="muted">画像ファイル（JPEG・PNG・WebP／3MBまで。{slimPosition ? "帯型バナー推奨 1200×120px" : "推奨 1200×400px"}）</span>
         {banner?.image_url && !preview && (
           <div className={styles.current}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
