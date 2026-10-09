@@ -6,25 +6,27 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreCard } from "@/app/store-card";
 import { getCurrentPref } from "@/lib/current-pref";
-import { getPrefPickupStores, PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
+import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 
-// Same randomized recommended priority and ten-store refill as the TOP page,
-// scoped to the selected prefecture, or nationwide when none is selected.
+// TOPの「すべての店舗を見る」。全国PICK UP(全国PICKUP契約+月ごとの抽選で10店舗)と、
+// 閲覧者の都道府県の地域PICKUP契約店舗。
 export default async function FeaturedStoresPage() {
   const supabase = await createClient();
   const { pref: currentPref } = await getCurrentPref();
-
-  const storesPromise = getPrefPickupStores(supabase, currentPref, PICKUP_PER_PREF_LIMIT);
 
   const [
     {
       data: { user },
     },
     stores,
-  ] = await Promise.all([supabase.auth.getUser(), storesPromise]);
+    regional,
+  ] = await Promise.all([supabase.auth.getUser(), getNationalPickupStores(supabase), getRegionalPickupStores(supabase, currentPref)]);
 
-  const storeFlags = await fetchStoreDisplayFlags(supabase, (stores ?? []).map((s: { id: string }) => s.id));
+  const storeFlags = await fetchStoreDisplayFlags(
+    supabase,
+    [...(stores ?? []), ...(regional ?? [])].map((s: { id: string }) => s.id)
+  );
 
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -41,14 +43,12 @@ export default async function FeaturedStoresPage() {
       <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <div className="container">
         <h1 style={{ fontSize: 22, marginTop: 20, marginBottom: 16 }}>
-          🏆 PICK UP店舗一覧{currentPref ? `（${currentPref}）` : "（全国）"}
+          🏆 PICK UP店舗一覧
         </h1>
 
         {(!stores || stores.length === 0) && (
           <p className="muted">
-            {currentPref
-              ? `${currentPref}にはまだPICK UP店舗がありません。`
-              : "まだPICK UP店舗がありません。"}
+            まだPICK UP店舗がありません。
           </p>
         )}
 
@@ -72,6 +72,26 @@ export default async function FeaturedStoresPage() {
             />
           ))}
         </div>
+
+        {regional.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 18, margin: "28px 0 14px" }}>📍 {currentPref}のPICK UP店舗</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 }}>
+              {regional.map((s: any) => (
+                <StoreCard
+                  key={s.id}
+                  store={s}
+                  isFavorite={favoriteStoreIds.has(s.id)}
+                  flags={storeFlags.get(s.id)}
+                  favoriteAction={async () => {
+                    "use server";
+                    await toggleFavoriteStore(s.id, "/stores/featured");
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
       <PortalFooter />
       <BottomTabs active="stores" />

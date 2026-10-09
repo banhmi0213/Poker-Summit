@@ -58,52 +58,57 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// 都道府県ごとのPICK UP表示順(2026/10、「PICKUPが埋まってない場合はランダム
-// で出す、契約で埋まった場合は10店舗をランダムに上位表示、一部だけ埋まって
-// る場合は契約店舗を優先的に上位表示して残り枠をランダム入れ替え」との指示
-// を受けて実装)。
+// ---------------------------------------------------------------------------
+// PICK UP店舗の表示(2026/10)
 //
-// - 契約店舗(is_recommended=true)は必ず全件含め、並び順はアクセスのたびに
-//   シャッフルする(同じ店舗がいつも1位固定になるのを防ぐ)。
-// - 残り枠(limit - 契約数)は、同じ都道府県の非契約・承認済み店舗からランダム
-//   に抽選して埋める。リクエストのたびに選び直すので、非契約枠は自然に
-//   ローテーションする。
-// この1本のロジックで3パターンすべてをカバーする: 契約0件なら実質ランダムの
-// 店舗だけがlimit件、契約がlimit件に達していればその契約店舗だけがシャッフル
-// されて並ぶ、契約が一部だけなら契約店舗が優先(先頭)でその後ろがランダム。
-export async function getPrefPickupStores(
-  supabase: SupabaseClient,
-  pref: string | null,
-  limit: number = PICKUP_PER_PREF_LIMIT
-): Promise<any[]> {
-  // A null prefecture applies the same priority and refill rules nationwide.
-  let query = supabase
+// 全国PICK UP(TOPページ・「すべての店舗を見る」): 全国10枠。
+//  - 全国TOPページPICKUP(アドオン)の契約店舗は必ず表示(先頭。並びはアクセスごとにシャッフル)
+//  - 足りない枠は、PICK UP契約のない店舗から抽選して埋める。抽選は月ごと(日本時間の月初めに
+//    入れ替わり、その月の間は同じ店舗)。契約が増えると抽選店舗が後ろから押し出される。
+// 地域PICK UP: その都道府県の地域PICKUP(アドオン)契約店舗だけを表示(抽選での穴埋めはしない)。
+// ---------------------------------------------------------------------------
+export const NATIONAL_PICKUP_SLOTS = 10;
+
+function jstMonthKey(now = new Date()) {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 7);
+}
+
+// 月+店舗IDから決まる抽選順(保存不要で、その月の間は同じ順番になる)
+function lotteryScore(month: string, id: string) {
+  let h = 2166136261;
+  const key = `${month}:${id}`;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export async function getNationalPickupStores(supabase: SupabaseClient, limit: number = NATIONAL_PICKUP_SLOTS): Promise<any[]> {
+  const { data, error } = await supabase.from("stores").select("*").in("status", ["approved", "listed"]);
+  if (error) throw new Error(error.message);
+  const all = data ?? [];
+  const contracted = shuffle(all.filter((s: any) => s.is_national_pickup));
+  const month = jstMonthKey();
+  const drawn = all
+    .filter((s: any) => !s.is_national_pickup && !s.is_recommended)
+    .sort((a: any, b: any) => lotteryScore(month, a.id) - lotteryScore(month, b.id));
+  return [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
+}
+
+export async function getRegionalPickupStores(supabase: SupabaseClient, pref: string | null): Promise<any[]> {
+  if (!pref) return [];
+  const { data, error } = await supabase
     .from("stores")
     .select("*")
-    .in("status", ["approved", "listed"]);
-  if (pref) query = query.eq("pref", pref);
-  const { data, error } = await query;
+    .in("status", ["approved", "listed"])
+    .eq("pref", pref)
+    .eq("is_recommended", true);
+  if (error) throw new Error(error.message);
+  return shuffle(data ?? []);
+}
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const all = data ?? [];
-
-  // 全国TOPページPICKUP(アドオン、2026/10)の店舗は、閲覧者の地域に関係なく先頭に出す。
-  let national: any[] = all.filter((s: any) => s.is_national_pickup);
-  if (pref) {
-    const { data: nationalRows } = await supabase
-      .from("stores")
-      .select("*")
-      .in("status", ["approved", "listed"])
-      .eq("is_national_pickup", true);
-    national = nationalRows ?? [];
-  }
-  const nationalIds = new Set(national.map((s: any) => s.id));
-  const rest = all.filter((s: any) => !nationalIds.has(s.id));
-  const contracted = shuffle(rest.filter((s: any) => s.is_recommended));
-  const others = shuffle(rest.filter((s: any) => !s.is_recommended));
-
-  return [...shuffle(national), ...contracted, ...others].slice(0, limit);
+/** 旧API(互換): 全国PICK UPを返す */
+export async function getPrefPickupStores(supabase: SupabaseClient, _pref: string | null, limit: number = PICKUP_PER_PREF_LIMIT) {
+  return getNationalPickupStores(supabase, limit);
 }
