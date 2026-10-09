@@ -24,8 +24,8 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  const q=String(searchParams.q??"").trim().slice(0,100);
  const rawDate=searchParams.date ?? "";
  const date=/^\d{4}-\d{2}-\d{2}$/.test(rawDate)&&Number.isFinite(Date.parse(rawDate+"T00:00:00Z"))&&new Date(rawDate+"T00:00:00Z").toISOString().slice(0,10)===rawDate ? rawDate : "";
- let query=supabase.from("dealer_profiles").select("user_id,full_name,pref,games,experience_years,dealer_type,available_dates,photo_url,avatar_kind,contract_status,available_regions,available_hours").eq("published",true).order("updated_at",{ascending:false});
- if(pref)query=query.eq("pref",pref);
+ let query=supabase.from("dealer_profiles").select("user_id,full_name,pref,games,experience_years,dealer_type,available_dates,photo_url,avatar_kind,contract_status,available_regions,available_hours,available_prefectures").eq("published",true).order("updated_at",{ascending:false});
+ if(pref)query=query.contains("available_prefectures",[pref]);
  if(date)query=query.contains("available_dates",[date]);
  if(q){
    const literal=q.replaceAll("\\","\\\\").replaceAll("%","\\%").replaceAll("_","\\_");
@@ -37,10 +37,10 @@ export default async function DealersPage({searchParams}:{searchParams:{pref?:st
  const {data:profiles,error}=await query;
  if(error)throw new Error("ディーラー情報を読み込めませんでした。");
  const stats=await dealerReliability(supabase,(profiles ?? []).map(p=>p.user_id));
- return <main className={styles.page}><h1 className={styles.heading}>フリーディーラーを探す</h1><p className={styles.hint}>最初は店舗所在地の都道府県を表示します。他県を探す場合は都道府県を変更してください。プロフィールは店舗アカウントだけが閲覧できます。</p>
+ return <main className={styles.page}><h1 className={styles.heading}>フリーディーラーを探す</h1><p className={styles.hint}>最初は店舗所在地に対応できるディーラーを表示します。他県を探す場合は対応地域を変更してください。居住地ではなく対応可能地域で検索します。プロフィールは店舗アカウントだけが閲覧できます。</p>
  <MatchingRulesNotice />
  <form action="/store/profile/dealers" className={styles.searchForm}>
- <label className={styles.field}>都道府県<select name="pref" defaultValue={pref}><option value="">全国</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
+ <label className={styles.field}>対応地域（都道府県）<select name="pref" defaultValue={pref}><option value="">全国</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
  <label className={styles.field}>フリーワード<input type="search" name="q" defaultValue={q} maxLength={100} placeholder="氏名・ゲーム種目"/></label>
  <label className={styles.field}>勤務希望日<input type="date" name="date" defaultValue={date}/></label>
  <button className="btn primary" type="submit">検索</button><Link className="btn" href="/store/profile/dealers">条件を解除</Link></form>

@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
+import { DealerRegionField } from "./region-field";
+import { inferDealerPrefectures } from "@/lib/dealer-regions";
 import { WorkDates } from "./work-dates";
 import { DealerPhotoField } from "./photo-field";
 import { saveDealer } from "./actions";
-import { DEALER_GAMES, DEALER_CONTRACT_STATUSES, type DealerProfile } from "@/lib/dealers";
+import { DEALER_GAMES, DEALER_CONTRACT_STATUSES, DEALER_STATUS_LABEL, type DealerProfile } from "@/lib/dealers";
 import { PREF_OPTIONS } from "@/lib/constants";
 import styles from "./dealer.module.css";
 function Submit(){const { pending }=useFormStatus();return <button className="btn primary" type="submit" disabled={pending}>{pending ? "保存中…" : "保存する"}</button>;}
@@ -20,8 +22,9 @@ export function DealerForm({ profile, address, photo, today, contacts }: { conta
  <label className={styles.field}>氏名 *<input name="name" defaultValue={profile?.full_name ?? ""} maxLength={100} autoComplete="name" required /></label>
  <label className={styles.field}>年齢 *<input name="age" type="number" min={0} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
  <label className={styles.field}>ディーラー種別<select name="dealerType" value={dealerType} onChange={e=>setDealerType(e.target.value)}><option>ディーラー</option><option>フリーディーラー</option></select></label>
- <label className={styles.field}>契約状況 *<select name="contractStatus" defaultValue={profile?.contract_status ?? "契約可能"} required>{DEALER_CONTRACT_STATUSES.map(s=><option key={s}>{s}</option>)}</select><span className={styles.hint}>現在の募集状況を選択してください。店舗の一覧にも表示されます。</span></label>
- <label className={styles.field+" "+styles.wide}>対応可能地域{freelance ? " *" : "（任意）"}<input name="availableRegions" maxLength={300} defaultValue={profile?.available_regions ?? ""} required={freelance} placeholder="例：大阪府・京都府・兵庫県（神戸市まで）" /><span className={styles.hint}>居住地とは別に、勤務に対応できる地域を記載してください。</span></label>
+ <label className={styles.field}>受付状況 *<select name="contractStatus" defaultValue={profile?.contract_status ?? "契約可能"} required>{DEALER_CONTRACT_STATUSES.map(s=><option key={s} value={s}>{DEALER_STATUS_LABEL[s]}</option>)}</select><span className={styles.hint}>現在の募集状況を選択してください。店舗の一覧にも表示されます。</span></label>
+ <DealerRegionField initial={profile?.available_prefectures?.length ? profile.available_prefectures : inferDealerPrefectures(profile?.available_regions ?? "")} required={freelance} />
+ <label className={styles.field+" "+styles.wide}>対応地域の補足（任意）<input name="regionNote" maxLength={100} defaultValue={profile?.region_note ?? ""} placeholder="例：兵庫県は神戸市まで／遠方は交通費相談" /><span className={styles.hint}>市区町村や交通費などの条件を記載できます。</span></label>
  <label className={styles.field+" "+styles.wide}>対応可能時間{freelance ? " *" : "（任意）"}<textarea name="availableHours" rows={3} maxLength={500} defaultValue={profile?.available_hours ?? ""} required={freelance} placeholder="例：平日18:00〜24:00／土日祝12:00〜翌2:00（日本時間）" /><span className={styles.hint}>曜日・時間帯や深夜対応の可否を、日本時間で記載してください。フリーディーラーは対応地域・時間の両方が必須です。</span></label>
  <label className={styles.field}>住所（都道府県） *<select name="pref" defaultValue={profile?.pref ?? ""} required><option value="">選択してください</option>{PREF_OPTIONS.map(p=><option key={p}>{p}</option>)}</select></label>
  <label className={styles.field+" "+styles.wide}>住所（市区町村・番地など） *<input name="address" defaultValue={address} maxLength={300} autoComplete="street-address" required /></label>
