@@ -63,6 +63,10 @@ export async function pickBanner(
 // と一致させること。
 export const BANNER_POSITIONS = [
   { value: "top", label: "TOPページ（開催予定イベントの上）" },
+  { value: "home_coupon", label: "TOPページ（お得なクーポンの上・横長1枚）" },
+  { value: "home_community", label: "TOPページ（サミット情報交換の上・横並び4枚）" },
+  { value: "home_ranking", label: "TOPページ（店舗ランキングの上・横長1枚）" },
+  { value: "home_jobs", label: "TOPページ（新着求人・スポット求人の上・横長1枚）" },
   { value: "sidebar", label: "サイドバー" },
   { value: "footer", label: "フッター" },
   { value: "store_list", label: "店舗一覧" },
@@ -121,4 +125,21 @@ export function isExternalBannerLink(linkUrl: string | null | undefined, request
   } catch {
     return false;
   }
+}
+/** 新しいTOPセクション直前の掲載枠。4枚枠は表示順の先頭4件。 */
+export async function getHomeSectionBanners(
+  supabase: SupabaseClient,
+  position: "home_coupon" | "home_community" | "home_ranking" | "home_jobs",
+  limit = 1
+): Promise<PickedBanner[]> {
+  const now = new Date().toISOString();
+  const { data } = await supabase.from("banners")
+    .select("id, title, image_url, link_url")
+    .eq("position", position).eq("active", true).is("scope", null)
+    .not("image_url", "is", null).neq("image_url", "")
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gte.${now}`)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true }).limit(limit);
+  return (data ?? []) as PickedBanner[];
 }
