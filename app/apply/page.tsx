@@ -6,6 +6,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
+import { ADDON_COLUMNS, addonPriceLabel, type AddonRow } from "@/lib/addons";
 import { BILLING_CYCLES, discountFor, getBillingSettings, quote, type BillingSettings } from "@/lib/bank-transfer";
 
 export const metadata = staticPageMetadata({ title: "店舗掲載のお申し込み", description: "アミューズメントポーカー店・ポーカーバーの掲載お申し込み。Poker Summitに店舗情報・イベント・求人を掲載して集客につなげましょう。", path: "/apply" });
@@ -34,8 +35,9 @@ export default async function ApplyPage({
       .order("sort_order"),
     supabase
       .from("addons")
-      .select("id, name, monthly_fee, description")
+      .select(ADDON_COLUMNS)
       .eq("active", true)
+      .not("code", "is", null)
       .order("sort_order"),
   ]);
 
@@ -152,7 +154,7 @@ export default async function ApplyPage({
         <p className="muted" style={{ marginBottom: 20 }}>
           店舗・施設の掲載をご希望の方は、以下のフォームよりお申込みください。
         </p>
-        <PricingSection plans={plans ?? []} addons={addons ?? []} billing={billing} />
+        <PricingSection plans={plans ?? []} addons={(addons ?? []) as AddonRow[]} billing={billing} />
         <h2 style={{ fontSize: 16, margin: "24px 0 10px" }}>お申込みフォーム</h2>
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
@@ -295,7 +297,7 @@ function featureLines(description: string | null) {
 // 辿れる店舗向けページで、一般会員向けのナビには出さない。決済審査では「販売する
 // サービスと価格が確認できること」が求められるため、内容・税込価格・請求と解約の
 // 条件をここで明示する。価格と内容は管理画面のプラン/アドオン設定(plans/addons)から表示。
-function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons: PriceItem[]; billing: BillingSettings }) {
+function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons: AddonRow[]; billing: BillingSettings }) {
   const prepay = BILLING_CYCLES.filter((m) => m !== 1).map((m) => ({ months: m, discount: discountFor(billing, m) }));
   if (plans.length === 0 && addons.length === 0) return null;
   return (
@@ -362,23 +364,33 @@ function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons
 
       {addons.length > 0 && (
         <div className="card" style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, margin: "0 0 8px" }}>追加オプション</h3>
-          {addons.map((addon) => (
-            <div key={addon.id} style={{ padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                <strong style={{ fontSize: 14 }}>{addon.name}</strong>
-                <span style={{ fontWeight: 700 }}>
-                  月額{yen(addon.monthly_fee)}
-                  <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
-                </span>
+          <h3 style={{ fontSize: 15, margin: "0 0 4px" }}>アドオン（オプション）</h3>
+          <p className="muted" style={{ fontSize: 12, margin: "0 0 6px" }}>ご契約後、店舗管理画面からお申し込みいただけます。</p>
+          {(["monthly", "one_time"] as const).map((type) => {
+            const list = addons.filter((a) => a.billing_type === type);
+            if (!list.length) return null;
+            return (
+              <div key={type} style={{ marginTop: 8 }}>
+                <div className="muted" style={{ fontSize: 12, fontWeight: 700 }}>{type === "monthly" ? "月額" : "都度払い"}</div>
+                {list.map((addon) => (
+                  <div key={addon.id} style={{ padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                      <strong style={{ fontSize: 14 }}>{addon.name}</strong>
+                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>
+                        {addonPriceLabel(addon)}
+                        <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
+                      </span>
+                    </div>
+                    {addon.description && (
+                      <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 0", lineHeight: 1.7 }}>
+                        {addon.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
               </div>
-              {addon.description && (
-                <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 0", lineHeight: 1.7 }}>
-                  {addon.description}
-                </p>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -89,8 +89,21 @@ export async function getPrefPickupStores(
   }
 
   const all = data ?? [];
-  const contracted = shuffle(all.filter((s: any) => s.is_recommended));
-  const others = shuffle(all.filter((s: any) => !s.is_recommended));
 
-  return [...contracted, ...others].slice(0, limit);
+  // 全国TOPページPICKUP(アドオン、2026/10)の店舗は、閲覧者の地域に関係なく先頭に出す。
+  let national: any[] = all.filter((s: any) => s.is_national_pickup);
+  if (pref) {
+    const { data: nationalRows } = await supabase
+      .from("stores")
+      .select("*")
+      .in("status", ["approved", "listed"])
+      .eq("is_national_pickup", true);
+    national = nationalRows ?? [];
+  }
+  const nationalIds = new Set(national.map((s: any) => s.id));
+  const rest = all.filter((s: any) => !nationalIds.has(s.id));
+  const contracted = shuffle(rest.filter((s: any) => s.is_recommended));
+  const others = shuffle(rest.filter((s: any) => !s.is_recommended));
+
+  return [...shuffle(national), ...contracted, ...others].slice(0, limit);
 }

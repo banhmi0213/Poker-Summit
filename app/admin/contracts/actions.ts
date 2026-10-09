@@ -127,6 +127,15 @@ export async function updateAddon(formData: FormData) {
     throw new Error("アドオン名を入力してください。");
   }
 
+  const optInt = (key: string) => {
+    if (!formData.has(key)) return undefined;
+    const raw = String(formData.get(key) ?? "").trim();
+    if (raw === "") return null;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+  const majorAreaFee = optInt("majorAreaFee");
+  const capacity = optInt("capacity");
   const { error } = await supabase
     .from("addons")
     .update({
@@ -134,6 +143,8 @@ export async function updateAddon(formData: FormData) {
       monthly_fee: monthlyFee,
       description: description || null,
       sort_order: sortOrder,
+      ...(majorAreaFee !== undefined ? { major_area_fee: majorAreaFee } : {}),
+      ...(capacity !== undefined ? { capacity } : {}),
     })
     .eq("id", addonId);
 

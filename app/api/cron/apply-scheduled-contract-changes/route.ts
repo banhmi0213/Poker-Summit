@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
   const { data: dueAddonRows, error: addonError } = await supabase
     .from("store_contract_addons")
     .select("store_contract_id")
+    .eq("billing_method", "card")
     .not("pending_removed_at", "is", null)
     .lte("pending_removed_at", nowIso);
   if (addonError) {
@@ -86,7 +87,8 @@ export async function GET(req: NextRequest) {
       const { data: addonRows, error: addonFetchError } = await supabase
         .from("store_contract_addons")
         .select("addon_id, pending_removed_at")
-        .eq("store_contract_id", storeContractId);
+        .eq("store_contract_id", storeContractId)
+        .eq("billing_method", "card");
       if (addonFetchError) throw new Error(addonFetchError.message);
 
       const finalAddonIds = (addonRows ?? [])

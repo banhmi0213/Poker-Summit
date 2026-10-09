@@ -101,7 +101,7 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
 
   const { data: contract } = await supabase
     .from("store_contracts")
-    .select("id, plan_id, billing_method, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id)")
+    .select("id, plan_id, billing_method, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id, billing_method)")
     .eq("store_id", storeId)
     .maybeSingle();
 
@@ -132,9 +132,10 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
   }
 
   const currentFee = (contract.plans as { monthly_fee: number } | null)?.monthly_fee ?? 0;
-  const currentAddonIds = ((contract.store_contract_addons ?? []) as { addon_id: string }[]).map(
-    (a) => a.addon_id
-  );
+  // カードで払っている月額アドオンだけ(振込のアドオンは別の請求書で払う)
+  const currentAddonIds = ((contract.store_contract_addons ?? []) as { addon_id: string; billing_method?: string }[])
+    .filter((a) => (a.billing_method ?? "card") === "card")
+    .map((a) => a.addon_id);
 
   // 新しく予約/確定するこの変更と矛盾する、古い「予約中」レコードは
   // 先に消しておく(以前の「既存pendingがあれば更新」方式から、

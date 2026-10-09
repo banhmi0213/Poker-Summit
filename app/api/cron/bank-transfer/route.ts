@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
         .from("invoices")
         .select("id", { count: "exact", head: true })
         .eq("store_contract_id", c.id)
+        .eq("kind", "plan")
         .in("status", ["unpaid", "paid"])
         .gte("period_end", periodStart);
       if ((count ?? 0) > 0) continue; // この期間の請求書は発行済み
@@ -122,6 +123,7 @@ export async function GET(req: NextRequest) {
     .select("*")
     .eq("status", "unpaid")
     .lt("due_date", today)
+    .eq("kind", "plan")
     .not("store_contract_id", "is", null);
   for (const inv of (overdue ?? []) as InvoiceRow[]) {
     // まだ支払い済みの期間が残っている(対象期間が始まっていない)うちは止めない
@@ -167,6 +169,92 @@ export async function GET(req: NextRequest) {
     } catch (e) {
       results.push({ step: "suspend", id: inv.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
     }
+  }
+
+  // 4) 振込で払う月額アドオン ---------------------------------------------------------
+  //  4a) 解約予約の期限が来たものを外す
+  const nowIso = new Date().toISOString();
+  const { data: removable } = await svc
+    .from("store_contract_addons")
+    .select("id")
+    .eq("billing_method", "bank_transfer")
+    .not("pending_removed_at", "is", null)
+    .lte("pending_removed_at", nowIso);
+  for (const r of removable ?? []) {
+    await svc.from("store_contract_addons").delete().eq("id", r.id);
+    results.push({ step: "addon_removed", id: r.id, ok: true });
+  }
+
+  //  4b) 期間終了の7日前に次の1か月分の請求書
+  const { data: dueAddons } = await svc
+    .from("store_contract_addons")
+    .select("id, fee, current_period_end, store_contract_id, addons(name, monthly_fee), store_contracts!inner(id, status, store_id, contact_name, contact_email, stores(name))")
+    .eq("billing_method", "bank_transfer")
+    .is("pending_removed_at", null)
+    .not("current_period_end", "is", null)
+    .lt("current_period_end", renewalCutoffIso);
+  for (const a of (dueAddons ?? []) as any[]) {
+    try {
+      const contract = Array.isArray(a.store_contracts) ? a.store_contracts[0] : a.store_contracts;
+      if (!contract || contract.status !== "active" || !contract.contact_email) continue;
+      const periodStart = isoToJstDate(a.current_period_end);
+      const { count } = await svc
+        .from("invoices")
+        .select("id", { count: "exact", head: true })
+        .eq("store_contract_addon_id", a.id)
+        .in("status", ["unpaid", "paid"])
+        .gte("period_end", periodStart);
+      if ((count ?? 0) > 0) continue;
+      const addon = Array.isArray(a.addons) ? a.addons[0] : a.addons;
+      const store = Array.isArray(contract.stores) ? contract.stores[0] : contract.stores;
+      const { createAddonInvoice } = await import("@/lib/addon-orders");
+      const invoice = await createAddonInvoice({
+        storeId: contract.store_id,
+        storeContractId: contract.id,
+        billToName: store?.name ?? "店舗",
+        billToContact: contract.contact_name,
+        billToEmail: contract.contact_email,
+        addonName: addon?.name ?? "アドオン",
+        unitPrice: a.fee ?? addon?.monthly_fee ?? 0,
+        quantity: 1,
+        monthly: true,
+        periodStart,
+        storeContractAddonId: a.id,
+      });
+      results.push({ step: "addon_renewal", id: invoice.id, ok: true });
+    } catch (e) {
+      results.push({ step: "addon_renewal", id: a.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  //  4c) 更新分が期限を過ぎても未入金で、期間が切れたアドオンは外す
+  const { data: overdueAddonInvoices } = await svc
+    .from("invoices")
+    .select("id, store_contract_addon_id, period_start, invoice_number")
+    .eq("status", "unpaid")
+    .eq("kind", "addon")
+    .lt("due_date", today)
+    .not("store_contract_addon_id", "is", null);
+  for (const inv of overdueAddonInvoices ?? []) {
+    if (inv.period_start && inv.period_start > today) continue;
+    const { data: row } = await svc
+      .from("store_contract_addons")
+      .select("id, current_period_end")
+      .eq("id", inv.store_contract_addon_id)
+      .maybeSingle();
+    if (!row) continue;
+    if (row.current_period_end && row.current_period_end > nowIso) continue;
+    await svc.from("store_contract_addons").delete().eq("id", row.id);
+    await svc.from("invoices").update({ status: "canceled" }).eq("id", inv.id).eq("status", "unpaid");
+    await svc.from("audit_log").insert({
+      actor_user_id: null,
+      actor_email: null,
+      action: "addon_stopped_for_nonpayment",
+      target_type: "invoice",
+      target_id: inv.id,
+      detail: { invoiceNumber: inv.invoice_number },
+    });
+    results.push({ step: "addon_stopped", id: inv.id, ok: true });
   }
 
   return NextResponse.json({ today, processed: results.length, results });
