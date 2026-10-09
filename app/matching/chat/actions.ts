@@ -6,7 +6,21 @@ import {createClient} from "@/lib/supabase/server";
 import {createStoreClient} from "@/lib/supabase/store-server";
 import {requireMatchingConsent} from "@/lib/matching-consent-server";
 import {UUID,validDate} from "@/lib/spot-jobs";
+import {normalizeDealerPhone,validDealerContacts} from "@/lib/dealer-contacts";
 export type ChatState={error:string;success:number};
+export async function saveChatContacts(previous:ChatState,form:FormData):Promise<ChatState>{
+ const record=String(form.get("record")||"");if(!UUID.test(record))return {error:"チャットを確認してください。",success:previous.success};
+ const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)redirect("/login");
+ const path="/account/dealer/chat/"+record;await requireMatchingConsent(db,user.id,"dealer",path);
+ const room=await db.from("dealer_matching_records").select("id").eq("id",record).eq("dealer_user_id",user.id).maybeSingle();
+ if(room.error||!room.data)return {error:"チャットを確認できません。",success:previous.success};
+ const phone=normalizeDealerPhone(String(form.get("phone")||"")),kind=String(form.get("contact_type")||""),value=String(form.get("contact_value")||"").trim();
+ if(form.get("agreed")!=="on"||!validDealerContacts(phone,kind,value,true))return {error:"連絡先を入力し、開示に同意してください。",success:previous.success};
+ const result=await db.from("dealer_private_contacts").upsert({user_id:user.id,phone,contact_type:kind,contact_value:value,disclosure_consented_at:new Date().toISOString()},{onConflict:"user_id"});
+ if(result.error)return {error:"連絡先を保存できませんでした。",success:previous.success};
+ revalidatePath(path);revalidatePath("/store/profile/dealer-chat/"+record);revalidatePath("/account/dealer/edit");
+ return {error:"",success:previous.success+1};
+}
 export async function chatAction(previous:ChatState,form:FormData):Promise<ChatState>{
  const actor=form.get("actor"),record=String(form.get("record")||"");
  if((actor!=="store"&&actor!=="dealer")||!UUID.test(record))return {error:"チャットを確認してください。",success:previous.success};
@@ -19,6 +33,10 @@ export async function chatAction(previous:ChatState,form:FormData):Promise<ChatS
  if(!["consent","send","terms","confirm","report","block","unblock"].includes(operation))return {error:"操作を確認してください。",success:previous.success};
  if(["consent","confirm","block"].includes(operation)&&form.get("agreed")!=="on")return {error:"内容を確認してチェックしてください。",success:previous.success};
  const payload:Record<string,string>={};
+ if(operation==="confirm"&&actor==="dealer"){
+  const result=await db.from("dealer_private_contacts").select("phone,contact_value,disclosure_consented_at,disclosure_version").eq("user_id",user.id).maybeSingle();
+  if(result.error||!result.data?.phone||!result.data.contact_value||!result.data.disclosure_consented_at||result.data.disclosure_version!=="2026-10-07-contact-v1")return {error:"先に、このチャット下部で連絡先を登録し、開示に同意してください。",success:previous.success};
+ }
  for(const key of ["body","nonce","revision","contract_type","payment_method","payment_date","notes","reason"])payload[key]=String(form.get(key)||"");
  if(operation==="send"&&(!UUID.test(payload.nonce)||!payload.body.trim()||payload.body.length>2000))return {error:"メッセージは1〜2000文字で記載してください。",success:previous.success};
  const {error}=await db.rpc("dealer_chat_operation",{p_record:record,p_operation:operation,p_payload:payload});
