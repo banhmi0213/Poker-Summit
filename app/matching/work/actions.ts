@@ -28,7 +28,9 @@ export async function submitWork(_state:{error:string},form:FormData):Promise<{e
   recordId=id;
   const review=String(form.get("review")||"").trim();
   if(operation==="review"&&(!review||review.length>2000))return {error:"レビューは1〜2000文字で記載してください。"};
-  ({error}=await db.rpc("update_spot_work",{p_record_id:id,p_actor:actor,p_operation:operation,p_review:operation==="review"?review:null}));
+  const rating=Number(form.get("rating"));
+  if(operation==="review"&&(!Number.isInteger(rating)||rating<1||rating>5))return {error:"星評価を1〜5で選択してください。"};
+  ({error}=await db.rpc(operation==="review"?"update_spot_work_with_rating":"update_spot_work",{p_record_id:id,p_actor:actor,p_operation:operation,p_review:operation==="review"?review:null,...(operation==="review"?{p_rating:rating}:{})}));
  }
  if(error)return {error:"保存できませんでした。募集状況・勤務終了時刻・レビューの保存を確認し、ページを更新して再度お試しください。"};
  for(const p of ["/account/dealer","/store/profile/spot-jobs","/store/profile/dealers","/spot-jobs"])revalidatePath(p,"layout");
