@@ -31,7 +31,7 @@ values
   ('pickup_national', '全国TOPページPICKUP店舗表示', 33000, null,
    'TOPページのPICK UP店舗に、閲覧者の地域に関係なく全国で表示します（全国10店舗限定）。', 'monthly', 10, 'national', false, true, 10),
   ('pickup_region', '地域PICKUP店舗表示', 11000, 22000,
-   '登録住所の都道府県のPICK UP店舗として表示します（各都道府県10店舗限定）。東京都・大阪府は22,000円、その他の地域は11,000円です。', 'monthly', 10, 'pref', false, true, 20),
+   '登録住所の都道府県のPICK UP店舗として表示します（各都道府県10店舗限定）。', 'monthly', 10, 'pref', false, true, 20),
   ('top_banner', 'TOPページバナー', 100000, null,
    'TOPページのメインバナーに店舗のバナーを掲載します。バナー画像は運営と調整のうえ設定します。', 'monthly', null, null, true, true, 30),
   ('spot_job_credit', 'スポット求人1件掲載', 2200, null,
