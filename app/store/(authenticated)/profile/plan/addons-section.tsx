@@ -1,6 +1,7 @@
 import { PendingSubmitButton } from "@/app/pending-submit-button";
-import { addonFeeFor, addonPriceLabel, ORDER_STATUS_LABEL, type AddonRow } from "@/lib/addons";
-import { purchaseAddonAction, cancelAddonAction } from "../addon-purchase-actions";
+import { addonFeeFor, ORDER_STATUS_LABEL, type AddonRow } from "@/lib/addons";
+import { AddonPicker, type PickerAddon } from "./addon-picker";
+import { cancelAddonAction } from "../addon-purchase-actions";
 
 type ContractAddon = {
   id: string;
@@ -48,133 +49,77 @@ export function AddonsSection({
   canUseCard: boolean;
   hasContract: boolean;
 }) {
-  const monthly = addons.filter((a) => a.billing_type === "monthly");
-  const oneTime = addons.filter((a) => a.billing_type === "one_time");
+  const mine = contractAddons
+    .map((c) => ({ c, addon: addons.find((a) => a.id === c.addon_id) }))
+    .filter((x) => !!x.addon);
 
-  const payment = (name: string) => (
-    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13 }}>
-      {canUseCard && (
-        <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <input type="radio" name={name} value="card" defaultChecked />
-          クレジットカード
-        </label>
-      )}
-      <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <input type="radio" name={name} value="bank_transfer" defaultChecked={!canUseCard} />
-        銀行振込（請求書）
-      </label>
-    </div>
-  );
+  const pickerAddons: PickerAddon[] = addons.map((a) => {
+    const contracted = contractAddons.some((c) => c.addon_id === a.id);
+    const left = slotsLeft[a.id] ?? null;
+    const disabledReason =
+      a.billing_type === "monthly" && contracted
+        ? "ご契約中"
+        : a.billing_type === "monthly" && left !== null && left <= 0
+          ? "現在満枠です"
+          : null;
+    return {
+      id: a.id,
+      code: a.code,
+      name: a.name,
+      description: a.description,
+      billingType: a.billing_type,
+      fee: addonFeeFor(a, pref),
+      disabledReason,
+      maxQuantity: a.code === "spot_job_credit" ? 50 : 1,
+    };
+  });
 
   return (
     <div className="card" id="addons" style={{ marginTop: 20 }}>
       <h2 style={{ fontSize: 17, margin: "0 0 4px" }}>アドオン</h2>
-      <p className="muted" style={{ fontSize: 12.5, margin: "0 0 14px", lineHeight: 1.7 }}>
-        お支払いはクレジットカードまたは銀行振込（請求書）を選べます。銀行振込はご入金の確認後に有効になります。
+      <p className="muted" style={{ fontSize: 12.5, margin: "0 0 10px", lineHeight: 1.7 }}>
+        使いたいアドオンにチェックを入れて、まとめてお申し込みいただけます。お支払いはクレジットカードまたは銀行振込（請求書）です。
       </p>
 
-      {!hasContract && <p className="err">有効な契約がないため、アドオンをお申し込みいただけません。</p>}
-
-      <h3 style={{ fontSize: 14.5, margin: "6px 0 8px" }}>月額のアドオン</h3>
-      <div style={{ display: "grid", gap: 10 }}>
-        {monthly.map((a) => {
-          const mine = contractAddons.find((c) => c.addon_id === a.id);
-          const left = slotsLeft[a.id] ?? null;
-          const fee = addonFeeFor(a, pref);
-          const endIso = mine ? (mine.billing_method === "bank_transfer" ? mine.current_period_end : contractPeriodEnd) : null;
-          return (
-            <div key={a.id} className="card" style={{ background: "var(--surface-2)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-                <strong style={{ fontSize: 14.5 }}>{a.name}</strong>
-                <span style={{ fontWeight: 700 }}>
-                  {yen(fee)}/月
-                </span>
-              </div>
-              {a.description && <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 8px", lineHeight: 1.7 }}>{a.description}</p>}
-              {mine ? (
-                <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 13 }}>
-                  <span className="badge">ご契約中</span>
+      {mine.length > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>ご契約中の月額アドオン</div>
+          <div style={{ display: "grid", gap: 6 }}>
+            {mine.map(({ c, addon }) => {
+              const endIso = c.billing_method === "bank_transfer" ? c.current_period_end : contractPeriodEnd;
+              return (
+                <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 13 }}>
+                  <strong>{addon!.name}</strong>
                   <span className="muted">
-                    {mine.billing_method === "bank_transfer" ? "銀行振込" : "カード"}
-                    {mine.pending_removed_at
-                      ? `・${jpDate(mine.pending_removed_at)}に解約予定`
-                      : endIso
-                        ? `・次回更新 ${jpDate(endIso)}`
-                        : ""}
+                    {yen(c.fee ?? addonFeeFor(addon!, pref))}/月・{c.billing_method === "bank_transfer" ? "銀行振込" : "カード"}
+                    {c.pending_removed_at ? `・${jpDate(c.pending_removed_at)}に解約予定` : endIso ? `・次回更新 ${jpDate(endIso)}` : ""}
                   </span>
-                  {!mine.pending_removed_at && (
+                  {!c.pending_removed_at && (
                     <form action={cancelAddonAction}>
-                      <input type="hidden" name="storeContractAddonId" value={mine.id} />
+                      <input type="hidden" name="storeContractAddonId" value={c.id} />
                       <PendingSubmitButton className="btn" pendingLabel="処理中…" style={{ fontSize: 12 }}>
-                        解約する（期間の終わりまで利用可）
+                        解約する
                       </PendingSubmitButton>
                     </form>
                   )}
                 </div>
-              ) : left !== null && left <= 0 ? (
-                <p className="muted" style={{ fontSize: 13, margin: 0 }}>
-                  現在満枠です（{a.capacity_scope === "pref" ? `${pref ?? "この地域"}で` : "全国で"}{a.capacity}店舗まで）。空きが出るまでお待ちください。
-                </p>
-              ) : (
-                hasContract && (
-                  <form action={purchaseAddonAction} style={{ display: "grid", gap: 8 }}>
-                    <input type="hidden" name="addonId" value={a.id} />
-                    {left !== null && <span className="muted" style={{ fontSize: 12 }}>残り{left}枠</span>}
-                    {payment("paymentMethod")}
-                    {a.needs_fulfillment && (
-                      <textarea name="note" rows={2} placeholder="運営への連絡事項（任意）" style={{ fontSize: 13 }} />
-                    )}
-                    <div>
-                      <PendingSubmitButton pendingLabel="処理中…">申し込む</PendingSubmitButton>
-                    </div>
-                    {canUseCard && (
-                      <p className="muted" style={{ fontSize: 11.5, margin: 0 }}>
-                        カードの場合は、プランとカード払いのアドオンの合計額をその場で決済し、契約期間を今日から1か月に更新します。
-                      </p>
-                    )}
-                  </form>
-                )
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <h3 style={{ fontSize: 14.5, margin: "18px 0 8px" }}>都度払いのアドオン</h3>
-      <div style={{ display: "grid", gap: 10 }}>
-        {oneTime.map((a) => (
-          <div key={a.id} className="card" style={{ background: "var(--surface-2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
-              <strong style={{ fontSize: 14.5 }}>{a.name}</strong>
-              <span style={{ fontWeight: 700 }}>{addonPriceLabel(a)}</span>
-            </div>
-            {a.description && <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 8px", lineHeight: 1.7 }}>{a.description}</p>}
-            {a.code === "spot_job_credit" && (
-              <p style={{ fontSize: 13, margin: "0 0 8px" }}>
-                現在の追加掲載枠：<strong>{spotCredits}件</strong>
-              </p>
-            )}
-            {hasContract && (
-              <form action={purchaseAddonAction} style={{ display: "grid", gap: 8 }}>
-                <input type="hidden" name="addonId" value={a.id} />
-                {a.code === "spot_job_credit" && (
-                  <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13 }}>
-                    件数
-                    <input type="number" name="quantity" min={1} max={50} defaultValue={1} style={{ width: 80 }} />
-                  </label>
-                )}
-                {payment("paymentMethod")}
-                {a.needs_fulfillment && (
-                  <textarea name="note" rows={2} placeholder="ご希望の日程・内容など（任意）" style={{ fontSize: 13 }} />
-                )}
-                <div>
-                  <PendingSubmitButton pendingLabel="処理中…">申し込む</PendingSubmitButton>
-                </div>
-              </form>
-            )}
+              );
+            })}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {spotCredits > 0 && (
+        <p style={{ fontSize: 13, margin: "0 0 8px" }}>
+          スポット求人の追加掲載枠：<strong>{spotCredits}件</strong>
+        </p>
+      )}
+
+      {hasContract ? (
+        <AddonPicker addons={pickerAddons} canUseCard={canUseCard} />
+      ) : (
+        <p className="err">有効な契約がないため、アドオンをお申し込みいただけません。</p>
+      )}
 
       {orders.length > 0 && (
         <>

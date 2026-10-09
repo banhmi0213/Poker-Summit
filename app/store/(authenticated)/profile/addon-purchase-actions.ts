@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createStoreClient } from "@/lib/supabase/store-server";
-import { purchaseAddon, cancelMonthlyAddon } from "@/lib/addon-orders";
+import { purchaseAddons, cancelMonthlyAddon } from "@/lib/addon-orders";
 
 // 店舗管理「プラン・お支払い」のアドオン購入・解約(2026/10)。
 // 結果はページ上部のメッセージで表示する(例外で「Application error」にしない)。
@@ -36,12 +36,12 @@ async function settle(run: () => Promise<string>) {
 export async function purchaseAddonAction(formData: FormData) {
   await settle(async () => {
     const storeId = await ownStoreId();
-    const addonId = String(formData.get("addonId") ?? "");
-    const quantity = Number(formData.get("quantity") ?? 1);
+    const addonIds = [...new Set(formData.getAll("addonIds").map(String).filter(Boolean))];
+    const items = addonIds.map((addonId) => ({ addonId, quantity: Number(formData.get(`quantity_${addonId}`) ?? 1) || 1 }));
     const paymentMethod = String(formData.get("paymentMethod") ?? "bank_transfer") === "card" ? "card" : "bank_transfer";
     const note = String(formData.get("note") ?? "").trim().slice(0, 1000) || null;
-    if (!addonId) throw new Error("アドオンを選んでください。");
-    return purchaseAddon({ storeId, addonId, quantity, paymentMethod, note });
+    if (!items.length) throw new Error("お申し込みするアドオンを選んでください。");
+    return purchaseAddons({ storeId, items, paymentMethod, note });
   });
 }
 
