@@ -54,6 +54,7 @@ export async function GET(req: NextRequest) {
     .from("store_contract_addons")
     .select("store_contract_id")
     .eq("billing_method", "card")
+    .is("fincode_subscription_id", null)
     .not("pending_removed_at", "is", null)
     .lte("pending_removed_at", nowIso);
   if (addonError) {
@@ -88,7 +89,8 @@ export async function GET(req: NextRequest) {
         .from("store_contract_addons")
         .select("addon_id, pending_removed_at")
         .eq("store_contract_id", storeContractId)
-        .eq("billing_method", "card");
+        .eq("billing_method", "card")
+        .is("fincode_subscription_id", null);
       if (addonFetchError) throw new Error(addonFetchError.message);
 
       const finalAddonIds = (addonRows ?? [])

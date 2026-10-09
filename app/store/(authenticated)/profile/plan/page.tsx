@@ -44,7 +44,7 @@ export default async function StorePlanPage({
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee)"
+          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),

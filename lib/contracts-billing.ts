@@ -191,7 +191,8 @@ export async function applyContractBillingChange(params: {
     .from("store_contract_addons")
     .select("id, addon_id")
     .eq("store_contract_id", contract.id)
-    .eq("billing_method", "card");
+    .eq("billing_method", "card")
+    .is("fincode_subscription_id", null);
   const keepIds = new Set(addons.map((a) => a.id as string));
   const existingIds = new Set(((existingRows ?? []) as any[]).map((r) => r.addon_id as string));
   const removeRowIds = ((existingRows ?? []) as any[]).filter((r) => !keepIds.has(r.addon_id)).map((r) => r.id);
@@ -200,7 +201,8 @@ export async function applyContractBillingChange(params: {
     .from("store_contract_addons")
     .update({ pending_removed_at: null })
     .eq("store_contract_id", contract.id)
-    .eq("billing_method", "card");
+    .eq("billing_method", "card")
+    .is("fincode_subscription_id", null);
   for (const a of addons) {
     if (existingIds.has(a.id)) {
       await supabase.from("store_contract_addons").update({ fee: a.fee }).eq("store_contract_id", contract.id).eq("addon_id", a.id);

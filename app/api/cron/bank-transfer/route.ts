@@ -172,12 +172,12 @@ export async function GET(req: NextRequest) {
   }
 
   // 4) 振込で払う月額アドオン ---------------------------------------------------------
-  //  4a) 解約予約の期限が来たものを外す
+  //  4a) 解約予約の期限が来たものを外す(振込のもの・アドオン別サブスクのカード払いのもの)
   const nowIso = new Date().toISOString();
   const { data: removable } = await svc
     .from("store_contract_addons")
     .select("id")
-    .eq("billing_method", "bank_transfer")
+    .or("billing_method.eq.bank_transfer,fincode_subscription_id.not.is.null")
     .not("pending_removed_at", "is", null)
     .lte("pending_removed_at", nowIso);
   for (const r of removable ?? []) {
