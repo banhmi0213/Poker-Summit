@@ -5,6 +5,53 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { applyContractBillingChange, schedulePlanDowngrade, cancelScheduledPlanChange } from "@/lib/contracts-billing";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { sendPlanChangeEmail } from "@/lib/email";
+
+function jpDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  const d = new Date(Date.parse(iso) + 9 * 60 * 60 * 1000);
+  return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+}
+
+// プラン変更の確認メール(ベストエフォート。送れなくても変更自体は止めない)。
+async function notifyPlanChange(params: {
+  contractId: string;
+  fromPlanId: string | null;
+  toPlanId: string;
+  kind: "changed" | "scheduled" | "failed";
+  amount?: number | null;
+  reason?: string | null;
+}) {
+  try {
+    const svc = createServiceRoleClient();
+    const [{ data: contract }, { data: plans }] = await Promise.all([
+      svc
+        .from("store_contracts")
+        .select("contact_email, current_period_end, pending_plan_effective_at, stores(name)")
+        .eq("id", params.contractId)
+        .maybeSingle(),
+      svc.from("plans").select("id, name").in("id", [params.fromPlanId, params.toPlanId].filter(Boolean) as string[]),
+    ]);
+    const to = contract?.contact_email as string | null | undefined;
+    if (!to) return;
+    const nameOf = (id: string | null) => (plans ?? []).find((p) => p.id === id)?.name ?? "（未設定）";
+    const store = (Array.isArray(contract?.stores) ? contract?.stores[0] : contract?.stores) as { name?: string } | null;
+    await sendPlanChangeEmail({
+      to,
+      storeName: store?.name ?? "店舗",
+      kind: params.kind,
+      fromPlan: nameOf(params.fromPlanId),
+      toPlan: nameOf(params.toPlanId),
+      amount: params.amount ?? null,
+      periodEnd: jpDate(contract?.current_period_end as string | null),
+      effectiveDate: jpDate((contract?.pending_plan_effective_at ?? contract?.current_period_end) as string | null),
+      reason: params.reason ?? null,
+    });
+  } catch (e) {
+    console.error("plan change email failed", e);
+  }
+}
 
 // server action の例外は Next.js の「Application error」画面になってしまうため、
 // ここで受け止めて、結果をページ上部のメッセージとして表示する(?ok= / ?error=)。
@@ -115,6 +162,13 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
         charged_amount: result.chargedAmount,
         reviewed_at: new Date().toISOString(),
       });
+      await notifyPlanChange({
+        contractId: contract.id,
+        fromPlanId: contract.plan_id,
+        toPlanId: requestedPlanId,
+        kind: "changed",
+        amount: result.chargedAmount,
+      });
       revalidatePath("/store/profile/plan");
       return `プランを変更しました（${(result.chargedAmount ?? 0).toLocaleString("ja-JP")}円を決済しました）。`;
     } catch (e) {
@@ -129,6 +183,13 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
         review_note: e instanceof Error ? e.message : String(e),
         reviewed_at: new Date().toISOString(),
       });
+      await notifyPlanChange({
+        contractId: contract.id,
+        fromPlanId: contract.plan_id,
+        toPlanId: requestedPlanId,
+        kind: "failed",
+        reason: e instanceof Error ? e.message : String(e),
+      });
       throw e;
     }
   } else {
@@ -141,6 +202,12 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
       note: note || null,
       status: "pending",
       payment_status: "scheduled",
+    });
+    await notifyPlanChange({
+      contractId: contract.id,
+      fromPlanId: contract.plan_id,
+      toPlanId: requestedPlanId,
+      kind: "scheduled",
     });
     return "プランの変更を予約しました。現在の契約期間が終わるタイミングで切り替わります。";
   }
