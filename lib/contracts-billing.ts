@@ -94,7 +94,15 @@ export async function applyContractBillingChange(params: {
   // 同一契約が何度も課金されうるので、注文IDは毎回ユニークにする
   // (申込み時のorderIdは1回限りの決済なので固定IDでよかったが、こちらは
   // 使い回せない)。
-  const orderId = ("c" + contract.id.replace(/-/g, "") + Date.now().toString(36)).slice(0, 30);
+  // fincodeのオーダーIDは30文字まで。以前は契約IDだけで30文字を使い切って時刻部分が
+  // 切り捨てられ、同じ契約の2回目以降の決済が「オーダーIDはすでに登録されています」
+  // (EC001025014)で失敗していた。契約IDの先頭+時刻+乱数で毎回ユニークにする。
+  const orderId = (
+    "c" +
+    contract.id.replace(/-/g, "").slice(0, 12) +
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 8)
+  ).slice(0, 30);
 
   const charge = await chargeFincodeCardOnce({
     orderId,
