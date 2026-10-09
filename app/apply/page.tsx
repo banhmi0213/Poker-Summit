@@ -376,10 +376,17 @@ function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons
                   <div key={addon.id} style={{ padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
                       <strong style={{ fontSize: 14 }}>{addon.name}</strong>
-                      <span style={{ fontWeight: 700, fontSize: 13.5 }}>
-                        {addonPriceLabel(addon)}
-                        <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
-                      </span>
+                      {addon.major_area_fee != null ? (
+                        // 地域で料金が変わるもの(地域PICKUP)は一覧には出さず、問い合わせで案内する
+                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>
+                          料金は<a href="/contact" style={LINK_STYLE}>お問い合わせ</a>ください
+                        </span>
+                      ) : (
+                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>
+                          {addonPriceLabel(addon)}
+                          <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
+                        </span>
+                      )}
                     </div>
                     {addon.description && (
                       <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 0", lineHeight: 1.7 }}>
