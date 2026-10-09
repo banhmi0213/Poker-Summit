@@ -101,7 +101,7 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
 
   const { data: contract } = await supabase
     .from("store_contracts")
-    .select("id, plan_id, billing_method, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id, billing_method)")
+    .select("id, plan_id, billing_method, plans!store_contracts_plan_id_fkey(monthly_fee, pickup), store_contract_addons(addon_id, billing_method, fincode_subscription_id)")
     .eq("store_id", storeId)
     .maybeSingle();
 
@@ -133,8 +133,9 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
 
   const currentFee = (contract.plans as { monthly_fee: number } | null)?.monthly_fee ?? 0;
   // カードで払っている月額アドオンだけ(振込のアドオンは別の請求書で払う)
-  const currentAddonIds = ((contract.store_contract_addons ?? []) as { addon_id: string; billing_method?: string }[])
-    .filter((a) => (a.billing_method ?? "card") === "card")
+  // プランのサブスクにまとめて払っている(古い方式の)アドオンだけ。アドオン別のサブスク・振込のものは対象外
+  const currentAddonIds = ((contract.store_contract_addons ?? []) as { addon_id: string; billing_method?: string; fincode_subscription_id?: string | null }[])
+    .filter((a) => (a.billing_method ?? "card") === "card" && !a.fincode_subscription_id)
     .map((a) => a.addon_id);
 
   // 新しく予約/確定するこの変更と矛盾する、古い「予約中」レコードは

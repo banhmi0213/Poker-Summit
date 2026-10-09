@@ -10,7 +10,17 @@ type ContractAddon = {
   current_period_end: string | null;
   pending_removed_at: string | null;
   fee: number | null;
+  fincode_subscription_id?: string | null;
 };
+
+// 申込日から1か月ごとに自動更新される期間の、次の区切り
+function rollForward(iso: string | null) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  const now = Date.now();
+  for (let i = 0; i < 240 && d.getTime() <= now; i++) d.setMonth(d.getMonth() + 1);
+  return d.toISOString();
+}
 
 type Order = {
   id: string;
@@ -51,14 +61,7 @@ export function AddonsSection({
   hasContract: boolean;
   planFee: number;
 }) {
-  const cardRecurringBase =
-    planFee +
-    contractAddons
-      .filter((c) => (c.billing_method ?? "card") === "card" && !c.pending_removed_at)
-      .reduce((sum, c) => {
-        const a = addons.find((x) => x.id === c.addon_id);
-        return sum + (c.fee ?? (a ? addonFeeFor(a, pref) : 0));
-      }, 0);
+
   const mine = contractAddons
     .map((c) => ({ c, addon: addons.find((a) => a.id === c.addon_id) }))
     .filter((x) => !!x.addon);
@@ -96,7 +99,12 @@ export function AddonsSection({
           <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>ご契約中の月額アドオン</div>
           <div style={{ display: "grid", gap: 6 }}>
             {mine.map(({ c, addon }) => {
-              const endIso = c.billing_method === "bank_transfer" ? c.current_period_end : contractPeriodEnd;
+              const endIso =
+                c.billing_method === "bank_transfer"
+                  ? c.current_period_end
+                  : c.fincode_subscription_id
+                    ? rollForward(c.current_period_end)
+                    : contractPeriodEnd;
               return (
                 <div key={c.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 13 }}>
                   <strong>{addon!.name}</strong>
@@ -126,7 +134,7 @@ export function AddonsSection({
       )}
 
       {hasContract ? (
-        <AddonPicker addons={pickerAddons} canUseCard={canUseCard} cardRecurringBase={cardRecurringBase} />
+        <AddonPicker addons={pickerAddons} canUseCard={canUseCard} />
       ) : (
         <p className="err">有効な契約がないため、アドオンをお申し込みいただけません。</p>
       )}

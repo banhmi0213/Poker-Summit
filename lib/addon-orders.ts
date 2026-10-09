@@ -1,5 +1,5 @@
 // アドオンの購入(2026/10)。カードはその場で決済、銀行振込は請求書を発行して入金確認で有効化。
-//  月額(カード): 契約のカード決済・サブスクにまとめる(lib/contracts-billing.ts applyContractBillingChange)
+//  月額(カード): 初月分をその場で決済し、2か月目からはアドオンごとのサブスクで毎月課金(プラン料金は取り直さない)
 //  月額(振込): アドオンごとに1か月分の請求書。入金確認で有効化し、期間終了の7日前に次の請求書(cron)
 //  都度: スポット求人1件掲載は追加掲載枠を付与。制作系は運営が対応(総合管理「アドオン注文」)
 // 書き込みは service-role。呼び出し元で店舗オーナー/運営の確認を済ませること。
@@ -340,83 +340,84 @@ export async function purchaseAddons(params: {
     return `請求書（${invoice.total_amount.toLocaleString("ja-JP")}円）をメールでお送りしました。ご入金の確認後にご利用いただけます。`;
   }
 
-  // ---- カード ----
-  const messages: string[] = [];
-  const monthly = lines.filter((l) => l.addon.billing_type === "monthly");
-  const oneTime = lines.filter((l) => l.addon.billing_type === "one_time");
-
-  if (monthly.length) {
-    const { applyContractBillingChange } = await import("@/lib/contracts-billing");
-    // 解約予約中のものは、新しい期間には含めない(ここで外れる)
-    const cardAddonIds = current
-      .filter((r) => (r.billing_method ?? "card") === "card" && !r.pending_removed_at)
-      .map((r) => r.addon_id);
-    const result = await applyContractBillingChange({
-      storeContractId: contract.id,
-      newPlanId: contract.plan_id,
-      newAddonIds: [...cardAddonIds, ...monthly.map((l) => l.addon.id)],
-      resolvesPendingPlan: false,
-    });
-    const nowIso = new Date().toISOString();
-    for (const l of monthly) {
-      await insertOrder(l, {
-        status: l.addon.needs_fulfillment ? "paid" : "completed",
-        paid_at: nowIso,
-        completed_at: l.addon.needs_fulfillment ? null : nowIso,
-      });
-      if (l.addon.needs_fulfillment) await notifyAdmin(store.name, l.addon.name, 1, l.unitPrice, "card", params.note);
-    }
-    messages.push(
-      `月額アドオン（${monthly.map((l) => l.addon.name).join("、")}）を追加しました。プランと合わせて${result.chargedAmount.toLocaleString(
-        "ja-JP"
-      )}円を決済し、契約期間を今日から1か月に更新しました。`
-    );
+  // ---- カード: 選んだアドオンの合計だけを1回で決済(プラン料金は含めない) ----
+  //  月額アドオンは初月分をここで決済し、2か月目からはアドオンごとのサブスクリプションで毎月課金する。
+  const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  const orderIds: string[] = [];
+  for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
+  const { getDefaultCardId, chargeFincodeCardOnce, createFincodePlan, createFincodeSubscription } = await import("@/lib/fincode");
+  const cardId = await getDefaultCardId(contract.fincode_customer_id!).catch(() => null);
+  const fincodeOrderId = (
+    "a" +
+    orderIds[0].replace(/-/g, "").slice(0, 12) +
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 7)
+  ).slice(0, 30);
+  const charge: any = cardId
+    ? await chargeFincodeCardOnce({ orderId: fincodeOrderId, customerId: contract.fincode_customer_id!, cardId, amount: total }).catch(
+        (e: unknown) => ({ status: "ERROR", error_code: e instanceof Error ? e.message : String(e) })
+      )
+    : { status: "NO_CARD" };
+  if (charge.status !== "CAPTURED") {
+    await svc
+      .from("addon_orders")
+      .update({ status: "canceled", fincode_order_id: fincodeOrderId, admin_note: `カード決済失敗: ${charge.status} ${charge.error_code ?? ""}` })
+      .in("id", orderIds);
+    throw new Error("カード決済が完了しませんでした。カード情報をご確認いただくか、銀行振込をお選びください。");
   }
+  const nowIso = new Date().toISOString();
+  await svc.from("addon_orders").update({ fincode_order_id: fincodeOrderId, paid_at: nowIso }).in("id", orderIds);
+  await svc.from("billing_events").insert({
+    store_contract_id: contract.id,
+    event_type: "success",
+    amount: total,
+    source: "contract_change",
+    note: `アドオン購入(${lines.map((l) => `${l.addon.name}×${l.quantity}`).join("、")})`,
+  });
 
-  if (oneTime.length) {
-    const total = oneTime.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
-    const orderIds: string[] = [];
-    for (const l of oneTime) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
-    const { getDefaultCardId, chargeFincodeCardOnce } = await import("@/lib/fincode");
-    const cardId = await getDefaultCardId(contract.fincode_customer_id!).catch(() => null);
-    const fincodeOrderId = (
-      "a" +
-      orderIds[0].replace(/-/g, "").slice(0, 12) +
-      Date.now().toString(36) +
-      Math.random().toString(36).slice(2, 7)
-    ).slice(0, 30);
-    const charge: any = cardId
-      ? await chargeFincodeCardOnce({ orderId: fincodeOrderId, customerId: contract.fincode_customer_id!, cardId, amount: total }).catch(
-          (e: unknown) => ({ status: "ERROR", error_code: e instanceof Error ? e.message : String(e) })
-        )
-      : { status: "NO_CARD" };
-    if (charge.status !== "CAPTURED") {
-      await svc
-        .from("addon_orders")
-        .update({ status: "canceled", fincode_order_id: fincodeOrderId, admin_note: `カード決済失敗: ${charge.status} ${charge.error_code ?? ""}` })
-        .in("id", orderIds);
-      const failMsg = "都度払いのアドオンはカード決済が完了しませんでした。カード情報をご確認いただくか、銀行振込をお選びください。";
-      if (messages.length) return `${messages.join(" ")} ※${failMsg}`;
-      throw new Error(failMsg);
+  // ここから先はお金を取れている。失敗しても止めずに、運営が直せるよう記録を残す。
+  const periodEndIso = jstDateToIso(addMonths(todayJst(), 1));
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    const orderId = orderIds[i];
+    if (l.addon.billing_type !== "monthly") {
+      await fulfillPaidAddonOrder(orderId);
+      continue;
     }
-    await svc.from("addon_orders").update({ fincode_order_id: fincodeOrderId, paid_at: new Date().toISOString() }).in("id", orderIds);
-    await svc.from("billing_events").insert({
+    let subscriptionId: string | null = null;
+    let subError: string | null = null;
+    try {
+      const plan = await createFincodePlan({ name: `アドオン:${l.addon.name}`, monthlyFee: l.unitPrice });
+      const sub = await createFincodeSubscription({ customerId: contract.fincode_customer_id!, cardId: cardId!, fincodePlanId: plan.id });
+      subscriptionId = sub.id;
+    } catch (e) {
+      subError = e instanceof Error ? e.message : String(e);
+    }
+    const { error: rowError } = await svc.from("store_contract_addons").insert({
       store_contract_id: contract.id,
-      event_type: "success",
-      amount: total,
-      source: "contract_change",
-      note: `アドオン購入(${oneTime.map((l) => `${l.addon.name}×${l.quantity}`).join("、")})`,
+      addon_id: l.addon.id,
+      fee: l.unitPrice,
+      billing_method: "card",
+      current_period_end: periodEndIso,
+      fincode_subscription_id: subscriptionId,
     });
-    for (const id of orderIds) await fulfillPaidAddonOrder(id);
-    messages.push(
-      `${oneTime.map((l) => (l.quantity > 1 ? `${l.addon.name}×${l.quantity}` : l.addon.name)).join("、")}をお申し込みいただきました（${total.toLocaleString(
-        "ja-JP"
-      )}円を決済しました）。`
-    );
+    await svc
+      .from("addon_orders")
+      .update({
+        status: l.addon.needs_fulfillment ? "paid" : "completed",
+        completed_at: l.addon.needs_fulfillment ? null : nowIso,
+        admin_note: subError || rowError ? `要確認: ${subError ? `毎月の課金設定に失敗(${subError})` : ""}${rowError ? ` 有効化に失敗(${rowError.message})` : ""}` : null,
+      })
+      .eq("id", orderId);
+    if (l.addon.needs_fulfillment) await notifyAdmin(store.name, l.addon.name, 1, l.unitPrice, "card", params.note);
   }
 
-  return messages.join(" ");
+  const monthlyNames = lines.filter((l) => l.addon.billing_type === "monthly").map((l) => l.addon.name);
+  return `${total.toLocaleString("ja-JP")}円を決済しました。${
+    monthlyNames.length ? `月額アドオン（${monthlyNames.join("、")}）は来月から毎月自動で決済されます。` : ""
+  }`;
 }
+
 
 async function notifyAdmin(storeName: string, addonName: string, quantity: number, total: number, paymentMethod: string, note: string | null) {
   try {
@@ -432,7 +433,7 @@ export async function cancelMonthlyAddon(params: { storeId: string; storeContrac
   const svc = createServiceRoleClient();
   const { data: row } = await svc
     .from("store_contract_addons")
-    .select("id, addon_id, billing_method, current_period_end, store_contracts!inner(store_id, current_period_end), addons(name)")
+    .select("id, addon_id, billing_method, current_period_end, fincode_subscription_id, store_contracts!inner(store_id, current_period_end), addons(name)")
     .eq("id", params.storeContractAddonId)
     .maybeSingle();
   const c = (Array.isArray((row as any)?.store_contracts) ? (row as any).store_contracts[0] : (row as any)?.store_contracts) as
@@ -440,15 +441,30 @@ export async function cancelMonthlyAddon(params: { storeId: string; storeContrac
     | undefined;
   if (!row || c?.store_id !== params.storeId) throw new Error("アドオンが見つかりません。");
   const name = ((Array.isArray((row as any).addons) ? (row as any).addons[0] : (row as any).addons) as { name?: string } | null)?.name ?? "アドオン";
-  const effectiveAt =
-    row.billing_method === "bank_transfer" ? row.current_period_end ?? new Date().toISOString() : c.current_period_end ?? new Date().toISOString();
+
+  let effectiveAt: string;
+  if (row.billing_method === "bank_transfer") {
+    effectiveAt = row.current_period_end ?? new Date().toISOString();
+  } else if (row.fincode_subscription_id) {
+    // アドオン別のサブスク: 次の課金を止め、今の1か月の終わりまで使える
+    effectiveAt = nextPeriodEnd(row.current_period_end);
+    const { cancelFincodeSubscription } = await import("@/lib/fincode");
+    await cancelFincodeSubscription(row.fincode_subscription_id).catch(() => undefined);
+  } else {
+    effectiveAt = c.current_period_end ?? new Date().toISOString();
+  }
   await svc.from("store_contract_addons").update({ pending_removed_at: effectiveAt }).eq("id", row.id);
   // 振込の更新請求がまだ未入金なら取り消す
-  await svc
-    .from("invoices")
-    .update({ status: "canceled" })
-    .eq("store_contract_addon_id", row.id)
-    .eq("status", "unpaid");
+  await svc.from("invoices").update({ status: "canceled" }).eq("store_contract_addon_id", row.id).eq("status", "unpaid");
   const d = new Date(Date.parse(effectiveAt) + 9 * 3600 * 1000);
   return `「${name}」の解約を受け付けました。${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日まではご利用いただけます。`;
+}
+
+/** 毎月自動更新される期間の、今日以降で最初の区切り(申込日から1か月ごと) */
+export function nextPeriodEnd(firstPeriodEndIso: string | null) {
+  if (!firstPeriodEndIso) return new Date().toISOString();
+  let d = isoToJstDate(firstPeriodEndIso);
+  const today = todayJst();
+  for (let i = 0; i < 240 && d <= today; i++) d = addMonths(d, 1);
+  return jstDateToIso(d);
 }
