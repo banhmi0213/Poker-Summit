@@ -312,7 +312,8 @@ export default async function StoreDetailPage({
     nearby = [...cityFirst, ...byDistance.filter((s) => !cityIds.has(s.id))].slice(0, NEARBY_LIMIT);
   }
   const upcomingEvents = (events ?? []).filter((ev) => !ev.start_at || Date.parse(ev.start_at) >= Date.now()).length;
-  const categoryLabel = (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
+  const categoryBase = (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
+  const categoryLabel = categoryBase.endsWith("ポーカー") ? `${categoryBase}店` : categoryBase;
   const station = store.nearest_station || store.station || "";
   const placeName = [store.pref, store.city].filter(Boolean).join("");
   // 店舗が紹介文を入れていない場合は、登録されている情報から案内文を組み立てる
