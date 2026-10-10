@@ -50,16 +50,23 @@ export function StoreCard({
         <div className="generic-store-cover">{cover ? <img loading="lazy" decoding="async" src={cover} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
         <div className="generic-store-finger">{store.logo_url ? <img loading="lazy" decoding="async" src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
         <div className={contentCounts ? "featured-store-card-body" : undefined} style={{ padding: 14 }}>
-          <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
-          {store.category && (
-            <span className="badge" style={{ marginBottom: 6 }}>
-              {CATEGORY_LABEL[store.category] ?? store.category}
-            </span>
+          <div className={contentCounts ? "featured-store-card-title" : undefined} style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
+          {contentCounts ? (
+            <>
+              <div className="featured-store-card-location muted">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</div>
+              <div className="featured-store-card-meta">
+                {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+                <span className="featured-store-card-cta">店舗詳細を見る ›</span>
+              </div>
+              <VerifiedStoreBadge flags={flags} />
+            </>
+          ) : (
+            <>
+              {store.category && <span className="badge" style={{ marginBottom: 6 }}>{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+              <VerifiedStoreBadge flags={flags} />
+              <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>📍 {[store.pref, store.city].filter(Boolean).join(" ")}</div>
+            </>
           )}
-          <VerifiedStoreBadge flags={flags} />
-          <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
-            📍 {[store.pref, store.city].filter(Boolean).join(" ")}
-          </div>
           {desc && !contentCounts && (
             <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
               {desc.slice(0, 40)}
