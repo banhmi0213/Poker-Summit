@@ -11,6 +11,7 @@ import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
+import { getStoreContentCounts } from "@/lib/store-content-counts";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
@@ -256,6 +257,8 @@ export default async function HomePage({
   const homeCoverPhotos = new Map<string, string>();
   (homePhotos ?? []).forEach(photo => { if (!homeCoverPhotos.has(photo.store_id)) homeCoverPhotos.set(photo.store_id, photo.url); });
 
+  const homeContentCounts = await getStoreContentCounts(supabase, [...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id)]);
+
   // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
   const postIds = (latestPosts ?? []).map((p) => p.id);
   const { data: replyRows } = postIds.length
@@ -350,7 +353,7 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
-          <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         {topBanners.length > 0 && (
           <div className="home-section">
@@ -391,7 +394,7 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る →</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
-          <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
+          <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         {jobsBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={jobsBanners} layout="wide" /></div>}
         <section className="home-section">
