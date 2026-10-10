@@ -500,3 +500,70 @@ Poker Summit運営事務局
     text,
   });
 }
+
+/** 店舗管理・運営画面へのログインがあったことの通知(不正ログインの早期発見用) */
+export async function sendLoginNotificationEmail(params: {
+  to: string;
+  accountLabel: string; // 例: 「店舗管理(〇〇ポーカー)」
+  at: Date;
+  ip: string | null;
+  userAgent: string | null;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.at.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const text = `Poker Summit をご利用いただきありがとうございます。
+
+${params.accountLabel}へのログインがありました。
+
+■ 日時：${when}（日本時間）
+■ IPアドレス：${params.ip ?? "不明"}
+■ ブラウザ：${(params.userAgent ?? "不明").slice(0, 200)}
+
+ご本人によるログインであれば、このメールへの対応は不要です。
+
+心当たりがない場合は、第三者がログインした可能性があります。
+すぐにパスワードを変更し、お問い合わせフォームから運営までご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】ログインのお知らせ", text });
+}
+
+/** メールアドレス登録・変更時の確認コード */
+export async function sendEmailVerificationCode(params: { to: string; code: string; minutes: number }): Promise<void> {
+  const text = `Poker Summit をご利用いただきありがとうございます。
+
+店舗管理画面で、このメールアドレスを連絡先として登録する操作がありました。
+次の確認コードを店舗管理画面に入力して、登録を完了してください。
+
+■ 確認コード：${params.code}
+（有効期限：${params.minutes}分）
+
+この操作に心当たりがない場合は、このメールを破棄してください。登録は完了しません。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
+}
+
+/** 連絡先メールアドレスが変更されたことを、変更前のアドレスへ知らせる */
+export async function sendContactEmailChangedNotice(params: { to: string; storeName: string; newEmail: string; at: Date }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.at.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const masked = params.newEmail.replace(/^(.).*(@.*)$/, "$1***$2");
+  const text = `Poker Summit をご利用いただきありがとうございます。
+
+${params.storeName} の連絡先メールアドレスが変更されました。
+
+■ 日時：${when}（日本時間）
+■ 変更後のアドレス：${masked}
+
+今後のお知らせ・請求書は変更後のアドレスに届きます。
+この変更に心当たりがない場合は、すぐにお問い合わせフォームから運営までご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】連絡先メールアドレス変更のお知らせ", text });
+}

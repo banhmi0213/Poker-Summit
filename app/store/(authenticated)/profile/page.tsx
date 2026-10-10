@@ -2,7 +2,7 @@ import { ReadableName } from "@/app/readable-name";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
-import { updateStoreProfile, updateMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
+import { updateStoreProfile, updateMyStoreContactEmail, confirmMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
 import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
 import { uploadStoreBanner, deleteStoreBanner } from "./banner-actions";
@@ -21,7 +21,7 @@ import {
 export default async function StoreProfilePage({
   searchParams,
 }: {
-  searchParams: { lineCode?: string };
+  searchParams: { lineCode?: string; emailCode?: string; emailError?: string; emailDone?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -135,7 +135,7 @@ export default async function StoreProfilePage({
 
   const needsLineLink = Boolean(store) && !store?.line_user_id;
   const needsContactEmail = Boolean(store) && Boolean(activeContract) && !activeContract?.contact_email;
-  const showRegistrationBanner = Boolean(activeContract) && (needsLineLink || needsContactEmail);
+  const showRegistrationBanner = Boolean(activeContract) && (needsLineLink || needsContactEmail || Boolean(searchParams.emailDone));
 
   return (
     <>
@@ -188,10 +188,43 @@ export default async function StoreProfilePage({
                 求人への応募や運営からのお知らせを、LINE・メールで受け取れるようにするため、未登録の項目のご登録をお願いします。
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {searchParams.emailDone && (
+                  <p style={{ fontSize: 13.5, color: "#1f7a3a", fontWeight: 700 }}>✓ 連絡先メールアドレスを登録しました。</p>
+                )}
+                {needsContactEmail && searchParams.emailError && (
+                  <p className="err" style={{ fontSize: 13 }}>{searchParams.emailError}</p>
+                )}
+                {needsContactEmail && searchParams.emailCode === "sent" && (
+                  <form action={confirmMyStoreContactEmail}>
+                    <div className="field">
+                      <span className="muted">入力したメールアドレスに届いた6桁の確認コード(15分有効)</span>
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                        <input
+                          type="text"
+                          name="code"
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          pattern="[0-9]{6}"
+                          maxLength={6}
+                          required
+                          placeholder="例: 123456"
+                          style={{ flex: "1 1 160px", letterSpacing: 3 }}
+                        />
+                        <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
+                          確認して登録する
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
                 {needsContactEmail && (
                   <form action={updateMyStoreContactEmail}>
                     <div className="field">
-                      <span className="muted">連絡先メールアドレス(未登録)</span>
+                      <span className="muted">
+                        {searchParams.emailCode === "sent"
+                          ? "コードが届かない場合は、アドレスを確認して再送してください"
+                          : "連絡先メールアドレス(未登録)。入力したアドレスに確認コードをお送りします"}
+                      </span>
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                         <input
                           type="email"
@@ -200,8 +233,8 @@ export default async function StoreProfilePage({
                           placeholder="例: info@example.com"
                           style={{ flex: "1 1 240px" }}
                         />
-                        <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>
-                          登録する
+                        <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
+                          {searchParams.emailCode === "sent" ? "コードを再送する" : "確認コードを送る"}
                         </button>
                       </div>
                     </div>

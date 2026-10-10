@@ -30,6 +30,8 @@ export default async function AdminAuditLogPage({
 
   if (from) query = query.gte("created_at", from);
   if (to) query = query.lte("created_at", `${to}T23:59:59`);
+  // ログインの記録(login_*)は件数が多いので、検索で「login」を指定したときだけ表示する
+  if (!q.toLowerCase().includes("login")) query = query.not("action", "like", "login_%");
   if (q) {
     query = query.or(`actor_email.ilike.%${q}%,action.ilike.%${q}%,target_type.ilike.%${q}%`);
   }
