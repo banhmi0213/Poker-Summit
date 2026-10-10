@@ -341,23 +341,19 @@ export async function purchaseAddons(params: {
   }
 
   // ---- カード: 選んだアドオンの合計だけを1回で決済(プラン料金は含めない) ----
-  //  月額アドオンは初月分をここで決済し、2か月目からはアドオンごとのサブスクリプションで毎月課金する。
+  //  月額アドオンは初月分をここで決済し、2か月目からは cron(apply-scheduled-contract-changes)が
+  //  アドオンごとの契約期間(current_period_end)の終わりに同じカードへ決済する。
   const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const orderIds: string[] = [];
   for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
-  const { getDefaultCardId, chargeFincodeCardOnce, createFincodePlan, createFincodeSubscription } = await import("@/lib/fincode");
-  const cardId = await getDefaultCardId(contract.fincode_customer_id!).catch(() => null);
-  const fincodeOrderId = (
-    "a" +
-    orderIds[0].replace(/-/g, "").slice(0, 12) +
-    Date.now().toString(36) +
-    Math.random().toString(36).slice(2, 7)
-  ).slice(0, 30);
-  const charge: any = cardId
-    ? await chargeFincodeCardOnce({ orderId: fincodeOrderId, customerId: contract.fincode_customer_id!, cardId, amount: total }).catch(
-        (e: unknown) => ({ status: "ERROR", error_code: e instanceof Error ? e.message : String(e) })
-      )
-    : { status: "NO_CARD" };
+  const { chargeSavedCard, newOrderId } = await import("@/lib/komoju");
+  const fincodeOrderId = newOrderId("a", orderIds[0]);
+  const charge = await chargeSavedCard({
+    orderId: fincodeOrderId,
+    customerId: contract.fincode_customer_id!,
+    amount: total,
+    metadata: { store_contract_id: contract.id },
+  });
   if (charge.status !== "CAPTURED") {
     await svc
       .from("addon_orders")
@@ -384,15 +380,9 @@ export async function purchaseAddons(params: {
       await fulfillPaidAddonOrder(orderId);
       continue;
     }
-    let subscriptionId: string | null = null;
-    let subError: string | null = null;
-    try {
-      const plan = await createFincodePlan({ name: `アドオン:${l.addon.name}`, monthlyFee: l.unitPrice });
-      const sub = await createFincodeSubscription({ customerId: contract.fincode_customer_id!, cardId: cardId!, fincodePlanId: plan.id });
-      subscriptionId = sub.id;
-    } catch (e) {
-      subError = e instanceof Error ? e.message : String(e);
-    }
+    // fincode_subscription_id に OWN_BILLING を入れた行 = アドオン単独で毎月決済する行(cronが更新)
+    const subscriptionId = OWN_BILLING;
+    const subError: string | null = null;
     const { error: rowError } = await svc.from("store_contract_addons").insert({
       store_contract_id: contract.id,
       addon_id: l.addon.id,
@@ -428,6 +418,9 @@ async function notifyAdmin(storeName: string, addonName: string, quantity: numbe
   }
 }
 
+/** アドオン単独で毎月カード決済する行の目印(store_contract_addons.fincode_subscription_id に入れる) */
+export const OWN_BILLING = "own_billing";
+
 /** 月額アドオンの解約(期間の終わりで外す)。 */
 export async function cancelMonthlyAddon(params: { storeId: string; storeContractAddonId: string }): Promise<string> {
   const svc = createServiceRoleClient();
@@ -446,10 +439,9 @@ export async function cancelMonthlyAddon(params: { storeId: string; storeContrac
   if (row.billing_method === "bank_transfer") {
     effectiveAt = row.current_period_end ?? new Date().toISOString();
   } else if (row.fincode_subscription_id) {
-    // アドオン別のサブスク: 次の課金を止め、今の1か月の終わりまで使える
-    effectiveAt = nextPeriodEnd(row.current_period_end);
-    const { cancelFincodeSubscription } = await import("@/lib/fincode");
-    await cancelFincodeSubscription(row.fincode_subscription_id).catch(() => undefined);
+    // アドオン単独で毎月決済している行: 次の決済をせず、支払い済みの期間の終わりまで使える
+    // (cron は pending_removed_at のある行を更新しない)
+    effectiveAt = row.current_period_end ?? new Date().toISOString();
   } else {
     effectiveAt = c.current_period_end ?? new Date().toISOString();
   }

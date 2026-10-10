@@ -1,11 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import {
-  getDefaultCardId,
-  chargeFincodeCardOnce,
-  createFincodePlan,
-  createFincodeSubscription,
-  cancelFincodeSubscription,
-} from "@/lib/fincode";
+import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
 import { addonFeeFor } from "@/lib/addons";
 
@@ -21,11 +15,10 @@ import { addonFeeFor } from "@/lib/addons";
 //   改めて決済してから切り替える(apply-scheduled-contract-changesの
 //   cronジョブが担当)。
 //
-// 設計: 1契約(store_contracts)につきfincodeサブスクリプションは常に1本
-// (プラン料金+アクティブなアドオン料金の合計額)。金額が変わるたびに、
-// 古いサブスクを解約し、その金額専用のfincodeプラン(都度作成、使い回し
-// しない — 変更頻度が低い想定の小規模運用なので単純さを優先)を作って
-// 新しいサブスクに差し替える。
+// 設計(2026/10 KOMOJU切替後): 決済サービス側のサブスク機能は使わない。
+// 契約期間(current_period_end)が終わると、cron(apply-scheduled-contract-changes)
+// がこの関数を呼んで「プラン料金+カード払いの月額アドオン」の合計をその場で
+// 決済し、期間を1か月延ばす。即時の変更(アップグレード等)も同じ関数で処理する。
 // ============================================================================
 
 type Supa = ReturnType<typeof createServiceRoleClient>;
@@ -34,7 +27,7 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   const { data, error } = await supabase
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at"
+      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email"
     )
     .eq("id", storeContractId)
     .single();
@@ -48,11 +41,6 @@ function addOneMonthIso(from: Date = new Date()): string {
   return d.toISOString();
 }
 
-// プラン名・アドオン名から、都度作成するfincodeプランの表示名を作る。
-function buildPlanLabel(planName: string, addonNames: string[]): string {
-  return addonNames.length > 0 ? `${planName}+${addonNames.join("+")}` : planName;
-}
-
 // プラン・アドオンの「現在の確定状態」を、満額決済のうえ即座に適用する。
 // 呼び出し元: 金額が上がる即時反映リクエスト、および期間終了時に保留中の
 // 変更を確定させるcronジョブの両方から使う共通処理。
@@ -64,6 +52,8 @@ export async function applyContractBillingChange(params: {
   // false: アドオンだけの変更など、プラン側の保留は手を付けず、期間だけ
   //        新しいcurrent_period_endへずらす(保留中の適用日を先送りする)。
   resolvesPendingPlan: boolean;
+  // 記録用: 期間終了時の自動更新なら "card_renewal"
+  source?: "contract_change" | "card_renewal";
 }): Promise<{ chargedAmount: number; newPeriodEnd: string }> {
   const supabase = createServiceRoleClient();
   const contract = await loadContract(supabase, params.storeContractId);
@@ -97,29 +87,12 @@ export async function applyContractBillingChange(params: {
   const addonFeeTotal = addons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
   const total = (plan.monthly_fee ?? 0) + addonFeeTotal;
 
-  const cardId = await getDefaultCardId(contract.fincode_customer_id).catch(() => null);
-  if (!cardId) {
-    throw new Error("カード情報が確認できませんでした。カードの再登録が必要な可能性があります。");
-  }
-
-  // 同一契約が何度も課金されうるので、注文IDは毎回ユニークにする
-  // (申込み時のorderIdは1回限りの決済なので固定IDでよかったが、こちらは
-  // 使い回せない)。
-  // fincodeのオーダーIDは30文字まで。以前は契約IDだけで30文字を使い切って時刻部分が
-  // 切り捨てられ、同じ契約の2回目以降の決済が「オーダーIDはすでに登録されています」
-  // (EC001025014)で失敗していた。契約IDの先頭+時刻+乱数で毎回ユニークにする。
-  const orderId = (
-    "c" +
-    contract.id.replace(/-/g, "").slice(0, 12) +
-    Date.now().toString(36) +
-    Math.random().toString(36).slice(2, 8)
-  ).slice(0, 30);
-
-  const charge = await chargeFincodeCardOnce({
+  const orderId = newOrderId("c", contract.id);
+  const charge = await chargeSavedCard({
     orderId,
     customerId: contract.fincode_customer_id,
-    cardId,
     amount: total,
+    metadata: { store_contract_id: contract.id },
   });
 
   if (charge.status !== "CAPTURED") {
@@ -127,8 +100,8 @@ export async function applyContractBillingChange(params: {
       store_contract_id: contract.id,
       event_type: "failed",
       amount: total,
-      source: "contract_change",
-      note: `決済失敗: status=${charge.status} error_code=${charge.error_code ?? "-"}`,
+      source: params.source ?? "contract_change",
+      note: `決済失敗: status=${charge.status} ${charge.error_code ?? ""}`.slice(0, 500),
     });
     await supabase
       .from("store_contracts")
@@ -137,35 +110,19 @@ export async function applyContractBillingChange(params: {
     throw new Error("決済が完了しませんでした。カード情報をご確認ください。");
   }
 
-  // 決済成功後はお金を実際に取れている状態。以降の処理(新サブスク作成等)が
-  // 失敗しても「失敗扱いで終わり」にはできない — 例外を投げず、できる
-  // ところまでは反映してbilling_eventsに記録を残す。
-  const fincodePlan = await createFincodePlan({
-    name: buildPlanLabel(plan.name, addons.map((a) => a.name)),
-    monthlyFee: total,
-  });
-  const subscription = await createFincodeSubscription({
-    customerId: contract.fincode_customer_id,
-    cardId,
-    fincodePlanId: fincodePlan.id,
-  });
-
-  if (contract.fincode_subscription_id) {
-    await cancelFincodeSubscription(contract.fincode_subscription_id).catch(() => {
-      // 既に無効化済み等は無視してよい(ベストエフォート)。
-    });
-  }
-
+  // 決済成功後はお金を実際に取れている状態。以降で失敗しても billing_events に記録を残す。
   const nowIso = new Date().toISOString();
   const newPeriodEnd = addOneMonthIso();
 
   const contractUpdate: Record<string, unknown> = {
     plan_id: params.newPlanId,
-    fincode_subscription_id: subscription.id,
+    fincode_subscription_id: null,
     current_period_end: newPeriodEnd,
     last_billing_status: "success",
     last_billing_at: nowIso,
     updated_at: nowIso,
+    suspended_for_nonpayment_at: null,
+    store_status_before_suspension: null,
   };
 
   if (params.resolvesPendingPlan) {
@@ -183,6 +140,15 @@ export async function applyContractBillingChange(params: {
     .update(contractUpdate)
     .eq("id", contract.id);
   if (updateError) throw new Error(updateError.message);
+
+  // カード決済の失敗で非公開にしていた店舗は、決済できたので元に戻す
+  if (contract.suspended_for_nonpayment_at) {
+    await supabase
+      .from("stores")
+      .update({ status: contract.store_status_before_suspension || "approved" })
+      .eq("id", contract.store_id)
+      .eq("status", "payment_suspended");
+  }
 
   // store_contract_addons を新しい構成に丸ごと置き換える(保留中の解除
   // 予約もここで全部クリアされる=新しい期間がまっさらにスタートする)。
@@ -218,8 +184,8 @@ export async function applyContractBillingChange(params: {
     store_contract_id: contract.id,
     event_type: "success",
     amount: total,
-    source: "contract_change",
-    note: `プラン・アドオン変更の即時決済(${plan.name}${
+    source: params.source ?? "contract_change",
+    note: `${params.source === "card_renewal" ? "契約更新の決済" : "プラン・アドオン変更の即時決済"}(${plan.name}${
       addons.length ? " + " + addons.map((a) => a.name).join("、") : ""
     })`,
   });
