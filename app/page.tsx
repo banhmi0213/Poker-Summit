@@ -112,11 +112,10 @@ export default async function HomePage({
   // can be filtered by it, same as /stores/featured already does.
   const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
 
-  // Nationwide and prefecture views share randomized recommended priority
-  // and refill up to ten stores. The home preview displays the first four.
-  // TOPのPICK UPは全国枠(全国PICKUP契約+月ごとの抽選)。閲覧者の都道府県の地域PICKUP契約店舗は別の欄に出す。
-  const pickupStoresPromise = getNationalPickupStores(supabase);
-  const regionalPickupPromise = getRegionalPickupStores(supabase, currentPref);
+  // Show one PICK UP section for the currently displayed location.
+  const pickupStoresPromise = currentPref
+    ? getRegionalPickupStores(supabase, currentPref)
+    : getNationalPickupStores(supabase);
 
   // All of the following are independent of each other, so they're fired
   // together instead of one-by-one — the serial version of this page was
@@ -237,10 +236,8 @@ export default async function HomePage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
-  // --- Featured stores: PICK UP契約店舗優先+空き枠ランダム埋め(上のコメント
-  // 参照)。ホームのプレビュー枠は4列×2行=8件なので、ここで最終的に切る。
+  // Keep the home preview at four stores for either location.
   const featuredStores = (featuredStoresAll ?? []).slice(0, 4);
-  const regionalPickup = (await regionalPickupPromise).slice(0, 4);
 
   // TOP ranks stores nationwide, independent of the visitor location.
   const { data: rankingRows, error: rankingError } = await supabase.rpc("public_store_rankings");
@@ -248,14 +245,14 @@ export default async function HomePage({
   const rankedStores = (rankingRows ?? []).slice(0, 4);
 
   const photoStoreIds = [...new Set([
-    ...featuredStores.map(s => s.id), ...regionalPickup.map((s: any) => s.id), ...rankedStores.map(s => s.id),
+    ...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id),
     ...displayEvents.map((e: any) => e.store_id).filter(Boolean),
   ])];
   const { data: homePhotos } = photoStoreIds.length
     ? await supabase.from("store_photos").select("store_id, url")
       .in("store_id", photoStoreIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
     : { data: [] };
-  const homeStoreFlags = await fetchStoreDisplayFlags(supabase, [...featuredStores.map(s => s.id), ...regionalPickup.map((s: any) => s.id), ...rankedStores.map(s => s.id)]);
+  const homeStoreFlags = await fetchStoreDisplayFlags(supabase, [...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id)]);
   const homeCoverPhotos = new Map<string, string>();
   (homePhotos ?? []).forEach(photo => { if (!homeCoverPhotos.has(photo.store_id)) homeCoverPhotos.set(photo.store_id, photo.url); });
 
@@ -351,16 +348,10 @@ export default async function HomePage({
 
       <main className={`home-feed ${styles.readable}`}>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🏆</span> PICK UP店舗</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
+          <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        {regionalPickup.length > 0 && (
-          <section className="home-section">
-            <div className="home-section-head"><h2><span>📍</span> {currentPref}のPICK UP店舗</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
-            <div className="home-grid home-grid-four">{regionalPickup.map((s: any) => <HomeStoreCard key={s.id} store={s} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
-          </section>
-        )}
         {topBanners.length > 0 && (
           <div className="home-section">
             <HomeBannerSlider banners={topBanners} />
