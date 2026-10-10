@@ -8,7 +8,7 @@ export function HomeSectionBanners({ banners, layout }: { banners: HomeBanner[];
   return (
     <div className={layout === "four" ? styles.four : styles.wide} aria-label="掲載バナー">
       {visible.map((b) => {
-        const image = <img src={b.image_url} alt={b.title} loading="lazy" style={b.image_url?.includes("-banner-light-v1.webp") ? { aspectRatio: "auto", objectFit: "contain" } : undefined} />;
+        const image = <img src={b.image_url} alt={b.title} loading="lazy" style={b.image_url?.match(/-banner-light-v\d+\.webp$/) ? { aspectRatio: "auto", objectFit: "contain" } : undefined} />;
         return b.link_url ? (
           <a key={b.id} className={styles.banner} href={b.link_url} target={b.external ? "_blank" : undefined} rel={b.external ? "noopener noreferrer" : undefined}>{image}</a>
         ) : <div key={b.id} className={styles.banner}>{image}</div>;
