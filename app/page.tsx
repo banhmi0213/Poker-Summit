@@ -410,9 +410,6 @@ export default async function HomePage({
 
       <div className="cta-banner">
         <div className="cta-banner-inner">
-          <div className="cta-icon" style={{ fontSize: 32 }}>
-            🃏
-          </div>
           <div className="cta-body">
             <div className="eyebrow">POKER LOVERS COMMUNITY</div>
             <h2>ポーカー好きと、もっとつながる。</h2>
