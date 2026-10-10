@@ -2778,3 +2778,8 @@ th {
  .home-store-copy :is(.home-tag,.verified-store-badge),.sl-card-body :is(.badge,.verified-store-badge) { align-self:flex-start; }
  .home-store-copy .home-card-cta,.sl-card-body .sl-card-cta { margin-top:auto; padding-top:12px; }
 }
+
+/* Keep the registered store heading visible above its photo gallery. */
+.sd-title { flex:1; min-width:0; width:100%; }
+.sd-title h1 { flex:0 0 100%; width:100%; min-width:0; }
+.sd-store-contact-bar { flex-shrink:0; }
