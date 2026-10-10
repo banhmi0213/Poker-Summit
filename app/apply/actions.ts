@@ -75,6 +75,9 @@ export async function submitApplication(formData: FormData) {
       const category = String(formData.get("category") ?? "").trim();
       const message = String(formData.get("message") ?? "").trim();
 
+  if (formData.get("agree") !== "on") {
+          redirect(`/apply?error=${encodeURIComponent("利用規約・特定商取引法に基づく表記・プライバシーポリシーへの同意が必要です。")}`);
+  }
   if (!companyName || !contactName || !email) {
           redirect(
                     `/apply?error=${encodeURIComponent(
@@ -157,6 +160,9 @@ export async function startPaidApplication(formData: FormData) {
       const cycleRaw = Number(formData.get("billingCycle") ?? 1);
       const billingCycle: BillingCycle = isBillingCycle(cycleRaw) ? cycleRaw : 1;
 
+  if (formData.get("agree") !== "on") {
+          redirect(`/apply?error=${encodeURIComponent("利用規約・特定商取引法に基づく表記・プライバシーポリシーへの同意が必要です。")}`);
+  }
   if (!companyName || !contactName || !email) {
           redirect(
                     `/apply?error=${encodeURIComponent("店舗名・会社名、担当者名、メールアドレスは必須です。")}`

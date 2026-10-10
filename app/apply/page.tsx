@@ -238,6 +238,26 @@ export default async function ApplyPage({
               </>
             )}
 
+            {plans && plans.length > 0 && (
+              <div style={{ border: "1px solid var(--border-strong, #d8c3a0)", borderRadius: 8, padding: "12px 14px", margin: "4px 0 14px", fontSize: 12.5, lineHeight: 1.75 }}>
+                <strong style={{ display: "block", marginBottom: 4 }}>「選んだプランで申し込む」前にご確認ください</strong>
+                <ul style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>選択したプランの税込料金（上の一覧に表示）を、選択したお支払いサイクルごとに請求します。</li>
+                  <li>契約は解約のお申し出がない限り同じ期間で自動更新し、更新後の料金を請求します。</li>
+                  <li>銀行振込は請求書の発行から7日以内にお支払いください。期限までにご入金がない場合は掲載を停止します。</li>
+                  <li>解約・自動更新の停止は、次回更新日の前日までに<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からお申し出ください。</li>
+                  <li>お支払い済みの料金の日割り・月割りでの返金は原則行いません。</li>
+                </ul>
+              </div>
+            )}
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6, margin: "0 0 14px" }}>
+              <input type="checkbox" name="agree" required style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }} />
+              <span>
+                <a href="/terms" target="_blank" rel="noopener" style={LINK_STYLE}>利用規約</a>・
+                <a href="/tokushoho" target="_blank" rel="noopener" style={LINK_STYLE}>特定商取引法に基づく表記</a>・
+                <a href="/privacy" target="_blank" rel="noopener" style={LINK_STYLE}>プライバシーポリシー</a>に同意します
+              </span>
+            </label>
             <button
               type="submit"
               formAction={submitApplication}
