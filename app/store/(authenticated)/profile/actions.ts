@@ -2,6 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { createHmac, randomInt, timingSafeEqual } from "crypto";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { sendContactEmailChangedNotice, sendEmailVerificationCode } from "@/lib/email";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { normalizeCity } from "@/lib/city";
 import {
@@ -128,6 +132,23 @@ export async function updateStoreProfile(formData: FormData) {
 // を介している。RLS参照はそれぞれのRPCのコメントを参照。
 // ---------------------------------------------------------------------------
 
+// 連絡先メールアドレスの登録・変更は、新しいアドレスに確認コードを送り、
+// コードの入力で本人の操作であることを確かめてから反映する(不正利用対策)。
+// コードはDBに保存せず、署名付きのCookie(15分有効)で照合する。
+const EMAIL_VERIFY_COOKIE = "ps_email_verify";
+const EMAIL_VERIFY_MINUTES = 15;
+const EMAIL_VERIFY_MAX_TRIES = 5;
+
+function emailVerifySignature(userId: string, email: string, code: string, exp: number) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  return createHmac("sha256", `ps-email-verify:${key}`).update(`${userId}|${email}|${code}|${exp}`).digest("hex");
+}
+
+function backToProfile(params: Record<string, string>): never {
+  const qs = new URLSearchParams(params).toString();
+  redirect(`/store/profile?${qs}#notify-banner`);
+}
+
 export async function updateMyStoreContactEmail(formData: FormData) {
   const supabase = await createClient();
   const {
@@ -138,19 +159,123 @@ export async function updateMyStoreContactEmail(formData: FormData) {
     throw new Error("ログインが必要です。");
   }
 
-  const contactEmail = String(formData.get("contactEmail") ?? "").trim();
-  if (!contactEmail) {
-    throw new Error("メールアドレスを入力してください。");
+  const contactEmail = String(formData.get("contactEmail") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail) || contactEmail.length > 254) {
+    backToProfile({ emailError: "メールアドレスの形式が正しくありません。" });
   }
 
-  const { error } = await supabase.rpc("update_my_store_contact_email", {
-    p_email: contactEmail,
+  // 送信回数の制限(1時間に5回まで)
+  const svc = createServiceRoleClient();
+  const { count: sentCount } = await svc
+    .from("audit_log")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "email_code_sent")
+    .eq("target_id", user.id)
+    .gte("created_at", new Date(Date.now() - 60 * 60_000).toISOString());
+  if ((sentCount ?? 0) >= 5) {
+    backToProfile({ emailError: "確認コードの送信回数が上限に達しました。1時間ほど時間をおいてからお試しください。" });
+  }
+
+  const code = String(randomInt(100000, 1000000));
+  const exp = Date.now() + EMAIL_VERIFY_MINUTES * 60_000;
+  const token = Buffer.from(
+    JSON.stringify({ u: user.id, e: contactEmail, x: exp, h: emailVerifySignature(user.id, contactEmail, code, exp) })
+  ).toString("base64url");
+
+  try {
+    await sendEmailVerificationCode({ to: contactEmail, code, minutes: EMAIL_VERIFY_MINUTES });
+  } catch {
+    backToProfile({ emailError: "確認コードのメールを送信できませんでした。アドレスをご確認のうえ、もう一度お試しください。" });
+  }
+  await svc.from("audit_log").insert({ actor_user_id: user.id, action: "email_code_sent", target_type: "store_contact_email", target_id: user.id, detail: {} });
+
+  const jar = await cookies();
+  jar.set(EMAIL_VERIFY_COOKIE, token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    path: "/store",
+    maxAge: EMAIL_VERIFY_MINUTES * 60,
   });
-  if (error) {
-    throw new Error(error.message);
+  backToProfile({ emailCode: "sent" });
+}
+
+export async function confirmMyStoreContactEmail(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error("ログインが必要です。");
+  }
+
+  const jar = await cookies();
+  const raw = jar.get(EMAIL_VERIFY_COOKIE)?.value;
+  let payload: { u: string; e: string; x: number; h: string } | null = null;
+  try {
+    payload = raw ? JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) : null;
+  } catch {
+    payload = null;
+  }
+  if (!payload || payload.u !== user.id || Date.now() > payload.x) {
+    jar.delete({ name: EMAIL_VERIFY_COOKIE, path: "/store" });
+    backToProfile({ emailError: "確認コードの有効期限が切れました。もう一度メールアドレスを入力してください。" });
+  }
+
+  const svc = createServiceRoleClient();
+  const issuedAt = new Date(payload.x - EMAIL_VERIFY_MINUTES * 60_000).toISOString();
+  const { count: failCount } = await svc
+    .from("audit_log")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "email_code_failed")
+    .eq("target_id", user.id)
+    .gte("created_at", issuedAt);
+  if ((failCount ?? 0) >= EMAIL_VERIFY_MAX_TRIES) {
+    jar.delete({ name: EMAIL_VERIFY_COOKIE, path: "/store" });
+    backToProfile({ emailError: "確認コードの入力に続けて失敗したため、このコードは使えなくなりました。もう一度メールアドレスを入力してください。" });
+  }
+
+  const code = String(formData.get("code") ?? "").replace(/\D/g, "");
+  const expected = Buffer.from(emailVerifySignature(user.id, payload.e, code, payload.x));
+  const given = Buffer.from(payload.h);
+  if (code.length !== 6 || expected.length !== given.length || !timingSafeEqual(expected, given)) {
+    await svc.from("audit_log").insert({ actor_user_id: user.id, action: "email_code_failed", target_type: "store_contact_email", target_id: user.id, detail: {} });
+    backToProfile({ emailCode: "sent", emailError: "確認コードが正しくありません。" });
+  }
+
+  const { data: store } = await svc.from("stores").select("id, name").eq("owner_user_id", user.id).maybeSingle();
+  if (!store) backToProfile({ emailError: "店舗が見つかりません。運営にお問い合わせください。" });
+  const { data: contract } = await svc
+    .from("store_contracts")
+    .select("id, contact_email")
+    .eq("store_id", store.id)
+    .eq("status", "active")
+    .maybeSingle();
+  if (!contract) backToProfile({ emailError: "有効な契約が見つかりません。運営にお問い合わせください。" });
+
+  const previous = contract.contact_email as string | null;
+  const { error } = await svc.from("store_contracts").update({ contact_email: payload.e }).eq("id", contract.id);
+  if (error) backToProfile({ emailError: "メールアドレスを登録できませんでした。運営にお問い合わせください。" });
+  await svc.from("audit_log").insert({
+    actor_user_id: user.id,
+    action: "store_contact_email_changed",
+    target_type: "store_contract",
+    target_id: contract.id,
+    detail: { had_previous: Boolean(previous) },
+  });
+  jar.delete({ name: EMAIL_VERIFY_COOKIE, path: "/store" });
+
+  // 変更前のアドレスにも知らせる(心当たりのない変更に気づけるように)
+  if (previous && previous.toLowerCase() !== payload.e) {
+    try {
+      await sendContactEmailChangedNotice({ to: previous, storeName: store.name, newEmail: payload.e, at: new Date() });
+    } catch {
+      // 通知に失敗しても変更は完了している
+    }
   }
 
   revalidatePath("/store/profile");
+  backToProfile({ emailDone: "1" });
 }
 
 // LINE連携用ワンタイムコードを店舗オーナー自身が再発行する。発行結果

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { loginLockMessage, recordLoginFailure, recordLoginLocked, recordLoginSuccess, requestMeta } from "@/lib/login-guard";
 
 // 会員・運営(admin_users)向けの通常ログイン。実メールアドレスでのログイン
 // のみを扱う。店舗管理のログインID("store-xxxxxxxx"形式・パスワード)は
@@ -13,6 +14,13 @@ export async function signIn(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
 
+  const meta = await requestMeta();
+  const lockMessage = await loginLockMessage("member", email, meta.ip);
+  if (lockMessage) {
+    await recordLoginLocked("member", email, meta);
+    redirect(`/login?error=${encodeURIComponent(lockMessage)}&next=${encodeURIComponent(next)}`);
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -20,10 +28,12 @@ export async function signIn(formData: FormData) {
   });
 
   if (error) {
+    await recordLoginFailure("member", email, meta);
     redirect(
       `/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`
     );
   }
+  await recordLoginSuccess("member", email, meta, data.user?.id ?? null);
 
   if (next) {
     redirect(next);
