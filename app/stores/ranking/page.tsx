@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { HomeStoreCard } from "@/app/home-store-card";
+import { getStoreContentCounts } from "@/lib/store-content-counts";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -47,6 +48,7 @@ export default async function StoreRankingPage({ searchParams }: {
   const covers = new Map<string, string>();
   (photos.data ?? []).forEach((p: any) => { if (!covers.has(p.store_id)) covers.set(p.store_id, p.url); });
   const favoriteIds = new Set((favorites.data ?? []).map((f: any) => f.store_id));
+  const storeContentCounts = await getStoreContentCounts(supabase, stores.map((s: any) => s.id));
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container">
@@ -55,7 +57,7 @@ export default async function StoreRankingPage({ searchParams }: {
         <div className="home-section-head"><h1>店舗ランキング{pref || region ? "（" + (pref || region) + "）" : "（全国）"}</h1></div>
         {!stores.length && <p className="muted">まだ店舗がありません。</p>}
         <div className="home-grid home-grid-four">{stores.map((s: any, index: number) =>
-          <HomeStoreCard key={s.id} store={s} rank={index + 1} coverPhoto={covers.get(s.id)}
+          <HomeStoreCard key={s.id} store={s} contentCounts={storeContentCounts.get(s.id)} rank={index + 1} coverPhoto={covers.get(s.id)}
             isFavorite={favoriteIds.has(s.id)} favoriteAction={async () => {
               "use server";
               await toggleFavoriteStore(s.id, path);
