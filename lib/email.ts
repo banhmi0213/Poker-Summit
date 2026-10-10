@@ -457,3 +457,40 @@ Poker Summit`;
     text,
   });
 }
+
+// 会員登録の完了メール(2026/10)。メールアドレスの確認が済んだとき(app/auth/confirm)に1回だけ送る。
+export async function sendWelcomeEmail(params: { to: string; name: string | null }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.name ? `${params.name} 様` : "Poker Summit会員の皆さま"}
+
+このたびはPoker Summitにご登録いただき、誠にありがとうございます。
+会員登録が完了しました。
+
+Poker Summitでは、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご覧いただけます。
+
+■ 会員になるとできること
+・お気に入り店舗の登録
+・求人への応募
+・クーポンの利用
+・イベントへの参加登録
+
+▼マイページ
+${siteUrl}/mypage
+
+▼店舗を探す
+${siteUrl}/stores
+
+ご不明な点がございましたら、お問い合わせフォームよりお気軽にご連絡ください。
+${siteUrl}/contact
+
+今後ともPoker Summitをよろしくお願いいたします。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+
+  await sendEmail({
+    to: params.to,
+    subject: "【Poker Summit】会員登録が完了しました",
+    text,
+  });
+}
