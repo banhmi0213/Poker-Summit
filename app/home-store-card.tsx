@@ -19,7 +19,12 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
         <h3><StoreDisplayName name={store.name} /></h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
         {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
         <VerifiedStoreBadge flags={flags} />
-        {contentCounts && <div className="home-store-counts" aria-label="店舗の掲載情報">\n          {([["🏆", "大会", contentCounts.events], ["🎟", "特典", contentCounts.coupons], ["📢", "お知らせ", contentCounts.notices], ["💼", "求人", contentCounts.jobs]] as const).map(([icon, label, count]) => (\n            <span key={label} className="home-store-count"><span className="home-store-count-number"><span aria-hidden="true">{icon}</span> {count}</span><span className="home-store-count-label">{label}</span></span>\n          ))}\n        </div>}\n        <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
+        {contentCounts && <div className="home-store-counts" aria-label="店舗の掲載情報">
+          {([["🏆", "大会", contentCounts.events], ["🎟", "特典", contentCounts.coupons], ["📢", "お知らせ", contentCounts.notices], ["💼", "求人", contentCounts.jobs]] as const).map(([icon, label, count]) => (
+            <span key={label} className="home-store-count"><span className="home-store-count-number"><span aria-hidden="true">{icon}</span> {count}</span><span className="home-store-count-label">{label}</span></span>
+          ))}
+        </div>}
+        <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
       </div>
     </Link>
   </article>;
