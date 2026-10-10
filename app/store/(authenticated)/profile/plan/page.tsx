@@ -230,6 +230,8 @@ export default async function StorePlanPage({
               </div>
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                 カード番号は決済代行会社(KOMOJU)の画面で入力します。Poker Summit には保存されません。
+                <br />
+                KOMOJUの画面では「今後の支払いに備えて支払い方法を保存します」にチェックを入れてから「保存」を押してください。
               </div>
             </div>
             <form action={startCardRegistration}>

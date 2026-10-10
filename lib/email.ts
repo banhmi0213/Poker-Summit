@@ -595,3 +595,56 @@ Poker Summit運営事務局
 ※このメールは送信専用です。`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済ができませんでした", text });
 }
+
+/** カード決済が完了したことの店舗向けお知らせ(契約の更新・カード登録時の決済) */
+export async function sendPaymentReceiptEmail(params: {
+  to: string;
+  storeName: string;
+  amount: number;
+  description: string; // 例: 「契約更新(ライトプラン)」
+  periodEnd: string | null; // 次の契約期間の終わり(YYYY年M月D日)
+  at: Date;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.at.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+ご登録のクレジットカードで、以下のとおり決済が完了しました。
+
+■ 内容：${params.description}
+■ 金額：${params.amount.toLocaleString("ja-JP")}円（税込）
+■ 決済日時：${when}
+${params.periodEnd ? `■ 次回の更新日：${params.periodEnd}\n` : ""}
+決済の履歴やご契約内容は、店舗管理画面の「プラン・お支払い」でご確認いただけます。
+${siteUrl}/store/profile/plan
+
+心当たりのない決済の場合は、お問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済完了のお知らせ", text });
+}
+
+/** お支払いカードが登録・変更されたことのお知らせ */
+export async function sendCardRegisteredEmail(params: { to: string; storeName: string; at: Date }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.at.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+お支払いに使うクレジットカードが登録（変更）されました。
+
+■ 日時：${when}
+
+次回以降の決済は、このカードで行います。
+カード番号は決済代行会社（KOMOJU）が管理しており、Poker Summit には保存されません。
+
+この操作に心当たりがない場合は、すぐにお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】お支払いカード登録のお知らせ", text });
+}
