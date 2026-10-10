@@ -11,10 +11,6 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
 ];
 
 export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string | null; regionSelector?: ReactNode }) {
-  // 会員登録・ログインは別々の窓(ボタン)にする(2026/09/30、1つのボタンに
-  // まとめたが「2窓にして」との指摘で再度分離)。店舗ログインは会員とは
-  // 別のアカウント体系(ログインID/パスワード)なので、常に別の色付き
-  // ボタンとして/store/loginへ飛ばす。
   const memberLinks = userEmail ? (
     <Link href="/mypage" className="portal-cta">
       マイページ
@@ -28,12 +24,6 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
         ログイン
       </Link>
     </>
-  );
-
-  const storeLoginLink = (
-    <Link href="/store/login" className="btn portal-secondary-btn">
-      店舗ログイン
-    </Link>
   );
 
   return (
@@ -63,7 +53,6 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
         <div className="portal-auth-actions">
           {regionSelector && <div className={styles.desktop}>{regionSelector}</div>}
           {memberLinks}
-          {storeLoginLink}
         </div>
         {regionSelector && <div className={styles.mobile}>{regionSelector}</div>}
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
@@ -83,7 +72,6 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
           <Link href="/blog" className="plink">BLOG</Link>
           <Link href="/major-tournaments" className="plink">国内外大型大会</Link>
         {memberLinks}
-        {storeLoginLink}
       </div>
     </nav>
   );

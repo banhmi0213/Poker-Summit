@@ -52,9 +52,14 @@ export async function PortalFooter() {
         <a href="/contact">お問い合わせ</a>
         <span className="footer-links__separator footer-links__apply-separator" aria-hidden="true"> ｜ </span>
         <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ</a>
+        <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
+        <a className="footer-links__apply" href="/store/login">店舗管理画面</a>
       </nav>
       <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.</div>
-      <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
+      <div className="footer-store-actions">
+        <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
+        <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>
+      </div>
     </div>
   );
 }
