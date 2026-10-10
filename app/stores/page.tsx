@@ -308,7 +308,7 @@ export default async function StoresPage({
           </Link>
         </nav>
         <div className="store-mobile-banner">
-          <CompactPortalBanner image="/images/poker-store-finder-banner.jpg"
+          <CompactPortalBanner image="/images/poker-store-finder-banner.webp"
             eyebrow="FIND YOUR POKER SPOT"
             title={`${heroPlace}のポーカースポットを探す`}
             subtitle="看板から見つける、あなたの次の一軒。" />

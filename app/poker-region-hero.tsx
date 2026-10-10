@@ -186,13 +186,13 @@ function formatCount(value: number) {
  */
 export function PokerRegionHero({
   stats,
-  backgroundSrc = "/images/poker-region-hero-bg.png",
+  backgroundSrc = "/images/poker-region-hero-bg.webp",
 }: Props) {
   return (
     <section className="ps-region-hero" aria-label="全国からポーカー店舗を探す">
       {/* Decoration only (Fuji/cityscape/cherry blossoms/chips/cards) — no
           text, map, or numbers are baked into this image. */}
-      <img className="ps-region-hero__bg" src={backgroundSrc} alt="" aria-hidden="true" />
+      <img className="ps-region-hero__bg" src={backgroundSrc} alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
 
       <div className="ps-region-hero__copy-left">
         <img className="ps-region-hero__logo-script" src="/images/hero-script-reference.png" alt={HERO_COPY.logoScript} />

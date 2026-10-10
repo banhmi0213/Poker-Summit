@@ -16,9 +16,9 @@ export function StoreListCard({ store, coverPhoto, isFavorite, distanceKm, favor
     <article className={`sl-card-desktop${goldFrameClass(flags)}`}>
       <form action={favoriteAction}><button type="submit" className={`store-fav-btn ${isFavorite ? "active" : ""}`} aria-label={`${store.name}をお気に入り${isFavorite ? "から解除" : "に追加"}`} aria-pressed={isFavorite}>{isFavorite ? "♥" : "♡"}</button></form>
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>
-        <div className="sl-card-cover">{cover ? <img src={cover} alt={`${store.name}の店舗写真`} /> : <StoreNamePlaceholder name={store.name} />}</div>
+        <div className="sl-card-cover">{cover ? <img loading="lazy" decoding="async" src={cover} alt={`${store.name}の店舗写真`} /> : <StoreNamePlaceholder name={store.name} />}</div>
         <div className="sl-card-body">
-          <div className="sl-card-logo">{store.logo_url ? <img src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
+          <div className="sl-card-logo">{store.logo_url ? <img loading="lazy" decoding="async" src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
           <h3><StoreDisplayName name={store.name} /></h3>
           <p>📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
           {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}

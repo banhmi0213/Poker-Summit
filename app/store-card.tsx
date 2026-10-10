@@ -44,8 +44,8 @@ export function StoreCard({
         </button>
       </form>
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>
-        <div className="generic-store-cover">{cover ? <img src={cover} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
-        <div className="generic-store-finger">{store.logo_url ? <img src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
+        <div className="generic-store-cover">{cover ? <img loading="lazy" decoding="async" src={cover} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
+        <div className="generic-store-finger">{store.logo_url ? <img loading="lazy" decoding="async" src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
         <div style={{ padding: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
           {store.category && (

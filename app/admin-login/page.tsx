@@ -25,7 +25,7 @@ export default function AdminLoginPage({
     <div className="container" style={{ maxWidth: 380, paddingTop: 60 }}>
       <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
         <div className="brand wordmark">
-          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+          <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         </div>
       </div>
       <div className="card">

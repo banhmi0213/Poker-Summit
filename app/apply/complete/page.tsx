@@ -113,7 +113,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   return (
     <div className="container" style={{ maxWidth: 480, paddingTop: 40 }}>
       <div className="brand wordmark" style={{ marginBottom: 20 }}>
-        <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+        <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
       </div>
       <div className="card">
         <h1 style={{ fontSize: 18, marginBottom: 8 }}>{title}</h1>

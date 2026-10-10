@@ -113,7 +113,7 @@ export default async function Page({params}:{params:{id:string}}){
 
 .mt-hero{min-height:190px;background:linear-gradient(110deg,#cfad70,#e6cea2);border-radius:12px}
 .mt-hero:after{display:none}
-.mt-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;background:url('/images/major-tournament-banner.jpg') 99% 50% / 202% auto no-repeat}
+.mt-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;background:url('/images/major-tournament-banner.webp') 99% 50% / 202% auto no-repeat}
 .mt-hero-content{width:50%;box-sizing:border-box;padding:26px 30px;color:#563814}
 .mt-hero .mt-eyebrow{color:#8b6427;font-size:9px;margin-bottom:10px}
 .mt-tag{color:#755321;border-color:#b59050;background:rgba(255,255,255,.25);font-size:10px;padding:4px 10px}
