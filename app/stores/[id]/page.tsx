@@ -329,7 +329,7 @@ export default async function StoreDetailPage({
     <div>
       <JsonLd data={storeJsonLd(store as SeoStore, (photos ?? []) as { url: string }[])} />
       <PortalHeader userEmail={user?.email} />
-      <main className="container sd-page detail-readable">
+      <main className={`container sd-page detail-readable${storeFlags?.goldFrame ? " sd-gold-detail" : ""}`}>
         <nav aria-label="パンくずリスト" className="breadcrumb" style={{ display: "flex", flexWrap: "wrap", gap: 6, fontWeight: 600 }}>
           <Link href="/">TOP</Link>
           <span aria-hidden="true">›</span>
@@ -337,6 +337,7 @@ export default async function StoreDetailPage({
           {store.pref && <><span aria-hidden="true">›</span><Link href={`/stores?pref=${encodeURIComponent(store.pref)}`}>{store.pref}</Link></>}
           {store.pref && store.city && <><span aria-hidden="true">›</span><Link href={cityPageHref(store.pref, store.city)}>{store.city}</Link></>}
         </nav>
+        <div className="sd-hero-surface">
         <div className="sd-title-row">
           <div className="sd-title"><h1><ReadableName name={store.name} /></h1>
             <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
@@ -392,6 +393,7 @@ export default async function StoreDetailPage({
               src={"https://maps.google.com/maps?q=" + encodeURIComponent(mapEmbedQuery) + "&output=embed"}
               loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
           </aside>
+        </div>
         </div>
         <StoreDetailTabs key={store.id} schedule={<StoreSchedule events={events ?? []} />} panels={[
           { id: "menu", label: "料金・メニュー", content: (

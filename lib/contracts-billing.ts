@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
@@ -142,6 +143,10 @@ export async function applyContractBillingChange(params: {
     .update(contractUpdate)
     .eq("id", contract.id);
   if (updateError) throw new Error(updateError.message);
+
+  // 決済成功・契約更新後に公開カードと店舗詳細の表示を更新する。
+  revalidatePath("/", "layout");
+  revalidatePath(`/stores/${contract.store_id}`);
 
   // カード決済の失敗で非公開にしていた店舗は、決済できたので元に戻す
   if (contract.suspended_for_nonpayment_at) {
