@@ -10,6 +10,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { HomeStoreCard } from "@/app/home-store-card";
+import { getStoreContentCounts } from "@/lib/store-content-counts";
 import { fetchStoreDisplayFlags, sortByListPriority } from "@/lib/plan-entitlements";
 import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
@@ -281,6 +282,8 @@ export default async function StoresPage({
   const displayFlags = await fetchStoreDisplayFlags(supabase, [...displayStores.map((s) => s.id), ...rankedStores.map((s: any) => s.id)]);
   if (!hasOrigin) displayStores = sortByListPriority(displayStores, displayFlags);
 
+  const storeContentCounts = await getStoreContentCounts(supabase, [...displayStores.map(s => s.id), ...rankedStores.map((s: any) => s.id)]);
+
   const pagination = paginateStores(displayStores, searchParams.page);
   const pageNumbers = Array.from({ length: pagination.totalPages }, (_, index) => index + 1)
     .filter(page => page === 1 || page === pagination.totalPages || Math.abs(page - pagination.page) <= 2);
@@ -505,7 +508,7 @@ export default async function StoresPage({
             <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る →</Link></div>
             {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
             <div className="home-grid home-grid-four">{rankedStores.map((s: any, index: number) => (
-              <HomeStoreCard key={s.id} store={s} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} flags={displayFlags.get(s.id)} favoriteAction={async () => {
+              <HomeStoreCard key={s.id} store={s} contentCounts={storeContentCounts.get(s.id)} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} flags={displayFlags.get(s.id)} favoriteAction={async () => {
                 "use server";
                 await toggleFavoriteStore(s.id, "/stores");
               }} />
