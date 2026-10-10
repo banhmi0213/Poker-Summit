@@ -11,7 +11,7 @@ import { StoreNamePlaceholder } from "@/app/store-name-placeholder";
 import styles from "./detail.module.css";
 import { EventSign } from "@/app/event-sign";
 import type { Metadata } from "next";
-import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { SITE_NAME, absoluteUrl, clip, pageTitle, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES } from "@/lib/seo";
 import { JsonLd } from "@/lib/json-ld";
 
 const EVENT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,8 +39,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     title,
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: e.title }] } : {}) },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", images: image ? [{ url: image, alt: e.title }] : DEFAULT_OG_IMAGES },
+    twitter: { card: "summary_large_image", title, description, images: [image ?? DEFAULT_OG_IMAGE] },
   };
 }
 

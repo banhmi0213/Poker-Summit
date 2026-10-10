@@ -1,4 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
+
+export const metadata: Metadata = { ...NOINDEX, title: "メンテナンス中｜Poker Summit" };
 
 export default async function MaintenancePage() {
   const supabase = await createClient();

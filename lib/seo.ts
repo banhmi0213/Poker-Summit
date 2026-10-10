@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 
 export const SITE_NAME = "Poker Summit";
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://poker-summit.vercel.app").replace(/\/$/, "");
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://pokersummit.jp").replace(/\/$/, "");
 export const SITE_TAGLINE = "全国のアミューズメントポーカー店・ポーカーバー検索";
 export const SITE_DESCRIPTION =
   "全国のアミューズメントポーカー店・ポーカーバーを都道府県や駅から探せるポータルサイト。営業時間・アクセス・トーナメント・イベント・求人・クーポン情報をまとめてチェックできます。";
+
+/** SNSで共有されたときの既定の画像(写真のないページ用) */
+export const DEFAULT_OG_IMAGE = "/og-default.jpg";
+export const DEFAULT_OG_IMAGES = [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: SITE_NAME }];
 
 /** "ページ名｜Poker Summit" の形に揃える */
 export function pageTitle(name: string) {
@@ -35,8 +39,8 @@ export function staticPageMetadata(opts: {
     title,
     description: opts.description,
     alternates: { canonical: opts.path },
-    openGraph: { title, description: opts.description, url: opts.path, siteName: SITE_NAME, locale: "ja_JP", type: "website" },
-    twitter: { card: "summary_large_image", title, description: opts.description },
+    openGraph: { title, description: opts.description, url: opts.path, siteName: SITE_NAME, locale: "ja_JP", type: "website", images: DEFAULT_OG_IMAGES },
+    twitter: { card: "summary_large_image", title, description: opts.description, images: [DEFAULT_OG_IMAGE] },
     ...(opts.index === false ? { robots: { index: false, follow: true } } : {}),
   };
 }

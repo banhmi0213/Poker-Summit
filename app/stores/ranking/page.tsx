@@ -6,8 +6,22 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { toggleFavoriteStore } from "@/app/member-actions";
+import type { Metadata } from "next";
+import { staticPageMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
+
+export function generateMetadata({ searchParams }: { searchParams: { pref?: string; region?: string } }): Metadata {
+  const pref = PREF_OPTIONS.includes(searchParams.pref ?? "") ? searchParams.pref! : "";
+  const region = !pref && REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
+  const place = pref || (region ? `${region}エリア` : "全国");
+  const qs = pref ? `?pref=${encodeURIComponent(pref)}` : region ? `?region=${encodeURIComponent(region)}` : "";
+  return staticPageMetadata({
+    title: `${place}のポーカー店ランキング`,
+    description: `${place}で人気のアミューズメントポーカー店・ポーカーバーのランキング。営業時間・アクセス・イベント情報もPoker Summitでチェックできます。`,
+    path: `/stores/ranking${qs}`,
+  });
+}
 
 export default async function StoreRankingPage({ searchParams }: {
   searchParams: { pref?: string; region?: string };

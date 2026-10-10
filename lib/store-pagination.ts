@@ -9,7 +9,7 @@ export function paginateStores<T>(stores: T[], requestedPage?: string) {
 
 export function storePageHref(filters: Record<string, string | undefined>, page: number) {
   const params = new URLSearchParams();
-  for (const key of ["q", "category", "pref", "region", "area", "lat", "lng"]) {
+  for (const key of ["q", "category", "pref", "city", "region", "area", "lat", "lng"]) {
     if (filters[key]) params.set(key, filters[key]!);
   }
   if (page > 1) params.set("page", String(page));

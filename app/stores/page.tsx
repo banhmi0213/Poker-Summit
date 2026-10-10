@@ -15,22 +15,35 @@ import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 import type { Metadata } from "next";
 import { CATEGORY_LABEL } from "@/lib/constants";
-import { SITE_NAME, pageTitle } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, pageTitle } from "@/lib/seo";
+import { CITY_PAGE_MIN_STORES, cityPageHref, countCityPages, isDesignatedCity } from "@/lib/city";
 
-type StoreListParams = { q?: string; category?: string; pref?: string; region?: string; area?: string; lat?: string; lng?: string; page?: string };
+type StoreListParams = { q?: string; category?: string; pref?: string; city?: string; region?: string; area?: string; lat?: string; lng?: string; page?: string };
+
+/** URLの city は都道府県が指定されているときだけ有効。変な値は無視する。 */
+function validCity(pref: string, city: string | undefined) {
+  const c = (city ?? "").trim();
+  return pref && c && c.length <= 20 && /[市区町村]$/.test(c) ? c : "";
+}
+
+/** 市区町村で絞る(政令指定都市は配下の区もまとめる) */
+function cityFilter<T extends { eq: Function; like: Function }>(query: T, city: string): T {
+  return isDesignatedCity(city) ? query.like("city", `${city}%`) : query.eq("city", city);
+}
 
 // 都道府県・エリア・カテゴリで絞った一覧は「東京都のアミューズメントポーカー」等の
 // 検索に当てたいので、それぞれ固有のタイトルとcanonicalを持たせる。
 // キーワード検索・現在地検索の結果は無数に組み合わせがあるので検索結果に出さない。
-export function generateMetadata({ searchParams }: { searchParams: StoreListParams }): Metadata {
+export async function generateMetadata({ searchParams }: { searchParams: StoreListParams }): Promise<Metadata> {
   const pref = PREF_OPTIONS.includes(searchParams.pref ?? "") ? searchParams.pref! : "";
+  const city = validCity(pref, searchParams.city);
   const region = !pref && REGIONS.includes(searchParams.region ?? "") ? searchParams.region! : "";
   const areaParam = searchParams.area?.trim() ?? "";
-  const area = pref && areaParam && (AREA_OPTIONS[pref] ?? []).includes(areaParam) && !areaParam.startsWith("その他") ? areaParam : "";
+  const area = !city && pref && areaParam && (AREA_OPTIONS[pref] ?? []).includes(areaParam) && !areaParam.startsWith("その他") ? areaParam : "";
   const category = searchParams.category && CATEGORY_LABEL[searchParams.category] ? searchParams.category : "";
   const page = Number(searchParams.page) > 1 ? Math.floor(Number(searchParams.page)) : 1;
 
-  const place = area ? `${pref} ${area}` : pref || (region ? `${region}エリア` : "全国");
+  const place = city ? `${pref}${city}` : area ? `${pref} ${area}` : pref || (region ? `${region}エリア` : "全国");
   const kind = category ? CATEGORY_LABEL[category] : "アミューズメントポーカー・ポーカーバー";
   const base = `${place}の${kind}一覧`;
   const title = pageTitle(page > 1 ? `${base}（${page}ページ目）` : base);
@@ -38,20 +51,35 @@ export function generateMetadata({ searchParams }: { searchParams: StoreListPara
 
   const qs = new URLSearchParams();
   if (pref) qs.set("pref", pref);
+  if (city) qs.set("city", city);
   if (area) qs.set("area", area);
   if (region) qs.set("region", region);
   if (category) qs.set("category", category);
   if (page > 1) qs.set("page", String(page));
-  const canonical = `/stores${qs.size ? `?${qs}` : ""}`;
+  // 市区町村ページは /stores/area/東京都/新宿区 の形を正とする(/stores?pref=..&city=.. でも開ける)
+  const canonical = city
+    ? `${cityPageHref(pref, city)}${page > 1 ? `?page=${page}` : ""}`
+    : `/stores${qs.size ? `?${qs}` : ""}`;
   const isSearch = !!searchParams.q?.trim() || !!searchParams.lat || !!searchParams.lng;
+
+  // 店舗が少なすぎる市区町村ページは中身が薄いので検索結果には出さない(リンクはたどれる)
+  let thinCityPage = false;
+  if (city && !isSearch) {
+    const supabase = await createClient();
+    const { count } = await cityFilter(
+      supabase.from("stores").select("id", { count: "exact", head: true }).eq("pref", pref).in("status", ["approved", "listed"]),
+      city
+    );
+    thinCityPage = (count ?? 0) < CITY_PAGE_MIN_STORES;
+  }
 
   return {
     title,
     description,
     alternates: { canonical },
-    openGraph: { title, description, url: canonical, siteName: SITE_NAME, locale: "ja_JP", type: "website" },
-    twitter: { card: "summary_large_image", title, description },
-    ...(isSearch ? { robots: { index: false, follow: true } } : {}),
+    openGraph: { title, description, url: canonical, siteName: SITE_NAME, locale: "ja_JP", type: "website", images: DEFAULT_OG_IMAGES },
+    twitter: { card: "summary_large_image", title, description, images: [DEFAULT_OG_IMAGE] },
+    ...(isSearch || thinCityPage ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -63,6 +91,7 @@ export default async function StoresPage({
     category?: string;
     pref?: string;
     region?: string;
+    city?: string;
     area?: string;
     lat?: string;
     lng?: string;
@@ -73,7 +102,8 @@ export default async function StoresPage({
   const category = searchParams.category ?? "";
   const pref = searchParams.pref ?? "";
   const region = searchParams.region ?? "";
-  const area = searchParams.area ?? "";
+  const city = validCity(PREF_OPTIONS.includes(pref) ? pref : "", searchParams.city);
+  const area = city ? "" : searchParams.area ?? "";
 
   // Present only when the visitor arrived via "現在地から探す" (top page) —
   // used to sort the results below by distance instead of the usual
@@ -153,6 +183,9 @@ export default async function StoresPage({
   if (region) {
     storesQuery = storesQuery.eq("region", region);
   }
+  if (city) {
+    storesQuery = cityFilter(storesQuery, city);
+  }
   if (area && pref) {
     const prefAreas = AREA_OPTIONS[pref] ?? [];
     const escapeIlike = (s: string) =>
@@ -183,6 +216,7 @@ export default async function StoresPage({
     { data: stores },
     storeListBanner,
     rankingResult,
+    { data: prefCityRows },
   ] = await Promise.all([
     supabase.auth.getUser(),
     storesQuery,
@@ -190,7 +224,13 @@ export default async function StoresPage({
     pref || isKnownRegion
       ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
       : Promise.resolve({ data: [], error: null }),
+    // 「市区町村から探す」リンク用(都道府県が決まっているときだけ)
+    pref && !q && !hasOrigin
+      ? supabase.from("stores").select("city").eq("pref", pref).in("status", ["approved", "listed"]).not("city", "is", null)
+      : Promise.resolve({ data: [] as { city: string | null }[] }),
   ]);
+  const cityLinks = Array.from(countCityPages((prefCityRows ?? []).map((r) => r.city)))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
 
   if (rankingResult.error) throw rankingResult.error;
   const rankedStores = (rankingResult.data ?? []).slice(0, 4);
@@ -244,13 +284,16 @@ export default async function StoresPage({
   const pagination = paginateStores(displayStores, searchParams.page);
   const pageNumbers = Array.from({ length: pagination.totalPages }, (_, index) => index + 1)
     .filter(page => page === 1 || page === pagination.totalPages || Math.abs(page - pagination.page) <= 2);
-  const pageHref = (page: number) => storePageHref(searchParams, page);
+  const pageHref = (page: number) =>
+    city && !q && !category && !hasOrigin
+      ? `${cityPageHref(pref, city)}${page > 1 ? `?page=${page}` : ""}`
+      : storePageHref({ ...searchParams, city: city || undefined }, page);
 
   // 見出しはページタイトル(generateMetadata)と同じ地名に揃える。
   // 都道府県で絞っていればその都道府県(エリア指定があれば併記)、地方だけなら地方名、それ以外は全国。
   const heroArea = pref && area && (AREA_OPTIONS[pref] ?? []).includes(area) && !area.startsWith("その他") ? area : "";
   const heroPlace = pref
-    ? `${pref}${heroArea ? ` ${heroArea}` : ""}`
+    ? `${pref}${city ? city : heroArea ? ` ${heroArea}` : ""}`
     : isKnownRegion
       ? region
       : "全国";
@@ -260,8 +303,8 @@ export default async function StoresPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
-          <Link href={pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
-            {pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
+          <Link href={city ? `/stores?pref=${encodeURIComponent(pref)}` : pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
+            {city ? `← ${pref}の店舗一覧` : pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
           </Link>
         </nav>
         <div className="store-mobile-banner">
@@ -394,6 +437,13 @@ export default async function StoresPage({
           </button>
         </ExpandableSearchForm>
 
+        {(pref || city) && !q && !hasOrigin && displayStores.length > 0 && (
+          <p className="sl-intro" style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 18px", color: "var(--muted, #666)" }}>
+            {heroPlace}には、{SITE_NAME}に掲載中の{category ? CATEGORY_LABEL[category] ?? "ポーカースポット" : "アミューズメントポーカー店・ポーカーバー"}が{displayStores.length}店舗あります。
+            営業時間や最寄り駅、開催予定のトーナメント・イベント、クーポン情報を店舗ごとにチェックして、近くのポーカースポットを見つけてください。
+          </p>
+        )}
+
         {displayStores.length === 0 && (
           <p className="muted">条件に一致する店舗はありません。</p>
         )}
@@ -430,6 +480,24 @@ export default async function StoresPage({
             </span>)}
             {pagination.page < pagination.totalPages ? <Link className="chip" href={pageHref(pagination.page + 1)} rel="next">次へ ›</Link> : <span className="chip" aria-disabled="true" style={{ opacity: 0.4 }}>次へ ›</span>}
           </nav>
+        )}
+
+        {cityLinks.length > 1 && (
+          <section className="home-section" style={{ marginTop: 32 }} aria-label="市区町村から探す">
+            <div className="home-section-head"><h2>{pref}の市区町村から探す</h2></div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {cityLinks.map(([name, n]) => (
+                <Link
+                  key={name}
+                  href={cityPageHref(pref, name)}
+                  className={`chip ${name === city ? "active" : ""}`}
+                  aria-current={name === city ? "page" : undefined}
+                >
+                  {name}（{n}）
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         {(pref || isKnownRegion) && (

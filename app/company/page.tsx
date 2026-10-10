@@ -22,7 +22,7 @@ const ITEMS: { label: string; body: ReactNode }[] = [
       <>
         お問い合わせフォームよりご連絡ください。
         <br />
-        <a href="/contact">https://poker-summit.vercel.app/contact</a>
+        <a href="/contact">https://pokersummit.jp/contact</a>
       </>
     ),
   },

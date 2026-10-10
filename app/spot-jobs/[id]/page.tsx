@@ -6,7 +6,11 @@ import {dealerAccess,spotImage} from '@/lib/spot-jobs-server';
 import {UUID,type SpotJob} from '@/lib/spot-jobs';
 import {SpotDetail,Restricted} from '../detail';
 import styles from '../spot.module.css';
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 export const dynamic='force-dynamic';
+export const metadata: Metadata = { ...NOINDEX, title: "スポット求人｜Poker Summit" };
+
 export default async function Page({params,searchParams}:{params:{id:string};searchParams:{date?:string}}) {
   const {db,user,allowed}=await dealerAccess(matchingReturnWithQuery('/spot-jobs/'+params.id,searchParams));
   if (!allowed) return <><PortalHeader userEmail={user.email}/><main className={styles.public}><Restricted/></main><PortalFooter/></>;

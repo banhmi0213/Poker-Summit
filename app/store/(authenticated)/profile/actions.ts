@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
+import { normalizeCity } from "@/lib/city";
 import {
   applyInstantStoreFieldsUpdate,
   hasPendingStoreChangeRequest,
@@ -24,8 +25,9 @@ export async function updateStoreProfile(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const category = String(formData.get("category") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
-  const city = String(formData.get("city") ?? "").trim();
   const address = String(formData.get("address") ?? "");
+  // 番地入り・空欄でも「〇〇市」「〇〇区」に揃える(市区町村ページへの自動振り分け)
+  const city = normalizeCity(pref, String(formData.get("city") ?? ""), address) ?? "";
   const tel = String(formData.get("tel") ?? "");
   const hours = String(formData.get("hours") ?? "");
   const nearestStation = String(formData.get("nearestStation") ?? "").trim();

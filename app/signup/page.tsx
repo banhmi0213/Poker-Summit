@@ -8,6 +8,10 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
+
+export const metadata: Metadata = { ...NOINDEX, title: "会員登録｜Poker Summit" };
 
 export default function SignupPage({
   searchParams,

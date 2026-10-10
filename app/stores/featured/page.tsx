@@ -8,8 +8,16 @@ import { StoreCard } from "@/app/store-card";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
+import type { Metadata } from "next";
+import { staticPageMetadata } from "@/lib/seo";
 
 // Match the TOP PICK UP section to the currently displayed location.
+export const metadata: Metadata = staticPageMetadata({
+  title: "PICK UP店舗一覧",
+  description: "Poker Summitが注目するアミューズメントポーカー店・ポーカーバーのPICK UP店舗一覧。全国・都道府県ごとのおすすめ店舗をチェックできます。",
+  path: "/stores/featured",
+});
+
 export default async function FeaturedStoresPage() {
   const supabase = await createClient();
   const { pref: currentPref } = await getCurrentPref();
