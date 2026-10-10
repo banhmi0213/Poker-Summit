@@ -2808,3 +2808,8 @@ th {
 .home-store-card .home-store-meta-row .home-card-cta{position:static;flex:0 0 auto;margin:0;padding:0;text-align:right;font-size:10px;white-space:nowrap}
 .home-store-card .home-store-copy:has(.home-store-counts) .home-store-counts{bottom:7px;padding-top:5px}
 @media(min-width:861px){.home-grid-four .home-store-card .home-store-copy:has(.home-store-counts){min-height:145px}}
+
+/* Fix: the overlapping store logo needs its reserved top clearance. */
+.home-store-card .home-store-copy:has(.home-store-counts){padding-top:42px;min-height:176px}
+.home-grid-four .home-store-card .home-store-copy:has(.home-store-counts){padding-top:40px;min-height:176px}
+@media(max-width:860px){.home-store-card .home-store-copy:has(.home-store-counts){padding-top:46px}}
