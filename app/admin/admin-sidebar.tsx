@@ -53,7 +53,7 @@ export function AdminSidebar() {
   return (
     <nav className="app-sidebar">
       <div className="brand wordmark">
-        <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+        <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         <small>総合管理画面</small>
       </div>
       {ADMIN_LINKS.map((l) => {

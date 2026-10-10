@@ -5,12 +5,12 @@ export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail }:
   image: string; eyebrow: string; title: string; subtitle: string; detail?: string;
 }) {
   const mobileImages: Record<string, string> = {
-    "/images/compact-careers.jpg": "/images/mobile-careers.jpg",
-    "/images/compact-news.jpg": "/images/mobile-news.jpg",
-    "/images/compact-events.jpg": "/images/mobile-events.jpg",
-    "/images/compact-coupons.jpg": "/images/mobile-coupons.jpg",
-    "/images/compact-community.jpg": "/images/mobile-community.jpg",
-    "/images/poker-store-finder-banner.jpg": "/images/mobile-stores.jpg",
+    "/images/compact-careers.webp": "/images/mobile-careers.webp",
+    "/images/compact-news.webp": "/images/mobile-news.webp",
+    "/images/compact-events.webp": "/images/mobile-events.webp",
+    "/images/compact-coupons.webp": "/images/mobile-coupons.webp",
+    "/images/compact-community.webp": "/images/mobile-community.webp",
+    "/images/poker-store-finder-banner.webp": "/images/mobile-stores.webp",
   };
   return <section className="compact-portal-banner" aria-label={title}>
     <div className="compact-portal-banner__copy">

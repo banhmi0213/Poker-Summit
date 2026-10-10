@@ -162,7 +162,7 @@ export default async function BoardPostPage({
           <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{post.body}</p>
           {post.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <img loading="lazy" decoding="async"
               src={post.image_url}
               alt=""
               style={{
@@ -226,7 +226,7 @@ export default async function BoardPostPage({
               <div style={{ fontSize: 13.5, marginTop: 2, whiteSpace: "pre-wrap" }}>{r.body}</div>
               {r.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <img loading="lazy" decoding="async"
                   src={r.image_url}
                   alt=""
                   style={{

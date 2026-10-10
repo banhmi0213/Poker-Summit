@@ -41,7 +41,7 @@ export default async function ApplyPage({
             ← トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
           </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>
@@ -70,7 +70,7 @@ export default async function ApplyPage({
             ← トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
           </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>お申込みありがとうございます</h1>
@@ -111,7 +111,7 @@ export default async function ApplyPage({
             ← トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
           </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>
@@ -139,7 +139,7 @@ export default async function ApplyPage({
           ← トップに戻る
         </Link>
         <div className="brand wordmark" style={{ marginBottom: 20 }}>
-          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+          <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         </div>
         <h1 style={{ fontSize: 20, marginBottom: 6 }}>掲載のお申込み</h1>
         <p className="muted" style={{ marginBottom: 20 }}>

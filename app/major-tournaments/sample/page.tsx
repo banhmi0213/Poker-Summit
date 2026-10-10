@@ -27,7 +27,7 @@ export default function TournamentSample() {
   <div className="mt-note"><strong>詳細ページのデザインサンプル</strong><span>大会名・日程・参加費・会場はすべて架空の表示例です。</span></div>
   <article>
    <header className="mt-hero">
-    <img src="/images/poker-store-finder-banner.jpg" alt="" className="mt-hero-image"/>
+    <img src="/images/poker-store-finder-banner.webp" alt="" className="mt-hero-image"/>
     <div className="mt-hero-content">
      <div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div>
      <span className="mt-tag">国内大会 · SAMPLE</span>

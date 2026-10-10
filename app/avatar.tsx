@@ -36,7 +36,7 @@ export function Avatar({
   if (url) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={url} alt="" className="avatar" style={{ objectFit: "cover", ...sizeStyle }} />
+      <img loading="lazy" decoding="async" src={url} alt="" className="avatar" style={{ objectFit: "cover", ...sizeStyle }} />
     );
   }
 

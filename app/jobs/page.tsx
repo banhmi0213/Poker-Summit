@@ -59,10 +59,10 @@ export default async function JobsPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <div className="container">
-        <CompactPortalBanner image="/images/compact-careers.jpg" eyebrow="POKER SUMMIT CAREERS" title="ポーカーの世界で、働こう。" subtitle="好きな空間で、あなたらしい仕事を。" detail="ディーラー・フロアスタッフ・バーテンダー" />
+        <CompactPortalBanner image="/images/compact-careers.webp" eyebrow="POKER SUMMIT CAREERS" title="ポーカーの世界で、働こう。" subtitle="好きな空間で、あなたらしい仕事を。" detail="ディーラー・フロアスタッフ・バーテンダー" />
         <h1 className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
-            src="/images/poker-careers-banner.jpg"
+            src="/images/poker-careers-banner.webp"
             alt="求人を探す — ポーカーの世界で、働こう。好きな空間で、あなたらしい仕事を。ディーラー・フロアスタッフ・バーテンダー"
             width={2172}
             height={724}
@@ -205,7 +205,7 @@ export default async function JobsPage({
           >
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
               {jobListBanner.image_url ? (
-                <img src={jobListBanner.image_url} alt={jobListBanner.title} style={{ width: "100%", display: "block" }} />
+                <img loading="lazy" decoding="async" src={jobListBanner.image_url} alt={jobListBanner.title} style={{ width: "100%", display: "block" }} />
               ) : (
                 <div style={{ padding: 16 }}>{jobListBanner.title}</div>
               )}

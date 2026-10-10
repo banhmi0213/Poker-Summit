@@ -45,7 +45,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Params 
   return <div className="portal"><PortalHeader userEmail={user?.email} />
     <main className={styles.page}>
       <div className={styles.back}><Link href="/">← TOPに戻る</Link></div>
-      <section className={styles.hero}><div className={styles.heroCopy}><span>POKER SUMMIT BLOG</span><h1>ポーカーの楽しみ方が、<br />もっと広がる。</h1><p>店舗紹介・大会レポート・初心者ガイド</p></div><div className={styles.heroPhoto}><picture><source media="(max-width:599px)" srcSet="/images/blog-magazine-mobile.jpg" /><img src="/images/blog-magazine-photo.jpg" alt="ポーカー店舗を紹介する開いた雑誌とチップ、トランプ" width="2172" height="724" /></picture></div></section>
+      <section className={styles.hero}><div className={styles.heroCopy}><span>POKER SUMMIT BLOG</span><h1>ポーカーの楽しみ方が、<br />もっと広がる。</h1><p>店舗紹介・大会レポート・初心者ガイド</p></div><div className={styles.heroPhoto}><picture><source media="(max-width:599px)" srcSet="/images/blog-magazine-mobile.webp" /><img loading="lazy" decoding="async" src="/images/blog-magazine-photo.webp" alt="ポーカー店舗を紹介する開いた雑誌とチップ、トランプ" width="2172" height="724" /></picture></div></section>
       <div className={styles.toolbar}>
         <nav aria-label="記事カテゴリ"><Link href={href(params,{ category:"",page:"" })} aria-current={!category ? "page" : undefined}>すべて</Link>{BLOG_CATEGORIES.map(c => <Link key={c} href={href(params,{ category:c,page:"" })} aria-current={category === c ? "page" : undefined}>{c}</Link>)}</nav>
         <form action="/blog" method="get"><input type="hidden" name="category" value={category} /><input name="q" defaultValue={q} placeholder="記事を検索" aria-label="記事を検索" /><button type="submit" aria-label="検索する">検索</button></form>

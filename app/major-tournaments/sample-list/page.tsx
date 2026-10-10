@@ -4,12 +4,12 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 export const metadata={title:"国内外大型大会 一覧サンプル | Poker Summit",robots:{index:false,follow:false}};
 const entries=[
-{id:1,title:"JAPAN POKER FESTIVAL 2026",scope:"国内",location:"日本・東京",venue:"サンプルホール 東京",date:"2026.11.20 — 11.22",month:"2026-11",fee:"¥50,000",text:"メインイベントからサイドイベントまで。３日間のポーカーフェスティバル。",image:"/images/poker-store-finder-banner.jpg",kind:"MAIN EVENT / SIDE EVENTS"},
-{id:2,title:"ASIA POKER WEEK",scope:"海外",location:"フィリピン・マニラ",venue:"サンプルリゾート マニラ",date:"2026.11.26 — 11.30",month:"2026-11",fee:"PHP 35,000",text:"アジアのプレイヤーが集う、５日間のトーナメントシリーズ。",image:"/images/blog-magazine-photo.jpg",kind:"INTERNATIONAL SERIES"},
-{id:3,title:"KANSAI POKER CLASSIC",scope:"国内",location:"日本・大阪",venue:"サンプルイベントホール 大阪",date:"2026.12.04 — 12.06",month:"2026-12",fee:"¥30,000",text:"初めての大型大会にも。関西で楽しむ週末のポーカーイベント。",image:"/images/poker-store-finder-banner.jpg",kind:"WEEKEND FESTIVAL"},
-{id:4,title:"SAIGON POKER FESTIVAL",scope:"海外",location:"ベトナム・ホーチミン",venue:"サンプルポーカールーム",date:"2026.12.10 — 12.15",month:"2026-12",fee:"VND 12,000,000",text:"メインイベント、ハイローラー、バウンティを開催する想定の大会。",image:"/images/blog-magazine-photo.jpg",kind:"MAIN EVENT / HIGH ROLLER"},
-{id:5,title:"TOKYO YEAR-END SERIES",scope:"国内",location:"日本・東京",venue:"サンプルコンベンションセンター",date:"2026.12.26 — 12.28",month:"2026-12",fee:"¥40,000",text:"１年の締めくくりに。さまざまな種目を楽しむ年末シリーズ。",image:"/images/poker-store-finder-banner.jpg",kind:"YEAR-END SERIES"},
-{id:6,title:"ASIA NEW YEAR CHAMPIONSHIP",scope:"海外",location:"韓国・ソウル",venue:"サンプルホテル ソウル",date:"2027.01.08 — 01.12",month:"2027-01",fee:"KRW 800,000",text:"新年のポーカー旅へ。海外大会の掲載イメージです。",image:"/images/blog-magazine-photo.jpg",kind:"NEW YEAR CHAMPIONSHIP"}];
+{id:1,title:"JAPAN POKER FESTIVAL 2026",scope:"国内",location:"日本・東京",venue:"サンプルホール 東京",date:"2026.11.20 — 11.22",month:"2026-11",fee:"¥50,000",text:"メインイベントからサイドイベントまで。３日間のポーカーフェスティバル。",image:"/images/poker-store-finder-banner.webp",kind:"MAIN EVENT / SIDE EVENTS"},
+{id:2,title:"ASIA POKER WEEK",scope:"海外",location:"フィリピン・マニラ",venue:"サンプルリゾート マニラ",date:"2026.11.26 — 11.30",month:"2026-11",fee:"PHP 35,000",text:"アジアのプレイヤーが集う、５日間のトーナメントシリーズ。",image:"/images/blog-magazine-photo.webp",kind:"INTERNATIONAL SERIES"},
+{id:3,title:"KANSAI POKER CLASSIC",scope:"国内",location:"日本・大阪",venue:"サンプルイベントホール 大阪",date:"2026.12.04 — 12.06",month:"2026-12",fee:"¥30,000",text:"初めての大型大会にも。関西で楽しむ週末のポーカーイベント。",image:"/images/poker-store-finder-banner.webp",kind:"WEEKEND FESTIVAL"},
+{id:4,title:"SAIGON POKER FESTIVAL",scope:"海外",location:"ベトナム・ホーチミン",venue:"サンプルポーカールーム",date:"2026.12.10 — 12.15",month:"2026-12",fee:"VND 12,000,000",text:"メインイベント、ハイローラー、バウンティを開催する想定の大会。",image:"/images/blog-magazine-photo.webp",kind:"MAIN EVENT / HIGH ROLLER"},
+{id:5,title:"TOKYO YEAR-END SERIES",scope:"国内",location:"日本・東京",venue:"サンプルコンベンションセンター",date:"2026.12.26 — 12.28",month:"2026-12",fee:"¥40,000",text:"１年の締めくくりに。さまざまな種目を楽しむ年末シリーズ。",image:"/images/poker-store-finder-banner.webp",kind:"YEAR-END SERIES"},
+{id:6,title:"ASIA NEW YEAR CHAMPIONSHIP",scope:"海外",location:"韓国・ソウル",venue:"サンプルホテル ソウル",date:"2027.01.08 — 01.12",month:"2027-01",fee:"KRW 800,000",text:"新年のポーカー旅へ。海外大会の掲載イメージです。",image:"/images/blog-magazine-photo.webp",kind:"NEW YEAR CHAMPIONSHIP"}];
 export default function Page({searchParams}:{searchParams:{scope?:string;q?:string;month?:string}}){
  const scope=["国内","海外"].includes(searchParams.scope||"")?searchParams.scope||"":"",q=searchParams.q?.trim()||"",month=searchParams.month||"";
  const results=entries.filter(e=>(!scope||e.scope===scope)&&(!month||e.month===month)&&(!q||(e.title+" "+e.location+" "+e.venue).toLowerCase().includes(q.toLowerCase())));
@@ -36,7 +36,7 @@ export default function Page({searchParams}:{searchParams:{scope?:string;q?:stri
 
 .ml-hero{min-height:190px;background:linear-gradient(110deg,#cfad70,#e6cea2)}
 .ml-hero:after{display:none}
-.ml-hero>.ml-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;max-width:none;padding:0;z-index:0;background-image:url('/images/major-tournament-banner.jpg');background-size:202% auto;background-position:99% 50%;background-repeat:no-repeat}
+.ml-hero>.ml-hero-photo{position:absolute;right:0;top:0;width:50%;height:100%;max-width:none;padding:0;z-index:0;background-image:url('/images/major-tournament-banner.webp');background-size:202% auto;background-position:99% 50%;background-repeat:no-repeat}
 .ml-hero>.ml-hero-copy{width:50%;max-width:none;box-sizing:border-box;padding:28px 30px}
 .ml-hero h1{font-size:28px;line-height:1.4;margin:12px 0}
 .ml-hero p{font-size:14px;font-weight:400;margin:0}

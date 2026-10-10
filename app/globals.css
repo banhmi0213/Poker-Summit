@@ -631,7 +631,7 @@ th {
   container-type: inline-size;
   container-name: mappanel;
   background: linear-gradient(155deg, #4a3418 0%, #2f2210 55%, #1c1508 100%);
-  background-image: url("/images/map-bg.jpg");
+  background-image: url("/images/map-bg.webp");
   background-size: cover;
   background-position: center;
 }
@@ -2505,7 +2505,7 @@ th {
 
 @media (min-width:861px) {
   .sl-page .sl-hero {
-    background: #e7cf9e url("/images/poker-store-finder-banner.jpg") center center / cover no-repeat;
+    background: #e7cf9e url("/images/poker-store-finder-banner.webp") center center / cover no-repeat;
   }
   .sl-hero h1 { font-family: "Noto Serif JP", "Yu Mincho", serif; font-size:34px; color:#fff; text-shadow:0 1px 3px rgba(104,72,25,.18); }
   .sl-hero > span { color:#5d431d; }
@@ -2528,7 +2528,7 @@ th {
 /* Match the store finder copy panel to the other desktop banners. */
 @media (min-width:861px) {
   .sl-page .sl-hero {
-    background: linear-gradient(110deg,#cfad72,#e6cca1) left / 50% 100% no-repeat, #e7cf9e url("/images/poker-store-finder-banner.jpg") center center / cover no-repeat;
+    background: linear-gradient(110deg,#cfad72,#e6cca1) left / 50% 100% no-repeat, #e7cf9e url("/images/poker-store-finder-banner.webp") center center / cover no-repeat;
     padding:18px 30px; gap:8px; border:0; margin-bottom:20px;
   }
   .sl-hero > span, .sl-hero h1, .sl-hero p { width:calc(50% - 30px); }

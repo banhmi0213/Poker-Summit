@@ -55,10 +55,10 @@ export default async function NewsPage() {
       <PortalHeader userEmail={user?.email} />
 
       <div className="container" style={{ paddingBottom: 0 }}>
-        <CompactPortalBanner image="/images/compact-news.jpg" eyebrow="POKER SUMMIT NEWS" title="お知らせ" subtitle="店舗とサイトからの最新情報をお届け。" detail="店舗のお知らせ・イベント情報・サイト更新" />
+        <CompactPortalBanner image="/images/compact-news.webp" eyebrow="POKER SUMMIT NEWS" title="お知らせ" subtitle="店舗とサイトからの最新情報をお届け。" detail="店舗のお知らせ・イベント情報・サイト更新" />
         <div className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
-            src="/images/poker-news-banner.jpg"
+            src="/images/poker-news-banner.webp"
             alt="お知らせ — 店舗とサイトからの最新情報をお届け。店舗のお知らせ・イベント情報・サイト更新"
             width={2171}
             height={724}
@@ -97,7 +97,7 @@ export default async function NewsPage() {
               </div>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{n.title}</div>
               {n.image_url && (
-                <img
+                <img loading="lazy" decoding="async"
                   src={n.image_url}
                   alt=""
                   style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginBottom: 6, objectFit: "cover" }}

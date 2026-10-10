@@ -41,7 +41,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
       <input type="checkbox" id="mobile-nav-toggle" className="nav-toggle" />
       <div className="portal-nav-inner">
         <Link href="/" className="portal-logo">
-          <img className="logo-img" src="/images/logo.png" alt="Poker Summit" />
+          <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         </Link>
         <div className="portal-links">
           {NAV_LINKS.map((l) => (
