@@ -4,6 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { customerIdFromSession } from "@/lib/komoju";
 import { applyContractBillingChange } from "@/lib/contracts-billing";
 import { sendCardRegisteredEmail } from "@/lib/email";
+import { notifyStoreLine } from "@/lib/store-line";
 
 // KOMOJUのカード登録ページから戻ってきたところ。登録されたカードを契約に保存し、
 // 決済が止まっている(契約期間が切れている)契約なら、その場で更新の決済を行う。
@@ -55,6 +56,11 @@ export async function GET(req: NextRequest) {
     const storeInfo = (Array.isArray((contract as any).stores) ? (contract as any).stores[0] : (contract as any).stores) as { name?: string } | null;
     await sendCardRegisteredEmail({ to: contract.contact_email, storeName: storeInfo?.name ?? "店舗", at: new Date() }).catch(() => undefined);
   }
+
+  await notifyStoreLine(
+    { storeId: store!.id },
+    "お支払いに使うクレジットカードが登録（変更）されました。心当たりがない場合は、すぐに運営までご連絡ください。"
+  );
 
   // 契約期間が切れている(前回の決済に失敗している)カード契約は、新しいカードで今すぐ更新する
   const overdue = contract.billing_method !== "bank_transfer" && contract.current_period_end && contract.current_period_end <= new Date().toISOString();

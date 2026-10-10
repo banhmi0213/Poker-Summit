@@ -387,6 +387,14 @@ export async function purchaseAddons(params: {
     }
   }
 
+  {
+    const { notifyStoreLine, PLAN_PAGE_URL, yen } = await import("@/lib/store-line");
+    await notifyStoreLine(
+      { storeId: params.storeId },
+      `${yen(total)}のカード決済が完了しました（アドオン：${lines.map((l) => l.addon.name).join("、")}）。\n${PLAN_PAGE_URL}`
+    );
+  }
+
   // ここから先はお金を取れている。失敗しても止めずに、運営が直せるよう記録を残す。
   const periodEndIso = jstDateToIso(addMonths(todayJst(), 1));
   for (let i = 0; i < lines.length; i++) {

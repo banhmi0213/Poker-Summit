@@ -4,6 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { applyContractBillingChange } from "@/lib/contracts-billing";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail } from "@/lib/email";
+import { notifyStoreLine, PLAN_PAGE_URL, yen } from "@/lib/store-line";
 
 // カード払いの決済に失敗してから、掲載を止めるまでの猶予日数
 const CARD_GRACE_DAYS = 7;
@@ -168,6 +169,10 @@ async function handleRenewalFailure(
         .update({ suspended_for_nonpayment_at: new Date().toISOString(), store_status_before_suspension: store.status })
         .eq("id", contract.id);
       await supabase.from("stores").update({ status: "payment_suspended" }).eq("id", contract.store_id);
+      await notifyStoreLine(
+        { storeId: contract.store_id },
+        `カード決済が確認できなかったため、店舗ページの掲載を一時停止しました。カードを登録し直すと、すぐに決済して掲載を再開します。\n${PLAN_PAGE_URL}`
+      );
       await supabase.from("audit_log").insert({
         action: "store_suspended_for_card_failure",
         target_type: "store",
@@ -189,6 +194,10 @@ async function handleRenewalFailure(
       .order("occurred_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+    await notifyStoreLine(
+      { storeId: contract.store_id },
+      `ご登録のカードで掲載料金の決済ができませんでした。${jstDateLabel(suspendAt.toISOString())}までにカード情報の登録し直しをお願いします（それまでに決済できない場合は掲載を一時停止します）。\n${PLAN_PAGE_URL}`
+    );
     await sendCardPaymentFailedEmail({
       to: contract.contact_email,
       storeName: store?.name ?? "店舗",
@@ -202,7 +211,7 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
   const out: Array<{ id: string; ok: boolean; detail?: string }> = [];
   const { data: rows } = await supabase
     .from("store_contract_addons")
-    .select("id, fee, current_period_end, addons(name), store_contracts!inner(id, status, fincode_customer_id, contact_email, stores(name))")
+    .select("id, fee, current_period_end, addons(name), store_contracts!inner(id, store_id, status, fincode_customer_id, contact_email, stores(name))")
     .eq("billing_method", "card")
     .eq("fincode_subscription_id", "own_billing")
     .is("pending_removed_at", null)
@@ -246,6 +255,13 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
           at: new Date(),
         }).catch(() => undefined);
       }
+      {
+        const d = new Date(newEnd.getTime() + 9 * 3600 * 1000);
+        await notifyStoreLine(
+          { storeId: contract.store_id },
+          `${yen(row.fee ?? 0)}のカード決済が完了しました（アドオン更新：${addon?.name ?? "アドオン"}）。\n次回更新日：${d.getUTCMonth() + 1}月${d.getUTCDate()}日\n${PLAN_PAGE_URL}`
+        );
+      }
       out.push({ id: row.id, ok: true });
     } else {
       await supabase.from("billing_events").insert({
@@ -258,6 +274,10 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
       // 猶予日数を過ぎても決済できないアドオンは外す
       if (overdueDays >= CARD_GRACE_DAYS) {
         await supabase.from("store_contract_addons").delete().eq("id", row.id);
+        await notifyStoreLine(
+          { storeId: contract.store_id },
+          `カード決済ができなかったため、アドオン「${addon?.name ?? "アドオン"}」を解除しました。\n${PLAN_PAGE_URL}`
+        );
         out.push({ id: row.id, ok: false, detail: "決済できないため解除" });
       } else {
         out.push({ id: row.id, ok: false, detail: charge.error_code ?? charge.status });

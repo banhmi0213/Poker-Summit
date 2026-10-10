@@ -210,6 +210,16 @@ export async function sendInvoice(invoice: InvoiceRow, settings: BillingSettings
   ]);
   const pdf = await buildInvoicePdf(invoice, settings);
   await sendInvoiceEmail({ invoice, settings, pdf, kind });
+
+  // LINE連携済みの店舗にはLINEでも知らせる(新規申込みでまだ店舗が無い場合は送らない)
+  const { notifyStoreLine, PLAN_PAGE_URL, yen } = await import("@/lib/store-line");
+  const due = formatJpDate(invoice.due_date);
+  await notifyStoreLine(
+    { storeId: invoice.store_id, contractId: invoice.store_contract_id },
+    kind === "reminder"
+      ? `明日（${due}）が請求書（${invoice.invoice_number}・${yen(invoice.total_amount)}）のお支払い期限です。お振込みをお願いします。\n${PLAN_PAGE_URL}`
+      : `請求書（${invoice.invoice_number}・${yen(invoice.total_amount)}・お支払い期限${due}）をメールでお送りしました。\n${PLAN_PAGE_URL}`
+  );
 }
 
 // ---- 入金確認 -------------------------------------------------------------------
@@ -360,6 +370,14 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
     target_id: inv.id,
     detail: { invoiceNumber: inv.invoice_number, amount: inv.total_amount, storeId, contractId },
   });
+
+  {
+    const { notifyStoreLine, yen } = await import("@/lib/store-line");
+    await notifyStoreLine(
+      { storeId, contractId },
+      `ご入金（請求書 ${inv.invoice_number}・${yen(inv.total_amount)}）を確認しました。ありがとうございます。`
+    );
+  }
 
   return { alreadyPaid: false as const, storeId, contractId };
 }

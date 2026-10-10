@@ -11,6 +11,7 @@ import {
   type InvoiceRow,
 } from "@/lib/bank-transfer";
 import { sendSuspensionNoticeEmail } from "@/lib/email";
+import { notifyStoreLine, PLAN_PAGE_URL } from "@/lib/store-line";
 
 // ============================================================================
 // 銀行振込の毎日の自動処理(2026/10新設。Vercel Cron、日本時間 毎朝9:00)
@@ -146,6 +147,10 @@ export async function GET(req: NextRequest) {
         .update({ suspended_for_nonpayment_at: new Date().toISOString(), store_status_before_suspension: previousStatus })
         .eq("id", contract.id);
       await svc.from("stores").update({ status: "payment_suspended" }).eq("id", contract.store_id);
+      await notifyStoreLine(
+        { storeId: contract.store_id },
+        `お支払い期限を過ぎてもご入金が確認できなかったため、店舗ページの掲載を一時停止しました（請求書 ${inv.invoice_number}）。ご入金を確認でき次第、再開します。\n${PLAN_PAGE_URL}`
+      );
       await svc.from("invoices").update({ overdue_notified_at: new Date().toISOString() }).eq("id", inv.id);
       await svc.from("audit_log").insert({
         actor_user_id: null,
