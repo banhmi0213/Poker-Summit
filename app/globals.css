@@ -2813,3 +2813,32 @@ th {
 .home-store-card .home-store-copy:has(.home-store-counts){padding-top:42px;min-height:176px}
 .home-grid-four .home-store-card .home-store-copy:has(.home-store-counts){padding-top:40px;min-height:176px}
 @media(max-width:860px){.home-store-card .home-store-copy:has(.home-store-counts){padding-top:46px}}
+
+/* Premium contract styling: matching double gold frames, without labels. */
+.store-gold-frame {
+  border: 6px double #b98b25 !important;
+  background: linear-gradient(135deg, #fffdf6, #fbefce) !important;
+  box-shadow: 0 3px 7px #a47a2426, 0 8px 22px #7655181f;
+}
+.store-gold-frame:hover {
+  box-shadow: 0 4px 10px #a47a2433, 0 10px 26px #76551826;
+}
+.store-gold-frame .home-store-copy,
+.store-gold-frame .sl-card-body { background: transparent; }
+.sd-gold-detail .sd-hero-surface {
+  padding: 24px;
+  border-top: 3px solid #b98b25;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #fcf4dd 0%, #f3dfaa 42%, #fffaf0 72%, #fff 100%);
+}
+.sd-gold-detail .sd-title-row { margin-bottom: 20px; }
+.sd-gold-detail :is(.sd-gallery-main, .sd-photo-empty) {
+  border: 6px double #b98b25;
+  box-shadow: 0 5px 16px #7655181a;
+  border-radius: 7px;
+}
+.sd-gold-detail .sd-info { background: #fff; }
+@media (max-width: 860px) {
+  .sd-gold-detail .sd-hero-surface { padding: 16px 12px; }
+  .sd-gold-detail .sd-title-row { margin-bottom: 14px; }
+}
