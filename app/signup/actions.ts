@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { passwordPolicyError } from "@/lib/password-policy";
+import { headers } from "next/headers";
+import { verifyTurnstile, clientIpFromHeaders } from "@/lib/turnstile";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 export async function signUp(formData: FormData) {
   if (formData.get("legalConsent") !== "agree") {
@@ -28,6 +31,14 @@ export async function signUp(formData: FormData) {
     redirect(`/signup?error=${encodeURIComponent(passwordError)}`);
   }
 
+  // ロボット対策(Cloudflare Turnstile)
+  const h = headers();
+  const ip = clientIpFromHeaders(h);
+  const token = String(formData.get("cf-turnstile-response") ?? "") || null;
+  if (!(await verifyTurnstile(token, ip))) {
+    redirect(`/signup?error=${encodeURIComponent("ロボットでないことの確認ができませんでした。もう一度お試しください。")}`);
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -39,6 +50,20 @@ export async function signUp(formData: FormData) {
 
   if (error) {
     redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // 登録時のIPアドレスを記録(重複登録の見回り用。新規登録のときだけ)
+  if (data.user && (data.user.identities?.length ?? 0) > 0) {
+    try {
+      await createServiceRoleClient()
+        .from("member_signup_logs")
+        .upsert(
+          { user_id: data.user.id, ip, user_agent: (h.get("user-agent") ?? "").slice(0, 300) || null },
+          { onConflict: "user_id", ignoreDuplicates: true }
+        );
+    } catch {
+      // 記録の失敗で登録は止めない
+    }
   }
 
   if (data.session) {
