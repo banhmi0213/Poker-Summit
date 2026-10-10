@@ -2820,3 +2820,12 @@ th {
 .featured-store-count{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;line-height:1.2}
 .featured-store-count-value{font-size:11px;font-weight:700;color:#94712e;white-space:nowrap}
 .featured-store-count-label{font-size:9px;color:#887a65;white-space:nowrap}
+
+/* Featured cards: fixed internal rows so all four fields align across cards. */
+.featured-store-card-body{min-height:176px;padding-top:14px!important}
+.featured-store-card-title{height:44px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.featured-store-card-location{font-size:12px;line-height:18px;height:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 0 5px}
+.featured-store-card-meta{display:flex;align-items:center;justify-content:space-between;gap:4px;height:25px;min-width:0}
+.featured-store-card-meta .badge{margin:0;max-width:59%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;padding:3px 6px}
+.featured-store-card-cta{color:#90651e;font-weight:700;font-size:10px;white-space:nowrap;flex-shrink:0}
+.featured-store-card-body .featured-store-counts{margin-top:auto}
