@@ -112,7 +112,7 @@ export function BannerForm({ banner }: { banner?: EditableBanner }) {
       </label>
 
       <div className="field">
-        <span className="muted">画像ファイル（JPEG・PNG・WebP／3MBまで。{slimPosition ? "帯型バナー推奨 1200×120px" : "推奨 1200×400px"}）</span>
+        <span className="muted">画像ファイル（JPEG・PNG・WebP／3MBまで。{slimPosition ? "帯型バナー推奨 1200×120px" : position === "home_footer_three" ? "3枚横並び用・推奨 600×600px（同じ比率で統一）" : "推奨 1200×400px"}）</span>
         {banner?.image_url && !preview && (
           <div className={styles.current}>
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -139,6 +139,7 @@ export default async function HomePage({
     communityBannerRows,
     rankingBannerRows,
     jobsBannerRows,
+    footerThreeBannerRows,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
@@ -195,6 +196,7 @@ export default async function HomePage({
     getHomeSectionBanners(supabase, "home_community", 4),
     getHomeSectionBanners(supabase, "home_ranking"),
     getHomeSectionBanners(supabase, "home_jobs"),
+    getHomeSectionBanners(supabase, "home_footer_three", 3),
   ]);
 
   // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
@@ -406,8 +408,11 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
         </section>
-        <section className={styles.promoGrid} aria-label="おすすめコンテンツ">
-          <Link id="blog" href="/blog" className={styles.promoBanner} style={{ scrollMarginTop: 160 }}><img src="/images/blog-promo-square.webp" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>
+        <section className={styles.promoGrid} aria-label="おすすめコンテンツ" id="blog" style={{ scrollMarginTop: 160 }}>
+          {footerThreeBannerRows.length > 0 ? footerThreeBannerRows.map((b) => {
+            const image = <img src={b.image_url ?? ""} alt={b.title} loading="lazy" />;
+            return b.link_url ? <a key={b.id} href={b.link_url} className={styles.promoBanner} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={styles.promoBanner}>{image}</div>;
+          }) : <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.webp" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>}
         </section>
       </main>
 
