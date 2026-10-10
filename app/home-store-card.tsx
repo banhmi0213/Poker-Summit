@@ -1,12 +1,13 @@
 import { StoreNamePlaceholder, StoreFallbackLogo, StoreDisplayName } from "@/app/store-name-placeholder";
 import Link from "next/link";
+import type { StoreContentCounts } from "@/lib/store-content-counts";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import type { StoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge, goldFrameClass } from "@/app/store-plan-badge";
 
-export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, rank, flags }: {
+export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, rank, flags, contentCounts }: {
   store: { id: string; name: string; pref: string | null; city: string | null; category: string | null; logo_url?: string | null; banner_url?: string | null };
-  coverPhoto?: string; isFavorite: boolean; favoriteAction: () => Promise<void>; rank?: number; flags?: StoreDisplayFlags | null;
+  coverPhoto?: string; isFavorite: boolean; favoriteAction: () => Promise<void>; rank?: number; flags?: StoreDisplayFlags | null; contentCounts?: StoreContentCounts;
 }) {
   const cover = store.banner_url || coverPhoto;
   return <article className={`home-store-card${goldFrameClass(flags)}`}>
@@ -16,9 +17,16 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
       <div className="home-store-copy">
         <div className="home-store-logo">{store.logo_url ? <img src={store.logo_url} alt="" loading="lazy" /> : <StoreFallbackLogo />}</div>
         <h3><StoreDisplayName name={store.name} /></h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
-        {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+        <div className="home-store-meta-row">
+          {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+          <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
+        </div>
         <VerifiedStoreBadge flags={flags} />
-        <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
+        {contentCounts && <div className="home-store-counts" aria-label="店舗の掲載情報">
+          {([["🏆", "大会", contentCounts.events], ["🎟", "特典", contentCounts.coupons], ["📢", "お知らせ", contentCounts.notices], ["💼", "求人", contentCounts.jobs]] as const).map(([icon, label, count]) => (
+            <span key={label} className="home-store-count"><span className="home-store-count-number"><span aria-hidden="true">{icon}</span> {count}</span><span className="home-store-count-label">{label}</span></span>
+          ))}
+        </div>}
       </div>
     </Link>
   </article>;
