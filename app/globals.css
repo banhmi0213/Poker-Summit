@@ -2813,3 +2813,10 @@ th {
 .home-store-card .home-store-copy:has(.home-store-counts){padding-top:42px;min-height:176px}
 .home-grid-four .home-store-card .home-store-copy:has(.home-store-counts){padding-top:40px;min-height:176px}
 @media(max-width:860px){.home-store-card .home-store-copy:has(.home-store-counts){padding-top:46px}}
+
+/* Featured listing: four content counts in a tidy footer, without overlapping the logo or name. */
+.featured-store-card-body{display:flex;flex-direction:column;min-height:155px;box-sizing:border-box}
+.featured-store-card-body .featured-store-counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin-top:auto;padding-top:8px;border-top:1px solid #eee5d6}
+.featured-store-count{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;line-height:1.2}
+.featured-store-count-value{font-size:11px;font-weight:700;color:#94712e;white-space:nowrap}
+.featured-store-count-label{font-size:9px;color:#887a65;white-space:nowrap}
