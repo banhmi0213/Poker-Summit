@@ -6,7 +6,6 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
-import { ADDON_COLUMNS, addonPriceLabel, type AddonRow } from "@/lib/addons";
 import { BILLING_CYCLES, discountFor, getBillingSettings, quote, type BillingSettings } from "@/lib/bank-transfer";
 
 export const metadata = staticPageMetadata({ title: "店舗掲載のお申し込み", description: "アミューズメントポーカー店・ポーカーバーの掲載お申し込み。Poker Summitに店舗情報・イベント・求人を掲載して集客につなげましょう。", path: "/apply" });
@@ -27,19 +26,11 @@ export default async function ApplyPage({
   const acceptingNew = settings?.listing_accept_new ?? true;
   const billing = await getBillingSettings();
 
-  const [{ data: plans }, { data: addons }] = await Promise.all([
-    supabase
-      .from("plans")
-      .select("id, name, monthly_fee, description")
-      .eq("active", true)
-      .order("sort_order"),
-    supabase
-      .from("addons")
-      .select(ADDON_COLUMNS)
-      .eq("active", true)
-      .not("code", "is", null)
-      .order("sort_order"),
-  ]);
+  const { data: plans } = await supabase
+    .from("plans")
+    .select("id, name, monthly_fee, description")
+    .eq("active", true)
+    .order("sort_order");
 
   if (!acceptingNew && !params.done) {
     return (
@@ -154,7 +145,7 @@ export default async function ApplyPage({
         <p className="muted" style={{ marginBottom: 20 }}>
           店舗・施設の掲載をご希望の方は、以下のフォームよりお申込みください。
         </p>
-        <PricingSection plans={plans ?? []} addons={(addons ?? []) as AddonRow[]} billing={billing} />
+        <PricingSection plans={plans ?? []} billing={billing} />
         <h2 style={{ fontSize: 16, margin: "24px 0 10px" }}>お申込みフォーム</h2>
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
@@ -296,10 +287,10 @@ function featureLines(description: string | null) {
 // 掲載を希望する店舗向けの料金説明。このページはフッターの「掲載希望の店舗様へ」からのみ
 // 辿れる店舗向けページで、一般会員向けのナビには出さない。決済審査では「販売する
 // サービスと価格が確認できること」が求められるため、内容・税込価格・請求と解約の
-// 条件をここで明示する。価格と内容は管理画面のプラン/アドオン設定(plans/addons)から表示。
-function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons: AddonRow[]; billing: BillingSettings }) {
+// 条件をここで明示する。プランの価格と内容は管理画面の設定から表示。追加オプションは店舗管理画面で案内。
+function PricingSection({ plans, billing }: { plans: PriceItem[]; billing: BillingSettings }) {
   const prepay = BILLING_CYCLES.filter((m) => m !== 1).map((m) => ({ months: m, discount: discountFor(billing, m) }));
-  if (plans.length === 0 && addons.length === 0) return null;
+  if (plans.length === 0) return null;
   return (
     <section aria-labelledby="pricing-heading" style={{ marginBottom: 8 }}>
       <h2 id="pricing-heading" style={{ fontSize: 16, margin: "0 0 4px" }}>
@@ -361,45 +352,6 @@ function PricingSection({ plans, addons, billing }: { plans: PriceItem[]; addons
           </div>
         );
       })}
-
-      {addons.length > 0 && (
-        <div className="card" style={{ marginBottom: 12 }}>
-          <h3 style={{ fontSize: 15, margin: "0 0 4px" }}>アドオン（オプション）</h3>
-          <p className="muted" style={{ fontSize: 12, margin: "0 0 6px" }}>ご契約後、店舗管理画面からお申し込みいただけます。</p>
-          {(["monthly", "one_time"] as const).map((type) => {
-            const list = addons.filter((a) => a.billing_type === type);
-            if (!list.length) return null;
-            return (
-              <div key={type} style={{ marginTop: 8 }}>
-                <div className="muted" style={{ fontSize: 12, fontWeight: 700 }}>{type === "monthly" ? "月額" : "都度払い"}</div>
-                {list.map((addon) => (
-                  <div key={addon.id} style={{ padding: "8px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                      <strong style={{ fontSize: 14 }}>{addon.name}</strong>
-                      {addon.major_area_fee != null ? (
-                        // 地域で料金が変わるもの(地域PICKUP)は一覧には出さず、問い合わせで案内する
-                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>
-                          料金は<a href="/contact" style={LINK_STYLE}>お問い合わせ</a>ください
-                        </span>
-                      ) : (
-                        <span style={{ fontWeight: 700, fontSize: 13.5 }}>
-                          {addonPriceLabel(addon)}
-                          <span className="muted" style={{ fontSize: 12, fontWeight: 400 }}>（税込）</span>
-                        </span>
-                      )}
-                    </div>
-                    {addon.description && (
-                      <p className="muted" style={{ fontSize: 12.5, margin: "4px 0 0", lineHeight: 1.7 }}>
-                        {addon.description}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
 
       <div className="card" style={{ fontSize: 12.5, lineHeight: 1.8 }}>
         <h3 style={{ fontSize: 14, margin: "0 0 6px" }}>お支払いと契約について</h3>
