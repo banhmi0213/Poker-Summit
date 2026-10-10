@@ -25,8 +25,12 @@ const MENU = [
   { href: "/liff/notices", label: "お知らせ", desc: "作成・編集・公開/非公開" },
 ];
 
+// Poker Summit の店舗用LINE公式アカウント。通知を届けるには友だちになってもらう必要がある。
+const LINE_OA_ADD_FRIEND_URL = "https://line.me/R/ti/p/@237fsfau";
+
 export default function LiffDashboardPage() {
-  const { ready, error, idToken } = useLiff();
+  const { ready, error, idToken, isFriend } = useLiff();
+  const [autoLinkTried, setAutoLinkTried] = useState(false);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [notLinked, setNotLinked] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -61,6 +65,36 @@ export default function LiffDashboardPage() {
     if (fromUrl) setCode((current) => current || fromUrl.toUpperCase());
   }, [ready]);
 
+  // 店舗管理画面のボタン・QRから開いたとき(?code=)は、押さなくても自動で連携する
+  useEffect(() => {
+    if (!ready || !idToken || !notLinked || autoLinkTried) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("code");
+    if (!fromUrl) return;
+    setAutoLinkTried(true);
+    void linkWithCode(fromUrl.toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, idToken, notLinked, autoLinkTried]);
+
+  async function linkWithCode(value: string) {
+    if (!idToken) return;
+    setLinking(true);
+    setLinkError(null);
+    try {
+      await liffFetch(idToken, "/api/liff/link", {
+        method: "POST",
+        body: JSON.stringify({ idToken, code: value.trim() }),
+      });
+      setCode("");
+      await load();
+      // 連携できたら、友だちでなければそのまま友だち追加の画面へ(通知を受け取るため)
+      if (isFriend === false) window.location.href = LINE_OA_ADD_FRIEND_URL;
+    } catch (e) {
+      setLinkError(e instanceof Error ? e.message : "連携に失敗しました。");
+    } finally {
+      setLinking(false);
+    }
+  }
+
   async function handleLink(e: FormEvent) {
     e.preventDefault();
     if (!idToken) return;
@@ -73,6 +107,7 @@ export default function LiffDashboardPage() {
       });
       setCode("");
       await load();
+      if (isFriend === false) window.location.href = LINE_OA_ADD_FRIEND_URL;
     } catch (e) {
       setLinkError(e instanceof Error ? e.message : "連携に失敗しました。");
     } finally {
@@ -91,7 +126,7 @@ export default function LiffDashboardPage() {
       <div className="card">
         <h2 style={{ marginBottom: 8, fontSize: 17 }}>店舗と連携する</h2>
         <p className="muted" style={{ marginBottom: 12, fontSize: 13.5 }}>
-          運営から発行されたワンタイムコードを入力してください。コードは総合管理画面から発行できます。
+          {linking ? "連携しています…" : "店舗管理画面の「LINE連携コードを発行する」で表示されたコードを入力してください。"}
         </p>
         <form onSubmit={handleLink}>
           <div className="field">
@@ -133,6 +168,16 @@ export default function LiffDashboardPage() {
       <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
         {STORE_STATUS_LABEL[me.store.status] ?? me.store.status} ・ LINE連携メニュー
       </p>
+      {isFriend === false && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#06c755" }}>
+          <p style={{ fontSize: 13.5, marginBottom: 10 }}>
+            ✅ 店舗との連携が完了しました。応募やお支払いのお知らせをLINEで受け取るため、最後に公式アカウントを友だち追加してください。
+          </p>
+          <a href={LINE_OA_ADD_FRIEND_URL} className="btn primary" style={{ background: "#06c755", borderColor: "#06c755", color: "#fff" }}>
+            友だち追加する
+          </a>
+        </div>
+      )}
       {me.pendingRequests.length > 0 && (
         <div className="card" style={{ marginBottom: 16, background: "var(--warning-soft)" }}>
           <p style={{ fontSize: 13.5 }}>
