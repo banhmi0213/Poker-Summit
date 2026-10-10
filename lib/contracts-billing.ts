@@ -3,6 +3,7 @@ import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
 import { addonFeeFor } from "@/lib/addons";
 import { sendPaymentReceiptEmail } from "@/lib/email";
+import { notifyStoreLine, PLAN_PAGE_URL, yen } from "@/lib/store-line";
 
 // ============================================================================
 // プラン・アドオンの「店舗が自分で決済して即時反映」機能(2026/10新設)。
@@ -208,6 +209,13 @@ export async function applyContractBillingChange(params: {
     } catch {
       // 通知はベストエフォート
     }
+  }
+  if (params.source === "card_renewal") {
+    const d = new Date(Date.parse(newPeriodEnd) + 9 * 3600 * 1000);
+    await notifyStoreLine(
+      { storeId: contract.store_id },
+      `${yen(total)}のカード決済が完了しました（契約更新：${plan.name}）。\n次回更新日：${d.getUTCMonth() + 1}月${d.getUTCDate()}日\n${PLAN_PAGE_URL}`
+    );
   }
 
   await recordStoreHistory(supabase, {
