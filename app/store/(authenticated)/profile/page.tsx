@@ -134,6 +134,21 @@ export default async function StoreProfilePage({
   }
 
   const needsLineLink = Boolean(store) && !store?.line_user_id;
+
+  // LINE連携のリンク(LIFF)とQRコード。開くとLINEの店舗用ページでコードが入力済みになる。
+  let lineLink: { url: string; qrSvg: string | null } | null = null;
+  const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+  if (needsLineLink && searchParams.lineCode && liffId && /^[A-Z0-9]{4,16}$/i.test(searchParams.lineCode)) {
+    const url = `https://liff.line.me/${liffId}?code=${encodeURIComponent(searchParams.lineCode)}`;
+    let qrSvg: string | null = null;
+    try {
+      const QRCode = (await import("qrcode")).default;
+      qrSvg = await QRCode.toString(url, { type: "svg", margin: 1, width: 138, errorCorrectionLevel: "M" });
+    } catch {
+      qrSvg = null;
+    }
+    lineLink = { url, qrSvg };
+  }
   const needsContactEmail = Boolean(store) && Boolean(activeContract) && !activeContract?.contact_email;
   const showRegistrationBanner = Boolean(activeContract) && (needsLineLink || needsContactEmail || Boolean(searchParams.emailDone));
 
@@ -246,13 +261,28 @@ export default async function StoreProfilePage({
                       LINE公式アカウント(未連携)
                     </span>
                     {searchParams.lineCode ? (
-                      <p style={{ fontSize: 13.5 }}>
-                        連携コード: <strong style={{ fontSize: 18, letterSpacing: 2 }}>{searchParams.lineCode}</strong>
-                        <br />
-                        <span className="muted small">
-                          LINE公式アカウントの店舗用メニューから、このコードを入力して連携してください(24時間有効・1回限り)。
-                        </span>
-                      </p>
+                      <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                        {lineLink?.qrSvg && (
+                          <div
+                            aria-label="LINE連携用のQRコード"
+                            style={{ width: 150, height: 150, background: "#fff", padding: 6, borderRadius: 8, border: "1px solid var(--border)" }}
+                            dangerouslySetInnerHTML={{ __html: lineLink.qrSvg }}
+                          />
+                        )}
+                        <div style={{ fontSize: 13.5, flex: "1 1 220px" }}>
+                          連携コード: <strong style={{ fontSize: 18, letterSpacing: 2 }}>{searchParams.lineCode}</strong>
+                          {lineLink?.url && (
+                            <div style={{ margin: "10px 0" }}>
+                              <a href={lineLink.url} target="_blank" rel="noopener noreferrer" className="btn primary" style={{ fontSize: 13, background: "#06c755", borderColor: "#06c755", color: "#fff" }}>
+                                LINEを開いて連携する
+                              </a>
+                            </div>
+                          )}
+                          <span className="muted small">
+                            スマホではボタンを押す、パソコンではQRコードをスマホで読み取ると、LINEが開いてコードが入力された状態になります。「連携する」を押せば完了です(24時間有効・1回限り)。
+                          </span>
+                        </div>
+                      </div>
                     ) : (
                       <form action={issueMyStoreLineLinkCode}>
                         <button type="submit" className="btn" style={{ fontSize: 12.5 }}>

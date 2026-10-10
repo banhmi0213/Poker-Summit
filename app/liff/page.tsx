@@ -54,6 +54,13 @@ export default function LiffDashboardPage() {
     load();
   }, [load]);
 
+  // 店舗管理画面のリンク・QRから開いたときは、連携コードを入力済みにする(?code=XXXX)
+  useEffect(() => {
+    if (!ready) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("code");
+    if (fromUrl) setCode((current) => current || fromUrl.toUpperCase());
+  }, [ready]);
+
   async function handleLink(e: FormEvent) {
     e.preventDefault();
     if (!idToken) return;
