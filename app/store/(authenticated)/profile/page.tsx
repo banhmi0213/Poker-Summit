@@ -170,6 +170,11 @@ export default async function StoreProfilePage({
           >
             <h1 style={{ fontSize: 20 }}><ReadableName name={store.name} /></h1>
             <span className="badge">{STORE_STATUS_LABEL[store.status] ?? store.status}</span>
+            {store.line_user_id && (
+              <span className="badge" style={{ marginLeft: 6, background: "rgba(6, 199, 85, 0.12)", color: "#058a3b" }}>
+                ✓ LINE連携済み
+              </span>
+            )}
           </div>
 
           {/* 新着応募アナウンス(2026/10、「求人通知のLINE、メールやけど
