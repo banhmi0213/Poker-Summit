@@ -22,7 +22,7 @@ type PlanRow = {
 export async function getStorePlan(supabase: any, storeId: string): Promise<StorePlan | null> {
   const { data } = await supabase
     .from("store_contracts")
-    .select("plans!store_contracts_plan_id_fkey(id, name, job_limit, spot_monthly_limit, pickup)")
+    .select("plans!store_contracts_plan_id_fkey(id, name, job_limit, spot_monthly_limit, pickup), store_contract_addons(current_period_end, pending_removed_at, addons(code))")
     .eq("store_id", storeId)
     .eq("status", "active")
     .order("created_at", { ascending: false })
@@ -30,10 +30,17 @@ export async function getStorePlan(supabase: any, storeId: string): Promise<Stor
     .maybeSingle();
   const plan = (Array.isArray(data?.plans) ? data?.plans[0] : data?.plans) as PlanRow | null | undefined;
   if (!plan) return null;
+  const now = Date.now();
+  const extraJobs = (data?.store_contract_addons ?? []).filter((a: any) => {
+    const addon = Array.isArray(a.addons) ? a.addons[0] : a.addons;
+    return addon?.code === "job_listing"
+      && (!a.current_period_end || Date.parse(a.current_period_end) > now)
+      && (!a.pending_removed_at || Date.parse(a.pending_removed_at) > now);
+  }).length;
   return {
     planId: plan.id,
     planName: plan.name,
-    jobLimit: plan.job_limit,
+    jobLimit: plan.job_limit === null ? null : plan.job_limit + extraJobs,
     spotMonthlyLimit: plan.spot_monthly_limit,
     pickup: !!plan.pickup,
   };
