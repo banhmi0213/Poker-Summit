@@ -3,6 +3,7 @@ import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { customerIdFromSession } from "@/lib/komoju";
 import { applyContractBillingChange } from "@/lib/contracts-billing";
+import { sendCardRegisteredEmail } from "@/lib/email";
 
 // KOMOJUのカード登録ページから戻ってきたところ。登録されたカードを契約に保存し、
 // 決済が止まっている(契約期間が切れている)契約なら、その場で更新の決済を行う。
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   const { data: contract } = store
     ? await svc
         .from("store_contracts")
-        .select("id, plan_id, current_period_end, billing_method, store_contract_addons(addon_id, billing_method, fincode_subscription_id, pending_removed_at)")
+        .select("id, plan_id, current_period_end, billing_method, contact_email, stores(name), store_contract_addons(addon_id, billing_method, fincode_subscription_id, pending_removed_at)")
         .eq("store_id", store.id)
         .eq("status", "active")
         .maybeSingle()
@@ -49,6 +50,11 @@ export async function GET(req: NextRequest) {
     target_id: contract.id,
     detail: {},
   });
+
+  if (contract.contact_email) {
+    const storeInfo = (Array.isArray((contract as any).stores) ? (contract as any).stores[0] : (contract as any).stores) as { name?: string } | null;
+    await sendCardRegisteredEmail({ to: contract.contact_email, storeName: storeInfo?.name ?? "店舗", at: new Date() }).catch(() => undefined);
+  }
 
   // 契約期間が切れている(前回の決済に失敗している)カード契約は、新しいカードで今すぐ更新する
   const overdue = contract.billing_method !== "bank_transfer" && contract.current_period_end && contract.current_period_end <= new Date().toISOString();

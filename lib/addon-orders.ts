@@ -371,6 +371,22 @@ export async function purchaseAddons(params: {
     note: `アドオン購入(${lines.map((l) => `${l.addon.name}×${l.quantity}`).join("、")})`,
   });
 
+  if (contract.contact_email) {
+    try {
+      const { sendPaymentReceiptEmail } = await import("@/lib/email");
+      await sendPaymentReceiptEmail({
+        to: contract.contact_email,
+        storeName: store.name,
+        amount: total,
+        description: `アドオンのお申し込み（${lines.map((l) => (l.quantity > 1 ? `${l.addon.name}×${l.quantity}` : l.addon.name)).join("、")}）`,
+        periodEnd: null,
+        at: new Date(),
+      });
+    } catch {
+      // 通知はベストエフォート
+    }
+  }
+
   // ここから先はお金を取れている。失敗しても止めずに、運営が直せるよう記録を残す。
   const periodEndIso = jstDateToIso(addMonths(todayJst(), 1));
   for (let i = 0; i < lines.length; i++) {

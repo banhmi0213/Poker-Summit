@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
 import { addonFeeFor } from "@/lib/addons";
+import { sendPaymentReceiptEmail } from "@/lib/email";
 
 // ============================================================================
 // プラン・アドオンの「店舗が自分で決済して即時反映」機能(2026/10新設)。
@@ -189,6 +190,25 @@ export async function applyContractBillingChange(params: {
       addons.length ? " + " + addons.map((a) => a.name).join("、") : ""
     })`,
   });
+
+  // 自動更新(カード登録時の即時更新を含む)は店舗に決済完了を知らせる。
+  // プラン変更・アドオン購入は呼び出し側が専用のメールを送る。
+  if (params.source === "card_renewal" && contract.contact_email) {
+    try {
+      const { data: storeInfo } = await supabase.from("stores").select("name").eq("id", contract.store_id).maybeSingle();
+      const d = new Date(Date.parse(newPeriodEnd) + 9 * 3600 * 1000);
+      await sendPaymentReceiptEmail({
+        to: contract.contact_email,
+        storeName: (storeInfo?.name as string | undefined) ?? "店舗",
+        amount: total,
+        description: `契約更新（${plan.name}${addons.length ? " + " + addons.map((a) => a.name).join("、") : ""}）`,
+        periodEnd: `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+        at: new Date(),
+      });
+    } catch {
+      // 通知はベストエフォート
+    }
+  }
 
   await recordStoreHistory(supabase, {
     storeId: contract.store_id,

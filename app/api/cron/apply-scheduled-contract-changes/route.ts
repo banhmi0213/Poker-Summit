@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { applyContractBillingChange } from "@/lib/contracts-billing";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
-import { sendCardPaymentFailedEmail } from "@/lib/email";
+import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail } from "@/lib/email";
 
 // カード払いの決済に失敗してから、掲載を止めるまでの猶予日数
 const CARD_GRACE_DAYS = 7;
@@ -202,7 +202,7 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
   const out: Array<{ id: string; ok: boolean; detail?: string }> = [];
   const { data: rows } = await supabase
     .from("store_contract_addons")
-    .select("id, fee, current_period_end, addons(name), store_contracts!inner(id, status, fincode_customer_id)")
+    .select("id, fee, current_period_end, addons(name), store_contracts!inner(id, status, fincode_customer_id, contact_email, stores(name))")
     .eq("billing_method", "card")
     .eq("fincode_subscription_id", "own_billing")
     .is("pending_removed_at", null)
@@ -234,6 +234,18 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
         source: "card_renewal",
         note: `アドオン更新の決済(${addon?.name ?? "アドオン"})`,
       });
+      if (contract.contact_email) {
+        const store = Array.isArray(contract.stores) ? contract.stores[0] : contract.stores;
+        const d = new Date(newEnd.getTime() + 9 * 3600 * 1000);
+        await sendPaymentReceiptEmail({
+          to: contract.contact_email,
+          storeName: store?.name ?? "店舗",
+          amount: row.fee ?? 0,
+          description: `アドオンの更新（${addon?.name ?? "アドオン"}）`,
+          periodEnd: `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
+          at: new Date(),
+        }).catch(() => undefined);
+      }
       out.push({ id: row.id, ok: true });
     } else {
       await supabase.from("billing_events").insert({
