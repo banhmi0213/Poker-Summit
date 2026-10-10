@@ -5,6 +5,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { StoreCard } from "@/app/store-card";
+import { getStoreContentCounts } from "@/lib/store-content-counts";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
@@ -29,6 +30,7 @@ export default async function FeaturedStoresPage() {
     stores,
   ] = await Promise.all([supabase.auth.getUser(), currentPref ? getRegionalPickupStores(supabase, currentPref) : getNationalPickupStores(supabase)]);
 
+  const storeContentCounts = await getStoreContentCounts(supabase, (stores ?? []).map((s: { id: string }) => s.id));
   const storeFlags = await fetchStoreDisplayFlags(
     supabase,
     (stores ?? []).map((s: { id: string }) => s.id)
@@ -69,6 +71,7 @@ export default async function FeaturedStoresPage() {
             <StoreCard
               key={s.id}
               store={s}
+              contentCounts={storeContentCounts.get(s.id)}
               isFavorite={favoriteStoreIds.has(s.id)}
               flags={storeFlags.get(s.id)}
               favoriteAction={async () => {
