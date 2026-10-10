@@ -30,8 +30,7 @@ async function getOwnedStoreId(storeId: string) {
 }
 
 // 求人の新規掲載だけ、契約プランの求人数の上限をサーバー側でも先に確認する
-// (2026/10、求人掲載アドオンを廃止しプランに統合。ライト0件/スタンダード3件/
-// プレミアム無制限)。画像アップロード前に弾くためのもので、最終的な上限は
+// ライト・スタンダードは求人掲載アドオン1件、プレミアムは無制限。画像アップロード前に弾くためのもので、最終的な上限は
 // DBトリガー(db/plan_tiers.sql の jobs_enforce_plan_limit)が強制する。
 // 既存求人の編集・削除・募集終了はオーナー確認のみ。
 async function getOwnedStoreIdForCreate(storeId: string) {
@@ -39,7 +38,7 @@ async function getOwnedStoreIdForCreate(storeId: string) {
 
   const limit = jobLimitOf(await getStorePlan(supabase, storeId));
   if (limit === 0) {
-    throw new Error("求人の掲載はスタンダードプラン以上でご利用いただけます。");
+    throw new Error("求人掲載1件（月額8,800円）のアドオン、またはプレミアムプランでご利用いただけます。");
   }
   if (limit !== null) {
     const { count } = await supabase

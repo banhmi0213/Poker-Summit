@@ -3,6 +3,7 @@
 //  都度: スポット求人1件掲載 / 店舗紹介記事or動画作成 / ライター来店+記事作成 / YouTube撮影+動画投稿
 
 export type AddonCode =
+  | "job_listing"
   | "pickup_national"
   | "pickup_region"
   | "top_banner"
