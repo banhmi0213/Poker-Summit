@@ -1,5 +1,6 @@
 import { StoreNamePlaceholder, StoreFallbackLogo, StoreDisplayName } from "@/app/store-name-placeholder";
 import Link from "next/link";
+import type { StoreContentCounts } from "@/lib/store-content-counts";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import type { StoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge, goldFrameClass } from "@/app/store-plan-badge";
@@ -11,6 +12,7 @@ export function StoreCard({
   favoriteAction,
   coverPhoto,
   flags,
+  contentCounts,
 }: {
   store: {
     id: string;
@@ -27,6 +29,7 @@ export function StoreCard({
   rank?: number;
   favoriteAction: () => Promise<void>;
   flags?: StoreDisplayFlags | null;
+  contentCounts?: StoreContentCounts;
 }) {
   const desc = store.description ?? "";
   const cover = store.banner_url || coverPhoto;
@@ -46,7 +49,7 @@ export function StoreCard({
       <Link href={`/stores/${store.id}`} style={{ display: "block", color: "inherit" }}>
         <div className="generic-store-cover">{cover ? <img loading="lazy" decoding="async" src={cover} alt={`${store.name}の画像`} /> : <StoreNamePlaceholder name={store.name} />}</div>
         <div className="generic-store-finger">{store.logo_url ? <img loading="lazy" decoding="async" src={store.logo_url} alt="" /> : <StoreFallbackLogo />}</div>
-        <div style={{ padding: 14 }}>
+        <div className={contentCounts ? "featured-store-card-body" : undefined} style={{ padding: 14 }}>
           <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 6 }}><StoreDisplayName name={store.name} /></div>
           {store.category && (
             <span className="badge" style={{ marginBottom: 6 }}>
@@ -57,12 +60,17 @@ export function StoreCard({
           <div className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>
             📍 {[store.pref, store.city].filter(Boolean).join(" ")}
           </div>
-          {desc && (
+          {desc && !contentCounts && (
             <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
               {desc.slice(0, 40)}
               {desc.length > 40 ? "…" : ""}
             </p>
           )}
+          {contentCounts && <div className="featured-store-counts" aria-label="店舗の掲載情報">
+            {([["🏆", "大会", contentCounts.events], ["🎟", "特典", contentCounts.coupons], ["📢", "お知らせ", contentCounts.notices], ["💼", "求人", contentCounts.jobs]] as const).map(([icon, label, count]) => (
+              <span className="featured-store-count" key={label}><span className="featured-store-count-value"><span aria-hidden="true">{icon}</span> {count}</span><span className="featured-store-count-label">{label}</span></span>
+            ))}
+          </div>}
         </div>
       </Link>
     </div>
