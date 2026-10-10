@@ -7,7 +7,7 @@ import {PortalFooter} from "@/app/portal-footer";
 import {BottomTabs} from "@/app/bottom-tabs";
 export const dynamic="force-dynamic";
 import type {Metadata} from "next";
-import {SITE_NAME,absoluteUrl,clip,pageTitle} from "@/lib/seo";
+import {SITE_NAME,absoluteUrl,clip,pageTitle,DEFAULT_OG_IMAGE,DEFAULT_OG_IMAGES} from "@/lib/seo";
 import {JsonLd} from "@/lib/json-ld";
 export async function generateMetadata({params}:{params:{id:string}}):Promise<Metadata>{
  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id))return {};
@@ -20,7 +20,7 @@ export async function generateMetadata({params}:{params:{id:string}}):Promise<Me
  const title=pageTitle(`${e.title}${period?`（${period}）`:""} 日程・スケジュール`);
  const description=clip(`${e.title}の開催情報。${period?`日程：${period}。`:""}${place?`会場：${place}。`:""}${e.description??""}`,160);
  const path=`/major-tournaments/${e.id}`;
- return {title,description,alternates:{canonical:path},openGraph:{title,description,url:path,siteName:SITE_NAME,locale:"ja_JP",type:"website"},twitter:{card:"summary",title,description}};
+ return {title,description,alternates:{canonical:path},openGraph:{title,description,url:path,siteName:SITE_NAME,locale:"ja_JP",type:"website",images:DEFAULT_OG_IMAGES},twitter:{card:"summary_large_image",title,description,images:[DEFAULT_OG_IMAGE]}};
 }
 function tournamentJsonLd(e:any){
  const data:Record<string,unknown>={"@context":"https://schema.org","@type":"Event",name:e.title,url:absoluteUrl(`/major-tournaments/${e.id}`),startDate:e.start_date,eventStatus:"https://schema.org/EventScheduled",eventAttendanceMode:"https://schema.org/OfflineEventAttendanceMode",location:{"@type":"Place",name:e.venue||e.location||"会場未定",address:e.location||e.venue||""}};

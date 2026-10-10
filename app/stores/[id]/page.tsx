@@ -24,10 +24,12 @@ import { StoreSchedule } from "./store-schedule";
 import { DetailIcon } from "./detail-icon";
 import { MenuDetail } from "./menu-detail";
 import { StoreDetailTabs } from "./store-detail-tabs";
-import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
 import { JsonLd } from "@/lib/json-ld";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge } from "@/app/store-plan-badge";
+import { cityPageHref } from "@/lib/city";
+import { distanceKm } from "@/lib/geocode";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -100,9 +102,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       siteName: SITE_NAME,
       locale: "ja_JP",
       type: "website",
-      ...(image ? { images: [{ url: image, alt: store.name }] } : {}),
+      images: image ? [{ url: image, alt: store.name }] : DEFAULT_OG_IMAGES,
     },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    twitter: { card: "summary_large_image", title, description, images: [image ?? DEFAULT_OG_IMAGE] },
   };
 }
 
@@ -137,6 +139,7 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
     { name: "TOP", item: absoluteUrl("/") },
     { name: "店舗を探す", item: absoluteUrl("/stores") },
     ...(store.pref ? [{ name: store.pref, item: absoluteUrl(`/stores?pref=${encodeURIComponent(store.pref)}`) }] : []),
+    ...(store.pref && store.city ? [{ name: store.city, item: absoluteUrl(cityPageHref(store.pref, store.city)) }] : []),
     { name: store.name, item: url },
   ];
   const breadcrumb = {
@@ -277,12 +280,62 @@ export default async function StoreDetailPage({
 
   const storeFlags = (await fetchStoreDisplayFlags(supabase, [store.id])).get(store.id);
 
+  // 同じ市区町村(足りなければ近い順に同じ都道府県)のほかの店舗。店舗どうしをリンクでつなぎ、
+  // 「近くの店も見たい」人と検索エンジンの両方が回遊しやすくする。
+  type NearbyStore = { id: string; name: string; category: string | null; city: string | null; nearest_station: string | null; lat: number | null; lng: number | null };
+  const NEARBY_LIMIT = 6;
+  let nearby: NearbyStore[] = [];
+  let cityStoreCount = 0;
+  if (store.pref) {
+    const cols = "id, name, category, city, nearest_station, lat, lng";
+    const [{ data: sameCity, count }, { data: samePref }] = await Promise.all([
+      store.city
+        ? supabase.from("stores").select(cols, { count: "exact" }).eq("pref", store.pref).eq("city", store.city)
+            .in("status", ["approved", "listed"]).neq("id", store.id).order("id").limit(NEARBY_LIMIT)
+        : Promise.resolve({ data: [] as NearbyStore[], count: 0 }),
+      hasCoords
+        ? supabase.from("stores").select(cols).eq("pref", store.pref).in("status", ["approved", "listed"])
+            .neq("id", store.id).not("lat", "is", null).not("lng", "is", null).limit(1000)
+        : Promise.resolve({ data: [] as NearbyStore[] }),
+    ]);
+    cityStoreCount = (count ?? 0) + 1;
+    const byDistance = ((samePref ?? []) as NearbyStore[])
+      .map((s) => ({ s, d: distanceKm(store.lat, store.lng, s.lat as number, s.lng as number) }))
+      .sort((a, b) => a.d - b.d)
+      .map((x) => x.s);
+    const cityIds = new Set(((sameCity ?? []) as NearbyStore[]).map((s) => s.id));
+    // 同じ市区町村の店舗は近い順に並べ、足りない分を同じ都道府県の近い店で埋める
+    const cityFirst = [
+      ...byDistance.filter((s) => cityIds.has(s.id)),
+      ...((sameCity ?? []) as NearbyStore[]).filter((s) => !byDistance.some((b) => b.id === s.id)),
+    ];
+    nearby = [...cityFirst, ...byDistance.filter((s) => !cityIds.has(s.id))].slice(0, NEARBY_LIMIT);
+  }
+  const upcomingEvents = (events ?? []).filter((ev) => !ev.start_at || Date.parse(ev.start_at) >= Date.now()).length;
+  const categoryLabel = (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
+  const station = store.nearest_station || store.station || "";
+  const placeName = [store.pref, store.city].filter(Boolean).join("");
+  // 店舗が紹介文を入れていない場合は、登録されている情報から案内文を組み立てる
+  const autoIntro = [
+    `${store.name}は${placeName || "日本"}にある${categoryLabel}です。`,
+    station ? `最寄り駅は${station}です。` : "",
+    upcomingEvents > 0 ? `現在、${upcomingEvents}件のトーナメント・イベントの開催が予定されています。` : "",
+    "料金や営業時間、最新のイベント情報は各タブをご覧いただくか、店舗へ直接お問い合わせください。",
+    store.city && cityStoreCount > 1 ? `${store.city}には、ほかにも${cityStoreCount - 1}店舗のポーカースポットが${SITE_NAME}に掲載されています。` : "",
+  ].join("");
+
   return (
     <div>
       <JsonLd data={storeJsonLd(store as SeoStore, (photos ?? []) as { url: string }[])} />
       <PortalHeader userEmail={user?.email} />
       <main className="container sd-page detail-readable">
-        <Link href="/stores" className="breadcrumb">← 店舗を探すに戻る</Link>
+        <nav aria-label="パンくずリスト" className="breadcrumb" style={{ display: "flex", flexWrap: "wrap", gap: 6, fontWeight: 600 }}>
+          <Link href="/">TOP</Link>
+          <span aria-hidden="true">›</span>
+          <Link href="/stores">店舗を探す</Link>
+          {store.pref && <><span aria-hidden="true">›</span><Link href={`/stores?pref=${encodeURIComponent(store.pref)}`}>{store.pref}</Link></>}
+          {store.pref && store.city && <><span aria-hidden="true">›</span><Link href={cityPageHref(store.pref, store.city)}>{store.city}</Link></>}
+        </nav>
         <div className="sd-title-row">
           <div className="sd-title"><h1><ReadableName name={store.name} /></h1>
             <span className="badge outline"><DetailIcon name="pin" /> {[store.pref, store.city].filter(Boolean).join(" ")}</span>
@@ -552,7 +605,32 @@ export default async function StoreDetailPage({
             </>
           ) },
         ]} />
-        {store.description && <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>}
+        {store.description
+          ? <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>
+          : <section className="sd-introduction"><h2>{store.name}について</h2><p>{autoIntro}</p></section>}
+        {nearby.length > 0 && (
+          <section className="sd-introduction sd-nearby" aria-label="近くのポーカー店">
+            <h2>{store.city ? `${store.city}周辺のポーカー店` : "近くのポーカー店"}</h2>
+            <ul style={{ listStyle: "none", padding: 0, margin: "8px 0 0", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 8 }}>
+              {nearby.map((s) => (
+                <li key={s.id}>
+                  <Link href={`/stores/${s.id}`} className="card" style={{ display: "block", padding: "10px 12px", height: "100%" }}>
+                    <strong style={{ display: "block", fontSize: 14 }}><ReadableName name={s.name} /></strong>
+                    <span className="muted" style={{ fontSize: 12 }}>
+                      {[s.city, (s.category && CATEGORY_LABEL[s.category]) || null, s.nearest_station].filter(Boolean).join(" ・ ")}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p style={{ marginTop: 10, display: "flex", gap: 16, flexWrap: "wrap", whiteSpace: "normal" }}>
+              {store.pref && store.city && cityStoreCount > 1 && (
+                <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗） ›</Link>
+              )}
+              {store.pref && <Link href={`/stores?pref=${encodeURIComponent(store.pref)}`} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
+            </p>
+          </section>
+        )}
         <div className="sd-store-support">
           <Link href="/contact" className="btn">お問い合わせ</Link>
           <form action={async () => { "use server"; await reportStore(store.id, path); }}>

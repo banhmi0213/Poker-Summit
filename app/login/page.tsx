@@ -3,6 +3,10 @@ import { signIn } from "./actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
+
+export const metadata: Metadata = { ...NOINDEX, title: "ログイン｜Poker Summit" };
 
 export default function LoginPage({
   searchParams,

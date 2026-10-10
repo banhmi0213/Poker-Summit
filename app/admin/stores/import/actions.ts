@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 import { searchPlaces, getPlaceDetails, guessCategory, type PlaceCandidate } from "@/lib/google-places";
 import { primaryRegionForPref } from "@/lib/constants";
+import { normalizeCity } from "@/lib/city";
 
 // 配列の各要素に対して非同期処理を「同時実行数を絞って」並列実行する
 // 小さなヘルパー(2026/10、Google Places検索・詳細取得の直列実行による
@@ -176,7 +177,7 @@ async function runImport(formData: FormData) {
       category,
       pref,
       region: primaryRegionForPref(pref),
-      city: details.city,
+      city: normalizeCity(pref, details.city, c.address),
       address: c.address,
       tel: details.tel,
       lat: c.lat,

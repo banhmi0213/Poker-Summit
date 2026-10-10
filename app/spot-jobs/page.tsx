@@ -12,8 +12,12 @@ import {dealerAccess,spotImage} from '@/lib/spot-jobs-server';
 import {japanToday,shiftTime,validDate,type SpotJob,type SpotShift} from '@/lib/spot-jobs';
 import {SpotImage,Restricted} from './detail';
 import styles from './spot.module.css';
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 export const dynamic='force-dynamic';
 type Params={pref?:string;game?:string;date?:string;page?:string};
+export const metadata: Metadata = { ...NOINDEX, title: "スポット求人｜Poker Summit" };
+
 export default async function Page({searchParams}:{searchParams:Params}) {
   const initial=await createClient();
   const {data:{user:viewer}}=await initial.auth.getUser();

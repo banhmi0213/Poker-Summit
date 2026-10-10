@@ -6,6 +6,8 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
 import styles from "@/app/mypage/profile-layout.module.css";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -20,6 +22,8 @@ const POSTS_LIMIT = 20;
 // 許可されている(RLS「profiles are publicly readable」)ため、未ログインの
 // 訪問者にも見せて問題ない(サミットの投稿詳細自体は会員登録が必要だが、
 // 一覧・アイコンは未ログインでも見えるのと同じ扱い)。
+export const metadata: Metadata = { ...NOINDEX, title: "会員プロフィール｜Poker Summit" };
+
 export default async function MemberProfilePage({
   params,
 }: {

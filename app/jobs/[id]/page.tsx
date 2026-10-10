@@ -10,7 +10,7 @@ import { CATEGORY_LABEL } from "@/lib/constants";
 import { pickBanner } from "@/lib/banners";
 import { AgeField, GenderField, DealerExperienceField } from "./applicant-attributes";
 import type { Metadata } from "next";
-import { SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
+import { SITE_NAME, absoluteUrl, clip, pageTitle, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES } from "@/lib/seo";
 import { JsonLd } from "@/lib/json-ld";
 
 const JOB_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,8 +39,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     title,
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: j.title }] } : {}) },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", images: image ? [{ url: image, alt: j.title }] : DEFAULT_OG_IMAGES },
+    twitter: { card: "summary_large_image", title, description, images: [image ?? DEFAULT_OG_IMAGE] },
     // 募集終了の求人は検索結果に残さない
     ...(j.status !== "open" ? { robots: { index: false, follow: true } } : {}),
   };

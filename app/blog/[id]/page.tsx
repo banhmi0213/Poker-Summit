@@ -9,15 +9,22 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { ArticleContent } from "../article-content";
+import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME } from "@/lib/seo";
 import styles from "../article.module.css";
 export async function generateMetadata({ params, searchParams }: { params: { id: string }; searchParams: { preview?: string } }): Promise<Metadata> {
  if (searchParams.preview === "1") return { robots: { index: false, follow: false } };
  const supabase = await createClient();
  const byId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id);
- const metaQuery=supabase.from("blog_entries").select("title,summary,meta_description,seo_title,canonical_url,search_index,slug").eq("active",true);
+ const metaQuery=supabase.from("blog_entries").select("title,summary,meta_description,seo_title,canonical_url,search_index,slug,image_url,image_alt").eq("active",true);
  const { data, error } = await (byId?metaQuery.eq("id",params.id):metaQuery.eq("slug",params.id)).maybeSingle();
  if (error || !data) return { robots: { index: false, follow: false } };
- return { title: data.seo_title?.trim() || `${data.title} | Poker Summit`, description: data.meta_description?.trim() || data.summary?.trim() || undefined, alternates:{canonical:data.canonical_url || `/blog/${data.slug || params.id}`}, robots:{index:data.search_index !== false,follow:true} };
+ const title=data.seo_title?.trim() || `${data.title}｜Poker Summit`;
+ const description=data.meta_description?.trim() || data.summary?.trim() || undefined;
+ const path=`/blog/${data.slug || params.id}`;
+ const images=data.image_url?[{url:data.image_url,alt:data.image_alt||data.title}]:DEFAULT_OG_IMAGES;
+ return { title, description, alternates:{canonical:data.canonical_url || path}, robots:{index:data.search_index !== false,follow:true},
+  openGraph:{title,description,url:path,siteName:SITE_NAME,locale:"ja_JP",type:"article",images},
+  twitter:{card:"summary_large_image",title,description,images:[data.image_url||DEFAULT_OG_IMAGE]} };
 }
 export default async function BlogArticlePage({ params, searchParams }: { params:{id:string}; searchParams:{preview?:string} }) {
  const supabase = await createClient();

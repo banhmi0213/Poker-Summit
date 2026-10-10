@@ -6,7 +6,11 @@ import { PortalFooter } from "@/app/portal-footer";
 import { TERMS_VERSION, PRIVACY_VERSION, MATCHING_RULES_VERSION } from "@/lib/legal";
 import { MatchingConsentForm } from "./form";
 import { matchingReturn } from "@/lib/matching-return";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { ...NOINDEX, title: "マッチング利用の同意｜Poker Summit" };
+
 export default async function ConsentPage({ searchParams }: { searchParams: { actor?: string; next?: string } }) {
  const actor = searchParams.actor ?? "dealer";
  if (actor !== "store" && actor !== "dealer") notFound();

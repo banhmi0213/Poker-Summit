@@ -13,6 +13,7 @@ import {
 } from "@/lib/store-update";
 import { PICKUP_PER_PREF_LIMIT } from "@/lib/contracts";
 import { generateStorePassword } from "@/lib/password-policy";
+import { normalizeCity } from "@/lib/city";
 
 
 function randomLoginId(storeId: string) {
@@ -137,8 +138,9 @@ export async function createStoreByAdmin(formData: FormData) {
   const category = String(formData.get("category") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
-  const city = String(formData.get("city") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
+  // 番地入り・空欄でも「〇〇市」「〇〇区」に揃える(市区町村ページへの自動振り分け)
+  const city = normalizeCity(pref, String(formData.get("city") ?? ""), address) ?? "";
   const tel = String(formData.get("tel") ?? "").trim();
   const hours = String(formData.get("hours") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -189,8 +191,9 @@ export async function updateStoreByAdmin(formData: FormData) {
   const category = String(formData.get("category") ?? "").trim();
   const region = String(formData.get("region") ?? "").trim();
   const pref = String(formData.get("pref") ?? "").trim();
-  const city = String(formData.get("city") ?? "").trim();
   const address = String(formData.get("address") ?? "").trim();
+  // 番地入り・空欄でも「〇〇市」「〇〇区」に揃える(市区町村ページへの自動振り分け)
+  const city = normalizeCity(pref, String(formData.get("city") ?? ""), address) ?? "";
   const tel = String(formData.get("tel") ?? "").trim();
   const hours = String(formData.get("hours") ?? "").trim();
   const nearestStation = String(formData.get("nearestStation") ?? "").trim();

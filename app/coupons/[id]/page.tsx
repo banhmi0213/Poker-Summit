@@ -9,7 +9,7 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { CouponBannerLightbox } from "@/app/coupons/coupon-banner-lightbox";
 import styles from "./detail.module.css";
 import type { Metadata } from "next";
-import { SITE_NAME, clip, pageTitle } from "@/lib/seo";
+import { SITE_NAME, clip, pageTitle, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) return {};
@@ -27,8 +27,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     title,
     description,
     alternates: { canonical: path },
-    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", ...(image ? { images: [{ url: image, alt: c.title }] } : {}) },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description, ...(image ? { images: [image] } : {}) },
+    openGraph: { title, description, url: path, siteName: SITE_NAME, locale: "ja_JP", type: "website", images: image ? [{ url: image, alt: c.title }] : DEFAULT_OG_IMAGES },
+    twitter: { card: "summary_large_image", title, description, images: [image ?? DEFAULT_OG_IMAGE] },
     ...(expired ? { robots: { index: false, follow: true } } : {}),
   };
 }

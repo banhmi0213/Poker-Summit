@@ -1,6 +1,8 @@
 import { ManagementLoginForm } from "@/app/management-login-form";
 import Link from "next/link";
 import { adminSignIn } from "./actions";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
 
 // 総合管理画面専用のログイン画面(2026/10、「adminは専用のログイン画面
 // 作って」との指示を受けて/loginから分離)。見た目・導線は/store/loginと
@@ -9,6 +11,8 @@ import { adminSignIn } from "./actions";
 // ではなく/admin-loginなのは、app/admin/layout.tsxの認証チェックに
 // 巻き込まれてリダイレクトループになるのを避けるため(詳細はactions.tsの
 // コメント参照)。
+export const metadata: Metadata = { ...NOINDEX, title: "管理ログイン｜Poker Summit" };
+
 export default function AdminLoginPage({
   searchParams,
 }: {
