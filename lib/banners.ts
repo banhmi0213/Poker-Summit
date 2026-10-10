@@ -69,6 +69,7 @@ export const BANNER_POSITIONS = [
   { value: "home_jobs", label: "TOPページ（新着求人・スポット求人の上・横長1枚）" },
   { value: "sidebar", label: "サイドバー" },
   { value: "footer", label: "フッター" },
+  { value: "home_footer_three", label: "TOPページ（フッター上・横並び3枚）" },
   { value: "store_list", label: "店舗一覧" },
   { value: "job_list", label: "求人一覧" },
   { value: "job_detail", label: "求人詳細" },
@@ -129,7 +130,7 @@ export function isExternalBannerLink(linkUrl: string | null | undefined, request
 /** 新しいTOPセクション直前の掲載枠。4枚枠は表示順の先頭4件。 */
 export async function getHomeSectionBanners(
   supabase: SupabaseClient,
-  position: "home_coupon" | "home_community" | "home_ranking" | "home_jobs",
+  position: "home_coupon" | "home_community" | "home_ranking" | "home_jobs" | "home_footer_three",
   limit = 1
 ): Promise<PickedBanner[]> {
   const now = new Date().toISOString();
