@@ -567,3 +567,31 @@ Poker Summit運営事務局
 ※このメールは送信専用です。`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】連絡先メールアドレス変更のお知らせ", text });
 }
+
+/** カードの継続決済に失敗したときの店舗向け通知 */
+export async function sendCardPaymentFailedEmail(params: {
+  to: string;
+  storeName: string;
+  amount: number;
+  suspendOn: string; // 掲載を止める予定日(YYYY/MM/DD)
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+
+ご登録のクレジットカードで、掲載料金（${params.amount.toLocaleString("ja-JP")}円・税込）の決済ができませんでした。
+カードの有効期限切れ・利用限度額などが考えられます。
+
+お手数ですが、店舗管理画面の「プラン・お支払い」からカード情報をご登録し直してください。
+${siteUrl}/store/profile/plan
+
+決済は毎日自動で再試行します。${params.suspendOn} までに決済が確認できない場合、店舗ページの掲載を一時停止いたします（決済が確認でき次第、再開します）。
+
+ご不明な点はお問い合わせフォームよりご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済ができませんでした", text });
+}

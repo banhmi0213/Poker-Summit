@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { getDefaultCardId, chargeFincodeCardOnce, createFincodeSubscription } from "@/lib/fincode";
+import { chargeSavedCard, customerIdFromSession, newOrderId } from "@/lib/komoju";
 import { provisionPaidStoreFromApplication } from "@/lib/store-provision";
 
 // ============================================================================
-// fincodeのカード登録(hosted page)完了後の戻り先(return_url)。
-// fincode公式ドキュメント曰く「POSTメソッドでリダイレクトがされます」なので
-// POSTで受ける(Next.jsのpage.tsxはGETしか受けないため、route.tsで受けて
-// 処理後にGETの表示ページへ302する)。
-//
-// ここで初回月分を単発課金(同期・その場で成功/失敗が分かる)し、成功したら
-// 2ヶ月目以降のサブスクリプションを登録、店舗自動作成〜ログイン/LINE連携
-// コード発行まで一気に行う。「決済成功のその場でパス発行」という要件上、
-// fincodeのWebhook(非同期・タイミング未確定)を待たずにここで完結させる
-// 設計にしている。Webhook側は2ヶ月目以降の継続課金の記録用。
+// KOMOJUのカード登録ページ(customerモードのセッション)完了後の戻り先(return_url)。
+// セッションの状態をKOMOJUに問い合わせて customer_id(登録済みカード)を取り出し、
+// 初月分をその場で決済(同期・成功/失敗がすぐ分かる)、成功したら店舗自動作成〜
+// ログイン/LINE連携コード発行まで一気に行う。
+// 2か月目以降は cron(/api/cron/apply-scheduled-contract-changes)が契約期間の
+// 終わりに同じカードへ決済する(KOMOJUのサブスク機能は使わない)。
 // ============================================================================
 
 async function handle(req: NextRequest): Promise<NextResponse> {
@@ -60,14 +56,14 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 
   const { data: plan } = await supabase
     .from("plans")
-    .select("id, monthly_fee, fincode_plan_id")
+    .select("id, monthly_fee")
     .eq("id", application.plan_id)
     .maybeSingle();
 
-  if (!plan || !plan.fincode_plan_id) {
+  if (!plan) {
     await supabase
       .from("listing_applications")
-      .update({ payment_status: "failed", payment_note: "プラン情報が見つかりません(fincode_plan_id未設定)。" })
+      .update({ payment_status: "failed", payment_note: "プラン情報が見つかりません。" })
       .eq("id", applicationId);
     return NextResponse.redirect(
       `${siteOrigin}/apply?error=${encodeURIComponent("プラン情報が見つかりません。運営までお問い合わせください。")}`,
@@ -75,52 +71,55 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const cardId = await getDefaultCardId(application.fincode_customer_id).catch(() => null);
-  if (!cardId) {
+  // カード登録セッションの結果を確認して、登録されたカード(customer_id)を取り出す
+  let customerId: string | null = application.fincode_customer_id.startsWith("session:")
+    ? null
+    : application.fincode_customer_id;
+  if (!customerId) {
+    const sessionId = application.fincode_customer_id.slice("session:".length);
+    customerId = await customerIdFromSession(sessionId).catch(() => null);
+    if (customerId) {
+      await supabase.from("listing_applications").update({ fincode_customer_id: customerId }).eq("id", applicationId);
+    }
+  }
+  if (!customerId) {
     await supabase
       .from("listing_applications")
       .update({ payment_status: "failed", payment_note: "カード登録が確認できませんでした。" })
       .eq("id", applicationId);
     return NextResponse.redirect(
       `${siteOrigin}/apply?error=${encodeURIComponent(
-        "カード登録が確認できませんでした。お手数ですがもう一度お試しください。"
+        "カード登録が完了していないか、確認できませんでした。お手数ですがもう一度お試しください。"
       )}`,
       { status: 303 }
     );
   }
 
-  const orderId = ("o" + applicationId.replace(/-/g, "")).slice(0, 30);
-
-  let charge;
-  try {
-    charge = await chargeFincodeCardOnce({
-      orderId,
-      customerId: application.fincode_customer_id,
-      cardId,
-      amount: plan.monthly_fee,
-    });
-  } catch (e) {
-    await supabase
-      .from("listing_applications")
-      .update({
-        payment_status: "failed",
-        payment_note: e instanceof Error ? e.message : "初回課金に失敗しました。",
-      })
-      .eq("id", applicationId);
-    return NextResponse.redirect(
-      `${siteOrigin}/apply?error=${encodeURIComponent(
-        "決済に失敗しました。カード情報をご確認のうえもう一度お試しください。"
-      )}`,
-      { status: 303 }
-    );
+  // 二重決済の防止: 同じ申込みの戻り先が同時に2回開かれても、決済するのは1回だけ
+  const { data: claimed } = await supabase
+    .from("listing_applications")
+    .update({ payment_status: "processing" })
+    .eq("id", applicationId)
+    .not("payment_status", "in", "(processing,active,charged_pending_manual)")
+    .select("id");
+  if (!claimed?.length) {
+    return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, { status: 303 });
   }
+
+  const orderId = newOrderId("apply", applicationId);
+  const charge = await chargeSavedCard({
+    orderId,
+    customerId,
+    amount: plan.monthly_fee,
+    metadata: { listing_application_id: applicationId },
+  });
 
   if (charge.status !== "CAPTURED") {
     await supabase
       .from("listing_applications")
       .update({
         payment_status: "failed",
-        payment_note: `決済失敗: status=${charge.status} error_code=${charge.error_code ?? "-"}`,
+        payment_note: `決済失敗: status=${charge.status} ${charge.error_code ?? ""}`.slice(0, 500),
       })
       .eq("id", applicationId);
     return NextResponse.redirect(
@@ -134,12 +133,6 @@ async function handle(req: NextRequest): Promise<NextResponse> {
   // ここから先はお金が実際に取れている状態。以降で失敗しても「失敗した
   // ことにして終わり」にはできない — 運営の手動フォロー行きにする。
   try {
-    const subscription = await createFincodeSubscription({
-      customerId: application.fincode_customer_id,
-      cardId,
-      fincodePlanId: plan.fincode_plan_id,
-    });
-
     await provisionPaidStoreFromApplication({
       application: {
         id: application.id,
@@ -151,8 +144,8 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         category: application.category,
         plan_id: application.plan_id,
       },
-      fincodeCustomerId: application.fincode_customer_id,
-      fincodeSubscriptionId: subscription.id,
+      fincodeCustomerId: customerId,
+      fincodeSubscriptionId: null,
     });
   } catch (e) {
     await supabase
@@ -178,7 +171,7 @@ export async function POST(req: NextRequest) {
   return handle(req);
 }
 
-// fincodeは仕様上POSTで戻す想定だが、テスト時に直接開けるようGETも許容する。
+// KOMOJUはGETで戻す。念のためPOSTも受ける。
 export async function GET(req: NextRequest) {
   return handle(req);
 }

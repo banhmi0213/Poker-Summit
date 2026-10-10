@@ -169,7 +169,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
           </p>
 
           <p className="muted" style={{ fontSize: 12, marginBottom: 10 }}>
-            fincode byGMO 連携が完了するまでは、引き落とし結果をここから手動で記録してください。
+            カード決済は自動で記録されます。銀行振込以外で手動の対応をした場合などは、ここから記録してください。
           </p>
 
           <form
@@ -217,7 +217,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
                   {formatDateTime(ev.occurred_at)}
                   {ev.amount != null ? ` ・ ${formatYen(ev.amount)}` : ""}
                   {" ・ "}
-                  <span className="muted">{ev.source === "fincode_webhook" ? "fincode自動" : "手動"}</span>
+                  <span className="muted">{ev.source === "manual" ? "手動" : ev.source === "card_renewal" ? "自動更新" : ev.source === "contract_change" ? "変更・購入" : ev.source === "bank_transfer" ? "振込" : "自動"}</span>
                   {ev.note ? <div className="muted">{ev.note}</div> : null}
                 </div>
               ))}

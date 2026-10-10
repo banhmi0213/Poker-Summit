@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { createFincodeCustomer, createFincodeCardRegistration, createFincodePlan } from "@/lib/fincode";
+import { createCardRegistrationSession } from "@/lib/komoju";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
@@ -117,9 +117,9 @@ export async function submitApplication(formData: FormData) {
 // プランを選んでその場でクレカ契約するルート(セルフサーブ)
 //
 // 1. listing_applications行を作成(plan_id付き、payment_status='awaiting_card')
-// 2. fincode顧客を作成
-// 3. fincodeのカード登録(hosted page)へリダイレクト
-// カード登録完了後はfincodeがapp/apply/complete(return_url)へPOSTで
+// 2. KOMOJUのカード登録セッションを作成
+// 3. KOMOJUのカード登録ページ(ホストページ)へリダイレクト
+// カード登録完了後はKOMOJUがapp/apply/complete/callback(return_url)へ戻す
 // 戻してくるので、そこで初回課金〜店舗自動作成〜ログイン/LINE連携コード
 // 発行までを行う(lib/store-provision.ts)。
 // ---------------------------------------------------------------------------
@@ -280,47 +280,32 @@ export async function startPaidApplication(formData: FormData) {
 
   // redirect()はNext.js内部で例外を投げて実現される仕組みなので、
   // try/catchの中では絶対に呼ばない(catchでもみ消してしまう)。
-  // fincode呼び出し部分だけをtry/catchし、リダイレクト先URLが決まって
+  // 決済サービス呼び出し部分だけをtry/catchし、リダイレクト先URLが決まって
   // からtryの外でredirect()する。
   let redirectTo: string | null = null;
       let failureMessage: string | null = null;
 
   try {
-          // fincode側のプランが未作成なら、うちのplans行の内容でこの場で作成し
-        // plans.fincode_plan_idにキャッシュする(admin_users以外は書けないため
-        // service-roleで)。
-        let fincodePlanId = plan!.fincode_plan_id as string | null;
-          if (!fincodePlanId) {
-                    const created = await createFincodePlan({ name: plan!.name, monthlyFee: plan!.monthly_fee });
-                    fincodePlanId = created.id;
-                    const svc = createServiceRoleClient();
-                    await svc.from("plans").update({ fincode_plan_id: fincodePlanId }).eq("id", planId);
+          // KOMOJUのカード登録ページ(customerモードのセッション)を作ってリダイレクトする。
+          // 登録完了後は /apply/complete/callback に戻り、そこで初月分を決済する。
+          // セッションIDは申込みに保存しておき、戻り先でKOMOJUに問い合わせて結果を確認する
+          // (DB列は fincode 時代の fincode_customer_id を流用。完了後は customer_id に置き換わる)。
+          const returnUrl = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
+          const session = await createCardRegistrationSession({
+                    returnUrl,
+                    email,
+                    externalCustomerId: `app-${application.id}`,
+          });
+          if (!session.session_url) {
+                    throw new Error("決済ページのURLを取得できませんでした。");
           }
-
-        const customer = await createFincodeCustomer({ name: contactName, email, phoneNo: tel || null });
-
-        const svc = createServiceRoleClient();
+          const svc = createServiceRoleClient();
           await svc
             .from("listing_applications")
-            .update({ fincode_customer_id: customer.id })
+            .update({ fincode_customer_id: `session:${session.id}` })
             .eq("id", application.id);
 
-        const returnBase = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
-          const registration = await createFincodeCardRegistration({
-                    customerId: customer.id,
-                    returnUrl: returnBase,
-                    // fincode側の制約でURLは256文字までなので、メッセージは短くしておく
-                    // (長い日本語メッセージをencodeURIComponentすると簡単に超える)。
-                    returnUrlOnFailure: `${getSiteUrl()}/apply?error=${encodeURIComponent(
-                                "カード登録に失敗しました"
-                              )}`,
-          });
-
-        if (!registration.redirect_url) {
-                  throw new Error("fincodeからカード登録ページのURLが返されませんでした。");
-        }
-
-        redirectTo = registration.redirect_url;
+          redirectTo = session.session_url;
   } catch (e) {
           failureMessage = e instanceof Error ? e.message : "決済準備に失敗しました。";
   }

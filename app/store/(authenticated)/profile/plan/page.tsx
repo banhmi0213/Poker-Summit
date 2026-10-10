@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { requestPlanChange, cancelPlanChangeRequest } from "../plan-actions";
 import { AddonsSection } from "./addons-section";
+import { startCardRegistration } from "./card-actions";
 import { getActiveAddons, addonSlotsLeft } from "@/lib/addons";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { cycleLabel, formatJpDate, getBillingSettings, isOverdue, isoToJstDate, todayJst, type InvoiceRow } from "@/lib/bank-transfer";
@@ -73,6 +74,8 @@ export default async function StorePlanPage({
     ]);
 
   const isTransfer = (contract as any)?.billing_method === "bank_transfer";
+  // カード登録の途中(session:...)は未登録扱い
+  const hasCard = !!contract?.fincode_customer_id && !String(contract.fincode_customer_id).startsWith("session:");
   const [{ data: invoiceRows }, billing] = await Promise.all([
     supabase
       .from("invoices")
@@ -211,10 +214,29 @@ export default async function StorePlanPage({
         </div>
       )}
 
-      {contract && !isTransfer && !contract.fincode_customer_id && (
-        <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
-          <div style={{ color: "#d1453b", fontSize: 13.5 }}>
-            ⚠️ カード情報が登録されていないため、プラン・アドオンの変更に伴うカード決済ができません。運営にお問い合わせください。
+      {contract && !isTransfer && (
+        <div
+          className="card"
+          style={{
+            marginBottom: 16,
+            ...(hasCard ? {} : { borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }),
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ fontSize: 13.5 }}>
+              <span className="muted">お支払いカード</span>
+              <div style={{ fontWeight: 700, marginTop: 2, color: hasCard ? undefined : "#d1453b" }}>
+                {hasCard ? "登録済み" : "⚠️ 未登録(カード決済ができません)"}
+              </div>
+              <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                カード番号は決済代行会社(KOMOJU)の画面で入力します。Poker Summit には保存されません。
+              </div>
+            </div>
+            <form action={startCardRegistration}>
+              <button type="submit" className={`btn ${hasCard ? "" : "primary"}`} style={{ fontSize: 13 }}>
+                {hasCard ? "カードを変更する" : "カードを登録する"}
+              </button>
+            </form>
           </div>
         </div>
       )}
@@ -354,7 +376,7 @@ export default async function StorePlanPage({
         slotsLeft={slotsLeft}
         spotCredits={spotCredits}
         orders={addonOrders}
-        canUseCard={billing.cardPaymentEnabled && !!contract?.fincode_customer_id}
+        canUseCard={billing.cardPaymentEnabled && hasCard}
         hasContract={(contract as any)?.status === "active"}
         planFee={((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0}
       />
