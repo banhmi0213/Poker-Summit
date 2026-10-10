@@ -2791,3 +2791,5 @@ th {
 .sd-title { flex:1; min-width:0; width:100%; }
 .sd-title h1 { flex:0 0 100%; width:100%; min-width:0; }
 .sd-store-contact-bar { flex-shrink:0; }
+
+.home-store-counts{position:absolute;left:10px;right:10px;bottom:29px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;border-top:1px solid #f0e9db;padding-top:5px}.home-store-count{min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}.home-store-count-number{color:#98732d;font-weight:700;font-size:11px;white-space:nowrap}.home-store-count-label{color:#8b8171;font-size:9px;white-space:nowrap}.home-store-card .home-card-cta{position:absolute;right:12px;bottom:8px;margin-top:0}.home-store-card .home-store-copy:has(.home-store-counts){padding-bottom:64px}
