@@ -7,6 +7,8 @@ type LiffState = {
   error: string | null;
   idToken: string | null;
   displayName: string | null;
+  // 公式アカウントと友だちかどうか(わからないときは null)
+  isFriend: boolean | null;
 };
 
 const initialState: LiffState = {
@@ -14,6 +16,7 @@ const initialState: LiffState = {
   error: null,
   idToken: null,
   displayName: null,
+  isFriend: null,
 };
 
 const LiffContext = createContext<LiffState>(initialState);
@@ -38,6 +41,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
             error: "LIFFの設定が完了していません。運営にお問い合わせください。",
             idToken: null,
             displayName: null,
+            isFriend: null,
           });
         }
         return;
@@ -64,12 +68,20 @@ export function LiffProvider({ children }: { children: ReactNode }) {
           // what actually authorizes API calls.
         }
 
+        let isFriend: boolean | null = null;
+        try {
+          isFriend = (await liff.getFriendship()).friendFlag;
+        } catch {
+          isFriend = null;
+        }
+
         if (!cancelled) {
           setState({
             ready: true,
             error: idToken ? null : "LINEのIDトークンを取得できませんでした。アプリを開き直してください。",
             idToken,
             displayName,
+            isFriend,
           });
         }
       } catch (e) {
@@ -79,6 +91,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
             error: e instanceof Error ? e.message : "LIFFの初期化に失敗しました。",
             idToken: null,
             displayName: null,
+            isFriend: null,
           });
         }
       }
