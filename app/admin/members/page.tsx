@@ -10,7 +10,7 @@ function formatDate(value: string) {
 export default async function AdminMembersPage({
   searchParams,
 }: {
-  searchParams: { q?: string };
+  searchParams: { q?: string; dup?: string };
 }) {
   const q = searchParams.q?.trim().toLowerCase() ?? "";
 
@@ -24,6 +24,32 @@ export default async function AdminMembersPage({
         m.email?.toLowerCase().includes(q) || m.store_name?.toLowerCase().includes(q)
     );
   }
+
+  // 登録時のIPアドレス(重複登録の見回り用)。同じIPから7日以内に登録された会員の数を出す。
+  const { data: signupLogs } = await supabase
+    .from("member_signup_logs")
+    .select("user_id, ip, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5000);
+  const logByUser = new Map<string, { ip: string | null; created_at: string }>();
+  const byIp = new Map<string, { user_id: string; t: number }[]>();
+  for (const l of (signupLogs ?? []) as { user_id: string; ip: string | null; created_at: string }[]) {
+    logByUser.set(l.user_id, l);
+    if (!l.ip) continue;
+    const arr = byIp.get(l.ip) ?? [];
+    arr.push({ user_id: l.user_id, t: Date.parse(l.created_at) });
+    byIp.set(l.ip, arr);
+  }
+  const WEEK = 7 * 24 * 60 * 60 * 1000;
+  const sameIpCount = (userId: string) => {
+    const log = logByUser.get(userId);
+    if (!log?.ip) return 0;
+    const t = Date.parse(log.created_at);
+    return (byIp.get(log.ip) ?? []).filter((x) => x.user_id !== userId && Math.abs(x.t - t) <= WEEK).length;
+  };
+  const dupOnly = searchParams.dup === "1";
+  if (dupOnly) list = list.filter((m: any) => sameIpCount(m.id) > 0);
+  const dupTotal = (members ?? []).filter((m: any) => sameIpCount(m.id) > 0).length;
 
   const userIds = list.map((m: any) => m.id);
   const [{ data: favStores }, { data: appliedJobs }] = await Promise.all([
@@ -58,7 +84,17 @@ export default async function AdminMembersPage({
         <button type="submit" className="btn" style={{ marginLeft: 8 }}>
           検索
         </button>
+        <Link
+          href={dupOnly ? "/admin/members" : "/admin/members?dup=1"}
+          className={`btn${dupOnly ? " primary" : ""}`}
+          style={{ marginLeft: 8 }}
+        >
+          同じIPからの登録のみ（{dupTotal}）
+        </Link>
       </form>
+      <p className="muted" style={{ fontSize: 12, margin: "-6px 0 12px" }}>
+        「同一IP」は、同じIPアドレスから7日以内に別の会員登録があった会員です。スマホ回線や店舗Wi-Fiなどでは別人でも同じIPになることがあるため、自動では止めていません。
+      </p>
 
       <div className="table-wrap"><table>
         <thead>
@@ -84,7 +120,21 @@ export default async function AdminMembersPage({
           {list.map((m: any) => (
             <tr key={m.id}>
               <td>{m.email}</td>
-              <td>{formatDate(m.created_at)}</td>
+              <td>
+                {formatDate(m.created_at)}
+                {sameIpCount(m.id) > 0 && (
+                  <span
+                    className="badge"
+                    title={`登録IP: ${logByUser.get(m.id)?.ip ?? ""}`}
+                    style={{ marginLeft: 6, background: "rgba(230, 160, 40, 0.18)", color: "#9a6200" }}
+                  >
+                    同一IP {sameIpCount(m.id) + 1}件
+                  </span>
+                )}
+                {logByUser.get(m.id)?.ip && (
+                  <div className="muted" style={{ fontSize: 11 }}>IP: {logByUser.get(m.id)?.ip}</div>
+                )}
+              </td>
               <td>
                 {m.is_admin && <span className="badge">運営</span>}
                 {m.store_id && !m.is_admin && (
