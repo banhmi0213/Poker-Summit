@@ -2843,35 +2843,37 @@ th {
   .sd-gold-detail .sd-title-row { margin-bottom: 14px; }
 }
 
-/* Mobile hero: readable copy above a half-height scenic photo. */
+/* Mobile-only half-height hero with all copy inside the photo. */
 @media (max-width: 767px) {
-  .ps-region-hero { display: flex; flex-direction: column; }
-  .ps-region-hero::before,
-  .ps-region-hero::after { display: none; }
+  .ps-region-hero { display: block; }
+  .ps-region-hero::before { display: block; aspect-ratio: 8 / 5; }
+  .ps-region-hero::after {
+    display: block; height: 62.5cqw;
+    background: linear-gradient(90deg, rgba(255,255,255,.78), rgba(255,255,255,.48) 65%, rgba(255,255,255,.1));
+  }
   .ps-region-hero__copy-left {
-    position: static; order: 1; width: auto;
-    padding: 18px 20px 0;
+    position: absolute; inset: 12px auto auto 12px; width: calc(100% - 24px);
+    padding: 0; margin: 0;
   }
   .ps-region-hero__logo-script {
-    width: min(72cqw, 360px); margin: 0 0 10px;
+    width: 65cqw; max-width: 100%; margin: 0 0 4px;
   }
   .ps-region-hero__headline {
-    font-size: clamp(21px, 5.6cqw, 32px); line-height: 1.35;
+    font-size: clamp(17px, 4.8cqw, 30px); line-height: 1.3;
   }
   .ps-region-hero__headline::after { display: none; }
   .ps-region-hero__copy-right {
-    position: static; order: 2; width: auto;
-    padding: 10px 20px 16px; text-align: left;
+    position: absolute; inset: 44cqw 12px auto 12px; width: auto;
+    padding: 0; margin: 0; text-align: left;
   }
-  .ps-region-hero__right-headline { margin: 0; font-size: 15px; line-height: 1.6; }
+  .ps-region-hero__right-headline { margin: 0; font-size: clamp(12px, 3.4cqw, 20px); line-height: 1.5; }
   .ps-region-hero__right-first-line,
   .ps-region-hero__right-line { display: inline; white-space: normal; }
   .ps-region-hero__right-first-line strong { font-size: 1.3em; }
   .ps-region-hero__right-headline::after { display: none; }
-  .ps-region-hero__right-tagline { display: flex; gap: 8px; margin-top: 4px; font-size: 10px; }
+  .ps-region-hero__right-tagline { display: flex; gap: 8px; margin-top: 3px; font-size: clamp(9px, 2.5cqw, 14px); }
   .ps-region-hero__bg {
-    position: relative; inset: auto; order: 3;
+    position: absolute; inset: 0 auto auto 0;
     height: 62.5cqw; object-position: 43% center;
   }
-  .ps-region-stats { order: 4; }
 }
