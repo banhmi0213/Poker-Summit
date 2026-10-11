@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { sweepImportArea } from "./sweep-actions";
-import { SWEEP_AREAS } from "./sweep-areas";
+import { SWEEP_AREAS, SWEEP_DONE } from "./sweep-areas";
 
 /** 都道府県を地域ごとに順番に検索して、取りこぼしを拾う一括検索 */
 export function SweepRunner() {
   const prefs = Object.keys(SWEEP_AREAS);
-  const [selected, setSelected] = useState<string[]>(prefs);
+  const [selected, setSelected] = useState<string[]>(prefs.filter((p) => !SWEEP_DONE.includes(p)));
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number; found: number; inserted: number; current: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,11 @@ export function SweepRunner() {
       <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
         駅・繁華街・市ごとに「ポーカー」「アミューズメントカジノ」「ポーカーバー」で順番に検索し、まだ登録のない店を「承認待ち」で仮登録します。
       </p>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
+        <button type="button" className="btn" disabled={running} onClick={() => setSelected(prefs)}>すべて選ぶ</button>
+        <button type="button" className="btn" disabled={running} onClick={() => setSelected([])}>すべて外す</button>
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 10, fontSize: 13 }}>
         {prefs.map((p) => (
           <label key={p} style={{ display: "flex", gap: 4, alignItems: "center" }}>
             <input
@@ -50,7 +54,7 @@ export function SweepRunner() {
               disabled={running}
               onChange={(e) => setSelected((s) => (e.target.checked ? [...s, p] : s.filter((x) => x !== p)))}
             />
-            {p}({SWEEP_AREAS[p].length}地域)
+            {p}({SWEEP_AREAS[p].length}){SWEEP_DONE.includes(p) ? "✓済" : ""}
           </label>
         ))}
       </div>
