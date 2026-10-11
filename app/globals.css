@@ -2941,3 +2941,7 @@ th {
 @media (prefers-reduced-motion: reduce) {
   .ps-region-hero__bg { animation: none !important; transform: none !important; }
 }
+
+/* Touch-only feedback for region cards; desktop SVG hit areas stay unchanged. */
+@media (hover:none) and (pointer:coarse){.ps-region-mobile-card{transition:background-color .16s ease,box-shadow .16s ease}.ps-region-mobile-card:active{background-color:#faf3e4;box-shadow:0 0 0 1px rgba(188,144,57,.28)}}
+@media (prefers-reduced-motion:reduce){.ps-region-mobile-card{transition:none!important}}
