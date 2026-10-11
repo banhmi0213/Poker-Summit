@@ -4,6 +4,7 @@ import { sweepArea } from "@/lib/store-sweep";
 import { SWEEP_AREAS } from "@/lib/sweep-areas";
 import { getPlaceBusinessStatus } from "@/lib/google-places";
 import { regeocodeNextStores } from "@/lib/regeocode";
+import { matchNextStores } from "@/lib/google-match";
 import { sendStoreMaintenanceDigest } from "@/lib/email";
 
 // ============================================================================
@@ -74,8 +75,9 @@ export async function GET(req: NextRequest) {
     await svc.from("stores").update(update).eq("id", s.id);
   }
 
-  // 3. 新しく入った店の座標
+  // 3. 新しく入った店の座標と、Googleマップとの結びつけ
   await regeocodeNextStores(40).catch(() => null);
+  await matchNextStores(16).catch(() => null);
 
   const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
