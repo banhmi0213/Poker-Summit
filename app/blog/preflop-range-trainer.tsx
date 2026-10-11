@@ -21,7 +21,7 @@ function expand(token: string): string[] {
  if (!plus) return [base];
  if (a === b) return ranks.slice(0, rankIndex(a) + 1).map(r => r + r);
  // E.g. ATs+ means ATs, AJs, AQs, AKs (not lower-ranked hands).
- return ranks.slice(rankIndex(b), rankIndex(a)).map(r => a + r + suffix);
+ return ranks.slice(rankIndex(a) + 1, rankIndex(b) + 1).map(r => a + r + suffix);
 }
 const definitions: Record<Position, { label: string; desc: string; tokens: string }> = {
  UTG: { label: "アーリー", desc: "後ろに5人が残るため、強いハンドを中心に参加する例です。", tokens: "77+ ATs+ KQs KJs QJs JTs AQo+ KQo" },
