@@ -1,5 +1,7 @@
 "use client";
 import {useState} from "react";
+import Link from "next/link";
+import {createClient} from "@/lib/supabase/client";
 import styles from "./graduation-test.module.css";
 type Q={topic:string;question:string;choices:[string,string,string];answer:number;explanation:string};
 const questions:Q[]=[
@@ -22,13 +24,15 @@ const questions:Q[]=[
 export const GRADUATION_PASS_SCORE=12;
 export function GraduationTest({onPass}:{onPass?:(score:number)=>void}){
  const [index,setIndex]=useState(0),[answers,setAnswers]=useState<number[]>([]),[finished,setFinished]=useState(false);
+ const [saveStatus,setSaveStatus]=useState<"idle"|"saving"|"saved"|"login"|"error">("idle");
  const score=answers.reduce((s,a,i)=>s+(a===questions[i].answer?1:0),0),passed=score>=GRADUATION_PASS_SCORE;
- function choose(a:number){if(answers.length!==index)return;const next=[...answers,a];setAnswers(next);if(index===questions.length-1){setFinished(true);if(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0)>=GRADUATION_PASS_SCORE)onPass?.(next.length);} }
- function reset(){setIndex(0);setAnswers([]);setFinished(false)}
+ function choose(a:number){if(answers.length!==index)return;const next=[...answers,a];setAnswers(next);if(index===questions.length-1){setFinished(true);if(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0)>=GRADUATION_PASS_SCORE)onPass?.(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0));} }
+ async function saveBadge(){setSaveStatus("saving");try{const supabase=createClient();const {data:{user}}=await supabase.auth.getUser();if(!user){setSaveStatus("login");return;}const {data,error}=await supabase.rpc("submit_academy_graduation",{p_answers:answers});if(error||!data?.[0]?.passed){setSaveStatus("error");return;}setSaveStatus("saved");}catch{setSaveStatus("error");}}
+ function reset(){setIndex(0);setAnswers([]);setFinished(false);setSaveStatus("idle")}
  const q=questions[index],selected=answers[index];
  return <section className={styles.root} aria-label="初心者卒業テスト">
  <header><span className={styles.eyebrow}>POKER SUMMIT · GRADUATION EXAM</span><h2>初心者卒業テスト</h2><p>ポジション・レンジ・役・ポットオッズ・実戦判断を総復習。15問中12問以上で合格です。</p></header>
  <div className={styles.progress}><span>{finished?"RESULT":`QUESTION ${index+1} / ${questions.length}`}</span><strong>{score} 問正解</strong></div><div className={styles.bar}><i style={{width:`${(finished?questions.length:index+1)/questions.length*100}%`}}/></div>
- {finished?<div className={styles.result} role="status"><div className={styles.medal}>{passed?"🏅":"♠"}</div><h3>{score} / {questions.length} 問正解</h3><strong>{passed?"合格！ 初心者卒業おめでとうございます":"あと少し！ 復習して再挑戦しましょう"}</strong><p>{passed?"各分野の基本をしっかり理解できています。":"各問題の解説を見直すと、次の挑戦につながります。"}</p><button type="button" onClick={reset}>もう一度挑戦する ↻</button><p className={styles.note}>※現在の採点結果はこの画面上の表示です。会員バッジ・修了証は会員別の記録機能と連携後に付与されます。</p></div>:<div className={styles.quiz}><span className={styles.topic}>{q.topic}</span><h3>{q.question}</h3><div className={styles.choices}>{q.choices.map((c,i)=><button type="button" key={i} disabled={selected!==undefined} className={selected===i?styles.chosen:undefined} onClick={()=>choose(i)}>{c}</button>)}</div>{selected!==undefined&&<div className={styles.feedback} role="status"><strong>{selected===q.answer?"✓ 正解！":"復習ポイント"}　正解：{q.choices[q.answer]}</strong><p>{q.explanation}</p><button type="button" onClick={()=>setIndex(v=>v+1)}>{index===questions.length-1?"結果を見る →":"次の問題へ →"}</button></div>}</div>}
+ {finished?<div className={styles.result} role="status"><div className={styles.medal}>{passed?"🏅":"♠"}</div><h3>{score} / {questions.length} 問正解</h3><strong>{passed?"合格！ 初心者卒業おめでとうございます":"あと少し！ 復習して再挑戦しましょう"}</strong><p>{passed?"各分野の基本をしっかり理解できています。":"各問題の解説を見直すと、次の挑戦につながります。"}</p>{passed && <div className={styles.saveBadge}><button type="button" disabled={saveStatus==="saving"||saveStatus==="saved"} onClick={saveBadge}>{saveStatus==="saving"?"保存中…":saveStatus==="saved"?"✓ 卒業バッジを保存しました":"🏅 会員バッジに合格を記録する"}</button>{saveStatus==="login"&&<p>バッジの保存にはログインが必要です。<Link href="/login?next=/learn">ログインする →</Link></p>}{saveStatus==="error"&&<p>保存できませんでした。Supabaseのマイグレーション適用を確認し、再度お試しください。</p>}{saveStatus==="saved"&&<p>マイページとサミットに卒業バッジが表示されます。</p>}</div>}<button type="button" onClick={reset}>もう一度挑戦する ↻</button><p className={styles.note}>※合格した会員は「会員バッジに記録する」から保存できます。未ログインでもテストは受験できます。</p></div>:<div className={styles.quiz}><span className={styles.topic}>{q.topic}</span><h3>{q.question}</h3><div className={styles.choices}>{q.choices.map((c,i)=><button type="button" key={i} disabled={selected!==undefined} className={selected===i?styles.chosen:undefined} onClick={()=>choose(i)}>{c}</button>)}</div>{selected!==undefined&&<div className={styles.feedback} role="status"><strong>{selected===q.answer?"✓ 正解！":"復習ポイント"}　正解：{q.choices[q.answer]}</strong><p>{q.explanation}</p><button type="button" onClick={()=>setIndex(v=>v+1)}>{index===questions.length-1?"結果を見る →":"次の問題へ →"}</button></div>}</div>}
  <p className={styles.note}>※初心者向けの基本戦略を扱います。実戦では相手やルールにより最適な判断が変わる場合があります。</p></section>;
 }
