@@ -194,6 +194,8 @@ export function PokerRegionHero({
           text, map, or numbers are baked into this image. */}
       <img className="ps-region-hero__bg" src={backgroundSrc} alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
 
+      <img className="ps-region-hero__mobile-map" src="/images/hero-map-reference.svg" alt="日本地図" decoding="async" />
+
       <div className="ps-region-hero__copy-left">
         <img className="ps-region-hero__logo-script" src="/images/hero-script-reference.png" alt={HERO_COPY.logoScript} />
         <h1 className="ps-region-hero__headline">

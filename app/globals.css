@@ -2945,3 +2945,13 @@ th {
 /* Touch-only feedback for region cards; desktop SVG hit areas stay unchanged. */
 @media (hover:none) and (pointer:coarse){.ps-region-mobile-card{transition:background-color .16s ease,box-shadow .16s ease}.ps-region-mobile-card:active{background-color:#faf3e4;box-shadow:0 0 0 1px rgba(188,144,57,.28)}}
 @media (prefers-reduced-motion:reduce){.ps-region-mobile-card{transition:none!important}}
+
+/* Mobile hero uses the same map artwork as PC, without interactive labels. */
+.ps-region-hero__mobile-map { display: none; }
+@media (max-width: 767px) {
+  .ps-region-hero__mobile-map {
+    display: block; position: absolute; z-index: 12;
+    top: 12cqw; right: 2cqw; width: 40cqw; height: 32cqw;
+    object-fit: contain; transform: rotate(8deg); pointer-events: none;
+  }
+}
