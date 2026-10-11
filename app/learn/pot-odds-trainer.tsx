@@ -26,7 +26,12 @@ function metrics(pot: number, bet: number, outs: number, streets: number) {
  return { call, finalPot, required, equity, difference: equity - required, ev: equity / 100 * (pot + bet) - (1 - equity / 100) * call };
 }
 function NumberField({label,value,onChange,min=0,max=1000000,step=50}: {label:string;value:number;onChange:(n:number)=>void;min?:number;max?:number;step?:number}) {
- return <label className={styles.field}><span>{label}</span><input type="number" inputMode="numeric" min={min} max={max} step={step} value={value} onChange={e=>{const n=Number(e.target.value);if(Number.isFinite(n))onChange(Math.min(max,Math.max(min,Math.round(n))));}}/></label>;
+ const clamp = (n:number) => Math.min(max,Math.max(min,Math.round(n)));
+ return <div className={styles.field}><label htmlFor={label}>{label}</label><div className={styles.numberControl}>
+  <button type="button" className={styles.stepButton} aria-label={label+"を減らす"} disabled={value<=min} onClick={()=>onChange(clamp(value-step))}>−</button>
+  <input id={label} type="number" inputMode="numeric" min={min} max={max} step={step} value={value} onChange={e=>{const n=Number(e.target.value);if(Number.isFinite(n))onChange(clamp(n));}}/>
+  <button type="button" className={styles.stepButton} aria-label={label+"を増やす"} disabled={value>=max} onClick={()=>onChange(clamp(value+step))}>＋</button>
+ </div></div>;
 }
 export function PotOddsTrainer() {
  const [pot,setPot] = useState(1000);
