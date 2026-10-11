@@ -26,3 +26,9 @@
 .promoBanner{display:block;border-radius:12px;overflow:hidden}
 .promoBanner img{display:block;width:100%;height:auto}
 @media(max-width:767px){.promoGrid{grid-template-columns:1fr;gap:16px}}
+
+/* Subtle, consistent premium motion for the three managed footer banners. */
+.promoBanner{border:1px solid transparent;transition:transform .26s ease,box-shadow .26s ease,border-color .26s ease}
+@media(hover:hover) and (pointer:fine){.promoBanner:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(82,55,19,.14);border-color:rgba(188,144,57,.35)}}
+.promoBanner:focus-visible{outline:2px solid #b98a32;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.promoBanner{transition:none!important}.promoBanner:hover{transform:none!important}}
