@@ -2948,6 +2948,8 @@ th {
 
 /* Mobile hero uses the same map artwork as PC, without interactive labels. */
 .ps-region-hero__mobile-map { display: none; }
+.ps-region-hero__video { opacity: 0; animation: none !important; transform: none !important; }
+.ps-region-hero__video.is-playing { opacity: 1; }
 @media (max-width: 767px) {
   .ps-region-hero__mobile-map {
     display: block; position: absolute; z-index: 12;
