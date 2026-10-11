@@ -44,7 +44,7 @@ export default async function GoogleMatchPage() {
       .from("stores")
       .select("id, name, pref, city, address, status, google_place_id, google_match_status, google_business_status, google_match_note")
       .in("status", ["approved", "listed", "pending"])
-      .or("google_match_status.in.(ambiguous,not_found,duplicate,error),google_business_status.in.(CLOSED_PERMANENTLY,CLOSED_TEMPORARILY)")
+      .or("google_match_status.in.(ambiguous,not_found,duplicate,error),and(google_business_status.in.(CLOSED_PERMANENTLY,CLOSED_TEMPORARILY),google_match_status.neq.checked_by_admin)")
       .order("google_match_status")
       .limit(500),
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).is("geo_source", null),

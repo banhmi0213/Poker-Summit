@@ -28,7 +28,7 @@ import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, absoluteUrl, clip, page
 import { JsonLd } from "@/lib/json-ld";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge } from "@/app/store-plan-badge";
-import { cityPageHref } from "@/lib/city";
+import { cityPageHref, prefPageHref } from "@/lib/city";
 import { distanceKm } from "@/lib/geocode";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,7 +50,31 @@ type SeoStore = {
   x_url: string | null;
   instagram_url: string | null;
   google_place_id?: string | null;
+  hours?: string | null;
 };
+
+const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/** 「18:00〜23:00」「21:00〜翌5:00」「24時間営業」のような毎日同じ営業時間だけを構造化データにする */
+function openingHoursSpec(hours: string | null | undefined) {
+  const h = (hours ?? "").normalize("NFKC").trim();
+  if (!h) return null;
+  if (/^24時間(営業)?$/.test(h)) {
+    return [{ "@type": "OpeningHoursSpecification", dayOfWeek: ALL_DAYS, opens: "00:00", closes: "23:59" }];
+  }
+  const m = h.match(/^(\d{1,2}):(\d{2})\s*[〜~\-–]\s*(?:翌)?(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const pad = (n: string) => n.padStart(2, "0");
+  const closeH = Number(m[3]) % 24;
+  return [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ALL_DAYS,
+      opens: `${pad(m[1])}:${m[2]}`,
+      closes: `${pad(String(closeH))}:${m[4]}`,
+    },
+  ];
+}
 
 function storeCategoryLabel(store: Pick<SeoStore, "category">) {
   return (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
@@ -135,6 +159,8 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
     business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
   }
   if (sameAs.length) business.sameAs = sameAs;
+  const spec = openingHoursSpec(store.hours);
+  if (spec) business.openingHoursSpecification = spec;
   // Googleマップの店舗(place_id)と結びついていれば、地図のURLを示す(ローカル検索での同一店舗の判定に効く)
   if (store.google_place_id) {
     business.hasMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`;
@@ -143,7 +169,7 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
   const crumbs = [
     { name: "TOP", item: absoluteUrl("/") },
     { name: "店舗を探す", item: absoluteUrl("/stores") },
-    ...(store.pref ? [{ name: store.pref, item: absoluteUrl(`/stores?pref=${encodeURIComponent(store.pref)}`) }] : []),
+    ...(store.pref ? [{ name: store.pref, item: absoluteUrl(prefPageHref(store.pref)) }] : []),
     ...(store.pref && store.city ? [{ name: store.city, item: absoluteUrl(cityPageHref(store.pref, store.city)) }] : []),
     { name: store.name, item: url },
   ];
@@ -342,7 +368,7 @@ export default async function StoreDetailPage({
           <Link href="/">TOP</Link>
           <span aria-hidden="true">›</span>
           <Link href="/stores">店舗を探す</Link>
-          {store.pref && <><span aria-hidden="true">›</span><Link href={`/stores?pref=${encodeURIComponent(store.pref)}`}>{store.pref}</Link></>}
+          {store.pref && <><span aria-hidden="true">›</span><Link href={prefPageHref(store.pref)}>{store.pref}</Link></>}
           {store.pref && store.city && <><span aria-hidden="true">›</span><Link href={cityPageHref(store.pref, store.city)}>{store.city}</Link></>}
         </nav>
         <div className="sd-hero-surface">
@@ -638,7 +664,7 @@ export default async function StoreDetailPage({
               {store.pref && store.city && cityStoreCount > 1 && (
                 <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗） ›</Link>
               )}
-              {store.pref && <Link href={`/stores?pref=${encodeURIComponent(store.pref)}`} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
+              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
             </p>
           </section>
         )}

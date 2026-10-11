@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
+import { prefPageHref } from "@/lib/city";
+import { getPrefStoreCounts } from "@/lib/pref-counts";
 
 export async function PortalFooter() {
   const supabase = await createClient();
@@ -7,9 +10,30 @@ export async function PortalFooter() {
     .select("contact_email")
     .eq("id", true)
     .maybeSingle();
+  const prefCounts = await getPrefStoreCounts().catch(() => ({} as Record<string, number>));
+  // 地方ごとに、掲載店舗がある都道府県へのリンクを並べる(全ページから都道府県ページへたどれるようにする)
+  const areaRows = REGIONS.map((region) => ({
+    region,
+    prefs: PREF_OPTIONS.filter((p) => PREF_REGION[p]?.[0] === region && (prefCounts[p] ?? 0) > 0),
+  })).filter((r) => r.prefs.length > 0);
 
   return (
     <div className="portal-footer">
+      {areaRows.length > 0 && (
+        <nav className="footer-areas" aria-label="都道府県からポーカー店を探す">
+          <p className="footer-areas__title">都道府県からポーカー店を探す</p>
+          {areaRows.map((row) => (
+            <div key={row.region} className="footer-areas__row">
+              <span className="footer-areas__region">{row.region}</span>
+              {row.prefs.map((p) => (
+                <a key={p} href={prefPageHref(p)}>
+                  {p.replace(/[都府県]$/, "")}
+                </a>
+              ))}
+            </div>
+          ))}
+        </nav>
+      )}
       Poker Summit — 全国のポーカースポット・求人・交流をつなぐポータル
       <br />
       <a href="/contact" className="btn" style={{ fontSize: 12.5, padding: "4px 8px", marginTop: 6, display: "inline-flex" }}>

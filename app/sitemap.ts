@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/seo";
-import { CITY_PAGE_MIN_STORES, cityPageHref, cityPageKeys } from "@/lib/city";
+import { CITY_PAGE_MIN_STORES, cityPageHref, cityPageKeys, prefPageHref } from "@/lib/city";
 import { createClient } from "@/lib/supabase/server";
 
 // Regenerate hourly so newly approved stores and blog posts appear without a redeploy.
@@ -33,14 +33,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if(data.length<PAGE_SIZE)break;
  }
 
- // 掲載店舗がある都道府県の一覧ページ(/stores?pref=東京都)。店舗一覧ページと同じcanonical形式。
+ // 掲載店舗がある都道府県の一覧ページ(/stores/area/東京都)。店舗一覧ページと同じcanonical形式。
  const prefLatest=new Map<string,number>();
  for(const store of storeRows){
   if(!store.pref)continue;
   const t=store.updated_at?new Date(store.updated_at).getTime():now.getTime();
   prefLatest.set(store.pref,Math.max(prefLatest.get(store.pref)??0,t));
  }
- const prefPages=Array.from(prefLatest,([pref,t])=>({url:`${base}/stores?pref=${encodeURIComponent(pref)}`,lastModified:new Date(t)}));
+ const prefPages=Array.from(prefLatest,([pref,t])=>({url:`${base}${prefPageHref(pref)}`,lastModified:new Date(t)}));
 
  // 市区町村ページ(/stores/area/東京都/新宿区)。店舗が一定数以上ある市区町村だけ。
  // 新しい店舗が登録されると自動でここに加わる。
