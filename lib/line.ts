@@ -83,6 +83,27 @@ export async function verifyLiffIdToken(idToken: string): Promise<LineIdTokenRes
 // (e.g. "your name/address change was approved"). Optional/best-effort: a
 // failure here should never block the underlying data change.
 // ---------------------------------------------------------------------------
+/**
+ * そのLINEユーザーが公式アカウント(Messaging API のチャネル)を友だち追加しているか。
+ * 友だちでない(またはブロック中)ならプロフィールAPIが404を返すのを利用する。わからないときは null。
+ */
+export async function isLineFriend(lineUserId: string): Promise<boolean | null> {
+  const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  if (!accessToken || !lineUserId) return null;
+  try {
+    const res = await fetch(`https://api.line.me/v2/bot/profile/${encodeURIComponent(lineUserId)}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) return true;
+    if (res.status === 404) return false;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export async function pushLineMessage(lineUserId: string, text: string): Promise<void> {
   const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   if (!accessToken || !lineUserId) return;
