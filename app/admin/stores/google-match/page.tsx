@@ -47,7 +47,7 @@ export default async function GoogleMatchPage() {
       .or("google_match_status.in.(ambiguous,not_found,duplicate,error),google_business_status.in.(CLOSED_PERMANENTLY,CLOSED_TEMPORARILY)")
       .order("google_match_status")
       .limit(500),
-    supabase.from("stores").select("id", { count: "exact", head: true }).is("geo_source", null),
+    supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).is("geo_source", null),
   ]);
   const rows = (review ?? []) as Row[];
 

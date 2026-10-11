@@ -67,6 +67,11 @@ export function cityPageKeys(city: string | null | undefined): string[] {
 }
 
 /** 市区町村ページのURL(/stores/area/東京都/新宿区) */
+/** 都道府県ページ(例: /stores/area/東京都) */
+export function prefPageHref(pref: string) {
+  return `/stores/area/${encodeURIComponent(pref)}`;
+}
+
 export function cityPageHref(pref: string, city: string) {
   return `/stores/area/${encodeURIComponent(pref)}/${encodeURIComponent(city)}`;
 }

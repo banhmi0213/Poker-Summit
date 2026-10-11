@@ -11,6 +11,7 @@ export async function regeocodeNextStores(limit = 40) {
   const { data: rows } = await svc
     .from("stores")
     .select("id, pref, city, address")
+    .in("status", ["approved", "listed", "pending"])
     .is("geo_source", null)
     .order("created_at")
     .limit(limit);
@@ -38,6 +39,10 @@ export async function regeocodeNextStores(limit = 40) {
   };
   await Promise.all([worker(), worker(), worker(), worker()]);
 
-  const { count: remaining } = await svc.from("stores").select("id", { count: "exact", head: true }).is("geo_source", null);
+  const { count: remaining } = await svc
+    .from("stores")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["approved", "listed", "pending"])
+    .is("geo_source", null);
   return { processed: (rows ?? []).length, ok, failed, remaining: remaining ?? 0 };
 }
