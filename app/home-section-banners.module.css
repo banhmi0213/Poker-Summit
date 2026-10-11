@@ -6,3 +6,11 @@
 .four .banner img { aspect-ratio: 3 / 2; }
 @media (max-width: 720px) { .wide .banner img { aspect-ratio: 6 / 1; } }
 @media (max-width: 720px) { .four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+
+/* Keep all admin-managed section banners visually consistent with store cards. */
+.banner { border: 1px solid transparent; transition: transform .26s ease, box-shadow .26s ease, border-color .26s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .banner:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(82,55,19,.14); border-color: rgba(188,144,57,.35); }
+}
+.banner:focus-visible { outline: 2px solid #b98a32; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .banner { transition: none !important; } .banner:hover { transform: none !important; } }
