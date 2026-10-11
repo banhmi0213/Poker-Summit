@@ -177,6 +177,25 @@ export default async function StoreProfilePage({
             )}
           </div>
 
+          {/* 検索で上に出るための入力のすすめ(営業時間・紹介文が空の店舗だけに出す) */}
+          {(() => {
+            const missing = [
+              !store.hours ? "営業時間" : null,
+              !(store.description ?? "").trim() ? "紹介文" : null,
+            ].filter(Boolean);
+            if (missing.length === 0) return null;
+            return (
+              <div className="card" style={{ marginBottom: 16, borderColor: "var(--accent, #c9a227)" }}>
+                <p style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 4 }}>
+                  🔍 {missing.join("と")}を入れると、Google検索で上に表示されやすくなります
+                </p>
+                <p className="muted" style={{ fontSize: 12.5 }}>
+                  お店の特徴(ゲームの種類・レート・初心者歓迎・トーナメントの開催日など)を紹介文に書くと、「地域名+ポーカー」で探している人に見つかりやすくなります。下の店舗情報から入力できます。
+                </p>
+              </div>
+            );
+          })()}
+
           {/* 新着応募アナウンス(2026/10、「求人通知のLINE、メールやけど
               店管理画面でアナウンス出るようにしよか」との指示を受けて追加)。
               求人管理ページ(/store/profile/jobs)を開くと既読になり消える。 */}

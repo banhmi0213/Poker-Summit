@@ -6,7 +6,7 @@ import { distanceKm } from "@/lib/geocode";
 // 掲載店舗をGoogleマップの場所(place_id)と結びつける。
 // 店名+市区町村でGoogleを検索し、名前の近さと所在地で一番それらしい候補を選ぶ。
 // 結果は stores.google_match_status に残す:
-//   matched     … 結びつけ済み(google_place_id / 緯度経度 / 営業状況を保存)
+//   matched     … 結びつけ済み(google_place_id / 営業状況を保存。座標は保存しない)
 //   ambiguous   … 候補はあるが自信がない(運営が確認)
 //   not_found   … Googleに見つからない(閉店・架空の可能性)
 //   duplicate   … 同じ場所が別の店舗にすでに結びついている(重複登録の可能性)
@@ -186,11 +186,9 @@ export async function matchNextStores(limit = 15) {
           status = "duplicate";
           update.google_match_note = `同じ場所が「${taken.name}」(${taken.id})に結びついています。${m.note}`;
         } else {
+          // Googleの座標は利用規約上30日を超えて保存できないので、place_id だけを保存する
+          // (座標は国土地理院の住所検索で取ったものを使う → lib/regeocode.ts)
           update.google_place_id = m.candidate.placeId;
-          if (m.candidate.lat != null && m.candidate.lng != null) {
-            update.lat = m.candidate.lat;
-            update.lng = m.candidate.lng;
-          }
         }
       }
       update.google_match_status = status;

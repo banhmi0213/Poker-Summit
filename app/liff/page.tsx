@@ -12,6 +12,8 @@ type MeResponse = {
     id: string;
     name: string;
     status: string;
+    hours?: string | null;
+    description?: string | null;
   };
   pendingRequests: { id: string; field: string }[];
 };
@@ -184,6 +186,14 @@ export default function LiffDashboardPage() {
             友だち追加する
           </a>
         </div>
+      )}
+      {(!me.store.hours || !(me.store.description ?? "").trim()) && (
+        <Link href="/liff/profile" className="card" style={{ display: "block", marginBottom: 16, textDecoration: "none", color: "inherit", borderColor: "#c9a227" }}>
+          <p style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 4 }}>
+            🔍 {[!me.store.hours ? "営業時間" : null, !(me.store.description ?? "").trim() ? "紹介文" : null].filter(Boolean).join("と")}を入れると、Google検索で上に表示されやすくなります
+          </p>
+          <p className="muted" style={{ fontSize: 12.5 }}>タップして入力する →</p>
+        </Link>
       )}
       {me.pendingRequests.length > 0 && (
         <div className="card" style={{ marginBottom: 16, background: "var(--warning-soft)" }}>
