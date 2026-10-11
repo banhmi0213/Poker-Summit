@@ -2923,3 +2923,21 @@ th {
   .banner-mobile-only[class*="four"], .banner-mobile-only[class*="promoGrid"] { display: grid !important; }
   .home-mobile-top-ad { width: 100%; margin: 0; }
 }
+
+/* National map: legible live statistics and a restrained ambient photo motion.
+   Geometry, prefecture hit targets, layout and all links remain unchanged. */
+@media (min-width: 768px) {
+  .ps-region-stat__label { font-size: clamp(11px, 0.9cqw, 15px); line-height: 1.35; }
+  .ps-region-stat strong { font-size: clamp(19px, 1.85cqw, 29px); margin-top: 4px; }
+  .ps-region-stat__icon svg { width: clamp(17px, 1.85cqw, 24px); height: clamp(17px, 1.85cqw, 24px); }
+}
+@keyframes ps-hero-ambient {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.018); }
+}
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .ps-region-hero__bg { transform-origin: 50% 50%; animation: ps-hero-ambient 16s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-region-hero__bg { animation: none !important; transform: none !important; }
+}
