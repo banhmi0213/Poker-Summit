@@ -44,3 +44,10 @@
 @media(hover:hover) and (pointer:fine){.readable :global(.home-post:hover){background-color:#faf3e4;box-shadow:inset 0 0 0 1px rgba(188,144,57,.17)}}
 .readable :global(.home-post:focus-visible){outline:2px solid #b98a32;outline-offset:2px;background-color:#faf3e4}
 @media(prefers-reduced-motion:reduce){.readable :global(.home-post){transition:none!important}}
+
+/* Touch feedback mirrors the desktop premium styling without sticky :hover. */
+@media (hover:none) and (pointer:coarse){
+ .promoBanner:active,.readable :global(.home-coupon-card:active){transform:scale(.988);box-shadow:0 4px 14px rgba(82,55,19,.16);border-color:rgba(188,144,57,.32)}
+ .readable :global(.home-post:active){background-color:#faf3e4;box-shadow:inset 0 0 0 1px rgba(188,144,57,.17)}
+}
+@media (prefers-reduced-motion:reduce){.promoBanner:active,.readable :global(.home-coupon-card:active){transform:none!important}}

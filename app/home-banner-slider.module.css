@@ -127,3 +127,6 @@
 }
 .slider:focus-within { box-shadow: 0 0 0 2px rgba(185,138,50,.35); }
 @media (prefers-reduced-motion: reduce) { .slider { transition: none !important; } .slider:hover { transform: none !important; } }
+
+/* Feedback belongs to the tapped link, not the slider container (swipe-safe). */
+@media (hover:none) and (pointer:coarse){.slide a:active{filter:brightness(1.045)}.arrow:active,.dot:active{filter:brightness(1.15)}}

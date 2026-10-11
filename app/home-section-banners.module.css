@@ -14,3 +14,6 @@
 }
 .banner:focus-visible { outline: 2px solid #b98a32; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .banner { transition: none !important; } .banner:hover { transform: none !important; } }
+
+@media (hover:none) and (pointer:coarse){.banner:active{transform:scale(.988);box-shadow:0 4px 14px rgba(82,55,19,.16);border-color:rgba(188,144,57,.32)}}
+@media (prefers-reduced-motion:reduce){.banner:active{transform:none!important}}
