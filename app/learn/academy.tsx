@@ -56,6 +56,45 @@ export function Academy() {
    <div><span className={styles.eyebrow}>YOUR LEARNING JOURNEY</span><h2>初心者コース</h2><p>{loaded ? `${completed.length} / 5 レッスンを学習済みに設定` : "学習状況を読み込み中"}</p></div>
    <div className={styles.progressRight}><strong>{loaded ? percent : 0}<small>%</small></strong><div className={styles.track}><span style={{width: (loaded ? percent : 0) + "%"}}/></div></div>
   </section>
+  <section className={styles.achievementGuide} aria-labelledby="achievement-guide-title">
+   <div className={styles.achievementIntro}>
+    <span className={styles.eyebrow}>ACADEMY ACHIEVEMENTS</span>
+    <h2 id="achievement-guide-title">学んだ証を、あなたのプロフィールに。</h2>
+    <p>初心者卒業テストに合格すると、会員アカウントに学習バッジを記録できます。獲得したバッジは、マイページとサミット（情報交換）の投稿・返信で公開されます。</p>
+   </div>
+   <div className={styles.achievementGrid}>
+    <div className={styles.achievementCard}>
+     <span className={styles.achievementIcon} aria-hidden="true">🏅</span>
+     <h3>初心者卒業バッジの獲得方法</h3>
+     <ol>
+      <li>5つのレッスンで基本を学ぶ</li>
+      <li>「06 初心者卒業テスト」で<strong>15問中12問以上</strong>正解する</li>
+      <li>ログイン後、「会員バッジに合格を記録する」を押して保存する</li>
+     </ol>
+     <p className={styles.achievementNote}>※テストは登録不要で受験できます。バッジの保存には会員ログインが必要です。学習済みチェックは合格条件ではありません。</p>
+     <button type="button" className={styles.achievementAction} onClick={() => {setSelected("graduation");document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"});}}>卒業テストに挑戦する ↗</button>
+    </div>
+    <div className={styles.achievementCard}>
+     <span className={styles.achievementIcon} aria-hidden="true">♠</span>
+     <h3>獲得したバッジの公開先</h3>
+     <div className={styles.achievementExample}><small>マイページ（名前の上）</small><div><span className={styles.levelTag}>Lv.2 ポーカー卒業生</span><span className={styles.graduateTag}>🏅 初心者コース卒業</span></div></div>
+     <div className={styles.achievementExample}><small>サミット（役職タグの隣）</small><div><span className={styles.roleTag}>♠ フリーディーラー</span><span className={styles.graduateTag}>🏅 初心者卒業</span></div></div>
+     <p className={styles.achievementNote}>役職タグはそのまま残り、学習バッジが追加されます。合格バッジを保存していない会員には卒業タグは表示されません。</p>
+     <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る ↗</Link><Link href="/board">サミットを見る ↗</Link></div>
+    </div>
+   </div>
+   <div className={styles.levelRoadmap}>
+    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>現在はLv.1とLv.2に対応。以降のレベル名・獲得条件は開発予定の案です。</p></div>
+    <div className={styles.levelRows}>
+     <div><span className={styles.levelNumber}>Lv.1</span><strong>ポーカー入門者</strong><small>会員の初期レベル</small><span className={styles.available}>公開中</span></div>
+     <div><span className={styles.levelNumber}>Lv.2</span><strong>ポーカー卒業生</strong><small>初心者卒業テスト合格・会員バッジ保存</small><span className={styles.available}>公開中</span></div>
+     <div><span className={styles.levelNumber}>Lv.3</span><strong>実戦チャレンジャー（仮）</strong><small>応用レッスン・実戦判断テストを想定</small><span className={styles.planned}>構想中</span></div>
+     <div><span className={styles.levelNumber}>Lv.4</span><strong>戦略マスター（仮）</strong><small>戦略・確率の応用テストを想定</small><span className={styles.planned}>構想中</span></div>
+     <div><span className={styles.levelNumber}>Lv.5</span><strong>アカデミーエキスパート（仮）</strong><small>総合上級チャレンジを想定</small><span className={styles.planned}>構想中</span></div>
+    </div>
+    <p className={styles.achievementNote}>※Lv.3以降の名称・条件・提供時期は未確定です。修了証、会員別学習履歴、ランキングも今後の開発予定です。</p>
+   </div>
+  </section>
   <div className={styles.layout}>
    <nav className={styles.lessonNav} aria-label="レッスンを選ぶ">
     <h2>LEARNING PATH <small>レッスン一覧</small></h2>
