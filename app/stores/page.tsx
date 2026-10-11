@@ -1,5 +1,5 @@
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
-import { paginateStores, storePageHref } from "@/lib/store-pagination";
+import { STORES_PER_PAGE, paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
@@ -16,7 +16,8 @@ import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 import type { Metadata } from "next";
 import { CATEGORY_LABEL } from "@/lib/constants";
-import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, pageTitle } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, absoluteUrl, pageTitle } from "@/lib/seo";
+import { JsonLd } from "@/lib/json-ld";
 import { CITY_PAGE_MIN_STORES, cityPageHref, countCityPages, isDesignatedCity, prefPageHref } from "@/lib/city";
 
 type StoreListParams = { q?: string; category?: string; pref?: string; city?: string; region?: string; area?: string; lat?: string; lng?: string; page?: string };
@@ -313,8 +314,30 @@ export default async function StoresPage({
       ? region
       : "全国";
 
+  // 都道府県・市区町村ページのパンくず(検索結果にパンくずとして表示される)
+  const listCrumbs = PREF_OPTIONS.includes(pref) && !q && !hasOrigin
+    ? [
+        { name: "TOP", item: absoluteUrl("/") },
+        { name: "店舗を探す", item: absoluteUrl("/stores") },
+        { name: pref, item: absoluteUrl(prefPageHref(pref)) },
+        ...(city ? [{ name: city, item: absoluteUrl(cityPageHref(pref, city)) }] : []),
+      ]
+    : null;
+  // 一覧に出ている店舗(このページ分)を ItemList として示す
+  const listItems = !q && !hasOrigin ? pagination.items.map((s: any, i: number) => ({ "@type": "ListItem", position: (pagination.page - 1) * STORES_PER_PAGE + i + 1, url: absoluteUrl(`/stores/${s.id}`), name: s.name })) : [];
+
   return (
     <div>
+      {listCrumbs && (
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: listCrumbs.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: c.item })),
+          }}
+        />
+      )}
+      {listItems.length > 0 && <JsonLd data={{ "@context": "https://schema.org", "@type": "ItemList", itemListElement: listItems }} />}
       <PortalHeader userEmail={user?.email} />
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>

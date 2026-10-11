@@ -850,6 +850,43 @@ th {
   font-weight: 700;
 }
 
+.footer-areas {
+  max-width: 960px;
+  margin: 0 auto 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-size: 12.5px;
+}
+
+.footer-areas__title {
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.footer-areas__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 3px 0;
+}
+
+.footer-areas__region {
+  flex: 0 0 6.5em;
+  color: var(--text-2);
+  font-weight: 700;
+}
+
+.portal-footer .footer-areas a {
+  font-weight: 400;
+  color: var(--text-2);
+}
+
+.portal-footer .footer-areas a:hover {
+  color: var(--accent-text);
+}
+
 .footer-links {
   margin: 12px 0;
   font-weight: 400;

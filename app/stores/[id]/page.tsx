@@ -50,7 +50,31 @@ type SeoStore = {
   x_url: string | null;
   instagram_url: string | null;
   google_place_id?: string | null;
+  hours?: string | null;
 };
+
+const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+/** 「18:00〜23:00」「21:00〜翌5:00」「24時間営業」のような毎日同じ営業時間だけを構造化データにする */
+function openingHoursSpec(hours: string | null | undefined) {
+  const h = (hours ?? "").normalize("NFKC").trim();
+  if (!h) return null;
+  if (/^24時間(営業)?$/.test(h)) {
+    return [{ "@type": "OpeningHoursSpecification", dayOfWeek: ALL_DAYS, opens: "00:00", closes: "23:59" }];
+  }
+  const m = h.match(/^(\d{1,2}):(\d{2})\s*[〜~\-–]\s*(?:翌)?(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const pad = (n: string) => n.padStart(2, "0");
+  const closeH = Number(m[3]) % 24;
+  return [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ALL_DAYS,
+      opens: `${pad(m[1])}:${m[2]}`,
+      closes: `${pad(String(closeH))}:${m[4]}`,
+    },
+  ];
+}
 
 function storeCategoryLabel(store: Pick<SeoStore, "category">) {
   return (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
@@ -135,6 +159,8 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
     business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
   }
   if (sameAs.length) business.sameAs = sameAs;
+  const spec = openingHoursSpec(store.hours);
+  if (spec) business.openingHoursSpecification = spec;
   // Googleマップの店舗(place_id)と結びついていれば、地図のURLを示す(ローカル検索での同一店舗の判定に効く)
   if (store.google_place_id) {
     business.hasMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`;
