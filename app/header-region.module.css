@@ -27,3 +27,9 @@
   .header :global(.portal-auth-actions) :global(.portal-cta),
   .header :global(.portal-auth-actions) :global(.ps-pref-selector){transition:none!important}
 }
+
+@media (hover:none) and (pointer:coarse){
+ .header :global(.portal-auth-actions) :global(.portal-cta:active),
+ .header :global(.mobile-nav-drawer) :global(.portal-cta:active){filter:brightness(1.09);box-shadow:0 0 12px rgba(218,173,70,.32)}
+ .header :global(.ps-pref-selector:active){border-color:#c99a3d;box-shadow:0 0 10px rgba(218,173,70,.23)}
+}
