@@ -1,0 +1,91 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { sweepArea } from "@/lib/store-sweep";
+import { SWEEP_AREAS } from "@/lib/sweep-areas";
+import { getPlaceBusinessStatus } from "@/lib/google-places";
+import { regeocodeNextStores } from "@/lib/regeocode";
+import { sendStoreMaintenanceDigest } from "@/lib/email";
+
+// ============================================================================
+// 店舗データの自動見直し(毎日 Vercel Cron から呼ばれる、2026/10)。
+// 1日に少しずつ進めて、約1か月で全国を1周する。
+//  1. 新店さがし: 全国の地域リストを順番に AREAS_PER_RUN 地域ずつGoogleで「ポーカー」検索し、
+//     店名がポーカー店らしい未登録の店を「承認待ち」に入れる(公開は運営が承認してから)。
+//  2. 閉業チェック: 掲載中でGoogleと結びついた店を、確認日の古い順に CHECKS_PER_RUN 件ずつ
+//     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
+//  3. 新しく入った店の座標を国土地理院で取る。
+// 何か見つかったら運営(site_settings.notify_email)にメールで知らせる。
+// ============================================================================
+
+export const maxDuration = 300;
+
+const AREAS_PER_RUN = 16; // 全国約460地域 → 約1か月で1周
+const CHECKS_PER_RUN = 30; // 掲載約800店 → 約1か月で1周
+
+function isAuthorized(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  return !!secret && req.headers.get("authorization") === `Bearer ${secret}`;
+}
+
+export async function GET(req: NextRequest) {
+  if (!isAuthorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!process.env.GOOGLE_PLACES_API_KEY) return NextResponse.json({ skipped: "no GOOGLE_PLACES_API_KEY" });
+
+  const svc = createServiceRoleClient();
+  const { data: state } = await svc.from("store_maintenance_state").select("*").eq("id", 1).maybeSingle();
+  const tasks = Object.entries(SWEEP_AREAS).flatMap(([pref, areas]) => areas.map((area) => ({ pref, area })));
+  let cursor = (state?.sweep_cursor ?? 0) % tasks.length;
+  let cycle = state?.sweep_cycle ?? 0;
+
+  // 1. 新店さがし
+  const newCandidates: string[] = [];
+  for (let i = 0; i < AREAS_PER_RUN; i++) {
+    const t = tasks[cursor];
+    try {
+      const r = await sweepArea(svc, t.pref, t.area, { keywords: ["ポーカー"], onlyPokerNames: true });
+      newCandidates.push(...r.inserted.map((n) => `${n}(${t.pref})`));
+    } catch {
+      // 1地域の失敗で全体を止めない
+    }
+    cursor++;
+    if (cursor >= tasks.length) {
+      cursor = 0;
+      cycle++;
+    }
+  }
+
+  // 2. 閉業チェック
+  const { data: stores } = await svc
+    .from("stores")
+    .select("id, name, google_place_id, google_business_status")
+    .eq("status", "approved")
+    .not("google_place_id", "is", null)
+    .order("google_checked_at", { ascending: true, nullsFirst: true })
+    .limit(CHECKS_PER_RUN);
+  const closed: { name: string; status: string }[] = [];
+  for (const s of stores ?? []) {
+    const status = await getPlaceBusinessStatus(s.google_place_id as string);
+    const update: Record<string, unknown> = { google_checked_at: new Date().toISOString() };
+    if (status) update.google_business_status = status;
+    if (status && status !== "OPERATIONAL" && status !== s.google_business_status) {
+      closed.push({ name: s.name, status });
+      if (status === "CLOSED_PERMANENTLY" || status === "NOT_FOUND") update.google_match_status = "needs_review";
+    }
+    await svc.from("stores").update(update).eq("id", s.id);
+  }
+
+  // 3. 新しく入った店の座標
+  await regeocodeNextStores(40).catch(() => null);
+
+  const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
+  await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed } });
+
+  if (newCandidates.length || closed.length) {
+    const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
+    if (settings?.notify_email) {
+      await sendStoreMaintenanceDigest({ to: settings.notify_email, newCandidates, closed }).catch(() => null);
+    }
+  }
+  return NextResponse.json(result);
+}

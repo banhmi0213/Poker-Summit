@@ -648,3 +648,31 @@ Poker Summit運営事務局
 ※このメールは送信専用です。`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】お支払いカード登録のお知らせ", text });
 }
+
+// ---------------------------------------------------------------------------
+// 店舗データの自動見直し(毎日少しずつ・約1か月で全国1周)の結果を運営に知らせる(2026/10)
+// ---------------------------------------------------------------------------
+export async function sendStoreMaintenanceDigest(params: {
+  to: string;
+  newCandidates: string[];
+  closed: { name: string; status: string }[];
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const lines: string[] = ["Poker Summit 店舗データの自動見直しで、確認が必要なものが見つかりました。", ""];
+  if (params.newCandidates.length) {
+    lines.push(`■ 新しく見つかった店(承認待ちに入れました): ${params.newCandidates.length}件`);
+    for (const n of params.newCandidates.slice(0, 50)) lines.push(`・${n}`);
+    lines.push(`→ ${siteUrl}/admin/stores?status=pending`, "");
+  }
+  if (params.closed.length) {
+    lines.push(`■ Googleで閉業・休業になった掲載店: ${params.closed.length}件`);
+    for (const c of params.closed.slice(0, 50)) lines.push(`・${c.name}(${c.status === "CLOSED_PERMANENTLY" ? "閉業" : c.status === "CLOSED_TEMPORARILY" ? "休業" : "Googleから消えた"})`);
+    lines.push(`→ ${siteUrl}/admin/stores/google-match`, "");
+  }
+  lines.push("Poker Summit");
+  await sendEmail({
+    to: params.to,
+    subject: `【Poker Summit】店舗の自動見直し: 新規${params.newCandidates.length}件・閉業/休業${params.closed.length}件`,
+    text: lines.join("\n"),
+  });
+}
