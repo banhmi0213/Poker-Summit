@@ -19,6 +19,16 @@ export async function geocodeAddress(
   const query = `${head}${addr}`;
   if (!query.trim()) return null;
 
+  const first = await gsiSearch(query);
+  if (first) return first;
+  // 京都の「三条通河原町東入中島町97」のような通り名入りの住所は見つからないことがあるので、
+  // 通り名の部分(〜通…上ル/下ル/東入/西入)を外して町名+番地で探し直す
+  const withoutStreet = query.replace(/[^\s区市町村]*?通[^\s]*?(?:上る|下る|上ル|下ル|東入ル?|西入ル?|東入る|西入る)/, "");
+  if (withoutStreet !== query) return gsiSearch(withoutStreet);
+  return null;
+}
+
+async function gsiSearch(query: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const res = await fetch(
       `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(query)}`,
