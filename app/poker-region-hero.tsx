@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HeroBackgroundVideo } from "./hero-background-video";
 import { PREF_REGION, REGIONS } from "@/lib/constants";
 import { REFERENCE_MAP_HITS } from "./region-map-paths";
 
@@ -193,6 +194,7 @@ export function PokerRegionHero({
       {/* Decoration only (Fuji/cityscape/cherry blossoms/chips/cards) — no
           text, map, or numbers are baked into this image. */}
       <img className="ps-region-hero__bg" src={backgroundSrc} alt="" aria-hidden="true" fetchPriority="high" decoding="async" />
+      <HeroBackgroundVideo />
 
       <img className="ps-region-hero__mobile-map" src="/images/hero-map-reference.svg" alt="日本地図" decoding="async" />
 
