@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyLiffIdToken } from "@/lib/line";
+import { isLineFriend, pushLineMessage, verifyLiffIdToken } from "@/lib/line";
 import { consumeStoreLinkCode } from "@/lib/store-update";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -37,5 +37,17 @@ export async function POST(req: NextRequest) {
   // 総合管理画面の「LINE連携」列(未連携/連携済み)を即座に反映する。
   revalidatePath("/admin/stores");
 
-  return NextResponse.json({ storeId: result.storeId });
+  // 友だち追加済みなら、トークに「連携完了」を届ける(画面はそのままトークへ移る)。
+  // まだ友だちでなければ、画面側で友だち追加の画面へ案内する。
+  // 友だち追加されたときは、LINE公式アカウントの「あいさつメッセージ」がトークに届く。
+  const isFriend = await isLineFriend(verified.userId);
+  if (isFriend) {
+    const { data: store } = await supabase.from("stores").select("name").eq("id", result.storeId).maybeSingle();
+    await pushLineMessage(
+      verified.userId,
+      `【Poker Summit】${store?.name ?? "店舗"}とLINEの連携が完了しました。\n今後、応募・お支払い・運営からのお知らせをこのトークでお届けします。\n店舗情報の編集は下のメニューからどうぞ。`
+    );
+  }
+
+  return NextResponse.json({ storeId: result.storeId, isFriend });
 }

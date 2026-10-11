@@ -27,6 +27,8 @@ const MENU = [
 
 // Poker Summit の店舗用LINE公式アカウント。通知を届けるには友だちになってもらう必要がある。
 const LINE_OA_ADD_FRIEND_URL = "https://line.me/R/ti/p/@237fsfau";
+// 公式アカウントとのトーク画面
+const LINE_OA_CHAT_URL = "https://line.me/R/oaMessage/@237fsfau/";
 
 export default function LiffDashboardPage() {
   const { ready, error, idToken, isFriend } = useLiff();
@@ -75,19 +77,24 @@ export default function LiffDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, idToken, notLinked, autoLinkTried]);
 
+  // 連携できたら LINE のトークへ移る。
+  // 友だちでなければ先に友だち追加の画面へ(追加すると「あいさつメッセージ」がトークに届く)。
+  function afterLinked(friend: boolean | null) {
+    window.location.href = friend === true ? LINE_OA_CHAT_URL : LINE_OA_ADD_FRIEND_URL;
+  }
+
   async function linkWithCode(value: string) {
     if (!idToken) return;
     setLinking(true);
     setLinkError(null);
     try {
-      await liffFetch(idToken, "/api/liff/link", {
+      const res = await liffFetch<{ isFriend: boolean | null }>(idToken, "/api/liff/link", {
         method: "POST",
         body: JSON.stringify({ idToken, code: value.trim() }),
       });
       setCode("");
       await load();
-      // 連携できたら、友だちでなければそのまま友だち追加の画面へ(通知を受け取るため)
-      if (isFriend === false) window.location.href = LINE_OA_ADD_FRIEND_URL;
+      afterLinked(res?.isFriend ?? isFriend);
     } catch (e) {
       setLinkError(e instanceof Error ? e.message : "連携に失敗しました。");
     } finally {
@@ -101,13 +108,13 @@ export default function LiffDashboardPage() {
     setLinking(true);
     setLinkError(null);
     try {
-      await liffFetch(idToken, "/api/liff/link", {
+      const res = await liffFetch<{ isFriend: boolean | null }>(idToken, "/api/liff/link", {
         method: "POST",
         body: JSON.stringify({ idToken, code: code.trim() }),
       });
       setCode("");
       await load();
-      if (isFriend === false) window.location.href = LINE_OA_ADD_FRIEND_URL;
+      afterLinked(res?.isFriend ?? isFriend);
     } catch (e) {
       setLinkError(e instanceof Error ? e.message : "連携に失敗しました。");
     } finally {
