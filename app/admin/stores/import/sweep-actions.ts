@@ -23,7 +23,7 @@ export async function sweepImportArea(pref: string, area: string) {
   if (!admin) throw new Error("運営権限がありません。");
 
   const excludeWords = DEFAULT_EXCLUDE_KEYWORDS.split(/[,、\s]+/).map((w) => w.trim().toLowerCase()).filter(Boolean);
-  const found = await Promise.all(SWEEP_KEYWORDS.map((kw) => searchPlaces(`${kw} ${area} ${pref}`).catch(() => [] as PlaceCandidate[])));
+  const found = await Promise.all(SWEEP_KEYWORDS.map((kw) => searchPlaces(area ? `${kw} ${area} ${pref}` : `${kw} ${pref}`).catch(() => [] as PlaceCandidate[])));
   const merged = new Map<string, PlaceCandidate>();
   for (const list of found) for (const r of list) if (!merged.has(r.placeId)) merged.set(r.placeId, r);
   const results = Array.from(merged.values());
