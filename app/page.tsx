@@ -22,6 +22,7 @@ import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
 import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
 import { getTopBanners, getHomeSectionBanners, isExternalBannerLink } from "@/lib/banners";
+import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { HomeSectionBanners } from "./home-section-banners";
 import { headers } from "next/headers";
@@ -205,11 +206,11 @@ export default async function HomePage({
   const siteHost = headers().get("host") ?? "";
   const topBanners: HomeBanner[] = topBannerRows.map((b) => {
     const external = isExternalBannerLink(b.link_url, siteHost);
-    return { id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
+    return { device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
   });
 
   const sectionBanners = (rows: typeof couponBannerRows): HomeBanner[] => rows.map((b) => ({
-    id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url,
+    device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url,
     external: isExternalBannerLink(b.link_url, siteHost),
   }));
   const couponBanners = sectionBanners(couponBannerRows);
@@ -275,6 +276,8 @@ export default async function HomePage({
     <div>
       <JsonLd data={HOME_JSON_LD} />
       <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
+
+      {bannersForDevice(topBanners, "mobile").length > 0 && <div className="home-mobile-top-ad banner-mobile-only"><HomeBannerSlider banners={bannersForDevice(topBanners, "mobile")} /></div>}
 
       {settings?.announcement && (
         <div className="container" style={{ paddingBottom: 0 }}>
@@ -357,9 +360,9 @@ export default async function HomePage({
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        {topBanners.length > 0 && (
-          <div className="home-section">
-            <HomeBannerSlider banners={topBanners} />
+        {bannersForDevice(topBanners, "pc").length > 0 && (
+          <div className="home-section banner-pc-only">
+            <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
           </div>
         )}
         <section className="home-section">
@@ -408,12 +411,14 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
         </section>
-        <section className={styles.promoGrid} aria-label="おすすめコンテンツ" id="blog" style={{ scrollMarginTop: 160 }}>
-          {footerThreeBannerRows.length > 0 ? footerThreeBannerRows.map((b) => {
+        {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
+        <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
+          {footerBanners.length > 0 ? footerBanners.map((b) => {
             const image = <img src={b.image_url ?? ""} alt={b.title} loading="lazy" />;
             return b.link_url ? <a key={b.id} href={b.link_url} className={styles.promoBanner} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={styles.promoBanner}>{image}</div>;
           }) : <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.webp" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>}
         </section>
+        ); })}
       </main>
 
       <div className="cta-banner">

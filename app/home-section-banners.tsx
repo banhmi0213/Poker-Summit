@@ -1,12 +1,13 @@
 import type { HomeBanner } from "./home-banner-slider";
+import { bannersForDevice } from "@/lib/banners";
 import styles from "./home-section-banners.module.css";
 
 /** Banner rows are hidden entirely when no active image exists. */
-export function HomeSectionBanners({ banners, layout }: { banners: HomeBanner[]; layout: "wide" | "four" }) {
-  const visible = banners.slice(0, layout === "four" ? 4 : 1);
+function DeviceSectionBanners({ banners, layout, device }: { banners: HomeBanner[]; layout: "wide" | "four"; device: "pc" | "mobile" }) {
+  const visible = bannersForDevice(banners, device).slice(0, layout === "four" ? 4 : 1);
   if (!visible.length) return null;
   return (
-    <div className={layout === "four" ? styles.four : styles.wide} aria-label="掲載バナー">
+    <div className={`${device === "pc" ? "banner-pc-only" : "banner-mobile-only"} ${layout === "four" ? styles.four : styles.wide}`} aria-label="掲載バナー">
       {visible.map((b) => {
         const image = <img src={b.image_url} alt={b.title} loading="lazy" style={b.image_url?.match(/-banner-light-v\d+\.webp$/) ? { aspectRatio: "auto", objectFit: "contain" } : undefined} />;
         return b.link_url ? (
@@ -15,4 +16,8 @@ export function HomeSectionBanners({ banners, layout }: { banners: HomeBanner[];
       })}
     </div>
   );
+}
+
+export function HomeSectionBanners(props: { banners: HomeBanner[]; layout: "wide" | "four" }) {
+  return <><DeviceSectionBanners {...props} device="pc" /><DeviceSectionBanners {...props} device="mobile" /></>;
 }

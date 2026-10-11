@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
-import { BANNER_BUCKET, BANNER_POSITIONS } from "@/lib/banners";
+import { BANNER_BUCKET, BANNER_POSITIONS, BANNER_DEVICES } from "@/lib/banners";
 
 export type BannerFormState = { error?: string; success?: string; savedAt?: number };
 
@@ -98,6 +98,9 @@ export async function saveBanner(_state: BannerFormState, formData: FormData): P
     const position = String(formData.get("position") ?? "top").trim();
     if (!BANNER_POSITIONS.some((p) => p.value === position)) throw new Error("表示位置を選択してください。");
 
+    const device = String(formData.get("device") ?? "all");
+    if (!BANNER_DEVICES.some(d => d.value === device)) throw new Error("表示する端末を選択してください。");
+
     const linkUrl = parseLinkUrl(formData.get("linkUrl"));
     const scope = String(formData.get("scope") ?? "").trim() || null;
     const sortOrderRaw = String(formData.get("sortOrder") ?? "0").trim() || "0";
@@ -127,6 +130,7 @@ export async function saveBanner(_state: BannerFormState, formData: FormData): P
 
     const values = {
       title,
+      device,
       image_url: imageUrl,
       link_url: linkUrl,
       position,
@@ -194,13 +198,14 @@ export async function moveBanner(bannerId: string, direction: "up" | "down") {
   const supabase = await createClient();
   await requireAdmin(supabase);
 
-  const { data: target } = await supabase.from("banners").select("position").eq("id", bannerId).maybeSingle();
+  const { data: target } = await supabase.from("banners").select("position, device").eq("id", bannerId).maybeSingle();
   if (!target) throw new Error("バナーが見つかりません。");
 
   const { data: siblings, error } = await supabase
     .from("banners")
     .select("id, sort_order")
     .eq("position", target.position)
+    .eq("device", target.device)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   if (error || !siblings) throw new Error(error?.message ?? "並び替えできませんでした。");

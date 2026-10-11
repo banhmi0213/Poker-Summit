@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { BANNER_POSITIONS } from "@/lib/banners";
+import { BANNER_POSITIONS, BANNER_DEVICES, type BannerDevice } from "@/lib/banners";
 import { saveBanner, type BannerFormState } from "./actions";
 import styles from "./banners.module.css";
 
@@ -12,6 +12,7 @@ const ACCEPT = ["image/jpeg", "image/png", "image/webp"];
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
 
 export type EditableBanner = {
+  device: BannerDevice;
   id: string;
   title: string;
   image_url: string | null;
@@ -42,7 +43,7 @@ function validateFile(file: File): string | null {
   return null;
 }
 
-export function BannerForm({ banner }: { banner?: EditableBanner }) {
+export function BannerForm({ banner, defaultDevice = "all" }: { banner?: EditableBanner; defaultDevice?: BannerDevice }) {
   const isEdit = Boolean(banner);
   const router = useRouter();
   const [state, action] = useFormState<BannerFormState, FormData>(saveBanner, {});
@@ -62,14 +63,14 @@ export function BannerForm({ banner }: { banner?: EditableBanner }) {
   useEffect(() => {
     if (!state.savedAt) return;
     if (isEdit) {
-      router.replace("/admin/banners");
+      router.replace(`/admin/banners?device=${banner?.device ?? defaultDevice}`);
     } else {
       formRef.current?.reset();
       setPreview(null);
       setFileName("");
       setPosition("top");
     }
-  }, [state.savedAt, isEdit, router]);
+  }, [state.savedAt, isEdit, router, banner?.device, defaultDevice]);
 
   function clearFile() {
     if (inputRef.current) inputRef.current.value = "";
@@ -188,6 +189,12 @@ export function BannerForm({ banner }: { banner?: EditableBanner }) {
           pattern="https?://.+"
           defaultValue={banner?.link_url ?? ""}
         />
+      </label>
+
+      <label className="field">
+        <span className="muted">表示する端末</span>
+        <select name="device" defaultValue={banner?.device ?? defaultDevice}>{BANNER_DEVICES.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}</select>
+        <small className="muted">共通は両方に表示。PC用・スマホ用は選んだ端末だけに表示します。</small>
       </label>
 
       <label className="field">

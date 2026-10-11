@@ -1,7 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PREF_REGION } from "./constants";
 
+export type BannerDevice = "all" | "pc" | "mobile";
+export const BANNER_DEVICES = [{ value: "all", label: "共通（PC・スマホ）" }, { value: "pc", label: "PC" }, { value: "mobile", label: "スマホ" }] as const;
+export function bannersForDevice<T extends { device?: BannerDevice }>(rows: T[], device: "pc" | "mobile"): T[] {
+  return [...rows.filter(b => b.device === device), ...rows.filter(b => !b.device || b.device === "all")];
+}
+
 export type PickedBanner = {
+  device?: BannerDevice;
   id: string;
   title: string;
   image_url: string | null;
@@ -17,12 +24,13 @@ export type PickedBanner = {
 export async function pickBanner(
   supabase: SupabaseClient,
   position: "store_list" | "job_list" | "job_detail",
-  opts: { pref?: string; region?: string } = {}
+  opts: { pref?: string; region?: string; device?: "pc" | "mobile" } = {}
 ): Promise<PickedBanner | null> {
   const now = new Date().toISOString();
   const { data: banners } = await supabase
     .from("banners")
-    .select("id, title, image_url, link_url, scope, sort_order")
+    .select("id, title, image_url, link_url, scope, sort_order, device")
+    .in("device", ["all", opts.device ?? "pc"])
     .eq("position", position)
     .eq("active", true)
     .or(`starts_at.is.null,starts_at.lte.${now}`)
@@ -36,18 +44,19 @@ export async function pickBanner(
   // and 中部), so this is a list of candidate regions rather than a single one.
   const regions = pref ? PREF_REGION[pref] ?? [] : opts.region ? [opts.region] : [];
 
+  const eligible = bannersForDevice(banners, opts.device ?? "pc");
   let picked: PickedBanner | null = null;
   if (pref) {
-    picked = banners.find((b) => b.scope === pref) ?? null;
+    picked = eligible.find((b) => b.scope === pref) ?? null;
   }
   if (!picked && regions.length > 0) {
-    picked = banners.find((b) => b.scope && regions.includes(b.scope)) ?? null;
+    picked = eligible.find((b) => b.scope && regions.includes(b.scope)) ?? null;
   }
   if (!picked) {
-    picked = banners.find((b) => !b.scope) ?? null;
+    picked = eligible.find((b) => !b.scope) ?? null;
   }
 
-  if (picked) {
+  if (picked && opts.device !== "mobile") {
     // Fire-and-forget impression log for the アクセス分析 banner tab (real data,
     // not the prototype's hardcoded impressions/clicks numbers).
     supabase
@@ -62,7 +71,7 @@ export async function pickBanner(
 // のCHECK制約('top'|'sidebar'|'footer'|'store_list'|'job_list'|'job_detail')
 // と一致させること。
 export const BANNER_POSITIONS = [
-  { value: "top", label: "TOPページ（開催予定イベントの上）" },
+  { value: "top", label: "TOP広告（PC：PICKUP下／スマホ：最上部）" },
   { value: "home_coupon", label: "TOPページ（お得なクーポンの上・横長1枚）" },
   { value: "home_community", label: "TOPページ（サミット情報交換の上・横並び4枚）" },
   { value: "home_ranking", label: "TOPページ（店舗ランキングの上・横長1枚）" },
@@ -93,7 +102,7 @@ export async function getTopBanners(supabase: SupabaseClient): Promise<PickedBan
   const now = new Date().toISOString();
   const { data } = await supabase
     .from("banners")
-    .select("id, title, image_url, link_url")
+    .select("id, title, image_url, link_url, device")
     .eq("position", "top")
     .eq("active", true)
     .is("scope", null)
@@ -135,12 +144,12 @@ export async function getHomeSectionBanners(
 ): Promise<PickedBanner[]> {
   const now = new Date().toISOString();
   const { data } = await supabase.from("banners")
-    .select("id, title, image_url, link_url")
+    .select("id, title, image_url, link_url, device")
     .eq("position", position).eq("active", true).is("scope", null)
     .not("image_url", "is", null).neq("image_url", "")
     .or(`starts_at.is.null,starts_at.lte.${now}`)
     .or(`ends_at.is.null,ends_at.gte.${now}`)
     .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true }).limit(limit);
+    .order("created_at", { ascending: true });
   return (data ?? []) as PickedBanner[];
 }
