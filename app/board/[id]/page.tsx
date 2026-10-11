@@ -7,6 +7,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge } from "@/app/member-role-badge";
+import { AcademyBadge } from "@/app/learn/academy-badge";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
 
@@ -94,6 +95,11 @@ export default async function BoardPostPage({
   const { data: authorProfiles } = authorUserIds.length
     ? await supabase.from("profiles").select("user_id, avatar_url, role").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; avatar_url: string | null; role: string | null }[] };
+  const { data: badgeRows } = authorUserIds.length
+    ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; best_score: number }[] };
+  const graduationByUserId: Record<string, number> = {};
+  badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   const avatarByUserId: Record<string, string | null> = {};
   // 投稿者・返信者の役職(2026/10、「サミットアイコン横の名前の上に役職を
   // 表示」との指示)。board/page.tsxと同じくavatar_urlと一緒にまとめて引く。
@@ -153,7 +159,7 @@ export default async function BoardPostPage({
               <Avatar name={post.author_name} url={null} />
             )}
             <div style={{ minWidth: 0 }}>
-              <MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} />
+              <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} /><AcademyBadge score={post.author_user_id ? graduationByUserId[post.author_user_id] : null} compact/></span>
               <div className="muted">
                 {post.author_name} ・ {formatDate(post.created_at)}
               </div>
@@ -204,7 +210,7 @@ export default async function BoardPostPage({
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} />
+                  <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} /><AcademyBadge score={r.author_user_id ? graduationByUserId[r.author_user_id] : null} compact/></span>
                   <div style={{ fontWeight: 700, fontSize: 13.5 }}>
                     {r.author_name}{" "}
                     <span className="muted small" style={{ fontWeight: 400 }}>

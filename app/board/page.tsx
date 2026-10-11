@@ -9,6 +9,7 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge } from "@/app/member-role-badge";
+import { AcademyBadge } from "@/app/learn/academy-badge";
 import { staticPageMetadata } from "@/lib/seo";
 
 export const metadata = staticPageMetadata({ title: "ポーカー掲示板", description: "ポーカー好きが集まる掲示板。店舗情報、大会の話題、初心者の質問などを気軽に投稿・閲覧できます。", path: "/board" });
@@ -114,6 +115,11 @@ export default async function BoardPage({
   const { data: authorProfiles } = authorUserIds.length
     ? await supabase.from("profiles").select("user_id, avatar_url, role").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; avatar_url: string | null; role: string | null }[] };
+  const { data: badgeRows } = authorUserIds.length
+    ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
+    : { data: [] as { user_id: string; best_score: number }[] };
+  const graduationByUserId: Record<string, number> = {};
+  badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   const avatarByUserId: Record<string, string | null> = {};
   // 投稿者の役職(2026/10、「サミットアイコン横の名前の上に役職を表示」
   // との指示)。profiles.roleをアイコンと同じく1回でまとめて引く。
@@ -297,7 +303,7 @@ export default async function BoardPage({
                       コントラスト比が低いため、サイト全体の.mutedは変えず
                       このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
                   <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25, minWidth: 0, maxWidth: "100%" }}>
-                    <MemberRoleBadge role={role} />
+                    <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
                     <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
                   </span>
                   <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>

@@ -48,6 +48,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
             お知らせ
           </Link>
           <Link href="/blog" className="plink">BLOG</Link>
+          <Link href="/learn" className="plink">♠ 学習コース</Link>
           <Link href="/major-tournaments" className="plink">国内外大型大会</Link>
         </div>
         <div className="portal-auth-actions">

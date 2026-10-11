@@ -18,6 +18,7 @@ import { AccountIcon } from "./account-icon";
 import { ProfileEditor } from "./profile-editor";
 import styles from "./profile-layout.module.css";
 import { Avatar } from "@/app/avatar";
+import { AcademyBadge } from "@/app/learn/academy-badge";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -98,6 +99,8 @@ export async function MyPageContent({
     .select("avatar_url, pref_public, role, bio, email_public")
     .eq("user_id", user.id)
     .maybeSingle();
+  const {data:graduation}=await supabase.from("academy_graduation").select("best_score").eq("user_id",user.id).maybeSingle();
+  const graduationScore=graduation?.best_score ?? null;
   const avatarUrl = myProfile?.avatar_url ?? null;
   // 都道府県の公開設定(2026/10追加)。profiles未保存ならsignup時の
   // user_metadataの値、それも無ければ公開扱い。
@@ -232,9 +235,9 @@ export async function MyPageContent({
         </div>) : (
           <div className={styles.summary}>
             <div className={styles.identity}>
-              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
+              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
               {myProfile?.bio && <p className={styles.bio}>{myProfile.bio}</p>}
-              {myProfile?.role && <span className={styles.role}>♠ {myProfile.role}</span>}
+              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:7}}>{myProfile?.role && <span className={styles.role}>♠ {myProfile.role}</span>}{graduationScore!==null&&<AcademyBadge score={graduationScore} compact/>}</div>
             </div>
             <dl className={styles.memberFacts}>
               <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
