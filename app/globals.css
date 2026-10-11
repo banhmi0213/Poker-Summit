@@ -2951,7 +2951,7 @@ th {
 @media (max-width: 767px) {
   .ps-region-hero__mobile-map {
     display: block; position: absolute; z-index: 12;
-    top: 3cqw; left: 50%; width: 70cqw; height: 56cqw;
+    top: 1cqw; left: 58%; width: 78cqw; height: 62cqw;
     object-fit: contain; transform: translateX(-50%) rotate(8deg); pointer-events: none;
   }
 }
