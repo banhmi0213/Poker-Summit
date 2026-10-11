@@ -12,7 +12,11 @@ export async function geocodeAddress(
   city: string | null,
   address: string | null
 ): Promise<{ lat: number; lng: number } | null> {
-  const query = [pref, city, address].filter(Boolean).join("");
+  // 住所欄に都道府県・市区町村から書いてある店が多いので、重ねて付けない
+  // (「大阪府大阪市…大阪府大阪市…」だと見つからないことがある)。郵便番号も外す。
+  const addr = (address ?? "").replace(/〒?\s*\d{3}-?\d{4}\s*/, "").trim();
+  const head = pref && addr.startsWith(pref) ? "" : city && addr.startsWith(city) ? (pref ?? "") : `${pref ?? ""}${city ?? ""}`;
+  const query = `${head}${addr}`;
   if (!query.trim()) return null;
 
   try {

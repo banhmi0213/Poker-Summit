@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { matchNextStores } from "@/lib/google-match";
+import { regeocodeNextStores } from "@/lib/regeocode";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -25,6 +26,12 @@ export async function runGoogleMatchBatch() {
     remaining: out.remaining,
     counts: out.results.reduce<Record<string, number>>((acc, r) => ((acc[r.status] = (acc[r.status] ?? 0) + 1), acc), {}),
   };
+}
+
+/** 座標を国土地理院で取り直す(画面から繰り返し呼ぶ) */
+export async function runRegeocodeBatch() {
+  await requireAdmin();
+  return regeocodeNextStores(40);
 }
 
 /** 確認待ちの店舗への対応: 候補で確定 / 非公開にする / 確認済みにする */

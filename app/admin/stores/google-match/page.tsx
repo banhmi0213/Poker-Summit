@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleMatchRunner } from "./runner";
+import { GoogleMatchRunner, RegeocodeRunner } from "./runner";
 import { resolveGoogleMatch, resetGoogleMatch } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ type Row = {
 export default async function GoogleMatchPage() {
   const supabase = await createClient();
   const ACTIVE = ["approved", "listed", "pending"];
-  const [{ count: remaining }, { count: linked }, { data: review }] = await Promise.all([
+  const [{ count: remaining }, { count: linked }, { data: review }, { count: geoRemaining }] = await Promise.all([
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).is("google_place_id", null).is("google_checked_at", null),
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).not("google_place_id", "is", null),
     supabase
@@ -47,6 +47,7 @@ export default async function GoogleMatchPage() {
       .or("google_match_status.in.(ambiguous,not_found,duplicate,error),google_business_status.in.(CLOSED_PERMANENTLY,CLOSED_TEMPORARILY)")
       .order("google_match_status")
       .limit(500),
+    supabase.from("stores").select("id", { count: "exact", head: true }).is("geo_source", null),
   ]);
   const rows = (review ?? []) as Row[];
 
@@ -58,6 +59,7 @@ export default async function GoogleMatchPage() {
         Googleで「閉業」になっている店舗や見つからない店舗は、下の一覧で確認してください。(結びつけ済み: {linked ?? 0}件)
       </p>
 
+      <RegeocodeRunner remaining={geoRemaining ?? 0} />
       <GoogleMatchRunner remaining={remaining ?? 0} />
 
       <h2 style={{ fontSize: 16, margin: "20px 0 8px" }}>確認が必要な店舗({rows.length}件)</h2>

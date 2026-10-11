@@ -42,10 +42,14 @@ export async function POST(req: NextRequest) {
   // 友だち追加されたときは、LINE公式アカウントの「あいさつメッセージ」がトークに届く。
   const isFriend = await isLineFriend(verified.userId);
   if (isFriend) {
-    const { data: store } = await supabase.from("stores").select("name").eq("id", result.storeId).maybeSingle();
+    const { data: store } = await supabase.from("stores").select("name, hours, description").eq("id", result.storeId).maybeSingle();
+    const missing = [!store?.hours ? "営業時間" : null, !(store?.description ?? "").trim() ? "紹介文" : null].filter(Boolean);
     await pushLineMessage(
       verified.userId,
-      `【Poker Summit】${store?.name ?? "店舗"}とLINEの連携が完了しました。\n今後、応募・お支払い・運営からのお知らせをこのトークでお届けします。\n店舗情報の編集は下のメニューからどうぞ。`
+      `【Poker Summit】${store?.name ?? "店舗"}とLINEの連携が完了しました。\n今後、応募・お支払い・運営からのお知らせをこのトークでお届けします。\n店舗情報の編集は下のメニューからどうぞ。` +
+        (missing.length
+          ? `\n\n💡${missing.join("と")}を入れると、Google検索で上に表示されやすくなります。メニューの「店舗基本情報」から入力できます。`
+          : "")
     );
   }
 
