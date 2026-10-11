@@ -28,7 +28,7 @@ import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, absoluteUrl, clip, page
 import { JsonLd } from "@/lib/json-ld";
 import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge } from "@/app/store-plan-badge";
-import { cityPageHref } from "@/lib/city";
+import { cityPageHref, prefPageHref } from "@/lib/city";
 import { distanceKm } from "@/lib/geocode";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -143,7 +143,7 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
   const crumbs = [
     { name: "TOP", item: absoluteUrl("/") },
     { name: "店舗を探す", item: absoluteUrl("/stores") },
-    ...(store.pref ? [{ name: store.pref, item: absoluteUrl(`/stores?pref=${encodeURIComponent(store.pref)}`) }] : []),
+    ...(store.pref ? [{ name: store.pref, item: absoluteUrl(prefPageHref(store.pref)) }] : []),
     ...(store.pref && store.city ? [{ name: store.city, item: absoluteUrl(cityPageHref(store.pref, store.city)) }] : []),
     { name: store.name, item: url },
   ];
@@ -342,7 +342,7 @@ export default async function StoreDetailPage({
           <Link href="/">TOP</Link>
           <span aria-hidden="true">›</span>
           <Link href="/stores">店舗を探す</Link>
-          {store.pref && <><span aria-hidden="true">›</span><Link href={`/stores?pref=${encodeURIComponent(store.pref)}`}>{store.pref}</Link></>}
+          {store.pref && <><span aria-hidden="true">›</span><Link href={prefPageHref(store.pref)}>{store.pref}</Link></>}
           {store.pref && store.city && <><span aria-hidden="true">›</span><Link href={cityPageHref(store.pref, store.city)}>{store.city}</Link></>}
         </nav>
         <div className="sd-hero-surface">
@@ -638,7 +638,7 @@ export default async function StoreDetailPage({
               {store.pref && store.city && cityStoreCount > 1 && (
                 <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗） ›</Link>
               )}
-              {store.pref && <Link href={`/stores?pref=${encodeURIComponent(store.pref)}`} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
+              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
             </p>
           </section>
         )}

@@ -17,7 +17,7 @@ import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 import type { Metadata } from "next";
 import { CATEGORY_LABEL } from "@/lib/constants";
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, pageTitle } from "@/lib/seo";
-import { CITY_PAGE_MIN_STORES, cityPageHref, countCityPages, isDesignatedCity } from "@/lib/city";
+import { CITY_PAGE_MIN_STORES, cityPageHref, countCityPages, isDesignatedCity, prefPageHref } from "@/lib/city";
 
 type StoreListParams = { q?: string; category?: string; pref?: string; city?: string; region?: string; area?: string; lat?: string; lng?: string; page?: string };
 
@@ -58,13 +58,23 @@ export async function generateMetadata({ searchParams }: { searchParams: StoreLi
   if (category) qs.set("category", category);
   if (page > 1) qs.set("page", String(page));
   // 市区町村ページは /stores/area/東京都/新宿区 の形を正とする(/stores?pref=..&city=.. でも開ける)
+  // 都道府県だけで絞ったページは /stores/area/東京都 の形を正とする
+  const prefOnly = pref && !city && !area && !region && !category;
   const canonical = city
     ? `${cityPageHref(pref, city)}${page > 1 ? `?page=${page}` : ""}`
-    : `/stores${qs.size ? `?${qs}` : ""}`;
+    : prefOnly
+      ? `${prefPageHref(pref)}${page > 1 ? `?page=${page}` : ""}`
+      : `/stores${qs.size ? `?${qs}` : ""}`;
   const isSearch = !!searchParams.q?.trim() || !!searchParams.lat || !!searchParams.lng;
 
   // 店舗が少なすぎる市区町村ページは中身が薄いので検索結果には出さない(リンクはたどれる)
   let thinCityPage = false;
+  if (prefOnly && !isSearch) {
+    // 掲載店舗が1店もない都道府県のページは検索結果に出さない
+    const supabase = await createClient();
+    const { count } = await supabase.from("stores").select("id", { count: "exact", head: true }).eq("pref", pref).in("status", ["approved", "listed"]);
+    thinCityPage = (count ?? 0) === 0;
+  }
   if (city && !isSearch) {
     const supabase = await createClient();
     const { count } = await cityFilter(
@@ -290,7 +300,9 @@ export default async function StoresPage({
   const pageHref = (page: number) =>
     city && !q && !category && !hasOrigin
       ? `${cityPageHref(pref, city)}${page > 1 ? `?page=${page}` : ""}`
-      : storePageHref({ ...searchParams, city: city || undefined }, page);
+      : PREF_OPTIONS.includes(pref) && !city && !area && !region && !q && !category && !hasOrigin
+        ? `${prefPageHref(pref)}${page > 1 ? `?page=${page}` : ""}`
+        : storePageHref({ ...searchParams, city: city || undefined }, page);
 
   // 見出しはページタイトル(generateMetadata)と同じ地名に揃える。
   // 都道府県で絞っていればその都道府県(エリア指定があれば併記)、地方だけなら地方名、それ以外は全国。
@@ -306,7 +318,7 @@ export default async function StoresPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
-          <Link href={city ? `/stores?pref=${encodeURIComponent(pref)}` : pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
+          <Link href={city ? prefPageHref(pref) : pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
             {city ? `← ${pref}の店舗一覧` : pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
           </Link>
         </nav>
