@@ -49,6 +49,7 @@ type SeoStore = {
   banner_url: string | null;
   x_url: string | null;
   instagram_url: string | null;
+  google_place_id?: string | null;
 };
 
 function storeCategoryLabel(store: Pick<SeoStore, "category">) {
@@ -134,6 +135,10 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
     business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
   }
   if (sameAs.length) business.sameAs = sameAs;
+  // Googleマップの店舗(place_id)と結びついていれば、地図のURLを示す(ローカル検索での同一店舗の判定に効く)
+  if (store.google_place_id) {
+    business.hasMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`;
+  }
 
   const crumbs = [
     { name: "TOP", item: absoluteUrl("/") },
