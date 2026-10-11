@@ -21,7 +21,7 @@ const lessons = [
 ] as const;
 type LessonId = Exclude<typeof lessons[number]["id"], "graduation">;
 const courseLessons = lessons.filter(l => l.id !== "graduation");
-const upcoming = ["学習レベル・バッジ・修了証", "会員別の学習履歴とランキング"];
+const upcoming = ["修了証の発行", "会員別の学習履歴とランキング"];
 
 export function Academy() {
  const [completed, setCompleted] = useState<LessonId[]>([]);
@@ -50,7 +50,7 @@ export function Academy() {
    <span className={styles.eyebrow}>POKER SUMMIT ACADEMY</span>
    <h1>遊びながら、ポーカーが上達する。</h1>
    <p>カードを選び、考えて、クイズに挑戦。はじめての方も自分のペースで学べる、無料の体験型コースです。</p>
-   <div className={styles.heroPills}><span>♠ 登録不要</span><span>✦ 全5レッスン</span><span>♥ スマホ対応</span></div>
+   <div className={styles.heroPills}><span>♠ 登録不要</span><span>✦ 5レッスン＋卒業テスト</span><span>♥ スマホ対応</span></div>
   </section>
   <section className={styles.progressPanel} aria-label="学習進捗">
    <div><span className={styles.eyebrow}>YOUR LEARNING JOURNEY</span><h2>初心者コース</h2><p>{loaded ? `${completed.length} / 5 レッスンを学習済みに設定` : "学習状況を読み込み中"}</p></div>
@@ -71,7 +71,7 @@ export function Academy() {
       {index < lessons.length - 1 && <button type="button" className={styles.nextButton} onClick={() => { setSelected(lessons[index + 1].id); document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"}); }}>次のレッスンへ →</button>}</div>
    </section>
   </div>
-  {loaded && completed.length === courseLessons.length && <section className={styles.congrats} role="status"><span>✦ COURSE COMPLETE ✦</span><h2>初心者コース、学習完了！</h2><p>5つのレッスンをすべて学習済みにしました。次は実戦で判断する練習へ進みましょう。</p><small>※現在は自己申告による学習完了表示です。公式の認定・修了証ではありません。</small></section>}
+  {loaded && completed.length === courseLessons.length && <section className={styles.congrats} role="status"><span>✦ COURSE COMPLETE ✦</span><h2>初心者コース、学習完了！</h2><p>5つのレッスンをすべて学習済みにしました。卒業テストに挑戦して、合格バッジを獲得しましょう。</p><small>※現在は自己申告による学習完了表示です。公式の認定・修了証ではありません。</small></section>}
   <section className={styles.future}><span className={styles.eyebrow}>COMING NEXT</span><h2>これから増える学習コンテンツ</h2><p>ポーカーの判断力を磨く、次のステップを順次制作予定です。</p><div className={styles.futureGrid}>{upcoming.map(name => <div key={name}><span>✧</span><strong>{name}</strong><small>今後公開予定</small></div>)}</div></section>
  </div>;
 }
