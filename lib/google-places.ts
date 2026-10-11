@@ -152,3 +152,19 @@ export function guessCategory(name: string, types: string[]): string {
   }
   return "other";
 }
+
+/** 営業状況だけを取る(閉業チェック用)。取れなければ null。 */
+export async function getPlaceBusinessStatus(placeId: string): Promise<string | null> {
+  try {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+    url.searchParams.set("key", getApiKey());
+    url.searchParams.set("place_id", placeId);
+    url.searchParams.set("fields", "business_status");
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    const data = await res.json();
+    if (data.status === "NOT_FOUND") return "NOT_FOUND";
+    return data.result?.business_status ?? null;
+  } catch {
+    return null;
+  }
+}
