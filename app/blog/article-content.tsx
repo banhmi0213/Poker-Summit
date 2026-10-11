@@ -3,12 +3,13 @@ import Link from "next/link";
 import { blogHeadingId, type BlogBlock, type BlogEntry, type BlogStore } from "@/lib/blog";
 import { StoreNamePlaceholder } from "@/app/store-name-placeholder";
 import styles from "./article.module.css";
+import { PositionTrainer } from "./position-trainer";
 
 function Paragraph({text=""}:{text?:string}) {
  const parts=text.split(/(https?:\/\/[^\s]+)/g);
  return <p>{parts.map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</p>;
 }
-export function ArticleContent({ title, category, summary, image, imageAlt, body, stores, authorName="", authorProfile="", publishedAt, updatedAt, showToc=true, references=[], imageRights="" }: {
+export function ArticleContent({ title, category, summary, image, imageAlt, body, stores, authorName="", authorProfile="", publishedAt, updatedAt, showToc=true, references=[], imageRights="", articleSlug="" }: {
  title:string; category:string; summary:string; image:string; imageAlt?:string; body:BlogBlock[]; stores:BlogStore[];
  authorName?:string; authorProfile?:string; publishedAt?:string|null; updatedAt?:string; showToc?:boolean; references?:BlogEntry["reference_sources"]; imageRights?:string;
 }) {
@@ -30,6 +31,7 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
    if(block.type==="table")return <div className={styles.tableWrap} key={i}><table><tbody>{(block.rows||[]).map((row,r)=><tr key={r}>{row.map((cell,n)=>r===0?<th key={n}>{cell}</th>:<td key={n}>{cell}</td>)}</tr>)}</tbody></table></div>;
    return <Paragraph key={i} text={block.text}/>;
   })}</div>
+  {articleSlug === "poker-position-beginners" && <PositionTrainer />}
   {!!references?.length&&<section className={styles.references}><h2>参考資料</h2><ul>{references.map((r,i)=><li key={i}>{r.url?<a href={r.url} target="_blank" rel="noopener noreferrer">{r.label||r.url}</a>:r.label}</li>)}</ul></section>}
   {!!stores.length&&<section className={styles.related}><h2>この記事で紹介した店舗</h2><div>{stores.map(store=><Link key={store.id} href={`/stores/${store.id}`} className={styles.store}>{store.banner_url?<img loading="lazy" decoding="async" src={store.banner_url} alt={store.name}/>:<StoreNamePlaceholder name={store.name}/>}<h3><ReadableName name={store.name} /></h3><p>{[store.pref,store.city].filter(Boolean).join(" ")}</p><strong>店舗詳細を見る →</strong></Link>)}</div></section>}
  </article>;
