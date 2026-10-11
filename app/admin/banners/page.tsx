@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { BANNER_POSITIONS, BANNER_POSITION_LABEL } from "@/lib/banners";
+import { BANNER_POSITIONS, BANNER_POSITION_LABEL, BANNER_DEVICES, type BannerDevice } from "@/lib/banners";
 import { deleteBanner, moveBanner, toggleBannerActive, updateBannerSortOrder } from "./actions";
 import { BannerForm, DeleteBannerButton, type EditableBanner } from "./banner-form";
 import styles from "./banners.module.css";
 
 type BannerRow = {
+  device: BannerDevice;
   id: string;
   title: string;
   image_url: string | null;
@@ -49,25 +50,28 @@ const POSITION_ORDER: Record<string, number> = Object.fromEntries(BANNER_POSITIO
 export default async function AdminBannersPage({
   searchParams,
 }: {
-  searchParams: { position?: string; edit?: string };
+  searchParams: { position?: string; edit?: string; device?: string };
 }) {
   const supabase = await createClient();
+  const deviceFilter = BANNER_DEVICES.some(d => d.value === searchParams.device) ? searchParams.device as BannerDevice : "all";
   const positionFilter = BANNER_POSITIONS.some((p) => p.value === searchParams.position)
     ? searchParams.position!
     : "";
 
   const { data } = await supabase
     .from("banners")
-    .select("id, title, image_url, link_url, position, scope, sort_order, active, starts_at, ends_at, created_at")
+    .select("id, title, image_url, link_url, position, scope, sort_order, active, starts_at, ends_at, created_at, device")
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
   const allBanners = ((data ?? []) as BannerRow[]).sort(
     (a, b) => (POSITION_ORDER[a.position] ?? 99) - (POSITION_ORDER[b.position] ?? 99)
   );
-  const banners = positionFilter ? allBanners.filter((b) => b.position === positionFilter) : allBanners;
+  const deviceBanners = allBanners.filter(b => b.device === deviceFilter);
+  const banners = positionFilter ? deviceBanners.filter((b) => b.position === positionFilter) : deviceBanners;
 
   const editing = searchParams.edit ? allBanners.find((b) => b.id === searchParams.edit) : undefined;
   const editable: EditableBanner | undefined = editing && {
+    device: editing.device,
     id: editing.id,
     title: editing.title,
     image_url: editing.image_url,
@@ -83,29 +87,32 @@ export default async function AdminBannersPage({
   // 上下ボタンは同じ表示位置の中での前後を入れ替える。
   const groupIndex = new Map<string, { index: number; size: number }>();
   for (const p of BANNER_POSITIONS) {
-    const group = allBanners.filter((b) => b.position === p.value);
+    const group = deviceBanners.filter((b) => b.position === p.value);
     group.forEach((b, index) => groupIndex.set(b.id, { index, size: group.length }));
   }
 
   const now = Date.now();
-  const filterHref = (value: string) => (value ? `/admin/banners?position=${value}` : "/admin/banners");
+  const filterHref = (value: string) => `/admin/banners?${new URLSearchParams({ device: deviceFilter, ...(value ? { position: value } : {}) })}`;
 
   return (
     <div>
       <h1 style={{ fontSize: 22, marginBottom: 16 }}>バナー管理</h1>
 
+      <nav className={styles.filters} aria-label="端末を切り替え">{BANNER_DEVICES.map(d => <Link key={d.value} href={`/admin/banners?device=${d.value}`} className={`btn ${deviceFilter === d.value ? styles.filterActive : ""}`}>{d.label}（{allBanners.filter(b => b.device === d.value).length}）</Link>)}</nav>
+      <p className="muted">PC・スマホの公開表示には、専用バナーを優先し、共通バナーも表示されます。</p>
+
       <div className="card">
         <h2 style={{ fontSize: 15, marginBottom: 10 }}>{editable ? "バナーを編集" : "新規バナー追加"}</h2>
         {searchParams.edit && !editable && <p className="err">編集するバナーが見つかりません。</p>}
-        <BannerForm key={editable?.id ?? "new"} banner={editable} />
+        <BannerForm key={`${editable?.id ?? "new"}-${deviceFilter}`} banner={editable} defaultDevice={deviceFilter} />
       </div>
 
       <nav className={styles.filters} aria-label="表示位置で絞り込み">
         <Link href={filterHref("")} className={`btn ${styles.small} ${!positionFilter ? styles.filterActive : ""}`}>
-          すべて（{allBanners.length}）
+          すべて（{deviceBanners.length}）
         </Link>
         {BANNER_POSITIONS.map((p) => {
-          const n = allBanners.filter((b) => b.position === p.value).length;
+          const n = deviceBanners.filter((b) => b.position === p.value).length;
           return (
             <Link
               key={p.value}
@@ -124,7 +131,7 @@ export default async function AdminBannersPage({
             <tr>
               <th>画像</th>
               <th>バナー名</th>
-              <th>表示位置</th>
+              <th>表示位置／端末</th>
               <th>絞り込み範囲</th>
               <th>リンク先</th>
               <th>掲載期間</th>
@@ -155,7 +162,7 @@ export default async function AdminBannersPage({
                     )}
                   </td>
                   <td>{b.title}</td>
-                  <td>{BANNER_POSITION_LABEL[b.position] ?? b.position}</td>
+                  <td>{BANNER_POSITION_LABEL[b.position] ?? b.position}<br /><small>{BANNER_DEVICES.find(d => d.value === b.device)?.label}</small></td>
                   <td>{b.scope || "—"}</td>
                   <td>
                     {b.link_url ? (
@@ -224,6 +231,7 @@ export default async function AdminBannersPage({
                       <Link
                         href={`/admin/banners?${new URLSearchParams({
                           ...(positionFilter ? { position: positionFilter } : {}),
+                          device: deviceFilter,
                           edit: b.id,
                         }).toString()}`}
                         className={`btn ${styles.small}`}

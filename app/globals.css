@@ -2877,3 +2877,12 @@ th {
     height: 62.5cqw; object-position: 43% center;
   }
 }
+
+/* Banner device targeting shares the mobile layout breakpoint. */
+.banner-mobile-only { display: none !important; }
+@media (max-width: 767px) {
+  .banner-pc-only { display: none !important; }
+  .banner-mobile-only { display: block !important; }
+  .banner-mobile-only[class*="four"], .banner-mobile-only[class*="promoGrid"] { display: grid !important; }
+  .home-mobile-top-ad { width: 100%; margin: 0; }
+}

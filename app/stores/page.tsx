@@ -221,7 +221,7 @@ export default async function StoresPage({
   ] = await Promise.all([
     supabase.auth.getUser(),
     storesQuery,
-    pickBanner(supabase, "store_list", { pref, region }),
+    Promise.all([pickBanner(supabase, "store_list", { pref, region, device: "pc" }), pickBanner(supabase, "store_list", { pref, region, device: "mobile" })]),
     pref || isKnownRegion
       ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
       : Promise.resolve({ data: [], error: null }),
@@ -321,26 +321,26 @@ export default async function StoresPage({
           <h1>{heroPlace}のポーカースポットを探す</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
-        {storeListBanner && (
-          <a
-            href={`/go/banner/${storeListBanner.id}`}
+        {storeListBanner.map((banner, i) => banner && (
+          <a key={i} className={i === 0 ? "banner-pc-only" : "banner-mobile-only"}
+            href={`/go/banner/${banner.id}`}
             target="_blank"
             rel="noreferrer"
             style={{ display: "block", maxWidth: 760, margin: "16px auto 0" }}
           >
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              {storeListBanner.image_url ? (
+              {banner.image_url ? (
                 <img
-                  src={storeListBanner.image_url}
-                  alt={storeListBanner.title}
+                  src={banner.image_url}
+                  alt={banner.title}
                   style={{ width: "100%", display: "block" }}
                 />
               ) : (
-                <div style={{ padding: 16 }}>{storeListBanner.title}</div>
+                <div style={{ padding: 16 }}>{banner.title}</div>
               )}
             </div>
           </a>
-        )}
+        ))}
 
         {hasOrigin && (
           <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>

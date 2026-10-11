@@ -52,7 +52,7 @@ export default async function JobsPage({
     favoriteJobIds = new Set((favs ?? []).map((f) => f.job_id));
   }
 
-  const jobListBanner = await pickBanner(supabase, "job_list", { pref });
+  const jobListBanner = await Promise.all([pickBanner(supabase, "job_list", { pref, device: "pc" }), pickBanner(supabase, "job_list", { pref, device: "mobile" })]);
 
   return (
     <div>
@@ -196,22 +196,22 @@ export default async function JobsPage({
           ))}
         </div>
 
-        {jobListBanner && (
-          <a
-            href={`/go/banner/${jobListBanner.id}`}
+        {jobListBanner.map((banner, i) => banner && (
+          <a key={i} className={i === 0 ? "banner-pc-only" : "banner-mobile-only"}
+            href={`/go/banner/${banner.id}`}
             target="_blank"
             rel="noreferrer"
             style={{ display: "block", maxWidth: 760, margin: "24px auto 0" }}
           >
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              {jobListBanner.image_url ? (
-                <img loading="lazy" decoding="async" src={jobListBanner.image_url} alt={jobListBanner.title} style={{ width: "100%", display: "block" }} />
+              {banner.image_url ? (
+                <img loading="lazy" decoding="async" src={banner.image_url} alt={banner.title} style={{ width: "100%", display: "block" }} />
               ) : (
-                <div style={{ padding: 16 }}>{jobListBanner.title}</div>
+                <div style={{ padding: 16 }}>{banner.title}</div>
               )}
             </div>
           </a>
-        )}
+        ))}
       </div>
       <PortalFooter />
       <BottomTabs active="jobs" />

@@ -11,6 +11,7 @@ import styles from "./home-banner-slider.module.css";
 // タッチ中と prefers-reduced-motion のときは自動切替しない。
 
 export type HomeBanner = {
+  device?: "all" | "pc" | "mobile";
   id: string;
   title: string;
   image_url: string;

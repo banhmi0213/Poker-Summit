@@ -131,7 +131,7 @@ export default async function JobDetailPage({
     .select("*", { count: "exact", head: true })
     .eq("job_id", j.id);
 
-  const jobDetailBanner = await pickBanner(supabase, "job_detail", { pref: j.stores?.pref });
+  const jobDetailBanner = await Promise.all([pickBanner(supabase, "job_detail", { pref: j.stores?.pref, device: "pc" }), pickBanner(supabase, "job_detail", { pref: j.stores?.pref, device: "mobile" })]);
   const phone = j.stores?.tel ? String(j.stores.tel).replace(/[^+0-9]/g, "") : "";
 
   return (
@@ -276,22 +276,22 @@ export default async function JobDetailPage({
           </div>
         )}
 
-        {jobDetailBanner && (
-          <a
-            href={`/go/banner/${jobDetailBanner.id}`}
+        {jobDetailBanner.map((banner, i) => banner && (
+          <a key={i} className={i === 0 ? "banner-pc-only" : "banner-mobile-only"}
+            href={`/go/banner/${banner.id}`}
             target="_blank"
             rel="noreferrer"
             style={{ display: "block", marginTop: 24 }}
           >
             <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-              {jobDetailBanner.image_url ? (
-                <img src={jobDetailBanner.image_url} alt={jobDetailBanner.title} style={{ width: "100%", display: "block" }} />
+              {banner.image_url ? (
+                <img src={banner.image_url} alt={banner.title} style={{ width: "100%", display: "block" }} />
               ) : (
-                <div style={{ padding: 16 }}>{jobDetailBanner.title}</div>
+                <div style={{ padding: 16 }}>{banner.title}</div>
               )}
             </div>
           </a>
-        )}
+        ))}
       </div>
       <PortalFooter />
       <BottomTabs active="jobs" />
