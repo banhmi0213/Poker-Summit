@@ -13,3 +13,17 @@
 /* Match the TOP search form edges. */
 .header :global(.portal-nav-inner){width:calc(100% - 40px);max-width:1140px;padding:12px 0;box-sizing:border-box}
 @media(max-width:767px){.header :global(.portal-nav-inner){width:calc(100% - 24px)}}
+
+/* Refined warm-gold hover glow for the three header actions (region, signup, login). */
+.header :global(.portal-auth-actions) :global(.portal-cta),
+.header :global(.portal-auth-actions) :global(.ps-pref-selector){transition:box-shadow .26s ease,filter .26s ease,border-color .26s ease}
+@media(hover:hover) and (pointer:fine){
+  .header :global(.portal-auth-actions) :global(.portal-cta:hover){filter:brightness(1.065);box-shadow:0 0 0 1px rgba(201,154,61,.28),0 0 15px rgba(218,173,70,.28)}
+  .header :global(.portal-auth-actions) :global(.ps-pref-selector:hover){border-color:#c99a3d;box-shadow:0 0 0 1px rgba(201,154,61,.16),0 0 13px rgba(218,173,70,.2)}
+}
+.header :global(.portal-auth-actions) :global(.portal-cta:focus-visible),
+.header :global(.portal-auth-actions) :global(.ps-pref-selector:focus-within){outline:2px solid #b98a32;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){
+  .header :global(.portal-auth-actions) :global(.portal-cta),
+  .header :global(.portal-auth-actions) :global(.ps-pref-selector){transition:none!important}
+}

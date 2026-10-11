@@ -119,3 +119,11 @@
     font-size: 20px;
   }
 }
+
+/* The large advertising slider lifts as a whole, without affecting swipe controls. */
+.slider { transition: transform .26s ease, box-shadow .26s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .slider:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(82,55,19,.14); }
+}
+.slider:focus-within { box-shadow: 0 0 0 2px rgba(185,138,50,.35); }
+@media (prefers-reduced-motion: reduce) { .slider { transition: none !important; } .slider:hover { transform: none !important; } }
