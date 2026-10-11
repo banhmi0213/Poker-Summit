@@ -274,7 +274,10 @@ export default async function StoreDetailPage({
   const mapQuery = hasCoords
     ? `${store.lat},${store.lng}`
     : [store.address, store.pref, store.city, store.name].filter(Boolean).join(" ");
-  const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
+  // Googleマップの場所と結びついている店舗は、その場所(place_id)で開く。経路案内もそのまま使える。
+  const mapUrl = store.google_place_id
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`
+    : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
   const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : store.address;
   const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
 

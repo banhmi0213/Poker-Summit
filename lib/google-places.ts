@@ -38,12 +38,12 @@ function getApiKey(): string {
 // 2026/10追記: 北海道検索の全滅原因はGoogle側のINVALID_REQUEST(pagetoken
 // 未有効化)だった。2ページ目以降でこれが出てもキーワード全体を失敗させず、
 // 1回だけ再試行して打ち切る(初回ページの失敗のみ例外を投げる)。
-export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
+export async function searchPlaces(query: string, maxPages = 3): Promise<PlaceCandidate[]> {
   const apiKey = getApiKey();
   const results: PlaceCandidate[] = [];
   let pageToken: string | null = null;
 
-  for (let page = 0; page < 3; page++) {
+  for (let page = 0; page < maxPages; page++) {
     const url = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
     url.searchParams.set("key", apiKey);
     url.searchParams.set("language", "ja");
