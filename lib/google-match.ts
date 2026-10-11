@@ -58,8 +58,58 @@ export function nameSimilarity(a: string, b: string) {
   return (2 * hit) / (ax.length + by.length);
 }
 
+/**
+ * 住所を「町名+番地」までの比較用キーにする。
+ * 例: 「〒516-0073 三重県伊勢市吹上１丁目５−２０ AKATSUKI BLD」→「伊勢市吹上1-5-20」
+ * 郵便番号・都道府県・建物名・階数は落とす。番地が取れなければ null。
+ */
+export function addressKey(address: string | null | undefined): string | null {
+  if (!address) return null;
+  let s = address
+    .normalize("NFKC")
+    .replace(/^日本[、,]?\s*/, "")
+    .replace(/〒?\s*\d{3}[-‐‑‒–—―−ーｰ－]?\d{4}/, "")
+    .replace(/(\d)\s*(?:丁目|番地|番|の)\s*(?=\d)/g, "$1-")
+    .replace(/(\d)\s*[‐‑‒–—―−ーｰ－-]\s*(?=\d)/g, "$1-")
+    .replace(/(\d)(?:丁目|番地|番|号)/g, "$1")
+    .trim()
+    .replace(/^.{2,3}?[都道府県]/, "");
+  // 建物名・階数は空白の後ろに来るので、番地は空白の手前までで切る
+  const m = s.match(/^([^\d\s]+?)\s*(\d+(?:-\d+)*)/);
+  if (!m) return null;
+  s = `${m[1].replace(/\s+/g, "")}${m[2].replace(/-+$/, "")}`;
+  return s;
+}
+
+/** 町名と番地(先頭2つ以上の数字)が一致するか。片方の番地が短い場合は前方一致で見る。 */
+export function sameAddress(a: string | null | undefined, b: string | null | undefined) {
+  const x = addressKey(a);
+  const y = addressKey(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const [short, long] = x.length <= y.length ? [x, y] : [y, x];
+  const nums = short.match(/\d+(?:-\d+)*$/)?.[0].split("-").length ?? 0;
+  return nums >= 2 && long.startsWith(`${short}-`);
+}
+
+const GENERIC_WORDS = /poker|room|bar|casino|amusement|cafe|club|house|lounge|shisha|darts|the|ポーカー|カジノ|バー|アミューズメント|店/g;
+
+/**
+ * 両方の店名に英字の固有名(「poker」「bar」等のありふれた語を除く)があるのに、まったく似ていないか。
+ * 例: 「POKER ROOM GOKIN 船橋」と「Poker Room Arkadia 船橋店」→ 店名変更や同じビルの別店舗の可能性。
+ * 片方がカタカナ表記(「Jack&Queen」と「ジャック＆クイーン」)の場合は判断しない。
+ */
+function latinNamesDiffer(a: string, b: string) {
+  const latin = (s: string) => (normalize(s).replace(GENERIC_WORDS, "").match(/[a-z0-9]+/g) ?? []).join("");
+  const x = latin(a);
+  const y = latin(b);
+  if (x.length < 3 || y.length < 3) return false;
+  return nameSimilarity(x, y) < 0.2;
+}
+
 function scoreCandidate(store: StoreRow, c: PlaceCandidate) {
   const nameScore = nameSimilarity(store.name, c.name);
+  const addressOk = sameAddress(store.address, c.address);
   const addr = (c.address ?? "").normalize("NFKC");
   const prefOk = !store.pref || addr.includes(store.pref);
   const cityOk = !store.city || addr.includes(store.city.normalize("NFKC"));
@@ -71,7 +121,11 @@ function scoreCandidate(store: StoreRow, c: PlaceCandidate) {
   if (!prefOk) score -= 0.5;
   if (!cityOk) score -= 0.15;
   if (!distanceOk) score -= 0.3;
-  return { score, nameScore, prefOk, cityOk, distanceOk };
+  // 住所(町名+番地)が一致すれば、名前の表記揺れ(英語/カタカナ、Google側の宣伝文句付き店名)は許容する。
+  // ただし両方に英字の店名があるのにまったく違う場合は、店名変更や同じビルの別店舗の可能性があるので確認に回す。
+  const differentLatinNames = latinNamesDiffer(store.name, c.name);
+  if (addressOk && !differentLatinNames) score = Math.max(score, 0.8);
+  return { score, nameScore, prefOk, cityOk, distanceOk, addressOk };
 }
 
 export async function matchStoreToGoogle(store: StoreRow): Promise<{ status: MatchStatus; candidate?: PlaceCandidate; note: string }> {
@@ -91,7 +145,7 @@ export async function matchStoreToGoogle(store: StoreRow): Promise<{ status: Mat
     .map((c) => ({ c, ...scoreCandidate(store, c) }))
     .sort((a, b) => b.score - a.score);
   const best = ranked[0];
-  const note = `候補「${best.c.name}」${best.c.address ?? ""}(名前の一致度 ${Math.round(best.nameScore * 100)}%) place_id:${best.c.placeId}`;
+  const note = `候補「${best.c.name}」${best.c.address ?? ""}(名前の一致度 ${Math.round(best.nameScore * 100)}%${best.addressOk ? "・住所一致" : ""}) place_id:${best.c.placeId}`;
 
   if (best.score >= 0.6 && best.prefOk) return { status: "matched", candidate: best.c, note };
   if (best.score >= 0.35 && best.prefOk) return { status: "ambiguous", candidate: best.c, note };
