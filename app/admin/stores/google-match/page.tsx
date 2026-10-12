@@ -12,7 +12,7 @@ const STATUS_LABEL: Record<string, string> = {
   duplicate: "重複の可能性",
   error: "検索エラー",
   checked_by_admin: "運営が確認済み",
-  needs_review: "自動見直しで閉業を検知",
+  needs_review: "自動見直しで閉業・休業を検知",
   hidden_by_admin: "非公開にした",
 };
 
