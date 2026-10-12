@@ -211,3 +211,44 @@ export async function matchNextStores(limit = 15) {
 
   return { results, remaining: remaining ?? 0 };
 }
+
+/**
+ * Googleマップに見つからなかった掲載中の店を、最後に調べてから30日たったものだけ探し直す(毎日の自動見直しから呼ぶ)。
+ * あとから店がGoogleマップに登録されることがあるので、見つかったら place_id を結びつけて閉業チェックの対象に入れる。
+ * はっきり一致したとき(matched)だけ結びつけ、それ以外は確認日だけ更新して今の状態(手動OKなど)はそのままにする。
+ */
+export async function rematchUnlinkedStores(limit = 3) {
+  const svc = createServiceRoleClient();
+  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: rows } = await svc
+    .from("stores")
+    .select("id, name, pref, city, address, lat, lng")
+    .eq("status", "approved")
+    .is("google_place_id", null)
+    .lt("google_checked_at", monthAgo)
+    .order("google_checked_at")
+    .limit(limit);
+
+  const linked: string[] = [];
+  for (const store of (rows ?? []) as StoreRow[]) {
+    const m = await matchStoreToGoogle(store);
+    const update: Record<string, unknown> = { google_checked_at: new Date().toISOString() };
+    if (m.status === "matched" && m.candidate) {
+      const { data: taken } = await svc
+        .from("stores")
+        .select("id")
+        .eq("google_place_id", m.candidate.placeId)
+        .neq("id", store.id)
+        .maybeSingle();
+      if (!taken) {
+        update.google_place_id = m.candidate.placeId;
+        update.google_match_status = "matched";
+        update.google_match_note = `再照合でGoogleマップに見つかった: ${m.note}`;
+        update.google_business_status = m.candidate.businessStatus;
+        linked.push(store.name);
+      }
+    }
+    await svc.from("stores").update(update).eq("id", store.id);
+  }
+  return { checked: rows?.length ?? 0, linked };
+}
