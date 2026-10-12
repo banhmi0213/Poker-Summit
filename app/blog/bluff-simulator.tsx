@@ -1,0 +1,3 @@
+"use client";
+import { useState } from "react";
+export function BluffSimulator(){const [pot,setPot]=useState(1000);const [bet,setBet]=useState(500);const needed=pot+bet>0?100*bet/(pot+bet):0;return <section aria-label="ブラフ判断シミュレーター" style={{padding:24,margin:24,border:'1px solid #d5b16d',borderRadius:12,background:'#fffaf0'}}><h2>ブラフ判断シミュレーター</h2><p>ベット前のポットとベット額から必要フォールド率を計算します。</p><label>ポット額<input type="number" min="0" value={pot} onChange={e=>setPot(Math.max(0,Number(e.target.value)||0))}/></label><label>ベット額<input type="number" min="0" value={bet} onChange={e=>setBet(Math.max(0,Number(e.target.value)||0))}/></label><p>必要フォールド率：<strong>{needed.toFixed(1)}%</strong></p><p>※相手1人、コールされたら必ず負ける場合の単純計算です。</p></section>;}
