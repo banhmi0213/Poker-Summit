@@ -1,6 +1,14 @@
 "use client";
 import { useState } from "react";
 import styles from "./bluff-simulator.module.css";
+function ChipAmount({id,label,value,onChange}:{id:string;label:string;value:number;onChange:(n:number)=>void}) {
+ const update=(n:number)=>onChange(Math.min(10000000,Math.max(0,Math.round(n))));
+ return <div className={styles.amountField}><label htmlFor={id}>{label}</label><div className={styles.amountControl}>
+ <button type="button" aria-label={label+"を減らす"} disabled={value<=0} onClick={()=>update(value-100)}>−</button>
+ <input id={id} type="number" inputMode="numeric" min="0" max="10000000" step="100" value={value} onChange={e=>{if(e.target.value!=="")update(Number(e.target.value));}} />
+ <button type="button" aria-label={label+"を増やす"} disabled={value>=10000000} onClick={()=>update(value+100)}>＋</button>
+ </div></div>;
+}
 const questions=[
 ["相手は弱いペアでもよくコールします。ブラフを仕掛ける？","無理にブラフしない","大きくベットする",0,"コールしやすい相手にはブラフが成功しにくくなります。"],
 ["フロップでフラッシュドローを持っています。セミブラフの利点は？","完成すれば必ず勝てる","フォールドを狙い、コールされても改善の可能性がある",1,"セミブラフはフォールドとハンド改善の両方が勝ち筋です。"],
@@ -17,8 +25,8 @@ export function BluffSimulator(){
  return <section className={styles.tool} aria-labelledby="bluff-tool-title">
  <header><small>POKER SUMMIT · INTERACTIVE TOOL</small><h2 id="bluff-tool-title">ブラフ判断シミュレーター</h2><p>数字を動かして必要フォールド率を学び、5つの場面で判断してみましょう。</p></header>
  <div className={styles.grid}><div className={styles.panel}><h3>① 必要フォールド率を計算</h3>
- <label>ベット前のポット（チップ）<input type="number" min="0" max="10000000" value={pot} onChange={e=>setPot(Math.min(10000000,Math.max(0,Number(e.target.value)||0)))}/></label>
- <label>自分のベット額（チップ）<input type="number" min="0" max="10000000" value={bet} onChange={e=>setBet(Math.min(10000000,Math.max(0,Number(e.target.value)||0)))}/></label>
+ <ChipAmount id="bluff-pot" label="ベット前のポット（チップ）" value={pot} onChange={setPot}/>
+ <ChipAmount id="bluff-bet" label="自分のベット額（チップ）" value={bet} onChange={setBet}/>
  <label>相手の予想フォールド率：{fold}%<input type="range" min="0" max="100" value={fold} onChange={e=>setFold(Number(e.target.value))}/></label>
  <button type="button" onClick={()=>{setPot(1000);setBet(500);setFold(40);}}>↻ 初期値に戻す</button></div>
  <div className={styles.panel} aria-live="polite"><h3>② 計算結果</h3><div className={styles.metric}>{need.toFixed(1)}<span>%</span></div><p>必要フォールド率 ＝ ベット額 ÷（ベット前のポット ＋ ベット額）× 100</p><p>予想フォールド率：<strong>{fold}%</strong></p><p className={styles.result}>{ev>0?"仮定上は期待値がプラス":ev<0?"仮定上は期待値がマイナス":"仮定上は期待値がゼロ"}（{Math.round(ev).toLocaleString("ja-JP")} チップ）</p></div></div>
