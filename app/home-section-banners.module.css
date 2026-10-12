@@ -17,3 +17,8 @@
 
 @media (hover:none) and (pointer:coarse){.banner:active{transform:scale(.988);box-shadow:0 4px 14px rgba(82,55,19,.16);border-color:rgba(188,144,57,.32)}}
 @media (prefers-reduced-motion:reduce){.banner:active{transform:none!important}}
+
+/* Wide artwork stays still and has no decorative frame on hover or touch. */
+.wide .banner { border: 0; transition: none; -webkit-tap-highlight-color: transparent; }
+.wide .banner:hover, .wide .banner:active { transform: none; box-shadow: none; border-color: transparent; }
+.wide .banner img { aspect-ratio: auto; object-fit: contain; }
