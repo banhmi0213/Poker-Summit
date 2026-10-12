@@ -70,7 +70,8 @@ export async function GET(req: NextRequest) {
     if (status) update.google_business_status = status;
     if (status && status !== "OPERATIONAL" && status !== s.google_business_status) {
       closed.push({ name: s.name, status });
-      if (status === "CLOSED_PERMANENTLY" || status === "NOT_FOUND") update.google_match_status = "needs_review";
+      // 一時休業も運営の方針で掲載から外すので、閉業と同じく「要確認」に入れる
+      update.google_match_status = "needs_review";
     }
     await svc.from("stores").update(update).eq("id", s.id);
   }
