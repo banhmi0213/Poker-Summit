@@ -4,7 +4,7 @@ import { sweepArea } from "@/lib/store-sweep";
 import { SWEEP_AREAS } from "@/lib/sweep-areas";
 import { getPlaceBusinessStatus } from "@/lib/google-places";
 import { regeocodeNextStores } from "@/lib/regeocode";
-import { matchNextStores } from "@/lib/google-match";
+import { matchNextStores, rematchUnlinkedStores } from "@/lib/google-match";
 import { sendStoreMaintenanceDigest } from "@/lib/email";
 
 // ============================================================================
@@ -15,6 +15,7 @@ import { sendStoreMaintenanceDigest } from "@/lib/email";
 //  2. 閉業チェック: 掲載中でGoogleと結びついた店を、確認日の古い順に CHECKS_PER_RUN 件ずつ
 //     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
 //  3. 新しく入った店の座標を国土地理院で取る。
+//  4. Googleマップに無かった店を、30日に1回ずつGoogleで探し直す。
 // 何か見つかったら運営(site_settings.notify_email)にメールで知らせる。
 // ============================================================================
 
@@ -79,10 +80,12 @@ export async function GET(req: NextRequest) {
   // 3. 新しく入った店の座標と、Googleマップとの結びつけ
   await regeocodeNextStores(40).catch(() => null);
   await matchNextStores(16).catch(() => null);
+  // 4. Googleマップに無かった店を月1回ずつ探し直す(あとから登録される店があるため)
+  const rematch = await rematchUnlinkedStores(3).catch(() => ({ checked: 0, linked: [] as string[] }));
 
   const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
-  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed } });
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed, rematchLinked: rematch.linked } });
 
   if (newCandidates.length || closed.length) {
     const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
