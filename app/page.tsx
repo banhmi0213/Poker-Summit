@@ -389,6 +389,7 @@ export default async function HomePage({
           </Link>)}</div>
         </section>
 
+        <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
         {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
         <section className="home-section home-summit">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る →</Link></div>
