@@ -15,7 +15,7 @@ const lessons = [
  { id: "position", number: "01", title: "ポジションを覚える", subtitle: "6人テーブルの席・行動順・特徴を学ぶ", article: "/blog/poker-position-beginners", Component: PositionTrainer },
  { id: "range", number: "02", title: "プリフロップレンジを学ぶ", subtitle: "169種類のハンドから参加判断の基本を学ぶ", article: "/blog/poker-preflop-range-beginners", Component: PreflopRangeTrainer },
  { id: "hands", number: "03", title: "役の強さ・勝敗判定に挑戦", subtitle: "10問のクイズで役とキッカーを理解する", article: "/blog/poker-beginner-texas-holdem", Component: HandStrengthQuiz },
- { id: "potodds", number: "04", title: "ポットオッズを計算する", subtitle: "必要勝率とドローの完成確率を比較する", article: null, Component: PotOddsTrainer },
+ { id: "potodds", number: "04", title: "ポットオッズを計算する", subtitle: "必要勝率とドローの完成確率を比較する", article: "/blog/poker-pot-odds-beginners", Component: PotOddsTrainer },
  { id: "decision", number: "05", title: "プリフロップ判断シミュレーター", subtitle: "手札・ポジション・相手のアクションから判断する", article: "/blog/poker-preflop-range-beginners", Component: PreflopDecisionSimulator },
  { id: "graduation", number: "06", title: "初心者卒業テスト", subtitle: "15問の総合テストで学習成果を確認する", article: null, Component: GraduationTest }
 ] as const;
