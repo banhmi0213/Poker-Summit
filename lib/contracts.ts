@@ -85,8 +85,19 @@ function lotteryScore(month: string, id: string) {
   return h >>> 0;
 }
 
+/** 指定したidの店舗を全列で取り、idの順番どおりに並べて返す */
+async function fetchFullStoresInOrder(supabase: SupabaseClient, ids: string[]): Promise<any[]> {
+  if (!ids.length) return [];
+  const { data, error } = await supabase.from("stores").select("*").in("id", ids).in("status", ["approved", "listed"]);
+  if (error) throw new Error(error.message);
+  const byId = new Map((data ?? []).map((s: any) => [s.id, s]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+
 export async function getNationalPickupStores(supabase: SupabaseClient, limit: number = NATIONAL_PICKUP_SLOTS): Promise<any[]> {
-  const { data, error } = await supabase.from("stores").select("*").in("status", ["approved", "listed"]);
+  // 抽選には全店舗のidと契約フラグだけあれば足りるので、まず軽い列だけ取り、
+  // 表示する店舗の分だけ全列を取り直す(全店舗の全列を毎回読むと重いため、2026/10)
+  const { data, error } = await supabase.from("stores").select("id, is_national_pickup, is_recommended").in("status", ["approved", "listed"]);
   if (error) throw new Error(error.message);
   const all = data ?? [];
   const contracted = shuffle(all.filter((s: any) => s.is_national_pickup));
@@ -94,7 +105,8 @@ export async function getNationalPickupStores(supabase: SupabaseClient, limit: n
   const drawn = all
     .filter((s: any) => !s.is_national_pickup && !s.is_recommended)
     .sort((a: any, b: any) => lotteryScore(month, a.id) - lotteryScore(month, b.id));
-  return [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
+  const picked = [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
+  return fetchFullStoresInOrder(supabase, picked.map((s: any) => s.id));
 }
 
 export const REGIONAL_PICKUP_SLOTS = 10;
@@ -107,7 +119,7 @@ export async function getRegionalPickupStores(
   limit: number = REGIONAL_PICKUP_SLOTS
 ): Promise<any[]> {
   if (!pref) return [];
-  const { data, error } = await supabase.from("stores").select("*").in("status", ["approved", "listed"]).eq("pref", pref);
+  const { data, error } = await supabase.from("stores").select("id, is_national_pickup, is_recommended").in("status", ["approved", "listed"]).eq("pref", pref);
   if (error) throw new Error(error.message);
   const all = data ?? [];
   const contracted = shuffle(all.filter((s: any) => s.is_recommended));
@@ -115,7 +127,8 @@ export async function getRegionalPickupStores(
   const drawn = all
     .filter((s: any) => !s.is_recommended && !s.is_national_pickup)
     .sort((a: any, b: any) => lotteryScore(`${month}:${pref}`, a.id) - lotteryScore(`${month}:${pref}`, b.id));
-  return [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
+  const picked = [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
+  return fetchFullStoresInOrder(supabase, picked.map((s: any) => s.id));
 }
 
 /** 旧API(互換): 全国PICK UPを返す */

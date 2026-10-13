@@ -188,12 +188,21 @@ export default async function StoreDetailPage({
 }) {
   const supabase = await createClient();
 
-  // Independent of each other, so fetched together.
+  // 店舗本体・イベント・求人・クーポン・お知らせ・写真・メニュー・プラン表示は、どれも
+  // URLの店舗IDだけで取れるので、店舗の取得を待たずに全部同時に取る(2026/10、表示速度対策。
+  // 以前は「店舗→中身→ログイン情報→プラン→近くの店」と5回順番待ちしていた)。
   const [
     {
       data: { user },
     },
     { data: store },
+    { data: events },
+    { data: jobs },
+    { data: coupons },
+    { data: notices },
+    { data: photos },
+    { data: menuItems },
+    displayFlagsById,
   ] = await Promise.all([
     supabase.auth.getUser(),
     supabase
@@ -202,6 +211,44 @@ export default async function StoreDetailPage({
       .eq("id", params.id)
       .in("status", ["approved", "listed"])
       .maybeSingle(),
+    supabase
+      .from("events")
+      .select("id, title, location, start_at")
+      .eq("store_id", params.id)
+      .eq("status", "published")
+      .order("start_at", { ascending: true }),
+    supabase
+      .from("jobs")
+      .select("id, title, job_type, salary, description, posted_at")
+      .eq("store_id", params.id)
+      .eq("status", "open")
+      .order("posted_at", { ascending: false }),
+    supabase
+      .from("coupons")
+      .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+      .eq("store_id", params.id)
+      .eq("active", true)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("store_notices")
+      .select("id, title, body, created_at, image_url")
+      .eq("store_id", params.id)
+      .eq("status", "published")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("store_photos")
+      .select("id, url")
+      .eq("store_id", params.id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("store_menu_items")
+      .select("id, name, price, description, image_url")
+      .eq("store_id", params.id)
+      .eq("status", "published")
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true }),
+    fetchStoreDisplayFlags(supabase, [params.id]),
   ]);
 
   if (!store) {
@@ -218,62 +265,15 @@ export default async function StoreDetailPage({
     .insert({ path, store_id: store.id, referrer, device })
     .then(() => {});
 
-  // These only depend on store.id, not on each other.
-  const [{ data: events }, { data: jobs }, { data: coupons }, { data: notices }, { data: photos }, { data: menuItems }] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("id, title, location, start_at")
-        .eq("store_id", store.id)
-        .eq("status", "published")
-        .order("start_at", { ascending: true }),
-      supabase
-        .from("jobs")
-        .select("id, title, job_type, salary, description, posted_at")
-        .eq("store_id", store.id)
-        .eq("status", "open")
-        .order("posted_at", { ascending: false }),
-      supabase
-        .from("coupons")
-        .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
-        .eq("store_id", store.id)
-        .eq("active", true)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("store_notices")
-        .select("id, title, body, created_at, image_url")
-        .eq("store_id", store.id)
-        .eq("status", "published")
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("store_photos")
-        .select("id, url")
-        .eq("store_id", store.id)
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("store_menu_items")
-        .select("id, name, price, description, image_url")
-        .eq("store_id", store.id)
-        .eq("status", "published")
-        .order("sort_order", { ascending: true })
-        .order("created_at", { ascending: true }),
-    ]);
-
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();
   let appliedJobIds = new Set<string>();
   let joinedEventIds = new Set<string>();
   let usedCouponIds = new Set<string>();
 
-  if (user) {
-    const [
-      { data: favStore },
-      { data: favJobs },
-      { data: apps },
-      { data: parts },
-      { data: uses },
-    ] = await Promise.all([
+  // ログイン中の人のお気に入り等と、近くの店舗は互いに独立なので同時に取る
+  const userDataPromise = user
+    ? Promise.all([
       supabase
         .from("favorite_stores")
         .select("store_id")
@@ -287,14 +287,8 @@ export default async function StoreDetailPage({
         .select("event_id")
         .eq("user_id", user.id),
       supabase.from("coupon_uses").select("coupon_id").eq("user_id", user.id),
-    ]);
-
-    isFavoriteStore = !!favStore;
-    favoriteJobIds = new Set((favJobs ?? []).map((f) => f.job_id));
-    appliedJobIds = new Set((apps ?? []).map((a) => a.job_id));
-    joinedEventIds = new Set((parts ?? []).map((p) => p.event_id));
-    usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
-  }
+      ])
+    : null;
 
   // 住所の承認時に運営側で自動取得済みの緯度経度(store.lat/lng)があれば、
   // それを使って地図を組み立てる方が、住所テキストを都度あいまい検索する
@@ -312,7 +306,7 @@ export default async function StoreDetailPage({
   const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : store.address;
   const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
 
-  const storeFlags = (await fetchStoreDisplayFlags(supabase, [store.id])).get(store.id);
+  const storeFlags = displayFlagsById.get(store.id);
 
   // 同じ市区町村(足りなければ近い順に同じ都道府県)のほかの店舗。店舗どうしをリンクでつなぎ、
   // 「近くの店も見たい」人と検索エンジンの両方が回遊しやすくする。
@@ -344,6 +338,21 @@ export default async function StoreDetailPage({
       ...((sameCity ?? []) as NearbyStore[]).filter((s) => !byDistance.some((b) => b.id === s.id)),
     ];
     nearby = [...cityFirst, ...byDistance.filter((s) => !cityIds.has(s.id))].slice(0, NEARBY_LIMIT);
+  }
+  if (userDataPromise) {
+    const [
+      { data: favStore },
+      { data: favJobs },
+      { data: apps },
+      { data: parts },
+      { data: uses },
+    ] = await userDataPromise;
+
+    isFavoriteStore = !!favStore;
+    favoriteJobIds = new Set((favJobs ?? []).map((f) => f.job_id));
+    appliedJobIds = new Set((apps ?? []).map((a) => a.job_id));
+    joinedEventIds = new Set((parts ?? []).map((p) => p.event_id));
+    usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
   }
   const upcomingEvents = (events ?? []).filter((ev) => !ev.start_at || Date.parse(ev.start_at) >= Date.now()).length;
   const categoryBase = (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";

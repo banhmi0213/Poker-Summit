@@ -62,26 +62,8 @@ export async function updateSession(request: NextRequest) {
   // ようにするのがポイント。
   const supabase = makeClient(isStoreScope ? STORE_AUTH_COOKIE_NAME : undefined);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (
-    !user &&
-    (isAdminPath ||
-      isStorePath ||
-      pathname.startsWith("/mypage") ||
-      pathname.startsWith("/account"))
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = isStorePath ? "/store/login" : isAdminPath ? "/admin-login" : "/login";
-    url.searchParams.set("next", pathname);
-    const response = NextResponse.redirect(url);
-    pendingCookies.forEach(({ name, value, options }) =>
-      response.cookies.set(name, value, options)
-    );
-    return response;
-  }
+  const isProtectedPath =
+    isAdminPath || isStorePath || pathname.startsWith("/mypage") || pathname.startsWith("/account");
 
   const maintenanceExempt =
     isAdminPath ||
@@ -92,24 +74,36 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/api") ||
     pathname.startsWith("/go/");
 
+  // ログイン必須のページだけ、認証サーバーに問い合わせてログイン状態を確かめる(getUser)。
+  // 一般公開のページでは、Cookie内のセッションの期限切れ更新だけを行う(getSession。
+  // 期限内なら通信なし)。ページ側のログイン判定は各ページの getUser で行うので、
+  // ここで毎回認証サーバーへ問い合わせる必要はない(2026/10、表示速度対策)。
+  // メンテナンスモードの確認もこれと同時に行う。
+  const [user, maintenanceMode] = await Promise.all([
+    isProtectedPath
+      ? supabase.auth.getUser().then(({ data }) => data.user)
+      : // session.user には触らない(サーバー側で触ると supabase-js が毎回警告を出すため)
+        supabase.auth.getSession().then(() => null),
+    maintenanceExempt ? Promise.resolve(false) : getMaintenanceMode(),
+  ]);
+
+  if (!user && isProtectedPath) {
+    const url = request.nextUrl.clone();
+    url.pathname = isStorePath ? "/store/login" : isAdminPath ? "/admin-login" : "/login";
+    url.searchParams.set("next", pathname);
+    const response = NextResponse.redirect(url);
+    pendingCookies.forEach(({ name, value, options }) =>
+      response.cookies.set(name, value, options)
+    );
+    return response;
+  }
+
   let response = NextResponse.next({ request });
 
-  if (!maintenanceExempt) {
-    // メンテナンスモードの判定は会員向けの通常ページだけなので、店舗用
-    // Cookieのセッション状態に関わらずデフォルトのクライアントで見てよい
-    // (isStoreScopeがfalseの経路にしか来ないため、supabaseは既にデフォルト
-    // Cookie側になっている)。
-    const { data: settings } = await supabase
-      .from("site_settings")
-      .select("maintenance_mode")
-      .eq("id", true)
-      .maybeSingle();
-
-    if (settings?.maintenance_mode) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/maintenance";
-      response = NextResponse.rewrite(url);
-    }
+  if (maintenanceMode) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/maintenance";
+    response = NextResponse.rewrite(url);
   }
 
   pendingCookies.forEach(({ name, value, options }) =>
@@ -117,4 +111,25 @@ export async function updateSession(request: NextRequest) {
   );
 
   return response;
+}
+
+// メンテナンスモードのON/OFFは、同じサーバーの中で30秒だけ覚えておく
+// (全ページの表示のたびにデータベースへ問い合わせないため。切り替えの反映は最大30秒遅れる)
+let maintenanceCache: { value: boolean; at: number } | null = null;
+async function getMaintenanceMode(): Promise<boolean> {
+  if (maintenanceCache && Date.now() - maintenanceCache.at < 30_000) return maintenanceCache.value;
+  // ログイン状態に関係ない設定なので、Cookieなしのクライアントで読む
+  // (期限切れのログイン情報で問い合わせて失敗するのを避ける)
+  const anon = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookies: { getAll: () => [], setAll: () => {} },
+  });
+  const { data: settings, error } = await anon
+    .from("site_settings")
+    .select("maintenance_mode")
+    .eq("id", true)
+    .maybeSingle();
+  if (error) return maintenanceCache?.value ?? false;
+  const value = !!settings?.maintenance_mode;
+  maintenanceCache = { value, at: Date.now() };
+  return value;
 }
