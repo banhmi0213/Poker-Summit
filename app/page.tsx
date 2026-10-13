@@ -276,7 +276,7 @@ export default async function HomePage({
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        {pickupBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={pickupBanners} layout="wide" /></div>}
+        {pickupBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={pickupBanners} layout="wide" pickup /></div>}
         {bannersForDevice(topBanners, "pc").length > 0 && (
           <div className="home-section banner-pc-only">
             <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
