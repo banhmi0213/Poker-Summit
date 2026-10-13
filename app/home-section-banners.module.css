@@ -36,6 +36,21 @@
   .pickup .banner:hover, .pickup .banner:active { transform: none; }
 }
 
-/* Match Summit banner size; hide only the artwork canvas padding. */
-.wide .jobsArtwork { position: relative; aspect-ratio: 2164 / 241; background: #f7edda; }
-.wide .jobsArtwork img { position: absolute; left: 50%; top: 50%; width: 100%; height: auto; transform: translate(-50%, -50%); }
+
+/* Recompose the approved source at the existing Summit dimensions without stretching photos. */
+.wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; background: #f9efd9; container-type: inline-size; }
+.jobsComposition { position: absolute; inset: 0; display: block; overflow: hidden; }
+.jobsLeft, .jobsRight { position: absolute; top: 0; bottom: 0; overflow: hidden; }
+.jobsLeft { left: 0; width: 23%; }
+.jobsRight { right: 0; width: 28%; }
+.wide .jobsArtwork .jobsLeft img, .wide .jobsArtwork .jobsRight img { position: absolute; top: 0; width: auto; height: 100%; max-width: none; aspect-ratio: 1707 / 341; object-fit: contain; }
+.jobsLeft img { left: 0; }
+.jobsRight img { right: 0; }
+.jobsLeft::after, .jobsRight::after { content: ""; position: absolute; inset: 0; }
+.jobsLeft::after { background: linear-gradient(90deg, transparent 52%, #f9efd9 83%); }
+.jobsRight::after { background: linear-gradient(270deg, transparent 52%, #f9efd9 83%); }
+.jobsCopy { position: absolute; left: 18%; right: 22%; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .35cqw; font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif; line-height: 1.2; }
+.jobsTitle { color: #975510; font-size: 3.45cqw; font-weight: 900; white-space: nowrap; }
+.jobsIcon { width: 2.3cqw; height: 1.9cqw; color: #c88315; }
+.jobsIcon svg { display: block; width: 100%; height: 100%; }
+.jobsSubtitle { color: #422314; font-size: 1.3cqw; font-weight: 700; white-space: nowrap; }

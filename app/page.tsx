@@ -329,7 +329,7 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>
         </section>
-        <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v4.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
+        <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v5.png", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
         <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
           <div><span style={{ color: "#9b7129", fontSize: 11, letterSpacing: "0.13em", fontWeight: 800 }}>POKER SUMMIT ACADEMY</span><h2 style={{ fontSize: "clamp(17px,2.4vw,24px)", margin: "7px 0" }}>遊びながら、ポーカーを学ぼう。</h2><p style={{ margin: 0, fontSize: 12, color: "#765f42" }}>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
           <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ →</Link>
