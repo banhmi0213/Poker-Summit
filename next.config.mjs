@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [{
+      source: "/images/jobs-banner-light-v3.webp",
+      headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+    }];
+  },
   experimental: {
     serverActions: { bodySizeLimit: "4mb" },
     // 請求書PDF(lib/invoice-pdf.ts)で使う日本語フォント。fs で読むので明示的に同梱する。
