@@ -2957,3 +2957,34 @@ th {
     object-fit: contain; transform: translateX(-50%) rotate(8deg); pointer-events: none;
   }
 }
+
+/* Small phones: keep TOP page store, event, coupon, ranking and job cards in two columns. */
+@media (max-width: 560px) {
+  .home-feed .home-grid-four,
+  .home-feed .home-grid-three,
+  .home-feed .home-job-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .home-feed .home-grid > * { min-width: 0; }
+  .home-feed .home-store-photo { height: 130px; }
+  .home-feed .home-store-copy { padding: 32px 9px 10px; min-height: 130px; }
+  .home-feed .home-store-logo { width: 45px; height: 45px; left: 9px; top: -21px; font-size: 23px; }
+  .home-feed .home-store-copy h3 { font-size: 12px; line-height: 1.4; }
+  .home-feed .home-store-copy .home-location { font-size: 10px !important; }
+  .home-feed .home-card-cta { font-size: 10px; }
+  .home-feed .auto-store-name-inner { padding: 9px 6px; }
+  .home-feed .auto-store-name strong { font-size: 16px; }
+  .home-feed .auto-store-name-medium strong { font-size: 14px; }
+  .home-feed .auto-store-name-long strong { font-size: 12px; }
+  .home-feed .home-event-photo { min-height: 110px; }
+  .home-feed .home-event-body { grid-template-columns: 1fr; gap: 6px; padding: 9px; }
+  .home-feed .home-event-date { display: flex; align-items: center; gap: 6px; border-right: 0; border-bottom: 1px solid #ede8db; padding: 0 0 5px; }
+  .home-feed .home-event-date strong { font-size: 16px; }
+  .home-feed .home-event-date span { margin-top: 0; font-size: 10px; }
+  .home-feed .home-event-placeholder { padding: 10px; }
+  .home-feed .home-event-placeholder strong { font-size: 15px; }
+  .home-feed .home-coupon-card { display: flex; flex-direction: column; gap: 7px; padding: 7px; }
+  .home-feed .home-coupon-image, .home-feed .home-coupon-image > img, .home-feed .home-coupon-image > div { min-height: 95px; height: 95px; }
+  .home-feed .home-coupon-image strong { font-size: 13px; }
+  .home-feed .home-coupon-copy { flex: 1; }
+  .home-feed .home-job-card { padding: 10px; }
+  .home-feed .home-job-salary { font-size: 13px; overflow-wrap: anywhere; }
+}
