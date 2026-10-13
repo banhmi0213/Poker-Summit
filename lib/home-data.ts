@@ -26,6 +26,7 @@ async function loadHomePublicData(currentPref: string | null) {
     { data: upcomingEvents },
     { data: popularCoupons },
     topBannerRows,
+    pickupBannerRows,
     couponBannerRows,
     communityBannerRows,
     rankingBannerRows,
@@ -68,6 +69,7 @@ async function loadHomePublicData(currentPref: string | null) {
       .order("created_at", { ascending: false })
       .limit(3),
     getTopBanners(supabase),
+    getHomeSectionBanners(supabase, "home_pickup"),
     getHomeSectionBanners(supabase, "home_coupon"),
     getHomeSectionBanners(supabase, "home_community", 4),
     getHomeSectionBanners(supabase, "home_ranking"),
