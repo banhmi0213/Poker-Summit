@@ -5,7 +5,7 @@ const nextConfig = {
       source: "/images/jobs-banner-light-v3.webp",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     }, {
-      source: "/images/jobs-banner-light-v5.png",
+      source: "/images/jobs-banner-light-v6.webp",
       headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
     }];
   },
