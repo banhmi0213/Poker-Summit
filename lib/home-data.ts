@@ -108,6 +108,7 @@ async function loadHomePublicData(currentPref: string | null) {
     isEventsLive,
     popularCoupons: popularCoupons ?? [],
     topBannerRows,
+    pickupBannerRows,
     couponBannerRows,
     communityBannerRows,
     rankingBannerRows,
