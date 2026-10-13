@@ -5,9 +5,3 @@
 .names li { display: flex; align-items: center; justify-content: center; min-width: 0; }
 .names a { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; text-align: center; color: #432b1b; font-family: "Noto Serif JP", serif; font-size: 1.04cqw; font-weight: 700; line-height: 1.25; text-decoration: none; overflow-wrap: anywhere; padding: 0 2%; }
 .names a:focus-visible, .artwork:focus-visible { outline: 2px solid #b98a32; outline-offset: -2px; }
-@media (max-width: 600px) {
-  .names { position: static; width: auto; height: auto; margin: 8px 12px 12px; border: 1px solid #c8a765; border-radius: 6px; background: #fff7e7; }
-  .names li { min-height: 36px; padding: 5px 8px; }
-  .names li + li { border-top: 1px solid #d9bd81; }
-  .names a { font-size: 12px; }
-}
