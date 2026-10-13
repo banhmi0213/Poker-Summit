@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./poker-table.module.css";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
@@ -15,6 +15,15 @@ const seats = [
 export default function PokerTablePreview() {
   const [action, setAction] = useState<Action | null>(null);
   const [raise, setRaise] = useState(100);
+  const [remaining, setRemaining] = useState(20);
+  const [running, setRunning] = useState(true);
+  useEffect(() => {
+    if (!running || action || remaining === 0) return;
+    const timer = window.setTimeout(() => setRemaining(t => Math.max(0, t - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [running, action, remaining]);
+  const choose = (next: Action) => { if (remaining > 0) { setAction(next); setRunning(false); } };
+  const reset = () => { setAction(null); setRaise(100); setRemaining(20); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}><span>POKER SUMMIT · TEXAS HOLD'EM</span><strong>UI PREVIEW</strong></div>
     <h1>オンラインポーカー テーブル試作</h1>
@@ -30,17 +39,18 @@ export default function PokerTablePreview() {
       <div className={styles.self}><div className={styles.avatar}>YOU</div><div><strong>あなた</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>
     </div>
     <div className={styles.controls}>
-      <div className={styles.turn}>あなたの番（サンプル）</div>
+      <div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div>
+      <div className={styles.timerTrack} role="progressbar" aria-label="アクション制限時間（デモ）" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining}><div className={styles.timerFill} style={{ width: `${remaining * 5}%`, background: remaining <= 5 ? "#d75a55" : "#e3b954" }} /></div>
       <label htmlFor="poker-demo-raise">レイズ額: {raise.toLocaleString()} chips</label>
       <input id="poker-demo-raise" type="range" min={100} max={1000} step={50} value={raise} onChange={e => setRaise(Number(e.target.value))} />
       <div className={styles.actions}>
-        <button type="button" onClick={() => setAction("FOLD")}>フォールド</button>
-        <button type="button" onClick={() => setAction("CHECK")}>チェック</button>
-        <button type="button" onClick={() => setAction("CALL")}>コール</button>
-        <button type="button" onClick={() => setAction("RAISE")}>レイズ</button>
+        <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("FOLD")}>フォールド</button>
+        <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CHECK")}>チェック</button>
+        <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CALL")}>コール</button>
+        <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("RAISE")}>レイズ</button>
       </div>
-      <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${raise.toLocaleString()} chips` : action}（デモのため送信されません）` : "操作ボタンを押すと選択状態を確認できます。"}</p>
-      <button className={styles.reset} type="button" onClick={() => { setAction(null); setRaise(100); }}>デモをリセット</button>
+      <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${raise.toLocaleString()} chips` : action}（デモのため送信されません）` : remaining === 0 ? "制限時間終了（デモ）。リセットすると再開します。" : "20秒のデモタイマーです。操作すると停止します。"}</p>
+      <button className={styles.reset} type="button" onClick={reset}>デモをリセット</button>
     </div>
   </section>;
 }
