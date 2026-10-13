@@ -111,7 +111,7 @@ export default async function HomePage({
   // "現在表示中の都道府県" — see lib/current-pref.ts (cookies/headers only, no DB).
   const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
 
-  // 誰が見ても同じ部分(店舗・イベント・バナー・ランキング等)は lib/home-data.ts で
+  // 表示のたびに変わらない部分(イベント・バナー・掲示板等)は lib/home-data.ts で
   // まとめて取得して60秒キャッシュし、ログイン状態だけをここで見る(2026/10、表示速度対策)。
   // ランキング(同数のときの順番がランダム)は表示のたびに取り直し、PICK UP の契約店舗も
   // 表示のたびに並べ替える。店舗カードの写真・件数等は全店舗ぶんのキャッシュから引く。
