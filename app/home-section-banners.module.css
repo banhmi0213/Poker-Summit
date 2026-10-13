@@ -47,8 +47,8 @@
 .jobsLeft img { left: 0; }
 .jobsRight img { right: 0; }
 .jobsLeft::after, .jobsRight::after { content: ""; position: absolute; inset: 0; }
-.jobsLeft::after { background: linear-gradient(90deg, transparent 52%, #f9efd9 83%); }
-.jobsRight::after { background: linear-gradient(270deg, transparent 52%, #f9efd9 83%); }
+.jobsLeft::after { background: linear-gradient(90deg, transparent 45%, #f9efd9 62%); }
+.jobsRight::after { background: linear-gradient(270deg, transparent 45%, #f9efd9 55%); }
 .jobsCopy { position: absolute; left: 18%; right: 22%; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .35cqw; font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif; line-height: 1.2; }
 .jobsTitle { color: #975510; font-size: 3.45cqw; font-weight: 900; white-space: nowrap; }
 .jobsIcon { width: 2.3cqw; height: 1.9cqw; color: #c88315; }
