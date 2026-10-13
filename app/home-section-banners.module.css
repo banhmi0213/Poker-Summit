@@ -35,3 +35,7 @@
   .pickup .banner { transition: none; }
   .pickup .banner:hover, .pickup .banner:active { transform: none; }
 }
+
+/* Match Summit banner size; hide only the artwork canvas padding. */
+.wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; background: url("/images/jobs-banner-light-v4.webp") center / 100% auto no-repeat; }
+.wide .jobsArtwork img { position: absolute; left: 50%; top: 50%; width: 95.816%; height: auto; transform: translate(-50%, -50%); }
