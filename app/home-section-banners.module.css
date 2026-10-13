@@ -37,5 +37,5 @@
 }
 
 /* Match Summit banner size; hide only the artwork canvas padding. */
-.wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; background: #f7edda; }
-.wide .jobsArtwork img { position: absolute; left: 50%; top: 50%; width: 95.816%; height: auto; transform: translate(-50%, -50%); }
+.wide .jobsArtwork { position: relative; aspect-ratio: 2164 / 241; background: #f7edda; }
+.wide .jobsArtwork img { position: absolute; left: 50%; top: 50%; width: 100%; height: auto; transform: translate(-50%, -50%); }
