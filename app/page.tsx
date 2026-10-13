@@ -20,6 +20,8 @@ import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
 import { isExternalBannerLink } from "@/lib/banners";
 import { getHomePublicData } from "@/lib/home-data";
+import { getStoreCardExtras } from "@/lib/store-card-extras";
+import { assemblePickup } from "@/lib/contracts";
 import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { HomeSectionBanners } from "./home-section-banners";
@@ -111,17 +113,28 @@ export default async function HomePage({
 
   // 誰が見ても同じ部分(店舗・イベント・バナー・ランキング等)は lib/home-data.ts で
   // まとめて取得して60秒キャッシュし、ログイン状態だけをここで見る(2026/10、表示速度対策)。
+  // ランキング(同数のときの順番がランダム)は表示のたびに取り直し、PICK UP の契約店舗も
+  // 表示のたびに並べ替える。店舗カードの写真・件数等は全店舗ぶんのキャッシュから引く。
   const [
     {
       data: { user },
     },
     home,
-  ] = await Promise.all([supabase.auth.getUser(), getHomePublicData(currentPref ?? null)]);
+    rankingResult,
+    extras,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    getHomePublicData(currentPref ?? null),
+    // TOPのランキングは訪問者の地域に関係なく全国
+    supabase.rpc("public_store_rankings"),
+    getStoreCardExtras(),
+  ]);
+  if (rankingResult.error) throw rankingResult.error;
+  const featuredStores = assemblePickup(home.pickupPool).slice(0, 4);
+  const rankedStores = (rankingResult.data ?? []).slice(0, 4);
 
   const {
     now,
-    featuredStores,
-    rankedStores,
     latestJobs,
     latestPosts,
     popularCoupons,
@@ -140,9 +153,9 @@ export default async function HomePage({
     footerThreeBannerRows,
   } = home;
   const settings = { announcement: home.announcement };
-  const homeCoverPhotos = new Map(Object.entries(home.coverPhotos));
-  const homeStoreFlags = new Map(home.flags);
-  const homeContentCounts = new Map(home.counts);
+  const homeCoverPhotos = extras.coverPhotos;
+  const homeStoreFlags = extras.flags;
+  const homeContentCounts = extras.counts;
 
   // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
   // 本番ドメイン(pokersummit.jp / www付き)とpoker-summit.vercel.appは同じ
