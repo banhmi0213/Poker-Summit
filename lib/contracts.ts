@@ -94,19 +94,46 @@ async function fetchFullStoresInOrder(supabase: SupabaseClient, ids: string[]): 
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 
-export async function getNationalPickupStores(supabase: SupabaseClient, limit: number = NATIONAL_PICKUP_SLOTS): Promise<any[]> {
+/**
+ * PICK UPの候補。契約店舗(毎回ランダムに並べ替える)と、契約のない店舗から月ごとの抽選で
+ * 決まる順番の店舗に分けて返す。抽選の結果は月の中で変わらないのでキャッシュしてよいが、
+ * 契約店舗の並べ替えは表示のたびに assemblePickup で行うこと(2026/10)。
+ */
+export type PickupPool = { contracted: any[]; drawn: any[]; limit: number };
+
+export async function getPickupPool(supabase: SupabaseClient, pref: string | null, limit?: number): Promise<PickupPool> {
+  const national = !pref;
+  const slots = limit ?? (national ? NATIONAL_PICKUP_SLOTS : REGIONAL_PICKUP_SLOTS);
   // 抽選には全店舗のidと契約フラグだけあれば足りるので、まず軽い列だけ取り、
-  // 表示する店舗の分だけ全列を取り直す(全店舗の全列を毎回読むと重いため、2026/10)
-  const { data, error } = await supabase.from("stores").select("id, is_national_pickup, is_recommended").in("status", ["approved", "listed"]);
+  // 表示しうる店舗の分だけ全列を取り直す(全店舗の全列を毎回読むと重いため)
+  let query = supabase.from("stores").select("id, is_national_pickup, is_recommended").in("status", ["approved", "listed"]);
+  if (pref) query = query.eq("pref", pref);
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   const all = data ?? [];
-  const contracted = shuffle(all.filter((s: any) => s.is_national_pickup));
   const month = jstMonthKey();
-  const drawn = all
+  const seed = national ? month : `${month}:${pref}`;
+  const contractedIds = all.filter((s: any) => (national ? s.is_national_pickup : s.is_recommended)).map((s: any) => s.id);
+  const drawnIds = all
     .filter((s: any) => !s.is_national_pickup && !s.is_recommended)
-    .sort((a: any, b: any) => lotteryScore(month, a.id) - lotteryScore(month, b.id));
-  const picked = [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
-  return fetchFullStoresInOrder(supabase, picked.map((s: any) => s.id));
+    .sort((a: any, b: any) => lotteryScore(seed, a.id) - lotteryScore(seed, b.id))
+    .slice(0, slots)
+    .map((s: any) => s.id);
+  const [contracted, drawn] = await Promise.all([
+    fetchFullStoresInOrder(supabase, contractedIds),
+    fetchFullStoresInOrder(supabase, drawnIds),
+  ]);
+  return { contracted, drawn, limit: slots };
+}
+
+/** 契約店舗を毎回ランダムに並べ替えてから、抽選の店舗で残りの枠を埋める */
+export function assemblePickup(pool: PickupPool): any[] {
+  const contracted = shuffle(pool.contracted);
+  return [...contracted, ...pool.drawn].slice(0, Math.max(pool.limit, contracted.length));
+}
+
+export async function getNationalPickupStores(supabase: SupabaseClient, limit: number = NATIONAL_PICKUP_SLOTS): Promise<any[]> {
+  return assemblePickup(await getPickupPool(supabase, null, limit));
 }
 
 export const REGIONAL_PICKUP_SLOTS = 10;
@@ -119,16 +146,7 @@ export async function getRegionalPickupStores(
   limit: number = REGIONAL_PICKUP_SLOTS
 ): Promise<any[]> {
   if (!pref) return [];
-  const { data, error } = await supabase.from("stores").select("id, is_national_pickup, is_recommended").in("status", ["approved", "listed"]).eq("pref", pref);
-  if (error) throw new Error(error.message);
-  const all = data ?? [];
-  const contracted = shuffle(all.filter((s: any) => s.is_recommended));
-  const month = jstMonthKey();
-  const drawn = all
-    .filter((s: any) => !s.is_recommended && !s.is_national_pickup)
-    .sort((a: any, b: any) => lotteryScore(`${month}:${pref}`, a.id) - lotteryScore(`${month}:${pref}`, b.id));
-  const picked = [...contracted, ...drawn].slice(0, Math.max(limit, contracted.length));
-  return fetchFullStoresInOrder(supabase, picked.map((s: any) => s.id));
+  return assemblePickup(await getPickupPool(supabase, pref, limit));
 }
 
 /** 旧API(互換): 全国PICK UPを返す */

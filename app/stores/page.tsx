@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import { getStoreCountForArea, getStoreListData } from "@/lib/store-list-data";
+import { getStoreCardExtras } from "@/lib/store-card-extras";
 import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
@@ -149,21 +150,30 @@ export default async function StoresPage({
 
   // 検索条件ごとに「誰が見ても同じ」部分は lib/store-list-data.ts でまとめて取得して
   // 60秒キャッシュし、ログイン状態とお気に入りだけをここで見る(2026/10、表示速度対策)。
+  // ランキング(同数のときの順番がランダム)は表示のたびに取り直す。
+  // 店舗カードの写真・件数等は全店舗ぶんのキャッシュから引く。
   const [
     {
       data: { user },
     },
     list,
+    rankingResult,
+    extras,
   ] = await Promise.all([
     supabase.auth.getUser(),
-    getStoreListData({ q, category, pref, region, city, area, rankingPrefs: isKnownRegion && !pref ? regionPrefs : [] }),
+    getStoreListData({ q, category, pref, region, city, area }),
+    pref || isKnownRegion
+      ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
+      : Promise.resolve({ data: [] as any[], error: null }),
+    getStoreCardExtras(),
   ]);
+  if (rankingResult.error) throw rankingResult.error;
   const stores = list.stores;
   const storeListBanner = list.storeListBanner;
-  const rankedStores = list.rankedStores;
-  const coverPhotos = new Map(Object.entries(list.coverPhotos));
-  const displayFlags = new Map(list.flags);
-  const storeContentCounts = new Map(list.counts);
+  const rankedStores = (rankingResult.data ?? []).slice(0, 4);
+  const coverPhotos = extras.coverPhotos;
+  const displayFlags = extras.flags;
+  const storeContentCounts = extras.counts;
   const cityLinks = hasOrigin
     ? []
     : Array.from(countCityPages(list.prefCities)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
