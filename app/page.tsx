@@ -25,6 +25,7 @@ import { assemblePickup } from "@/lib/contracts";
 import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { HomeSectionBanners } from "./home-section-banners";
+import { HomeRankingBanner } from "./home-ranking-banner";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
@@ -315,7 +316,7 @@ export default async function HomePage({
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        {jobsBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={jobsBanners} layout="wide" /></div>}
+        <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 新着求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
           {!latestJobs?.length && <p className="muted">現在募集中の求人はありません。</p>}
