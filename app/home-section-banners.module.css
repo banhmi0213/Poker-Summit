@@ -22,3 +22,16 @@
 .wide .banner { border: 0; transition: none; -webkit-tap-highlight-color: transparent; }
 .wide .banner:hover, .wide .banner:active { transform: none; box-shadow: none; border-color: transparent; }
 .wide .banner img { aspect-ratio: auto; object-fit: contain; }
+
+/* PICK UP banner only: subtle gold lift while keeping other wide banners static. */
+.pickup .banner { transition: transform .24s ease, box-shadow .24s ease; }
+@media (hover: hover) and (pointer: fine) {
+  .pickup .banner:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(134, 93, 25, .23); }
+}
+@media (hover: none) and (pointer: coarse) {
+  .pickup .banner:active { transform: scale(.992); box-shadow: 0 5px 16px rgba(134, 93, 25, .18); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pickup .banner { transition: none; }
+  .pickup .banner:hover, .pickup .banner:active { transform: none; }
+}
