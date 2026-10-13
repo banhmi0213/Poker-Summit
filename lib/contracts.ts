@@ -126,10 +126,15 @@ export async function getPickupPool(supabase: SupabaseClient, pref: string | nul
   return { contracted, drawn, limit: slots };
 }
 
-/** 契約店舗を毎回ランダムに並べ替えてから、抽選の店舗で残りの枠を埋める */
+/**
+ * 表示のたびに並び順だけをランダムにする(顔ぶれは月ごとの抽選のまま、2026/10)。
+ * 契約店舗は必ず先頭側に出すため、契約店舗どうし・抽選店舗どうしでそれぞれ並べ替える。
+ */
 export function assemblePickup(pool: PickupPool): any[] {
   const contracted = shuffle(pool.contracted);
-  return [...contracted, ...pool.drawn].slice(0, Math.max(pool.limit, contracted.length));
+  const slots = Math.max(pool.limit, contracted.length);
+  const drawn = shuffle(pool.drawn.slice(0, Math.max(0, slots - contracted.length)));
+  return [...contracted, ...drawn];
 }
 
 export async function getNationalPickupStores(supabase: SupabaseClient, limit: number = NATIONAL_PICKUP_SLOTS): Promise<any[]> {
