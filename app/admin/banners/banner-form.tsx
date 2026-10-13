@@ -101,7 +101,7 @@ export function BannerForm({ banner, defaultDevice = "all" }: { banner?: Editabl
   }
 
   const shownImage = preview ?? banner?.image_url ?? null;
-  const slimPosition = ["home_coupon", "home_ranking", "home_jobs"].includes(position);
+  const slimPosition = ["home_pickup", "home_coupon", "home_ranking", "home_jobs"].includes(position);
 
   return (
     <form ref={formRef} action={action} className={styles.form}>
