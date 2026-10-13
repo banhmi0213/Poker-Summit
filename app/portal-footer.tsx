@@ -1,16 +1,25 @@
-import { createClient } from "@/lib/supabase/server";
+import { unstable_cache } from "next/cache";
+import { createAnonClient } from "@/lib/supabase/anon";
 import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { prefPageHref } from "@/lib/city";
 import { getPrefStoreCounts } from "@/lib/pref-counts";
 
+// フッターの問い合わせ先メール(管理画面で変えたら最大5分で反映)
+const getFooterSettings = unstable_cache(
+  async () => {
+    const { data } = await createAnonClient().from("site_settings").select("contact_email").eq("id", true).maybeSingle();
+    return (data as { contact_email: string | null } | null) ?? null;
+  },
+  ["footer-settings-v1"],
+  { revalidate: 300 }
+);
+
 export async function PortalFooter() {
-  const supabase = await createClient();
-  const { data: settings } = await supabase
-    .from("site_settings")
-    .select("contact_email")
-    .eq("id", true)
-    .maybeSingle();
-  const prefCounts = await getPrefStoreCounts().catch(() => ({} as Record<string, number>));
+  // どちらも全ページ共通なのでキャッシュから取る(2026/10、表示速度対策)
+  const [settings, prefCounts] = await Promise.all([
+    getFooterSettings().catch(() => null),
+    getPrefStoreCounts().catch(() => ({} as Record<string, number>)),
+  ]);
   // 地方ごとに、掲載店舗がある都道府県へのリンクを並べる(全ページから都道府県ページへたどれるようにする)
   const areaRows = REGIONS.map((region) => ({
     region,

@@ -4,14 +4,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
-import { pickBanner } from "@/lib/banners";
+import { getStoreCountForArea, getStoreListData } from "@/lib/store-list-data";
 import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { HomeStoreCard } from "@/app/home-store-card";
-import { getStoreContentCounts } from "@/lib/store-content-counts";
-import { fetchStoreDisplayFlags, sortByListPriority } from "@/lib/plan-entitlements";
+import { sortByListPriority } from "@/lib/plan-entitlements";
 import { StoreListCard } from "./store-list-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "@/app/pref-area-select";
 import type { Metadata } from "next";
@@ -29,9 +28,6 @@ function validCity(pref: string, city: string | undefined) {
 }
 
 /** 市区町村で絞る(政令指定都市は配下の区もまとめる) */
-function cityFilter<T extends { eq: Function; like: Function }>(query: T, city: string): T {
-  return isDesignatedCity(city) ? query.like("city", `${city}%`) : query.eq("city", city);
-}
 
 // 都道府県・エリア・カテゴリで絞った一覧は「東京都のアミューズメントポーカー」等の
 // 検索に当てたいので、それぞれ固有のタイトルとcanonicalを持たせる。
@@ -72,17 +68,10 @@ export async function generateMetadata({ searchParams }: { searchParams: StoreLi
   let thinCityPage = false;
   if (prefOnly && !isSearch) {
     // 掲載店舗が1店もない都道府県のページは検索結果に出さない
-    const supabase = await createClient();
-    const { count } = await supabase.from("stores").select("id", { count: "exact", head: true }).eq("pref", pref).in("status", ["approved", "listed"]);
-    thinCityPage = (count ?? 0) === 0;
+    thinCityPage = (await getStoreCountForArea(pref, "")) === 0;
   }
   if (city && !isSearch) {
-    const supabase = await createClient();
-    const { count } = await cityFilter(
-      supabase.from("stores").select("id", { count: "exact", head: true }).eq("pref", pref).in("status", ["approved", "listed"]),
-      city
-    );
-    thinCityPage = (count ?? 0) < CITY_PAGE_MIN_STORES;
+    thinCityPage = (await getStoreCountForArea(pref, city)) < CITY_PAGE_MIN_STORES;
   }
 
   return {
@@ -158,103 +147,26 @@ export default async function StoresPage({
 
   const supabase = await createClient();
 
-  let storesQuery = supabase
-    .from("stores")
-    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url, banner_url")
-    .in("status", ["approved", "listed"])
-    // Secondary sort by id: created_at alone ties for rows inserted in the
-    // same batch, and Postgres doesn't guarantee a stable order for ties.
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false });
-
-  if (q) {
-    // Widen the free-word search beyond just the store name: match address,
-    // description, city, pref/region, and the owner-editable "area keywords"
-    // field (e.g. "ミナミ アメ村 心斎橋") so nickname/area searches work even
-    // without a dedicated region dropdown in the UI.
-    const escaped = q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    const pattern = `"%${escaped}%"`;
-    storesQuery = storesQuery.or(
-      [
-        `name.ilike.${pattern}`,
-        `address.ilike.${pattern}`,
-        `description.ilike.${pattern}`,
-        `area_keywords.ilike.${pattern}`,
-        `city.ilike.${pattern}`,
-        `pref.ilike.${pattern}`,
-        `region.ilike.${pattern}`,
-      ].join(",")
-    );
-  }
-  if (category) {
-    storesQuery = storesQuery.eq("category", category);
-  }
-  if (pref) {
-    storesQuery = storesQuery.eq("pref", pref);
-  }
-  if (region) {
-    storesQuery = storesQuery.eq("region", region);
-  }
-  if (city) {
-    storesQuery = cityFilter(storesQuery, city);
-  }
-  if (area && pref) {
-    const prefAreas = AREA_OPTIONS[pref] ?? [];
-    const escapeIlike = (s: string) =>
-      s.replace(/\\/g, "\\\\").replace(/[%_]/g, (m) => `\\${m}`);
-    if (area.startsWith("その他") && prefAreas.includes(area)) {
-      // Catch-all: match stores whose city/area_keywords don't hit any of
-      // this prefecture's OTHER, more specific areas (rather than matching
-      // "その他◯◯" as a literal string).
-      prefAreas
-        .filter((a) => a !== area)
-        .forEach((a) => {
-          const otherPattern = `%${escapeIlike(a)}%`;
-          storesQuery = storesQuery
-            .not("city", "ilike", otherPattern)
-            .not("area_keywords", "ilike", otherPattern);
-        });
-    } else {
-      const escaped = area.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-      const pattern = `"%${escaped}%"`;
-      storesQuery = storesQuery.or(`city.ilike.${pattern},area_keywords.ilike.${pattern}`);
-    }
-  }
-
+  // 検索条件ごとに「誰が見ても同じ」部分は lib/store-list-data.ts でまとめて取得して
+  // 60秒キャッシュし、ログイン状態とお気に入りだけをここで見る(2026/10、表示速度対策)。
   const [
     {
       data: { user },
     },
-    { data: stores },
-    storeListBanner,
-    rankingResult,
-    { data: prefCityRows },
+    list,
   ] = await Promise.all([
     supabase.auth.getUser(),
-    storesQuery,
-    Promise.all([pickBanner(supabase, "store_list", { pref, region, device: "pc" }), pickBanner(supabase, "store_list", { pref, region, device: "mobile" })]),
-    pref || isKnownRegion
-      ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
-      : Promise.resolve({ data: [], error: null }),
-    // 「市区町村から探す」リンク用(都道府県が決まっているときだけ)
-    pref && !q && !hasOrigin
-      ? supabase.from("stores").select("city").eq("pref", pref).in("status", ["approved", "listed"]).not("city", "is", null)
-      : Promise.resolve({ data: [] as { city: string | null }[] }),
+    getStoreListData({ q, category, pref, region, city, area, rankingPrefs: isKnownRegion && !pref ? regionPrefs : [] }),
   ]);
-  const cityLinks = Array.from(countCityPages((prefCityRows ?? []).map((r) => r.city)))
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
-
-  if (rankingResult.error) throw rankingResult.error;
-  const rankedStores = (rankingResult.data ?? []).slice(0, 4);
-
-  // One batch, using the same photo order as the store detail page.
-  const storeIds = [...new Set([...(stores ?? []).map(s => s.id), ...rankedStores.map((s: any) => s.id)])];
-  const { data: photos } = storeIds.length
-    ? await supabase.from("store_photos").select("store_id, url")
-        .in("store_id", storeIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
-    : { data: [] };
-  const coverPhotos = new Map<string, string>();
-  (photos ?? []).forEach(photo => { if (!coverPhotos.has(photo.store_id)) coverPhotos.set(photo.store_id, photo.url); });
+  const stores = list.stores;
+  const storeListBanner = list.storeListBanner;
+  const rankedStores = list.rankedStores;
+  const coverPhotos = new Map(Object.entries(list.coverPhotos));
+  const displayFlags = new Map(list.flags);
+  const storeContentCounts = new Map(list.counts);
+  const cityLinks = hasOrigin
+    ? []
+    : Array.from(countCityPages(list.prefCities)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
 
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -265,14 +177,10 @@ export default async function StoresPage({
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
 
-  // When arriving via "現在地から探す", sort by distance from the visitor's
-  // current location instead of the query's default newest-first order.
-  // Stores without geocoded coordinates yet can't be placed on that scale,
-  // so they're kept at the end (in their existing order) rather than dropped.
-  type StoreWithDistance = (typeof stores extends (infer T)[] | null ? T : never) & {
-    distanceKm: number | null;
-  };
-  let displayStores: StoreWithDistance[] = (stores ?? []).map((s) => ({
+  // 「現在地から探す」で来たときは、いつもの新しい順ではなく現在地から近い順に並べる。
+  // 座標がまだ無い店舗は距離を出せないので、外さずに最後に回す。
+  type StoreWithDistance = (typeof stores)[number] & { distanceKm: number | null };
+  let displayStores: StoreWithDistance[] = stores.map((s) => ({
     ...s,
     distanceKm:
       hasOrigin && typeof s.lat === "number" && typeof s.lng === "number"
@@ -290,10 +198,7 @@ export default async function StoresPage({
 
   // 料金プランによる表示順(プレミアム → スタンダード → その他)。現在地から探す
   // 場合は距離順を優先する。同じプラン内では今まで通りの順番。
-  const displayFlags = await fetchStoreDisplayFlags(supabase, [...displayStores.map((s) => s.id), ...rankedStores.map((s: any) => s.id)]);
   if (!hasOrigin) displayStores = sortByListPriority(displayStores, displayFlags);
-
-  const storeContentCounts = await getStoreContentCounts(supabase, [...displayStores.map(s => s.id), ...rankedStores.map((s: any) => s.id)]);
 
   const pagination = paginateStores(displayStores, searchParams.page);
   const pageNumbers = Array.from({ length: pagination.totalPages }, (_, index) => index + 1)

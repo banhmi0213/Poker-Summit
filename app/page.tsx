@@ -11,8 +11,6 @@ import { PortalHeader } from "./portal-header";
 import { PortalFooter } from "./portal-footer";
 import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
-import { getStoreContentCounts } from "@/lib/store-content-counts";
-import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
 import { PokerRegionHero } from "./poker-region-hero";
@@ -20,8 +18,8 @@ import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
 import { getCurrentPref } from "@/lib/current-pref";
-import { getNationalPickupStores, getRegionalPickupStores } from "@/lib/contracts";
-import { getTopBanners, getHomeSectionBanners, isExternalBannerLink } from "@/lib/banners";
+import { isExternalBannerLink } from "@/lib/banners";
+import { getHomePublicData } from "@/lib/home-data";
 import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { HomeSectionBanners } from "./home-section-banners";
@@ -107,98 +105,44 @@ export default async function HomePage({
   const area = params.area ?? "";
 
   const supabase = await createClient();
-  const now = new Date().toISOString();
 
-  // "現在表示中の都道府県" — see lib/current-pref.ts. Read up front (cheap:
-  // cookies/headers only, no DB round trip) so the PICK UP店舗 section below
-  // can be filtered by it, same as /stores/featured already does.
+  // "現在表示中の都道府県" — see lib/current-pref.ts (cookies/headers only, no DB).
   const { pref: currentPref, source: currentPrefSource } = await getCurrentPref();
 
-  // Show one PICK UP section for the currently displayed location.
-  const pickupStoresPromise = currentPref
-    ? getRegionalPickupStores(supabase, currentPref)
-    : getNationalPickupStores(supabase);
-
-  // All of the following are independent of each other, so they're fired
-  // together instead of one-by-one — the serial version of this page was
-  // making 12+ round trips to the database back to back, which is what was
-  // making the whole site feel slow to load.
+  // 誰が見ても同じ部分(店舗・イベント・バナー・ランキング等)は lib/home-data.ts で
+  // まとめて取得して60秒キャッシュし、ログイン状態だけをここで見る(2026/10、表示速度対策)。
   const [
     {
       data: { user },
     },
-    { data: settings },
-    statsResults,
-    { data: memberCountRaw },
-    featuredStoresAll,
-    { data: latestJobs },
-    { data: latestPosts },
-    { data: upcomingEvents },
-    { data: popularCoupons },
+    home,
+  ] = await Promise.all([supabase.auth.getUser(), getHomePublicData(currentPref ?? null)]);
+
+  const {
+    now,
+    featuredStores,
+    rankedStores,
+    latestJobs,
+    latestPosts,
+    popularCoupons,
+    displayEvents,
+    isEventsLive,
+    memberCountRaw,
+    totalStoreCount,
+    openJobCount,
+    threadCount,
+    replyCounts,
     topBannerRows,
     couponBannerRows,
     communityBannerRows,
     rankingBannerRows,
     jobsBannerRows,
     footerThreeBannerRows,
-  ] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
-    Promise.all([
-      supabase
-        .from("stores")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["approved", "listed"]),
-      supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open"),
-      supabase
-        .from("board_posts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "visible"),
-    ]),
-    // Real member count for the region-hero stats panel. auth.users isn't
-    // queryable through PostgREST directly (no PII exposed here, just a
-    // count), so this goes through a SECURITY DEFINER RPC.
-    supabase.rpc("public_member_count"),
-    pickupStoresPromise,
-    supabase
-      .from("jobs")
-      .select("id, title, job_type, salary, store_id, stores(name, category, pref, city, logo_url)")
-      .eq("status", "open")
-      .order("posted_at", { ascending: false })
-      .limit(4),
-    // 「更新された順にTOPページにも来るように」との指示(2026/10)。/board
-    // 一覧と同じく、返信があるたびに更新されるboard_posts.updated_atで
-    // ソートする(新規投稿時点ではcreated_atと同じ値)。/boardと同じくid
-    // の降順も付けておく: updated_atが同値(複数スレッドがまだ一度も
-    // 更新されていない等)の場合、二次キーなしだとPostgresが順序を
-    // 保証しないため、/board一覧と表示順がずれてしまう。
-    supabase
-      .from("board_posts")
-      .select("id, title, author_name, created_at, updated_at")
-      .eq("status", "visible")
-      .order("updated_at", { ascending: false })
-      .order("id", { ascending: false })
-      .limit(8),
-    supabase
-      .from("events")
-      .select("id, title, location, start_at, end_at, category, banner_image_url, store_id, stores(name, pref, city)")
-      .eq("status", "published")
-      .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`)
-      .order("start_at", { ascending: true })
-      .limit(8),
-    supabase
-      .from("coupons")
-      .select("id, title, discount, valid_until, banner_image_url, store_id, stores(name, category, pref, city)")
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(3),
-    getTopBanners(supabase),
-    getHomeSectionBanners(supabase, "home_coupon"),
-    getHomeSectionBanners(supabase, "home_community", 4),
-    getHomeSectionBanners(supabase, "home_ranking"),
-    getHomeSectionBanners(supabase, "home_jobs"),
-    getHomeSectionBanners(supabase, "home_footer_three", 3),
-  ]);
+  } = home;
+  const settings = { announcement: home.announcement };
+  const homeCoverPhotos = new Map(Object.entries(home.coverPhotos));
+  const homeStoreFlags = new Map(home.flags);
+  const homeContentCounts = new Map(home.counts);
 
   // TOPバナーのリンク先が自サイト以外なら別タブで開く(target="_blank")。
   // 本番ドメイン(pokersummit.jp / www付き)とpoker-summit.vercel.appは同じ
@@ -218,19 +162,7 @@ export default async function HomePage({
   const rankingBanners = sectionBanners(rankingBannerRows);
   const jobsBanners = sectionBanners(jobsBannerRows);
 
-  const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] =
-    statsResults;
-
-  // --- Live vs upcoming events: prefer showing what's happening right now,
-  // and only fall back to "coming up" events when nothing is live. ---
-  const liveEvents = (upcomingEvents ?? []).filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 4);
-  const nextEvents = (upcomingEvents ?? [])
-    .filter((ev: any) => !ev.start_at || ev.start_at > now)
-    .slice(0, 4);
-  const isEventsLive = liveEvents.length > 0;
-  const displayEvents = isEventsLive ? liveEvents : nextEvents;
-
-  // --- Favorites (depends on `user`, so it runs after the batch above) ---
+  // --- Favorites (人によって変わるのでキャッシュしない) ---
   let favoriteStoreIds = new Set<string>();
   if (user) {
     const { data: favs } = await supabase
@@ -239,38 +171,6 @@ export default async function HomePage({
       .eq("user_id", user.id);
     favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
   }
-
-  // Keep the home preview at four stores for either location.
-  const featuredStores = (featuredStoresAll ?? []).slice(0, 4);
-
-  // TOP ranks stores nationwide, independent of the visitor location.
-  const { data: rankingRows, error: rankingError } = await supabase.rpc("public_store_rankings");
-  if (rankingError) throw rankingError;
-  const rankedStores = (rankingRows ?? []).slice(0, 4);
-
-  const photoStoreIds = [...new Set([
-    ...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id),
-    ...displayEvents.map((e: any) => e.store_id).filter(Boolean),
-  ])];
-  const { data: homePhotos } = photoStoreIds.length
-    ? await supabase.from("store_photos").select("store_id, url")
-      .in("store_id", photoStoreIds).order("sort_order", { ascending: true }).order("created_at", { ascending: true })
-    : { data: [] };
-  const homeStoreFlags = await fetchStoreDisplayFlags(supabase, [...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id)]);
-  const homeCoverPhotos = new Map<string, string>();
-  (homePhotos ?? []).forEach(photo => { if (!homeCoverPhotos.has(photo.store_id)) homeCoverPhotos.set(photo.store_id, photo.url); });
-
-  const homeContentCounts = await getStoreContentCounts(supabase, [...featuredStores.map(s => s.id), ...rankedStores.map(s => s.id)]);
-
-  // --- Reply counts (depends on latestPosts, so it runs after the batch above) ---
-  const postIds = (latestPosts ?? []).map((p) => p.id);
-  const { data: replyRows } = postIds.length
-    ? await supabase.from("board_replies").select("post_id").in("post_id", postIds)
-    : { data: [] as { post_id: string }[] };
-  const replyCounts: Record<string, number> = {};
-  replyRows?.forEach((r) => {
-    replyCounts[r.post_id] = (replyCounts[r.post_id] ?? 0) + 1;
-  });
 
   return (
     <div>
