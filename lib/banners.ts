@@ -72,6 +72,7 @@ export async function pickBanner(
 // と一致させること。
 export const BANNER_POSITIONS = [
   { value: "top", label: "TOP広告（PC：PICKUP下／スマホ：最上部）" },
+  { value: "home_pickup", label: "TOPページ（PICK UP店舗下・TOP広告の上・横長1枚）" },
   { value: "home_coupon", label: "TOPページ（お得なクーポンの上・横長1枚）" },
   { value: "home_community", label: "TOPページ（サミット情報交換の上・横並び4枚）" },
   { value: "home_ranking", label: "TOPページ（店舗ランキングの上・横長1枚）" },
@@ -139,7 +140,7 @@ export function isExternalBannerLink(linkUrl: string | null | undefined, request
 /** 新しいTOPセクション直前の掲載枠。4枚枠は表示順の先頭4件。 */
 export async function getHomeSectionBanners(
   supabase: SupabaseClient,
-  position: "home_coupon" | "home_community" | "home_ranking" | "home_jobs" | "home_footer_three",
+  position: "home_pickup" | "home_coupon" | "home_community" | "home_ranking" | "home_jobs" | "home_footer_three",
   limit = 1
 ): Promise<PickedBanner[]> {
   const now = new Date().toISOString();
