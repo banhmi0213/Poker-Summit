@@ -147,6 +147,7 @@ export default async function HomePage({
     threadCount,
     replyCounts,
     topBannerRows,
+    pickupBannerRows,
     couponBannerRows,
     communityBannerRows,
     rankingBannerRows,
@@ -171,6 +172,7 @@ export default async function HomePage({
     device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url,
     external: isExternalBannerLink(b.link_url, siteHost),
   }));
+  const pickupBanners = sectionBanners(pickupBannerRows);
   const couponBanners = sectionBanners(couponBannerRows);
   const communityBanners = sectionBanners(communityBannerRows);
   const rankingBanners = sectionBanners(rankingBannerRows);
@@ -274,6 +276,7 @@ export default async function HomePage({
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
+        {pickupBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={pickupBanners} layout="wide" /></div>}
         {bannersForDevice(topBanners, "pc").length > 0 && (
           <div className="home-section banner-pc-only">
             <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
