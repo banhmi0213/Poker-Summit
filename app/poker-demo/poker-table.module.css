@@ -27,3 +27,31 @@
 .quickBets button{background:#327c65;border:0;border-radius:7px;padding:11px 2px;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
 .quickBets button:last-child{background:#bc862e}
 @media(max-width:420px){.heading{gap:5px}.heading span{font-size:9px}.menuToggle{font-size:11px;padding:6px}.menuPanel{top:50px}}
+
+/* Compact mobile table with avatar-ring action timer. */
+.table{min-height:390px;margin:16px 0 10px;padding:12px 8px 15px}
+.topSeats{position:absolute;top:8px;left:50%;transform:translateX(-50%)}
+.edgeSeatThree,.edgeSeatFour,.edgeSeatFive,.edgeSeatSix{position:absolute;z-index:1}
+.edgeSeatThree{top:19%;left:1%}
+.edgeSeatFour{top:19%;right:1%}
+.edgeSeatFive{bottom:24%;left:1%}
+.edgeSeatSix{bottom:24%;right:1%}
+.felt{margin:auto 0;gap:12px}
+.self{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:max-content;max-width:95%;margin:0}
+.activeAvatar{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;box-shadow:0 0 12px #e7b95377}
+.activeAvatar .avatar{width:38px;height:38px;border:2px solid #10273d}
+.controls{gap:8px;padding:12px}
+.controls .turn{font-size:12px}
+@media(max-width:420px){
+  .table{min-height:350px;padding:8px 5px 12px}
+  .felt{gap:10px}
+  .edgeSeatThree,.edgeSeatFour{top:18%}
+  .edgeSeatFive,.edgeSeatSix{bottom:25%}
+  .seat{font-size:9px}
+  .seat .avatar{width:31px;height:31px}
+  .self{gap:6px}
+  .self .hole span{width:31px;height:42px;font-size:17px}
+  .activeAvatar{width:42px;height:42px}
+  .activeAvatar .avatar{width:34px;height:34px}
+  .controls{padding:10px}
+}
