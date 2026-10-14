@@ -123,3 +123,10 @@
   .table[data-showdown=true] .self .hole span{width:29px;height:39px;font-size:16px}
   .table[data-showdown=true] .self .memberName{max-width:74px}
 }
+
+/* Two face-down cards are dealt to every opponent from preflop. */
+.showdownPosition .miniCards .cardBack{background:repeating-linear-gradient(45deg,#163b6d 0 4px,#285b92 4px 8px);border:2px solid #f1d79a;color:#f1d79a;text-shadow:0 1px 2px #0008;font-size:15px}
+.demoFoldControls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px;margin:8px 0;font-size:11px;color:#e2d4b3}
+.demoFoldControls button{background:#28435a;border:1px solid #6d8090;border-radius:6px;color:#fff;padding:6px 8px;font-size:10px;cursor:pointer}
+.demoFoldControls button[aria-pressed=true]{background:#6e3540;border-color:#c97680}
+@media(max-width:480px){.showdownPosition .miniCards .cardBack{font-size:12px;border-width:1px}}
