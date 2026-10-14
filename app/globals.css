@@ -2989,8 +2989,11 @@ th {
   .home-feed .home-job-salary { font-size: 13px; overflow-wrap: anywhere; }
 }
 
-/* Keep the mobile map and its explanatory copy in separate visual areas. */
+/* Keep the explanation inside the mobile photo, below the map artwork. */
 @media (max-width: 767px) {
+  .ps-region-hero::before { aspect-ratio: 4 / 3; }
+  .ps-region-hero::after,
+  .ps-region-hero__bg { height: 75cqw; }
   .ps-region-hero__mobile-map {
     top: 5cqw;
     left: 62%;
@@ -2998,14 +3001,14 @@ th {
     height: 52cqw;
   }
   .ps-region-hero__copy-right {
-    position: relative;
-    inset: auto;
+    position: absolute;
+    inset: 63cqw 16px auto;
     width: auto;
     margin: 0;
-    padding: 12px 16px;
-    background: #fffaf2;
-    border-bottom: 1px solid #eee5d3;
+    padding: 0;
+    background: transparent;
+    border: 0;
   }
   .ps-region-hero__right-headline { text-wrap: balance; }
-  .ps-region-hero__right-tagline { flex-wrap: wrap; }
+  .ps-region-hero__right-tagline { flex-wrap: wrap; line-height: 1.5; }
 }
