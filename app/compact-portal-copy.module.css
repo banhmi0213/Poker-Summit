@@ -1,0 +1,4 @@
+.word { display: inline; }
+@media (max-width: 860px) {
+  .word { display: inline-block; white-space: nowrap; }
+}

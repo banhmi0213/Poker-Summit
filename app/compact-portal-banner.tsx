@@ -1,8 +1,9 @@
+import styles from "./compact-portal-copy.module.css";
 import { ReadableName } from "@/app/readable-name";
 import Image from "next/image";
 
-export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail }: {
-  image: string; eyebrow: string; title: string; subtitle: string; detail?: string;
+export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail, subtitleParts, detailParts }: {
+  image: string; eyebrow: string; title: string; subtitle: string; detail?: string; subtitleParts?: string[]; detailParts?: string[];
 }) {
   const mobileImages: Record<string, string> = {
     "/images/compact-careers.webp": "/images/mobile-careers.webp",
@@ -16,8 +17,8 @@ export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail }:
     <div className="compact-portal-banner__copy">
       <span className="compact-portal-banner__eyebrow">{eyebrow}</span>
       <h1><ReadableName name={title} /></h1>
-      <p>{subtitle}</p>
-      {detail && <small>{detail}</small>}
+      <p>{subtitleParts ? subtitleParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : subtitle}</p>
+      {detail && <small>{detailParts ? detailParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : detail}</small>}
     </div>
     <div className="compact-portal-banner__photo">
       <picture>

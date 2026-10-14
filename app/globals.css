@@ -2988,3 +2988,24 @@ th {
   .home-feed .home-job-card { padding: 10px; }
   .home-feed .home-job-salary { font-size: 13px; overflow-wrap: anywhere; }
 }
+
+/* Keep the mobile map and its explanatory copy in separate visual areas. */
+@media (max-width: 767px) {
+  .ps-region-hero__mobile-map {
+    top: 5cqw;
+    left: 62%;
+    width: 68cqw;
+    height: 52cqw;
+  }
+  .ps-region-hero__copy-right {
+    position: relative;
+    inset: auto;
+    width: auto;
+    margin: 0;
+    padding: 12px 16px;
+    background: #fffaf2;
+    border-bottom: 1px solid #eee5d3;
+  }
+  .ps-region-hero__right-headline { text-wrap: balance; }
+  .ps-region-hero__right-tagline { flex-wrap: wrap; }
+}
