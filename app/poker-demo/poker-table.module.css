@@ -178,3 +178,27 @@
  .actionBadge{font-size:8px;max-width:74px;padding:1px 3px}
  .turnSeconds{font-size:8px}
 }
+
+/* Stable seat anchor points: action badges and countdowns must not shift P5/P6. */
+.edgeSeatFive,.edgeSeatSix,.edgeSeatThree,.edgeSeatFour,.topSeats{z-index:3}
+.edgeSeatFive,.edgeSeatSix{bottom:auto;top:65%}
+.edgeSeatFive .seat,.edgeSeatSix .seat{position:relative;min-width:52px}
+.seat{position:relative}
+.seat .actionBadge{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;z-index:4}
+.seat .turnSeconds{position:absolute;top:calc(100% + 20px);left:50%;transform:translateX(-50%);white-space:nowrap}
+.seatAvatarRow{min-height:45px}
+.seatTimerRing{width:45px;height:45px;flex-shrink:0}
+.seatTimerRing .avatar{width:39px;height:39px}
+.positionMarkers{position:absolute;inset:0;z-index:4;pointer-events:none}
+.positionMarker{position:absolute;background:#f3c35e;color:#14283a;border:1px solid #fff0bc;border-radius:6px;padding:2px 5px;font-size:10px;font-weight:900;line-height:1.2}
+.markerFive{left:11%;top:59%}
+.markerSix{right:11%;top:59%}
+@media(max-width:480px){
+ .edgeSeatFive,.edgeSeatSix{top:64%;bottom:auto}
+ .seatAvatarRow{min-height:36px}
+ .seatTimerRing{width:36px;height:36px}
+ .seatTimerRing .avatar{width:32px;height:32px}
+ .markerFive{left:12%;top:59%}
+ .markerSix{right:12%;top:59%}
+ .positionMarker{font-size:8px;padding:2px 3px}
+}
