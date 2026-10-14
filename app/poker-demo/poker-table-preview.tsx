@@ -69,7 +69,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const playerAt = (id: string) => betting.players.find(p => p.id === id)!;
   const positionFor = (id:string) => positionName(id,buttonIndex);
   const displayStack = (id:string) => (playerAt(id).stack + (payouts?.[id] ?? 0)).toLocaleString();
-  const handResults = payouts ? clockwiseSeats.map(id => {
+  const handResults = payouts ? ["p3", "p2", "p4", "p5", "you", "p6"].map(id => {
     const finalStack = playerAt(id).stack + (payouts[id] ?? 0);
     return { id, name: id === "you" ? member.displayName : "PLAYER " + id.slice(1), won: payouts[id] ?? 0, delta: finalStack - handStartingStacks[id] };
   }) : [];
