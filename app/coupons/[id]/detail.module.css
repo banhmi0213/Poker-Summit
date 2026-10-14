@@ -4,3 +4,6 @@
 .favoriteForm{display:flex;justify-content:center;margin-top:14px}.favoriteButton{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:8px 26px;border:1px solid #dac7a4;border-radius:8px;background:#fff;color:#493827;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}.favoriteButton span{font-size:24px;line-height:1;color:#96702c}.favoriteButton:hover{background:#faf5e9}.favoriteButton[aria-pressed="true"]{background:#faf1dc;border-color:#b99448}.favoriteButton:focus-visible{outline:2px solid #a7802f;outline-offset:3px}
 
 .page h1,.page h2,.page h3{color:#302316;font-weight:800;}
+
+/* Align the page shell with the shared PC/mobile gutters. */
+.page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}

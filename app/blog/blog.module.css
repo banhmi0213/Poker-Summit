@@ -56,3 +56,10 @@
   }
   .toolbar nav a:focus-visible { outline: 2px solid #a47a21; outline-offset: 2px; }
 }
+
+/* Align the page shell with the shared PC/mobile gutters. */
+.page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
+
+.section{margin-block:var(--section-space)}
+.grid{gap:var(--grid-space)}
+.copy{padding:var(--card-space)}

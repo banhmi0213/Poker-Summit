@@ -1,0 +1,60 @@
+/* Shared public-page spacing. Deliberate reading/form widths remain local. */
+:root {
+  --page-max: 1180px;
+  --page-gutter: 20px;
+  --page-top: 24px;
+  --page-bottom: 40px;
+  --section-space: 24px;
+  --heading-space: 12px;
+  --grid-space: 16px;
+  --card-space: 16px;
+}
+@media (max-width: 767px) {
+  :root {
+    --page-gutter: 16px;
+    --page-top: 16px;
+    --page-bottom: 32px;
+    --section-space: 20px;
+    --grid-space: 12px;
+    --card-space: 12px;
+  }
+}
+.container {
+  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
+}
+.container.ep-page, .container.cp-page, .container.sd-page {
+  max-width: var(--page-max);
+  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
+}
+.ml-page.ml-page, .mt-sample.mt-sample {
+  width: 100%;
+  max-width: var(--page-max);
+  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
+}
+/* A single gap avoids collapsed/doubled section margins and empty ad slots. */
+.home-feed {
+  max-width: var(--page-max);
+  padding: var(--page-top) var(--page-gutter) 0;
+  margin: 0 auto var(--page-bottom);
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-space);
+}
+.home-feed > * { margin-block: 0 !important; }
+.home-feed > .home-section:empty { display: none; }
+@media (min-width: 768px) {
+  .home-feed > .home-section:has(> .banner-mobile-only):not(:has(> .banner-pc-only)) { display: none; }
+}
+@media (max-width: 767px) {
+  .home-feed > .home-section:has(> .banner-pc-only):not(:has(> .banner-mobile-only)) { display: none; }
+}
+.home-section-head { margin-bottom: var(--heading-space); }
+.home-feed .home-grid, .home-feed .home-post-grid { gap: var(--grid-space); }
+.ep-grid, .sl-grid { gap: var(--grid-space); }
+.home-feed .home-event-body, .home-feed .home-job-card, .ep-card-body { padding: var(--card-space); }
+/* The elevated store logo reserves its own space; keep that geometry intact. */
+.home-feed .home-store-copy { padding-right: var(--card-space); padding-bottom: var(--card-space); }
+@media (max-width: 767px) { .home-feed .home-store-copy { padding-left: var(--card-space); } }
+@media (min-width: 768px) {
+  .ps-region-hero { width: calc(100% - var(--page-gutter) * 2); max-width: calc(var(--page-max) - 40px); }
+}

@@ -5,3 +5,11 @@
 .topBanner{margin:16px 0 20px;border-radius:10px;overflow:hidden;background:#f8f1df}.topBanner img{display:block;width:100%;height:auto;object-fit:contain}
 
 .page h1,.page h2,.page h3{color:#302316;font-weight:800;}
+
+/* Align the page shell with the shared PC/mobile gutters. */
+.page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
+
+.layout{gap:var(--section-space)}
+.section{margin-top:var(--section-space)}
+.section h2{margin-bottom:var(--heading-space)}
+.panel{padding:var(--card-space)}

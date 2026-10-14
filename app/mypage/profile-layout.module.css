@@ -51,3 +51,6 @@
 .pokerChip{position:absolute;left:25px;top:27px;width:20px;height:20px;border:3px dashed #fff5d8;border-radius:50%;background:#bc9233;box-shadow:0 0 0 1.4px #977020;box-sizing:border-box;display:grid;place-items:center}
 .pokerChip>span{width:8px;height:8px;border:1px solid #fff5d8;border-radius:50%;box-sizing:border-box}
 @media(max-width:600px){.pageHeading{flex-wrap:wrap;gap:18px}.spotBanner{width:100%;grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;padding:13px 12px}.dealerIcon{transform:scale(.85);transform-origin:left center}.spotCopy small{max-width:200px}}
+
+/* Align the page shell with the shared PC/mobile gutters. */
+.page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./admin/major-tournaments/tournament.css";
+import "./spacing.css";
 import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 
