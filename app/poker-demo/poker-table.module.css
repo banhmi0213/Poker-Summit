@@ -106,3 +106,20 @@
 
 /* Raise PLAYER 2 showdown hand slightly; other seats unchanged. */
 .showdownTwo{top:7%}
+
+/* Phone-only showdown layout: preserve desktop positions. */
+@media(max-width:480px){
+  .table[data-showdown=true]{min-height:390px}
+  .table[data-showdown=true] .edgeSeatThree,.table[data-showdown=true] .edgeSeatFour{top:20%}
+  .table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{bottom:25%}
+  .table[data-showdown=true] .showdownThree{top:24%;left:15%}
+  .table[data-showdown=true] .showdownFour{top:24%;right:15%}
+  .table[data-showdown=true] .showdownFive{bottom:19%;left:15%}
+  .table[data-showdown=true] .showdownSix{bottom:19%;right:15%}
+  .table[data-showdown=true] .showdownTwo{top:7%;left:55%}
+  .table[data-showdown=true] .showdownPosition .miniCards span{width:24px;height:33px;font-size:11px}
+  .table[data-showdown=true] .showdownPosition .handRank{font-size:8px;padding:2px 4px}
+  .table[data-showdown=true] .self{bottom:8px;gap:5px}
+  .table[data-showdown=true] .self .hole span{width:29px;height:39px;font-size:16px}
+  .table[data-showdown=true] .self .memberName{max-width:74px}
+}
