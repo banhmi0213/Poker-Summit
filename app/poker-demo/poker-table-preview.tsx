@@ -140,17 +140,9 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
           source.start(start); source.stop(start + 0.12);
         });
       } else {
-        // Keep the original pleasant three-note victory cue, then add
-        // four bright metallic chip clinks ("charin charin charin charin").
+        // Original three-note victory sound. A custom audio asset can replace this later.
         [659.25, 830.61, 987.77].forEach((frequency, index) => {
           tone(frequency, index * 0.115, 0.3, 0.10);
-        });
-        [0, 0.19, 0.38, 0.57].forEach((offset, i) => {
-          const delay = 0.49 + offset;
-          const pitch = [1, 1.09, 0.96, 1.13][i];
-          tone(1480 * pitch, delay, 0.27, 0.095, "triangle");
-          tone(2960 * pitch, delay + 0.009, 0.19, 0.045);
-          tone(4440 * pitch, delay + 0.016, 0.12, 0.019);
         });
       }
     } catch { /* Audio must never interrupt the game. */ }
