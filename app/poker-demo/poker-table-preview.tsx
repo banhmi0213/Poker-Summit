@@ -27,6 +27,9 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
   const [raise, setRaise] = useState(100);
   const [remaining, setRemaining] = useState(20);
+  const [timeBanksUsed, setTimeBanksUsed] = useState(0);
+  const timeBankSeconds = 20;
+  const demoTimeBankLimit = 1; // Future tournament configuration will supply this limit.
   const [running, setRunning] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
@@ -68,7 +71,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const reset = () => { setBetting(createBettingRound([
     { id: "you", stack: 2500 }, { id: "p2", stack: 2500 }, { id: "p3", stack: 1850 },
     { id: "p4", stack: 3100 }, { id: "p5", stack: 2260 }, { id: "p6", stack: 1900 },
-  ], 100, "you")); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setRunning(true); };
+  ], 100, "you")); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -122,7 +125,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${(20 - remaining) * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(betting.players[0].stack)}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
     </div>
     {!spectating ? <div className={styles.controls}>
-      <div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div>
+      <div className={styles.turnHeader}><div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || action !== null || showdown || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
 
       <label htmlFor="poker-demo-raise">レイズ額: {showChips(raise)}</label>
       <input id="poker-demo-raise" type="range" min={100} max={betting.players[0].stack + betting.players[0].committed} step={50} value={raise} onChange={e => setRaise(Number(e.target.value))} />
