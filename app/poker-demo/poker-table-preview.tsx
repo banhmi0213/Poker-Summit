@@ -89,6 +89,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     p5: styles.awardP5, p6: styles.awardP6, you: styles.awardYou,
   };
   const awardWinners = payouts ? clockwiseSeats.filter(id => (payouts[id] ?? 0) > 0) : [];
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  soundEnabledRef.current = soundEnabled;
   // Web Audio sound is synthesized locally; no external file or network request.
   // Browsers require a user gesture before audio playback.
   const unlockAudio = () => {
@@ -128,8 +130,6 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  soundEnabledRef.current = soundEnabled;
   const [runTwice, setRunTwice] = useState(false);
   const [multipliers, setMultipliers] = useState([2, 3, 4]);
   const [feltColor, setFeltColor] = useState<"blue" | "green" | "black">("blue");
