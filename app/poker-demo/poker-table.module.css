@@ -202,3 +202,7 @@
  .markerSix{right:12%;top:59%}
  .positionMarker{font-size:8px;padding:2px 3px}
 }
+
+/* Lift lower-left and lower-right players above card/action overlays. */
+.edgeSeatFive,.edgeSeatSix{top:57%;bottom:auto}
+@media(max-width:480px){.edgeSeatFive,.edgeSeatSix{top:56%;bottom:auto}}
