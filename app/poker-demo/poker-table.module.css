@@ -96,3 +96,10 @@
 .showdownSix{bottom:18%;right:14%}
 .showdownPosition .miniCards span{width:clamp(22px,5.4vw,33px);height:clamp(31px,7.3vw,44px);font-size:clamp(11px,2.8vw,16px)}
 .showdownPosition .handRank{font-size:9px}
+
+/* Move seats 3–6 showdown hands toward their respective avatars, away from the board and seat 1. */
+.showdownThree{top:23%;left:9%}
+.showdownFour{top:23%;right:9%}
+.showdownFive{bottom:16%;left:9%}
+.showdownSix{bottom:16%;right:9%}
+@media(max-width:420px){.showdownThree,.showdownFive{left:8%}.showdownFour,.showdownSix{right:8%}}
