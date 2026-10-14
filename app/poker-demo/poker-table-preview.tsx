@@ -19,7 +19,7 @@ const demoHoles: Record<string, [Card,Card]> = {
   p3:[{rank:10,suit:"h"},{rank:10,suit:"s"}],
   p4:[{rank:14,suit:"d"},{rank:11,suit:"d"}],
   p5:[{rank:9,suit:"h"},{rank:9,suit:"d"}],
-  p6:[{rank:12,suit:"s"},{rank:11,suit:"s"}],
+  p6:[{rank:12,suit:"s"},{rank:8,suit:"s"}],
 };
 const positionName = (id:string, buttonIndex:number) => {
   const p = positions(clockwiseSeats, buttonIndex);
@@ -279,7 +279,7 @@ const sampleHands = [
   { cards: ["10♥", "10♠"], rank: "スリーカード（10）" },
   { cards: ["A♦", "J♦"], rank: "ハイカード（A）" },
   { cards: ["9♥", "9♦"], rank: "スリーカード（9）" },
-  { cards: ["Q♠", "J♠"], rank: "ハイカード（K）" },
+  { cards: ["Q♠", "8♠"], rank: "ハイカード（K）" },
 ];
 function Seat({ name, stack, index, active, seconds, positionLabel, lastAction }: { name: string; stack: string; index: number; showdown: boolean; active: boolean; seconds: number; positionLabel?: string; lastAction?: string }) {
   const progress = Math.max(0, Math.min(100, (1 - seconds / 20) * 100));
