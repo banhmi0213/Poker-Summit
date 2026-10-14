@@ -18,7 +18,9 @@ export default function PokerTablePreview({ member }: { member: { displayName: s
   const [remaining, setRemaining] = useState(20);
   const [running, setRunning] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPage, setMenuPage] = useState("table");
+  const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
+  const [spectating, setSpectating] = useState(false);
+  const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [runTwice, setRunTwice] = useState(false);
@@ -49,9 +51,10 @@ export default function PokerTablePreview({ member }: { member: { displayName: s
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} index={5} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} index={6} /></div>
-      <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${(20 - remaining) * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>
+      {spectating && <div className={styles.spectatorTag}>観戦中 · 席を離れています（デモ）</div>}
+      {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${(20 - remaining) * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}
     </div>
-    <div className={styles.controls}>
+    {!spectating ? <div className={styles.controls}>
       <div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div>
 
       <label htmlFor="poker-demo-raise">レイズ額: {showChips(raise)}</label>
@@ -65,7 +68,7 @@ export default function PokerTablePreview({ member }: { member: { displayName: s
       </div>
       <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${showChips(raise)}` : action}（デモのため送信されません）` : remaining === 0 ? "制限時間終了（デモ）。リセットすると再開します。" : "自分のアイコン外周が20秒のタイマーです。操作すると停止します。"}</p>
       <button className={styles.reset} type="button" onClick={reset}>デモをリセット</button>
-    </div>
+    </div> : <div className={styles.spectatorPanel}>観戦モード：操作ボタンは非表示です。左上の☰ → 観戦から席に戻れます。</div>}
   </section>;
 }
 
