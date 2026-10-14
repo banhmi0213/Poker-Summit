@@ -256,3 +256,20 @@
 .resultDeltas b{white-space:nowrap}
 .resultGain b{color:#9df4a7}.resultLoss b{color:#ff9797}.resultEven b{color:#cbd5e1}
 @media(max-width:480px){.resultDeltas{grid-template-columns:repeat(2,minmax(0,1fr))}.resultOverlay>strong{font-size:12px}}
+
+/* P3 at 1 o'clock; P4 at 11 o'clock. Positioned above the avatar,
+   not beside the showdown hand or rank. */
+.edgeSeatThree .seatAvatarRow .seatPositionBadge{
+  top:-9px;left:calc(50% + 13px);right:auto;transform:translateY(-50%);
+}
+.edgeSeatFour .seatAvatarRow .seatPositionBadge{
+  top:-9px;right:calc(50% + 13px);left:auto;transform:translateY(-50%);
+}
+@media(max-width:480px){
+ .edgeSeatThree .seatAvatarRow .seatPositionBadge{
+   top:-7px;left:calc(50% + 10px);right:auto;transform:translateY(-50%);
+ }
+ .edgeSeatFour .seatAvatarRow .seatPositionBadge{
+   top:-7px;right:calc(50% + 10px);left:auto;transform:translateY(-50%);
+ }
+}
