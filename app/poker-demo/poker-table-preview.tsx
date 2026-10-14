@@ -45,6 +45,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const [action, setAction] = useState<Action | null>(null);
   const [buttonIndex, setButtonIndex] = useState(5);
   const [payouts, setPayouts] = useState<Record<string,number> | null>(null);
+  const [awardAnimationDone, setAwardAnimationDone] = useState(false);
   const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialStacks);
   const [handFinished, setHandFinished] = useState(false);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
@@ -74,6 +75,19 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     return { id, name: id === "you" ? member.displayName : "PLAYER " + id.slice(1), won: payouts[id] ?? 0, delta: finalStack - handStartingStacks[id] };
   }) : [];
   const winningPlayers = handResults.filter(p => p.won > 0);
+  // Animation is presentation-only; existing payouts and betting math remain authoritative.
+  useEffect(() => {
+    if (!payouts) { setAwardAnimationDone(false); return; }
+    setAwardAnimationDone(false);
+    const timer = window.setTimeout(() => setAwardAnimationDone(true), 1900);
+    return () => window.clearTimeout(timer);
+  }, [payouts]);
+  const awardDestinations: Record<string, string> = {
+    p2: styles.awardP2, p3: styles.awardP3, p4: styles.awardP4,
+    p5: styles.awardP5, p6: styles.awardP6, you: styles.awardYou,
+  };
+  const awardWinners = payouts ? clockwiseSeats.filter(id => (payouts[id] ?? 0) > 0) : [];
+
   const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
@@ -240,6 +254,12 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
+      {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
+        {awardWinners.map(id => <div key={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
+          <span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span>
+          <b className={styles.awardAmount}>+{payouts[id].toLocaleString()}</b>
+        </div>)}
+      </div>}
       <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={displayStack("p3")} index={3} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={positionFor("p3")} lastAction={lastActions["p3"]} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={displayStack("p4")} index={4} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={positionFor("p4")} lastAction={lastActions["p4"]} /></div>
@@ -261,7 +281,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
       {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div className={styles.selfInfo}>{positionFor("you") && <span className={styles.positionBadge}>{positionFor("you")}</span>}{lastActions.you && <span className={styles.actionBadge}>{lastActions.you}</span>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
     </div>
-      {payouts && <div className={styles.resultOverlay} role="status" aria-live="polite">
+      {payouts && awardAnimationDone && <div className={styles.resultOverlay} role="status" aria-live="polite">
         <strong>🏆 {winningPlayers.map(p => p.name).join("・")} がPOT獲得</strong>
         <div className={styles.resultDeltas}>{handResults.map(p => <span key={p.id} className={p.delta > 0 ? styles.resultGain : p.delta < 0 ? styles.resultLoss : styles.resultEven}>{p.name} <b>{p.delta > 0 ? "+" : ""}{p.delta.toLocaleString()}</b></span>)}</div>
       </div>}
