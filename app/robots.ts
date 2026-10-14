@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
     userAgent:"*",
     allow:"/",
     // Logged-in areas, dashboards and APIs have nothing for search engines.
-    disallow:["/admin","/admin-login","/account","/mypage","/store$","/store/","/matching$","/matching/","/login","/signup","/liff","/api/"],
+    disallow:["/admin","/admin-login","/account","/mypage","/store$","/store/","/matching$","/matching/","/liff","/api/"],
    },
   ],
   sitemap:`${base}/sitemap.xml`,

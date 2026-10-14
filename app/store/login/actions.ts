@@ -1,5 +1,6 @@
 "use server";
 
+import { loginDestination } from "@/lib/login-destination";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { STORE_LOGIN_ID_DOMAIN } from "@/lib/constants";
@@ -65,7 +66,7 @@ export async function storeSignIn(formData: FormData) {
     // 通知に失敗してもログインは続ける
   }
 
-  redirect(next || "/store/profile");
+  redirect(loginDestination(next, "store"));
 }
 
 export async function storeSignOut() {

@@ -1,12 +1,12 @@
 import Link from "next/link";
-import { signIn } from "./actions";
+import { MemberLoginForm } from "./member-login-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import type { Metadata } from "next";
-import { NOINDEX } from "@/lib/seo";
+import { staticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { ...NOINDEX, title: "ログイン｜Poker Summit" };
+export const metadata: Metadata = staticPageMetadata({ title: "会員ログイン", description: "Poker Summitの会員ログイン。マイページからお気に入り店舗や応募状況、プロフィールを確認できます。", path: "/login" });
 
 export default function LoginPage({
   searchParams,
@@ -30,37 +30,14 @@ export default function LoginPage({
         </div>
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
-          <form action={signIn}>
-            <input type="hidden" name="next" value={next} />
-            <div className="field">
-              <span className="muted">メールアドレス</span>
-              <input type="email" name="email" required autoComplete="email" />
-            </div>
-            <div className="field">
-              <span className="muted">パスワード</span>
-              <input
-                type="password"
-                name="password"
-                required
-                autoComplete="current-password"
-              />
-            </div>
-            <button type="submit" className="btn primary" style={{ width: "100%" }}>
-              ログイン
-            </button>
-          </form>
+          <h1 style={{ fontSize: 20, marginBottom: 16 }}>会員ログイン</h1>
+          <MemberLoginForm next={next} />
           <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
             会員登録がまだの方は<Link href="/signup">こちらから登録</Link>
           </p>
-          <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
-            店舗の方は<Link href="/store/login">こちらから店舗管理ログイン</Link>
-          </p>
-          <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
-            運営の方は<Link href="/admin-login">こちらから総合管理ログイン</Link>
-          </p>
         </div>
       </div>
-      <PortalFooter />
+      <PortalFooter hideManagementLinks />
       <BottomTabs />
     </div>
   );

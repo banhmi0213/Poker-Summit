@@ -242,6 +242,7 @@ export async function MyPageContent({
             <dl className={styles.memberFacts}>
               <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
               <div><dt>▦ 登録日</dt><dd>{joinedAt || "未設定"}</dd></div>
+              <div><dt>m HOLD’EM ID</dt><dd>{String(user.user_metadata?.m_holdem_id || "未登録")}<small>（非公開）</small></dd></div>
               <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
@@ -476,7 +477,7 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
+        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} mHoldemId={String(user.user_metadata?.m_holdem_id || "")} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
           <section className={styles.infoPanel}>
             <h2>♟ プロフィール</h2>
             <dl>

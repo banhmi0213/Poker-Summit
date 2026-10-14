@@ -14,7 +14,7 @@ const getFooterSettings = unstable_cache(
   { revalidate: 300 }
 );
 
-export async function PortalFooter() {
+export async function PortalFooter({ hideManagementLinks = false }: { hideManagementLinks?: boolean } = {}) {
   // どちらも全ページ共通なのでキャッシュから取る(2026/10、表示速度対策)
   const [settings, prefCounts] = await Promise.all([
     getFooterSettings().catch(() => null),
@@ -86,12 +86,12 @@ export async function PortalFooter() {
         <span className="footer-links__separator footer-links__apply-separator" aria-hidden="true"> ｜ </span>
         <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
-        <a className="footer-links__apply" href="/store/login">店舗管理画面</a>
+        {!hideManagementLinks && <a className="footer-links__apply" href="/store/login">店舗管理画面</a>}
       </nav>
       <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.</div>
       <div className="footer-store-actions">
         <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
-        <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>
+        {!hideManagementLinks && <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>}
       </div>
     </div>
   );

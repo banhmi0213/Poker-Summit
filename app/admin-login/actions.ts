@@ -1,5 +1,6 @@
 "use server";
 
+import { loginDestination } from "@/lib/login-destination";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loginLockMessage, recordLoginFailure, recordLoginLocked, recordLoginSuccess, requestMeta } from "@/lib/login-guard";
@@ -40,6 +41,10 @@ export async function adminSignIn(formData: FormData) {
     );
   }
 
+  const { data: adminRow, error: adminError } = await supabase.from("admin_users").select("user_id").eq("user_id", data.user!.id).maybeSingle();
+  if (adminError || !adminRow) {
+    redirect(`/admin-login?error=${encodeURIComponent("総合管理画面へのアクセス権限がありません。")}`);
+  }
   await recordLoginSuccess("admin", email, meta, data.user?.id ?? null);
   try {
     if (data.user?.email) {
@@ -49,5 +54,5 @@ export async function adminSignIn(formData: FormData) {
     // 通知に失敗してもログインは続ける
   }
 
-  redirect(next);
+  redirect(loginDestination(next, "admin"));
 }

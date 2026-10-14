@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const supabase=await createClient();
  const now=new Date();
 
- const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company"].map(path=>({url:`${base}${path}`,lastModified:now}));
+ const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company","/signup","/login"].map(path=>({url:`${base}${path}`,lastModified:now}));
 
  const {data:blogData}=await supabase.from("blog_entries").select("id,slug,updated_at").eq("active",true).eq("include_in_sitemap",true).eq("search_index",true);
  const blog=(blogData||[]).map(entry=>({url:`${base}/blog/${entry.slug||entry.id}`,lastModified:entry.updated_at?new Date(entry.updated_at):now}));

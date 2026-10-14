@@ -1,17 +1,16 @@
 import Link from "next/link";
 import { signUp } from "./actions";
 import { PREF_OPTIONS } from "@/lib/constants";
-import { PortalHeader } from "@/app/portal-header";
-import { PortalFooter } from "@/app/portal-footer";
-import { BottomTabs } from "@/app/bottom-tabs";
+import styles from "./signup.module.css";
+import { M_HOLDEM_ID_MAX_LENGTH, M_HOLDEM_PARTICIPATION_NOTICE } from "@/lib/m-holdem";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import type { Metadata } from "next";
-import { NOINDEX } from "@/lib/seo";
+import { staticPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { ...NOINDEX, title: "会員登録｜Poker Summit" };
+export const metadata: Metadata = staticPageMetadata({ title: "会員登録", description: "Poker Summitの無料会員登録。お気に入り店舗の保存、求人応募、クーポン利用などをご利用いただけます。", path: "/signup" });
 
 export default function SignupPage({
   searchParams,
@@ -21,23 +20,22 @@ export default function SignupPage({
   const params = searchParams;
 
   return (
-    <div>
-      <PortalHeader />
-      <div className="container" style={{ maxWidth: 380 }}>
-      <Link href="/" className="breadcrumb">
-        ← トップに戻る
-      </Link>
-      <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
-        <div className="brand wordmark">
-          <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-        </div>
-      </div>
-
+    <main className={styles.page}>
+      <Link href="/" className={styles.back}>← トップに戻る</Link>
+      <div className={styles.layout}>
+        <section className={styles.intro}>
+          <Link href="/" aria-label="Poker Summit トップページ"><img className={styles.logo} src="/images/logo.webp" alt="Poker Summit" /></Link>
+          <span className={styles.badge}>無料会員登録</span>
+          <h1>ポーカーの楽しさが、<br />ここに集まる。</h1>
+          <p className={styles.lead}>全国のポーカースポット・大会・求人をつなぐPoker Summit。会員登録して、もっと便利に楽しもう。</p>
+          <div className={styles.benefits}>お気に入り店舗の保存・求人応募・クーポン利用・イベントの参加予定登録ができます。</div>
+        </section>
+        <section className={styles.panel} aria-label="会員登録フォーム">
       {params.done ? (
-        <div className="card">
-          <h1 style={{ fontSize: 18, marginBottom: 8 }}>
+        <div className={styles.success}>
+          <h2 className={styles.heading}>
             確認メールをお送りしました
-          </h1>
+          </h2>
           <p className="muted">
             メール内のリンクから登録を完了してください。
           </p>
@@ -46,19 +44,16 @@ export default function SignupPage({
           </Link>
         </div>
       ) : (
-        <div className="card">
-          <h1 style={{ fontSize: 18, marginBottom: 12 }}>会員登録</h1>
-          <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
-            会員登録すると、お気に入り登録・求人応募・クーポン利用・イベント参加登録ができるようになります。
-          </p>
-          {params.error && <p className="err">{params.error}</p>}
+        <div>
+          <h2 className={styles.heading}>会員登録</h2>
+          {params.error && <p className={styles.error} role="alert">{params.error}</p>}
           <form action={signUp}>
-            <div className="field">
-              <span className="muted">ハンドルネーム</span>
+            <label className={styles.field}>
+              <span>ハンドルネーム</span>
               <input type="text" name="name" autoComplete="nickname" />
-            </div>
-            <div className="field">
-              <span className="muted">都道府県</span>
+            </label>
+            <label className={styles.field}>
+              <span>都道府県 <b className={styles.required}>必須</b></span>
               <select name="pref" defaultValue="" required>
                 <option value="" disabled>
                   選択してください
@@ -69,23 +64,24 @@ export default function SignupPage({
                   </option>
                 ))}
               </select>
-            </div>
+            </label>
             {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
                 できるようにして」との指示)。他の会員から見える会員プロフィール
                 ページ(/members/[id])に出すかどうかを選べる。 */}
-            <div className="field">
-              <span className="muted">都道府県の公開設定</span>
+            <label className={styles.field}>
+              <span>都道府県の公開設定</span>
               <select name="prefPublic" defaultValue="public">
                 <option value="public">公開（他の会員にも表示）</option>
                 <option value="private">非公開（自分だけに表示）</option>
               </select>
-            </div>
-            <div className="field">
-              <span className="muted">メールアドレス</span>
+            </label>
+            <label className={styles.field}>
+              <span>メールアドレス <b className={styles.required}>必須</b></span>
               <input type="email" name="email" required autoComplete="email" />
-            </div>
-            <div className="field">
-              <span className="muted">パスワード（{PASSWORD_RULE_LABEL}）</span>
+            </label>
+            <label className={styles.field}>
+              <span>パスワード <b className={styles.required}>必須</b></span>
+              <small>{PASSWORD_RULE_LABEL}</small>
               <input
                 type="password"
                 name="password"
@@ -95,10 +91,18 @@ export default function SignupPage({
                 title={PASSWORD_RULE_LABEL}
                 autoComplete="new-password"
               />
+            </label>
+            <label className={styles.field}>
+              <span>m HOLD’EM ID <b className={styles.optional}>任意</b></span>
+              <input type="text" name="mHoldemId" maxLength={M_HOLDEM_ID_MAX_LENGTH} autoComplete="off" spellCheck={false} placeholder="IDを入力" aria-describedby="m-holdem-notice" />
+            </label>
+            <div id="m-holdem-notice" className={styles.notice}>
+              <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>
+              <p>未入力でも会員登録できます。マイページから後で登録・変更できます。IDは一般公開されません。</p>
             </div>
             <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
             <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
-            <label style={{ display: "flex", alignItems: "flex-start", gap: 8, margin: "18px 0", fontSize: 13, lineHeight: 1.8, minHeight: 44 }}>
+            <label className={styles.consent}>
               <input type="checkbox" name="legalConsent" value="agree" required style={{ marginTop: 5, flexShrink: 0 }} />
               <span><Link href="/terms" target="_blank" rel="noopener noreferrer">利用規約</Link>および<Link href="/privacy" target="_blank" rel="noopener noreferrer">プライバシーポリシー</Link>を確認し、同意します。</span>
             </label>
@@ -108,18 +112,18 @@ export default function SignupPage({
                 <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-language="ja" style={{ margin: "0 0 14px" }} />
               </>
             )}
-            <button type="submit" className="btn primary" style={{ width: "100%" }}>
-              登録する
+            <button type="submit" className={styles.submit}>
+              無料会員登録する
             </button>
           </form>
-          <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
+          <p className={styles.help}>
             すでにアカウントをお持ちの方は<Link href="/login">こちらからログイン</Link>
           </p>
         </div>
       )}
+        </section>
       </div>
-      <PortalFooter />
-      <BottomTabs />
-    </div>
+      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>© Poker Summit</footer>
+    </main>
   );
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -23,6 +24,9 @@ export async function updateProfile(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "").trim();
+  const mHoldemId = normalizeMHoldemId(formData.has("mHoldemId") ? formData.get("mHoldemId") : user.user_metadata?.m_holdem_id);
+  const idError = mHoldemIdError(mHoldemId);
+  if (idError) redirect(`/account/profile?error=${encodeURIComponent(idError)}`);
   const pref = String(formData.get("pref") ?? "").trim();
   // 都道府県の公開設定(2026/10追加、「会員登録時都道府県を非公開にできる
   // ように」との指示。登録後もここで切り替えられるようにする)。
@@ -36,7 +40,7 @@ export async function updateProfile(formData: FormData) {
   }
 
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: name, pref, pref_public: prefPublic },
+    data: { display_name: name, pref, pref_public: prefPublic, m_holdem_id: mHoldemId || null },
   });
 
   if (error) {

@@ -1,5 +1,6 @@
 "use server";
 
+import { loginDestination } from "@/lib/login-destination";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loginLockMessage, recordLoginFailure, recordLoginLocked, recordLoginSuccess, requestMeta } from "@/lib/login-guard";
@@ -35,35 +36,7 @@ export async function signIn(formData: FormData) {
   }
   await recordLoginSuccess("member", email, meta, data.user?.id ?? null);
 
-  if (next) {
-    redirect(next);
-  }
-
-  const userId = data.user?.id;
-
-  if (userId) {
-    const { data: adminRow } = await supabase
-      .from("admin_users")
-      .select("user_id")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (adminRow) {
-      redirect("/admin/stores");
-    }
-
-    const { data: ownedStore } = await supabase
-      .from("stores")
-      .select("id")
-      .eq("owner_user_id", userId)
-      .maybeSingle();
-
-    if (ownedStore) {
-      redirect("/store/profile");
-    }
-  }
-
-  redirect("/mypage");
+  redirect(loginDestination(next, "member"));
 }
 
 export async function signOut() {

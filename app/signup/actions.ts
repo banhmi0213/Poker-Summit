@@ -1,5 +1,6 @@
 "use server";
 
+import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
@@ -18,6 +19,9 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
+  const idError = mHoldemIdError(mHoldemId);
+  if (idError) redirect(`/signup?error=${encodeURIComponent(idError)}`);
   const pref = String(formData.get("pref") ?? "").trim();
   // 都道府県の公開設定(2026/10追加)。未指定時は従来通り公開扱い。
   const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
@@ -44,7 +48,7 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      data: { display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic, legal_consent: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION },
+      data: { m_holdem_id: mHoldemId || null, display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic, legal_consent: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION },
     },
   });
 
