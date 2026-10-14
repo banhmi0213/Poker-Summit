@@ -234,3 +234,25 @@
  .edgeSeatThree .seatPositionBadge,.edgeSeatFive .seatPositionBadge{top:4px;left:-22px;right:auto}
  .edgeSeatFour .seatPositionBadge,.edgeSeatSix .seatPositionBadge{top:4px;right:-22px;left:auto}
 }
+
+/* Position tags are positioned against the avatar row, not the entire seat.
+   All four edge seats point inward so tags remain inside the table. */
+.seatAvatarRow{position:relative}
+.seatAvatarRow .seatPositionBadge{position:absolute;z-index:6;top:-3px;left:auto;right:auto;font-size:9px;line-height:1.2;padding:2px 4px}
+.edgeSeatThree .seatAvatarRow .seatPositionBadge{left:calc(100% + 3px);right:auto;top:-3px}
+.edgeSeatFour .seatAvatarRow .seatPositionBadge{right:calc(100% + 3px);left:auto;top:-3px}
+.edgeSeatFive .seatAvatarRow .seatPositionBadge{left:calc(100% + 3px);right:auto;top:12px}
+.edgeSeatSix .seatAvatarRow .seatPositionBadge{right:calc(100% + 3px);left:auto;top:12px}
+.topSeats .seatAvatarRow .seatPositionBadge{right:calc(100% + 3px);left:auto;top:-3px}
+@media(max-width:480px){
+ .seatAvatarRow .seatPositionBadge{font-size:8px;padding:1px 3px}
+ .edgeSeatThree .seatAvatarRow .seatPositionBadge,.edgeSeatFour .seatAvatarRow .seatPositionBadge{top:-2px}
+ .edgeSeatFive .seatAvatarRow .seatPositionBadge,.edgeSeatSix .seatAvatarRow .seatPositionBadge{top:10px}
+}
+.resultOverlay{margin:12px 0;background:#102b3d;border:1px solid #d4a64e;border-radius:12px;padding:12px 10px;text-align:center;color:#ffda83}
+.resultOverlay>strong{font-size:14px}
+.resultDeltas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.resultDeltas span{display:flex;justify-content:space-between;align-items:center;gap:3px;border:1px solid #36546a;border-radius:6px;background:#172f40;padding:6px 5px;font-size:10px;color:#fff}
+.resultDeltas b{white-space:nowrap}
+.resultGain b{color:#9df4a7}.resultLoss b{color:#ff9797}.resultEven b{color:#cbd5e1}
+@media(max-width:480px){.resultDeltas{grid-template-columns:repeat(2,minmax(0,1fr))}.resultOverlay>strong{font-size:12px}}
