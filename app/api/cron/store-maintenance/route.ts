@@ -85,7 +85,8 @@ export async function GET(req: NextRequest) {
   // 4. Googleマップに無かった店を月1回ずつ探し直す(あとから登録される店があるため)
   const rematch = await rematchUnlinkedStores(3).catch(() => ({ checked: 0, linked: [] as string[] }));
   // 5. 営業時間が空の店舗の営業時間をGoogleから取る(25日ごとに取り直し、30日を超えたものは消す。月850回まで)
-  const hours = await fetchNextGoogleHours(30).catch(() => null);
+  // 全店ほぼ同じ日に取ったので、取り直し(25日目)から期限(30日)までの5日で回り切るよう1日150件まで
+  const hours = await fetchNextGoogleHours(150).catch(() => null);
 
   const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
