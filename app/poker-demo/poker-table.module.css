@@ -68,3 +68,13 @@
 
 /* Clearly visible game controls at both ends of header */
 .heading{align-items:center;gap:8px}.heading span{flex:1;text-align:center}.menuToggle,.topExit{flex:0 0 42px;min-width:42px;min-height:42px;border:1px solid #b99a58;border-radius:10px;background:#20364b;color:#f6d47c;display:grid;place-items:center;font-size:24px;cursor:pointer}.topExit{font-size:27px}.menuPanel{top:64px}.menuNav{grid-template-columns:repeat(3,minmax(0,1fr))}.menuNav button:disabled{opacity:.35;cursor:not-allowed;background:#1c242c}.menuFields button{background:#376958;border:1px solid #6e9c87;border-radius:8px;color:white;padding:10px}.guestNotice{font-size:12px;color:#f3d48a;text-align:center;margin:5px 0}.spectatorTag{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);padding:8px;background:#102b40;color:#f2d486;border-radius:12px;white-space:nowrap;font-size:11px}.spectatorPanel{background:#193348;padding:14px;text-align:center;border-radius:10px;font-size:13px}@media(max-width:420px){.menuToggle,.topExit{flex-basis:38px;min-width:38px;min-height:38px}.heading span{font-size:9px}.menuPanel{top:56px}}
+
+/* Ring spectator vacant seat and rejoin confirmation */
+.spectatorSeat{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:5px;color:#ffe3a0;font-size:11px;white-space:nowrap}
+.seatPlus{width:46px;height:46px;border-radius:50%;border:2px solid #e5be6e;background:#183951;color:#ffdc88;font-size:30px;line-height:1;cursor:pointer;box-shadow:0 0 13px #e4b95670}
+.seatOverlay{position:fixed;inset:0;background:#000b;z-index:100;display:grid;place-items:center;padding:16px}
+.seatDialog{width:min(360px,100%);background:#182e42;border:1px solid #d7b260;border-radius:14px;padding:20px;color:#fff;box-shadow:0 20px 60px #0008}
+.seatDialog h2{font-size:19px;margin:0 0 12px}.seatDialog p{font-size:13px;line-height:1.6}
+.seatDialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.seatDialogActions button{border:0;border-radius:8px;padding:11px 13px;color:white;background:#3c5468;cursor:pointer}
+.seatDialogActions button:last-child{background:#d8ad55;color:#1a2b3b;font-weight:700}
