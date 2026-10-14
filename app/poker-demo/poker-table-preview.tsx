@@ -32,10 +32,10 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const timeBankSeconds = 20;
   const demoTimeBankLimit = 1; // Future tournament configuration will supply this limit.
   const [running, setRunning] = useState(true);
-  const isYourTurn = betting.toAct === "you" && !handFinished && !showdown && !spectating;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
   const [spectating, setSpectating] = useState(initialSpectating);
+  const isYourTurn = betting.toAct === "you" && !handFinished && !showdown && !spectating;
   const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
