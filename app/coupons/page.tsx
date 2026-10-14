@@ -1,3 +1,4 @@
+import searchControls from "@/app/search-controls.module.css";
 import { couponCategoryLabel, matchesCouponLocation } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
@@ -137,7 +138,7 @@ export default async function CouponsPage({
           </picture>
         </h1>
 
-        <form className="cp-search" method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        <form className={`cp-search ${searchControls.form}`} method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           <input type="hidden" name="sort" value={sort} />
           {onlyAvailable && <input type="hidden" name="onlyAvailable" value="1" />}
           <input
@@ -162,7 +163,7 @@ export default async function CouponsPage({
           </button>
         </form>
 
-        <div className="chip-row" style={{ marginBottom: 18 }}>
+        <div className={`chip-row ${searchControls.categories}`} style={{ marginBottom: 18 }}>
           <Link href={buildHref({ offerType: "" })} className={`chip ${!offerType ? "active" : ""}`}>
             すべて
           </Link>

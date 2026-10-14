@@ -1,3 +1,4 @@
+import searchControls from "@/app/search-controls.module.css";
 import { JobCategoryFilter } from "./category-filter";
 import { readJobSearch, matchesJobSearch } from "@/lib/job-categories";
 import { ReadableName } from "@/app/readable-name";
@@ -81,6 +82,7 @@ export default async function JobsPage({
         <JobTypeTabs active="regular" />
         <h2 style={{fontSize:18, marginBottom:12}}>{[role, jobType].filter(Boolean).join("・") || "すべての求人"} <small className="muted">新着順</small></h2>
         <form
+          className={searchControls.form}
           method="get"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
@@ -101,6 +103,7 @@ export default async function JobsPage({
           />
           <select
             name="pref"
+            aria-label="都道府県"
             defaultValue={pref}
             style={{
               padding: "8px 10px",

@@ -1,0 +1,39 @@
+/* Public search controls: mobile readability and touch targets, without PC changes. */
+@media (max-width: 767px) {
+  .form.form {
+    min-width: 0;
+    max-width: 100%;
+    row-gap: 10px !important;
+  }
+  .form.form input[type="text"],
+  .form.form select {
+    font-size: 16px !important;
+    min-height: 48px;
+    height: auto;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    flex: 1 1 100% !important;
+  }
+  .form.form > button[type="submit"] {
+    min-height: 48px;
+    width: 100%;
+    flex: 1 1 100%;
+    font-size: 16px !important;
+    justify-content: center;
+  }
+  .form.form fieldset { min-width: 0; max-width: 100%; }
+  .form.form fieldset label {
+    min-height: 44px;
+    max-width: 100%;
+    font-size: 14px;
+  }
+  .categories.categories { padding-left: 0; padding-right: 0; gap: 8px; }
+  .categories.categories a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 14px;
+  }
+}
