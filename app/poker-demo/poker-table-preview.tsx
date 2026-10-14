@@ -21,8 +21,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     { id: "you", stack: 2500, committed: 0 },
     { id: "p5", stack: 2260 }, { id: "p3", stack: 1850 },
     { id: "p2", stack: 2500 }, { id: "p4", stack: 3100 }, { id: "p6", stack: 1900 },
-  ], 100, "you"));
-  const [bettingMessage, setBettingMessage] = useState("自分の操作でチップとポットが変化します（ローカルデモ）。");
+  ], 100, "p3"));
+  const [bettingMessage, setBettingMessage] = useState("プリフロップはUTG（PLAYER 3）から開始します（ローカルデモ）。");
   const [showdown, setShowdown] = useState(false);
   const [foldedSeats, setFoldedSeats] = useState<number[]>([]);
   const [streetStep, setStreetStep] = useState(0);
@@ -117,6 +117,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         return;
       }
       const nextStep = streetStep + 1;
+      // Postflop action begins at the first eligible seat clockwise from BTN (P6): SB/YOU, then BB/P5.
       const first = betting.players.find(p => !p.folded && !p.allIn);
       setStreetStep(nextStep);
       if (!first) {
@@ -156,7 +157,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const reset = () => { setLastActions({}); setTurnRemaining(20); setBetting(createBettingRound([
     { id: "you", stack: 2500 }, { id: "p5", stack: 2260 }, { id: "p3", stack: 1850 },
     { id: "p2", stack: 2500 }, { id: "p4", stack: 3100 }, { id: "p6", stack: 1900 },
-  ], 100, "you")); setHandFinished(false); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
+  ], 100, "p3")); setHandFinished(false); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -249,7 +250,7 @@ function Seat({ name, stack, index, active, seconds, positionLabel, lastAction }
     </div>
     <span>{name}</span><small>{stack}</small>
     {lastAction && <span className={styles.actionBadge}>{lastAction}</span>}
-    {active && <span className={styles.turnSeconds}>{seconds}s</span>}
+
   </div>;
 }
 
