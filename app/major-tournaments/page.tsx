@@ -7,10 +7,15 @@ import { BottomTabs } from "@/app/bottom-tabs";
 export const dynamic="force-dynamic";
 import {staticPageMetadata} from "@/lib/seo";
 export const metadata=staticPageMetadata({title:"国内外の大型ポーカー大会 日程・スケジュール",description:"国内・海外の大型ポーカー大会の開催情報とスケジュール。開催地や日程で次の大会を探せます。",path:"/major-tournaments"});
+function isCurrentOrUpcomingTournament(entry: { start_date?: string | null; end_date?: string | null }, today: string) {
+ const lastDay = entry.end_date || entry.start_date;
+ return !lastDay || lastDay >= today;
+}
 export default async function Page({searchParams}:{searchParams:{scope?:string;q?:string;month?:string;page?:string}}){
  const db=await createClient();
  const [{data:{user}},{data,error}]=await Promise.all([db.auth.getUser(),db.from("major_tournaments").select("id,title,scope,location,venue,start_date,end_date,description").eq("active",true).order("start_date",{ascending:true,nullsFirst:false}).order("id",{ascending:true})]);
- const entries=(data||[]).map(e=>({...e,date:e.start_date?e.start_date.replaceAll("-",".")+(e.end_date&&e.end_date!==e.start_date?" — "+e.end_date.replaceAll("-","."):""):"開催日未定",month:e.start_date?.slice(0,7)||"",text:e.description||""}));
+ const today=new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Tokyo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+ const entries=(data||[]).filter(e=>isCurrentOrUpcomingTournament(e,today)).map(e=>({...e,date:e.start_date?e.start_date.replaceAll("-",".")+(e.end_date&&e.end_date!==e.start_date?" — "+e.end_date.replaceAll("-","."):""):"開催日未定",month:e.start_date?.slice(0,7)||"",text:e.description||""}));
  const months=Array.from(new Set(entries.map(e=>e.month).filter(Boolean))).sort();
  const scope=["国内","海外"].includes(searchParams.scope||"")?searchParams.scope||"":"",q=searchParams.q?.trim()||"",month=searchParams.month||"";
  const results=entries.filter(e=>(!scope||e.scope===scope)&&(!month||e.month===month)&&(!q||(e.title+" "+e.location+" "+e.venue).toLowerCase().includes(q.toLowerCase())));
