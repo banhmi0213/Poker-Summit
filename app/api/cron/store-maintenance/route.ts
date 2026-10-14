@@ -5,6 +5,7 @@ import { SWEEP_AREAS } from "@/lib/sweep-areas";
 import { getPlaceBusinessStatus } from "@/lib/google-places";
 import { regeocodeNextStores } from "@/lib/regeocode";
 import { matchNextStores, rematchUnlinkedStores } from "@/lib/google-match";
+import { fetchNextGoogleHours } from "@/lib/google-hours";
 import { sendStoreMaintenanceDigest } from "@/lib/email";
 
 // ============================================================================
@@ -16,6 +17,7 @@ import { sendStoreMaintenanceDigest } from "@/lib/email";
 //     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
 //  3. 新しく入った店の座標を国土地理院で取る。
 //  4. Googleマップに無かった店を、30日に1回ずつGoogleで探し直す。
+//  5. 営業時間が空の店舗の営業時間をGoogleから取る(店舗が入れた店は取らない)。
 // 何か見つかったら運営(site_settings.notify_email)にメールで知らせる。
 // ============================================================================
 
@@ -82,10 +84,12 @@ export async function GET(req: NextRequest) {
   await matchNextStores(16).catch(() => null);
   // 4. Googleマップに無かった店を月1回ずつ探し直す(あとから登録される店があるため)
   const rematch = await rematchUnlinkedStores(3).catch(() => ({ checked: 0, linked: [] as string[] }));
+  // 5. 営業時間が空の店舗の営業時間をGoogleから取る(25日ごとに取り直し、30日を超えたものは消す。月850回まで)
+  const hours = await fetchNextGoogleHours(30).catch(() => null);
 
   const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
-  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed, rematchLinked: rematch.linked } });
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed, rematchLinked: rematch.linked, hours } });
 
   if (newCandidates.length || closed.length) {
     const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
