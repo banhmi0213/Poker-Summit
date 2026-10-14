@@ -56,6 +56,8 @@ const form=extra=>{const f=new FormData();for(const [k,v]of Object.entries({emai
  const event={key:'Enter',nativeEvent:{isComposing:false,keyCode:13},target:new HTMLInputElement('password'),currentTarget:{requestSubmit(){submitted++}},preventDefault(){prevented++}};
  component.props.onKeyDown(event);assert.equal(submitted,1);assert.equal(prevented,1);
  component.props.onKeyDown({...event,nativeEvent:{isComposing:true}});assert.equal(submitted,1);
+ assert.equal(require('../app/login/layout.tsx').metadata.robots.index,true);
+ assert.equal(require('../app/signup/layout.tsx').metadata.robots.index,true);
  const robots=require('../app/robots.ts').default();assert(!robots.rules[0].disallow.includes('/login'));assert(!robots.rules[0].disallow.includes('/signup'));assert(robots.rules[0].disallow.includes('/admin'));
  console.log('PASS: same-account role destinations, unauthorized admin denial, unsafe redirects, optional ID signup/update/clear, no ID in public profile writes, logo/normal-registration rendering, confirmation state, Enter/IME handling and public auth robots settings');
 })().catch(e=>{console.error(e);process.exitCode=1});

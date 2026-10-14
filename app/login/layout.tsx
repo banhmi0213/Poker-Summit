@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import { NOINDEX } from "@/lib/seo";
+import type { Metadata } from "next";
 
-// ログインが必要な画面・会員/店舗専用の画面は検索結果に出さない
-export const metadata = NOINDEX;
+// 公開の会員登録・ログイン入口は検索対象。認証後のページは各専用レイアウトでnoindex。
+export const metadata: Metadata = { robots: { index: true, follow: true } };
 
 export default function Layout({ children }: { children: ReactNode }) {
   return <>{children}</>;
