@@ -218,3 +218,8 @@
   .edgeSeatFive,.edgeSeatSix{top:50%;bottom:auto}
   .table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:50%;bottom:auto}
 }
+
+/* Position tags follow the moving button without changing seat/card anchors. */
+.seatPositionBadge{position:absolute;left:calc(100% + 3px);top:1px;background:#f3c35e;color:#14283a;border:1px solid #fff0bc;border-radius:5px;padding:2px 4px;font-size:9px;font-weight:900;white-space:nowrap;z-index:5}
+.edgeSeatFour .seatPositionBadge,.edgeSeatSix .seatPositionBadge{left:auto;right:calc(100% + 3px)}
+@media(max-width:480px){.seatPositionBadge{font-size:8px;padding:1px 3px}}
