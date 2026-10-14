@@ -12,14 +12,15 @@ const seats = [
   { name: "PLAYER 6", stack: "1,900" },
 ];
 
-export default function PokerTablePreview({ member, isGuestPreview = false }: { member: { displayName: string; avatarUrl: string | null }; isGuestPreview?: boolean }) {
+export default function PokerTablePreview({ member, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; isGuestPreview?: boolean; initialSpectating?: boolean }) {
   const [action, setAction] = useState<Action | null>(null);
   const [raise, setRaise] = useState(100);
   const [remaining, setRemaining] = useState(20);
   const [running, setRunning] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
-  const [spectating, setSpectating] = useState(false);
+  const [spectating, setSpectating] = useState(initialSpectating);
+  const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -59,8 +60,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false }: { 
           {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n}×</option>)}</select></label>)}
           <small>BB表示と倍率はデモに反映。SEの音声再生・設定保存は未実装です。</small>
         </div>}
-        {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
-        {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
+        {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
+        {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
       </div>
     </div>
     <h1>オンラインポーカー テーブル試作</h1>
@@ -77,7 +78,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false }: { 
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} index={5} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} index={6} /></div>
-      {spectating && <div className={styles.spectatorTag}>観戦中 · 席を離れています（デモ）</div>}
+      {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
       {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${(20 - remaining) * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}
     </div>
     {!spectating ? <div className={styles.controls}>
@@ -95,6 +96,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false }: { 
       <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${showChips(raise)}` : action}（デモのため送信されません）` : remaining === 0 ? "制限時間終了（デモ）。リセットすると再開します。" : "自分のアイコン外周が20秒のタイマーです。操作すると停止します。"}</p>
       <button className={styles.reset} type="button" onClick={reset}>デモをリセット</button>
     </div> : <div className={styles.spectatorPanel}>観戦モード：操作ボタンは非表示です。左上の☰ → 観戦から席に戻れます。</div>}
+    {seatConfirm && <div className={styles.seatOverlay}><div className={styles.seatDialog} role="dialog" aria-modal="true" aria-labelledby="seat-confirm-title"><h2 id="seat-confirm-title">着席の確認</h2><p>この空席に着席しますか？</p><p>デモのため、実際の着席やチップ移動は行いません。</p><div className={styles.seatDialogActions}><button type="button" onClick={() => setSeatConfirm(false)}>キャンセル</button><button type="button" onClick={() => { setSpectating(false); setSeatConfirm(false); reset(); }}>着席する</button></div></div></div>}
   </section>;
 }
 
