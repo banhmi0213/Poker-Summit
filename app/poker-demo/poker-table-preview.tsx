@@ -68,10 +68,11 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     <h1>オンラインポーカー テーブル試作</h1>
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。実際の対戦、チップ増減、カード抽選、サーバー通信は行いません。</p>
-    <div className={styles.table} data-felt={feltColor}>
+    <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
       <div className={styles.topSeats}><Seat {...seats[0]} index={2} showdown={showdown} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} index={3} showdown={showdown} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} index={4} showdown={showdown} /></div>
+      {showdown && <div className={styles.opponentCardsLayer} aria-label="ショーダウンで公開された各プレイヤーのハンド">{seats.map((seat, i) => <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}><strong className={styles.handRank}>{sampleHands[i].rank}</strong><div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>)}</div></div>)}</div>}
       <div className={styles.felt}>
         <div className={styles.pot}>POT <strong>1,575</strong></div>
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", showdown ? "K♠" : "—"].map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>
@@ -109,6 +110,5 @@ const sampleHands = [
   { cards: ["Q♠", "J♠"], rank: "ハイカード（K）" },
 ];
 function Seat({ name, stack, index, showdown }: { name: string; stack: string; index: number; showdown: boolean }) {
-  const hand = sampleHands[index - 2];
-  return <div className={styles.seat}><div className={styles.avatar}>{index}</div><span>{name}</span><small>{stack}</small>{showdown && <div className={styles.opponentHand}><strong className={styles.handRank}>{hand.rank}</strong><div className={styles.miniCards}>{hand.cards.map((card, i) => <span key={i} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>)}</div></div>}</div>;
+  return <div className={styles.seat}><div className={styles.avatar}>{index}</div><span>{name}</span><small>{stack}</small></div>;
 }
