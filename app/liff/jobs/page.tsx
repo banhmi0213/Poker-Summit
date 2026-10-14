@@ -244,6 +244,7 @@ function JobRow({
           <div className="field">
             <span className="muted">雇用形態</span>
             <select value={draft.jobType} onChange={(e) => setDraft({ ...draft, jobType: e.target.value })}>
+              {draft.jobType && !JOB_TYPE_OPTIONS.includes(draft.jobType) && <option hidden value={draft.jobType}>{draft.jobType}</option>}
               <option value="">未設定</option>
               {JOB_TYPE_OPTIONS.map((t) => (
                 <option key={t} value={t}>

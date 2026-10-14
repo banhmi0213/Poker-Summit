@@ -212,9 +212,7 @@ export const AREA_OPTIONS: Record<string, string[]> = {
 export const JOB_TYPE_OPTIONS = [
   "正社員",
   "契約社員",
-  "パート",
   "アルバイト",
-  "業務委託",
 ];
 
 export const BOARD_CATEGORIES = [

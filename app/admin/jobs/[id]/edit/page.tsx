@@ -64,6 +64,7 @@ export default async function AdminJobEditPage({
           <div className="field">
             <span className="muted">雇用形態</span>
             <select name="jobType" defaultValue={job.job_type ?? ""}>
+              {job.job_type && !JOB_TYPE_OPTIONS.includes(job.job_type) && <option hidden value={job.job_type}>{job.job_type}</option>}
               <option value="">未設定</option>
               {JOB_TYPE_OPTIONS.map((t) => (
                 <option key={t} value={t}>

@@ -331,6 +331,7 @@ export default async function StoreJobsPage() {
               <div className="field">
                 <span className="muted">雇用形態</span>
                 <select name="jobType" defaultValue={j.job_type ?? ""}>
+              {j.job_type && !JOB_TYPE_OPTIONS.includes(j.job_type) && <option hidden value={j.job_type}>{j.job_type}</option>}
                   <option value="">選択してください</option>
                   {JOB_TYPE_OPTIONS.map((t) => (
                     <option key={t} value={t}>

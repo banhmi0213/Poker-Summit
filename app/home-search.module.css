@@ -54,3 +54,8 @@
 
 .search.search{width:calc(100% - var(--page-gutter) * 2);max-width:calc(var(--page-max) - 40px)}
 .promoGrid{gap:var(--grid-space)}
+
+/* The tournament source includes an off-centre white canvas and outer frame.
+   Match the adjacent square cards using its inner artwork; keep the original asset intact. */
+.promoBanner{position:relative;aspect-ratio:1}
+.majorPromo img{position:absolute;max-width:none;width:107.639485%;height:107.639485%;left:-2.145923%;top:-2.145923%}

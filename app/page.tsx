@@ -329,8 +329,10 @@ export default async function HomePage({
         {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
         <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
           {footerBanners.length > 0 ? footerBanners.map((b) => {
+            const isMajorArtwork = b.image_url?.endsWith("/major-tournaments-square-v1.webp");
+            const bannerClass = `${styles.promoBanner}${isMajorArtwork ? ` ${styles.majorPromo}` : ""}`;
             const image = <img src={b.image_url ?? ""} alt={b.title} loading="lazy" />;
-            return b.link_url ? <a key={b.id} href={b.link_url} className={styles.promoBanner} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={styles.promoBanner}>{image}</div>;
+            return b.link_url ? <a key={b.id} href={b.link_url} className={bannerClass} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={bannerClass}>{image}</div>;
           }) : <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.webp" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>}
         </section>
         ); })}

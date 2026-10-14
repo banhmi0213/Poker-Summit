@@ -1,6 +1,5 @@
 import { JobCategoryFilter } from "./category-filter";
-import { SpotCategoryResults } from "./spot-category-results";
-import { JOB_ROLES, readJobFilters, matchesJobFilters } from "@/lib/job-categories";
+import { readJobSearch, matchesJobSearch } from "@/lib/job-categories";
 import { ReadableName } from "@/app/readable-name";
 import { JobTypeTabs } from "./job-type-tabs";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
@@ -24,11 +23,8 @@ export default async function JobsPage({
 }) {
   const q = searchParams.q?.trim() ?? "";
   const pref = searchParams.pref ?? "";
-  const jobType = searchParams.jobType ?? "";
-  const role = JOB_ROLES.some(r => r === searchParams.role) ? searchParams.role! : "";
-
-  const filters = readJobFilters(searchParams.category ?? (role || (jobType === "正社員" ? "正社員" : undefined)));
-  const employmentFilter = searchParams.category === undefined && jobType === "正社員" ? "" : jobType;
+  const { role, jobType: requestedJobType } = readJobSearch(searchParams);
+  const jobType = JOB_TYPE_OPTIONS.includes(requestedJobType) ? requestedJobType : "";
 
   const supabase = await createClient();
   const {
@@ -44,13 +40,13 @@ export default async function JobsPage({
     .order("posted_at", { ascending: false });
 
   if (q) query = query.ilike("title", `%${q}%`);
-  if (employmentFilter) query = query.eq("job_type", employmentFilter);
+  if (jobType) query = query.eq("job_type", jobType);
 
   const { data: rawJobs } = await query;
   let jobs = (rawJobs ?? []).filter((j: any) => j.stores?.status === "approved" || j.stores?.status === "listed");
   if (pref) jobs = jobs.filter((j: any) => j.stores?.pref === pref);
 
-  jobs = jobs.filter((j: any) => matchesJobFilters(j, filters));
+  jobs = jobs.filter((j: any) => matchesJobSearch(j, role, jobType));
 
   let favoriteJobIds = new Set<string>();
   if (user) {
@@ -83,12 +79,12 @@ export default async function JobsPage({
         </h1>
 
         <JobTypeTabs active="regular" />
-        <h2 style={{fontSize:18, marginBottom:12}}>{filters.length ? filters.join("・") : "すべての求人"} <small className="muted">新着順</small></h2>
+        <h2 style={{fontSize:18, marginBottom:12}}>{[role, jobType].filter(Boolean).join("・") || "すべての求人"} <small className="muted">新着順</small></h2>
         <form
           method="get"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
-          <JobCategoryFilter selected={filters} />
+          <JobCategoryFilter selected={role} />
           <input
             type="text"
             name="q"
@@ -124,7 +120,8 @@ export default async function JobsPage({
           </select>
           <select
             name="jobType"
-            defaultValue={employmentFilter}
+            defaultValue={jobType}
+            aria-label="雇用形態"
             style={{
               padding: "8px 10px",
               borderRadius: 6,
@@ -146,7 +143,7 @@ export default async function JobsPage({
           </button>
         </form>
 
-        {jobs.length === 0 && !filters.includes("スポット") && <div className="empty">条件に合う求人が見つかりませんでした。</div>}
+        {jobs.length === 0 && <div className="empty">条件に合う求人が見つかりませんでした。</div>}
 
         <div
           style={{
@@ -206,8 +203,6 @@ export default async function JobsPage({
             </div>
           ))}
         </div>
-
-        {(!filters.length || filters.includes("スポット")) && <SpotCategoryResults pref={pref} q={q} employmentFilter={employmentFilter} />}
 
         {jobListBanner.map((banner, i) => banner && (
           <a key={i} className={i === 0 ? "banner-pc-only" : "banner-mobile-only"}

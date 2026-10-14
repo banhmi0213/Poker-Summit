@@ -28,11 +28,15 @@ export function matchesJobRole(job: { job_role?: string | null; title?: string |
   return false;
 }
 
-export const JOB_FILTERS = ["ディーラー", "スポット", "ホールスタッフ", "正社員"] as const;
-export function readJobFilters(value?: string | string[]) {
-  const values = Array.isArray(value) ? value : value ? [value] : [];
-  return JOB_FILTERS.filter(category => values.includes(category));
+// Retain earlier category URLs, interpreting role and employment as separate conditions.
+export function readJobSearch(params: {role?: string; jobType?: string; category?: string | string[]}) {
+  const legacy = Array.isArray(params.category) ? params.category : params.category ? [params.category] : [];
+  const requestedRole = params.role ?? legacy.find(category => JOB_ROLES.some(role => role === category)) ?? "";
+  return {
+    role: JOB_ROLES.some(role => role === requestedRole) ? requestedRole : "",
+    jobType: params.jobType || (params.role === undefined && legacy.includes("正社員") ? "正社員" : ""),
+  };
 }
-export function matchesJobFilters(job: { job_role?: string | null; title?: string | null; job_type?: string | null }, filters: readonly string[]) {
-  return !filters.length || filters.some(category => category === "正社員" ? job.job_type === "正社員" : category !== "スポット" && matchesJobRole(job, category));
+export function matchesJobSearch(job: {job_role?: string | null; title?: string | null; job_type?: string | null}, role: string, jobType: string) {
+  return matchesJobRole(job, role) && (!jobType || job.job_type === jobType);
 }
