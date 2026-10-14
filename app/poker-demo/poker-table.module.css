@@ -273,3 +273,31 @@
    top:-7px;right:calc(50% + 10px);left:auto;transform:translateY(-50%);
  }
 }
+
+/* Showdown awards: a purely visual, non-interactive layer above the felt.
+   Flights originate at POT (table center) and end at the winning seat.
+   Each winner gets a separate stream, including split/side pots. */
+.awardAnimationLayer{position:absolute;inset:0;z-index:25;pointer-events:none;overflow:hidden;border-radius:46%/27%}
+.awardFlight{position:absolute;left:50%;top:35%;width:0;height:0;--award-x:0px;--award-y:0px}
+.awardP2{--award-x:0px;--award-y:-115px}
+.awardP3{--award-x:-205px;--award-y:-70px}
+.awardP4{--award-x:205px;--award-y:-70px}
+.awardP5{--award-x:-205px;--award-y:90px}
+.awardP6{--award-x:205px;--award-y:90px}
+.awardYou{--award-x:-75px;--award-y:150px}
+.awardCoin{position:absolute;left:-11px;top:-11px;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff2ae,#f5c75b 48%,#a66c18 80%);border:2px solid #fff2a0;box-shadow:0 0 11px #ffd66b,0 2px 4px #001c35;color:#785017;font-size:12px;font-weight:900;opacity:0;animation:potChipFlight 1.3s cubic-bezier(.2,.6,.22,1) forwards}
+.awardCoin:nth-child(2){animation-delay:.13s}.awardCoin:nth-child(3){animation-delay:.26s}
+.awardAmount{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;background:#142b3d;border:1px solid #f3c35f;border-radius:8px;padding:4px 7px;color:#ffdd81;font-size:13px;opacity:0;animation:awardNumberPop .8s ease-out 1.05s both}
+@keyframes potChipFlight{0%{opacity:0;transform:translate(0,0) scale(.5)}12%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translate(var(--award-x),var(--award-y)) scale(.8)}}
+@keyframes awardNumberPop{0%{opacity:0;transform:translate(calc(var(--award-x) - 50%),calc(var(--award-y) + 10px)) scale(.7)}30%,75%{opacity:1;transform:translate(calc(var(--award-x) - 50%),var(--award-y)) scale(1.1)}100%{opacity:0;transform:translate(calc(var(--award-x) - 50%),calc(var(--award-y) - 8px)) scale(1)}}
+@media(max-width:560px){
+ .awardP2{--award-x:0px;--award-y:-105px}
+ .awardP3{--award-x:-42vw;--award-y:-65px}
+ .awardP4{--award-x:42vw;--award-y:-65px}
+ .awardP5{--award-x:-42vw;--award-y:75px}
+ .awardP6{--award-x:42vw;--award-y:75px}
+ .awardYou{--award-x:-13vw;--award-y:130px}
+}
+@media(prefers-reduced-motion:reduce){
+ .awardCoin,.awardAmount{animation:none;opacity:0}
+}
