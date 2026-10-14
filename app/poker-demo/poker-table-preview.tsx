@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./poker-table.module.css";
+import { applyBettingAction, createBettingRound, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 const seats = [
@@ -14,12 +15,21 @@ const seats = [
 
 export default function PokerTablePreview({ member, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; isGuestPreview?: boolean; initialSpectating?: boolean }) {
   const [action, setAction] = useState<Action | null>(null);
+  const [betting, setBetting] = useState<BettingRound>(() => createBettingRound([
+    { id: "you", stack: 2500, committed: 0 },
+    { id: "p2", stack: 2500 }, { id: "p3", stack: 1850 },
+    { id: "p4", stack: 3100 }, { id: "p5", stack: 2260 }, { id: "p6", stack: 1900 },
+  ], 100, "you"));
+  const [bettingMessage, setBettingMessage] = useState("自分の操作でチップとポットが変化します（ローカルデモ）。");
   const [showdown, setShowdown] = useState(false);
   const [foldedSeats, setFoldedSeats] = useState<number[]>([]);
   const [streetStep, setStreetStep] = useState(0);
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
   const [raise, setRaise] = useState(100);
   const [remaining, setRemaining] = useState(20);
+  const [timeBanksUsed, setTimeBanksUsed] = useState(0);
+  const timeBankSeconds = 20;
+  const demoTimeBankLimit = 1; // Future tournament configuration will supply this limit.
   const [running, setRunning] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
@@ -39,8 +49,29 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     const timer = window.setTimeout(() => setRemaining(t => Math.max(0, t - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [running, action, remaining]);
-  const choose = (next: Action) => { if (remaining > 0 && !showdown) { setAction(next); setRunning(false); } };
-  const reset = () => { setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setRunning(true); };
+  const choose = (next: Action) => {
+    if (remaining <= 0 || showdown || action || spectating) return;
+    const player = betting.players[0];
+    const owed = betting.currentBet - player.committed;
+    let betAction: BettingAction;
+    if (next === "FOLD") betAction = { type: "fold" };
+    else if (next === "CHECK") betAction = { type: "check" };
+    else if (next === "CALL") betAction = owed > 0 ? { type: "call" } : { type: "check" };
+    else betAction = { type: betting.currentBet > 0 ? "raise" : "bet", amount: raise };
+    try {
+      const updated = applyBettingAction(betting, "you", betAction);
+      setBetting(updated);
+      setAction(next);
+      setRunning(false);
+      setBettingMessage(`${next === "RAISE" ? "レイズ " + raise : next} を反映。残高 ${updated.players[0].stack.toLocaleString()} / POT ${potTotal(updated).toLocaleString()}（ローカルデモ）`);
+    } catch (error) {
+      setBettingMessage(error instanceof Error ? error.message : "操作を処理できませんでした");
+    }
+  };
+  const reset = () => { setBetting(createBettingRound([
+    { id: "you", stack: 2500 }, { id: "p2", stack: 2500 }, { id: "p3", stack: 1850 },
+    { id: "p4", stack: 3100 }, { id: "p5", stack: 2260 }, { id: "p6", stack: 1900 },
+  ], 100, "you")); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -70,7 +101,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     </div>
     <h1>オンラインポーカー テーブル試作</h1>
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
-    <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。実際の対戦、チップ増減、カード抽選、サーバー通信は行いません。</p>
+    <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
       <div className={styles.topSeats}><Seat {...seats[0]} index={2} showdown={showdown} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} index={3} showdown={showdown} /></div>
@@ -84,28 +115,28 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         </div>)}
       </div>
       <div className={styles.felt}>
-        <div className={styles.pot}>POT <strong>1,575</strong></div>
+        <div className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", "K♠"].slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>
         <div className={styles.street}>{streetNames[streetStep]} · デモ表示</div>
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} index={5} showdown={showdown} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} index={6} showdown={showdown} /></div>
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
-      {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${(20 - remaining) * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>2,500 chips</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
+      {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(betting.players[0].stack)}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
     </div>
     {!spectating ? <div className={styles.controls}>
-      <div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div>
+      <div className={styles.turnHeader}><div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || action !== null || showdown || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
 
       <label htmlFor="poker-demo-raise">レイズ額: {showChips(raise)}</label>
-      <input id="poker-demo-raise" type="range" min={100} max={2500} step={50} value={raise} onChange={e => setRaise(Number(e.target.value))} />
-      <div className={styles.quickBets}>{multipliers.map((m,i) => <button type="button" key={i} onClick={() => setRaise(Math.min(2500, m * bigBlind))}>{m}×</button>)}<button type="button" onClick={() => setRaise(2500)}>ALL-IN</button></div>
+      <input id="poker-demo-raise" type="range" min={100} max={betting.players[0].stack + betting.players[0].committed} step={50} value={raise} onChange={e => setRaise(Number(e.target.value))} />
+      <div className={styles.quickBets}>{multipliers.map((m,i) => <button type="button" key={i} onClick={() => setRaise(Math.min(betting.players[0].stack + betting.players[0].committed, m * bigBlind))}>{m}×</button>)}<button type="button" onClick={() => setRaise(betting.players[0].stack + betting.players[0].committed)}>ALL-IN</button></div>
       <div className={styles.actions}>
         <button type="button" disabled={remaining === 0 || action !== null || showdown} onClick={() => choose("FOLD")}>フォールド</button>
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CHECK")}>チェック</button>
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CALL")}>コール</button>
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("RAISE")}>レイズ</button>
       </div>
-      <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${showChips(raise)}` : action}（デモのため送信されません）` : remaining === 0 ? "制限時間終了（デモ）。リセットすると再開します。" : "自分のアイコン外周が20秒のタイマーです。操作すると停止します。"}</p>
+      <p role="status" aria-live="polite">{bettingMessage}</p>
       <div className={styles.demoFoldControls}><span>相手のフォールド確認（デモ）</span>{seats.map((seat, i) => <button type="button" key={seat.name} aria-pressed={foldedSeats.includes(i + 2)} onClick={() => setFoldedSeats(prev => prev.includes(i + 2) ? prev.filter(n => n !== i + 2) : [...prev, i + 2])}>P{i + 2} {foldedSeats.includes(i + 2) ? "復帰" : "FOLD"}</button>)}</div>
       <div className={styles.demoSteps}><button type="button" disabled={streetStep === 4} onClick={() => { const next = Math.min(4, streetStep + 1); setStreetStep(next); setShowdown(next === 4); setRunning(false); }}>{streetStep === 4 ? "ショーダウン表示中" : `次へ：${streetNames[streetStep + 1]}（デモ）`}</button><button className={styles.reset} type="button" onClick={reset}>デモをリセット</button></div>
     </div> : <div className={styles.spectatorPanel}>観戦モード：操作ボタンは非表示です。左上の☰ → 観戦から席に戻れます。</div>}
