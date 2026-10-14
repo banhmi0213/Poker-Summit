@@ -100,32 +100,56 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
-  const playAwardSound = () => {
+  type SoundKind = "turn" | "action" | "deal" | "win";
+  const playSound = (kind: SoundKind) => {
     if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
-    if (!context) return;
-    const play = () => {
-      if (context.state !== "running") return;
-      try {
-        const now = context.currentTime;
-        [659.25, 830.61, 987.77].forEach((frequency, index) => {
-          const oscillator = context.createOscillator();
+    if (!context || context.state !== "running") return;
+    try {
+      const now = context.currentTime;
+      const tone = (frequency: number, delay: number, duration: number, volume: number, wave: OscillatorType = "sine") => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        const start = now + delay;
+        osc.type = wave; osc.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain); gain.connect(context.destination);
+        osc.start(start); osc.stop(start + duration + 0.015);
+      };
+      if (kind === "turn") {
+        tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
+      } else if (kind === "action") {
+        tone(310, 0, 0.085, 0.085, "triangle");
+      } else if (kind === "deal") {
+        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * 0.15), context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        [0, 0.12].forEach(delay => {
+          const source = context.createBufferSource();
+          const filter = context.createBiquadFilter();
           const gain = context.createGain();
-          const start = now + index * 0.115;
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(frequency, start);
+          const start = now + delay;
+          source.buffer = buffer; filter.type = "bandpass";
+          filter.frequency.value = 2400; filter.Q.value = 0.65;
           gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(0.14, start + 0.018);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
-          oscillator.connect(gain);
-          gain.connect(context.destination);
-          oscillator.start(start);
-          oscillator.stop(start + 0.34);
+          gain.gain.exponentialRampToValueAtTime(0.13, start + 0.014);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.105);
+          source.connect(filter); filter.connect(gain); gain.connect(context.destination);
+          source.start(start); source.stop(start + 0.12);
         });
-      } catch { /* Do not interrupt the game if audio is unavailable. */ }
-    };
-    if (context.state === "running") play();
-    else void context.resume().then(play).catch(() => {});
+      } else {
+        [0, 0.13, 0.26, 0.39].forEach((delay, i) => {
+          tone([1320, 1568, 1175, 1760][i], delay, 0.22, 0.095);
+          tone([2640, 3136, 2350, 3520][i], delay + 0.008, 0.12, 0.025);
+        });
+      }
+    } catch { /* Audio must never interrupt the game. */ }
+  };
+  const previewSound = (kind: SoundKind) => {
+    unlockAudio();
+    window.setTimeout(() => playSound(kind), 100);
   };
   useEffect(() => {
     const activate = () => {
@@ -145,29 +169,23 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   }, []);
   useEffect(() => {
     if (!payouts || !soundEnabled) return;
-    const timer = window.setTimeout(() => {
-      const context = audioContextRef.current;
-      if (!context || context.state !== "running") return;
-      try {
-        const now = context.currentTime;
-        [659.25, 830.61, 987.77].forEach((frequency, index) => {
-          const oscillator = context.createOscillator();
-          const gain = context.createGain();
-          const start = now + index * 0.115;
-          oscillator.type = "sine";
-          oscillator.frequency.setValueAtTime(frequency, start);
-          gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(0.14, start + 0.018);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
-          oscillator.connect(gain);
-          gain.connect(context.destination);
-          oscillator.start(start);
-          oscillator.stop(start + 0.34);
-        });
-      } catch { /* Audio is optional. */ }
-    }, 180);
+    const timer = window.setTimeout(() => playSound("win"), 180);
     return () => window.clearTimeout(timer);
   }, [payouts, soundEnabled]);
+  const previousActorRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const actor = !handFinished && !showdown && !spectating ? betting.toAct : null;
+    const previous = previousActorRef.current;
+    previousActorRef.current = actor;
+    if (previous === undefined || previous === actor || actor !== "you") return;
+    playSound("turn");
+  }, [betting.toAct, handFinished, showdown, spectating]);
+  const previousStreetRef = useRef(streetStep);
+  useEffect(() => {
+    if (previousStreetRef.current === streetStep) return;
+    previousStreetRef.current = streetStep;
+    if (streetStep > 0 && streetStep < 4) playSound("deal");
+  }, [streetStep]);
 
 
   const [seatConfirm, setSeatConfirm] = useState(false);
@@ -218,6 +236,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         const next = applyBettingAction(betting, actorId, owed > 0 ? { type: "call" } : { type: "check" });
         setBetting(next);
         setLastActions(prev => ({ ...prev, [actorId]: owed > 0 ? `CALL ${Math.min(owed, player.stack)}` : "CHECK" }));
+        playSound("action");
         setBettingMessage(`PLAYER ${actorId.slice(1)}：${owed > 0 ? "コール" : "チェック"}（自動デモ）`);
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
@@ -322,10 +341,15 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         {menuPage === "settings" && <div className={styles.menuFields}>
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
-          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>\n          <button type="button" disabled={!soundEnabled} onClick={() => { unlockAudio(); window.setTimeout(playAwardSound, 80); }}>♪ 勝利SEを試聴</button>
+          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>\n          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("turn")}>♪ 自分の番「ポッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("action")}>♪ 相手の行動「プッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("deal")}>♪ カード「シャシャッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("win")}>♪ 勝利「チャリチャリ」</button>
+          </div>
           <p>固定BET倍率</p>
           {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n}×</option>)}</select></label>)}
-          <small>BB表示と倍率はデモに反映。SEの音声再生・設定保存は未実装です。</small>
+          <small>BB表示と倍率はデモに反映。SEは各場面で再生されます。設定の保存は未実装です。</small>
         </div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
