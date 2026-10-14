@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { GoogleMatchRunner, RegeocodeRunner } from "./runner";
+import { GoogleHoursRunner, GoogleMatchRunner, RegeocodeRunner } from "./runner";
 import { resolveGoogleMatch, resetGoogleMatch } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +38,8 @@ type Row = {
 export default async function GoogleMatchPage() {
   const supabase = await createClient();
   const ACTIVE = ["approved", "listed", "pending"];
-  const [{ count: remaining }, { count: linked }, { data: review }, { count: geoRemaining }] = await Promise.all([
+  const hoursRefreshBefore = new Date(Date.now() - 25 * 86400 * 1000).toISOString();
+  const [{ count: remaining }, { count: linked }, { data: review }, { count: geoRemaining }, { count: hoursRemaining }, { count: withGoogleHours }] = await Promise.all([
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).is("google_place_id", null).is("google_checked_at", null),
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).not("google_place_id", "is", null),
     supabase
@@ -49,6 +50,20 @@ export default async function GoogleMatchPage() {
       .order("google_match_status")
       .limit(500),
     supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ACTIVE).is("geo_source", null),
+    supabase
+      .from("stores")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved")
+      .not("google_place_id", "is", null)
+      .or(
+        [
+          "and(hours.is.null,google_hours_fetched_at.is.null)",
+          `and(hours.is.null,google_hours_fetched_at.lt.${hoursRefreshBefore})`,
+          "and(hours.eq.,google_hours_fetched_at.is.null)",
+          `and(hours.eq.,google_hours_fetched_at.lt.${hoursRefreshBefore})`,
+        ].join(",")
+      ),
+    supabase.from("stores").select("id", { count: "exact", head: true }).eq("status", "approved").not("google_hours_text", "is", null),
   ]);
   const rows = (review ?? []) as Row[];
 
@@ -62,6 +77,7 @@ export default async function GoogleMatchPage() {
 
       <RegeocodeRunner remaining={geoRemaining ?? 0} />
       <GoogleMatchRunner remaining={remaining ?? 0} />
+      <GoogleHoursRunner remaining={hoursRemaining ?? 0} withHours={withGoogleHours ?? 0} />
 
       <h2 style={{ fontSize: 16, margin: "20px 0 8px" }}>確認が必要な店舗({rows.length}件)</h2>
       {rows.length === 0 && <p className="muted">いまのところありません。</p>}

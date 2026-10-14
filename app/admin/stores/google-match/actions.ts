@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { matchNextStores } from "@/lib/google-match";
 import { regeocodeNextStores } from "@/lib/regeocode";
+import { fetchNextGoogleHours } from "@/lib/google-hours";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -32,6 +33,14 @@ export async function runGoogleMatchBatch() {
 export async function runRegeocodeBatch() {
   await requireAdmin();
   return regeocodeNextStores(40);
+}
+
+/** 営業時間が空の店舗の営業時間をGoogleから取る(画面から繰り返し呼ぶ。月間上限あり) */
+export async function runGoogleHoursBatch() {
+  await requireAdmin();
+  const r = await fetchNextGoogleHours(30);
+  revalidatePath("/admin/stores/google-match");
+  return r;
 }
 
 /** 確認待ちの店舗への対応: 候補で確定 / 非公開にする / 確認済みにする */

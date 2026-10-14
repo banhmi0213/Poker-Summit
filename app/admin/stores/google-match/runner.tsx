@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { runGoogleMatchBatch, runRegeocodeBatch } from "./actions";
+import { runGoogleHoursBatch, runGoogleMatchBatch, runRegeocodeBatch } from "./actions";
 
 const LABEL: Record<string, string> = {
   matched: "結びつけ",
@@ -106,6 +106,61 @@ export function RegeocodeRunner({ remaining: initialRemaining }: { remaining: nu
           今回の結果: 取得 {done.ok}件 / 取得できず {done.failed}件
         </p>
       )}
+      {error && <p className="err" style={{ marginTop: 8 }}>{error}</p>}
+    </div>
+  );
+}
+
+/** 営業時間が空の店舗の営業時間を、Googleマップから取る(月850回まで=無料枠の範囲) */
+export function GoogleHoursRunner({ remaining: initialRemaining, withHours }: { remaining: number; withHours: number }) {
+  const router = useRouter();
+  const [running, setRunning] = useState(false);
+  const [remaining, setRemaining] = useState(initialRemaining);
+  const [done, setDone] = useState({ fetched: 0, found: 0 });
+  const [capReached, setCapReached] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setRunning(true);
+    setError(null);
+    let left = remaining;
+    try {
+      while (left > 0) {
+        const r = await runGoogleHoursBatch();
+        left = r.remaining;
+        setRemaining(r.remaining);
+        setDone((d) => ({ fetched: d.fetched + r.fetched, found: d.found + r.found }));
+        if (r.capReached) {
+          setCapReached(true);
+          break;
+        }
+        if (r.fetched === 0) break;
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRunning(false);
+      router.refresh();
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginBottom: 16 }}>
+      <p style={{ marginBottom: 4 }}>
+        Googleの営業時間を表示中: <strong>{withHours}店</strong> / まだ取っていない(または取り直しが必要な)店舗: <strong>{remaining}件</strong>
+      </p>
+      <p className="muted" style={{ marginBottom: 8, fontSize: 13 }}>
+        店舗が自分で営業時間を入れた店は取りません。毎晩の自動見直しでも少しずつ取り直します(Googleの無料枠内で月850回まで)。
+      </p>
+      <button className="btn primary" onClick={run} disabled={running || remaining === 0}>
+        {running ? "取得中…(このままお待ちください)" : remaining === 0 ? "完了" : "Googleから営業時間を取る"}
+      </button>
+      {done.fetched > 0 && (
+        <p className="muted" style={{ marginTop: 8, fontSize: 13 }}>
+          今回の結果: {done.fetched}件を確認 / 営業時間あり {done.found}件
+        </p>
+      )}
+      {capReached && <p className="err" style={{ marginTop: 8 }}>今月の上限(850回)に達したので止めました。続きは来月、自動で取ります。</p>}
       {error && <p className="err" style={{ marginTop: 8 }}>{error}</p>}
     </div>
   );

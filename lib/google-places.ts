@@ -168,3 +168,39 @@ export async function getPlaceBusinessStatus(placeId: string): Promise<string | 
     return null;
   }
 }
+
+export type PlaceOpeningHours = {
+  /** 「月曜日: 18時00分～2時00分」のような曜日ごとの表示用文字列(月曜始まり) */
+  weekdayText: string[] | null;
+  /** Googleの periods(曜日0=日曜、"HHMM")。構造化データ用 */
+  periods: unknown[] | null;
+  businessStatus: string | null;
+  notFound: boolean;
+};
+
+/**
+ * 営業時間を取る(2026/10)。opening_hours は「Contact Data」SKU(毎月1,000回まで無料)で
+ * 課金されるので、呼び出す回数は lib/google-hours.ts の月間上限で管理する。
+ */
+export async function getPlaceOpeningHours(placeId: string): Promise<PlaceOpeningHours | null> {
+  try {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+    url.searchParams.set("key", getApiKey());
+    url.searchParams.set("place_id", placeId);
+    url.searchParams.set("language", "ja");
+    url.searchParams.set("fields", "opening_hours,business_status");
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    const data = await res.json();
+    if (data.status === "NOT_FOUND") return { weekdayText: null, periods: null, businessStatus: "NOT_FOUND", notFound: true };
+    if (data.status !== "OK") return null;
+    const oh = data.result?.opening_hours;
+    return {
+      weekdayText: Array.isArray(oh?.weekday_text) && oh.weekday_text.length ? oh.weekday_text : null,
+      periods: Array.isArray(oh?.periods) && oh.periods.length ? oh.periods : null,
+      businessStatus: data.result?.business_status ?? null,
+      notFound: false,
+    };
+  } catch {
+    return null;
+  }
+}

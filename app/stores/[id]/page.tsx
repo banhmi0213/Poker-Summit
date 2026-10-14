@@ -51,9 +51,39 @@ type SeoStore = {
   instagram_url: string | null;
   google_place_id?: string | null;
   hours?: string | null;
+  google_hours_periods?: unknown;
 };
 
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+const PERIOD_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+/** Googleマップの営業時間(periods)を構造化データにする */
+function googleHoursSpec(periods: unknown): unknown[] | null {
+  if (!Array.isArray(periods) || !periods.length) return null;
+  const hhmm = (t: unknown) => (typeof t === "string" && /^\d{4}$/.test(t) ? `${t.slice(0, 2)}:${t.slice(2)}` : null);
+  // 24時間営業は「日曜0:00に開いて閉まらない」1件だけで表される
+  if (periods.length === 1 && !(periods[0] as any)?.close) {
+    return [{ "@type": "OpeningHoursSpecification", dayOfWeek: ALL_DAYS, opens: "00:00", closes: "23:59" }];
+  }
+  const out = periods
+    .map((p: any) => {
+      const day = PERIOD_DAYS[p?.open?.day];
+      const opens = hhmm(p?.open?.time);
+      const closes = hhmm(p?.close?.time);
+      return day && opens && closes ? { "@type": "OpeningHoursSpecification", dayOfWeek: day, opens, closes } : null;
+    })
+    .filter(Boolean);
+  return out.length ? out : null;
+}
+
+/** Googleの「月曜日: 18時00分～2時00分」を「月 18:00〜2:00」にして見やすくする */
+function formatGoogleHoursLine(line: string) {
+  return line
+    .replace(/^(.)曜日[:：]\s*/, "$1 ")
+    .replace(/(\d{1,2})時(\d{2})分/g, "$1:$2")
+    .replace(/[～~]/g, "〜");
+}
 
 /** 「18:00〜23:00」「21:00〜翌5:00」「24時間営業」のような毎日同じ営業時間だけを構造化データにする */
 function openingHoursSpec(hours: string | null | undefined) {
@@ -159,7 +189,8 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
     business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
   }
   if (sameAs.length) business.sameAs = sameAs;
-  const spec = openingHoursSpec(store.hours);
+  // 店舗が入れた営業時間を優先し、無ければGoogleマップの営業時間を使う
+  const spec = store.hours ? openingHoursSpec(store.hours) : googleHoursSpec(store.google_hours_periods);
   if (spec) business.openingHoursSpecification = spec;
   // Googleマップの店舗(place_id)と結びついていれば、地図のURLを示す(ローカル検索での同一店舗の判定に効く)
   if (store.google_place_id) {
@@ -423,7 +454,12 @@ export default async function StoreDetailPage({
           <StorePhotoGallery key={store.id} photos={photos ?? []} name={store.name} reference={store.id === "b56daf2a-4ab1-4ad1-b317-a0387ab3391e"} />
           <aside className="sd-info">
             <dl className="sd-info-list">
-              <div><dt><DetailIcon name="clock" />営業時間</dt><dd>{store.hours || "店舗にお問い合わせください"}</dd></div>
+              <div><dt><DetailIcon name="clock" />営業時間</dt><dd>{store.hours ? store.hours : Array.isArray(store.google_hours_text) && store.google_hours_text.length ? (
+                <>
+                  {(store.google_hours_text as string[]).map((line) => <span key={line} style={{ display: "block" }}>{formatGoogleHoursLine(line)}</span>)}
+                  <span className="muted" style={{ display: "block", fontSize: 11, marginTop: 4 }}>※Googleマップの情報です。変更されている場合があるので、来店前に店舗のSNS等でご確認ください。</span>
+                </>
+              ) : "店舗にお問い合わせください"}</dd></div>
               <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || "最寄り駅は店舗にお問い合わせください"}</dd></div>
               <div><dt><DetailIcon name="pin" />住所</dt><dd>{store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録"}</dd></div>
               <div><dt><DetailIcon name="phone" />電話番号</dt><dd>{store.tel ? <a href={`tel:${phone}`}>{store.tel}</a> : "未登録"}</dd></div>
