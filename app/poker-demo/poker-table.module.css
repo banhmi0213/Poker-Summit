@@ -86,3 +86,13 @@
 .miniCards{display:flex;gap:2px}.miniCards span{display:grid;place-items:center;width:25px;height:34px;background:#fff;color:#192b3b;border-radius:4px;font-weight:800;font-size:12px;box-shadow:0 2px 4px #0005}.miniCards .redCard{color:#dc2440}
 .demoSteps{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}.demoSteps>button{border:0;border-radius:8px;padding:10px 13px;background:#d5a74e;color:#142638;font-size:12px;font-weight:700;cursor:pointer}.demoSteps .reset{background:#344b5c;color:#fff}
 @media(max-width:420px){.miniCards span{width:20px;height:29px;font-size:10px}.opponentHand .handRank{font-size:8px;padding:2px 3px}.handWithRank .handRank{font-size:9px}}
+
+.opponentCardsLayer{position:absolute;inset:0;z-index:2;pointer-events:none}
+.showdownPosition{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px}
+.showdownTwo{top:10%;left:55%}
+.showdownThree{top:24%;left:14%}
+.showdownFour{top:24%;right:14%}
+.showdownFive{bottom:18%;left:14%}
+.showdownSix{bottom:18%;right:14%}
+.showdownPosition .miniCards span{width:clamp(22px,5.4vw,33px);height:clamp(31px,7.3vw,44px);font-size:clamp(11px,2.8vw,16px)}
+.showdownPosition .handRank{font-size:9px}
