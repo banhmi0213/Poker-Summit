@@ -78,3 +78,11 @@
 .seatDialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .seatDialogActions button{border:0;border-radius:8px;padding:11px 13px;color:white;background:#3c5468;cursor:pointer}
 .seatDialogActions button:last-child{background:#d8ad55;color:#1a2b3b;font-weight:700}
+
+/* Showdown hand labels and visible cards (demo only). */
+.handWithRank,.opponentHand{display:flex;flex-direction:column;align-items:center;gap:3px}
+.handRank{font-size:10px;line-height:1.3;color:#ffe08a;background:#14293ee8;border:1px solid #c69b46;border-radius:6px;padding:3px 5px;text-align:center;white-space:nowrap}
+.opponentHand{margin-top:3px}.opponentHand .handRank{font-size:9px}
+.miniCards{display:flex;gap:2px}.miniCards span{display:grid;place-items:center;width:25px;height:34px;background:#fff;color:#192b3b;border-radius:4px;font-weight:800;font-size:12px;box-shadow:0 2px 4px #0005}.miniCards .redCard{color:#dc2440}
+.demoSteps{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}.demoSteps>button{border:0;border-radius:8px;padding:10px 13px;background:#d5a74e;color:#142638;font-size:12px;font-weight:700;cursor:pointer}.demoSteps .reset{background:#344b5c;color:#fff}
+@media(max-width:420px){.miniCards span{width:20px;height:29px;font-size:10px}.opponentHand .handRank{font-size:8px;padding:2px 3px}.handWithRank .handRank{font-size:9px}}
