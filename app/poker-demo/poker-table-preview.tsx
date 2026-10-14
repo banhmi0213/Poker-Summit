@@ -91,20 +91,21 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const awardWinners = payouts ? clockwiseSeats.filter(id => (payouts[id] ?? 0) > 0) : [];
   const [soundEnabled, setSoundEnabled] = useState(true);
   soundEnabledRef.current = soundEnabled;
-  // Web Audio sound is synthesized locally; no external file or network request.
-  // Browsers require a user gesture before audio playback.
+  // Unlock Web Audio from any genuine user gesture, including menu and action buttons.
+  // Playback is synthesized locally and does not require audio assets.
   const unlockAudio = () => {
-    if (!soundEnabledRef.current || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
     try {
       if (!audioContextRef.current) audioContextRef.current = new AudioContext();
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
-    } catch { /* Audio is optional and must never interrupt gameplay. */ }
+    } catch { /* Audio is optional. */ }
   };
-  useEffect(() => {
-    if (!payouts || !soundEnabled) return;
+  const playAwardSound = () => {
+    if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
-    if (!context || context.state !== "running") return;
-    const timer = window.setTimeout(() => {
+    if (!context) return;
+    const play = () => {
+      if (context.state !== "running") return;
       try {
         const now = context.currentTime;
         [659.25, 830.61, 987.77].forEach((frequency, index) => {
@@ -114,14 +115,56 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
           oscillator.type = "sine";
           oscillator.frequency.setValueAtTime(frequency, start);
           gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(0.075, start + 0.018);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.28);
+          gain.gain.exponentialRampToValueAtTime(0.14, start + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
           oscillator.connect(gain);
           gain.connect(context.destination);
           oscillator.start(start);
-          oscillator.stop(start + 0.3);
+          oscillator.stop(start + 0.34);
         });
-      } catch { /* Silently skip unsupported audio playback. */ }
+      } catch { /* Do not interrupt the game if audio is unavailable. */ }
+    };
+    if (context.state === "running") play();
+    else void context.resume().then(play).catch(() => {});
+  };
+  useEffect(() => {
+    const activate = () => {
+      try {
+        if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+        if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+      } catch { /* Audio is optional. */ }
+    };
+    document.addEventListener("pointerdown", activate, { passive: true });
+    document.addEventListener("keydown", activate);
+    return () => {
+      document.removeEventListener("pointerdown", activate);
+      document.removeEventListener("keydown", activate);
+      void audioContextRef.current?.close().catch(() => {});
+      audioContextRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    if (!payouts || !soundEnabled) return;
+    const timer = window.setTimeout(() => {
+      const context = audioContextRef.current;
+      if (!context || context.state !== "running") return;
+      try {
+        const now = context.currentTime;
+        [659.25, 830.61, 987.77].forEach((frequency, index) => {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          const start = now + index * 0.115;
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(frequency, start);
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.14, start + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          oscillator.start(start);
+          oscillator.stop(start + 0.34);
+        });
+      } catch { /* Audio is optional. */ }
     }, 180);
     return () => window.clearTimeout(timer);
   }, [payouts, soundEnabled]);
@@ -279,7 +322,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         {menuPage === "settings" && <div className={styles.menuFields}>
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
-          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>\n          <button type="button" disabled={!soundEnabled} onClick={() => { unlockAudio(); window.setTimeout(playAwardSound, 80); }}>♪ 勝利SEを試聴</button>
           <p>固定BET倍率</p>
           {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n}×</option>)}</select></label>)}
           <small>BB表示と倍率はデモに反映。SEの音声再生・設定保存は未実装です。</small>
