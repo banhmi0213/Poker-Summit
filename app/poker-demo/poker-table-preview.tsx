@@ -102,7 +102,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
 }
 
 const sampleHands = [
-  { cards: ["K♥", "K♦"], rank: "ワンペア（K）" },
+  { cards: ["K♥", "K♦"], rank: "スリーカード（K）" },
   { cards: ["10♥", "10♠"], rank: "スリーカード（10）" },
   { cards: ["A♦", "J♦"], rank: "ハイカード（A）" },
   { cards: ["9♥", "9♦"], rank: "スリーカード（9）" },
