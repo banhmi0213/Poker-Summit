@@ -45,6 +45,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const [action, setAction] = useState<Action | null>(null);
   const [buttonIndex, setButtonIndex] = useState(5);
   const [payouts, setPayouts] = useState<Record<string,number> | null>(null);
+  const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialStacks);
   const [handFinished, setHandFinished] = useState(false);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
   const [betting, setBetting] = useState<BettingRound>(() => makeHand(initialStacks,5)!);
@@ -68,6 +69,11 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const playerAt = (id: string) => betting.players.find(p => p.id === id)!;
   const positionFor = (id:string) => positionName(id,buttonIndex);
   const displayStack = (id:string) => (playerAt(id).stack + (payouts?.[id] ?? 0)).toLocaleString();
+  const handResults = payouts ? clockwiseSeats.map(id => {
+    const finalStack = playerAt(id).stack + (payouts[id] ?? 0);
+    return { id, name: id === "you" ? member.displayName : "PLAYER " + id.slice(1), won: payouts[id] ?? 0, delta: finalStack - handStartingStacks[id] };
+  }) : [];
+  const winningPlayers = handResults.filter(p => p.won > 0);
   const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
@@ -196,6 +202,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     const nextButton = (buttonIndex + 1) % clockwiseSeats.length;
     // Demo reloads starting stacks when chips run out; a real table uses a rebuy/leave flow.
     const nextRound = makeHand(stacks,nextButton) ?? makeHand(initialStacks,nextButton)!;
+    setHandStartingStacks(stacks);
     setButtonIndex(nextButton); setBetting(nextRound); setPayouts(null);
     setLastActions({}); setTurnRemaining(20); setHandFinished(false);
     setBettingMessage("新しいハンド：BTNを時計回りに移動しSB 50 / BB 100を徴収しました（デモ）。");
@@ -233,6 +240,10 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
+      {payouts && <div className={styles.resultOverlay} role="status" aria-live="polite">
+        <strong>🏆 {winningPlayers.map(p => p.name).join("・")} がPOT獲得</strong>
+        <div className={styles.resultDeltas}>{handResults.map(p => <span key={p.id} className={p.delta > 0 ? styles.resultGain : p.delta < 0 ? styles.resultLoss : styles.resultEven}>{p.name} <b>{p.delta > 0 ? "+" : ""}{p.delta.toLocaleString()}</b></span>)}</div>
+      </div>}
       <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={displayStack("p3")} index={3} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={positionFor("p3")} lastAction={lastActions["p3"]} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={displayStack("p4")} index={4} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={positionFor("p4")} lastAction={lastActions["p4"]} /></div>
@@ -287,9 +298,9 @@ function Seat({ name, stack, index, active, seconds, positionLabel, lastAction }
     <div className={styles.seatAvatarRow}>
       <div className={styles.seatTimerRing} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div className={styles.avatar}>{index}</div></div>
 
+      {positionLabel && <span className={styles.seatPositionBadge}>{positionLabel}</span>}
     </div>
     <span>{name}</span><small>{stack}</small>
-    {positionLabel && <span className={styles.seatPositionBadge}>{positionLabel}</span>}
     {lastAction && <span className={styles.actionBadge}>{lastAction}</span>}
 
   </div>;
