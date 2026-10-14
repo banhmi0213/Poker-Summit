@@ -1,7 +1,6 @@
 /** Pure, server-authoritative Texas Hold'em primitives.
  * No network, persistence or wagering. Use a cryptographic random source in production.
  */
-import { randomInt } from "node:crypto";
 
 export type Suit = "c" | "d" | "h" | "s";
 export type Rank = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14;
@@ -11,15 +10,6 @@ export type HandScore = readonly [number, ...number[]];
 const suits: Suit[] = ["c", "d", "h", "s"];
 export function createDeck(): Card[] {
   return suits.flatMap(suit => Array.from({ length: 13 }, (_, i) => ({ suit, rank: (i + 2) as Rank })));
-}
-
-export function shuffleDeck(deck: readonly Card[]): Card[] {
-  const result = [...deck];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = randomInt(i + 1);
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
 }
 
 /** Returns lexicographically comparable scores: 8 straight flush to 0 high card. */
