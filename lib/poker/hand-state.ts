@@ -1,6 +1,7 @@
 /** Deterministic hand lifecycle. Only the server should own this state in multiplayer. */
 import type { Card } from "./engine";
-import { createDeck, shuffleDeck } from "./engine";
+import { createDeck } from "./engine";
+import { shuffleDeck } from "./server-shuffle";
 
 export type Street = "preflop" | "flop" | "turn" | "river" | "showdown";
 export type PlayerStatus = "active" | "folded" | "all-in";
