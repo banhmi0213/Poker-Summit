@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "オンラインポーカー UI試作
 export default async function PokerDemoPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login?next=/poker-demo");
+  if (!user) redirect("/signup");
   const { data: profile } = await supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle();
   const displayName = typeof user.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
     ? user.user_metadata.display_name.trim() : "会員";
