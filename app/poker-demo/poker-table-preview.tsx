@@ -196,7 +196,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         <span className={`${styles.positionMarker} ${styles.markerFive}`}>BB</span>
       </div>
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
-        {seats.map((seat, i) => (foldedSeats.includes(i + 2) || betting.players[i + 1].folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
+        {seats.map((seat, i) => (foldedSeats.includes(i + 2) || playerAt(`p${i + 2}`).folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
           {showdown && <strong className={styles.handRank}>{sampleHands[i].rank}</strong>}
           <div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => showdown
             ? <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>
