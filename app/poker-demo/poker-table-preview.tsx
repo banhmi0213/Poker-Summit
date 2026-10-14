@@ -81,7 +81,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   useEffect(() => {
     if (!payouts) { setAwardAnimationDone(false); return; }
     setAwardAnimationDone(false);
-    const timer = window.setTimeout(() => setAwardAnimationDone(true), 1900);
+    const timer = window.setTimeout(() => setAwardAnimationDone(true), 2900);
     return () => window.clearTimeout(timer);
   }, [payouts]);
   const awardDestinations: Record<string, string> = {
@@ -140,9 +140,17 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
           source.start(start); source.stop(start + 0.12);
         });
       } else {
-        [0, 0.13, 0.26, 0.39].forEach((delay, i) => {
-          tone([1320, 1568, 1175, 1760][i], delay, 0.22, 0.095);
-          tone([2640, 3136, 2350, 3520][i], delay + 0.008, 0.12, 0.025);
+        // Keep the original pleasant three-note victory cue, then add
+        // four bright metallic chip clinks ("charin charin charin charin").
+        [659.25, 830.61, 987.77].forEach((frequency, index) => {
+          tone(frequency, index * 0.115, 0.3, 0.10);
+        });
+        [0, 0.19, 0.38, 0.57].forEach((offset, i) => {
+          const delay = 0.49 + offset;
+          const pitch = [1, 1.09, 0.96, 1.13][i];
+          tone(1480 * pitch, delay, 0.27, 0.095, "triangle");
+          tone(2960 * pitch, delay + 0.009, 0.19, 0.045);
+          tone(4440 * pitch, delay + 0.016, 0.12, 0.019);
         });
       }
     } catch { /* Audio must never interrupt the game. */ }
