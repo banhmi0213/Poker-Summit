@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -46,6 +46,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const [buttonIndex, setButtonIndex] = useState(5);
   const [payouts, setPayouts] = useState<Record<string,number> | null>(null);
   const [awardAnimationDone, setAwardAnimationDone] = useState(false);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const soundEnabledRef = useRef(true);
   const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialStacks);
   const [handFinished, setHandFinished] = useState(false);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
@@ -79,7 +81,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   useEffect(() => {
     if (!payouts) { setAwardAnimationDone(false); return; }
     setAwardAnimationDone(false);
-    const timer = window.setTimeout(() => setAwardAnimationDone(true), 1900);
+    const timer = window.setTimeout(() => setAwardAnimationDone(true), 2900);
     return () => window.clearTimeout(timer);
   }, [payouts]);
   const awardDestinations: Record<string, string> = {
@@ -87,11 +89,108 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     p5: styles.awardP5, p6: styles.awardP6, you: styles.awardYou,
   };
   const awardWinners = payouts ? clockwiseSeats.filter(id => (payouts[id] ?? 0) > 0) : [];
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  soundEnabledRef.current = soundEnabled;
+  // Unlock Web Audio from any genuine user gesture, including menu and action buttons.
+  // Playback is synthesized locally and does not require audio assets.
+  const unlockAudio = () => {
+    if (typeof window === "undefined") return;
+    try {
+      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+    } catch { /* Audio is optional. */ }
+  };
+  type SoundKind = "turn" | "action" | "deal" | "win";
+  const playSound = (kind: SoundKind) => {
+    if (!soundEnabledRef.current) return;
+    const context = audioContextRef.current;
+    if (!context || context.state !== "running") return;
+    try {
+      const now = context.currentTime;
+      const tone = (frequency: number, delay: number, duration: number, volume: number, wave: OscillatorType = "sine") => {
+        const osc = context.createOscillator();
+        const gain = context.createGain();
+        const start = now + delay;
+        osc.type = wave; osc.frequency.setValueAtTime(frequency, start);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+        osc.connect(gain); gain.connect(context.destination);
+        osc.start(start); osc.stop(start + duration + 0.015);
+      };
+      if (kind === "turn") {
+        tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
+      } else if (kind === "action") {
+        tone(310, 0, 0.085, 0.085, "triangle");
+      } else if (kind === "deal") {
+        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * 0.15), context.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        [0, 0.12].forEach(delay => {
+          const source = context.createBufferSource();
+          const filter = context.createBiquadFilter();
+          const gain = context.createGain();
+          const start = now + delay;
+          source.buffer = buffer; filter.type = "bandpass";
+          filter.frequency.value = 2400; filter.Q.value = 0.65;
+          gain.gain.setValueAtTime(0.0001, start);
+          gain.gain.exponentialRampToValueAtTime(0.13, start + 0.014);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.105);
+          source.connect(filter); filter.connect(gain); gain.connect(context.destination);
+          source.start(start); source.stop(start + 0.12);
+        });
+      } else {
+        // Original three-note victory sound. A custom audio asset can replace this later.
+        [659.25, 830.61, 987.77].forEach((frequency, index) => {
+          tone(frequency, index * 0.115, 0.3, 0.10);
+        });
+      }
+    } catch { /* Audio must never interrupt the game. */ }
+  };
+  const previewSound = (kind: SoundKind) => {
+    unlockAudio();
+    window.setTimeout(() => playSound(kind), 100);
+  };
+  useEffect(() => {
+    const activate = () => {
+      try {
+        if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+        if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
+      } catch { /* Audio is optional. */ }
+    };
+    document.addEventListener("pointerdown", activate, { passive: true });
+    document.addEventListener("keydown", activate);
+    return () => {
+      document.removeEventListener("pointerdown", activate);
+      document.removeEventListener("keydown", activate);
+      void audioContextRef.current?.close().catch(() => {});
+      audioContextRef.current = null;
+    };
+  }, []);
+  useEffect(() => {
+    if (!payouts || !soundEnabled) return;
+    const timer = window.setTimeout(() => playSound("win"), 180);
+    return () => window.clearTimeout(timer);
+  }, [payouts, soundEnabled]);
+  const previousActorRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    const actor = !handFinished && !showdown && !spectating ? betting.toAct : null;
+    const previous = previousActorRef.current;
+    previousActorRef.current = actor;
+    if (previous === undefined || previous === actor || actor !== "you") return;
+    playSound("turn");
+  }, [betting.toAct, handFinished, showdown, spectating]);
+  const previousStreetRef = useRef(streetStep);
+  useEffect(() => {
+    if (previousStreetRef.current === streetStep) return;
+    previousStreetRef.current = streetStep;
+    if (streetStep > 0 && streetStep < 4) playSound("deal");
+  }, [streetStep]);
+
 
   const [seatConfirm, setSeatConfirm] = useState(false);
   const [gameType] = useState<"ring" | "tournament">("ring");
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [runTwice, setRunTwice] = useState(false);
   const [multipliers, setMultipliers] = useState([2, 3, 4]);
   const [feltColor, setFeltColor] = useState<"blue" | "green" | "black">("blue");
@@ -137,6 +236,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         const next = applyBettingAction(betting, actorId, owed > 0 ? { type: "call" } : { type: "check" });
         setBetting(next);
         setLastActions(prev => ({ ...prev, [actorId]: owed > 0 ? `CALL ${Math.min(owed, player.stack)}` : "CHECK" }));
+        playSound("action");
         setBettingMessage(`PLAYER ${actorId.slice(1)}：${owed > 0 ? "コール" : "チェック"}（自動デモ）`);
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
@@ -241,10 +341,15 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         {menuPage === "settings" && <div className={styles.menuFields}>
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
-          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>\n          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("turn")}>♪ 自分の番「ポッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("action")}>♪ 相手の行動「プッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("deal")}>♪ カード「シャシャッ」</button>
+            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("win")}>♪ 勝利「チャリチャリ」</button>
+          </div>
           <p>固定BET倍率</p>
           {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n}×</option>)}</select></label>)}
-          <small>BB表示と倍率はデモに反映。SEの音声再生・設定保存は未実装です。</small>
+          <small>BB表示と倍率はデモに反映。SEは各場面で再生されます。設定の保存は未実装です。</small>
         </div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
@@ -253,16 +358,16 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     <h1>オンラインポーカー テーブル試作</h1>
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
-    <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
+    <div className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
       {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
         {awardWinners.map(id => <div key={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
           <span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span>
           <b className={styles.awardAmount}>+{payouts[id].toLocaleString()}</b>
         </div>)}
       </div>}
-      <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} /></div>
-      <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={displayStack("p3")} index={3} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={positionFor("p3")} lastAction={lastActions["p3"]} /></div>
-      <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={displayStack("p4")} index={4} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={positionFor("p4")} lastAction={lastActions["p4"]} /></div>
+      <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} winnerGlow={Boolean(payouts?.p2)} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} /></div>
+      <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={displayStack("p3")} index={3} winnerGlow={Boolean(payouts?.p3)} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={positionFor("p3")} lastAction={lastActions["p3"]} /></div>
+      <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={displayStack("p4")} index={4} winnerGlow={Boolean(payouts?.p4)} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={positionFor("p4")} lastAction={lastActions["p4"]} /></div>
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
         {seats.map((seat, i) => (foldedSeats.includes(i + 2) || playerAt(`p${i + 2}`).folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
           {showdown && <strong className={styles.handRank}>{sampleHands[i].rank}</strong>}
@@ -276,10 +381,10 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", "K♠"].slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>
         <div className={styles.street}>{streetNames[streetStep]} · デモ表示</div>
       </div>
-      <div className={styles.edgeSeatFive}><Seat {...seats[3]} stack={displayStack("p5")} index={5} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} positionLabel={positionFor("p5")} lastAction={lastActions["p5"]} /></div>
-      <div className={styles.edgeSeatSix}><Seat {...seats[4]} stack={displayStack("p6")} index={6} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} positionLabel={positionFor("p6")} lastAction={lastActions["p6"]} /></div>
+      <div className={styles.edgeSeatFive}><Seat {...seats[3]} stack={displayStack("p5")} index={5} winnerGlow={Boolean(payouts?.p5)} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} positionLabel={positionFor("p5")} lastAction={lastActions["p5"]} /></div>
+      <div className={styles.edgeSeatSix}><Seat {...seats[4]} stack={displayStack("p6")} index={6} winnerGlow={Boolean(payouts?.p6)} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} positionLabel={positionFor("p6")} lastAction={lastActions["p6"]} /></div>
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
-      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div className={styles.selfInfo}>{positionFor("you") && <span className={styles.positionBadge}>{positionFor("you")}</span>}{lastActions.you && <span className={styles.actionBadge}>{lastActions.you}</span>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
+      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""} ${payouts?.you ? styles.winnerGlow : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div className={styles.selfInfo}>{positionFor("you") && <span className={styles.positionBadge}>{positionFor("you")}</span>}{lastActions.you && <span className={styles.actionBadge}>{lastActions.you}</span>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
     </div>
       {payouts && awardAnimationDone && <div className={styles.resultOverlay} role="status" aria-live="polite">
         <strong>🏆 {winningPlayers.map(p => p.name).join("・")} がPOT獲得</strong>
@@ -312,9 +417,9 @@ const sampleHands = [
   { cards: ["9♥", "9♦"], rank: "スリーカード（9）" },
   { cards: ["Q♠", "8♠"], rank: "ハイカード（K）" },
 ];
-function Seat({ name, stack, index, active, seconds, positionLabel, lastAction }: { name: string; stack: string; index: number; showdown: boolean; active: boolean; seconds: number; positionLabel?: string; lastAction?: string }) {
+function Seat({ name, stack, index, active, seconds, positionLabel, lastAction, winnerGlow }: { name: string; stack: string; index: number; showdown: boolean; active: boolean; seconds: number; positionLabel?: string; lastAction?: string; winnerGlow?: boolean }) {
   const progress = Math.max(0, Math.min(100, (1 - seconds / 20) * 100));
-  return <div className={`${styles.seat} ${active ? styles.seatActive : ""}`}>
+  return <div className={`${styles.seat} ${active ? styles.seatActive : ""} ${winnerGlow ? styles.winnerSeat : ""}`}>
     <div className={styles.seatAvatarRow}>
       <div className={styles.seatTimerRing} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div className={styles.avatar}>{index}</div></div>
 
