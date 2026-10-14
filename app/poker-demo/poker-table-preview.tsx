@@ -12,7 +12,7 @@ const seats = [
   { name: "PLAYER 6", stack: "1,900" },
 ];
 
-export default function PokerTablePreview() {
+export default function PokerTablePreview({ member }: { member: { displayName: string; avatarUrl: string | null } }) {
   const [action, setAction] = useState<Action | null>(null);
   const [raise, setRaise] = useState(100);
   const [remaining, setRemaining] = useState(20);
@@ -37,7 +37,7 @@ export default function PokerTablePreview() {
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}><span>POKER SUMMIT · TEXAS HOLD'EM</span><strong>UI PREVIEW</strong></div>
     <h1>オンラインポーカー テーブル試作</h1>
-    <p className={styles.notice}>これは画面・操作感を確認するためのデモです。実際の対戦、チップ増減、カード抽選、サーバー通信は行いません。</p>
+    <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。実際の対戦、チップ増減、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor}>
       <div className={styles.topSeats}><Seat {...seats[0]} index={2} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} index={3} /></div>
@@ -49,7 +49,7 @@ export default function PokerTablePreview() {
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} index={5} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} index={6} /></div>
-      <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(${remaining <= 5 ? "#f05b58" : "#f3c663"} ${remaining * 5}%, #42586c 0)` }}><div className={styles.avatar}>YOU</div></div><div><strong>あなた</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>
+      <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20} aria-valuenow={remaining} style={{ background: `conic-gradient(${remaining <= 5 ? "#f05b58" : "#f3c663"} ${remaining * 5}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>2,500 chips</small></div><div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>
     </div>
     <div className={styles.controls}>
       <div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div>
