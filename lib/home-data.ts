@@ -1,4 +1,5 @@
 import "server-only";
+import { getDomesticTournamentEvents, matchesEventLocation } from "@/lib/major-tournament-events";
 import { unstable_cache } from "next/cache";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { getPickupPool } from "@/lib/contracts";
@@ -15,6 +16,11 @@ export const HOME_CACHE_SECONDS = 60;
 async function loadHomePublicData(currentPref: string | null) {
   const supabase = createAnonClient();
   const now = new Date().toISOString();
+  let eventQuery = supabase.from("events")
+    .select(`id, title, location, start_at, end_at, category, banner_image_url, store_id, stores${currentPref ? "!inner" : ""}(name, pref, city)`)
+    .eq("status", "published")
+    .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`);
+  if (currentPref) eventQuery = eventQuery.eq("stores.pref", currentPref);
 
   const [
     { data: settings },
@@ -24,6 +30,7 @@ async function loadHomePublicData(currentPref: string | null) {
     { data: latestJobs },
     { data: latestPosts },
     { data: upcomingEvents },
+    domesticEvents,
     { data: popularCoupons },
     topBannerRows,
     pickupBannerRows,
@@ -55,13 +62,8 @@ async function loadHomePublicData(currentPref: string | null) {
       .order("updated_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(8),
-    supabase
-      .from("events")
-      .select("id, title, location, start_at, end_at, category, banner_image_url, store_id, stores(name, pref, city)")
-      .eq("status", "published")
-      .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`)
-      .order("start_at", { ascending: true })
-      .limit(8),
+    eventQuery.order("start_at", { ascending: true }).limit(8),
+    getDomesticTournamentEvents(supabase, now),
     supabase
       .from("coupons")
       .select("id, title, discount, valid_until, banner_image_url, store_id, stores(name, category, pref, city)")
@@ -78,8 +80,11 @@ async function loadHomePublicData(currentPref: string | null) {
   ]);
 
   // 開催中のイベントがあればそれを、なければこれからのイベントを出す
-  const liveEvents = (upcomingEvents ?? []).filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 4);
-  const nextEvents = (upcomingEvents ?? []).filter((ev: any) => !ev.start_at || ev.start_at > now).slice(0, 4);
+  const combinedEvents = [...(upcomingEvents ?? []), ...domesticEvents]
+    .filter(ev => matchesEventLocation(ev, { pref: currentPref || undefined }))
+    .sort((a, b) => (a.start_at ?? "").localeCompare(b.start_at ?? "") || a.id.localeCompare(b.id));
+  const liveEvents = combinedEvents.filter((ev: any) => ev.start_at && ev.start_at <= now).slice(0, 4);
+  const nextEvents = combinedEvents.filter((ev: any) => !ev.start_at || ev.start_at > now).slice(0, 4);
   const isEventsLive = liveEvents.length > 0;
   const displayEvents = isEventsLive ? liveEvents : nextEvents;
 
@@ -118,7 +123,7 @@ async function loadHomePublicData(currentPref: string | null) {
   };
 }
 
-export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v2"], {
+export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v3"], {
   revalidate: HOME_CACHE_SECONDS,
   tags: ["public-stores"],
 });

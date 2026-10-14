@@ -288,9 +288,9 @@ export default async function HomePage({
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
             const status = getEventStatus(ev, now);
             const photo = ev.banner_image_url;
-            return <Link className="home-event-card" href={`/events/${ev.id}`} key={ev.id}>
-              <div className="home-event-photo">{photo ? <img src={photo} alt={ev.title} loading="lazy" /> : <EventSign title={ev.title} category={ev.category} startAt={ev.start_at} venue={ev.stores?.name || ev.location} />}</div>
-              <div className="home-event-body"><div className="home-event-date">{ev.start_at ? <><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month:"2-digit", day:"2-digit", timeZone:"Asia/Tokyo" })}</strong><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit", timeZone:"Asia/Tokyo" })}</span></> : <span>日時未定</span>}</div>
+            return <Link className="home-event-card" href={ev.href || `/events/${ev.id}`} key={ev.id}>
+              <div className="home-event-photo">{photo ? <img src={photo} alt={ev.title} loading="lazy" /> : <EventSign title={ev.title} category={ev.category} startAt={ev.start_at} dateOnly={ev.all_day} venue={ev.stores?.name || ev.location} />}</div>
+              <div className="home-event-body"><div className="home-event-date">{ev.start_at ? <><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month:"2-digit", day:"2-digit", timeZone:"Asia/Tokyo" })}</strong><span>{ev.all_day ? (ev.end_date !== ev.start_date ? `〜${ev.end_date.slice(5).replace("-", "/")}` : "開催日") : new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit", timeZone:"Asia/Tokyo" })}</span></> : <span>日時未定</span>}</div>
                 <div className="home-event-copy"><h3><ReadableName name={ev.title} /></h3><p><ReadableName name={ev.stores?.name || ""} /></p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る ›</span></div>
               </div>
             </Link>;
