@@ -55,3 +55,6 @@
   .activeAvatar .avatar{width:34px;height:34px}
   .controls{padding:10px}
 }
+
+/* Signed-in member avatar, scoped to the poker demo. */
+.memberAvatarImage{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}.activeAvatar .avatar{overflow:hidden}.memberName{display:block;max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
