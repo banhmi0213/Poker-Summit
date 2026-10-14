@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import styles from "./poker-table.module.css";
-import { applyBettingAction, createBettingRound, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
+import { applyBettingAction, beginNextBettingStreet, createBettingRound, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 const seats = [
@@ -15,6 +15,7 @@ const seats = [
 
 export default function PokerTablePreview({ member, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; isGuestPreview?: boolean; initialSpectating?: boolean }) {
   const [action, setAction] = useState<Action | null>(null);
+  const [handFinished, setHandFinished] = useState(false);
   const [betting, setBetting] = useState<BettingRound>(() => createBettingRound([
     { id: "you", stack: 2500, committed: 0 },
     { id: "p2", stack: 2500 }, { id: "p3", stack: 1850 },
@@ -31,6 +32,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const timeBankSeconds = 20;
   const demoTimeBankLimit = 1; // Future tournament configuration will supply this limit.
   const [running, setRunning] = useState(true);
+  const isYourTurn = betting.toAct === "you" && !handFinished && !showdown && !spectating;
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
   const [spectating, setSpectating] = useState(initialSpectating);
@@ -45,12 +47,12 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const bigBlind = 100;
   const showChips = (value: number) => displayUnit === "bb" ? `${(value / bigBlind).toFixed(1)} BB` : `${value.toLocaleString()} chips`;
   useEffect(() => {
-    if (!running || action || remaining === 0) return;
+    if (!running || !isYourTurn || remaining === 0) return;
     const timer = window.setTimeout(() => setRemaining(t => Math.max(0, t - 1)), 1000);
     return () => window.clearTimeout(timer);
-  }, [running, action, remaining]);
+  }, [running, isYourTurn, remaining]);
   const choose = (next: Action) => {
-    if (remaining <= 0 || showdown || action || spectating) return;
+    if (remaining <= 0 || !isYourTurn) return;
     const player = betting.players[0];
     const owed = betting.currentBet - player.committed;
     let betAction: BettingAction;
@@ -68,10 +70,77 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       setBettingMessage(error instanceof Error ? error.message : "操作を処理できませんでした");
     }
   };
+  // Demo-only bots: check when free, otherwise call (or go all-in).
+  // In a real match the server, not the browser, will own this progression.
+  useEffect(() => {
+    if (handFinished || showdown || spectating) return;
+    const actorId = betting.toAct;
+    if (!actorId || actorId === "you") return;
+    const timer = window.setTimeout(() => {
+      const player = betting.players.find(p => p.id === actorId);
+      if (!player) return;
+      const owed = betting.currentBet - player.committed;
+      try {
+        const next = applyBettingAction(betting, actorId, owed > 0 ? { type: "call" } : { type: "check" });
+        setBetting(next);
+        setBettingMessage(`PLAYER ${actorId.slice(1)}：${owed > 0 ? "コール" : "チェック"}（自動デモ）`);
+      } catch (error) {
+        setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
+      }
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [betting, handFinished, showdown, spectating]);
+
+  // The next street begins only when every live player has acted and matched
+  // the highest contribution, or cannot act because they are all-in.
+  useEffect(() => {
+    if (handFinished || showdown || spectating || betting.toAct !== null) return;
+    const timer = window.setTimeout(() => {
+      const live = betting.players.filter(p => !p.folded);
+      if (live.length <= 1) {
+        setHandFinished(true);
+        setRunning(false);
+        setBettingMessage(`${live[0]?.id === "you" ? "あなた" : "PLAYER " + (live[0]?.id.slice(1) ?? "")} の勝利（フォールドによる終了・分配前のデモ）`);
+        return;
+      }
+      if (streetStep >= 3) {
+        setStreetStep(4);
+        setShowdown(true);
+        setRunning(false);
+        setBettingMessage("ショーダウン（デモ）。勝敗・ポット分配は未実装です。");
+        return;
+      }
+      const nextStep = streetStep + 1;
+      const first = betting.players.find(p => !p.folded && !p.allIn);
+      setStreetStep(nextStep);
+      if (!first) {
+        // Everyone remaining is all-in: show the rest of the board.
+        setStreetStep(4);
+        setShowdown(true);
+        setRunning(false);
+        return;
+      }
+      setBetting(beginNextBettingStreet(betting, first.id));
+      setAction(null);
+      setRemaining(20);
+      setRunning(true);
+      setBettingMessage(`${streetNames[nextStep]}：次のベットラウンドです（自動デモ）`);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [betting, handFinished, showdown, spectating, streetStep]);
+
+  useEffect(() => {
+    if (betting.toAct === "you" && !handFinished && !showdown && !spectating) {
+      setRemaining(20);
+      setRunning(true);
+      setAction(null);
+    }
+  }, [betting.toAct, handFinished, showdown, spectating]);
+
   const reset = () => { setBetting(createBettingRound([
     { id: "you", stack: 2500 }, { id: "p2", stack: 2500 }, { id: "p3", stack: 1850 },
     { id: "p4", stack: 3100 }, { id: "p5", stack: 2260 }, { id: "p6", stack: 1900 },
-  ], 100, "you")); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
+  ], 100, "you")); setHandFinished(false); setBettingMessage("チップとポットを初期化しました。"); setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setTimeBanksUsed(0); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -103,11 +172,11 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
-      <div className={styles.topSeats}><Seat {...seats[0]} index={2} showdown={showdown} /></div>
-      <div className={styles.edgeSeatThree}><Seat {...seats[1]} index={3} showdown={showdown} /></div>
-      <div className={styles.edgeSeatFour}><Seat {...seats[2]} index={4} showdown={showdown} /></div>
+      <div className={styles.topSeats}><Seat {...seats[0]} stack={betting.players[1].stack.toLocaleString()} index={2} showdown={showdown} /></div>
+      <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={betting.players[2].stack.toLocaleString()} index={3} showdown={showdown} /></div>
+      <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={betting.players[3].stack.toLocaleString()} index={4} showdown={showdown} /></div>
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
-        {seats.map((seat, i) => foldedSeats.includes(i + 2) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
+        {seats.map((seat, i) => (foldedSeats.includes(i + 2) || betting.players[i + 1].folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
           {showdown && <strong className={styles.handRank}>{sampleHands[i].rank}</strong>}
           <div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => showdown
             ? <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>
@@ -119,26 +188,26 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", "K♠"].slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>
         <div className={styles.street}>{streetNames[streetStep]} · デモ表示</div>
       </div>
-      <div className={styles.edgeSeatFive}><Seat {...seats[3]} index={5} showdown={showdown} /></div>
-      <div className={styles.edgeSeatSix}><Seat {...seats[4]} index={6} showdown={showdown} /></div>
+      <div className={styles.edgeSeatFive}><Seat {...seats[3]} stack={betting.players[4].stack.toLocaleString()} index={5} showdown={showdown} /></div>
+      <div className={styles.edgeSeatSix}><Seat {...seats[4]} stack={betting.players[5].stack.toLocaleString()} index={6} showdown={showdown} /></div>
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
       {!spectating && <div className={styles.self}><div className={styles.activeAvatar} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar}>{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div><strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(betting.players[0].stack)}</small></div>{action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>ハイカード（A）</strong>}<div className={styles.hole}><span>A♠</span><span>Q♥</span></div></div>}</div>}
     </div>
     {!spectating ? <div className={styles.controls}>
-      <div className={styles.turnHeader}><div className={styles.turn}>あなたの番（サンプル） · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || action !== null || showdown || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
+      <div className={styles.turnHeader}><div className={styles.turn}>{isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : "相手の番"} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || !isYourTurn || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
 
       <label htmlFor="poker-demo-raise">レイズ額: {showChips(raise)}</label>
       <input id="poker-demo-raise" type="range" min={100} max={betting.players[0].stack + betting.players[0].committed} step={50} value={raise} onChange={e => setRaise(Number(e.target.value))} />
       <div className={styles.quickBets}>{multipliers.map((m,i) => <button type="button" key={i} onClick={() => setRaise(Math.min(betting.players[0].stack + betting.players[0].committed, m * bigBlind))}>{m}×</button>)}<button type="button" onClick={() => setRaise(betting.players[0].stack + betting.players[0].committed)}>ALL-IN</button></div>
       <div className={styles.actions}>
-        <button type="button" disabled={remaining === 0 || action !== null || showdown} onClick={() => choose("FOLD")}>フォールド</button>
-        <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CHECK")}>チェック</button>
+        <button type="button" disabled={remaining === 0 || !isYourTurn} onClick={() => choose("FOLD")}>フォールド</button>
+        <button type="button" disabled={remaining === 0 || !isYourTurn} onClick={() => choose("CHECK")}>チェック</button>
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("CALL")}>コール</button>
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("RAISE")}>レイズ</button>
       </div>
       <p role="status" aria-live="polite">{bettingMessage}</p>
       <div className={styles.demoFoldControls}><span>相手のフォールド確認（デモ）</span>{seats.map((seat, i) => <button type="button" key={seat.name} aria-pressed={foldedSeats.includes(i + 2)} onClick={() => setFoldedSeats(prev => prev.includes(i + 2) ? prev.filter(n => n !== i + 2) : [...prev, i + 2])}>P{i + 2} {foldedSeats.includes(i + 2) ? "復帰" : "FOLD"}</button>)}</div>
-      <div className={styles.demoSteps}><button type="button" disabled={streetStep === 4} onClick={() => { const next = Math.min(4, streetStep + 1); setStreetStep(next); setShowdown(next === 4); setRunning(false); }}>{streetStep === 4 ? "ショーダウン表示中" : `次へ：${streetNames[streetStep + 1]}（デモ）`}</button><button className={styles.reset} type="button" onClick={reset}>デモをリセット</button></div>
+      <div className={styles.demoSteps}><button type="button" disabled onClick={() => {}}>{streetStep === 4 ? "ショーダウン表示中" : `自動進行中：${streetNames[streetStep + 1]}`}</button><button className={styles.reset} type="button" onClick={reset}>デモをリセット</button></div>
     </div> : <div className={styles.spectatorPanel}>観戦モード：操作ボタンは非表示です。左上の☰ → 観戦から席に戻れます。</div>}
     {seatConfirm && <div className={styles.seatOverlay}><div className={styles.seatDialog} role="dialog" aria-modal="true" aria-labelledby="seat-confirm-title"><h2 id="seat-confirm-title">着席の確認</h2><p>この空席に着席しますか？</p><p>デモのため、実際の着席やチップ移動は行いません。</p><div className={styles.seatDialogActions}><button type="button" onClick={() => setSeatConfirm(false)}>キャンセル</button><button type="button" onClick={() => { setSpectating(false); setSeatConfirm(false); reset(); }}>着席する</button></div></div></div>}
   </section>;
