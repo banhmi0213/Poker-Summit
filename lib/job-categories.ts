@@ -27,3 +27,12 @@ export function matchesJobRole(job: { job_role?: string | null; title?: string |
   if (role === "ホールスタッフ") return /ホールスタッフ|フロアスタッフ/.test(job.title ?? "");
   return false;
 }
+
+export const JOB_FILTERS = ["ディーラー", "スポット", "ホールスタッフ", "正社員"] as const;
+export function readJobFilters(value?: string | string[]) {
+  const values = Array.isArray(value) ? value : value ? [value] : [];
+  return JOB_FILTERS.filter(category => values.includes(category));
+}
+export function matchesJobFilters(job: { job_role?: string | null; title?: string | null; job_type?: string | null }, filters: readonly string[]) {
+  return !filters.length || filters.some(category => category === "正社員" ? job.job_type === "正社員" : category !== "スポット" && matchesJobRole(job, category));
+}

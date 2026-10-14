@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const ts=require('typescript');
+const source=fs.readFileSync('lib/job-categories.ts','utf8');
+const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;
+const box={exports:{}};new Function('module','exports',compiled)(box,box.exports);
+const {readJobFilters,matchesJobFilters}=box.exports;
+assert.deepEqual(readJobFilters(['正社員','ディーラー','invalid','ディーラー']),['ディーラー','正社員']);
+assert.deepEqual(readJobFilters(),[]);
+assert(matchesJobFilters({job_role:'ディーラー',job_type:'正社員'},['ディーラー']));
+assert(matchesJobFilters({job_role:'ディーラー',job_type:'正社員'},['正社員']));
+assert(matchesJobFilters({job_role:'ホールスタッフ',job_type:'アルバイト'},['ディーラー','ホールスタッフ']));
+assert(!matchesJobFilters({job_role:'ホールスタッフ'},['ディーラー']));
+assert(!matchesJobFilters({job_role:'ディーラー'},['スポット']));
+assert(matchesJobFilters({title:'ディーラー募集'},['ディーラー']));
+assert(matchesJobFilters({job_role:'バーテンダー'},[]));
+assert(!matchesJobFilters({job_role:'ホールスタッフ',title:'ディーラー募集'},['ディーラー']));
+console.log('job multi filters: passed');
