@@ -160,3 +160,21 @@
 @media(max-width:480px){
   .table[data-showdown=false] .showdownTwo{left:59%;top:7%}
 }
+
+/* Active seat, turn timer and compact action/position indicators. */
+.seatAvatarRow{display:flex;align-items:center;justify-content:center;gap:3px}
+.seatTimerRing{border-radius:50%;padding:3px;background:#42586c;display:grid;place-items:center}
+.seatTimerRing .avatar{margin:0}
+.seatActive .seatTimerRing{box-shadow:0 0 9px #f2c15f}
+.positionBadge{display:inline-block;background:#f3c35e;color:#14283a;border:1px solid #fff0bc;border-radius:5px;padding:1px 4px;font-size:9px;font-weight:900;line-height:1.4;white-space:nowrap}
+.actionBadge{display:inline-block;max-width:92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid #d8b365;background:#142c43e8;color:#ffdb88;border-radius:5px;padding:2px 4px;font-size:9px;font-weight:800;line-height:1.3}
+.turnSeconds{font-size:9px;color:#ffe09c;font-weight:800}
+.selfInfo{display:flex;flex-direction:column;gap:2px;align-items:flex-start}
+.turnActive{box-shadow:0 0 0 2px #e6bb64,0 0 14px #e7b953aa}
+@media(max-width:480px){
+ .seatAvatarRow{gap:2px}
+ .seatTimerRing{padding:2px}
+ .positionBadge{font-size:8px;padding:1px 3px}
+ .actionBadge{font-size:8px;max-width:74px;padding:1px 3px}
+ .turnSeconds{font-size:8px}
+}
