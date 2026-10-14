@@ -1,9 +1,10 @@
+import { couponCategoryLabel } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "../coupons-actions";
-import { COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
+import { CouponCategorySelect } from "@/app/coupon-category-select";
 
 // /store/profile 1ページの中の1セクションだったクーポン管理を、独立した
 // ページへ分離(2026/09/30)。バナー画像はファイルアップロード対応
@@ -60,17 +61,7 @@ export default async function StoreCouponsPage() {
             <span className="muted">説明</span>
             <textarea name="description" rows={3} />
           </div>
-          <div className="field">
-            <span className="muted">特典タイプ（任意・一覧の絞り込みに使われます）</span>
-            <select name="offerType" defaultValue="">
-              <option value="">未設定</option>
-              {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CouponCategorySelect value={""} />
           <div className="field">
             <span className="muted">クーポンコード</span>
             <input type="text" name="code" />
@@ -99,9 +90,10 @@ export default async function StoreCouponsPage() {
             <h3><ReadableName name={c.title} /></h3>
             <span className="badge">{c.active ? "公開中" : "停止中"}</span>
           </div>
+          {!c.offer_type && <p className="small" style={{ color: "#795010" }}>掲載カテゴリが未設定です。「編集」から選択するとカテゴリ別一覧にも掲載されます。</p>}
           {c.offer_type && (
             <span className="badge outline" style={{ marginTop: 4 }}>
-              {c.offer_type}
+              {couponCategoryLabel(c.offer_type)}
             </span>
           )}
           {c.banner_image_url && (
@@ -159,17 +151,7 @@ export default async function StoreCouponsPage() {
                 <span className="muted">説明</span>
                 <textarea name="description" rows={3} defaultValue={c.description ?? ""} />
               </div>
-              <div className="field">
-                <span className="muted">特典タイプ（任意・一覧の絞り込みに使われます）</span>
-                <select name="offerType" defaultValue={c.offer_type ?? ""}>
-                  <option value="">未設定</option>
-                  {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CouponCategorySelect value={c.offer_type ?? ""} />
               <div className="field">
                 <span className="muted">クーポンコード</span>
                 <input type="text" name="code" defaultValue={c.code ?? ""} />

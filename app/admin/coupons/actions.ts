@@ -1,5 +1,6 @@
 "use server";
 
+import { requireCouponCategory } from "@/lib/coupon-categories";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -15,6 +16,7 @@ export async function setCouponActive(id: string, active: boolean) {
 
   await logAdminAction(supabase, active ? "coupon_activate" : "coupon_deactivate", "coupon", id);
   revalidatePath("/admin/coupons");
+  revalidatePath("/coupons");
 }
 
 export async function deleteCoupon(id: string) {
@@ -27,6 +29,7 @@ export async function deleteCoupon(id: string) {
 
   await logAdminAction(supabase, "coupon_delete", "coupon", id);
   revalidatePath("/admin/coupons");
+  revalidatePath("/coupons");
 }
 
 export async function createCouponByAdmin(formData: FormData) {
@@ -40,7 +43,7 @@ export async function createCouponByAdmin(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
-  const offerType = String(formData.get("offerType") ?? "").trim();
+  const offerType = requireCouponCategory(String(formData.get("offerType") ?? "").trim());
 
   if (!storeId) {
     throw new Error("店舗を選択してください。");
@@ -70,6 +73,7 @@ export async function createCouponByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "coupon_create", "coupon", data?.id, { storeId, title });
   revalidatePath("/admin/coupons");
+  revalidatePath("/coupons");
 }
 
 export async function updateCouponByAdmin(formData: FormData) {
@@ -83,7 +87,7 @@ export async function updateCouponByAdmin(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
-  const offerType = String(formData.get("offerType") ?? "").trim();
+  const offerType = requireCouponCategory(String(formData.get("offerType") ?? "").trim());
 
   if (!title) {
     throw new Error("クーポンのタイトルを入力してください。");
@@ -108,6 +112,7 @@ export async function updateCouponByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "coupon_edit", "coupon", couponId);
   revalidatePath("/admin/coupons");
+  revalidatePath("/coupons");
 
   // 独立した編集ページ(/admin/coupons/[id]/edit)から呼ばれるようになったので、
   // 保存後は一覧に戻す(admin/stores・admin/jobs の編集ページと同じパターン)。

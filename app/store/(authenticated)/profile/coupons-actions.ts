@@ -1,5 +1,6 @@
 "use server";
 
+import { requireCouponCategory } from "@/lib/coupon-categories";
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
@@ -42,7 +43,7 @@ export async function createCoupon(formData: FormData) {
   // 特典タイプ(2026/10、「チップと検索欄を実際にクーポンを絞り込める機能に
   // する」との指示でcoupons.offer_typeを新設)。COUPON_OFFER_TYPE_OPTIONS
   // のいずれかか、未設定(空文字→null)。
-  const offerType = String(formData.get("offerType") ?? "").trim();
+  const offerType = requireCouponCategory(String(formData.get("offerType") ?? "").trim());
   const bannerFile = formData.get("bannerImage");
 
   if (!title) {
@@ -79,6 +80,7 @@ export async function createCoupon(formData: FormData) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/coupons");
+  revalidatePath("/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -97,6 +99,7 @@ export async function deactivateCoupon(couponId: string, storeId: string) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/coupons");
+  revalidatePath("/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -112,7 +115,7 @@ export async function updateCoupon(formData: FormData) {
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
   const usageLimit = usageLimitRaw ? parseInt(usageLimitRaw, 10) : null;
-  const offerType = String(formData.get("offerType") ?? "").trim();
+  const offerType = requireCouponCategory(String(formData.get("offerType") ?? "").trim());
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
 
@@ -166,6 +169,7 @@ export async function updateCoupon(formData: FormData) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/coupons");
+  revalidatePath("/coupons");
   revalidatePath(`/stores/${storeId}`);
 }
 
@@ -195,5 +199,6 @@ export async function deleteCoupon(couponId: string, storeId: string) {
 
   revalidatePath("/store/profile");
   revalidatePath("/store/profile/coupons");
+  revalidatePath("/coupons");
   revalidatePath(`/stores/${storeId}`);
 }

@@ -2,7 +2,7 @@ import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { setCouponActive, deleteCoupon, createCouponByAdmin } from "./actions";
-import { COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
+import { CouponCategorySelect } from "@/app/coupon-category-select";
 
 export default async function AdminCouponsPage({
   searchParams,
@@ -77,17 +77,7 @@ export default async function AdminCouponsPage({
             <span className="muted">説明</span>
             <textarea name="description" rows={2} />
           </div>
-          <div className="field">
-            <span className="muted">特典タイプ（公開ページの絞り込みに使われます）</span>
-            <select name="offerType" defaultValue="">
-              <option value="">未設定</option>
-              {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CouponCategorySelect value={""} />
           <div className="field">
             <span className="muted">クーポンコード</span>
             <input type="text" name="code" />

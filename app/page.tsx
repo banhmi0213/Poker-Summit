@@ -1,3 +1,5 @@
+import { CouponCategoryEntrances } from "./coupon-category-entrances";
+import { couponCategoryHref } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { EventSign } from "./event-sign";
@@ -138,7 +140,6 @@ export default async function HomePage({
     now,
     latestJobs,
     latestPosts,
-    popularCoupons,
     displayEvents,
     isEventsLive,
     memberCountRaw,
@@ -298,12 +299,8 @@ export default async function HomePage({
         </section>
         {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href="/coupons">すべてのクーポンを見る →</Link></div>
-          {!popularCoupons?.length && <p className="muted">現在利用可能なクーポンはありません。</p>}
-          <div className="home-grid home-grid-three">{popularCoupons?.map((c: any) => <Link href={`/stores/${c.store_id}`} className="home-coupon-card" key={c.id}>
-            <div className="home-coupon-image">{c.banner_image_url ? <img src={c.banner_image_url} alt={c.title} loading="lazy" /> : <div><span>COUPON</span><strong>{c.discount || "店舗特典"}</strong><span>POKER SUMMIT</span></div>}</div>
-            <div className="home-coupon-copy"><h3><ReadableName name={c.title} /></h3><p><ReadableName name={c.stores?.name || ""} /></p><p className="home-location">📍 {[c.stores?.pref,c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
-          </Link>)}</div>
+          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る →</Link></div>
+          <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
         </section>
 
         <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>

@@ -1,3 +1,4 @@
+import { couponCategoryLabel, matchesCouponLocation } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Image from "next/image";
@@ -33,10 +34,11 @@ function truncate(text: string, max: number) {
 export default async function CouponsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; pref?: string; area?: string; offerType?: string; sort?: string; onlyAvailable?: string };
+  searchParams: { q?: string; pref?: string; area?: string; region?: string; offerType?: string; sort?: string; onlyAvailable?: string };
 }) {
   const q = searchParams.q?.trim() ?? "";
   const pref = searchParams.pref ?? "";
+  const region = searchParams.region ?? "";
   const area = pref ? searchParams.area ?? "" : "";
   const offerType = searchParams.offerType ?? "";
   // 並び替え。既定は「有効期限が近い順」(expiry)、もう一方は「新着順」(new)。
@@ -61,6 +63,7 @@ export default async function CouponsPage({
     const params = new URLSearchParams();
     if (nextQ) params.set("q", nextQ);
     if (nextPref) params.set("pref", nextPref);
+    if (!nextPref && region) params.set("region", region);
     if (area && nextPref === pref) params.set("area", area);
     if (nextOfferType) params.set("offerType", nextOfferType);
     if (nextSort && nextSort !== "expiry") params.set("sort", nextSort);
@@ -84,8 +87,7 @@ export default async function CouponsPage({
   let coupons = (rawCoupons ?? []).filter(
     (c: any) => c.stores?.status === "approved" || c.stores?.status === "listed"
   );
-  if (pref) coupons = coupons.filter((c: any) => c.stores?.pref === pref);
-  if (area) coupons = coupons.filter((c: any) => [c.stores?.city, c.stores?.address].some(value => value?.includes(area)));
+  coupons = coupons.filter((c: any) => matchesCouponLocation(c.stores, pref, area, region));
   if (offerType) coupons = coupons.filter((c: any) => c.offer_type === offerType);
   if (q) {
     coupons = coupons.filter(
@@ -153,6 +155,7 @@ export default async function CouponsPage({
             }}
           />
           {offerType && <input type="hidden" name="offerType" value={offerType} />}
+          {!pref && region && <input type="hidden" name="region" value={region} />}
           <PrefAreaSelect prefOptions={PREF_OPTIONS} prefLabel="都道府県" initialPref={pref} initialArea={area} />
           <button type="submit" className="btn primary" style={{ fontSize: 13 }}>
             検索
@@ -169,7 +172,7 @@ export default async function CouponsPage({
               href={buildHref({ offerType: t })}
               className={`chip ${offerType === t ? "active" : ""}`}
             >
-              {t}
+              {couponCategoryLabel(t)}
             </Link>
           ))}
         </div>
@@ -184,11 +187,12 @@ export default async function CouponsPage({
             marginBottom: 14,
           }}
         >
-          <h2 style={{ fontSize: 17 }}>クーポン一覧　{list.length}件</h2>
+          <h2 style={{ fontSize: 17 }}>{offerType ? couponCategoryLabel(offerType) : "クーポン"}一覧　{list.length}件</h2>
           <form method="get" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <input type="hidden" name="q" value={q} />
             <input type="hidden" name="pref" value={pref} />
             <input type="hidden" name="area" value={area} />
+            {!pref && region && <input type="hidden" name="region" value={region} />}
             <input type="hidden" name="offerType" value={offerType} />
             <select
               name="sort"

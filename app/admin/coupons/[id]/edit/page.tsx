@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { updateCouponByAdmin } from "../../actions";
-import { COUPON_OFFER_TYPE_OPTIONS } from "@/lib/constants";
+import { CouponCategorySelect } from "@/app/coupon-category-select";
 
 // 従来は /admin/coupons の一覧テーブル内(操作列、幅の狭いセル)に<details>で
 // インライン展開していたが、店舗管理・求人管理・イベント管理と同じ理由
@@ -81,17 +81,7 @@ export default async function AdminCouponEditPage({
             <input type="number" name="usageLimit" min={1} defaultValue={coupon.usage_limit ?? ""} />
           </div>
 
-          <div className="field">
-            <span className="muted">特典タイプ（公開ページの絞り込みに使われます）</span>
-            <select name="offerType" defaultValue={coupon.offer_type ?? ""}>
-              <option value="">未設定</option>
-              {COUPON_OFFER_TYPE_OPTIONS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CouponCategorySelect value={coupon.offer_type ?? ""} />
 
           <div className="field" style={{ gridColumn: "1 / -1" }}>
             <span className="muted">説明</span>
