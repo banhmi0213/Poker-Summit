@@ -103,3 +103,6 @@
 .showdownFive{bottom:16%;left:9%}
 .showdownSix{bottom:16%;right:9%}
 @media(max-width:420px){.showdownThree,.showdownFive{left:8%}.showdownFour,.showdownSix{right:8%}}
+
+/* Raise PLAYER 2 showdown hand slightly; other seats unchanged. */
+.showdownTwo{top:7%}
