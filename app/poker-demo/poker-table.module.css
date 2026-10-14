@@ -78,3 +78,71 @@
 .seatDialogActions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .seatDialogActions button{border:0;border-radius:8px;padding:11px 13px;color:white;background:#3c5468;cursor:pointer}
 .seatDialogActions button:last-child{background:#d8ad55;color:#1a2b3b;font-weight:700}
+
+/* Showdown hand labels and visible cards (demo only). */
+.handWithRank,.opponentHand{display:flex;flex-direction:column;align-items:center;gap:3px}
+.handRank{font-size:10px;line-height:1.3;color:#ffe08a;background:#14293ee8;border:1px solid #c69b46;border-radius:6px;padding:3px 5px;text-align:center;white-space:nowrap}
+.opponentHand{margin-top:3px}.opponentHand .handRank{font-size:9px}
+.miniCards{display:flex;gap:2px}.miniCards span{display:grid;place-items:center;width:25px;height:34px;background:#fff;color:#192b3b;border-radius:4px;font-weight:800;font-size:12px;box-shadow:0 2px 4px #0005}.miniCards .redCard{color:#dc2440}
+.demoSteps{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px}.demoSteps>button{border:0;border-radius:8px;padding:10px 13px;background:#d5a74e;color:#142638;font-size:12px;font-weight:700;cursor:pointer}.demoSteps .reset{background:#344b5c;color:#fff}
+@media(max-width:420px){.miniCards span{width:20px;height:29px;font-size:10px}.opponentHand .handRank{font-size:8px;padding:2px 3px}.handWithRank .handRank{font-size:9px}}
+
+.opponentCardsLayer{position:absolute;inset:0;z-index:2;pointer-events:none}
+.showdownPosition{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px}
+.showdownTwo{top:10%;left:55%}
+.showdownThree{top:24%;left:14%}
+.showdownFour{top:24%;right:14%}
+.showdownFive{bottom:18%;left:14%}
+.showdownSix{bottom:18%;right:14%}
+.showdownPosition .miniCards span{width:clamp(22px,5.4vw,33px);height:clamp(31px,7.3vw,44px);font-size:clamp(11px,2.8vw,16px)}
+.showdownPosition .handRank{font-size:9px}
+
+/* Move seats 3–6 showdown hands toward their respective avatars, away from the board and seat 1. */
+.showdownThree{top:23%;left:9%}
+.showdownFour{top:23%;right:9%}
+.showdownFive{bottom:16%;left:9%}
+.showdownSix{bottom:16%;right:9%}
+@media(max-width:420px){.showdownThree,.showdownFive{left:8%}.showdownFour,.showdownSix{right:8%}}
+
+/* Raise PLAYER 2 showdown hand slightly; other seats unchanged. */
+.showdownTwo{top:7%}
+
+/* Phone-only showdown layout: preserve desktop positions. */
+@media(max-width:480px){
+  .table[data-showdown=true]{min-height:390px}
+  .table[data-showdown=true] .edgeSeatThree,.table[data-showdown=true] .edgeSeatFour{top:20%}
+  .table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{bottom:25%}
+  .table[data-showdown=true] .showdownThree{top:24%;left:15%}
+  .table[data-showdown=true] .showdownFour{top:24%;right:15%}
+  .table[data-showdown=true] .showdownFive{bottom:19%;left:15%}
+  .table[data-showdown=true] .showdownSix{bottom:19%;right:15%}
+  .table[data-showdown=true] .showdownTwo{top:7%;left:55%}
+  .table[data-showdown=true] .showdownPosition .miniCards span{width:24px;height:33px;font-size:11px}
+  .table[data-showdown=true] .showdownPosition .handRank{font-size:8px;padding:2px 4px}
+  .table[data-showdown=true] .self{bottom:8px;gap:5px}
+  .table[data-showdown=true] .self .hole span{width:29px;height:39px;font-size:16px}
+  .table[data-showdown=true] .self .memberName{max-width:74px}
+}
+
+/* Two face-down cards are dealt to every opponent from preflop. */
+.showdownPosition .miniCards .cardBack{background:repeating-linear-gradient(45deg,#163b6d 0 4px,#285b92 4px 8px);border:2px solid #f1d79a;color:#f1d79a;text-shadow:0 1px 2px #0008;font-size:15px}
+.demoFoldControls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px;margin:8px 0;font-size:11px;color:#e2d4b3}
+.demoFoldControls button{background:#28435a;border:1px solid #6d8090;border-radius:6px;color:#fff;padding:6px 8px;font-size:10px;cursor:pointer}
+.demoFoldControls button[aria-pressed=true]{background:#6e3540;border-color:#c97680}
+@media(max-width:480px){.showdownPosition .miniCards .cardBack{font-size:12px;border-width:1px}}
+
+/* Gold thumbs-up mark on navy-backed hole cards. */
+.showdownPosition .miniCards .cardBack{background:linear-gradient(145deg,#143a68,#092441);color:#dcb46b;border:1px solid #dfbd7b;box-shadow:inset 0 0 0 2px #1c4c7b,0 2px 4px #0005}
+.thumbLogo{display:block;width:75%;height:80%;color:#e6c17a;filter:drop-shadow(0 1px 1px #0008)}
+
+/* Smaller centered Poker Summit emblem on card backs. */
+.thumbLogo{width:49%;height:53%}
+/* Keep P3/P4 hole cards beside their avatars rather than over their names. */
+.showdownThree{top:20%;left:12%}
+.showdownFour{top:20%;right:12%}
+@media(max-width:480px){
+  .table[data-showdown=true] .showdownThree{top:20%;left:13%}
+  .table[data-showdown=true] .showdownFour{top:20%;right:13%}
+  .showdownThree{top:20%;left:13%}
+  .showdownFour{top:20%;right:13%}
+}
