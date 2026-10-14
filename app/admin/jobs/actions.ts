@@ -1,5 +1,6 @@
 "use server";
 
+import { readJobRole } from "@/lib/job-categories";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -41,6 +42,7 @@ export async function updateJobByAdmin(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const jobType = String(formData.get("jobType") ?? "").trim();
+  const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
 
@@ -53,6 +55,7 @@ export async function updateJobByAdmin(formData: FormData) {
     .update({
       title,
       job_type: jobType || null,
+    ...(formData.has("jobRole") ? { job_role: jobRole } : {}),
       salary: salary || null,
       description: description || null,
     })

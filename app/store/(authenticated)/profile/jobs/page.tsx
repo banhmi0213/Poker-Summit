@@ -1,3 +1,4 @@
+import { JobRoleSelect } from "@/app/job-role-select";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -158,6 +159,7 @@ export default async function StoreJobsPage() {
               <span className="muted">求人タイトル</span>
               <input type="text" name="title" required />
             </div>
+            <JobRoleSelect />
             <div className="field">
               <span className="muted">雇用形態</span>
               <select name="jobType" defaultValue="">
@@ -325,6 +327,7 @@ export default async function StoreJobsPage() {
                 <span className="muted">求人タイトル</span>
                 <input type="text" name="title" required defaultValue={j.title} />
               </div>
+              <JobRoleSelect value={j.job_role ?? ""} />
               <div className="field">
                 <span className="muted">雇用形態</span>
                 <select name="jobType" defaultValue={j.job_type ?? ""}>

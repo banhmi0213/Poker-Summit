@@ -1,5 +1,6 @@
 "use server";
 
+import { readJobRole } from "@/lib/job-categories";
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
@@ -60,6 +61,7 @@ export async function createJob(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const jobType = String(formData.get("jobType") ?? "").trim();
+  const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
@@ -80,6 +82,7 @@ export async function createJob(formData: FormData) {
     store_id: storeId,
     title,
     job_type: jobType || null,
+    ...(formData.has("jobRole") ? { job_role: jobRole } : {}),
     salary: salary || null,
     description: description || null,
     banner_image_url: bannerImageUrl,
@@ -127,6 +130,7 @@ export async function updateJob(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const jobType = String(formData.get("jobType") ?? "").trim();
+  const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const bannerFile = formData.get("bannerImage");
@@ -146,6 +150,7 @@ export async function updateJob(formData: FormData) {
   const updates: Record<string, unknown> = {
     title,
     job_type: jobType || null,
+    ...(formData.has("jobRole") ? { job_role: jobRole } : {}),
     salary: salary || null,
     description: description || null,
   };

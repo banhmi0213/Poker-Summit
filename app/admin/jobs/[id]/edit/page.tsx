@@ -1,3 +1,4 @@
+import { JobRoleSelect } from "@/app/job-role-select";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ export default async function AdminJobEditPage({
   const supabase = await createClient();
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, title, job_type, salary, description, status, store_id, stores(name)")
+    .select("id, title, job_type, job_role, salary, description, status, store_id, stores(name)")
     .eq("id", params.id)
     .maybeSingle();
 
@@ -59,6 +60,7 @@ export default async function AdminJobEditPage({
             <input type="text" name="title" defaultValue={job.title} required />
           </div>
 
+          <JobRoleSelect value={job.job_role ?? ""} />
           <div className="field">
             <span className="muted">雇用形態</span>
             <select name="jobType" defaultValue={job.job_type ?? ""}>

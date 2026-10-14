@@ -1,3 +1,4 @@
+import { JobCategoryEntrances } from "./job-category-entrances";
 import { CouponCategoryEntrances } from "./coupon-category-entrances";
 import { couponCategoryHref } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
@@ -138,7 +139,6 @@ export default async function HomePage({
 
   const {
     now,
-    latestJobs,
     latestPosts,
     displayEvents,
     isEventsLive,
@@ -318,13 +318,8 @@ export default async function HomePage({
         </section>
         <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>💼</span> 新着求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
-          {!latestJobs?.length && <p className="muted">現在募集中の求人はありません。</p>}
-          <div className="home-grid home-job-grid">{latestJobs?.map((j: any) => <Link href={`/stores/${j.store_id}`} className="home-job-card" key={j.id}>
-            <div className="home-job-top"><div className="home-job-logo">{j.stores?.logo_url ? <img src={j.stores.logo_url} alt="" loading="lazy" /> : "♠"}</div><span className="home-tag">{j.job_type || "求人募集中"}</span></div>
-            <h3><ReadableName name={j.title} /></h3><p><ReadableName name={j.stores?.name || ""} /></p><p className="home-location">📍 {[j.stores?.pref,j.stores?.city].filter(Boolean).join(" ")}</p>
-            {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
-          </Link>)}</div>
+          <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
+          <JobCategoryEntrances pref={pref || currentPref || ""} />
         </section>
         <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
         <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
