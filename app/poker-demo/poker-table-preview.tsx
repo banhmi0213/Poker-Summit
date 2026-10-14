@@ -80,7 +80,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
           {showdown && <strong className={styles.handRank}>{sampleHands[i].rank}</strong>}
           <div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => showdown
             ? <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>
-            : <span key={j} className={styles.cardBack} aria-label="裏向きのカード">♠</span>)}</div>
+            : <span key={j} className={styles.cardBack} aria-label="Poker Summitの親指ロゴ入り裏向きカード"><ThumbLogo /></span>)}</div>
         </div>)}
       </div>
       <div className={styles.felt}>
@@ -122,4 +122,17 @@ const sampleHands = [
 ];
 function Seat({ name, stack, index, showdown }: { name: string; stack: string; index: number; showdown: boolean }) {
   return <div className={styles.seat}><div className={styles.avatar}>{index}</div><span>{name}</span><small>{stack}</small></div>;
+}
+
+/** Small gold-outline thumbs-up mark inspired by the Poker Summit logo. */
+function ThumbLogo() {
+  return <svg className={styles.thumbLogo} viewBox="0 0 90 116" role="img" aria-label="Poker Summit 親指ロゴ" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M35 58 C30 45 30 35 31 17 C31 5 41 3 47 7 C53 10 54 17 54 28 L54 62 C61 62 69 64 72 72 C76 84 70 98 57 104 C43 112 27 107 20 97" />
+      <path d="M35 58 C26 50 17 56 17 65 C11 61 3 66 5 76 C1 82 6 91 15 93 C16 102 26 105 33 100" />
+      <path d="M17 65 C19 79 24 89 34 91 C40 94 49 91 52 84" />
+      <path d="M35 58 C34 73 39 82 51 82 C56 80 59 76 67 76" />
+      <path d="M6 76 C11 87 18 91 24 90" />
+    </g>
+  </svg>;
 }
