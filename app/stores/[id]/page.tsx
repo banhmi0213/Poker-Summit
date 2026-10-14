@@ -77,12 +77,22 @@ function googleHoursSpec(periods: unknown): unknown[] | null {
   return out.length ? out : null;
 }
 
-/** Googleの「月曜日: 18時00分～2時00分」を「月 18:00〜2:00」にして見やすくする */
+/**
+ * Googleの「月曜日: 18時00分～2時00分」を「月 18:00〜翌2:00」にして見やすくする。
+ * 閉店が開店より早い時刻なら日付をまたぐので「翌」を付け、0時ちょうどの閉店は「24:00」と書く
+ * (サイト内の営業時間の書き方に合わせる)。
+ */
 function formatGoogleHoursLine(line: string) {
+  const toMin = (h: string, m: string) => Number(h) * 60 + Number(m);
   return line
     .replace(/^(.)曜日[:：]\s*/, "$1 ")
-    .replace(/(\d{1,2})時(\d{2})分/g, "$1:$2")
-    .replace(/[～~]/g, "〜");
+    .replace(/(\d{1,2})時(\d{2})分\s*[～~]\s*(\d{1,2})時(\d{2})分/g, (_all, oh, om, ch, cm) => {
+      const open = toMin(oh, om);
+      const close = toMin(ch, cm);
+      const closeText = close === 0 ? "24:00" : `${close < open ? "翌" : ""}${Number(ch)}:${cm}`;
+      return `${Number(oh)}:${om}〜${closeText}`;
+    })
+    .replace(/(\d+)\s*時間営業/, "$1時間営業");
 }
 
 /** 「18:00〜23:00」「21:00〜翌5:00」「24時間営業」のような毎日同じ営業時間だけを構造化データにする */
