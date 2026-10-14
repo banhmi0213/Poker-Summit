@@ -8,7 +8,7 @@ import PokerTablePreview from "./poker-table-preview";
 
 export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
 
-export default async function PokerDemoPage() {
+export default async function PokerDemoPage({ searchParams }: { searchParams?: { mode?: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
@@ -19,7 +19,7 @@ export default async function PokerDemoPage() {
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      <PokerTablePreview member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} />
+      <PokerTablePreview member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={searchParams?.mode === "spectate"} />
     </main>
     <PortalFooter />
     <BottomTabs />
