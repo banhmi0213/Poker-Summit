@@ -301,3 +301,16 @@
 @media(prefers-reduced-motion:reduce){
  .awardCoin,.awardAmount{animation:none;opacity:0}
 }
+
+/* Winner spotlight: light the avatar rather than moving any seat or hole cards. */
+.winnerSeat .seatTimerRing,.winnerGlow{
+  animation:winnerGoldPulse 1.05s ease-in-out 2;
+  box-shadow:0 0 0 3px #ffe49a,0 0 15px 6px #ffc34d,0 0 30px 8px #eeb4499c!important;
+  border-radius:50%;
+}
+.winnerSeat .avatar,.winnerGlow .avatar{border-color:#ffe6a1;box-shadow:inset 0 0 10px #ffcf5c55}
+@keyframes winnerGoldPulse{
+  0%,100%{filter:brightness(1);box-shadow:0 0 0 2px #dba74c,0 0 9px 3px #ffc34d80}
+  45%{filter:brightness(1.4);box-shadow:0 0 0 4px #fff1ae,0 0 20px 9px #ffc34d,0 0 35px 12px #ffca6788}
+}
+@media(prefers-reduced-motion:reduce){.winnerSeat .seatTimerRing,.winnerGlow{animation:none}}
