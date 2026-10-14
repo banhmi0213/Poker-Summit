@@ -15,6 +15,7 @@ const seats = [
 export default function PokerTablePreview({ member, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; isGuestPreview?: boolean; initialSpectating?: boolean }) {
   const [action, setAction] = useState<Action | null>(null);
   const [showdown, setShowdown] = useState(false);
+  const [foldedSeats, setFoldedSeats] = useState<number[]>([]);
   const [streetStep, setStreetStep] = useState(0);
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
   const [raise, setRaise] = useState(100);
@@ -39,7 +40,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     return () => window.clearTimeout(timer);
   }, [running, action, remaining]);
   const choose = (next: Action) => { if (remaining > 0 && !showdown) { setAction(next); setRunning(false); } };
-  const reset = () => { setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setRunning(true); };
+  const reset = () => { setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null); setRaise(100); setRemaining(20); setRunning(true); };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -74,7 +75,14 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       <div className={styles.topSeats}><Seat {...seats[0]} index={2} showdown={showdown} /></div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} index={3} showdown={showdown} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} index={4} showdown={showdown} /></div>
-      {showdown && <div className={styles.opponentCardsLayer} aria-label="ショーダウンで公開された各プレイヤーのハンド">{seats.map((seat, i) => <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}><strong className={styles.handRank}>{sampleHands[i].rank}</strong><div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>)}</div></div>)}</div>}
+      <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
+        {seats.map((seat, i) => foldedSeats.includes(i + 2) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
+          {showdown && <strong className={styles.handRank}>{sampleHands[i].rank}</strong>}
+          <div className={styles.miniCards}>{sampleHands[i].cards.map((card, j) => showdown
+            ? <span key={j} className={card.includes("♥") || card.includes("♦") ? styles.redCard : ""}>{card}</span>
+            : <span key={j} className={styles.cardBack} aria-label="裏向きのカード">♠</span>)}</div>
+        </div>)}
+      </div>
       <div className={styles.felt}>
         <div className={styles.pot}>POT <strong>1,575</strong></div>
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", "K♠"].slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>
@@ -98,6 +106,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         <button type="button" disabled={remaining === 0 || action !== null} onClick={() => choose("RAISE")}>レイズ</button>
       </div>
       <p role="status" aria-live="polite">{action ? `選択: ${action === "RAISE" ? `レイズ ${showChips(raise)}` : action}（デモのため送信されません）` : remaining === 0 ? "制限時間終了（デモ）。リセットすると再開します。" : "自分のアイコン外周が20秒のタイマーです。操作すると停止します。"}</p>
+      <div className={styles.demoFoldControls}><span>相手のフォールド確認（デモ）</span>{seats.map((seat, i) => <button type="button" key={seat.name} aria-pressed={foldedSeats.includes(i + 2)} onClick={() => setFoldedSeats(prev => prev.includes(i + 2) ? prev.filter(n => n !== i + 2) : [...prev, i + 2])}>P{i + 2} {foldedSeats.includes(i + 2) ? "復帰" : "FOLD"}</button>)}</div>
       <div className={styles.demoSteps}><button type="button" disabled={streetStep === 4} onClick={() => { const next = Math.min(4, streetStep + 1); setStreetStep(next); setShowdown(next === 4); setRunning(false); }}>{streetStep === 4 ? "ショーダウン表示中" : `次へ：${streetNames[streetStep + 1]}（デモ）`}</button><button className={styles.reset} type="button" onClick={reset}>デモをリセット</button></div>
     </div> : <div className={styles.spectatorPanel}>観戦モード：操作ボタンは非表示です。左上の☰ → 観戦から席に戻れます。</div>}
     {seatConfirm && <div className={styles.seatOverlay}><div className={styles.seatDialog} role="dialog" aria-modal="true" aria-labelledby="seat-confirm-title"><h2 id="seat-confirm-title">着席の確認</h2><p>この空席に着席しますか？</p><p>デモのため、実際の着席やチップ移動は行いません。</p><div className={styles.seatDialogActions}><button type="button" onClick={() => setSeatConfirm(false)}>キャンセル</button><button type="button" onClick={() => { setSpectating(false); setSeatConfirm(false); reset(); }}>着席する</button></div></div></div>}
