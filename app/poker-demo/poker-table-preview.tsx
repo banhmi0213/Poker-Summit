@@ -188,8 +188,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。これは画面・操作感を確認するためのデモです。チップとポットはローカルで試算します。実際の対戦、カード抽選、サーバー通信は行いません。</p>
     <div className={styles.table} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
-      <div className={styles.topSeats}><Seat {...seats[0]} stack={playerAt("p2").stack.toLocaleString()} index={2} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={"SB"} lastAction={lastActions["p2"]} /></div>
-      <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={playerAt("p3").stack.toLocaleString()} index={3} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={"BB"} lastAction={lastActions["p3"]} /></div>
+      <div className={styles.topSeats}><Seat {...seats[0]} stack={playerAt("p2").stack.toLocaleString()} index={2} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={undefined} lastAction={lastActions["p2"]} /></div>
+      <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={playerAt("p3").stack.toLocaleString()} index={3} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={undefined} lastAction={lastActions["p3"]} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={playerAt("p4").stack.toLocaleString()} index={4} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={undefined} lastAction={lastActions["p4"]} /></div>
       <div className={styles.positionMarkers} aria-label="ポジション">
         <span className={`${styles.positionMarker} ${styles.markerSix}`}>BTN</span>
