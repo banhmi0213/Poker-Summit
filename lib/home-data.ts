@@ -125,7 +125,7 @@ async function loadHomePublicData(currentPref: string | null) {
   };
 }
 
-export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v3"], {
+export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v4"], {
   revalidate: HOME_CACHE_SECONDS,
   tags: ["public-stores"],
 });
