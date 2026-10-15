@@ -37,6 +37,8 @@ export default async function StorePasswordPage({
           </p>
         )}
         <form action={changeStorePassword}>
+          {/* パスワード保存機能が「どのログインIDの新しいパスワードか」を判断するための欄(画面には出さない) */}
+          <input type="text" name="username" autoComplete="username" value={(user.email ?? "").split("@")[0]} readOnly hidden />
           <div className="field">
             <span className="muted">新しいパスワード（{PASSWORD_RULE_LABEL}）</span>
             <input type="password" name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />

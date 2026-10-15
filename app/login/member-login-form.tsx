@@ -10,7 +10,7 @@ export function MemberLoginForm({ next }: { next: string }) {
     event.currentTarget.requestSubmit();
   }}>
     <input type="hidden" name="next" value={next} />
-    <label className="field"><span>メールアドレス</span><input type="email" name="email" required autoComplete="email" /></label>
+    <label className="field"><span>メールアドレス</span><input type="email" name="email" required autoComplete="username email" /></label>
     <label className="field"><span>パスワード</span><input type="password" name="password" required enterKeyHint="go" autoComplete="current-password" /></label>
     <button type="submit" className="btn primary" style={{ width: "100%" }}>ログイン</button>
   </form>;
