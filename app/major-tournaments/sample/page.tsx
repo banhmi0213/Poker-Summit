@@ -81,7 +81,7 @@ export default function TournamentSample() {
    <div className="mt-bottom"><Link href="/major-tournaments">← 国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む →</Link></div>
   </article>
  </main><PortalFooter/><BottomTabs/>
- <style>{`
+ <style dangerouslySetInnerHTML={{ __html: `
 .mt-sample{max-width:1140px;width:calc(100% - 40px);margin:0 auto;padding:24px 0 48px;color:#382b1e}
 .mt-back{font-size:13px;color:#785622;display:inline-block;margin-bottom:18px}
 .mt-note{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12px;padding:12px 16px;border:1px solid #dfc995;background:#fff9e9;border-radius:9px;margin-bottom:18px;color:#745627}
@@ -123,5 +123,5 @@ export default function TournamentSample() {
 .mt-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:900px){.mt-columns{grid-template-columns:1fr}.mt-side{display:grid;grid-template-columns:1fr 1fr;gap:18px}.mt-hero h1{font-size:36px}.mt-facts strong{font-size:18px}}
 @media(max-width:600px){.mt-sample{width:calc(100% - 24px);padding-top:18px}.mt-hero{min-height:310px}.mt-hero-content{padding:26px 22px}.mt-hero h1{font-size:32px}.mt-hero:after{background:linear-gradient(90deg,rgba(28,26,21,.94),rgba(28,26,21,.65))}.mt-hero-meta{flex-direction:column;gap:8px}.mt-facts{grid-template-columns:repeat(2,1fr)}.mt-facts>div{padding:16px}.mt-facts>div:nth-child(2){border-right:0}.mt-facts>div:nth-child(-n+2){border-bottom:1px solid #eee6da}.mt-facts strong{font-size:17px}.mt-panel{padding:20px 16px}.mt-section-nav{gap:18px;font-size:12px}.mt-side{display:block}.mt-days span{font-size:9px}.mt-sample table,.mt-sample tbody,.mt-sample tr,.mt-sample td{display:block}.mt-sample thead{display:none}.mt-sample tr{padding:14px 12px;margin-bottom:10px;border:1px solid #e8dfd0;border-radius:9px}.mt-sample td{padding:5px 0;border:0;display:flex;align-items:center;justify-content:space-between;gap:12px}.mt-sample td:before{content:attr(data-label);font-size:11px;font-weight:400;color:#8c7c67}.mt-sample .mt-event{display:block;padding:8px 0}.mt-sample .mt-event:before{display:none}.mt-event strong{font-size:14px}.mt-time{font-size:18px}.mt-bottom{flex-direction:column}.mt-note{font-size:11px}}
-`}</style></div>;
+` }} /></div>;
 }
