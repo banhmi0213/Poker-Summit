@@ -5,6 +5,7 @@ on:
     paths:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
+      - "app/poker-demo/**"
       - "tests/poker-*.test.cjs"
       - "package.json"
       - "package-lock.json"
@@ -13,6 +14,7 @@ on:
     paths:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
+      - "app/poker-demo/**"
       - "tests/poker-*.test.cjs"
       - "package.json"
       - "package-lock.json"

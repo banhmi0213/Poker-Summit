@@ -15,6 +15,8 @@ require.extensions[".ts"] = (module, filename) => {
 };
 const { calculateSidePots, createBettingRound, applyBettingAction, legalBettingActions } = require("../lib/poker/betting.ts");
 const { settleShowdown } = require("../lib/poker/settlement.ts");
+const { settleCompletedHand } = require("../lib/poker/hand-settlement.ts");
+const { beginNextBettingStreet } = require("../lib/poker/betting.ts");
 const C = (rank, suit) => ({ rank, suit });
 const board = [C(2,"c"), C(5,"d"), C(8,"h"), C(11,"s"), C(13,"c")];
 const hole = {
@@ -91,4 +93,76 @@ test("outstanding call against all-in opponent allows only call/fold, not raise"
 test("side pot rejects duplicate players and unsafe arithmetic", () => {
   assert.throws(()=>calculateSidePots([entry("A",10),entry("A",10)]),/Duplicate/);
   assert.throws(()=>calculateSidePots([entry("A",Number.MAX_SAFE_INTEGER),entry("B",Number.MAX_SAFE_INTEGER)]),/safe integer/);
+});
+
+const finish = (round, river = false, cards = board) =>
+  settleCompletedHand(round, cards, hole, round.players.map(p => p.id), "A", river);
+const conserved = (round, result, initial) => {
+  assert.equal(round.players.reduce((n,p) => n + p.stack + result.payouts[p.id], 0), initial);
+};
+
+test("actual unequal all-in actions run out and settle every side pot", () => {
+  let round = createBettingRound([{id:"A",stack:100},{id:"B",stack:200},{id:"C",stack:300}],100,"A");
+  round = applyBettingAction(round,"A",{type:"bet",amount:100});
+  round = applyBettingAction(round,"B",{type:"raise",amount:200});
+  round = applyBettingAction(round,"C",{type:"call"});
+  assert.equal(round.toAct,null);
+  const result = finish(round);
+  assert.equal(result.showdown,true);
+  assert.deepEqual(result.payouts,{A:300,B:200,C:0});
+  conserved(round,result,600);
+});
+
+test("all players exhausting their stacks still receive payouts", () => {
+  let round = createBettingRound([{id:"A",stack:100},{id:"B",stack:100}],100,"A");
+  round = applyBettingAction(round,"A",{type:"bet",amount:100});
+  round = applyBettingAction(round,"B",{type:"call"});
+  assert.ok(round.players.every(p=>p.allIn));
+  const result = finish(round);
+  assert.deepEqual(result.payouts,{A:200,B:0});
+  conserved(round,result,200);
+  assert.deepEqual(finish(round),result); // Resolving again does not mutate stacks or add a second award.
+});
+
+test("fold to an all-in awards the whole pot without a board", () => {
+  let round = createBettingRound([{id:"A",stack:300},{id:"B",stack:300}],100,"A");
+  round = applyBettingAction(round,"A",{type:"bet",amount:300});
+  round = applyBettingAction(round,"B",{type:"fold"});
+  const result = finish(round,false,[]);
+  assert.equal(result.showdown,false);
+  assert.deepEqual(result.payouts,{A:300,B:0});
+  conserved(round,result,600);
+});
+
+test("unfinished action and incomplete all-in board cannot settle", () => {
+  let round = createBettingRound([{id:"A",stack:100},{id:"B",stack:100}],100,"A");
+  assert.throws(()=>finish(round),/not complete/);
+  round = applyBettingAction(round,"A",{type:"bet",amount:100});
+  round = applyBettingAction(round,"B",{type:"call"});
+  assert.throws(()=>finish(round,false,board.slice(0,3)),/five board/);
+});
+
+test("normal streets retain contributions and settle only after river", () => {
+  let round = createBettingRound([{id:"A",stack:500},{id:"B",stack:500}],100,"A");
+  round = applyBettingAction(round,"A",{type:"bet",amount:100});
+  round = applyBettingAction(round,"B",{type:"call"});
+  assert.equal(finish(round),null);
+  for (let street = 0; street < 3; street++) {
+    round = beginNextBettingStreet(round,"B");
+    round = applyBettingAction(round,"B",{type:"check"});
+    round = applyBettingAction(round,"A",{type:"check"});
+    if (street < 2) assert.equal(finish(round),null);
+  }
+  const result = finish(round,true);
+  assert.deepEqual(result.payouts,{A:200,B:0});
+  conserved(round,result,1000);
+});
+
+test("short all-in call returns unmatched excess and conserves chips", () => {
+  let round = createBettingRound([{id:"A",stack:300},{id:"B",stack:100}],100,"A");
+  round = applyBettingAction(round,"A",{type:"bet",amount:300});
+  round = applyBettingAction(round,"B",{type:"call"});
+  const result = finish(round);
+  assert.deepEqual(result.payouts,{A:400,B:0});
+  conserved(round,result,400);
 });
