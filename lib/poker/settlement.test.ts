@@ -29,7 +29,9 @@ test("blinds are deducted and short stacks post all-in", () => {
 });
 
 test("side pots go to strongest eligible hands and preserve chips", () => {
-  const board = [c(2,"c"),c(7,"d"),c(9,"h"),c(11,"s"),c(13,"c")];
+  // Keep KK a pair so AA wins the main pot; K on board made KK trips
+  // and contradicted the expected payouts in this previously unrun fixture.
+  const board = [c(2,"c"),c(7,"d"),c(9,"h"),c(11,"s"),c(12,"c")];
   const entries = [
     { id: "a", totalCommitted: 100, folded: false, hole: [c(14,"h"),c(14,"d")] as const },
     { id: "b", totalCommitted: 300, folded: false, hole: [c(13,"h"),c(13,"d")] as const },

@@ -101,8 +101,9 @@ export function applyBettingAction(round: BettingRound, playerId: string, action
       const raiseSize = action.amount - round.currentBet;
       if (raiseSize < round.minRaise && contribution !== p.stack)
         throw new Error("Below minimum raise unless all-in");
-      // A short all-in does not reopen betting for players who have already acted.
-      if (p.acted) throw new Error("Player cannot raise again without reopened action");
+      // Reopening is player-relative: several short all-ins may together make
+      // a full raise since this player's last action (Poker TDA, Re-Opening the Bet).
+      if (p.acted && owed < round.minRaise) throw new Error("Player cannot raise again without reopened action");
       contribute(contribution);
       currentBet = action.amount;
       if (raiseSize >= round.minRaise) {
@@ -126,7 +127,7 @@ export function legalBettingActions(round: BettingRound, playerId: string) {
   if (!p || round.toAct !== playerId || p.folded || p.allIn) return null;
   const owed = Math.max(0, round.currentBet - p.committed);
   const maxTotal = p.committed + p.stack;
-  const canRaise = !p.acted &&
+  const canRaise = (!p.acted || owed >= round.minRaise) &&
     round.players.some(other => other.id !== playerId && !other.folded && !other.allIn) &&
     maxTotal > round.currentBet;
   const minTotal = round.currentBet === 0 ? round.bigBlind : round.currentBet + round.minRaise;
@@ -167,6 +168,7 @@ export function calculateSidePots(players: readonly Pick<BettingPlayer, "id" | "
 }
 /** Clear street commitments but retain all chips already contributed to the pot. */
 export function beginNextBettingStreet(round: BettingRound, firstToAct: string): BettingRound {
+  if (!bettingRoundComplete(round)) throw new Error("Betting round is not complete");
   const players = round.players.map(p => ({ ...p, committed: 0, acted: false }));
   const actor = players.find(p => p.id === firstToAct);
   if (!actor || actor.folded || actor.allIn) throw new Error("Invalid first actor");

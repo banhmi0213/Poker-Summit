@@ -17,6 +17,10 @@ const { calculateSidePots, createBettingRound, applyBettingAction, legalBettingA
 const { settleShowdown } = require("../lib/poker/settlement.ts");
 const { settleCompletedHand } = require("../lib/poker/hand-settlement.ts");
 const { beginNextBettingStreet } = require("../lib/poker/betting.ts");
+// Include the original engine tests in the same CI command; previously these
+// TypeScript suites existed but were not loaded by npm run test:poker.
+require("../lib/poker/betting.test.ts");
+require("../lib/poker/settlement.test.ts");
 const C = (rank, suit) => ({ rank, suit });
 const board = [C(2,"c"), C(5,"d"), C(8,"h"), C(11,"s"), C(13,"c")];
 const hole = {
@@ -165,4 +169,166 @@ test("short all-in call returns unmatched excess and conserves chips", () => {
   const result = finish(round);
   assert.deepEqual(result.payouts,{A:400,B:0});
   conserved(round,result,400);
+});
+
+const seatsRound = stacks => createBettingRound(stacks.map((stack,i)=>({id:String.fromCharCode(65+i),stack})),100,"A");
+const act = (r,id,type,amount) => applyBettingAction(r,id,amount === undefined ? {type} : {type,amount});
+const unchangedOnError = (r, action, pattern) => {
+  const snapshot = structuredClone(r);
+  assert.throws(action,pattern);
+  assert.deepEqual(r,snapshot);
+};
+
+test("opening minimum, full raise increment and legal amounts agree", () => {
+  let r = seatsRound([1000,1000,1000]);
+  unchangedOnError(r,()=>act(r,"A","bet",99),/minimum/);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",300);
+  assert.equal(legalBettingActions(r,"C").minRaiseTo,500);
+  unchangedOnError(r,()=>act(r,"C","raise",499),/minimum/);
+  r = act(r,"C","raise",500);
+  assert.equal(r.toAct,"A");
+  assert.equal(legalBettingActions(r,"A").minRaiseTo,700);
+});
+
+test("one short all-in does not reopen the original bettor", () => {
+  let r = seatsRound([1000,150,1000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",150);
+  r = act(r,"C","call");
+  assert.equal(r.toAct,"A");
+  assert.equal(legalBettingActions(r,"A").raise,false);
+  unchangedOnError(r,()=>act(r,"A","raise",250),/reopened/);
+  r = act(r,"A","call");
+  assert.equal(r.toAct,null);
+});
+
+test("cumulative short all-ins reopen only seats facing a full raise", () => {
+  let r = seatsRound([1000,150,1000,200,1000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",150);
+  r = act(r,"C","call");
+  r = act(r,"D","raise",200);
+  r = act(r,"E","call");
+  assert.equal(r.toAct,"A");
+  assert.equal(r.minRaise,100);
+  assert.equal(legalBettingActions(r,"A").raise,true);
+  assert.equal(legalBettingActions(r,"A").minRaiseTo,300);
+  const raised = act(r,"A","raise",300);
+  assert.equal(raised.toAct,"C");
+  assert.equal(legalBettingActions(raised,"C").raise,true);
+  r = act(r,"A","call");
+  assert.equal(r.toAct,"C");
+  assert.equal(legalBettingActions(r,"C").raise,false);
+  unchangedOnError(r,()=>act(r,"C","raise",300),/reopened/);
+});
+
+test("cumulative short raises below the full increment stay closed", () => {
+  let r = seatsRound([1000,140,190,1000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",140);
+  r = act(r,"C","raise",190);
+  r = act(r,"D","call");
+  assert.equal(legalBettingActions(r,"A").raise,false);
+  unchangedOnError(r,()=>act(r,"A","raise",290),/reopened/);
+});
+
+test("checker facing a full opening bet can raise", () => {
+  let r = seatsRound([1000,1000,1000]);
+  r = act(r,"A","check");
+  r = act(r,"B","bet",100);
+  r = act(r,"C","call");
+  assert.equal(legalBettingActions(r,"A").raise,true);
+  r = act(r,"A","raise",200);
+  assert.equal(r.toAct,"B");
+});
+
+test("unacted seat can make a full raise after a short all-in", () => {
+  let r = seatsRound([1000,150,1000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",150);
+  assert.equal(legalBettingActions(r,"C").minRaiseTo,250);
+  r = act(r,"C","raise",250);
+  assert.equal(legalBettingActions(r,"A").raise,true);
+});
+
+test("six-seat preflop includes BB option then postflop starts after BTN", () => {
+  const {postBlinds} = require("../lib/poker/settlement.ts");
+  const ids = ["A","B","C","D","E","F"];
+  const posted = postBlinds(ids.map(id=>({id,stack:1000})),0,50,100);
+  let r = createBettingRound(posted.players,100,posted.positions.preflopFirst);
+  for (const id of ["D","E","F","A","B"]) {
+    assert.equal(r.toAct,id);
+    r = act(r,id,"call");
+  }
+  assert.equal(r.toAct,"C");
+  assert.equal(legalBettingActions(r,"C").raise,true);
+  r = act(r,"C","check");
+  assert.equal(r.toAct,null);
+  r = beginNextBettingStreet(r,posted.positions.postflopFirst);
+  for (const id of ["B","C","D","E","F","A"]) {
+    assert.equal(r.toAct,id);
+    r = act(r,id,"check");
+  }
+  assert.equal(r.toAct,null);
+  assert.equal(r.players.reduce((n,p)=>n+p.stack+p.totalCommitted,0),6000);
+});
+
+test("heads-up action is BTN preflop and BB postflop", () => {
+  const {postBlinds} = require("../lib/poker/settlement.ts");
+  const p = postBlinds([{id:"A",stack:1000},{id:"B",stack:1000}],0,50,100);
+  let r = createBettingRound(p.players,100,p.positions.preflopFirst);
+  assert.equal(r.toAct,"A");
+  r = act(r,"A","call");
+  r = act(r,"B","check");
+  r = beginNextBettingStreet(r,p.positions.postflopFirst);
+  assert.equal(r.toAct,"B");
+});
+
+test("wrong turn and premature street transition leave chips unchanged", () => {
+  const r = seatsRound([1000,1000,1000]);
+  unchangedOnError(r,()=>act(r,"B","fold"),/turn/);
+  unchangedOnError(r,()=>beginNextBettingStreet(r,"B"),/not complete/);
+  unchangedOnError(r,()=>act(r,"A","call"),/Nothing/);
+});
+
+test("folded and all-in seats are skipped while calls preserve total chips", () => {
+  let r = seatsRound([1000,100,1000,1000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","call");
+  r = act(r,"C","fold");
+  r = act(r,"D","call");
+  assert.equal(r.toAct,null);
+  r = beginNextBettingStreet(r,"D");
+  assert.equal(r.toAct,"D");
+  r = act(r,"D","check");
+  assert.equal(r.toAct,"A");
+  r = act(r,"A","check");
+  assert.equal(r.toAct,null);
+  assert.equal(r.players.reduce((n,p)=>n+p.stack+p.totalCommitted,0),3100);
+});
+
+test("cumulative reopening keeps the last full raise increment, not BB", () => {
+  let r = seatsRound([2000,2000,450,500,2000]);
+  r = act(r,"A","bet",100);
+  r = act(r,"B","raise",300);
+  r = act(r,"C","raise",450);
+  r = act(r,"D","raise",500);
+  r = act(r,"E","call");
+  r = act(r,"A","call");
+  assert.equal(r.toAct,"B");
+  assert.equal(legalBettingActions(r,"B").minRaiseTo,700);
+  unchangedOnError(r,()=>act(r,"B","raise",600),/minimum/);
+  r = act(r,"B","raise",700);
+  assert.equal(r.minRaise,200);
+});
+
+test("three kings beat pocket aces in both eligible pots", () => {
+  const cards = [C(2,"c"),C(7,"d"),C(9,"h"),C(11,"s"),C(13,"c")];
+  const entries = [
+    {id:"A",totalCommitted:100,folded:false,hole:[C(14,"h"),C(14,"d")]},
+    {id:"B",totalCommitted:300,folded:false,hole:[C(13,"h"),C(13,"d")]},
+    {id:"C",totalCommitted:300,folded:false,hole:[C(3,"h"),C(4,"d")]},
+  ];
+  assert.deepEqual(settleShowdown(entries,cards,["A","B","C"],"C").payouts,{A:0,B:700,C:0});
 });
