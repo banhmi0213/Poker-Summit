@@ -380,6 +380,16 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
             : <span key={j} className={styles.cardBack} aria-label="Poker Summitの親指ロゴ入り裏向きカード"><ThumbLogo /></span>)}</div>
         </div>)}
       </div>
+      <div className={styles.streetBets} aria-label="各席のベット額">
+        {!payouts && betting.players.filter(p => p.committed > 0).map(p => {
+          const position = positionFor(p.id);
+          const blind = streetStep === 0 && !lastActions[p.id] && (position === "SB" || position === "BB") ? position : "";
+          return <div key={p.id} className={`${styles.streetBet} ${styles[`bet_${p.id}`]}`} aria-label={`${p.id === "you" ? "あなた" : `PLAYER ${p.id.slice(1)}`}：${blind ? blind + " " : ""}ベット ${showChips(p.committed)}`}>
+            <span className={styles.betChip} aria-hidden="true">♠</span>
+            <span>{blind && <b>{blind} </b>}{displayUnit === "bb" ? `${(p.committed / bigBlind).toFixed(1)} BB` : p.committed.toLocaleString()}</span>
+          </div>;
+        })}
+      </div>
       <div className={styles.felt}>
         <div className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
         <div className={styles.cards} aria-label="サンプル共通カード">{["6♦", "2♥", "10♣", "9♣", "K♠"].slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((c, i) => <span key={i} className={c.includes("♥") || c.includes("♦") ? styles.red : ""}>{c}</span>)}</div>

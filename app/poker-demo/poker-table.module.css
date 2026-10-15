@@ -316,3 +316,11 @@
 @media(prefers-reduced-motion:reduce){.winnerSeat .seatTimerRing,.winnerGlow{animation:none}}
 
 .quickBets button:disabled{opacity:.4;cursor:not-allowed}.controls input:disabled{opacity:.4;cursor:not-allowed}.actions button{overflow-wrap:anywhere}
+
+/* Current-street chips stay on the felt; commitments are already included in POT. */
+.streetBets{position:absolute;inset:0;pointer-events:none;z-index:3}
+.streetBet{position:absolute;display:flex;align-items:center;gap:4px;transform:translateX(-50%);white-space:nowrap;border-radius:10px;padding:3px 6px;background:#102b40ee;border:1px solid #b7a064;color:#fff0bf;font-size:10px;line-height:1.2;font-variant-numeric:tabular-nums;box-shadow:0 2px 4px #0004}
+.streetBet b{font-size:9px;color:#efcd7a}
+.betChip{display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px;border-radius:50%;border:2px dashed #fff1b3;background:#c69b37;box-shadow:inset 0 0 0 1px #88621e;color:#473312;font-size:10px}
+.bet_p2{top:20%;left:50%}.bet_p3{top:35%;left:25%}.bet_p4{top:35%;left:75%}.bet_p5{bottom:30%;left:25%}.bet_p6{bottom:30%;left:75%}.bet_you{bottom:20%;left:50%}
+@media(max-width:480px){.streetBet{font-size:9px;padding:2px 4px;gap:3px}.betChip{width:15px;height:15px;flex-basis:15px;font-size:9px}.bet_p3,.bet_p5{left:24%}.bet_p4,.bet_p6{left:76%}}

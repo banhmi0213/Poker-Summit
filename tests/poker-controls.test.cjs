@@ -55,3 +55,23 @@ require('node:test').test('controls render legal amounts and actions across five
     assert.match(v.html, /オールインのみ/);
     React.useState = original;
 });
+
+require('node:test').test('blind chip markers show posted amounts and clear on the next street', () => {
+    const { postBlinds } = req(root + '/lib/poker/settlement.ts');
+    const { beginNextBettingStreet, potTotal } = req(root + '/lib/poker/betting.ts');
+    const ids = ['you', 'p5', 'p3', 'p2', 'p4', 'p6'];
+    const posted = postBlinds(ids.map(id => ({ id, stack: 1000 })), 5, 50, 100);
+    let r = createBettingRound(posted.players, 100, posted.positions.preflopFirst);
+    let view = render(r);
+    assert.match(view.html, /aria-label="あなた：SB ベット 50 chips"/);
+    assert.match(view.html, /aria-label="PLAYER 5：BB ベット 100 chips"/);
+    assert.equal((view.html.match(/class="betChip"/g) || []).length, 2);
+    assert.equal(potTotal(r), 150); // Markers are a view of existing chips, not extra contributions.
+    for (const id of ['p3', 'p2', 'p4', 'p6', 'you']) r = applyBettingAction(r, id, { type: 'call' });
+    r = applyBettingAction(r, 'p5', { type: 'check' });
+    view = render(r);
+    assert.equal((view.html.match(/class="betChip"/g) || []).length, 6);
+    r = beginNextBettingStreet(r, 'you');
+    assert.equal(potTotal(r), 600);
+    assert.doesNotMatch(render(r).html, /class="betChip"/);
+});
