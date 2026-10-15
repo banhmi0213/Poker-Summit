@@ -23,8 +23,8 @@ let fixture;
 const stateForFixture = function (initial) { return original(typeof initial === 'function' ? () => { const value = initial(); return value?.players && value?.bigBlind ? fixture : value; } : initial); };
 const deck = req(root + '/lib/poker/engine.ts').createDeck();
 const fixtureDeal = { board: deck.slice(12,17), holes: Object.fromEntries(['you','p5','p3','p2','p4','p6'].map((id,i)=>[id,[deck[i],deck[i+6]]])) };
-function render(r) { fixture = r; let html; React.useState = stateForFixture; try {
-    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, initialDeal: fixtureDeal, isGuestPreview: true }));
+function render(r,extra = {}) { fixture = r; let html; React.useState = stateForFixture; try {
+    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, initialDeal: fixtureDeal, isGuestPreview: true, ...extra }));
 }
 finally {
     React.useState = original;
@@ -87,4 +87,47 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
     assert.match(html, /aria-label="共通カード"><\/div>/);
+});
+
+require('node:test').test('tournament sample renders top clock, structure menu and scope notice',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const ids=['you','p5','p3','p2','p4','p6'],r=createBettingRound(ids.map(id=>({id,stack:1000})),100,'you');
+ const tournament={id:'sample',title:'TEST CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
+ const html=render(r,{tournament,serverNow:Date.parse(tournament.starts_at)}).html;
+ assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>ストラクチャー<\/button>/);assert.match(html,/50\/100・アンティなし/);
+});
+require('node:test').test('structure table renders all levels, break and late registration details',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const View=req(root+'/app/poker-tournaments/structure-view.tsx').default;
+ const html=renderToStaticMarkup(React.createElement(View,{structure:defaultStructure,currentIndex:4}));
+ assert.match(html,/10,000/);assert.match(html,/BBアンティ/);assert.match(html,/レベル4終了まで/);assert.match(html,/25点チップのカラーアップ/);assert.equal((html.match(/<tr/g)||[]).length,10);assert.match(html,/aria-current="step"/);
+});
+require('node:test').test('saved tournament renders faint background image, collaboration and typed prizes',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const Panel=req(root+'/app/poker-tournaments/clock-panel.tsx').default;
+ const tournament={id:'test',title:'COLLAB CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:true,structure:defaultStructure,image_url:'https://example.com/logo.png',organizer_name:'Summit × コラボ',prizes:[{rank:1,kind:'chips',chips:5000,description:''},{rank:2,kind:'text',chips:0,description:'ギフト券'}]};
+ const props={tournament,serverNow:Date.parse(tournament.starts_at)};
+ for(const mode of ['clock','structure']) { const html=renderToStaticMarkup(React.createElement(Panel,{...props,mode}));assert.match(html,/src="https:\/\/example.com\/logo.png"/);assert.match(html,/class="backdrop"/);assert.match(html,/Summit × コラボ/);if(mode==='structure'){assert.match(html,/5,000 チップ/);assert.match(html,/ギフト券/);assert.match(html,/自動付与は準備中/);} }
+});
+require('node:test').test('numeric controls change chips by ten, minutes by one, preserve 75 and clamp limits',()=>{
+ const Stepper=req(root+'/app/poker-tournaments/number-stepper.tsx').default;
+ const oldId=React.useId;React.useId=()=> 'stepper';
+ try{
+  let changed;
+  let el=Stepper({label:'SB',value:75,onChange:v=>changed=v,min:0,max:100});
+  const [minus,input,plus]=el.props.children;
+  minus.props.onClick();assert.equal(changed,65);plus.props.onClick();assert.equal(changed,85);
+  assert.equal(input.props.step,1);assert.equal(input.props.inputMode,'numeric');assert.equal(minus.props.type,'button');assert.equal(plus.props.type,'button');
+  let prevented=false;input.props.onKeyDown({key:'ArrowUp',preventDefault:()=>prevented=true});assert.equal(changed,85);assert.ok(prevented);
+  el=Stepper({label:'分',value:20,onChange:v=>changed=v,min:1,max:240,increment:1});el.props.children[2].props.onClick();assert.equal(changed,21);el.props.children[0].props.onClick();assert.equal(changed,19);
+  el=Stepper({label:'SB',value:95,onChange:v=>changed=v,min:0,max:100});el.props.children[2].props.onClick();assert.equal(changed,100);
+  el=Stepper({label:'分',value:1,onChange:v=>changed=v,min:1,max:240,increment:1});assert.equal(el.props.children[0].props.disabled,true);
+  el=Stepper({label:'休憩SB',value:0,onChange:v=>changed=v,disabled:true});assert.ok(el.props.children.every(child=>child.props.disabled));
+ }finally{React.useId=oldId;}
+});
+require('node:test').test('structure editor exposes mobile steppers with correct field increments',()=>{
+ const Editor=req(root+'/app/poker-tournaments/structure-editor.tsx').default;
+ const html=renderToStaticMarkup(React.createElement(Editor));
+ assert.match(html,/行1 sbを10増やす/);assert.match(html,/行1 minutesを1増やす/);assert.match(html,/レイトレジスト終了レベルを1増やす/);assert.match(html,/data-label="SB"/);assert.match(html,/data-label="分"/);
+ assert.match(html,/aria-label="行2 sb"[^>]*value="75"/);
 });
