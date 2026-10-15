@@ -12,6 +12,7 @@ import {closeSpotJob} from './actions';
 import SpotEditor from './editor';
 import { getStorePlan, spotMonthlyLimitOf, countSpotMatchesThisMonth } from '@/lib/plan-entitlements';
 import styles from '@/app/spot-jobs/spot.module.css';
+import { StoreContentRuleNotice } from "../content-rule-notice";
 export const dynamic='force-dynamic';
 export default async function Page({searchParams}:{searchParams:{edit?:string;saved?:string;closed?:string;error?:string;page?:string}}) {
   const db=await createStoreClient();
@@ -45,7 +46,7 @@ export default async function Page({searchParams}:{searchParams:{edit?:string;sa
   const {data:jobs,error,count}=await db.from('spot_jobs').select('*,spot_job_shifts(*)',{count:'exact'}).eq('store_id',store.id).order('created_at',{ascending:false}).order('id').range((page-1)*6,page*6-1);
   if (error) throw new Error('登録済み求人を読み込めませんでした。');
   const image=await spotImage(db,{image_path:job?.image_path||null,store_id:store.id},store.banner_url);
-  return <main className={styles.manage}><div className={styles.heading}><h1>スポット求人</h1><Link className={styles.button} href="/store/profile/dealers">フリーディーラーを探す →</Link></div>
+  return <main className={styles.manage}><div className={styles.heading}><h1>スポット求人</h1><Link className={styles.button} href="/store/profile/dealers">フリーディーラーを探す →</Link></div><StoreContentRuleNotice />
     <p className={styles.muted}>募集は登録済みディーラーにだけ表示されます。店舗情報・所在地は店舗情報から自動で反映されます。</p>
     {spotLimit===0?<section className={styles.box} role="note"><strong>{spotCredits>0?`追加掲載枠が${spotCredits}件あります`:'スポット求人の公開はスタンダードプラン以上、または「スポット求人1件掲載」の追加でご利用いただけます'}</strong><p className={styles.muted}>{spotCredits>0?'求人を「公開する」で保存すると、追加掲載枠を1件使って公開します。':'「スポット求人1件掲載」（2,200円）を追加すると、このプランのままでも1件ずつ公開できます。スタンダードプラン（月額16,500円）は月10件の成立まで、プレミアムプラン（月額33,000円）は無制限です。下書きの作成はこのまま行えます。'}</p><Link className={styles.button} href="/store/profile/plan#addons">アドオン・プランを確認する →</Link></section>
     :spotLimit!==null&&<p className={styles.muted}>ご契約プラン：{spotPlan?.planName}　／　今月の成立 {spotMatchesThisMonth}件（月{spotLimit}件まで）{spotCredits>0&&`　／　追加掲載枠 ${spotCredits}件`}{spotMatchesThisMonth>=spotLimit&&<strong>{spotCredits>0?'　今月の上限に達しています。以降の確定には追加掲載枠を1件ずつ使います。':'　今月の上限に達しています。「スポット求人1件掲載」を追加すると、上限を超えて確定できます。'}</strong>}</p>}

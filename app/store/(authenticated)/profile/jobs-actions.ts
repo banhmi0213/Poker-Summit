@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { readJobRole } from "@/lib/job-categories";
 import { revalidatePath } from "next/cache";
@@ -64,6 +65,7 @@ export async function createJob(formData: FormData) {
   const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, salary, description);
   const bannerFile = formData.get("bannerImage");
 
   if (!title) {
@@ -133,6 +135,7 @@ export async function updateJob(formData: FormData) {
   const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, salary, description);
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
 

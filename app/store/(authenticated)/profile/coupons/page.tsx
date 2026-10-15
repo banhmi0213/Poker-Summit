@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "../coupons-actions";
 import { CouponCategorySelect } from "@/app/coupon-category-select";
+import { StoreContentRuleNotice } from "../content-rule-notice";
 
 // /store/profile 1ページの中の1セクションだったクーポン管理を、独立した
 // ページへ分離(2026/09/30)。バナー画像はファイルアップロード対応
@@ -45,6 +46,7 @@ export default async function StoreCouponsPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>クーポン管理</h1>
+      <StoreContentRuleNotice />
 
       <div className="card">
         <form action={createCoupon} encType="multipart/form-data">

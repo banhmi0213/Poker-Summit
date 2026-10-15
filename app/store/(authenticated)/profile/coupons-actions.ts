@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { requireCouponCategory } from "@/lib/coupon-categories";
 import { revalidatePath } from "next/cache";
@@ -36,6 +37,7 @@ export async function createCoupon(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const discount = String(formData.get("discount") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, discount, description);
   const code = String(formData.get("code") ?? "").trim();
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();
@@ -111,6 +113,7 @@ export async function updateCoupon(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const discount = String(formData.get("discount") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, discount, description);
   const code = String(formData.get("code") ?? "").trim();
   const validUntil = String(formData.get("validUntil") ?? "").trim();
   const usageLimitRaw = String(formData.get("usageLimit") ?? "").trim();

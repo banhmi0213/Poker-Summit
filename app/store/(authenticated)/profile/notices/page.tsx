@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createNotice, updateNotice, toggleNoticeStatus, deleteNotice } from "../notices-actions";
+import { StoreContentRuleNotice } from "../content-rule-notice";
 
 // /store/profile 1ページの中の1セクションだったお知らせ管理を、独立した
 // ページへ分離(2026/09/30)。
@@ -41,6 +42,7 @@ export default async function StoreNoticesPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>お知らせ管理</h1>
+      <StoreContentRuleNotice />
 
       <div className="card">
         <form action={createNotice} encType="multipart/form-data">
