@@ -5,10 +5,15 @@ import { REFERENCE_MAP_HITS } from "./region-map-paths";
 
 type Stats = {
   storeCount: number;
+  prefCount: number;
+  majorTournamentCount: number;
   jobCount: number;
   memberCount: number;
   summitPostCount: number;
 };
+
+// 求人・会員・投稿の数は、少ないうちは出すと逆効果なので、この数を超えたら自動で表示する(2026/10)
+export const STAT_SHOW_THRESHOLDS = { jobs: 10, members: 100, posts: 10 };
 
 type Props = {
   stats: Stats;
@@ -156,6 +161,25 @@ function SpeechBubbleIcon() {
   );
 }
 
+function MapPinIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.3" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg {...ICON_PROPS}>
+      <path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z" />
+      <path d="M7.5 6H4.5a3 3 0 0 0 3 4M16.5 6h3a3 3 0 0 1-3 4" />
+      <path d="M12 13.5V17M8.5 20h7M9.5 17h5v3h-5z" />
+    </svg>
+  );
+}
+
 function formatCount(value: number) {
   return new Intl.NumberFormat("ja-JP").format(value);
 }
@@ -189,6 +213,16 @@ export function PokerRegionHero({
   stats,
   backgroundSrc = "/images/poker-region-hero-bg.webp",
 }: Props) {
+  // 店舗数・都道府県・大型大会はいつも出し、求人・会員・投稿は一定数を超えたら出す
+  const statItems = [
+    { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> },
+    { label: "掲載都道府県", value: formatCount(stats.prefCount), icon: <MapPinIcon /> },
+    { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
+    ...(stats.jobCount >= STAT_SHOW_THRESHOLDS.jobs ? [{ label: "掲載求人数", value: formatCount(stats.jobCount), icon: <BriefcaseIcon /> }] : []),
+    ...(stats.memberCount >= STAT_SHOW_THRESHOLDS.members ? [{ label: "会員数", value: formatCount(stats.memberCount), icon: <MembersIcon /> }] : []),
+    ...(stats.summitPostCount >= STAT_SHOW_THRESHOLDS.posts ? [{ label: "サミット投稿数", value: formatCount(stats.summitPostCount), icon: <SpeechBubbleIcon /> }] : []),
+  ];
+
   return (
     <section className="ps-region-hero" aria-label="全国からポーカー店舗を探す">
       {/* Decoration only (Fuji/cityscape/cherry blossoms/chips/cards) — no
@@ -290,27 +324,14 @@ export function PokerRegionHero({
         })}
       </nav>
 
-      <div className="ps-region-stats" aria-label="Poker Summit 統計">
-        <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true"><StoreIcon /></span>
-          <span className="ps-region-stat__label">全国の掲載店舗数</span>
-          <strong>{formatCount(stats.storeCount)}</strong>
-        </div>
-        <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true"><BriefcaseIcon /></span>
-          <span className="ps-region-stat__label">掲載求人数</span>
-          <strong>{formatCount(stats.jobCount)}</strong>
-        </div>
-        <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true"><MembersIcon /></span>
-          <span className="ps-region-stat__label">会員数</span>
-          <strong>{formatCount(stats.memberCount)}</strong>
-        </div>
-        <div className="ps-region-stat">
-          <span className="ps-region-stat__icon" aria-hidden="true"><SpeechBubbleIcon /></span>
-          <span className="ps-region-stat__label">サミット投稿数</span>
-          <strong>{formatCount(stats.summitPostCount)}</strong>
-        </div>
+      <div className="ps-region-stats" aria-label="Poker Summit 統計" style={{ ["--stat-cols" as string]: String(statItems.length) }}>
+        {statItems.map((item) => (
+          <div className="ps-region-stat" key={item.label}>
+            <span className="ps-region-stat__icon" aria-hidden="true">{item.icon}</span>
+            <span className="ps-region-stat__label">{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+        ))}
       </div>
 
       {/* Mobile-only fallback: real, visible, styled region cards (no tappable

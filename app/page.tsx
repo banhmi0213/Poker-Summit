@@ -24,6 +24,7 @@ import { getCurrentPref } from "@/lib/current-pref";
 import { isExternalBannerLink } from "@/lib/banners";
 import { getHomePublicData } from "@/lib/home-data";
 import { getStoreCardExtras } from "@/lib/store-card-extras";
+import { getPrefStoreCounts } from "@/lib/pref-counts";
 import { assemblePickup } from "@/lib/contracts";
 import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
@@ -126,12 +127,14 @@ export default async function HomePage({
     home,
     rankingResult,
     extras,
+    prefCounts,
   ] = await Promise.all([
     supabase.auth.getUser(),
     getHomePublicData(currentPref ?? null),
     // TOPのランキングは訪問者の地域に関係なく全国
     supabase.rpc("public_store_rankings"),
     getStoreCardExtras(),
+    getPrefStoreCounts().catch(() => ({} as Record<string, number>)),
   ]);
   if (rankingResult.error) throw rankingResult.error;
   const featuredStores = assemblePickup(home.pickupPool).slice(0, 4);
@@ -260,6 +263,8 @@ export default async function HomePage({
       <PokerRegionHero
         stats={{
           storeCount: totalStoreCount ?? 0,
+          prefCount: Object.values(prefCounts).filter((n) => n > 0).length,
+          majorTournamentCount: home.majorTournamentCount,
           jobCount: openJobCount ?? 0,
           memberCount: memberCountRaw ?? 0,
           summitPostCount: threadCount ?? 0,
