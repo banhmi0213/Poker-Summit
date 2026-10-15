@@ -314,3 +314,5 @@
   45%{filter:brightness(1.4);box-shadow:0 0 0 4px #fff1ae,0 0 20px 9px #ffc34d,0 0 35px 12px #ffca6788}
 }
 @media(prefers-reduced-motion:reduce){.winnerSeat .seatTimerRing,.winnerGlow{animation:none}}
+
+.quickBets button:disabled{opacity:.4;cursor:not-allowed}.controls input:disabled{opacity:.4;cursor:not-allowed}.actions button{overflow-wrap:anywhere}
