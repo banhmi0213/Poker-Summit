@@ -149,6 +149,7 @@ export function potTotal(round: BettingRound): number {
 }
 /** Layer all contributions, including dead chips from folded players, into main and side pots. */
 export function calculateSidePots(players: readonly Pick<BettingPlayer, "id" | "totalCommitted" | "folded">[]): SidePot[] {
+  if (new Set(players.map(p => p.id)).size !== players.length) throw new Error("Duplicate player");
   if (players.some(p => !integer(p.totalCommitted))) throw new Error("Invalid contribution");
   const levels = [...new Set(players.map(p => p.totalCommitted).filter(v => v > 0))].sort((a, b) => a - b);
   let previous = 0;
@@ -157,6 +158,8 @@ export function calculateSidePots(players: readonly Pick<BettingPlayer, "id" | "
     const contributors = players.filter(p => p.totalCommitted >= level);
     const amount = (level - previous) * contributors.length;
     const eligible = contributors.filter(p => !p.folded).map(p => p.id);
+    if (!Number.isSafeInteger(amount)) throw new Error("Pot exceeds safe integer chip range");
+    if (amount > 0 && eligible.length === 0) throw new Error("Pot has no eligible players");
     if (amount > 0) pots.push({ amount, eligible });
     previous = level;
   }
