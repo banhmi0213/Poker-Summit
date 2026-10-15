@@ -75,7 +75,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
 
         <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.9 }}>
           <p>
-            店舗・事業者の方：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link>
+            ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link>
           </p>
           <p>
             <Link href="/terms">利用規約</Link>・<Link href="/privacy">プライバシーポリシー</Link>・<Link href="/tokushoho">特定商取引法に基づく表記</Link>・<Link href="/company">運営会社</Link>
