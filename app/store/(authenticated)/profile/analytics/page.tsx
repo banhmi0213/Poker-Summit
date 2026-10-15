@@ -49,10 +49,9 @@ export default async function StoreAnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .eq("store_id", store.id);
 
-  const { count: sitewideViews } = await supabase
-    .from("page_views")
-    .select("*", { count: "exact", head: true })
-    .not("store_id", "is", null);
+  // 全店舗の閲覧記録は店舗からは読めないため、件数だけ返す関数で取る(2026/10)
+  const { data: sitewideViewsRaw } = await supabase.rpc("sitewide_store_view_count");
+  const sitewideViews = Number(sitewideViewsRaw ?? 0);
 
   const { count: totalStores } = await supabase
     .from("stores")
