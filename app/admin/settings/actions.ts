@@ -118,3 +118,26 @@ export async function updateMaintenanceSettings(formData: FormData) {
   revalidatePath("/admin/settings");
   revalidatePath("/");
 }
+
+/** 先行登録モード(ONの間は一般向けページを先行会員登録の案内に差し替える。反映は最大30秒) */
+export async function updatePrelaunchSettings(formData: FormData) {
+  const supabase = await createClient();
+  const prelaunchMode = formData.get("prelaunchMode") === "1";
+  const prelaunchMessage = String(formData.get("prelaunchMessage") ?? "").trim();
+  const prelaunchXUrl = String(formData.get("prelaunchXUrl") ?? "").trim();
+  if (prelaunchXUrl && !/^https:\/\/(x|twitter)\.com\//.test(prelaunchXUrl)) {
+    throw new Error("公式XのURLは https://x.com/ から始まる形で入力してください。");
+  }
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      prelaunch_mode: prelaunchMode,
+      prelaunch_message: prelaunchMessage || null,
+      prelaunch_x_url: prelaunchXUrl || null,
+    })
+    .eq("id", true);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings");
+  revalidatePath("/admin/settings");
+  revalidatePath("/prelaunch");
+}
