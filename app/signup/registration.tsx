@@ -16,7 +16,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
       <header className={styles.header}>
         <Link href="/" aria-label="Poker Summit トップページ"><img className={styles.logo} src="/images/logo.webp" alt="Poker Summit" /></Link>
         <span className={styles.headerLabel}>{early ? "先行会員登録受付中" : "無料会員登録"}</span>
-        <Link href="/" className={styles.back}>← トップに戻る</Link>
+        {!early && <Link href="/" className={styles.back}>← トップに戻る</Link>}
       </header>
       <div className={styles.layout}>
         <section className={styles.intro}>
