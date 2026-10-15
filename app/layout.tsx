@@ -25,6 +25,8 @@ export const metadata: Metadata = {
     images: DEFAULT_OG_IMAGES,
   },
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE] },
+  // Google Search Console の所有権確認(2026/10)。確認後も消さないこと(消すと確認が外れる)
+  verification: { google: "v-vQFn2rvqxcBghuEN-zxIqLPHhekhHJkCHDVuPbF3M" },
 };
 
 export default function RootLayout({
