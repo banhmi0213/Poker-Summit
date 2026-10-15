@@ -1,7 +1,10 @@
-.control{display:inline-grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;width:100%;min-width:0;max-width:230px;gap:3px;vertical-align:middle}
+.control{display:inline-grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;width:calc(100% - .3em);margin-inline-start:.3em;min-width:0;max-width:230px;gap:3px;vertical-align:middle}
 .control button{box-sizing:border-box;min-width:44px;min-height:44px;border:1px solid #c5a45c;border-radius:7px;background:#fff7e5;color:#513d17;font-size:21px;font-weight:700;cursor:pointer;touch-action:manipulation}
 .control button:disabled{opacity:.35;cursor:default}
 .control input{box-sizing:border-box;width:100%;min-width:0;min-height:44px;text-align:center;font-size:16px;padding:6px 2px;border:1px solid #b8ab91;border-radius:6px;background:white;color:#302716;appearance:textfield;-moz-appearance:textfield}
 .control input::-webkit-inner-spin-button,.control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .control input:disabled{opacity:.5;background:#f1f1f1}
 .control button:focus-visible,.control input:focus-visible{outline:2px solid #9b711d;outline-offset:2px}
+
+.control button:first-child{background:#eaf4ff;border-color:#3981c4;color:#1c5d98}
+.control button:last-child{background:#fff0f0;border-color:#d15858;color:#a62f2f}
