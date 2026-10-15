@@ -120,7 +120,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
       )}
         </section>
       </div>
-      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>© Poker Summit</footer>
+      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>{early && <p className={styles.storeLinks}>ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link></p>}© Poker Summit</footer>
     </main>
   );
 }
