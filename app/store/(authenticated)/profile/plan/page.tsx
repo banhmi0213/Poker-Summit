@@ -136,7 +136,7 @@ export default async function StorePlanPage({
       {(contract as any)?.suspended_for_nonpayment_at && (
         <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)" }}>
           <div style={{ color: "#d1453b", fontSize: 13.5, fontWeight: 700 }}>
-            ⚠️ お支払期限までにご入金を確認できなかったため、店舗ページの公開を停止しています。
+            ⚠️ お支払期限から7日を過ぎてもご入金を確認できなかったため、店舗ページの公開を停止しています。
           </div>
           <div style={{ fontSize: 13, marginTop: 4 }}>下記の請求書の金額をお振り込みください。ご入金の確認後、公開を再開します。</div>
         </div>

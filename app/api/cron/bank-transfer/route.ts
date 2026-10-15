@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
+  BANK_GRACE_DAYS,
   addDays,
   createInvoice,
   getBillingSettings,
@@ -10,7 +11,7 @@ import {
   todayJst,
   type InvoiceRow,
 } from "@/lib/bank-transfer";
-import { sendSuspensionNoticeEmail } from "@/lib/email";
+import { sendOverdueGraceNoticeEmail, sendSuspensionNoticeEmail } from "@/lib/email";
 import { notifyStoreLine, PLAN_PAGE_URL } from "@/lib/store-line";
 
 // ============================================================================
@@ -22,6 +23,11 @@ import { notifyStoreLine, PLAN_PAGE_URL } from "@/lib/store-line";
 // 入金確認で公開を戻す処理は lib/bank-transfer.ts confirmInvoicePayment。
 // 認証: Authorization: Bearer $CRON_SECRET(Vercel Cronが自動で付与)
 // ============================================================================
+
+function jpDate(isoDate: string) {
+  const [, m, d] = isoDate.split("-");
+  return `${Number(m)}月${Number(d)}日`;
+}
 
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
@@ -118,12 +124,54 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 3) 期限超過 → 店舗ページを非公開 ------------------------------------------------
-  const { data: overdue } = await svc
+  // 3a) 期限を過ぎた翌日のお知らせ(猶予7日のうちにご入金をお願いする) ----------------------
+  const { data: justOverdue } = await svc
     .from("invoices")
     .select("*")
     .eq("status", "unpaid")
     .lt("due_date", today)
+    .eq("kind", "plan")
+    .not("store_contract_id", "is", null)
+    .is("overdue_warned_at", null);
+  for (const inv of (justOverdue ?? []) as (InvoiceRow & { overdue_warned_at?: string | null })[]) {
+    if (!inv.due_date) continue;
+    const payBy = addDays(inv.due_date, BANK_GRACE_DAYS);
+    if (payBy < today) continue; // 猶予を過ぎているもの(この仕組みより前の請求書)は停止の処理に任せる
+    const suspendOn = addDays(payBy, 1);
+    try {
+      const { data: contract } = await svc.from("store_contracts").select("store_id").eq("id", inv.store_contract_id!).maybeSingle();
+      try {
+        await sendOverdueGraceNoticeEmail({
+          to: inv.bill_to_email,
+          name: inv.bill_to_name,
+          invoiceNumber: inv.invoice_number,
+          amount: inv.total_amount,
+          dueDate: inv.due_date,
+          payBy,
+          suspendOn,
+        });
+      } catch {
+        // 通知はベストエフォート
+      }
+      if (contract?.store_id) {
+        await notifyStoreLine(
+          { storeId: contract.store_id },
+          `請求書（${inv.invoice_number}）のお支払期限（${jpDate(inv.due_date)}）を過ぎています。${jpDate(payBy)}までにご入金が確認できない場合、${jpDate(suspendOn)}に店舗ページの掲載を一時停止します。\n${PLAN_PAGE_URL}`
+        );
+      }
+      await svc.from("invoices").update({ overdue_warned_at: new Date().toISOString() }).eq("id", inv.id);
+      results.push({ step: "overdue_warning", id: inv.id, ok: true });
+    } catch (e) {
+      results.push({ step: "overdue_warning", id: inv.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  // 3b) 期限から7日を過ぎても未入金 → 店舗ページを非公開 ----------------------------------
+  const { data: overdue } = await svc
+    .from("invoices")
+    .select("*")
+    .eq("status", "unpaid")
+    .lt("due_date", addDays(today, -BANK_GRACE_DAYS))
     .eq("kind", "plan")
     .not("store_contract_id", "is", null);
   for (const inv of (overdue ?? []) as InvoiceRow[]) {
@@ -149,7 +197,7 @@ export async function GET(req: NextRequest) {
       await svc.from("stores").update({ status: "payment_suspended" }).eq("id", contract.store_id);
       await notifyStoreLine(
         { storeId: contract.store_id },
-        `お支払い期限を過ぎてもご入金が確認できなかったため、店舗ページの掲載を一時停止しました（請求書 ${inv.invoice_number}）。ご入金を確認でき次第、再開します。\n${PLAN_PAGE_URL}`
+        `お支払期限から7日を過ぎてもご入金が確認できなかったため、店舗ページの掲載を一時停止しました（請求書 ${inv.invoice_number}）。ご入金を確認でき次第、再開します。\n${PLAN_PAGE_URL}`
       );
       await svc.from("invoices").update({ overdue_notified_at: new Date().toISOString() }).eq("id", inv.id);
       await svc.from("audit_log").insert({
@@ -229,13 +277,13 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  //  4c) 更新分が期限を過ぎても未入金で、期間が切れたアドオンは外す
+  //  4c) 更新分が期限から7日を過ぎても未入金で、期間が切れたアドオンは外す
   const { data: overdueAddonInvoices } = await svc
     .from("invoices")
     .select("id, store_contract_addon_id, period_start, invoice_number")
     .eq("status", "unpaid")
     .eq("kind", "addon")
-    .lt("due_date", today)
+    .lt("due_date", addDays(today, -BANK_GRACE_DAYS))
     .not("store_contract_addon_id", "is", null);
   for (const inv of overdueAddonInvoices ?? []) {
     if (inv.period_start && inv.period_start > today) continue;
