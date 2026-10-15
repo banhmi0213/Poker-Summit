@@ -105,3 +105,15 @@ test('invalid clock dates fail and formatting never wraps minutes at 60', () => 
     assert.equal(clockText(3601), '60:01');
     assert.equal(clockText(-1), '00:00');
 });
+const { validateTournamentDetails } = require('../lib/poker/tournament.ts');
+test('prizes normalize text, sort ranks and preserve chips without issuing payouts',()=>{
+ const input=[{rank:2,kind:'text',chips:99,description:' ギフト券 '},{rank:1,kind:'chips',chips:5000,description:''}];
+ const result=validateTournamentDetails(' Summit × コラボ ',input);
+ assert.equal(result.organizer_name,'Summit × コラボ');assert.deepEqual(result.prizes.map(p=>p.rank),[1,2]);assert.equal(result.prizes[0].chips,5000);assert.equal(result.prizes[1].chips,0);assert.equal(input[0].chips,99);
+ assert.deepEqual(validateTournamentDetails('',[]),{organizer_name:'',prizes:[]});
+});
+test('prizes reject duplicate ranks, unsupported kinds and unsafe chip values',()=>{
+ const valid={rank:1,kind:'chips',chips:100,description:''};
+ for(const patch of [{rank:0},{rank:1.5},{rank:1001},{kind:'cash'},{chips:0},{chips:-1},{chips:1.5},{chips:1000000001},{chips:NaN},{description:'a'.repeat(501)}]) assert.throws(()=>validateTournamentDetails('',[{...valid,...patch}]));
+ assert.throws(()=>validateTournamentDetails('',[valid,valid]));assert.throws(()=>validateTournamentDetails('',[{rank:1,kind:'text',chips:0,description:'  '}]));assert.throws(()=>validateTournamentDetails('a'.repeat(201),[]));assert.throws(()=>validateTournamentDetails('',null));
+});

@@ -102,3 +102,10 @@ require('node:test').test('structure table renders all levels, break and late re
  const html=renderToStaticMarkup(React.createElement(View,{structure:defaultStructure,currentIndex:4}));
  assert.match(html,/10,000/);assert.match(html,/BBアンティ/);assert.match(html,/レベル4終了まで/);assert.match(html,/25点チップのカラーアップ/);assert.equal((html.match(/<tr/g)||[]).length,10);assert.match(html,/aria-current="step"/);
 });
+require('node:test').test('saved tournament renders faint background image, collaboration and typed prizes',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const Panel=req(root+'/app/poker-tournaments/clock-panel.tsx').default;
+ const tournament={id:'test',title:'COLLAB CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:true,structure:defaultStructure,image_url:'https://example.com/logo.png',organizer_name:'Summit × コラボ',prizes:[{rank:1,kind:'chips',chips:5000,description:''},{rank:2,kind:'text',chips:0,description:'ギフト券'}]};
+ const props={tournament,serverNow:Date.parse(tournament.starts_at)};
+ for(const mode of ['clock','structure']) { const html=renderToStaticMarkup(React.createElement(Panel,{...props,mode}));assert.match(html,/src="https:\/\/example.com\/logo.png"/);assert.match(html,/class="backdrop"/);assert.match(html,/Summit × コラボ/);if(mode==='structure'){assert.match(html,/5,000 チップ/);assert.match(html,/ギフト券/);assert.match(html,/自動付与は準備中/);} }
+});

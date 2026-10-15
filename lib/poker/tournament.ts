@@ -14,7 +14,25 @@ export type TournamentStructure = {
     reentry: boolean;
     periods: BlindPeriod[];
 };
+export type TournamentPrize = { rank: number; kind: "chips" | "text"; chips: number; description: string };
+export function validateTournamentDetails(organizer: unknown, raw: unknown) {
+    if (typeof organizer !== "string" || organizer.trim().length > 200) throw new Error("主催者名は200文字以内で入力してください。");
+    if (!Array.isArray(raw) || raw.length > 100) throw new Error("プライズは100件以内で設定してください。");
+    const ranks = new Set<number>();
+    const prizes: TournamentPrize[] = raw.map(p => {
+        if (!p || !Number.isSafeInteger(p.rank) || p.rank < 1 || p.rank > 1000 || ranks.has(p.rank)) throw new Error("プライズの順位は1〜1000の重複しない整数で設定してください。");
+        ranks.add(p.rank);
+        if (p.kind !== "chips" && p.kind !== "text") throw new Error("プライズの種類を確認してください。");
+        if (typeof p.description !== "string" || p.description.trim().length > 500) throw new Error("プライズの説明は500文字以内で入力してください。");
+        if (p.kind === "chips" && (!Number.isSafeInteger(p.chips) || p.chips < 1 || p.chips > 1000000000)) throw new Error("プライズのチップ数は1〜1,000,000,000で入力してください。");
+        if (p.kind === "text" && !p.description.trim()) throw new Error("プライズの内容を入力してください。");
+        return {rank:p.rank, kind:p.kind, chips:p.kind === "chips" ? p.chips : 0, description:p.description.trim()};
+    });
+    return {organizer_name:organizer.trim(), prizes:prizes.sort((a,b)=>a.rank-b.rank)};
+}
 export type PokerTournament = {
+    organizer_name?: string;
+    prizes?: TournamentPrize[];
     id: string;
     title: string;
     owner_store_id: string | null;

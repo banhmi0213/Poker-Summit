@@ -20,7 +20,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   let tournament: PokerTournament | undefined;
   if (searchParams?.tournament) {
     if (!/^[a-f0-9-]{36}$/i.test(searchParams.tournament)) notFound();
-    const { data, error } = await supabase.from("poker_tournaments").select("id,title,owner_store_id,starts_at,published,structure,image_url").eq("id",searchParams.tournament).eq("published",true).maybeSingle();
+    const { data, error } = await supabase.from("poker_tournaments").select("id,title,owner_store_id,starts_at,published,structure,image_url,organizer_name,prizes").eq("id",searchParams.tournament).eq("published",true).maybeSingle();
     if (error || !data) notFound();
     tournament = {...data, structure: validateStructure(data.structure)} as PokerTournament;
   } else if (searchParams?.game === "tournament") {

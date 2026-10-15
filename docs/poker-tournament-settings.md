@@ -31,3 +31,8 @@ Reference: https://www.pokertda.com/view-poker-tda-rules/ — New Hand / New Bet
 2. Open /poker-tournaments/preview: change stack/levels/ante/breaks, apply to the unsaved clock.
 3. After live migration: admin can create Summit/store records; store can edit its own records only; draft is absent from lobby, published visible.
 4. Save/reload structure and image; replace/remove image, unpublish. Test other-store changes are rejected and failed upload/save preserves current record.
+
+## Organizer/prize extension
+Migration 20261015175743 was applied to the same project. Adds optional public organizer_name (200 chars) and typed prizes (unique ranks, chips 1..1e9 or required text). Ownership remains controlled solely by owner_store_id and existing RLS. No wallet, payout or tournament-result writes are implemented. The project currently has no member-chip wallet table; store_spot_credits is a separate advertising credit product and must not be used for prizes.
+
+Uploaded images render at 16% opacity behind clock/structure information, at 25% in lobby/form previews. The generic game=tournament sample has no saved image; open a published tournament using its tournament UUID or the manager's table link. Added runtime tests cover prize validation and rendering. Live rollback checks verified JSON constraints and organizer/prize persistence without altering existing records. 64 engine/config/render tests passed. Manual browser appearance and form submission remain review steps.

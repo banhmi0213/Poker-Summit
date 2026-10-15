@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createStoreClient } from "@/lib/supabase/store-server";
-import { validateStructure, type PokerTournament } from "./tournament";
+import { validateTournamentDetails, validateStructure, type PokerTournament } from "./tournament";
 import { parseEventLocalInput } from "@/lib/event-dates";
 import { assertAllowedStoreText } from "@/lib/content-rules";
 import { randomUUID } from "node:crypto";
@@ -10,7 +10,7 @@ export type TournamentFormState = {
     message: string;
     id?: string;
 };
-const columns = "id,title,owner_store_id,starts_at,published,structure,image_url,image_path";
+const columns = "id,title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes";
 export async function tournamentManager(scope: "admin" | "store") {
     const client = scope === "admin" ? await createClient() : await createStoreClient();
     const { data: { user } } = await client.auth.getUser();
@@ -65,6 +65,10 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
         const structure = validateStructure(JSON.parse(json));
         if (scope === "store")
             assertAllowedStoreText(title, ...structure.periods.map(p => p.note));
+        const prizeJson = String(form.get("prizes") ?? "[]");
+        if (prizeJson.length > 100000) throw new Error("プライズ設定が大きすぎます。");
+        const details = validateTournamentDetails(String(form.get("organizer_name") ?? ""), JSON.parse(prizeJson));
+        if (scope === "store") assertAllowedStoreText(details.organizer_name, ...details.prizes.map(p => p.description));
         const published = form.get("published") === "on";
         let existing: PokerTournament | null = null;
         if (id) {
@@ -98,7 +102,7 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
             cleanup = () => client.storage.from("poker-tournament-images").remove([uploaded!]);
             image_url = client.storage.from("poker-tournament-images").getPublicUrl(image_path).data.publicUrl;
         }
-        const payload = { title, owner_store_id: owner, starts_at, published, structure, image_url, image_path };
+        const payload = { ...details, title, owner_store_id: owner, starts_at, published, structure, image_url, image_path };
         const result = id ? await client.from("poker_tournaments").update(payload).eq("id", id).select("id").single() : await client.from("poker_tournaments").insert(payload).select("id").single();
         if (result.error || !result.data)
             throw new Error("大会設定を保存できませんでした。DBの準備状況と権限をご確認ください。");
