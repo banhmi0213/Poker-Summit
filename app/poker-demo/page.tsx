@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import { dealDemoHand } from "@/lib/poker/demo-deal";
 import PokerTablePreview from "./poker-table-preview";
 
 export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
@@ -19,7 +20,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      <PokerTablePreview member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={searchParams?.mode === "spectate"} />
+      <PokerTablePreview initialDeal={dealDemoHand(["you", "p5", "p3", "p2", "p4", "p6"], 5)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={searchParams?.mode === "spectate"} />
     </main>
     <PortalFooter />
     <BottomTabs />

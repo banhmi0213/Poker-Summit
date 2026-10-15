@@ -21,8 +21,10 @@ const React = req('react'), { renderToStaticMarkup } = req('react-dom/server'), 
 const original = React.useState;
 let fixture;
 const stateForFixture = function (initial) { return original(typeof initial === 'function' ? () => { const value = initial(); return value?.players && value?.bigBlind ? fixture : value; } : initial); };
+const deck = req(root + '/lib/poker/engine.ts').createDeck();
+const fixtureDeal = { board: deck.slice(12,17), holes: Object.fromEntries(['you','p5','p3','p2','p4','p6'].map((id,i)=>[id,[deck[i],deck[i+6]]])) };
 function render(r) { fixture = r; let html; React.useState = stateForFixture; try {
-    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, isGuestPreview: true }));
+    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, initialDeal: fixtureDeal, isGuestPreview: true }));
 }
 finally {
     React.useState = original;
@@ -74,4 +76,15 @@ require('node:test').test('blind chip markers show posted amounts and clear on t
     r = beginNextBettingStreet(r, 'you');
     assert.equal(potTotal(r), 600);
     assert.doesNotMatch(render(r).html, /class="betChip"/);
+});
+
+require('node:test').test('preflop renders the supplied hand, ten opponent card backs and no board', () => {
+    const ids = ['you', 'p5', 'p3', 'p2', 'p4', 'p6'];
+    const r = createBettingRound(ids.map(id => ({ id, stack: 1000 })), 100, 'you');
+    const html = render(r).html;
+    const { cardLabel } = req(root + '/lib/poker/card-display.ts');
+    const hand = html.match(/<div class="hole">([\s\S]*?)<\/div>/)[1];
+    for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
+    assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
+    assert.match(html, /aria-label="共通カード"><\/div>/);
 });
