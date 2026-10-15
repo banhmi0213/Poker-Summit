@@ -79,13 +79,14 @@ export async function updateSession(request: NextRequest) {
   // 期限内なら通信なし)。ページ側のログイン判定は各ページの getUser で行うので、
   // ここで毎回認証サーバーへ問い合わせる必要はない(2026/10、表示速度対策)。
   // メンテナンスモードの確認もこれと同時に行う。
-  const [user, maintenanceMode] = await Promise.all([
+  const [user, flags] = await Promise.all([
     isProtectedPath
       ? supabase.auth.getUser().then(({ data }) => data.user)
       : // session.user には触らない(サーバー側で触ると supabase-js が毎回警告を出すため)
         supabase.auth.getSession().then(() => null),
-    maintenanceExempt ? Promise.resolve(false) : getMaintenanceMode(),
+    getSiteFlags(),
   ]);
+  const maintenanceMode = !maintenanceExempt && flags.maintenance;
 
   if (!user && isProtectedPath) {
     const url = request.nextUrl.clone();
@@ -104,6 +105,18 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
     response = NextResponse.rewrite(url);
+  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(hasMemberSessionCookie(request) && (await isAdminSession(supabase)))) {
+    // 先行登録モード(2026/10): 一般向けページは先行会員登録の案内ページに差し替える。
+    // トップ(/)は検索結果に案内ページが出るよう通常の200で返し、それ以外のページは
+    // 「一時的に閉じている」ことを検索エンジンに伝えるため 503 + Retry-After で返す
+    // (ローンチ後に元の評価のまま戻すため。noindex にはしない)。
+    const url = request.nextUrl.clone();
+    url.pathname = "/prelaunch";
+    url.search = "";
+    response =
+      pathname === "/"
+        ? NextResponse.rewrite(url, { request })
+        : NextResponse.rewrite(url, { request, status: 503, headers: { "Retry-After": "86400" } });
   }
 
   pendingCookies.forEach(({ name, value, options }) =>
@@ -113,11 +126,11 @@ export async function updateSession(request: NextRequest) {
   return response;
 }
 
-// メンテナンスモードのON/OFFは、同じサーバーの中で30秒だけ覚えておく
+// メンテナンスモード・先行登録モードのON/OFFは、同じサーバーの中で30秒だけ覚えておく
 // (全ページの表示のたびにデータベースへ問い合わせないため。切り替えの反映は最大30秒遅れる)
-let maintenanceCache: { value: boolean; at: number } | null = null;
-async function getMaintenanceMode(): Promise<boolean> {
-  if (maintenanceCache && Date.now() - maintenanceCache.at < 30_000) return maintenanceCache.value;
+let flagsCache: { value: { maintenance: boolean; prelaunch: boolean }; at: number } | null = null;
+async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolean }> {
+  if (flagsCache && Date.now() - flagsCache.at < 30_000) return flagsCache.value;
   // ログイン状態に関係ない設定なので、Cookieなしのクライアントで読む
   // (期限切れのログイン情報で問い合わせて失敗するのを避ける)
   const anon = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -125,11 +138,34 @@ async function getMaintenanceMode(): Promise<boolean> {
   });
   const { data: settings, error } = await anon
     .from("site_settings")
-    .select("maintenance_mode")
+    .select("maintenance_mode, prelaunch_mode")
     .eq("id", true)
     .maybeSingle();
-  if (error) return maintenanceCache?.value ?? false;
-  const value = !!settings?.maintenance_mode;
-  maintenanceCache = { value, at: Date.now() };
+  if (error) return flagsCache?.value ?? { maintenance: false, prelaunch: false };
+  const value = { maintenance: !!settings?.maintenance_mode, prelaunch: !!settings?.prelaunch_mode };
+  flagsCache = { value, at: Date.now() };
   return value;
+}
+
+/** 先行登録モード中も開けるページ(運営・店舗管理・会員登録/ログイン・規約類・API等) */
+function isPrelaunchExempt(pathname: string) {
+  const exact = ["/prelaunch", "/maintenance", "/login", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
+  if (exact.includes(pathname)) return true;
+  const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/_next/"];
+  return pathname === "/admin" || prefixes.some((p) => pathname.startsWith(p));
+}
+
+/** 会員(運営含む)のログインCookieがあるか。無ければ運営チェックの問い合わせを省く */
+function hasMemberSessionCookie(request: NextRequest) {
+  return request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token") && !c.name.startsWith(STORE_AUTH_COOKIE_NAME));
+}
+
+/** 運営としてログインしているか(先行登録モード中も運営はサイト全体を確認できるようにする) */
+async function isAdminSession(supabase: ReturnType<typeof createServerClient>) {
+  try {
+    const { data } = await supabase.rpc("is_admin");
+    return data === true;
+  } catch {
+    return false;
+  }
 }

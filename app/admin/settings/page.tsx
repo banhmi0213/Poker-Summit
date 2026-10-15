@@ -5,6 +5,7 @@ import {
   updateListingSettings,
   updateNotifySettings,
   updateMaintenanceSettings,
+  updatePrelaunchSettings,
 } from "./actions";
 
 const REPORT_AUTO_HIDE_OPTIONS = ["1件", "3件", "5件", "10件", "自動非表示にしない"];
@@ -69,6 +70,7 @@ export default async function AdminSettingsPage({
     { key: "listing", label: "掲載・審査設定" },
     { key: "notify", label: "通知設定" },
     { key: "maintenance", label: "メンテナンス" },
+    { key: "prelaunch", label: "先行登録モード" },
   ];
 
   return (
@@ -226,6 +228,36 @@ export default async function AdminSettingsPage({
                   <button type="submit" className="btn primary">
                     保存する
                   </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {tab === "prelaunch" && (
+            <div className="card" style={{ maxWidth: 640, marginBottom: 20 }}>
+              <form action={updatePrelaunchSettings}>
+                <h3 style={{ marginBottom: 4 }}>先行登録モード</h3>
+                <p className="muted" style={{ fontSize: 12.5, marginBottom: 12, lineHeight: 1.8 }}>
+                  ONにすると、一般の訪問者には「先行会員登録受付中」のページだけを表示します(反映まで最大30秒)。
+                  <br />
+                  運営(ログイン中)・店舗管理画面・掲載申込み・会員登録/ログイン・規約類はそのまま使えます。
+                  先行登録した会員がログインすると「登録ありがとうございます」と表示されます。
+                </p>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: "rgba(200,160,60,0.12)", padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 14 }}>
+                  <span style={{ fontWeight: 700 }}>先行登録モードをONにする</span>
+                  <input type="checkbox" name="prelaunchMode" value="1" defaultChecked={s.prelaunch_mode ?? false} style={{ width: 18, height: 18 }} />
+                </label>
+                <div className="field">
+                  <span className="muted">案内ページの説明文(空欄なら標準の文)</span>
+                  <textarea name="prelaunchMessage" rows={4} defaultValue={s.prelaunch_message ?? ""} />
+                </div>
+                <div className="field">
+                  <span className="muted">公式XのURL(例: https://x.com/pokersummit_jp)</span>
+                  <input type="url" name="prelaunchXUrl" defaultValue={s.prelaunch_x_url ?? ""} />
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="submit" className="btn primary">保存する</button>
+                  <a href="/prelaunch" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>案内ページを確認する →</a>
                 </div>
               </form>
             </div>
