@@ -37,7 +37,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
       supabase
         .from("store_contracts")
         .select(
-          "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, created_at, plan_id, stores(id, name, pref, region, tel, status), store_contract_addons(addon_id)"
+          "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, created_at, plan_id, price_lock_plan_id, price_lock_fee, price_lock_granted_at, price_lock_ended_at, price_lock_end_reason, stores(id, name, pref, region, tel, status), store_contract_addons(addon_id)"
         )
         .eq("id", params.id)
         .maybeSingle(),
@@ -105,6 +105,13 @@ export default async function ContractDetailPage({ params }: { params: { id: str
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
         <div className="card">
           <h2 style={{ fontSize: 15, marginBottom: 10 }}>契約内容</h2>
+          {(contract as any).price_lock_plan_id && (
+            <p style={{ fontSize: 12.5, margin: "0 0 10px", padding: "6px 10px", borderRadius: 6, background: (contract as any).price_lock_ended_at ? "#f3f3f3" : "#fff4d6" }}>
+              {(contract as any).price_lock_ended_at
+                ? `年内お申込み特典(料金据え置き): 対象外になりました（${({ plan_change: "プラン変更", nonpayment: "未払いによる掲載停止", canceled: "解約" } as Record<string, string>)[(contract as any).price_lock_end_reason] ?? (contract as any).price_lock_end_reason}・${new Date((contract as any).price_lock_ended_at).toLocaleDateString("ja-JP")}）`
+                : `★ 年内お申込み特典: 料金据え置き中（月額${Number((contract as any).price_lock_fee).toLocaleString("ja-JP")}円・${new Date((contract as any).price_lock_granted_at).toLocaleDateString("ja-JP")}から）`}
+            </p>
+          )}
           <form action={updateContract} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <input type="hidden" name="contractId" value={contract.id} />
             <label>

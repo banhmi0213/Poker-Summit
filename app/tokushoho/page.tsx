@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -74,7 +75,11 @@ const ITEMS: { label: string; body: ReactNode }[] = [
   { label: "ディーラーマッチングとの区別", body: "本表記は当社が提供する有料プラン・広告・オプション等のサービス対価に関するものです。店舗とディーラー間の契約、報酬・賃金およびその支払いは当事者が行い、当社は代行しません。マッチングの利用条件は利用規約と利用ガイドをご確認ください。" },
 ];
 
-export default function TokushohoPage() {
+export default async function TokushohoPage() {
+  const priceLock = await getPriceLockCampaign();
+  const items = priceLock.enabled
+    ? [...ITEMS.slice(0, ITEMS.findIndex((x) => x.label.startsWith("販売価格")) + 1), { label: "年内お申込み特典（料金据え置き）", body: <>年内お申込み特典（料金据え置き）：{priceLock.deadlineLabel}までに初回のお支払いが完了した月額プランの契約は、当運営が料金を改定した場合も、契約時に選択したプランの月額料金を据え置きます。ただし、プランの変更（アップグレード・ダウングレード）、未払いによる掲載停止、解約のいずれかがあった場合は対象外となり、以降は改定後の料金を適用します。据え置きは初回に契約したプランに限り、消費税率の変更による差額およびアドオンの料金は対象外です。詳しくは<a href="/terms#price-lock">利用規約</a>をご確認ください。</> }, ...ITEMS.slice(ITEMS.findIndex((x) => x.label.startsWith("販売価格")) + 1)]
+    : ITEMS;
   return (
     <div>
       <PortalHeader />
@@ -82,7 +87,7 @@ export default function TokushohoPage() {
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>特定商取引法に基づく表記</h1>
         <p style={{ fontSize: 12 }}>最終改定日：2026年10月16日</p>
         <div className="card">
-          {ITEMS.map((item) => (
+          {items.map((item) => (
             <div key={item.label}>
               <h2 style={LABEL_STYLE}>{item.label}</h2>
               <p style={P_STYLE}>{item.body}</p>

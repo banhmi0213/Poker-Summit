@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { effectivePlanFee, isPriceLockActive } from "@/lib/price-lock";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -45,7 +46,7 @@ export default async function StorePlanPage({
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
+          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, price_lock_plan_id, price_lock_fee, price_lock_ended_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),
@@ -248,11 +249,18 @@ export default async function StorePlanPage({
           <span className="muted">現在のプラン</span>
           <div style={{ fontWeight: 700, fontSize: 16, marginTop: 2 }}>
             {contract?.plans
-              ? `${(contract.plans as { name: string }).name}（¥${(
+              ? `${(contract.plans as { name: string }).name}（¥${effectivePlanFee(
+                  contract as any,
+                  (contract as any).plan_id,
                   (contract.plans as { monthly_fee: number }).monthly_fee ?? 0
                 ).toLocaleString("ja-JP")}/月）`
               : "未契約・プラン未設定"}
           </div>
+          {contract && isPriceLockActive(contract as any) && (
+            <div style={{ marginTop: 6, display: "inline-block", background: "#fff4d6", border: "1px solid #e2c06a", borderRadius: 6, padding: "4px 10px", fontSize: 12.5, fontWeight: 700, color: "#7a5512" }}>
+              ★ 年内お申込み特典：料金据え置き対象（月額¥{Number((contract as any).price_lock_fee).toLocaleString("ja-JP")}）
+            </div>
+          )}
           {contract?.current_period_end && (
             <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
               現在の契約期間: 〜{new Date(contract.current_period_end).toLocaleDateString("ja-JP")}
@@ -379,7 +387,7 @@ export default async function StorePlanPage({
         orders={addonOrders}
         canUseCard={billing.cardPaymentEnabled && hasCard}
         hasContract={(contract as any)?.status === "active"}
-        planFee={((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0}
+        planFee={contract ? effectivePlanFee(contract as any, (contract as any).plan_id, ((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0) : 0}
       />
     </div>
   );

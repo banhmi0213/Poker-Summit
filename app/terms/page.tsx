@@ -3,6 +3,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 
 export const metadata = staticPageMetadata({ title: "利用規約", description: "Poker Summitの利用規約。", path: "/terms" });
 
@@ -21,7 +22,8 @@ const MATCHING_GUIDE = [
  { title: "情報の公開と運営による確認", lines: ["公開設定を有効にしたディーラープロフィールは店舗アカウントに表示され、一般会員には表示されません。店舗は募集に必要な範囲だけで使い、転載や無断転送をしないでください。", "通報対応や安全確保等のため、権限を有する運営担当者が必要な履歴等を確認する場合があります。同意記録やチャット履歴の扱い・保存はプライバシーポリシーをご確認ください。"] },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const priceLock = await getPriceLockCampaign();
   return (
     <div>
       <PortalHeader />
@@ -231,6 +233,7 @@ export default function TermsPage() {
               <li>当運営は、有料サービスの料金または内容を変更する場合、効力発生日の30日前までに本サービス上またはメールで周知します。変更は効力発生日以降に開始または更新する契約期間から適用します。</li>
               <li>掲載内容が本規約、法令または公序良俗に反する場合、当運営は第5条に従い掲載の停止その他必要な措置をとることがあります。この場合の料金の取扱いは、措置の理由、提供状況および適用法令に従います。</li>
               <li>PICK UP表示、広告枠等で抽選・順番により表示される機能は、表示位置、表示回数、閲覧数または集客効果を保証するものではありません。</li>
+              {priceLock.enabled && <li id="price-lock" style={{ scrollMarginTop: 100 }}>年内お申込み特典（料金据え置き）：{priceLock.deadlineLabel}までに初回のお支払いが完了した月額プランの契約は、当運営が料金を改定した場合も、契約時に選択したプランの月額料金を据え置きます。ただし、プランの変更（アップグレード・ダウングレード）、未払いによる掲載停止、解約のいずれかがあった場合は対象外となり、以降は改定後の料金を適用します。据え置きは初回に契約したプランに限り、消費税率の変更による差額およびアドオンの料金は対象外です。</li>}
             </ol>
           </section>
           <section id="antisocial-forces" style={{ scrollMarginTop: 100, marginTop: 32 }}>

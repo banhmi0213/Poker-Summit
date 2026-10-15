@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -140,4 +140,23 @@ export async function updatePrelaunchSettings(formData: FormData) {
   await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings");
   revalidatePath("/admin/settings");
   revalidatePath("/prelaunch");
+}
+
+// 年内お申込み特典(料金据え置き)の表示と受付期限(2026/10)
+export async function updatePriceLockSettings(formData: FormData) {
+  const supabase = await createClient();
+  const enabled = formData.get("priceLockEnabled") === "1";
+  const deadlineDate = String(formData.get("priceLockDeadline") ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(deadlineDate)) throw new Error("受付期限の日付を正しく入力してください。");
+  const { error } = await supabase
+    .from("site_settings")
+    .update({ price_lock_campaign_enabled: enabled, price_lock_deadline: `${deadlineDate}T23:59:59+09:00` })
+    .eq("id", true);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, enabled ? "settings_price_lock_on" : "settings_price_lock_off", "site_settings");
+  revalidateTag("price-lock-campaign");
+  revalidatePath("/admin/settings");
+  revalidatePath("/apply");
+  revalidatePath("/terms");
+  revalidatePath("/tokushoho");
 }

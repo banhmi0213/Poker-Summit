@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { effectivePlanFee } from "@/lib/price-lock";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
@@ -30,7 +31,7 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   const { data, error } = await supabase
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email"
+      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at"
     )
     .eq("id", storeContractId)
     .single();
@@ -88,7 +89,9 @@ export async function applyContractBillingChange(params: {
     .map((a) => ({ ...a, fee: addonFeeFor(a, pref) as number }));
 
   const addonFeeTotal = addons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
-  const total = (plan.monthly_fee ?? 0) + addonFeeTotal;
+  // 年内お申込み特典: 据え置き中の同じプランなら据え置き料金で請求する(lib/price-lock.ts)
+  const planFee = effectivePlanFee(contract, plan.id, plan.monthly_fee ?? 0);
+  const total = planFee + addonFeeTotal;
 
   const orderId = newOrderId("c", contract.id);
   const charge = await chargeSavedCard({
