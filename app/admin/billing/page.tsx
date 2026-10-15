@@ -201,9 +201,7 @@ export default async function AdminBillingPage({
                   const store = Array.isArray(c.stores) ? c.stores[0] : c.stores;
                   return (
                     <option key={c.id} value={c.id}>
-                      {store?.name ?? "（店舗名なし）"}（{c.billing_method === "bank_transfer" ? `振込・${cycleLabel(c.billing_cycle_months)}` : "カード"}
-                      {c.current_period_end ? `・〜${new Date(c.current_period_end).toLocaleDateString("ja-JP")}` : ""}
-                      {c.contact_email ? "" : "・メール未登録"}）
+                      {`${store?.name ?? "（店舗名なし）"}（${c.billing_method === "bank_transfer" ? `振込・${cycleLabel(c.billing_cycle_months)}` : "カード"}${c.current_period_end ? `・〜${new Date(c.current_period_end).toLocaleDateString("ja-JP")}` : ""}${c.contact_email ? "" : "・メール未登録"}）`}
                     </option>
                   );
                 })}
@@ -216,7 +214,7 @@ export default async function AdminBillingPage({
                   .filter((p: any) => p.active)
                   .map((p: any) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}（月額{yen(p.monthly_fee)}）
+                      {`${p.name}（月額${yen(p.monthly_fee)}）`}
                     </option>
                   ))}
               </select>

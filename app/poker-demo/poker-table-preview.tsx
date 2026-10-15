@@ -361,7 +361,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
             <button type="button" disabled={!soundEnabled} onClick={() => previewSound("win")}>♪ 勝利「チャリチャリ」</button>
           </div>
           <p>固定BET倍率</p>
-          {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{n}×</option>)}</select></label>)}
+          {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{`${n}×`}</option>)}</select></label>)}
           <small>BB表示と倍率はデモに反映。SEは各場面で再生されます。設定の保存は未実装です。</small>
         </div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}

@@ -113,7 +113,7 @@ export default async function ContractDetailPage({ params }: { params: { id: str
                 <option value="">選択してください</option>
                 {(plans ?? []).map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name}（{formatYen(p.monthly_fee)}）{!p.active ? "（停止中）" : ""}
+                    {`${p.name}（${formatYen(p.monthly_fee)}）${!p.active ? "（停止中）" : ""}`}
                   </option>
                 ))}
               </select>

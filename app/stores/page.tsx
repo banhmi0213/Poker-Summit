@@ -264,7 +264,8 @@ export default async function StoresPage({
           <CompactPortalBanner image="/images/poker-store-finder-banner.webp"
             eyebrow="FIND YOUR POKER SPOT"
             title={`${heroPlace}のポーカースポットを探す`}
-            subtitle="看板から見つける、あなたの次の一軒。" />
+            subtitle="看板から見つける、あなたの次の一軒。"
+            heading="h2" />
         </div>
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>

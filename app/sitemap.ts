@@ -14,7 +14,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const supabase=await createClient();
  const now=new Date();
 
- const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company","/signup","/login"].map(path=>({url:`${base}${path}`,lastModified:now}));
 
  const {data:blogData}=await supabase.from("blog_entries").select("id,slug,updated_at").eq("active",true).eq("include_in_sitemap",true).eq("search_index",true);
  const blog=(blogData||[]).map(entry=>({url:`${base}/blog/${entry.slug||entry.id}`,lastModified:entry.updated_at?new Date(entry.updated_at):now}));
@@ -69,6 +68,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const jobPages=(jobs||[]).filter(listed).map((j:any)=>({url:`${base}/jobs/${j.id}`,lastModified:lm(j.updated_at)}));
  const couponPages=(coupons||[]).filter(listed).filter((c:any)=>!c.valid_until||c.valid_until>=today).map((c:any)=>({url:`${base}/coupons/${c.id}`,lastModified:lm(c.updated_at)}));
  const tournamentPages=(tournaments||[]).map((t:any)=>({url:`${base}/major-tournaments/${t.id}`,lastModified:lm(t.updated_at)}));
+
+ // 固定ページの更新日: 一覧ページはその中身の一番新しい更新日、TOPは全体で一番新しい日。
+ // それ以外(会社概要など)は更新日を付けない(以前はアクセスした時刻が入っていた)。
+ const latest=(rows:{lastModified?:string|Date}[])=>rows.reduce<Date|undefined>((m,r)=>{const d=r.lastModified?new Date(r.lastModified):undefined;return d&&(!m||d>m)?d:m;},undefined);
+ const listLatest:Record<string,Date|undefined>={"/stores":latest(stores),"/events":latest(eventPages),"/jobs":latest(jobPages),"/coupons":latest(couponPages),"/major-tournaments":latest(tournamentPages),"/blog":latest(blog)};
+ listLatest[""]=latest(Object.values(listLatest).filter((d):d is Date=>!!d).map(d=>({lastModified:d})));
+ const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company","/signup","/login"].map(path=>{const d=listLatest[path];return d?{url:`${base}${path}`,lastModified:d}:{url:`${base}${path}`};});
 
  return [...fixed,...prefPages,...cityPages,...stores,...eventPages,...jobPages,...couponPages,...tournamentPages,...blog];
 }

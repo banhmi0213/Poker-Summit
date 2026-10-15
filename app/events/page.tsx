@@ -66,7 +66,7 @@ export default async function EventsPage({ searchParams }: {
       <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
     <main className="container ep-page">
       <CompactPortalBanner image="/images/compact-events.webp" eyebrow="TOURNAMENTS & EVENTS" title="トーナメント・イベントを探す" subtitle="次の挑戦も、はじめての一歩も。" detail="" />
-        <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
+        <div className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
         <Image
           src="/images/poker-events-banner.webp"
           alt="TOURNAMENTS & EVENTS — トーナメント・イベントを探す。次の挑戦も、はじめての一歩も。"
@@ -76,7 +76,7 @@ export default async function EventsPage({ searchParams }: {
           sizes="(max-width: 1180px) 100vw, 1140px"
           style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
         />
-      </h1>
+      </div>
       <form method="get" className="ep-search">
         {kind !== "すべて" && <input type="hidden" name="kind" value={kind} />}
         <label className="ep-keyword">フリーワード<input name="q" defaultValue={q} placeholder="キーワードで検索" /></label>
