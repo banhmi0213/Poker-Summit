@@ -10,6 +10,7 @@ import {
   type AnalyticsIssue,
 } from "@/lib/analytics";
 import { classifyReferrer } from "@/lib/referrer";
+import { fetchAllRows } from "@/lib/fetch-all-rows";
 
 type SP = {
   tab?: string;
@@ -329,11 +330,13 @@ async function OverviewTab({
   if (scope === "store" && storeId) {
     const [{ data: store }, { data: views }, { count: favCount }] = await Promise.all([
       supabase.from("stores").select("id, name, category, pref").eq("id", storeId).maybeSingle(),
-      supabase
-        .from("page_views")
-        .select("created_at, referrer, device")
-        .eq("store_id", storeId)
-        .gte("created_at", since.toISOString()),
+      fetchAllRows(() =>
+        supabase
+          .from("page_views")
+          .select("created_at, referrer, device")
+          .eq("store_id", storeId)
+          .gte("created_at", since.toISOString())
+      ),
       supabase.from("favorite_stores").select("*", { count: "exact", head: true }).eq("store_id", storeId),
     ]);
     if (!store) return <p className="empty">店舗が見つかりません。</p>;
@@ -425,11 +428,13 @@ async function OverviewTab({
     { data: favByStoreRaw },
     { data: dashCounts },
   ] = await Promise.all([
-    supabase
-      .from("page_views")
-      .select("created_at, referrer, device, store_id")
-      .not("store_id", "is", null)
-      .gte("created_at", since.toISOString()),
+    fetchAllRows(() =>
+      supabase
+        .from("page_views")
+        .select("created_at, referrer, device, store_id")
+        .not("store_id", "is", null)
+        .gte("created_at", since.toISOString())
+    ),
     supabase.from("favorite_stores").select("*", { count: "exact", head: true }),
     supabase.from("favorite_jobs").select("*", { count: "exact", head: true }),
     supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
@@ -619,11 +624,13 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
   const [{ data: views }, { data: favs }] =
     storeIds.length > 0
       ? await Promise.all([
-          supabase
-            .from("page_views")
-            .select("store_id, created_at")
-            .in("store_id", storeIds)
-            .gte("created_at", since.toISOString()),
+          fetchAllRows(() =>
+            supabase
+              .from("page_views")
+              .select("store_id, created_at")
+              .in("store_id", storeIds)
+              .gte("created_at", since.toISOString())
+          ),
           supabase.from("favorite_stores").select("store_id").in("store_id", storeIds),
         ])
       : [{ data: [] as any[] }, { data: [] as any[] }];
@@ -685,7 +692,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
 
   const [{ data: entries }, { data: views }] = await Promise.all([
     supabase.from("blog_entries").select("id,title,slug,category,active,published_at").order("published_at", { ascending: false }),
-    supabase.from("page_views").select("blog_entry_id,created_at").not("blog_entry_id", "is", null),
+    fetchAllRows(() => supabase.from("page_views").select("blog_entry_id,created_at").not("blog_entry_id", "is", null)),
   ]);
 
   const rows = (entries ?? []).map((entry: any) => {
@@ -748,10 +755,10 @@ async function BannerTab({ supabase, since }: any) {
 
   const [{ data: impressions }, { data: clicks }] = await Promise.all([
     bannerIds.length > 0
-      ? supabase.from("banner_impressions").select("banner_id").in("banner_id", bannerIds).gte("created_at", since.toISOString())
+      ? fetchAllRows(() => supabase.from("banner_impressions").select("banner_id").in("banner_id", bannerIds).gte("created_at", since.toISOString()))
       : Promise.resolve({ data: [] as any[] }),
     bannerIds.length > 0
-      ? supabase.from("banner_clicks").select("banner_id").in("banner_id", bannerIds).gte("created_at", since.toISOString())
+      ? fetchAllRows(() => supabase.from("banner_clicks").select("banner_id").in("banner_id", bannerIds).gte("created_at", since.toISOString()))
       : Promise.resolve({ data: [] as any[] }),
   ]);
 

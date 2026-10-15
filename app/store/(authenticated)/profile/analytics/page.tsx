@@ -1,9 +1,11 @@
+import { fetchAllRows } from "@/lib/fetch-all-rows";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 
+// 日本時間の日付で区切る
 function dayKey(d: Date) {
-  return d.toISOString().slice(0, 10);
+  return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
 export default async function StoreAnalyticsPage() {
@@ -33,12 +35,14 @@ export default async function StoreAnalyticsPage() {
   const since = new Date();
   since.setDate(since.getDate() - 14);
 
-  const { data: views } = await supabase
-    .from("page_views")
-    .select("created_at, referrer")
-    .eq("store_id", store.id)
-    .gte("created_at", since.toISOString())
-    .order("created_at", { ascending: true });
+  // 1,000件を超えても取り切る(lib/fetch-all-rows.ts)
+  const { data: views } = await fetchAllRows<{ created_at: string; referrer: string | null }>(() =>
+    supabase
+      .from("page_views")
+      .select("created_at, referrer")
+      .eq("store_id", store.id)
+      .gte("created_at", since.toISOString())
+  );
 
   const { count: totalViews } = await supabase
     .from("page_views")
@@ -69,14 +73,15 @@ export default async function StoreAnalyticsPage() {
       : 0;
 
   const dailyCounts = new Map<string, number>();
-  for (let i = 0; i < 14; i++) {
+  // 今日を含む直近14日(以前は今日が抜けて「15日前〜昨日」になっていた)
+  for (let i = 1; i <= 14; i++) {
     const d = new Date(since);
     d.setDate(d.getDate() + i);
     dailyCounts.set(dayKey(d), 0);
   }
   views?.forEach((v) => {
     const key = dayKey(new Date(v.created_at));
-    dailyCounts.set(key, (dailyCounts.get(key) ?? 0) + 1);
+    if (dailyCounts.has(key)) dailyCounts.set(key, (dailyCounts.get(key) ?? 0) + 1);
   });
   const dailyList = Array.from(dailyCounts.entries());
   const maxDaily = Math.max(1, ...dailyList.map(([, c]) => c));
