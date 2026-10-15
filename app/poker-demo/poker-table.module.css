@@ -322,10 +322,17 @@
 .streetBet{position:absolute;display:flex;align-items:center;gap:4px;transform:translateX(-50%);white-space:nowrap;border-radius:10px;padding:3px 6px;background:#102b40ee;border:1px solid #b7a064;color:#fff0bf;font-size:10px;line-height:1.2;font-variant-numeric:tabular-nums;box-shadow:0 2px 4px #0004}
 .streetBet b{font-size:9px;color:#efcd7a}
 .betChip{display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px;border-radius:50%;border:2px dashed #fff1b3;background:#c69b37;box-shadow:inset 0 0 0 1px #88621e;color:#473312;font-size:10px}
-.bet_p2{top:46px;left:auto;right:calc(50% + 35px);transform:none}.bet_p3{top:35%;left:25%}.bet_p4{top:35%;left:75%}.bet_p5{bottom:30%;left:25%}.bet_p6{bottom:30%;left:75%}.bet_you{bottom:20%;left:50%}
+.bet_p2{top:calc(100% + 4px);left:50%;right:auto;transform:translateX(-50%)}.bet_p3{top:35%;left:25%}.bet_p4{top:35%;left:75%}.bet_p5{bottom:30%;left:25%}.bet_p6{bottom:30%;left:75%}.bet_you{bottom:20%;left:50%}
 @media(max-width:480px){.streetBet{font-size:9px;padding:2px 4px;gap:3px}.betChip{width:15px;height:15px;flex-basis:15px;font-size:9px}.bet_p3,.bet_p5{left:24%}.bet_p4,.bet_p6{left:76%}}
 
 .hole span.blackCard{color:#17263b}.hole span.redCard{color:#dc2440}
 
-/* Anchor P2 chips beside the upper seat, away from both its action tag and moving POT. */
-@media(max-width:480px){.bet_p2{top:40px;right:calc(50% + 28px)}}
+
+
+/* P2: action above avatar, rotating position badge lower at its side, chips below stack. */
+.topSeats .seat .actionBadge{top:auto;bottom:calc(100% + 3px);margin-top:0}
+.topSeats .seatAvatarRow .seatPositionBadge{top:18px}
+/* Keep the postflop POT/board below the complete upper-seat stack. */
+.felt{position:absolute;left:0;right:0;top:128px;margin:0}
+.table[data-street="0"] .felt{top:42%}
+@media(max-width:480px){.topSeats .seatAvatarRow .seatPositionBadge{top:14px}.felt{top:116px}}

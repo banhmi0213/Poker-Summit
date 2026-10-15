@@ -332,6 +332,16 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
       setDealing(false);
     }
   };
+  const streetBet = (id: string) => {
+    const p = playerAt(id);
+    if (payouts || p.committed <= 0) return null;
+    const position = positionFor(p.id);
+    const blind = streetStep === 0 && !lastActions[p.id] && (position === "SB" || position === "BB") ? position : "";
+    return <div key={p.id} className={`${styles.streetBet} ${styles[`bet_${p.id}`]}`} aria-label={`${p.id === "you" ? "あなた" : `PLAYER ${p.id.slice(1)}`}：${blind ? blind + " " : ""}ベット ${showChips(p.committed)}`}>
+      <span className={styles.betChip} aria-hidden="true">♠</span>
+      <span>{blind && <b>{blind} </b>}{displayUnit === "bb" ? `${(p.committed / bigBlind).toFixed(1)} BB` : p.committed.toLocaleString()}</span>
+    </div>;
+  };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
@@ -367,14 +377,14 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
     <h1>オンラインポーカー テーブル試作</h1>
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。カードはハンドごとにサーバーでシャッフルします。チップとゲーム進行はブラウザ内のデモです。オンライン対戦・会員残高とは連携していません。</p>
-    <div className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"}>
+    <div className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"} data-street={streetStep}>
       {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
         {awardWinners.map(id => <div key={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
           <span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span>
           <b className={styles.awardAmount}>+{payouts[id].toLocaleString()}</b>
         </div>)}
       </div>}
-      <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} winnerGlow={Boolean(payouts?.p2)} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} /></div>
+      <div className={styles.topSeats}><Seat {...seats[0]} stack={displayStack("p2")} index={2} winnerGlow={Boolean(payouts?.p2)} showdown={showdown} active={activePlayerId === "p2"} seconds={turnRemaining} positionLabel={positionFor("p2")} lastAction={lastActions["p2"]} />{streetBet("p2")}</div>
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} stack={displayStack("p3")} index={3} winnerGlow={Boolean(payouts?.p3)} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} positionLabel={positionFor("p3")} lastAction={lastActions["p3"]} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} stack={displayStack("p4")} index={4} winnerGlow={Boolean(payouts?.p4)} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} positionLabel={positionFor("p4")} lastAction={lastActions["p4"]} /></div>
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
@@ -386,14 +396,7 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
         </div>)}
       </div>
       <div className={styles.streetBets} aria-label="各席のベット額">
-        {!payouts && betting.players.filter(p => p.committed > 0).map(p => {
-          const position = positionFor(p.id);
-          const blind = streetStep === 0 && !lastActions[p.id] && (position === "SB" || position === "BB") ? position : "";
-          return <div key={p.id} className={`${styles.streetBet} ${styles[`bet_${p.id}`]}`} aria-label={`${p.id === "you" ? "あなた" : `PLAYER ${p.id.slice(1)}`}：${blind ? blind + " " : ""}ベット ${showChips(p.committed)}`}>
-            <span className={styles.betChip} aria-hidden="true">♠</span>
-            <span>{blind && <b>{blind} </b>}{displayUnit === "bb" ? `${(p.committed / bigBlind).toFixed(1)} BB` : p.committed.toLocaleString()}</span>
-          </div>;
-        })}
+        {clockwiseSeats.filter(id => id !== "p2").map(streetBet)}
       </div>
       <div className={styles.felt}>
         <div className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
