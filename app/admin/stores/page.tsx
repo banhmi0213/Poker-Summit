@@ -63,7 +63,10 @@ export default async function AdminStoresPage({
       // Postgres doesn't guarantee a stable order for ties — without this the
       // row order can visibly shuffle between page loads.
       .order("created_at", { ascending: false })
-      .order("id", { ascending: false });
+      .order("id", { ascending: false })
+      // カテゴリ「その他」= ポーカー店ではない取り込みデータ(パチンコ店・ゲームセンター等、全て却下済み)。
+      // 一覧には出さない(2026/10)。
+      .neq("category", "other");
 
     if (status !== "all") {
       q0 = q0.eq("status", status);
