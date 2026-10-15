@@ -53,3 +53,20 @@
 .field{font-size:13px;margin-bottom:18px}.field input,.field select{font-size:16px;min-height:46px}.notice{font-size:12px;padding:12px}.notice p{font-size:11px}.consent{font-size:12px;line-height:1.9}.submit{font-size:19px;min-height:52px}
 .footer{justify-content:center;text-align:center;padding:18px 16px;font-size:10px}.footer nav{justify-content:center;gap:16px;width:100%}
 }
+
+/* Compact desktop composition; photo retains its full native frame. */
+@media(min-width:761px){
+.header{max-width:1180px;min-height:72px;padding:10px 24px;gap:18px}.logo{width:270px}.headerLabel{font-size:13px;padding-left:18px}
+.layout{max-width:1180px;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+.intro{padding:30px 0 0;display:flex;flex-direction:column;background:#fdfaf5}
+.intro:before{display:none}.eyebrow,.intro h1,.lead{margin-left:30px;margin-right:24px}
+.intro h1{font-size:clamp(28px,3vw,43px);line-height:1.5;margin-top:15px;margin-bottom:16px}.lead{font-size:15px;line-height:1.8}
+.photo{display:block;width:100%;height:auto;margin-top:auto;object-fit:contain}
+.panel{margin:18px 20px 18px 0;padding:18px 24px 14px}.heading{font-size:25px}.badge{margin:5px auto 13px}
+.field{font-size:12px;gap:4px;margin-bottom:10px}.field input,.field select{min-height:36px;padding:7px 10px}.field small{font-size:10px}
+.notice{padding:8px 10px;font-size:11px;line-height:1.55}.notice p{font-size:10px;margin-top:5px;padding-top:5px}.consent{margin:10px 0;font-size:11px}.submit{min-height:44px;padding:9px 24px;font-size:18px}.confirmation{margin:7px 0}.help{padding-top:7px;margin-top:7px}.footer{max-width:1180px;padding:12px 24px}
+}
+@media(min-width:761px) and (max-height:800px){
+.header{min-height:60px;padding-top:6px;padding-bottom:6px}.logo{width:240px}.panel{margin-top:12px;margin-bottom:12px;padding:12px 20px}.heading{font-size:22px}.badge{margin-bottom:9px}.field{margin-bottom:7px;gap:3px}.field input,.field select{min-height:32px;padding:5px 9px}.notice{padding:6px 9px}.consent{margin:7px 0}.confirmation,.help{font-size:10px}.footer{padding:8px 24px}.intro h1{font-size:36px}.intro{padding-top:24px}
+}
+@media(max-width:760px){.photo{display:none}.intro:before{background-image:linear-gradient(180deg,#24130488,#2413046b 65%,#f8f1e5),url('/images/member-registration-approved-photo.webp')}}

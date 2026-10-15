@@ -9,30 +9,32 @@ import { headers } from "next/headers";
 import { verifyTurnstile, clientIpFromHeaders } from "@/lib/turnstile";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
-export async function signUp(formData: FormData) {
+export async function signUp(formData: FormData) { return register(formData, "/signup"); }
+export async function prelaunchSignUp(formData: FormData) { return register(formData, "/prelaunch"); }
+async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   if (formData.get("legalConsent") !== "agree") {
-    redirect(`/signup?error=${encodeURIComponent("利用規約とプライバシーポリシーへの同意が必要です。")}`);
+    redirect(`${path}?error=${encodeURIComponent("利用規約とプライバシーポリシーへの同意が必要です。")}`);
   }
   if (formData.get("termsVersion") !== TERMS_VERSION || formData.get("privacyVersion") !== PRIVACY_VERSION) {
-    redirect(`/signup?error=${encodeURIComponent("規約が更新されました。ページを更新して内容をご確認ください。")}`);
+    redirect(`${path}?error=${encodeURIComponent("規約が更新されました。ページを更新して内容をご確認ください。")}`);
   }
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
   const idError = mHoldemIdError(mHoldemId);
-  if (idError) redirect(`/signup?error=${encodeURIComponent(idError)}`);
+  if (idError) redirect(`${path}?error=${encodeURIComponent(idError)}`);
   const pref = String(formData.get("pref") ?? "").trim();
   // 都道府県の公開設定(2026/10追加)。未指定時は従来通り公開扱い。
   const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
 
   if (!email || !password) {
-    redirect(`/signup?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
+    redirect(`${path}?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
   }
 
   const passwordError = passwordPolicyError(password);
   if (passwordError) {
-    redirect(`/signup?error=${encodeURIComponent(passwordError)}`);
+    redirect(`${path}?error=${encodeURIComponent(passwordError)}`);
   }
 
   // ロボット対策(Cloudflare Turnstile)
@@ -40,7 +42,7 @@ export async function signUp(formData: FormData) {
   const ip = clientIpFromHeaders(h);
   const token = String(formData.get("cf-turnstile-response") ?? "") || null;
   if (!(await verifyTurnstile(token, ip))) {
-    redirect(`/signup?error=${encodeURIComponent("ロボットでないことの確認ができませんでした。もう一度お試しください。")}`);
+    redirect(`${path}?error=${encodeURIComponent("ロボットでないことの確認ができませんでした。もう一度お試しください。")}`);
   }
 
   const supabase = await createClient();
@@ -53,7 +55,7 @@ export async function signUp(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+    redirect(`${path}?error=${encodeURIComponent(error.message)}`);
   }
 
   // 登録時のIPアドレスを記録(重複登録の見回り用。新規登録のときだけ)
@@ -74,5 +76,5 @@ export async function signUp(formData: FormData) {
     redirect("/mypage");
   }
 
-  redirect("/signup?done=1");
+  redirect(`${path}?done=1`);
 }

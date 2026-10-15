@@ -1,3 +1,4 @@
+import { RegistrationPage } from "../signup/registration";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   description: `まもなくオープン。${SITE_DESCRIPTION}`,
 };
 
-export default async function PrelaunchPage() {
+export default async function PrelaunchPage({searchParams}: {searchParams: {error?: string; done?: string}}) {
   const supabase = await createClient();
   const [{ data: settings }, { data: auth }] = await Promise.all([
     supabase.from("site_settings").select("prelaunch_message, prelaunch_x_url, contact_email").eq("id", true).maybeSingle(),
@@ -21,6 +22,8 @@ export default async function PrelaunchPage() {
   const message =
     settings?.prelaunch_message ||
     "全国のアミューズメントポーカー店・トーナメント・イベント情報をまとめて探せるポーカー総合情報サイト「Poker Summit」が、まもなくオープンします。";
+
+  if (!loggedIn) return RegistrationPage({searchParams, early: true});
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#fffaf0 0%,#f6ead2 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px" }}>
