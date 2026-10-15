@@ -213,15 +213,22 @@ export function PokerRegionHero({
   stats,
   backgroundSrc = "/images/poker-region-hero-bg.webp",
 }: Props) {
-  // 店舗数・都道府県・大型大会はいつも出し、求人・会員・投稿は一定数を超えたら出す
-  const statItems = [
-    { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> },
-    { label: "掲載都道府県", value: formatCount(stats.prefCount), icon: <MapPinIcon /> },
-    { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
+  // 求人・会員・投稿は一定数を超えたら出す。都道府県・大型大会は、それらが出るまでのつなぎで、
+  // 並びが4つ以上になった時点で外す(店舗数＋実際の利用の数字だけを見せる。2026/10)
+  const activityItems = [
     ...(stats.jobCount >= STAT_SHOW_THRESHOLDS.jobs ? [{ label: "掲載求人数", value: formatCount(stats.jobCount), icon: <BriefcaseIcon /> }] : []),
     ...(stats.memberCount >= STAT_SHOW_THRESHOLDS.members ? [{ label: "会員数", value: formatCount(stats.memberCount), icon: <MembersIcon /> }] : []),
     ...(stats.summitPostCount >= STAT_SHOW_THRESHOLDS.posts ? [{ label: "サミット投稿数", value: formatCount(stats.summitPostCount), icon: <SpeechBubbleIcon /> }] : []),
   ];
+  const fillerItems = [
+    { label: "掲載都道府県", value: formatCount(stats.prefCount), icon: <MapPinIcon /> },
+    { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
+  ];
+  const storeItem = { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> };
+  const statItems =
+    1 + fillerItems.length + activityItems.length >= 4
+      ? [storeItem, ...activityItems]
+      : [storeItem, ...fillerItems, ...activityItems];
 
   return (
     <section className="ps-region-hero" aria-label="全国からポーカー店舗を探す">
