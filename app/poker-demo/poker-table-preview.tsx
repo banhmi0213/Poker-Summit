@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
-import { postBlinds, positions, settleShowdown } from "@/lib/poker/settlement";
+import { postBlinds, positions } from "@/lib/poker/settlement";
+import { settleCompletedHand } from "@/lib/poker/hand-settlement";
 import type { Card } from "@/lib/poker/engine";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
@@ -261,23 +262,16 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   useEffect(() => {
     if (handFinished || showdown || spectating || betting.toAct !== null) return;
     const timer = window.setTimeout(() => {
-      const live = betting.players.filter(p => !p.folded);
-      if (live.length <= 1) {
-        const winner = live[0]?.id;
-        if (winner) setPayouts({ [winner]: potTotal(betting) });
+      const result = settleCompletedHand(betting, demoBoard, demoHoles, clockwiseSeats, clockwiseSeats[buttonIndex], streetStep >= 3);
+      if (result) {
+        setPayouts(result.payouts);
         setHandFinished(true);
         setRunning(false);
-        setBettingMessage(`${live[0]?.id === "you" ? "あなた" : "PLAYER " + (live[0]?.id.slice(1) ?? "")} の勝利・POT ${potTotal(betting)} を獲得（デモ）`);
-        return;
-      }
-      if (streetStep >= 3) {
-        const result = settleShowdown(betting.players.map(p=>({id:p.id,totalCommitted:p.totalCommitted,folded:p.folded,hole:demoHoles[p.id]})),demoBoard,clockwiseSeats,clockwiseSeats[buttonIndex]);
-        setPayouts(result.payouts);
-        const winners = [...new Set(result.awards.flatMap(a=>a.winners))];
-        setStreetStep(4);
-        setShowdown(true);
-        setRunning(false);
-        setBettingMessage(`ショーダウン：${winners.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")} がPOTを獲得（デモ）`);
+        if (result.showdown) {
+          setStreetStep(4);
+          setShowdown(true);
+        }
+        setBettingMessage(`${result.showdown ? "ショーダウン：" : ""}${result.winners.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")} がPOTを獲得（デモ）`);
         return;
       }
       const nextStep = streetStep + 1;
@@ -286,16 +280,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
       const offset = clockwiseSeats.indexOf(pos.postflopFirst);
       const ordered = [...clockwiseSeats.slice(offset),...clockwiseSeats.slice(0,offset)];
       const firstId = ordered.find(id=>betting.players.some(p=>p.id===id && !p.folded && !p.allIn));
-      const first = betting.players.find(p=>p.id===firstId);
       setStreetStep(nextStep);
-      if (!first) {
-        // Everyone remaining is all-in: show the rest of the board.
-        setStreetStep(4);
-        setShowdown(true);
-        setRunning(false);
-        return;
-      }
-      setBetting(beginNextBettingStreet(betting, first.id));
+      setBetting(beginNextBettingStreet(betting, firstId!));
       setLastActions({});
       setAction(null);
       setRemaining(20);
