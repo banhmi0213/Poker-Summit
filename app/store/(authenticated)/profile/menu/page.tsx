@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createMenuItem, updateMenuItem, toggleMenuItemStatus, deleteMenuItem } from "../menu-actions";
+import { StoreContentRuleNotice } from "../content-rule-notice";
 
 // 店舗独自の料金・メニュー(参加費・レイト・ドリンク等)を店舗オーナーが
 // 管理できるページ。運営側の「プラン・アップグレード」(Poker Summit
@@ -44,6 +45,7 @@ export default async function StoreMenuPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>料金・メニュー</h1>
+      <StoreContentRuleNotice />
       <p className="muted" style={{ fontSize: 12.5, marginBottom: 16 }}>
         参加費・レイト・ドリンクなど、店舗独自の料金表です。公開中の項目は店舗詳細ページに表示されます。
       </p>

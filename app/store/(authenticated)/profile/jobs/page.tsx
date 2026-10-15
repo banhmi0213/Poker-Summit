@@ -6,6 +6,7 @@ import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createJob, toggleJobStatus, updateJob, deleteJob } from "../jobs-actions";
 import { JOB_TYPE_OPTIONS } from "@/lib/constants";
 import { getStorePlan, jobLimitOf, limitLabel } from "@/lib/plan-entitlements";
+import { StoreContentRuleNotice } from "../content-rule-notice";
 
 const GENDER_LABEL: Record<string, string> = { male: "男性", female: "女性" };
 const DEALER_EXPERIENCE_LABEL: Record<string, string> = {
@@ -144,6 +145,7 @@ export default async function StoreJobsPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>求人管理</h1>
+      <StoreContentRuleNotice />
 
       {jobLimit !== 0 && (
         <p className="muted small" style={{ marginBottom: 12 }}>

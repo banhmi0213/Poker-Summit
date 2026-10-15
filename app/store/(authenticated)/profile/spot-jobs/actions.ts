@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 import { requireMatchingConsent } from "@/lib/matching-consent-server";
 import { randomUUID } from 'crypto';
 import { redirect } from 'next/navigation';
@@ -44,6 +45,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   const duties=value('duties'), requirements=value('requirements'), dress=value('dress');
   const transport=value('transport_type'), limit=transport==='limited'?Number(value('transport_limit')):null;
   const deadlineRaw=value('deadline'), published=form.get('published')==='true';
+  try { assertAllowedStoreText(duties, requirements, dress, contractNotes); } catch (e) { return { error: e instanceof Error ? e.message : '掲載できない内容が含まれています。' }; }
   let shifts: SpotShift[];
   try {
     shifts=JSON.parse(value('shifts'));

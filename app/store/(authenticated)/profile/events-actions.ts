@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { parseEventDates } from "@/lib/event-dates";
 
@@ -37,6 +38,7 @@ export async function createEvent(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, description);
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
   const eventDates = parseEventDates(startAt,endAt);
@@ -109,6 +111,7 @@ export async function updateEvent(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const location = String(formData.get("location") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  assertAllowedStoreText(title, description);
   const startAt = String(formData.get("startAt") ?? "").trim();
   const endAt = String(formData.get("endAt") ?? "").trim();
   const eventDates = parseEventDates(startAt,endAt);

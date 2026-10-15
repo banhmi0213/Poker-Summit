@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createEvent, toggleEventStatus, updateEvent, deleteEvent } from "../events-actions";
 import { EVENT_CATEGORIES } from "@/lib/constants";
+import { StoreContentRuleNotice } from "../content-rule-notice";
 
 // /store/profile 1ページの中の1セクションだったイベント管理を、独立した
 // ページへ分離(2026/09/30)。バナー画像はファイルアップロード対応
@@ -56,6 +57,7 @@ export default async function StoreEventsPage() {
         ← 店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>トーナメント・イベント管理</h1>
+      <StoreContentRuleNotice />
 
       <div className="card">
         <form action={createEvent} encType="multipart/form-data">

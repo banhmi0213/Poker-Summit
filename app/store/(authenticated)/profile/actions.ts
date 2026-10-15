@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -36,6 +37,7 @@ export async function updateStoreProfile(formData: FormData) {
   const hours = String(formData.get("hours") ?? "");
   const nearestStation = String(formData.get("nearestStation") ?? "").trim();
   const description = String(formData.get("description") ?? "");
+  assertAllowedStoreText(name, description);
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const xUrl = String(formData.get("xUrl") ?? "").trim();

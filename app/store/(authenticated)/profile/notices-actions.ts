@@ -1,4 +1,5 @@
 "use server";
+import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { revalidatePath } from "next/cache";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -34,6 +35,7 @@ export async function createNotice(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  assertAllowedStoreText(title, body);
   const imageFile = formData.get("image");
 
   if (!title) {
@@ -81,6 +83,7 @@ export async function updateNotice(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
+  assertAllowedStoreText(title, body);
   const imageFile = formData.get("image");
   const removeImage = formData.get("removeImage") === "on";
 
