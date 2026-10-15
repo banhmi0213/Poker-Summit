@@ -10,6 +10,7 @@ import {
   type AnalyticsIssue,
 } from "@/lib/analytics";
 import { classifyReferrer } from "@/lib/referrer";
+import { DealerStats } from "./dealer-stats";
 
 type SP = {
   tab?: string;
@@ -192,6 +193,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
           サイト全体の閲覧動向（実データ集計・{analyticsPeriodLabel(filters)}）
         </span>
       </div>
+
+      <DealerStats />
 
       <div className="card" style={{ marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
