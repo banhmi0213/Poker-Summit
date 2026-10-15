@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_DESCRIPTION } from "@/lib/seo";
+import { signOut } from "@/app/login/actions";
 
 // 先行登録モード中に一般向けページの代わりに出す、先行会員登録の案内ページ(2026/10)。
 // middleware(lib/supabase/middleware.ts)が site_settings.prelaunch_mode のときにここへ差し替える。
@@ -75,13 +76,19 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
 
         <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.9 }}>
           <p>
-            店舗・事業者の方：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link>
+            ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link>
           </p>
           <p>
             <Link href="/terms">利用規約</Link>・<Link href="/privacy">プライバシーポリシー</Link>・<Link href="/tokushoho">特定商取引法に基づく表記</Link>・<Link href="/company">運営会社</Link>
           </p>
           {settings?.contact_email && <p>お問い合わせ：{settings.contact_email}</p>}
           <p style={{ marginTop: 8 }}>© 株式会社Give Rise</p>
+          {/* 共用の端末向けに、登録後の画面からログアウトできるようにする(2026/10) */}
+          <form action={signOut} style={{ marginTop: 14 }}>
+            <button type="submit" style={{ background: "none", border: "1px solid #d9c9a3", borderRadius: 6, padding: "6px 14px", fontSize: 12, color: "#8a6d3b", cursor: "pointer" }}>
+              ログアウト
+            </button>
+          </form>
         </div>
       </div>
     </div>

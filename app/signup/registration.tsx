@@ -94,7 +94,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             </label>
             <div id="m-holdem-notice" className={styles.notice}>
               <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>
-              <p>未入力でも会員登録できます。マイページから後で登録・変更できます。IDは一般公開されません。</p>
+              <p>未入力でも会員登録できます。{early ? "サイトのオープン後に、マイページから登録・変更できます。" : "マイページから後で登録・変更できます。"}IDは一般公開されません。</p>
             </div>
             <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
             <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
