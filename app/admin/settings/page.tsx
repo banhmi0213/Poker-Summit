@@ -6,6 +6,7 @@ import {
   updateNotifySettings,
   updateMaintenanceSettings,
   updatePrelaunchSettings,
+  updatePriceLockSettings,
 } from "./actions";
 
 const REPORT_AUTO_HIDE_OPTIONS = ["1件", "3件", "5件", "10件", "自動非表示にしない"];
@@ -71,6 +72,7 @@ export default async function AdminSettingsPage({
     { key: "notify", label: "通知設定" },
     { key: "maintenance", label: "メンテナンス" },
     { key: "prelaunch", label: "先行登録モード" },
+    { key: "priceLock", label: "年内お申込み特典" },
   ];
 
   return (
@@ -228,6 +230,39 @@ export default async function AdminSettingsPage({
                   <button type="submit" className="btn primary">
                     保存する
                   </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {tab === "priceLock" && (
+            <div className="card" style={{ maxWidth: 640, marginBottom: 20 }}>
+              <form action={updatePriceLockSettings}>
+                <h3 style={{ marginBottom: 4 }}>年内お申込み特典（料金据え置き）</h3>
+                <p className="muted" style={{ fontSize: 12.5, marginBottom: 12, lineHeight: 1.8 }}>
+                  ONにすると、掲載申込み画面に特典の枠、利用規約・特定商取引法の表記に条件が表示され（反映まで最大1分）、
+                  受付期限までに初回のお支払いが完了した契約に、契約時のプラン料金の据え置きが付きます。
+                  <br />
+                  プランの変更・未払いによる掲載停止・解約があった契約は、自動で対象外になります（戻りません）。
+                  <br />
+                  受付期限を過ぎると申込み画面の枠は自動で消えます。据え置き中のお店がいる間は、規約の記載を残すためONのままにしてください。
+                </p>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: "rgba(200,160,60,0.12)", padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 14 }}>
+                  <span style={{ fontWeight: 700 }}>年内お申込み特典を表示・受付する</span>
+                  <input type="checkbox" name="priceLockEnabled" value="1" defaultChecked={s.price_lock_campaign_enabled ?? false} style={{ width: 18, height: 18 }} />
+                </label>
+                <div className="field">
+                  <span className="muted">受付期限（この日の23:59まで・日本時間）</span>
+                  <input
+                    type="date"
+                    name="priceLockDeadline"
+                    required
+                    defaultValue={s.price_lock_deadline ? new Date(s.price_lock_deadline).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }) : "2026-12-31"}
+                  />
+                </div>
+                <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <button type="submit" className="btn primary">保存する</button>
+                  <a href="/apply" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>申込み画面を確認する →</a>
                 </div>
               </form>
             </div>

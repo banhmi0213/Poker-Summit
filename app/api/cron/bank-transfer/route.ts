@@ -13,6 +13,7 @@ import {
 } from "@/lib/bank-transfer";
 import { sendOverdueGraceNoticeEmail, sendSuspensionNoticeEmail } from "@/lib/email";
 import { notifyStoreLine, PLAN_PAGE_URL } from "@/lib/store-line";
+import { effectivePlanFee } from "@/lib/price-lock";
 
 // ============================================================================
 // 銀行振込の毎日の自動処理(2026/10新設。Vercel Cron、日本時間 毎朝9:00)
@@ -56,7 +57,7 @@ export async function GET(req: NextRequest) {
   const { data: dueContracts } = await svc
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, billing_cycle_months, current_period_end, contact_name, contact_email, stores(name)"
+      "id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, billing_cycle_months, current_period_end, contact_name, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)"
     )
     .eq("status", "active")
     .eq("billing_method", "bank_transfer")
@@ -79,8 +80,10 @@ export async function GET(req: NextRequest) {
         !!c.pending_plan_id && !!c.pending_plan_effective_at && isoToJstDate(c.pending_plan_effective_at as string) <= periodStart;
       const planId = (usePending ? c.pending_plan_id : c.plan_id) as string | null;
       if (!planId) throw new Error("プランが設定されていません。");
-      const { data: plan } = await svc.from("plans").select("id, name, monthly_fee").eq("id", planId).maybeSingle();
-      if (!plan) throw new Error("プランが見つかりません。");
+      const { data: planRow } = await svc.from("plans").select("id, name, monthly_fee").eq("id", planId).maybeSingle();
+      if (!planRow) throw new Error("プランが見つかりません。");
+      // 年内お申込み特典: 据え置き中の同じプランなら据え置き料金で請求書を出す(lib/price-lock.ts)
+      const plan = { ...planRow, monthly_fee: effectivePlanFee(c as any, planRow.id, planRow.monthly_fee) };
       if (!c.contact_email) throw new Error("連絡先メールアドレスが未登録です。");
       const months = Number(c.billing_cycle_months);
       const store = Array.isArray(c.stores) ? c.stores[0] : c.stores;

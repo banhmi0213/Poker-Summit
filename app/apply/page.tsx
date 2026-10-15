@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
+import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
 import { submitApplication, startPaidApplication } from "./actions";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +27,7 @@ export default async function ApplyPage({
     .maybeSingle();
   const acceptingNew = settings?.listing_accept_new ?? true;
   const billing = await getBillingSettings();
+  const priceLock = await getPriceLockCampaign();
 
   const { data: plans } = await supabase
     .from("plans")
@@ -145,7 +148,7 @@ export default async function ApplyPage({
         <p className="muted" style={{ marginBottom: 20 }}>
           店舗・施設の掲載をご希望の方は、以下のフォームよりお申込みください。
         </p>
-        <PricingSection plans={plans ?? []} billing={billing} />
+        <PricingSection plans={plans ?? []} billing={billing} priceLockDeadline={priceLock.accepting ? priceLock.deadlineLabel : null} />
         <h2 style={{ fontSize: 16, margin: "24px 0 10px" }}>お申込みフォーム</h2>
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
@@ -308,7 +311,7 @@ function featureLines(description: string | null) {
 // 辿れる店舗向けページで、一般会員向けのナビには出さない。決済審査では「販売する
 // サービスと価格が確認できること」が求められるため、内容・税込価格・請求と解約の
 // 条件をここで明示する。プランの価格と内容は管理画面の設定から表示。追加オプションは店舗管理画面で案内。
-function PricingSection({ plans, billing }: { plans: PriceItem[]; billing: BillingSettings }) {
+function PricingSection({ plans, billing, priceLockDeadline }: { plans: PriceItem[]; billing: BillingSettings; priceLockDeadline: string | null }) {
   const prepay = BILLING_CYCLES.filter((m) => m !== 1).map((m) => ({ months: m, discount: discountFor(billing, m) }));
   if (plans.length === 0) return null;
   return (
@@ -319,6 +322,7 @@ function PricingSection({ plans, billing }: { plans: PriceItem[]; billing: Billi
       <p className="muted" style={{ fontSize: 12.5, margin: "0 0 12px", lineHeight: 1.7 }}>
         掲載をご希望の店舗・事業者様向けの有料プランです。一般会員の方は無料でご利用いただけます。
       </p>
+      {priceLockDeadline && <PriceLockCampaignBox deadlineLabel={priceLockDeadline} />}
 
       {plans.map((plan) => {
         const features = featureLines(plan.description);
