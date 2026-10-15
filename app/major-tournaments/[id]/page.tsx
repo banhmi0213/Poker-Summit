@@ -55,7 +55,7 @@ export default async function Page({params}:{params:{id:string}}){
  <a href="#tournament-schedule" className="mt-button">スケジュールを見る ↓</a>{officialUrl&&<a href={officialUrl} className="mt-button mt-official" target="_blank" rel="noopener noreferrer">公式サイト・大会情報 ↗</a>}</section>
  <section className="mt-panel mt-travel"><span className="mt-eyebrow">PLAN YOUR VISIT</span><h3>参加前にチェック</h3><ul><li>エントリー方法・受付時間</li><li>参加費に含まれる内容</li><li>本人確認・参加条件</li><li>大会ルール・持ち物</li></ul><p>最新の開催情報は、主催者の公式案内をご確認ください。</p></section></aside></div>
  <div className="mt-bottom"><Link href="/major-tournaments">← 国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む →</Link></div></article>
- </main><PortalFooter/><BottomTabs/><style>{`
+ </main><PortalFooter/><BottomTabs/><style dangerouslySetInnerHTML={{ __html: `
 
 .mt-sample{max-width:1140px;width:calc(100% - 40px);margin:0 auto;padding:24px 0 48px;color:#382b1e}
 .mt-back{font-size:13px;color:#785622;display:inline-block;margin-bottom:18px}
@@ -121,5 +121,5 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-hero-meta{color:#563814;font-size:11px;line-height:1.7;gap:5px 16px;margin-top:12px}
 @media(max-width:900px){.mt-hero h1{font-size:26px}}
 @media(max-width:600px){.mt-hero{min-height:200px}.mt-hero-content{padding:20px 16px}.mt-hero h1{font-size:22px}.mt-hero .mt-eyebrow{font-size:7px;line-height:1.6}.mt-hero-photo{background-size:auto 155%;background-position:99% 50%}.mt-hero-meta{font-size:10px;gap:4px}}
-`}</style></div>;
+` }} /></div>;
 }

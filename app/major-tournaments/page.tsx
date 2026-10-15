@@ -39,7 +39,7 @@ export default async function Page({searchParams}:{searchParams:{scope?:string;q
  </nav>}
  {error?<div className="ml-empty"><p className="err">大会情報を読み込めませんでした。時間をおいて再度お試しください。</p></div>:!results.length&&<div className="ml-empty"><h3>{entries.length?"条件に合う大会がありません。":"大会情報は準備中です。"}</h3>{entries.length>0&&<><p>開催区分や検索キーワードを変更してください。</p><Link href="/major-tournaments">条件をクリア →</Link></>}</div>}
  <section className="ml-guide"><div><span className="ml-eyebrow">YOUR NEXT POKER TRIP</span><h2>行きたい大会が見つかったら。</h2><p>詳細ページでスケジュール・参加費・会場を確認。<br/>海外大会の時刻は、開催地の現地時間で掲載します。</p></div></section>
- </main><PortalFooter/><BottomTabs/><style>{`
+ </main><PortalFooter/><BottomTabs/><style dangerouslySetInnerHTML={{ __html: `
 .ml-range{text-align:center;font-size:12px;color:#795f39;margin:20px 0 12px}.ml-pagination{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 26px}.ml-pagination>a,.ml-pagination>span[aria-disabled]{border:1px solid #dec99e;border-radius:7px;padding:11px 18px;font-size:13px;background:#faf5e8;color:#70521f}.ml-pagination>a:hover{background:#f1e3c1}.ml-pagination>span[aria-disabled]{opacity:.4}.ml-page-number{font-size:13px;color:#70521f}#tournament-list{scroll-margin-top:24px}
 .ml-page{width:calc(100% - 40px);max-width:1140px;margin:0 auto;padding:24px 0 48px;color:#382b1e}.ml-back{font-size:13px;color:#795623;display:inline-block;margin-bottom:18px}.ml-notice{background:#fff9e9;border:1px solid #dfcb9c;border-radius:9px;padding:12px 16px;font-size:11px;color:#795b2d;display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:18px}
 .ml-hero{position:relative;min-height:240px;border-radius:14px;overflow:hidden;background:#dcc18f;display:flex;align-items:center}.ml-hero>img{position:absolute;right:0;top:0;width:55%;height:100%;object-fit:cover}.ml-hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#d7b77a 0%,#e5cda3 43%,rgba(229,205,163,0) 64%)}.ml-hero>div{position:relative;z-index:1;padding:32px;max-width:65%}.ml-eyebrow{font-size:9px;letter-spacing:.18em;color:#936f2b;display:block}.ml-hero h1{font-size:32px;font-family:serif;font-weight:700;margin:12px 0;color:#fff;border:0;padding:0}.ml-hero p{font-size:17px;font-weight:700;margin:0 0 10px;color:#513713}.ml-hero small{font-size:11px;color:#765632;line-height:1.7}
@@ -67,5 +67,5 @@ export default async function Page({searchParams}:{searchParams:{scope?:string;q
 .ml-cover small{display:block;font-size:8px;letter-spacing:.24em;color:#a27b35;margin:8px 0}
 .ml-cover>div>span{color:#8a6b3b}
 .ml-scope{top:10px;left:10px}
-`}</style></div>;
+` }} /></div>;
 }
