@@ -279,7 +279,4 @@ export const MEMBER_ROLE_OPTIONS = [
   "一般人",
   "ディーラー",
   "フリーディーラー",
-  "自由人",
-  "インフルエンサー",
-  "YouTuber",
 ];
