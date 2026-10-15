@@ -21,14 +21,16 @@ export default function SignupPage({
 
   return (
     <main className={styles.page}>
-      <Link href="/" className={styles.back}>← トップに戻る</Link>
+      <header className={styles.header}>
+        <Link href="/" aria-label="Poker Summit トップページ"><img className={styles.logo} src="/images/logo.webp" alt="Poker Summit" /></Link>
+        <span className={styles.headerLabel}>無料会員登録</span>
+        <Link href="/" className={styles.back}>← トップに戻る</Link>
+      </header>
       <div className={styles.layout}>
         <section className={styles.intro}>
-          <Link href="/" aria-label="Poker Summit トップページ"><img className={styles.logo} src="/images/logo.webp" alt="Poker Summit" /></Link>
-          <span className={styles.badge}>無料会員登録</span>
-          <h1>ポーカーの楽しさが、<br />ここに集まる。</h1>
-          <p className={styles.lead}>全国のポーカースポット・大会・求人をつなぐPoker Summit。会員登録して、もっと便利に楽しもう。</p>
-          <div className={styles.benefits}>お気に入り店舗の保存・求人応募・クーポン利用・イベントの参加予定登録ができます。</div>
+          <span className={styles.eyebrow}>MEMBER REGISTRATION</span>
+          <h1><span>ポーカーの楽しさが</span><br /><span>ここに集まる。</span></h1>
+          <p className={styles.lead}>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</p>
         </section>
         <section className={styles.panel} aria-label="会員登録フォーム">
       {params.done ? (
@@ -45,12 +47,13 @@ export default function SignupPage({
         </div>
       ) : (
         <div>
-          <h2 className={styles.heading}>会員登録</h2>
+          <h2 className={styles.heading}>無料会員登録</h2>
+          <p className={styles.badge}>無料・年会費なし</p>
           {params.error && <p className={styles.error} role="alert">{params.error}</p>}
           <form action={signUp}>
             <label className={styles.field}>
               <span>ハンドルネーム</span>
-              <input type="text" name="name" autoComplete="nickname" />
+              <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" />
             </label>
             <label className={styles.field}>
               <span>都道府県 <b className={styles.required}>必須</b></span>
@@ -77,7 +80,7 @@ export default function SignupPage({
             </label>
             <label className={styles.field}>
               <span>メールアドレス <b className={styles.required}>必須</b></span>
-              <input type="email" name="email" required autoComplete="email" />
+              <input type="email" name="email" required autoComplete="email" placeholder="例）example@example.com" />
             </label>
             <label className={styles.field}>
               <span>パスワード <b className={styles.required}>必須</b></span>
@@ -109,13 +112,14 @@ export default function SignupPage({
             {TURNSTILE_SITE_KEY && (
               <>
                 <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="afterInteractive" async defer />
-                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-language="ja" style={{ margin: "0 0 14px" }} />
+                <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-language="ja" data-size="flexible" style={{ margin: "0 0 14px" }} />
               </>
             )}
             <button type="submit" className={styles.submit}>
-              無料会員登録する
+              無料会員登録する <span aria-hidden="true">→</span>
             </button>
           </form>
+          <p className={styles.confirmation}>登録後、確認メールをお送りします。</p>
           <p className={styles.help}>
             すでにアカウントをお持ちの方は<Link href="/login">こちらからログイン</Link>
           </p>
