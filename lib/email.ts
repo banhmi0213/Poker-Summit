@@ -293,10 +293,10 @@ ${bank.type} ${bank.number}
 
   const isNewApplication = !invoice.store_contract_id && !!invoice.listing_application_id;
   const warning = isAddon
-    ? "※お支払期限までにご入金が確認できない場合、お申し込み・アドオンのご利用を停止いたします。"
+    ? "※お支払期限から7日を過ぎてもご入金が確認できない場合、お申し込み・アドオンのご利用を停止いたします。"
     : isNewApplication
       ? "※お支払期限を過ぎてもご入金が確認できない場合、お申し込みを取り消させていただくことがあります。"
-      : "※お支払期限までにご入金が確認できない場合、期限の翌日に店舗ページの公開を停止いたします。ご入金の確認後、公開を再開いたします。";
+      : "※お支払期限から7日を過ぎてもご入金が確認できない場合、店舗ページの公開を停止いたします。ご入金の確認後、公開を再開いたします。";
 
   const text = `${invoice.bill_to_name} 様
 
@@ -347,7 +347,7 @@ export async function sendSuspensionNoticeEmail(params: {
   const text = `${params.name} 様
 
 いつもPoker Summitをご利用いただき、誠にありがとうございます。
-請求書 ${params.invoiceNumber}（${params.amount.toLocaleString("ja-JP")}円）について、お支払期限までにご入金を確認できなかったため、店舗ページの公開を停止いたしました。
+請求書 ${params.invoiceNumber}（${params.amount.toLocaleString("ja-JP")}円）について、お支払期限から7日を過ぎてもご入金を確認できなかったため、店舗ページの公開を停止いたしました。
 
 ご入金を確認でき次第、公開を再開いたします。
 請求書は店舗管理画面の「プラン・お支払い」からダウンロードできます。
@@ -693,4 +693,37 @@ ${params.link}
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
+}
+
+/** 振込の請求書がお支払期限を過ぎた翌日のお知らせ(猶予7日のうちに入金をお願いする、2026/10) */
+export async function sendOverdueGraceNoticeEmail(params: {
+  to: string;
+  name: string;
+  invoiceNumber: string;
+  amount: number;
+  dueDate: string;
+  payBy: string;
+  suspendOn: string;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const jp = (iso: string) => {
+    const [y, m, d] = iso.split("-");
+    return `${y}年${Number(m)}月${Number(d)}日`;
+  };
+  const text = `${params.name} 様
+
+いつもPoker Summitをご利用いただき、誠にありがとうございます。
+請求書 ${params.invoiceNumber}（${params.amount.toLocaleString("ja-JP")}円）について、お支払期限（${jp(params.dueDate)}）を過ぎましたが、ご入金をまだ確認できておりません。
+
+お手数ですが、${jp(params.payBy)}までにお振り込みをお願いいたします。
+期日までにご入金が確認できない場合、${jp(params.suspendOn)}に店舗ページの公開を一時停止いたします（ご入金の確認後、公開を再開いたします）。
+
+請求書・お振込先は店舗管理画面の「プラン・お支払い」からご確認いただけます。
+${siteUrl}/store/profile/plan
+
+行き違いでお振り込み済みの場合はご容赦ください。ご不明な点は info@pokersummit.jp までご連絡ください。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: `【Poker Summit】お支払期限を過ぎています（請求書 ${params.invoiceNumber}）`, text });
 }
