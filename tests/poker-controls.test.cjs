@@ -23,8 +23,8 @@ let fixture;
 const stateForFixture = function (initial) { return original(typeof initial === 'function' ? () => { const value = initial(); return value?.players && value?.bigBlind ? fixture : value; } : initial); };
 const deck = req(root + '/lib/poker/engine.ts').createDeck();
 const fixtureDeal = { board: deck.slice(12,17), holes: Object.fromEntries(['you','p5','p3','p2','p4','p6'].map((id,i)=>[id,[deck[i],deck[i+6]]])) };
-function render(r) { fixture = r; let html; React.useState = stateForFixture; try {
-    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, initialDeal: fixtureDeal, isGuestPreview: true }));
+function render(r,extra = {}) { fixture = r; let html; React.useState = stateForFixture; try {
+    html = renderToStaticMarkup(React.createElement(Component, { member: { displayName: 'TEST', avatarUrl: null }, initialDeal: fixtureDeal, isGuestPreview: true, ...extra }));
 }
 finally {
     React.useState = original;
@@ -87,4 +87,18 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
     assert.match(html, /aria-label="共通カード"><\/div>/);
+});
+
+require('node:test').test('tournament sample renders top clock, structure menu and scope notice',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const ids=['you','p5','p3','p2','p4','p6'],r=createBettingRound(ids.map(id=>({id,stack:1000})),100,'you');
+ const tournament={id:'sample',title:'TEST CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
+ const html=render(r,{tournament,serverNow:Date.parse(tournament.starts_at)}).html;
+ assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>ストラクチャー<\/button>/);assert.match(html,/50\/100・アンティなし/);
+});
+require('node:test').test('structure table renders all levels, break and late registration details',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const View=req(root+'/app/poker-tournaments/structure-view.tsx').default;
+ const html=renderToStaticMarkup(React.createElement(View,{structure:defaultStructure,currentIndex:4}));
+ assert.match(html,/10,000/);assert.match(html,/BBアンティ/);assert.match(html,/レベル4終了まで/);assert.match(html,/25点チップのカラーアップ/);assert.equal((html.match(/<tr/g)||[]).length,10);assert.match(html,/aria-current="step"/);
 });

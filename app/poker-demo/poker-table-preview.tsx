@@ -7,6 +7,8 @@ import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBe
 import { postBlinds, positions } from "@/lib/poker/settlement";
 import { settleCompletedHand } from "@/lib/poker/hand-settlement";
 import { cardLabel, handLabel, isRedCard, type DemoDeal } from "@/lib/poker/card-display";
+import type { PokerTournament } from "@/lib/poker/tournament";
+import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
@@ -32,7 +34,7 @@ const seats = [
   { name: "PLAYER 6", stack: "1,900" },
 ];
 
-export default function PokerTablePreview({ member, initialDeal, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; isGuestPreview?: boolean; initialSpectating?: boolean }) {
+export default function PokerTablePreview({ member, initialDeal, tournament, serverNow = 0, isGuestPreview = false, initialSpectating = false }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; tournament?: PokerTournament; serverNow?: number; isGuestPreview?: boolean; initialSpectating?: boolean }) {
   const [deal, setDeal] = useState(initialDeal);
   const [dealing, setDealing] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
@@ -59,7 +61,7 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
   const [running, setRunning] = useState(true);
   const [turnRemaining, setTurnRemaining] = useState(20);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPage, setMenuPage] = useState<"settings" | "spectate" | "exit">("settings");
+  const [menuPage, setMenuPage] = useState<"settings" | "structure" | "spectate" | "exit">("settings");
   const [spectating, setSpectating] = useState(initialSpectating);
   const activePlayerId = !dealing && !handFinished && !showdown && !spectating ? betting.toAct : null;
   const isYourTurn = activePlayerId === "you";
@@ -189,7 +191,7 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
 
 
   const [seatConfirm, setSeatConfirm] = useState(false);
-  const [gameType] = useState<"ring" | "tournament">("ring");
+  const gameType = tournament ? "tournament" : "ring";
   const [displayUnit, setDisplayUnit] = useState<"chips" | "bb">("chips");
   const [runTwice, setRunTwice] = useState(false);
   const [multipliers, setMultipliers] = useState([2, 3, 4]);
@@ -353,6 +355,7 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
       <div className={styles.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)}>×</button></div>
       <nav className={styles.menuNav} aria-label="ゲームメニュー">
         <button type="button" className={menuPage === "settings" ? styles.menuSelected : ""} onClick={() => setMenuPage("settings")}>⚙ 設定</button>
+        {tournament && <button type="button" className={menuPage === "structure" ? styles.menuSelected : ""} onClick={() => setMenuPage("structure")}>ストラクチャー</button>}
         <button type="button" className={menuPage === "spectate" ? styles.menuSelected : ""} disabled={gameType === "tournament"} onClick={() => setMenuPage("spectate")}>◉ 観戦</button>
         <button type="button" className={menuPage === "exit" ? styles.menuSelected : ""} onClick={() => { setMenuPage("exit"); setExitConfirm(false); }}>↪ 退出</button>
       </nav>
@@ -370,11 +373,13 @@ export default function PokerTablePreview({ member, initialDeal, isGuestPreview 
           {multipliers.map((m, i) => <label key={i}>ボタン {i + 1}<select value={m} onChange={e => setMultipliers(prev => prev.map((v, j) => i === j ? Number(e.target.value) : v))}>{[2,2.5,3,4,5,6,8,10].map(n => <option key={n} value={n}>{`${n}×`}</option>)}</select></label>)}
           <small>BB表示と倍率はデモに反映。SEは各場面で再生されます。設定の保存は未実装です。</small>
         </div>}
+        {menuPage === "structure" && tournament && <div className={styles.menuFields}><TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
       </div>
     </div>
     <h1>オンラインポーカー テーブル試作</h1>
+    {tournament && <TournamentPanel tournament={tournament} serverNow={serverNow}/>}
     {isGuestPreview && <p className={styles.guestNotice}>開発Preview：ログインなしのデモ表示です。本番は会員限定です。</p>}
     <p className={styles.notice}>ログイン中の会員アイコンと表示名を反映しています。他の5席はダミーです。カードはハンドごとにサーバーでシャッフルします。チップとゲーム進行はブラウザ内のデモです。オンライン対戦・会員残高とは連携していません。</p>
     <div className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"} data-street={streetStep}>

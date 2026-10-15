@@ -13,10 +13,11 @@ export default async function PokerLobbyPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
   if (!user && !isPreview) redirect("/signup");
+  const {data: tournaments} = await supabase.from("poker_tournaments").select("id,title,starts_at,structure,image_url").eq("published",true).order("starts_at");
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      <PokerLobbyPreview isGuestPreview={!user} />
+      <PokerLobbyPreview configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
     </main>
     <PortalFooter />
     <BottomTabs />
