@@ -32,6 +32,9 @@ export default function LoginPage({
           {params.error && <p className="err">{params.error}</p>}
           <h1 style={{ fontSize: 20, marginBottom: 16 }}>会員ログイン</h1>
           <MemberLoginForm next={next} />
+          <p className="muted" style={{ marginTop: 10, fontSize: 12.5, textAlign: "right" }}>
+            <Link href="/login/forgot">パスワードを忘れた方</Link>
+          </p>
           <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
             会員登録がまだの方は<Link href="/signup">こちらから登録</Link>
           </p>
