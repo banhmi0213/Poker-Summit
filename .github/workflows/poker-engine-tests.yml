@@ -1,0 +1,43 @@
+name: Poker engine tests
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/poker-engine-tests.yml"
+      - "lib/poker/**"
+      - "tests/poker-*.test.cjs"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/poker-engine-tests.yml"
+      - "lib/poker/**"
+      - "tests/poker-*.test.cjs"
+      - "package.json"
+      - "package-lock.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poker-engine-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  poker-engine-tests:
+    name: Poker engine regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run poker regression tests
+        run: npm run test:poker
