@@ -54,12 +54,6 @@ export default function AdminLoginPage({
         <p className="muted" style={{ marginTop: 10, fontSize: 12.5, textAlign: "right" }}>
           <Link href="/login/forgot?from=admin">パスワードを忘れた方</Link>
         </p>
-        <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
-          会員の方は<Link href="/login">こちらから会員ログイン</Link>
-        </p>
-        <p className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>
-          店舗の方は<Link href="/store/login">こちらから店舗管理ログイン</Link>
-        </p>
       </div>
     </div>
   );
