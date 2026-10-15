@@ -33,6 +33,8 @@ export default async function ChangePasswordPage({
         )}
         <form action={changePassword}>
           {params.from === "admin" && <input type="hidden" name="from" value="admin" />}
+          {/* パスワード保存機能が「どのアカウントの新しいパスワードか」を判断するための欄(画面には出さない) */}
+          <input type="email" name="username" autoComplete="username" value={user.email ?? ""} readOnly hidden />
           <div className="field">
             <span>新しいパスワード（{PASSWORD_RULE_LABEL}）</span>
             <input type="password" name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />

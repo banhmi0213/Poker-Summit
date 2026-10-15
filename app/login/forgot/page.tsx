@@ -33,7 +33,7 @@ export default function ForgotPasswordPage({ searchParams }: { searchParams: { e
               <input type="hidden" name="from" value={fromAdmin ? "admin" : "member"} />
               <label className="field">
                 <span>メールアドレス</span>
-                <input type="email" name="email" required autoComplete="email" />
+                <input type="email" name="email" required autoComplete="username email" />
               </label>
               <button type="submit" className="btn primary" style={{ width: "100%" }}>
                 再設定メールを送る

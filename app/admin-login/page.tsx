@@ -38,7 +38,7 @@ export default function AdminLoginPage({
           <input type="hidden" name="next" value={next} />
           <div className="field">
             <span className="muted">メールアドレス</span>
-            <input type="email" name="email" required autoComplete="email" />
+            <input type="email" name="email" required autoComplete="username email" />
           </div>
           <div className="field">
             <span className="muted">パスワード</span>
