@@ -423,6 +423,7 @@ async function OverviewTab({
     { count: totalStoreCount },
     { data: allStoresFull },
     { data: favByStoreRaw },
+    { data: dashCounts },
   ] = await Promise.all([
     supabase
       .from("page_views")
@@ -438,6 +439,8 @@ async function OverviewTab({
       .in("status", ["approved", "listed"])
       .order("name", { ascending: true }),
     supabase.from("favorite_stores").select("store_id"),
+    // 会員数(店舗管理用アカウントを除く)・掲載中求人数・公開中フリーディーラー数
+    supabase.rpc("admin_dashboard_counts"),
   ]);
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
@@ -487,6 +490,9 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
+        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} />
+        <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
+        <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
         <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
