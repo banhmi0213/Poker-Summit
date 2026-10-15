@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { DealerRegionField } from "./region-field";
 import { inferDealerPrefectures } from "@/lib/dealer-regions";
+import { DealerWageField } from "./wage-field";
 import { WorkDates } from "./work-dates";
 import { DealerPhotoField } from "./photo-field";
 import { saveDealer } from "./actions";
@@ -42,6 +43,7 @@ export function DealerForm({ profile, address, photo, today, contacts }: { conta
  <fieldset className={styles.games+" "+styles.wide}><legend>対応可能なゲーム種目 *（複数選択）</legend>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={profile?.games.includes(g) ?? false} />{g}</label>)}</fieldset>
  <label className={styles.field}>経験年数 *<input name="years" type="number" min={0} max={80} step={0.1} defaultValue={profile?.experience_years ?? ""} required /><span className={styles.hint}>半年の場合は0.5年と入力できます。</span></label>
  <WorkDates initialDates={profile?.available_dates ?? []} today={today} />
+ <DealerWageField initialMin={profile?.desired_hourly_wage_min ?? null} initialMax={profile?.desired_hourly_wage_max ?? null} />
  <label className={styles.field+" "+styles.wide}>アピールポイント<textarea name="appeal" rows={7} maxLength={3000} defaultValue={profile?.appeal ?? ""} placeholder="得意なゲーム、ディーラー経験などを記載してください。" /></label>
  <label className={styles.wide}><input type="checkbox" name="published" defaultChecked={profile?.published ?? true} /> 店舗アカウントにプロフィールを表示する<p className={styles.hint}>一般会員には表示されません。チェックを外すと本人だけが閲覧できます。</p></label>
  </div><div className={styles.actions}><Submit /></div></form>;
