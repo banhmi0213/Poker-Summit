@@ -201,7 +201,7 @@ export default async function ApplyPage({
                     <option value="">選択しない(まずは問い合わせのみ)</option>
                     {plans.map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name}(月額{p.monthly_fee.toLocaleString()}円・税込)
+                        {`${p.name}(月額${p.monthly_fee.toLocaleString()}円・税込)`}
                       </option>
                     ))}
                   </select>

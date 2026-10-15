@@ -122,7 +122,7 @@ export default async function CouponsPage({
       <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <main className="container cp-page">
         <CompactPortalBanner image="/images/compact-coupons.webp" eyebrow="COUPONS & OFFERS" title="クーポンで、もっとポーカーを楽しもう。" subtitle="気になるお店の特典を、まとめてチェック。" subtitleParts={["気になるお店の特典を、", "まとめてチェック。"]} detail="" />
-        <h1 className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
+        <div className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
           <picture>
             <source media="(min-width: 861px)" srcSet="/images/poker-coupons-banner-desktop.webp" />
           <Image
@@ -136,7 +136,7 @@ export default async function CouponsPage({
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
           />
           </picture>
-        </h1>
+        </div>
 
         <form className={`cp-search ${searchControls.form}`} method="get" style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
           <input type="hidden" name="sort" value={sort} />

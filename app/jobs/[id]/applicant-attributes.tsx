@@ -19,7 +19,7 @@ export function AgeField() {
         <option value="">選択してください</option>
         {AGE_OPTIONS.map((age) => (
           <option key={age} value={age}>
-            {age}歳
+            {`${age}歳`}
           </option>
         ))}
       </select>

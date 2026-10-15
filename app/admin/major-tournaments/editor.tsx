@@ -23,7 +23,7 @@ export function TournamentEditor({entry}:{entry?:{id:string;title:string;scope:s
  <input type="hidden" name="id" value={entry?.id||""}/>
  <label className="wide">大会名 *<input name="title" required maxLength={160} defaultValue={entry?.title} placeholder="例：JAPAN POKER FESTIVAL 2026"/></label>
  <label>開催区分<select name="scope" value={scope} onChange={e=>setScope(e.target.value)}><option>国内</option><option>海外</option></select></label>
- <label>地域・国<select name="location" value={location} onChange={e=>setLocations(prev=>({...prev,[scope]:e.target.value}))}><option value="">{scope==="国内"?"都道府県を選択":"国を選択"}</option>{location&&!options.includes(location)&&<option value={location}>{location}（登録済み）</option>}{options.map(value=><option key={value} value={value}>{value}</option>)}</select></label>
+ <label>地域・国<select name="location" value={location} onChange={e=>setLocations(prev=>({...prev,[scope]:e.target.value}))}><option value="">{scope==="国内"?"都道府県を選択":"国を選択"}</option>{location&&!options.includes(location)&&<option value={location}>{`${location}（登録済み）`}</option>}{options.map(value=><option key={value} value={value}>{value}</option>)}</select></label>
  <label>会場<input name="venue" maxLength={300} defaultValue={entry?.venue} placeholder="会場名を入力"/></label>
  <label>開催開始日<input type="date" name="start_date" defaultValue={entry?.start_date||""}/></label>
  <label>開催終了日<input type="date" name="end_date" defaultValue={entry?.end_date||""}/></label>

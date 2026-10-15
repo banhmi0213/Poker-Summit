@@ -4,6 +4,10 @@ import { storeSignIn } from "./actions";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import type { Metadata } from "next";
+import { NOINDEX } from "@/lib/seo";
+
+export const metadata: Metadata = { ...NOINDEX, title: "店舗管理ログイン｜Poker Summit", alternates: { canonical: "/store/login" } };
 
 // 会員ログイン(/login, メールアドレス)と店舗管理ログイン(ログインID)は
 // 見た目も入力形式も別物なのに1つの画面に無理に同居させていた

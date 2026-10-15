@@ -51,8 +51,7 @@ export default async function NewContractPage() {
               <option value="">選択してください</option>
               {availableStores.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name}
-                  {s.pref ? `（${s.pref}）` : ""}
+                  {`${s.name}${s.pref ? `（${s.pref}）` : ""}`}
                 </option>
               ))}
             </select>
@@ -64,7 +63,7 @@ export default async function NewContractPage() {
               <option value="">選択してください</option>
               {plans.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.name}（{formatYen(p.monthly_fee)}）
+                  {`${p.name}（${formatYen(p.monthly_fee)}）`}
                 </option>
               ))}
             </select>

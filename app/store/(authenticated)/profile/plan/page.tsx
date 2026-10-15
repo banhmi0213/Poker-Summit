@@ -350,8 +350,7 @@ export default async function StorePlanPage({
                 </option>
                 {(allPlans ?? []).map((p) => (
                   <option key={p.id} value={p.id} disabled={p.id === contract?.plan_id}>
-                    {p.name}（¥{(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）
-                    {p.id === contract?.plan_id ? "・現在のプラン" : ""}
+                    {`${p.name}（¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）${p.id === contract?.plan_id ? "・現在のプラン" : ""}`}
                   </option>
                 ))}
               </select>

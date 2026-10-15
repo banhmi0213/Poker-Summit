@@ -78,9 +78,9 @@ export default async function NewsPage() {
       </div>
 
       <div className="container">
-        <h1 style={{ fontSize: 22, marginTop: 16, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 22, marginTop: 16, marginBottom: 16 }}>
           📣 お知らせ{currentPref ? `（${currentPref}）` : "（全国）"}
-        </h1>
+        </h2>
 
         {(!notices || notices.length === 0) && (
           <p className="muted">

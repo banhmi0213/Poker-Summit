@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import { NOINDEX } from "@/lib/seo";
 export const dynamic='force-dynamic';
 type Params={pref?:string;game?:string;date?:string;page?:string;sort?:string};
-export const metadata: Metadata = { ...NOINDEX, title: "スポット求人｜Poker Summit" };
+export const metadata: Metadata = { ...NOINDEX, title: "スポット求人｜Poker Summit", alternates: { canonical: "/spot-jobs" } };
 
 export default async function Page({searchParams}:{searchParams:Params}) {
   const initial=await createClient();

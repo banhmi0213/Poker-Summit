@@ -66,7 +66,7 @@ export default async function JobsPage({
       <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
       <div className="container">
         <CompactPortalBanner image="/images/compact-careers.webp" eyebrow="POKER SUMMIT CAREERS" title="ポーカーの世界で、働こう。" subtitle="好きな空間で、あなたらしい仕事を。" detail="ディーラー・フロアスタッフ・バーテンダー" detailParts={["ディーラー・", "フロアスタッフ・", "バーテンダー"]} />
-        <h1 className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
+        <div className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <Image
             src="/images/poker-careers-banner.webp"
             alt="求人を探す — ポーカーの世界で、働こう。好きな空間で、あなたらしい仕事を。ディーラー・フロアスタッフ・バーテンダー"
@@ -77,7 +77,7 @@ export default async function JobsPage({
             sizes="(max-width: 1180px) 100vw, 1140px"
             style={{ display: "block", width: "100%", height: "100%", objectFit: "fill" }}
           />
-        </h1>
+        </div>
 
         <JobTypeTabs active="regular" />
         <h2 style={{fontSize:18, marginBottom:12}}>{[role, jobType].filter(Boolean).join("・") || "すべての求人"} <small className="muted">新着順</small></h2>
