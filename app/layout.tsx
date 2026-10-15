@@ -5,6 +5,11 @@ import "./admin/major-tournaments/tournament.css";
 import "./spacing.css";
 import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
+import Script from "next/script";
+
+// Google アナリティクス(GA4、2026/10)。本番(pokersummit.jp)だけで計測し、プレビュー環境では読み込まない。
+const GA_MEASUREMENT_ID = "G-M5QMYFSCHJ";
+const ENABLE_ANALYTICS = process.env.VERCEL_ENV === "production";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -41,6 +46,14 @@ export default function RootLayout({
         {children}
         <BackToTop />
         <ImageUploadCompressor />
+        {ENABLE_ANALYTICS && (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );
