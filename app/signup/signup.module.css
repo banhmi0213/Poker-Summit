@@ -5,7 +5,7 @@
 .back{margin-left:auto;font-size:12px;color:#775329;white-space:nowrap}
 .layout{position:relative;max-width:1440px;margin:auto;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);background:linear-gradient(135deg,#fffdf9,#f4e8d1);overflow:hidden}
 .intro{position:relative;min-width:0;padding:58px 36px 570px;isolation:isolate;background:#f8f1e3}
-.intro:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#fdfaf5 0%,#fdfaf5 21%,#fdfaf5f5 29%,#fdfaf5a8 39%,#fdfaf500 55%),url('/images/member-registration-lounge-v1.webp') center bottom/cover no-repeat}
+.intro:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#fdfaf5 0%,#fdfaf5 21%,#fdfaf5f5 29%,#fdfaf5a8 39%,#fdfaf500 55%),url('/images/member-registration-lounge-v3.webp') center bottom/cover no-repeat}
 .eyebrow{display:flex;align-items:center;gap:14px;color:#986629;font-size:12px;letter-spacing:.22em;font-family:"Noto Serif JP",serif}
 .eyebrow:after{content:"";width:40px;height:1px;background:#cda869}
 .intro h1{font-family:"Noto Serif JP",serif;font-weight:600;font-size:clamp(30px,3.55vw,54px);line-height:1.65;margin:22px 0;letter-spacing:.015em;word-break:keep-all;overflow-wrap:normal}
@@ -44,7 +44,7 @@
 .logo{width:250px}.headerLabel{border-left:0;padding:0;font-size:11px;letter-spacing:.15em}.back{margin:2px 0 0;font-size:11px}
 .layout{display:block;padding-bottom:16px;background:#f8f1e5}
 .intro{padding:26px 20px 58px;text-align:center;color:#fff;min-height:230px;box-sizing:border-box}
-.intro:before{background:linear-gradient(180deg,#24130488,#2413046b 65%,#f8f1e5),url('/images/member-registration-lounge-v1.webp') center 38%/cover no-repeat}
+.intro:before{background:linear-gradient(180deg,#24130488,#2413046b 65%,#f8f1e5),url('/images/member-registration-lounge-v3.webp') center 38%/cover no-repeat}
 .eyebrow{justify-content:center;color:#f8e3ba;font-size:10px}.eyebrow:after{background:#e4cb9c;width:25px}
 .intro h1{font-size:clamp(23px,6.5vw,32px);line-height:1.6;margin:12px 0;text-shadow:0 1px 6px #20100070}
 .lead{font-family:inherit;font-size:12px;line-height:1.9;margin:auto;max-width:380px;text-shadow:0 1px 5px #201000}
