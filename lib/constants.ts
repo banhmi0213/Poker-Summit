@@ -8,9 +8,11 @@ export const CATEGORY_LABEL: Record<string, string> = {
   other: "その他",
 };
 
-export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL).map(
-  ([value, label]) => ({ value, label })
-);
+// 「その他」は選択肢に出さない(2026/10)。ポーカー店ではない取り込みデータ(却下済み)の目印として
+// データ上は残しているため、表示名(CATEGORY_LABEL)には残す。
+export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABEL)
+  .filter(([value]) => value !== "other")
+  .map(([value, label]) => ({ value, label }));
 
 // 掲載のお申込み(/apply)フォームのカテゴリ選択肢のみを絞った版。既存店舗の
 // カテゴリ表示・編集(store-card.tsx, 管理画面の店舗編集など)は上の
