@@ -92,13 +92,17 @@ export function applyBettingAction(round: BettingRound, playerId: string, action
         throw new Error("New total bet must exceed current bet");
       if (action.type === "bet" && round.currentBet !== 0) throw new Error("Use raise facing a bet");
       if (action.type === "raise" && round.currentBet === 0) throw new Error("Use bet to open");
+      // A raise needs at least one opponent who can still respond with chips.
+      // Otherwise an uncalled wager must not be added to the pot.
+      if (!players.some(other => other.id !== playerId && !other.folded && !other.allIn))
+        throw new Error("Cannot bet or raise when every opponent is all-in");
       const contribution = action.amount - p.committed;
       if (contribution > p.stack) throw new Error("Insufficient stack");
       const raiseSize = action.amount - round.currentBet;
       if (raiseSize < round.minRaise && contribution !== p.stack)
         throw new Error("Below minimum raise unless all-in");
       // A short all-in does not reopen betting for players who have already acted.
-      if (p.acted && !p.allIn) throw new Error("Player cannot raise again without reopened action");
+      if (p.acted) throw new Error("Player cannot raise again without reopened action");
       contribute(contribution);
       currentBet = action.amount;
       if (raiseSize >= round.minRaise) {
@@ -113,6 +117,29 @@ export function applyBettingAction(round: BettingRound, playerId: string, action
   const survivors = players.filter(x => !x.folded);
   const toAct = survivors.length <= 1 ? null : nextToAct(players, index, currentBet);
   return { ...round, players, currentBet, minRaise, lastAggressor, toAct };
+}
+/** Legal choices for the player currently on turn, including minimum total raise-to.
+ * All amounts are total street commitments (not additional chips).
+ */
+export function legalBettingActions(round: BettingRound, playerId: string) {
+  const p = round.players.find(player => player.id === playerId);
+  if (!p || round.toAct !== playerId || p.folded || p.allIn) return null;
+  const owed = Math.max(0, round.currentBet - p.committed);
+  const maxTotal = p.committed + p.stack;
+  const canRaise = !p.acted &&
+    round.players.some(other => other.id !== playerId && !other.folded && !other.allIn) &&
+    maxTotal > round.currentBet;
+  const minTotal = round.currentBet === 0 ? round.bigBlind : round.currentBet + round.minRaise;
+  return {
+    fold: true,
+    check: owed === 0,
+    call: owed > 0,
+    callAmount: Math.min(owed, p.stack),
+    raise: canRaise,
+    minRaiseTo: canRaise ? Math.min(minTotal, maxTotal) : null,
+    maxRaiseTo: canRaise ? maxTotal : null,
+    shortAllInOnly: canRaise && maxTotal < minTotal,
+  };
 }
 export function bettingRoundComplete(round: BettingRound): boolean {
   return round.toAct === null;
