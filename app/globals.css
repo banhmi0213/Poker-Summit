@@ -2694,6 +2694,16 @@ th {
 .home-job-card .home-card-cta { margin-top:auto; padding-top:10px; border-top:1px solid #f0ebe0; }
 @media(max-width:1000px) { .home-region-nav { flex-direction:column; align-items:flex-start; gap:12px; } .home-store-copy { padding-left:88px; } .home-store-logo { width:62px; height:62px; left:12px; } }
 @media(max-width:860px) { .home-grid-three { grid-template-columns:repeat(2,minmax(0,1fr)); } .home-job-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+/* TOPの新着クーポン・新着求人(2026/10): PCは横4列、タブレット・スマホは2列(4件で2×2) */
+.home-new-grid { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:16px; }
+@media(max-width:860px) { .home-grid.home-new-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; } }
+.home-coupon-card--vertical { display:flex; flex-direction:column; gap:10px; }
+.home-coupon-card--vertical .home-coupon-image, .home-coupon-card--vertical .home-coupon-image > img, .home-coupon-card--vertical .home-coupon-image > div { min-height:0; height:120px; }
+.home-coupon-card--vertical .home-coupon-copy { flex:1; padding:0 4px 4px; }
+.home-new-grid .home-job-card { padding:12px; }
+.home-new-grid h3 { font-size:13px; line-height:1.45; margin:0 0 4px; overflow-wrap:anywhere; }
+.home-new-grid p { font-size:11px; margin:0 0 2px; }
+@media(max-width:560px) { .home-new-grid .home-job-salary { font-size:14px; margin:6px 0; } .home-coupon-card--vertical .home-coupon-image, .home-coupon-card--vertical .home-coupon-image > img, .home-coupon-card--vertical .home-coupon-image > div { height:96px; } }
 @media(max-width:560px) {
  .home-feed { padding:0 20px; }
  .home-section { margin:24px 0; }

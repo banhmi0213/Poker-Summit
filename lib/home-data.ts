@@ -54,6 +54,7 @@ async function loadHomePublicData(currentPref: string | null) {
       .select("id, title, job_type, salary, store_id, stores(name, category, pref, city, logo_url)")
       .eq("status", "open")
       .order("posted_at", { ascending: false })
+      .order("id", { ascending: false })
       .limit(4),
     // /board一覧と同じ並び(返信で更新される updated_at の新しい順、同値は id 降順)
     supabase
@@ -70,7 +71,8 @@ async function loadHomePublicData(currentPref: string | null) {
       .select("id, title, discount, valid_until, banner_image_url, store_id, stores(name, category, pref, city)")
       .eq("active", true)
       .order("created_at", { ascending: false })
-      .limit(3),
+      .order("id", { ascending: false })
+      .limit(4),
     getTopBanners(supabase),
     getHomeSectionBanners(supabase, "home_pickup"),
     getHomeSectionBanners(supabase, "home_coupon"),
@@ -125,7 +127,7 @@ async function loadHomePublicData(currentPref: string | null) {
   };
 }
 
-export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v3"], {
+export const getHomePublicData = unstable_cache(loadHomePublicData, ["home-public-data-v4"], {
   revalidate: HOME_CACHE_SECONDS,
   tags: ["public-stores"],
 });
