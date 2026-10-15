@@ -28,7 +28,7 @@ create table public.poker_tournaments (
  id uuid primary key default gen_random_uuid(),
  owner_store_id uuid references public.stores(id) on delete restrict,
  title text not null check(char_length(btrim(title)) between 1 and 120),
- starts_at timestamptz not null,
+ starts_at timestamptz not null check(isfinite(starts_at)),
  published boolean not null default false,
  structure jsonb not null check(public.valid_poker_structure(structure) is true),
  image_url text,
@@ -41,15 +41,11 @@ create index poker_tournaments_owner on public.poker_tournaments(owner_store_id)
 alter table public.poker_tournaments enable row level security;
 grant select on public.poker_tournaments to anon;
 grant select,insert,update on public.poker_tournaments to authenticated;
-create policy poker_tournaments_public_read on public.poker_tournaments for select to anon,authenticated using(published);
-create policy poker_tournaments_admin_read on public.poker_tournaments for select to authenticated using((select public.is_admin()));
-create policy poker_tournaments_admin_insert on public.poker_tournaments for insert to authenticated with check((select public.is_admin()));
-create policy poker_tournaments_admin_update on public.poker_tournaments for update to authenticated using((select public.is_admin())) with check((select public.is_admin()));
-create policy poker_tournaments_owner_read on public.poker_tournaments for select to authenticated using(not public.is_suspended() and exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=auth.uid()));
-create policy poker_tournaments_owner_insert on public.poker_tournaments for insert to authenticated with check(not public.is_suspended() and exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=auth.uid()));
-create policy poker_tournaments_owner_update on public.poker_tournaments for update to authenticated using(not public.is_suspended() and exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=auth.uid())) with check(not public.is_suspended() and exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=auth.uid()));
+create policy poker_tournaments_read on public.poker_tournaments for select to anon,authenticated using(published or (not (select public.is_suspended()) and ((select public.is_admin()) or exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=(select auth.uid())))));
+create policy poker_tournaments_insert on public.poker_tournaments for insert to authenticated with check(not (select public.is_suspended()) and ((select public.is_admin()) or exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=(select auth.uid()))));
+create policy poker_tournaments_update on public.poker_tournaments for update to authenticated using(not (select public.is_suspended()) and ((select public.is_admin()) or exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=(select auth.uid())))) with check(not (select public.is_suspended()) and ((select public.is_admin()) or exists(select 1 from public.stores s where s.id=owner_store_id and s.owner_user_id=(select auth.uid()))));
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('poker-tournament-images','poker-tournament-images',true,2097152,array['image/png','image/jpeg','image/webp']);
 create policy poker_tournament_images_manage on storage.objects for all to authenticated
-using(bucket_id='poker-tournament-images' and not public.is_suspended() and ((select public.is_admin()) or ((storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.stores s where s.owner_user_id=auth.uid()))))
-with check(bucket_id='poker-tournament-images' and not public.is_suspended() and ((select public.is_admin()) or ((storage.foldername(name))[1]=auth.uid()::text and exists(select 1 from public.stores s where s.owner_user_id=auth.uid()))));
+using(bucket_id='poker-tournament-images' and not (select public.is_suspended()) and ((select public.is_admin()) or ((storage.foldername(name))[1]=(select auth.uid())::text and exists(select 1 from public.stores s where s.owner_user_id=(select auth.uid())))))
+with check(bucket_id='poker-tournament-images' and not (select public.is_suspended()) and ((select public.is_admin()) or ((storage.foldername(name))[1]=(select auth.uid())::text and exists(select 1 from public.stores s where s.owner_user_id=(select auth.uid())))));
 commit;

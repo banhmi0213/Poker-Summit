@@ -20,7 +20,7 @@ const SA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',SB='bbbbbbbb-bbbb-4bbb-8bbb-bbbb
  create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
  alter table storage.objects enable row level security;grant select,insert,update,delete on storage.objects to authenticated;
  create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;`);
- await db.exec(fs.readFileSync('supabase/migrations/20261016180000_poker_tournament_settings.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261015173721_poker_tournament_settings.sql','utf8'));
  const auth=async(id,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('app.uid',$1,false)",[id]);await db.exec(`set role ${role}`);};
  const insert=async(owner,title,published=false,structure=defaultStructure)=>db.query('insert into poker_tournaments(owner_store_id,title,starts_at,published,structure) values($1,$2,now(),$3,$4) returning id',[owner,title,published,JSON.stringify(structure)]);
  await auth(ADMIN);const global=(await insert(null,'global')).rows[0].id;check(Boolean(global));

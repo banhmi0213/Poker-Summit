@@ -5,6 +5,8 @@ on:
     paths:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
+      - "supabase/migrations/*poker*.sql"
+      - "db/tests/poker*"
       - "app/poker-demo/**"
       - "tests/poker-*.test.cjs"
       - "package.json"
@@ -14,6 +16,8 @@ on:
     paths:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
+      - "supabase/migrations/*poker*.sql"
+      - "db/tests/poker*"
       - "app/poker-demo/**"
       - "tests/poker-*.test.cjs"
       - "package.json"

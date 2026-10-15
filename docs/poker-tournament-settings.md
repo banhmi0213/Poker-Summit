@@ -8,13 +8,15 @@
 - Unsaved editor preview: /poker-tournaments/preview. No database writes.
 
 ## Database
-Apply supabase/migrations/20261016180000_poker_tournament_settings.sql only after verifying the live project and existing public.stores UUID IDs, public.is_admin(), public.is_suspended(), and storage/auth schemas. It adds poker_tournaments and the poker-tournament-images bucket, JSON validation constraints, RLS and indexes; no existing events or balances are deleted.
+Migration supabase/migrations/20261015173721_poker_tournament_settings.sql was applied to poker-summit (tjmeqnzvuoguoffltxrp), with existing public.stores UUID IDs, public.is_admin(), public.is_suspended(), and storage/auth schemas. It adds poker_tournaments and the poker-tournament-images bucket, JSON validation constraints, RLS and indexes; no existing events or balances are deleted.
 
-The migration has NOT been applied to the live project in this session. The Supabase plugin installation was confirmed, but no project/SQL callable tools were exposed to the active runtime. Do not mark live storage/save tests complete until access is available.
+Supabase connectivity became available and the live project/schema were inspected. Applied migration version 20261015173721. Enabled RLS, explicit Data API grants and the 2MB public PNG/JPEG/WebP image bucket. Owner/admin rules are combined per command; identity functions are cached per statement. Existing unrelated data/policies were not rewritten.
+
+Live transaction test passed 10 assertions: owner insert/update, draft privacy, other-owner read/write restrictions, publication/unpublication, and admin insert/update. All test rows were rolled back; final poker_tournaments row count was zero. New-table security advisor findings: none. New indexes naturally report unused before traffic. Actual browser login/form submission and binary Storage API uploads remain manual verification items; SQL metadata/RLS tests do not prove those complete.
 
 ## Verification
 - npm run test:poker includes clock boundaries, reload/background catchup, breaks, late registration (including breaks before the cutoff), final-level continuation, numeric limits and rendered timer/structure.
-- Optional isolated PostgreSQL check: POKER_PGLITE_MODULE=/tmp/poker-sql-check/node_modules/@electric-sql/pglite node db/tests/poker_tournaments_isolated.cjs. Installs PGlite separately; not a production connection. 23 migration/schema/RLS/storage assertions passed. Identity helpers are test stubs, so live policies still need verification against the real schema.
+- Optional isolated PostgreSQL check: POKER_PGLITE_MODULE=/tmp/poker-sql-check/node_modules/@electric-sql/pglite node db/tests/poker_tournaments_isolated.cjs. Installs PGlite separately; not a production connection. 23 migration/schema/RLS/storage assertions passed. Identity helpers are test stubs, so live table RLS was additionally verified with real project helpers and rollback-only writes.
 - Project-wide tsc reports pre-existing unrelated errors; review changed-path diagnostics. Local build lacks Supabase env for existing terms/tokushoho prerender; Vercel configured build is the deployment check.
 
 ## Deliberate execution boundary
