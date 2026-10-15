@@ -324,3 +324,5 @@
 .betChip{display:grid;place-items:center;width:17px;height:17px;flex:0 0 17px;border-radius:50%;border:2px dashed #fff1b3;background:#c69b37;box-shadow:inset 0 0 0 1px #88621e;color:#473312;font-size:10px}
 .bet_p2{top:30%;left:50%}.bet_p3{top:35%;left:25%}.bet_p4{top:35%;left:75%}.bet_p5{bottom:30%;left:25%}.bet_p6{bottom:30%;left:75%}.bet_you{bottom:20%;left:50%}
 @media(max-width:480px){.streetBet{font-size:9px;padding:2px 4px;gap:3px}.betChip{width:15px;height:15px;flex-basis:15px;font-size:9px}.bet_p3,.bet_p5{left:24%}.bet_p4,.bet_p6{left:76%}}
+
+.hole span.blackCard{color:#17263b}.hole span.redCard{color:#dc2440}
