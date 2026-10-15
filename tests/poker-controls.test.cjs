@@ -109,3 +109,25 @@ require('node:test').test('saved tournament renders faint background image, coll
  const props={tournament,serverNow:Date.parse(tournament.starts_at)};
  for(const mode of ['clock','structure']) { const html=renderToStaticMarkup(React.createElement(Panel,{...props,mode}));assert.match(html,/src="https:\/\/example.com\/logo.png"/);assert.match(html,/class="backdrop"/);assert.match(html,/Summit × コラボ/);if(mode==='structure'){assert.match(html,/5,000 チップ/);assert.match(html,/ギフト券/);assert.match(html,/自動付与は準備中/);} }
 });
+require('node:test').test('numeric controls change chips by ten, minutes by one, preserve 75 and clamp limits',()=>{
+ const Stepper=req(root+'/app/poker-tournaments/number-stepper.tsx').default;
+ const oldId=React.useId;React.useId=()=> 'stepper';
+ try{
+  let changed;
+  let el=Stepper({label:'SB',value:75,onChange:v=>changed=v,min:0,max:100});
+  const [minus,input,plus]=el.props.children;
+  minus.props.onClick();assert.equal(changed,65);plus.props.onClick();assert.equal(changed,85);
+  assert.equal(input.props.step,1);assert.equal(input.props.inputMode,'numeric');assert.equal(minus.props.type,'button');assert.equal(plus.props.type,'button');
+  let prevented=false;input.props.onKeyDown({key:'ArrowUp',preventDefault:()=>prevented=true});assert.equal(changed,85);assert.ok(prevented);
+  el=Stepper({label:'分',value:20,onChange:v=>changed=v,min:1,max:240,increment:1});el.props.children[2].props.onClick();assert.equal(changed,21);el.props.children[0].props.onClick();assert.equal(changed,19);
+  el=Stepper({label:'SB',value:95,onChange:v=>changed=v,min:0,max:100});el.props.children[2].props.onClick();assert.equal(changed,100);
+  el=Stepper({label:'分',value:1,onChange:v=>changed=v,min:1,max:240,increment:1});assert.equal(el.props.children[0].props.disabled,true);
+  el=Stepper({label:'休憩SB',value:0,onChange:v=>changed=v,disabled:true});assert.ok(el.props.children.every(child=>child.props.disabled));
+ }finally{React.useId=oldId;}
+});
+require('node:test').test('structure editor exposes mobile steppers with correct field increments',()=>{
+ const Editor=req(root+'/app/poker-tournaments/structure-editor.tsx').default;
+ const html=renderToStaticMarkup(React.createElement(Editor));
+ assert.match(html,/行1 sbを10増やす/);assert.match(html,/行1 minutesを1増やす/);assert.match(html,/レイトレジスト終了レベルを1増やす/);assert.match(html,/data-label="SB"/);assert.match(html,/data-label="分"/);
+ assert.match(html,/aria-label="行2 sb"[^>]*value="75"/);
+});
