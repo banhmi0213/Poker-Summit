@@ -45,6 +45,7 @@ async function loadHomePublicData(currentPref: string | null) {
       supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open"),
       supabase.from("board_posts").select("*", { count: "exact", head: true }).eq("status", "visible"),
+      supabase.from("major_tournaments").select("*", { count: "exact", head: true }).eq("active", true),
     ]),
     supabase.rpc("public_member_count"),
     getPickupPool(supabase, currentPref),
@@ -97,7 +98,7 @@ async function loadHomePublicData(currentPref: string | null) {
     replyCounts[r.post_id] = (replyCounts[r.post_id] ?? 0) + 1;
   });
 
-  const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }] = statsResults;
+  const [{ count: totalStoreCount }, { count: openJobCount }, { count: threadCount }, { count: majorTournamentCount }] = statsResults;
 
   return {
     now,
@@ -105,6 +106,7 @@ async function loadHomePublicData(currentPref: string | null) {
     totalStoreCount: totalStoreCount ?? 0,
     openJobCount: openJobCount ?? 0,
     threadCount: threadCount ?? 0,
+    majorTournamentCount: majorTournamentCount ?? 0,
     memberCountRaw: (memberCountRaw as number | null) ?? null,
     pickupPool,
     latestJobs: latestJobs ?? [],
