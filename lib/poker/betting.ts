@@ -30,6 +30,9 @@ function integer(value: number): boolean {
   return Number.isSafeInteger(value) && value >= 0;
 }
 function nextToAct(players: readonly BettingPlayer[], afterIndex: number, currentBet: number): string | null {
+  // No further betting when every remaining opponent is all-in.
+  const actionable = players.filter(p => !p.folded && !p.allIn);
+  if (actionable.length === 0 || (actionable.length === 1 && actionable[0].committed >= currentBet)) return null;
   for (let n = 1; n <= players.length; n++) {
     const p = players[(afterIndex + n) % players.length];
     if (!p.folded && !p.allIn && (!p.acted || p.committed < currentBet)) return p.id;
@@ -54,7 +57,8 @@ export function createBettingRound(
   const currentBet = Math.max(...players.map(p => p.committed));
   const actor = players.find(p => p.id === firstToAct);
   if (!actor || actor.folded || actor.allIn) throw new Error("Invalid first actor");
-  return { players, currentBet, minRaise: bigBlind, bigBlind, toAct: firstToAct, lastAggressor: null };
+  const toAct = nextToAct(players, (players.indexOf(actor) + players.length - 1) % players.length, currentBet);
+  return { players, currentBet, minRaise: bigBlind, bigBlind, toAct, lastAggressor: null };
 }
 export function applyBettingAction(round: BettingRound, playerId: string, action: BettingAction): BettingRound {
   if (round.toAct !== playerId) throw new Error("Not player's turn");
@@ -136,5 +140,6 @@ export function beginNextBettingStreet(round: BettingRound, firstToAct: string):
   const players = round.players.map(p => ({ ...p, committed: 0, acted: false }));
   const actor = players.find(p => p.id === firstToAct);
   if (!actor || actor.folded || actor.allIn) throw new Error("Invalid first actor");
-  return { players, currentBet: 0, minRaise: round.bigBlind, bigBlind: round.bigBlind, toAct: firstToAct, lastAggressor: null };
+  const toAct = nextToAct(players, (players.indexOf(actor) + players.length - 1) % players.length, 0);
+  return { players, currentBet: 0, minRaise: round.bigBlind, bigBlind: round.bigBlind, toAct, lastAggressor: null };
 }
