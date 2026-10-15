@@ -55,37 +55,13 @@ export default async function StoreAnalyticsPage() {
     .select("*", { count: "exact", head: true })
     .in("status", ["approved", "listed"]);
 
-  // 「アクセス分析にお気に入り数もわかるようにしといて」との指示により
-  // 追加(2026/09/30)。
-  const { count: favoriteCount } = await supabase
-    .from("favorite_stores")
-    .select("*", { count: "exact", head: true })
-    .eq("store_id", store.id);
-
-  // 求人のお気に入り数・クーポン使用回数もアクセス統計で見られるように
-  // 追加(2026/10、「アクセス統計に求人お気に入り数、クーポン使用回数を
-  // 追加」との指示)。トップの店舗管理画面(page.tsx)に既にある集計と
-  // 同じやり方(求人IDを集めてfavorite_jobsを数える／coupons.used_countを
-  // 合計する)をこのページにも持ってくる。
-  const [{ data: storeJobIds }, { data: couponsForStats }] = await Promise.all([
-    supabase.from("jobs").select("id").eq("store_id", store.id),
-    supabase.from("coupons").select("used_count").eq("store_id", store.id),
-  ]);
-
-  let jobFavoriteCount = 0;
-  const jobIdList = (storeJobIds ?? []).map((j) => j.id);
-  if (jobIdList.length) {
-    const { count: jobFavCount } = await supabase
-      .from("favorite_jobs")
-      .select("*", { count: "exact", head: true })
-      .in("job_id", jobIdList);
-    jobFavoriteCount = jobFavCount ?? 0;
-  }
-
-  const totalCouponUses = (couponsForStats ?? []).reduce(
-    (sum, c) => sum + (c.used_count ?? 0),
-    0
-  );
+  // お気に入り数(店舗・求人・クーポン)。お気に入りの表は店舗からは直接読めないため、
+  // 件数だけ返す関数で取る(2026/10、クーポンは「使用回数」から「お気に入り数」に変更)。
+  const { data: favCounts } = await supabase.rpc("store_favorite_counts", { p_store_id: store.id });
+  const fc = (favCounts ?? {}) as { store?: number; jobs?: number; coupons?: number };
+  const favoriteCount = Number(fc.store ?? 0);
+  const jobFavoriteCount = Number(fc.jobs ?? 0);
+  const couponFavoriteCount = Number(fc.coupons ?? 0);
 
   const avgViewsPerStore =
     totalStores && totalStores > 0
@@ -168,9 +144,9 @@ export default async function StoreAnalyticsPage() {
           </div>
         </div>
         <div className="card">
-          <div className="muted">クーポン使用回数（全クーポン合計）</div>
+          <div className="muted">クーポンのお気に入り数（全クーポン合計）</div>
           <div style={{ fontSize: 26, fontWeight: 900, marginTop: 4 }}>
-            {totalCouponUses}
+            ♥ {couponFavoriteCount}
           </div>
         </div>
       </div>
