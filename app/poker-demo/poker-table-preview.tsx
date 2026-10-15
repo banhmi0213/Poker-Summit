@@ -62,6 +62,7 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
   const [timeBanksUsed, setTimeBanksUsed] = useState(0);
   const timeBankSeconds = 20;
   const demoTimeBankLimit = 1; // Future tournament configuration will supply this limit.
+  const [autoChoice, setAutoChoice] = useState<"CHECK" | "FOLD" | null>(null);
   const [running, setRunning] = useState(true);
   const [turnRemaining, setTurnRemaining] = useState(20);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -202,8 +203,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     const timer = window.setTimeout(() => setRemaining(t => Math.max(0, t - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [running, isYourTurn, remaining]);
-  const choose = (next: Action) => {
-    if (remaining <= 0 || !isYourTurn) return;
+  const choose = (next: Action, automatic = false) => {
+    if (!isYourTurn || (!automatic && remaining <= 0)) return;
     const player = playerAt("you");
     const owed = betting.currentBet - player.committed;
     let betAction: BettingAction;
@@ -214,14 +215,24 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     try {
       const updated = applyBettingAction(betting, "you", betAction);
       setBetting(updated);
-      setLastActions(prev => ({ ...prev, you: next === "RAISE" ? `${betAction.type.toUpperCase()} ${raise}` : next }));
+      setLastActions(prev => ({ ...prev, you: automatic ? `AUTO ${next}` : next === "RAISE" ? `${betAction.type.toUpperCase()} ${raise}` : next }));
       setAction(next);
+      setAutoChoice(null);
       setRunning(false);
-      setBettingMessage(`${next === "RAISE" ? "レイズ " + raise : next} を反映。残高 ${updated.players[0].stack.toLocaleString()} / POT ${potTotal(updated).toLocaleString()}（ローカルデモ）`);
+      setBettingMessage(`${automatic ? "AUTO " : ""}${next === "RAISE" ? "レイズ " + raise : next} を反映.残高 ${updated.players[0].stack.toLocaleString()} / POT ${potTotal(updated).toLocaleString()}（ローカルデモ）`);
     } catch (error) {
       setBettingMessage(error instanceof Error ? error.message : "操作を処理できませんでした");
     }
   };
+  const owedForYou = Math.max(0, betting.currentBet - playerAt("you").committed);
+  // Auto actions never spend chips without explicit consent.
+  useEffect(() => {
+    if (!isYourTurn || !running || handFinished || showdown || spectating) return;
+    const preferred = autoChoice === "FOLD" ? "FOLD" : owedForYou === 0 ? "CHECK" : "FOLD";
+    if (remaining !== 0 && autoChoice === null) return;
+    const timer = window.setTimeout(() => choose(preferred, true), 0);
+    return () => window.clearTimeout(timer);
+  }, [remaining, isYourTurn, autoChoice, owedForYou, running, handFinished, showdown, spectating]);
   // Demo-only bots: check when free, otherwise call (or go all-in).
   // In a real match the server, not the browser, will own this progression.
   useEffect(() => {
@@ -321,6 +332,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     setLastActions({}); setTurnRemaining(20); setHandFinished(false);
     setBettingMessage("新しいハンド：BTNを時計回りに移動しSB 50 / BB 100を徴収しました（デモ）。");
     setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null);
+    // Auto-action reservations apply to a single hand only; never carry into the next hand.
+    setAutoChoice(null);
     setRaise(200); setRemaining(20); setTimeBanksUsed(0); setRunning(true);
   };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
@@ -401,6 +414,12 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
         <button type="button" disabled={remaining === 0 || !isYourTurn} onClick={() => choose("CHECK")}>チェック</button>
         <button type="button" disabled={remaining === 0 || !isYourTurn} onClick={() => choose("CALL")}>コール</button>
         <button type="button" disabled={remaining === 0 || !isYourTurn} onClick={() => choose("RAISE")}>レイズ</button>
+      </div>
+      <div className={styles.demoFoldControls} aria-label="自動アクション予約">
+        <span>自動アクション（次の自分の番に適用）</span>
+        <button type="button" aria-pressed={autoChoice === "CHECK"} disabled={handFinished || showdown} onClick={() => setAutoChoice(v => v === "CHECK" ? null : "CHECK")}>AUTO CHECK / FOLD</button>
+        <button type="button" aria-pressed={autoChoice === "FOLD"} disabled={handFinished || showdown} onClick={() => setAutoChoice(v => v === "FOLD" ? null : "FOLD")}>AUTO FOLD</button>
+        <small>{autoChoice === "CHECK" ? "チェック可能ならCHECK、コールが必要ならFOLD" : autoChoice === "FOLD" ? "自分の番で自動FOLD" : "未選択（0秒でCHECKまたはFOLD）"}</small>
       </div>
       <p role="status" aria-live="polite">{bettingMessage}</p>
       <div className={styles.demoFoldControls}><span>相手のフォールド確認（デモ）</span>{seats.map((seat, i) => <button type="button" key={seat.name} aria-pressed={foldedSeats.includes(i + 2)} onClick={() => setFoldedSeats(prev => prev.includes(i + 2) ? prev.filter(n => n !== i + 2) : [...prev, i + 2])}>P{i + 2} {foldedSeats.includes(i + 2) ? "復帰" : "FOLD"}</button>)}</div>
