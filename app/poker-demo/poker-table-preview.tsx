@@ -332,6 +332,8 @@ export default function PokerTablePreview({ member, isGuestPreview = false, init
     setLastActions({}); setTurnRemaining(20); setHandFinished(false);
     setBettingMessage("新しいハンド：BTNを時計回りに移動しSB 50 / BB 100を徴収しました（デモ）。");
     setFoldedSeats([]); setStreetStep(0); setShowdown(false); setAction(null);
+    // Auto-action reservations apply to a single hand only; never carry into the next hand.
+    setAutoChoice(null);
     setRaise(200); setRemaining(20); setTimeBanksUsed(0); setRunning(true);
   };
   return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
