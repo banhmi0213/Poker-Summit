@@ -213,8 +213,7 @@ export function PokerRegionHero({
   stats,
   backgroundSrc = "/images/poker-region-hero-bg.webp",
 }: Props) {
-  // 求人・会員・投稿は一定数を超えたら出す。都道府県・大型大会は、それらが出るまでのつなぎで、
-  // 並びが4つ以上になった時点で外す(店舗数＋実際の利用の数字だけを見せる。2026/10)
+  // 求人・会員・投稿は一定数を超えたら出す。都道府県・大型大会は、それらが出るまでのつなぎ(2026/10)
   const activityItems = [
     ...(stats.jobCount >= STAT_SHOW_THRESHOLDS.jobs ? [{ label: "掲載求人数", value: formatCount(stats.jobCount), icon: <BriefcaseIcon /> }] : []),
     ...(stats.memberCount >= STAT_SHOW_THRESHOLDS.members ? [{ label: "会員数", value: formatCount(stats.memberCount), icon: <MembersIcon /> }] : []),
@@ -225,10 +224,10 @@ export function PokerRegionHero({
     { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
   ];
   const storeItem = { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> };
-  const statItems =
-    1 + fillerItems.length + activityItems.length >= 4
-      ? [storeItem, ...activityItems]
-      : [storeItem, ...fillerItems, ...activityItems];
+  // 並びは最大4つ。足りない分だけ、都道府県→大型大会の順でつなぎを入れる(超えた分は大型大会から外す)
+  const MAX_STATS = 4;
+  const keptFillers = fillerItems.slice(0, Math.max(0, MAX_STATS - 1 - activityItems.length));
+  const statItems = [storeItem, ...keptFillers, ...activityItems];
 
   return (
     <section className="ps-region-hero" aria-label="全国からポーカー店舗を探す">
