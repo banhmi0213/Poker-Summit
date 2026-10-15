@@ -308,8 +308,8 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る →</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
-          {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。1件も無いときは出さない */}
-          {popularCoupons.length > 0 && <div className="home-grid home-grid-three" style={{ marginTop: 16 }}>{popularCoupons.map((c: any) => <Link href={`/coupons/${c.id}`} className="home-coupon-card" key={c.id}>
+          {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
+          {popularCoupons.length > 0 && <div className="home-grid home-new-grid">{popularCoupons.map((c: any) => <Link href={`/coupons/${c.id}`} className="home-coupon-card home-coupon-card--vertical" key={c.id}>
             <div className="home-coupon-image">{c.banner_image_url ? <img src={c.banner_image_url} alt={c.title} loading="lazy" /> : <div><span>COUPON</span><strong>{c.discount || "店舗特典"}</strong><span>POKER SUMMIT</span></div>}</div>
             <div className="home-coupon-copy"><h3><ReadableName name={c.title} /></h3><p><ReadableName name={c.stores?.name || ""} /></p><p className="home-location">📍 {[c.stores?.pref, c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
           </Link>)}</div>}
@@ -332,8 +332,8 @@ export default async function HomePage({
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
-          {/* 新着求人(職種画像と求人バナーの間、2026/10)。1件も無いときは出さない */}
-          {latestJobs.length > 0 && <div className="home-grid home-job-grid" style={{ marginTop: 16 }}>{latestJobs.map((j: any) => <Link href={`/jobs/${j.id}`} className="home-job-card" key={j.id}>
+          {/* 新着求人(職種画像と求人バナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
+          {latestJobs.length > 0 && <div className="home-grid home-new-grid">{latestJobs.map((j: any) => <Link href={`/jobs/${j.id}`} className="home-job-card" key={j.id}>
             <div className="home-job-top"><div className="home-job-logo">{j.stores?.logo_url ? <img src={j.stores.logo_url} alt="" loading="lazy" /> : "♠"}</div><span className="home-tag">{j.job_type || "求人募集中"}</span></div>
             <h3><ReadableName name={j.title} /></h3><p><ReadableName name={j.stores?.name || ""} /></p><p className="home-location">📍 {[j.stores?.pref, j.stores?.city].filter(Boolean).join(" ")}</p>
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
