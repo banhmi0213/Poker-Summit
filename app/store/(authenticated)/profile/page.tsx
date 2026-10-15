@@ -58,7 +58,7 @@ export default async function StoreProfilePage({
   let openJobCount = 0;
   let totalJobCount = 0;
   let activeCouponCount = 0;
-  let totalCouponUses = 0;
+  let couponFavoriteCount = 0;
   let favoriteCount = 0;
   let totalViews = 0;
   let jobFavoriteCount = 0;
@@ -74,6 +74,7 @@ export default async function StoreProfilePage({
       { count: viewCount },
       { data: storeJobIds },
       { data: contractRow },
+      { data: favCounts },
     ] = await Promise.all([
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("store_id", store.id),
       supabase
@@ -100,13 +101,17 @@ export default async function StoreProfilePage({
         .eq("store_id", store.id)
         .eq("status", "active")
         .maybeSingle(),
+      // お気に入りの表は店舗からは直接読めないため、件数だけ返す関数で取る(2026/10)
+      supabase.rpc("store_favorite_counts", { p_store_id: store.id }),
     ]);
 
     totalJobCount = totalJobs ?? 0;
     openJobCount = openJobs ?? 0;
     activeCouponCount = (couponsForStats ?? []).filter((c) => c.active).length;
-    totalCouponUses = (couponsForStats ?? []).reduce((sum, c) => sum + (c.used_count ?? 0), 0);
-    favoriteCount = favCount ?? 0;
+    const fc = (favCounts ?? {}) as { store?: number; jobs?: number; coupons?: number };
+    couponFavoriteCount = Number(fc.coupons ?? 0);
+    favoriteCount = Number(fc.store ?? favCount ?? 0);
+    jobFavoriteCount = Number(fc.jobs ?? 0);
     totalViews = viewCount ?? 0;
     activeContract = contractRow;
 
@@ -114,11 +119,7 @@ export default async function StoreProfilePage({
     // 追加(2026/09/30)。この店舗の全求人を通算したお気に入り数。
     const jobIdList = (storeJobIds ?? []).map((j) => j.id);
     if (jobIdList.length) {
-      const [{ count: jobFavCount }, { count: unreadCount }] = await Promise.all([
-        supabase
-          .from("favorite_jobs")
-          .select("*", { count: "exact", head: true })
-          .in("job_id", jobIdList),
+      const [{ count: unreadCount }] = await Promise.all([
         // 「求人通知のLINE、メールやけど店管理画面でアナウンス出るように
         // しよか」との指示を受けて追加(2026/10)。viewed_by_store_atが
         // nullの応募=店舗管理画面(求人管理)でまだ確認していない新着応募。
@@ -128,7 +129,6 @@ export default async function StoreProfilePage({
           .in("job_id", jobIdList)
           .is("viewed_by_store_at", null),
       ]);
-      jobFavoriteCount = jobFavCount ?? 0;
       unreadApplicationCount = unreadCount ?? 0;
     }
   }
@@ -338,7 +338,7 @@ export default async function StoreProfilePage({
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{activeCouponCount}</div>
-              <div className="muted small">発行中のクーポン（合計利用{totalCouponUses}回）</div>
+              <div className="muted small">発行中のクーポン（お気に入り{couponFavoriteCount}件）</div>
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>♥ {favoriteCount}</div>
