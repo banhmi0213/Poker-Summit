@@ -24,9 +24,9 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
           <h1><span>ポーカーの楽しさが</span><br /><span>ここに集まる。</span></h1>
           <p className={styles.lead}>{early ? "全国の店舗・大会・求人情報を、もっと身近に。正式公開に先がけて、無料の会員登録を受け付けています。" : <>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</>}</p>
           {early && <aside className={styles.tournamentPromo} aria-labelledby="early-tournament-title">
-            <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span>先行会員限定トーナメント開催決定！</span></h2>
+            <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
             <p>先行登録いただいた方を、m HOLD’EMアプリで開催する限定トーナメントにご招待します。</p>
-            <p className={styles.tournamentNote}>※参加にはアプリ内アイテム（ダイヤ）が必要です。</p>
+            <p className={styles.tournamentNote}>※参加にはアプリ内アイテム（ダイヤ）が必要です。<br />※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。</p>
             <div className={styles.tournamentFollow}><p>日程・参加方法・プライズは公式Xで発表します <span aria-hidden="true">→</span></p><a className={styles.xFollowButton} href="https://x.com/poker_summit" target="_blank" rel="noopener noreferrer">公式Xをフォロー <span aria-hidden="true">↗</span></a></div>
           </aside>}
           <img className={styles.photo} src="/images/member-registration-approved-photo.webp" alt="Poker Summitのロゴが入ったテーブルでカードを配るディーラー" width={668} height={525} />
