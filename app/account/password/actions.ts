@@ -5,17 +5,18 @@ import { createClient } from "@/lib/supabase/server";
 import { passwordPolicyError } from "@/lib/password-policy";
 
 export async function changePassword(formData: FormData) {
+  const q = String(formData.get("from") ?? "") === "admin" ? "from=admin&" : "";
   const password = String(formData.get("password") ?? "");
   const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
 
   const passwordError = passwordPolicyError(password);
   if (passwordError) {
-    redirect(`/account/password?error=${encodeURIComponent(passwordError)}`);
+    redirect(`/account/password?${q}error=${encodeURIComponent(passwordError)}`);
   }
 
   if (password !== passwordConfirm) {
     redirect(
-      `/account/password?error=${encodeURIComponent("確認用パスワードが一致しません。")}`
+      `/account/password?${q}error=${encodeURIComponent("確認用パスワードが一致しません。")}`
     );
   }
 
@@ -23,8 +24,8 @@ export async function changePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/account/password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/account/password?${q}error=${encodeURIComponent(error.message)}`);
   }
 
-  redirect("/account/password?done=1");
+  redirect(`/account/password?${q}done=1`);
 }

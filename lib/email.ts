@@ -676,3 +676,21 @@ export async function sendStoreMaintenanceDigest(params: {
     text: lines.join("\n"),
   });
 }
+
+/** パスワード再設定用リンク(「パスワードを忘れた方」から送る。会員・運営共通) */
+export async function sendPasswordResetEmail(params: { to: string; link: string; minutes: number }): Promise<void> {
+  const text = `Poker Summit をご利用いただきありがとうございます。
+
+パスワード再設定のお申込みを受け付けました。
+次のリンクを開いて、新しいパスワードを設定してください。
+
+${params.link}
+
+（有効期限：${params.minutes}分・1回のみ有効）
+
+この操作に心当たりがない場合は、このメールを破棄してください。パスワードは変更されません。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
+}

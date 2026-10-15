@@ -6,7 +6,7 @@ import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from
 export default async function ChangePasswordPage({
   searchParams,
 }: {
-  searchParams: { error?: string; done?: string };
+  searchParams: { error?: string; done?: string; from?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -27,9 +27,12 @@ export default async function ChangePasswordPage({
         {params.done && (
           <p className="muted" style={{ marginBottom: 12, color: "var(--good)" }}>
             パスワードを変更しました。
+            <br />
+            <a href={params.from === "admin" ? "/admin" : "/mypage"}>{params.from === "admin" ? "総合管理画面へ" : "マイページへ"}</a>
           </p>
         )}
         <form action={changePassword}>
+          {params.from === "admin" && <input type="hidden" name="from" value="admin" />}
           <div className="field">
             <span>新しいパスワード（{PASSWORD_RULE_LABEL}）</span>
             <input type="password" name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />
