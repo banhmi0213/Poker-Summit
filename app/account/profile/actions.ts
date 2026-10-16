@@ -2,7 +2,7 @@
 
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 
 // ハンドルネーム・都道府県の変更(2026/10、「ハンドルネームの修正欄がない」

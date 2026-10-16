@@ -1,7 +1,7 @@
 "use server";
 import { assertAllowedStoreText } from "@/lib/content-rules";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createHmac, randomInt, timingSafeEqual } from "crypto";

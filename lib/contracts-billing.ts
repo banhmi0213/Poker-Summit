@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { effectivePlanFee } from "@/lib/price-lock";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";

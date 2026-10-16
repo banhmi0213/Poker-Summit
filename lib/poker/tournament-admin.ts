@@ -4,7 +4,7 @@ import { validateTournamentDetails, validateStructure, type PokerTournament } fr
 import { parseEventLocalInput } from "@/lib/event-dates";
 import { assertAllowedStoreText } from "@/lib/content-rules";
 import { randomUUID } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 export type TournamentFormState = {
     ok: boolean;
     message: string;

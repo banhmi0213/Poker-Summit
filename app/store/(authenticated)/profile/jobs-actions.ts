@@ -2,7 +2,7 @@
 import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { readJobRole } from "@/lib/job-categories";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
 import { getStorePlan, jobLimitOf } from "@/lib/plan-entitlements";

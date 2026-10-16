@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { NextRequest, NextResponse } from "next/server";
 import { isLineFriend, pushLineMessage, verifyLiffIdToken } from "@/lib/line";
 import { consumeStoreLinkCode } from "@/lib/store-update";

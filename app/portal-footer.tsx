@@ -4,14 +4,14 @@ import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { prefPageHref } from "@/lib/city";
 import { getPrefStoreCounts } from "@/lib/pref-counts";
 
-// フッターの問い合わせ先メール(管理画面で変えたら最大5分で反映)
+// フッターの問い合わせ先メール(管理画面で保存したら即反映。lib/revalidate.ts)
 const getFooterSettings = unstable_cache(
   async () => {
     const { data } = await createAnonClient().from("site_settings").select("contact_email").eq("id", true).maybeSingle();
     return (data as { contact_email: string | null } | null) ?? null;
   },
   ["footer-settings-v1"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["public-stores"] }
 );
 
 export async function PortalFooter({ hideManagementLinks = false }: { hideManagementLinks?: boolean } = {}) {

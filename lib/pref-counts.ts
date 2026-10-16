@@ -16,5 +16,5 @@ export const getPrefStoreCounts = unstable_cache(
     return counts;
   },
   ["pref-store-counts"],
-  { revalidate: 3600 }
+  { revalidate: 3600, tags: ["public-stores"] }
 );

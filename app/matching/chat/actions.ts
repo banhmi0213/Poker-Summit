@@ -1,7 +1,7 @@
 "use server";
 import {kickMatchingNotifications} from "@/lib/matching-notification-kick";
 import {redirect} from "next/navigation";
-import {revalidatePath} from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import {createClient} from "@/lib/supabase/server";
 import {createStoreClient} from "@/lib/supabase/store-server";
 import {requireMatchingConsent} from "@/lib/matching-consent-server";
