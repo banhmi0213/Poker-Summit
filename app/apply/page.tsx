@@ -3,6 +3,7 @@ import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
 import { submitApplication, startPaidApplication } from "./actions";
 import { ApplyStoreFields } from "./store-fields";
+import { ApplyEmailFields } from "./email-fields";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
@@ -159,10 +160,7 @@ export default async function ApplyPage({
               <span className="muted">ご担当者名 *</span>
               <input type="text" name="contactName" required />
             </div>
-            <div className="field">
-              <span className="muted">メールアドレス *</span>
-              <input type="email" name="email" required />
-            </div>
+            <ApplyEmailFields />
             <div className="field">
               <span className="muted">カテゴリ</span>
               <select name="category" defaultValue="">
