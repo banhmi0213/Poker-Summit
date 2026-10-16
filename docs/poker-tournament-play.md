@@ -8,7 +8,7 @@ The tournament demo now initializes all seats with structure.startingStack and f
 - BBA is common main-pot money: keep its amount in totalCommitted for conservation/refunds but exclude sharedAnte from per-player matching thresholds. Add it to the main pot before splitting, including odd chips.
 - Individual partial antes retain the payer's matching cap. Short-blind preflop brings in the full configured BB if multiple players can still bet. A sole remaining actor only needs to match live all-in opponents.
 - All forced-bet all-ins can start with no actor and run out automatically. Snapshot metadata survives street transitions without charging again.
-- Unfinished demo resets refund each player's own contributions; completed hands carry awards once. Ring demos retain the announced refill behavior. Tournament demos stop on any zero stack; they never automatically inject replacement chips. Elimination/remaining-seat progression is a subsequent development step.
+- Unfinished demo resets refund each player's own contributions; completed hands carry awards once. Ring demos retain the announced refill behavior. Tournament demos never automatically inject replacement chips. Zero-stack seats are now eliminated after payouts; see poker-tournament-elimination.md for dead-button progression, reduced rosters, HU and champion termination.
 
 ## Scope
 This is still a browser-local demo with five dummy opponents and all dealt cards in its client payload. It is not a synchronized online tournament. No registration, re-entry, member wallet, tournament result or prize payout writes. Reload starts a fresh local demo. Admin/store permissions and saved configuration remain unchanged. No database migration is required.
@@ -26,3 +26,5 @@ Verify regular `/poker-demo` still uses ring settings 50/100 with the original s
 ## Rule references
 - New limits apply to the next hand: TDA 2026 Rule 25, https://www.pokertda.com/view-poker-tda-rules/
 - BB-first BBA recommendation: TDA 2026 RP-11 (JOPT translation), https://japanopenpoker.com/rule/pokertda2026v1/
+
+The following elimination stage expands the regression suite to 109 Node cases plus 2 component lifecycle scenarios; details and new review presets are in [poker-tournament-elimination.md](poker-tournament-elimination.md).

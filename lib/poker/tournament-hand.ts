@@ -1,6 +1,6 @@
 /** Local tournament demo hand boundaries. No registration, wallet or multiplayer authority. */
 import { createBettingRound, type BettingRound } from "./betting";
-import { postBlinds, positions } from "./settlement";
+import { postBlindsForPositions, positions, type BlindPositions } from "./settlement";
 import { tournamentClock, type PokerTournament, type TournamentStructure } from "./tournament";
 export type HandTerms = { level: number; index: number; sb: number; bb: number; ante: number; anteType: TournamentStructure["anteType"] };
 export const ringTerms: HandTerms = {level:0,index:0,sb:50,bb:100,ante:0,anteType:"none"};
@@ -11,18 +11,19 @@ export function tournamentHandTerms(t: Pick<PokerTournament,"structure"|"starts_
 }
 /** Antes never count toward the street call. BBA is BB-first (TDA 2026 RP-11)
  * and its common money is excluded from the BB player's side-pot matching limit. */
-export function startForcedHand(entries: readonly {id:string;stack:number}[], buttonIndex:number, terms:HandTerms) {
+export function startForcedHand(entries: readonly {id:string;stack:number}[], buttonIndex:number, terms:HandTerms, assigned?:BlindPositions) {
     if(!Number.isSafeInteger(terms.sb)||terms.sb<1||!Number.isSafeInteger(terms.bb)||terms.bb<terms.sb||!Number.isSafeInteger(terms.ante)||terms.ante<0||!["none","bb","per-player"].includes(terms.anteType)||(terms.anteType==="none"&&terms.ante!==0))throw new Error("Invalid forced bet settings");
     if(!Number.isSafeInteger(entries.reduce((sum,p)=>sum+p.stack,0)))throw new Error("Total chips exceed safe integer range");
     if(entries.some(p=>!Number.isSafeInteger(p.stack)||p.stack<=0))throw new Error("A new hand requires positive stacks");
-    const pos=positions(entries.map(p=>p.id),buttonIndex);
+    const pos=assigned??positions(entries.map(p=>p.id),buttonIndex);
+    if(!entries.some(p=>p.id===pos.preflopFirst)||!entries.some(p=>p.id===pos.postflopFirst))throw new Error("Invalid action positions");
     const antePaid:Record<string,number>={};
     const beforeBlinds=entries.map(p=>{
         const paid=terms.anteType==="per-player"?Math.min(p.stack,terms.ante):0;
         antePaid[p.id]=paid;
         return {...p,stack:p.stack-paid,totalCommitted:paid};
     });
-    const posted=postBlinds(beforeBlinds,buttonIndex,terms.sb,terms.bb);
+    const posted=postBlindsForPositions(beforeBlinds,pos,terms.sb,terms.bb);
     const players=posted.players.map(p=>{
         const bba=terms.anteType==="bb"&&p.id===pos.bb?Math.min(p.stack,terms.ante):0;
         antePaid[p.id]+=bba;
