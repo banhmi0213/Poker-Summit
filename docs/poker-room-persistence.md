@@ -74,7 +74,7 @@ uncertain save, since the prior deal may already be committed.
 
 ## Verification
 
-- `npm run test:poker`: 232 total regressions, including 18 persistence cases: encrypted roundtrip,
+- `npm run test:poker`: 248 total regressions, including 18 persistence cases: encrypted roundtrip,
   all streets, replay receipts, socket invalidation, overdue turns, next levels, full tournament
   restarts through champion, key rotation/tampering, save conflicts and ambiguous response retries.
 - `POKER_PGLITE_MODULE=<isolated PGlite module> node db/tests/poker_persistence_isolated.cjs`:

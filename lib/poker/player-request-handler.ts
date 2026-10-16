@@ -2,8 +2,7 @@
 import type {DurableRoomOwner} from './durable-room-owner';
 import {parseHandCommand} from './authoritative-hand';
 import {PokerAuthError,pokerUUID,createSupabasePokerAuthenticator,type VerifiedPokerMember} from './request-auth';
-type Operation='seat'|'connect'|'state'|'spectate'|'act'|'disconnect'|'leave';
-type Access={memberId:string;roomId:string;operation:Operation};
+import type {RoomAccess as Access} from './room-directory';
 type Dependencies={origins:readonly string[];verify:(token:string)=>Promise<VerifiedPokerMember>;authorize:(access:Access)=>Promise<boolean>;owner:(roomId:string)=>Promise<DurableRoomOwner|null>};
 class RequestError extends Error {constructor(readonly status:number){super('Invalid poker request');}}
 const maxBytes=4096;

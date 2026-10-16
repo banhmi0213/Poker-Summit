@@ -22,8 +22,8 @@ A separate mandatory server `authorize({memberId,roomId,operation})` callback de
 for every operation. There is no default allow-all policy. Authentication alone does NOT grant
 seating, tournament admission or private-room observation. Deployment must bind each room to its
 actual tournament/registration/visibility policy before using this factory. A missing callback is a
-configuration error; false/null/error denies. No new registration database or paid admission rule
-is introduced here. Authorization is checked before owner dispatch, not atomically inside a queued
+configuration error; false/null/error denies. A concrete pre-start room directory/roster policy is now documented in
+[poker-room-admission.md](./poker-room-admission.md); no paid admission rule is introduced. Authorization is checked before owner dispatch, not atomically inside a queued
 DB transaction; immediate policy revocation of already dispatched operations is not guaranteed.
 
 `owner(roomId)` must return the one existing DurableRoomOwner from trusted routing. It must not
@@ -85,5 +85,5 @@ use a service-role storage client for user identity. No endpoint is publicly act
 23 request/auth regressions: real SDK Auth/RPC request headers, fresh user/suspension checks and
 identity isolation, rejected metadata/roles/bans/deletions, admission denial, strict schemas,
 origin/method/body limits, stolen/replaced capabilities, receipts/stale packets, owner save gating,
-generic failures/no caching, and composed authentication plus durable seating. Full suite: 232 Node
-regressions; CI also runs 85 isolated PostgreSQL checks and 2 React lifecycle cases plus Preview build.
+generic failures/no caching, and composed authentication plus durable seating. Full suite: 248 Node
+regressions; CI also runs 156 isolated PostgreSQL checks and 2 React lifecycle cases plus Preview build.

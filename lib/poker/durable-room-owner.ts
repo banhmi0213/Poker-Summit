@@ -6,15 +6,22 @@ import {prepareRoomSave,restoreRoom,type KeyRing,type RoomStore} from './room-pe
 import type {TurnDeadline} from './seated-hand-room';
 
 type Config=ConstructorParameters<typeof ScheduledTournamentRoom>[0];
-type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;maxPending?:number};
+type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;maxPending?:number;expectedConfig?:Config};
 const unavailable=()=>new Error('Room unavailable; durable recovery required');
+function checkConfig(room:ScheduledTournamentRoom,config?:Config){
+ if(!config)return;
+ const expected=new ScheduledTournamentRoom(config).checkpoint(),actual=room.checkpoint();
+ if(expected.startsAt!==actual.startsAt||JSON.stringify(expected.structure)!==JSON.stringify(actual.structure))throw new Error('Stored room configuration mismatch');
+}
 export class DurableRoomOwner {
   #room:ScheduledTournamentRoom;
   #roomId:string; #store:RoomStore; #keys:KeyRing; #now?:()=>number;
+  #expectedConfig?:Config;
   #version:number; #halted=true; #tail:Promise<void>=Promise.resolve(); #pending=0; #limit:number;
   private constructor(room:ScheduledTournamentRoom,version:number,options:Options) {
     const limit=options.maxPending??128;
     if(!Number.isSafeInteger(limit)||limit<1||limit>4096)throw new Error('Invalid owner queue limit');
+    this.#expectedConfig=options.expectedConfig?structuredClone(options.expectedConfig):undefined;
     this.#room=room;this.#version=version;this.#roomId=options.roomId;this.#store=options.store;
     this.#keys=structuredClone(options.keys);this.#now=options.now;this.#limit=limit;
   }
@@ -29,6 +36,7 @@ export class DurableRoomOwner {
   static async load(options:Options) {
     const saved=await restoreRoom(options.store,options.roomId,options.keys,{now:options.now});
     if(!saved)throw new Error('Stored room not found');
+    checkConfig(saved.room,options.expectedConfig);
     const owner=new DurableRoomOwner(saved.room,saved.version,options);
     await owner.#persist(saved.room,saved.version);owner.#halted=false;return owner;
   }
@@ -92,6 +100,7 @@ export class DurableRoomOwner {
     try {
       const saved=await restoreRoom(this.#store,this.#roomId,this.#keys,{now:this.#now});
       if(!saved)throw unavailable();
+      checkConfig(saved.room,this.#expectedConfig);
       await this.#persist(saved.room,saved.version);
       const state=saved.room.publicSnapshot();
       this.#room=saved.room;this.#halted=false;return state;
