@@ -187,6 +187,7 @@ export async function reportPost(postId: string, formData?: FormData) {
     reporter_user_id: user?.id ?? null,
     reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
     detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
+    reporter_email: (() => { const e = String(formData?.get("reporterEmail") ?? "").trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 ? e : null; })(),
   });
 
   if (error) {
@@ -208,6 +209,7 @@ export async function reportReply(replyId: string, postId: string, formData?: Fo
     reporter_user_id: user?.id ?? null,
     reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
     detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
+    reporter_email: (() => { const e = String(formData?.get("reporterEmail") ?? "").trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 ? e : null; })(),
   });
 
   if (error) {

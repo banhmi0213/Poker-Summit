@@ -807,3 +807,38 @@ ${quoted}`;
   const subject = params.subject?.trim() ? `Re: ${params.subject.trim()}【Poker Summit】` : "【Poker Summit】お問い合わせへのご回答";
   await sendEmail({ to: params.to, subject, text });
 }
+
+/** 通報してくれた人への返信(総合管理の通報管理から、2026/10)。返信を受けられるよう info@ から送る */
+export async function sendReportReplyEmail(params: { to: string; body: string; targetLabel: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `Poker Summitをご利用いただきありがとうございます。
+先日ご報告いただいた件（${params.targetLabel}）について、ご連絡いたします。
+
+${params.body}
+
+ご報告いただき、ありがとうございました。
+
+Poker Summit運営事務局
+${siteUrl}
+ご不明な点は、このメールへのご返信でお問い合わせいただけます。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】ご報告いただいた件について", text });
+}
+
+/** 運営から店舗への個別のお知らせ(店舗管理の「運営からのお知らせ」にも残す。メールは info@ から) */
+export async function sendStoreMessageEmail(params: { to: string; storeName: string; title: string; body: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+いつもPoker Summitをご利用いただき、誠にありがとうございます。
+
+${params.body}
+
+この内容は店舗管理画面の「運営からのお知らせ」でもご確認いただけます。
+${siteUrl}/store/profile/messages
+
+ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.title}`, text });
+}
