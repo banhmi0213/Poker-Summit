@@ -4,6 +4,7 @@ import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
 import { submitApplication, startPaidApplication } from "./actions";
 import { ApplyStoreFields } from "./store-fields";
 import { ApplyEmailFields } from "./email-fields";
+import { ApplyBillingFields } from "./billing-fields";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
@@ -190,35 +191,13 @@ export default async function ApplyPage({
                     ))}
                   </select>
                 </div>
-                <div className="field">
-                  <span className="muted">お支払い方法</span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 4 }}>
-                    <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
-                      <input type="radio" name="billingMethod" value="bank_transfer" defaultChecked />
-                      銀行振込（請求書払い）
-                    </label>
-                    {billing.cardPaymentEnabled && (
-                      <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
-                        <input type="radio" name="billingMethod" value="card" />
-                        クレジットカード（毎月の自動決済）
-                      </label>
-                    )}
-                  </div>
-                </div>
-                <div className="field">
-                  <span className="muted">お支払いサイクル（銀行振込の場合）</span>
-                  <select name="billingCycle" defaultValue="1">
-                    {BILLING_CYCLES.map((m) => {
-                      const d = discountFor(billing, m);
-                      const label = quote(0, m, d).label;
-                      return (
-                        <option key={m} value={m}>
-                          {m === 1 ? "毎月払い" : `${m}か月まとめ払い${label ? `（${label}）` : ""}`}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                <ApplyBillingFields
+                  cardEnabled={billing.cardPaymentEnabled}
+                  cycles={BILLING_CYCLES.map((m) => {
+                    const label = quote(0, m, discountFor(billing, m)).label;
+                    return { value: m, label: m === 1 ? "毎月払い" : `${m}か月まとめ払い${label ? `（${label}）` : ""}` };
+                  })}
+                />
               </>
             )}
 
