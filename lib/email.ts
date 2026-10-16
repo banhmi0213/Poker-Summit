@@ -194,6 +194,8 @@ Poker Summit運営事務局`;
 export async function sendListingApplicationNotificationEmail(params: {
   to: string;
   companyName: string;
+  storeName?: string | null;
+  matchedStoreId?: string | null;
   contactName: string;
   email: string;
   tel?: string | null;
@@ -204,7 +206,9 @@ export async function sendListingApplicationNotificationEmail(params: {
   const siteUrl = getSiteUrl();
   const text = `Poker Summitに新しい掲載申込がありました。
 
-店舗名・会社名: ${params.companyName}
+申込み名義: ${params.companyName}
+店舗名: ${params.storeName || params.companyName}
+掲載中の店舗との結び付け: ${params.matchedStoreId ? `あり（${siteUrl}/stores/${params.matchedStoreId}）` : "なし（新しい店舗として掲載）"}
 ご担当者名: ${params.contactName}
 メールアドレス: ${params.email}
 電話番号: ${params.tel || "(未記入)"}

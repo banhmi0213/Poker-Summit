@@ -7,6 +7,37 @@ import { createCardRegistrationSession } from "@/lib/komoju";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
+import { searchStoreCandidates } from "@/lib/store-match";
+
+// 申込み名義・店舗名・住所と、掲載中の店舗との結び付け(2026/10)。
+// - 店舗名で申し込む: 店舗名だけ必須(請求書の宛名も店舗名)
+// - 会社名で申し込む: 会社名と店舗名の両方が必須(請求書の宛名は会社名)
+// - matchedStoreId: フォームで「このお店です」と選んだ掲載中の店舗。店名・電話番号・住所のうち
+//   2つ以上が一致し、まだ管理者がいない店舗のときだけ受け付ける(サーバー側でも確認し直す)。
+async function readApplicant(formData: FormData): Promise<
+  | { ok: true; applicantType: "store" | "company"; companyName: string; storeName: string; tel: string; pref: string; address: string; matchedStoreId: string | null }
+  | { ok: false; error: string }
+> {
+  const applicantType = String(formData.get("applicantType") ?? "store") === "company" ? "company" : "store";
+  const storeName = String(formData.get("storeName") ?? formData.get("companyName") ?? "").trim();
+  const companyInput = String(formData.get("companyName") ?? "").trim();
+  const tel = String(formData.get("tel") ?? "").trim();
+  const pref = String(formData.get("pref") ?? "").trim();
+  const address = String(formData.get("address") ?? "").trim();
+  const matchedRaw = String(formData.get("matchedStoreId") ?? "").trim();
+  if (!storeName) return { ok: false, error: "店舗名を入力してください。" };
+  if (applicantType === "company" && !companyInput) return { ok: false, error: "会社名で申し込む場合は、会社名と店舗名の両方を入力してください。" };
+  const companyName = applicantType === "company" ? companyInput : storeName;
+  let matchedStoreId: string | null = null;
+  if (matchedRaw) {
+    const candidates = await searchStoreCandidates({ name: storeName, tel, pref, address });
+    const hit = candidates.find((c) => c.id === matchedRaw);
+    if (!hit || hit.match_count < 2) return { ok: false, error: "選択した掲載中のお店と、入力内容(店舗名・電話番号・住所)が一致しませんでした。入力内容をご確認ください。" };
+    if (hit.has_owner) return { ok: false, error: "選択したお店には、すでに店舗管理アカウントが発行されています。お問い合わせフォームからご連絡ください。" };
+    matchedStoreId = hit.id;
+  }
+  return { ok: true, applicantType, companyName, storeName, tel, pref, address, matchedStoreId };
+}
 
 // 運営への掲載申込通知メール(2026/10、「問い合わせ、掲載申込があったら
 // メール届くように設定しておいて」との指示を受けて追加)。submitApplication()
@@ -18,6 +49,8 @@ async function notifyNewListingApplication(
   supabase: Awaited<ReturnType<typeof createClient>>,
   params: {
     companyName: string;
+    storeName: string;
+    matchedStoreId: string | null;
     contactName: string;
     email: string;
     tel: string;
@@ -37,6 +70,8 @@ async function notifyNewListingApplication(
       await sendListingApplicationNotificationEmail({
         to: notifySettings.notify_email,
         companyName: params.companyName,
+        storeName: params.storeName,
+        matchedStoreId: params.matchedStoreId,
         contactName: params.contactName,
         email: params.email,
         tel: params.tel,
@@ -67,11 +102,11 @@ export async function submitApplication(formData: FormData) {
                   );
   }
 
-  const companyName = String(formData.get("companyName") ?? "").trim();
+  const applicant = await readApplicant(formData);
+  if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
+  const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const tel = String(formData.get("tel") ?? "").trim();
       const email = String(formData.get("email") ?? "").trim();
-      const pref = String(formData.get("pref") ?? "").trim();
       const category = String(formData.get("category") ?? "").trim();
       const message = String(formData.get("message") ?? "").trim();
 
@@ -81,13 +116,17 @@ export async function submitApplication(formData: FormData) {
   if (!companyName || !contactName || !email) {
           redirect(
                     `/apply?error=${encodeURIComponent(
-                                "店舗名・会社名、担当者名、メールアドレスは必須です。"
+                                "店舗名、担当者名、メールアドレスは必須です。"
                               )}`
                   );
   }
 
   const { error } = await supabase.from("listing_applications").insert({
           company_name: companyName,
+          applicant_type: applicantType,
+          store_name: storeName,
+          address: address || null,
+          matched_store_id: matchedStoreId,
           contact_name: contactName,
           tel: tel || null,
           email,
@@ -102,6 +141,8 @@ export async function submitApplication(formData: FormData) {
 
   await notifyNewListingApplication(supabase, {
     companyName,
+    storeName,
+    matchedStoreId,
     contactName,
     email,
     tel,
@@ -148,11 +189,11 @@ export async function startPaidApplication(formData: FormData) {
                   );
   }
 
-  const companyName = String(formData.get("companyName") ?? "").trim();
+  const applicant = await readApplicant(formData);
+  if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
+  const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const tel = String(formData.get("tel") ?? "").trim();
       const email = String(formData.get("email") ?? "").trim();
-      const pref = String(formData.get("pref") ?? "").trim();
       const category = String(formData.get("category") ?? "").trim();
       const message = String(formData.get("message") ?? "").trim();
       const planId = String(formData.get("planId") ?? "").trim();
@@ -165,7 +206,7 @@ export async function startPaidApplication(formData: FormData) {
   }
   if (!companyName || !contactName || !email) {
           redirect(
-                    `/apply?error=${encodeURIComponent("店舗名・会社名、担当者名、メールアドレスは必須です。")}`
+                    `/apply?error=${encodeURIComponent("店舗名、担当者名、メールアドレスは必須です。")}`
                   );
   }
       if (!planId) {
@@ -208,6 +249,10 @@ export async function startPaidApplication(formData: FormData) {
         .from("listing_applications")
         .insert({
                   company_name: companyName,
+                  applicant_type: applicantType,
+                  store_name: storeName,
+                  address: address || null,
+                  matched_store_id: matchedStoreId,
                   contact_name: contactName,
                   tel: tel || null,
                   email,
@@ -229,6 +274,8 @@ export async function startPaidApplication(formData: FormData) {
 
   await notifyNewListingApplication(supabase, {
     companyName,
+    storeName,
+    matchedStoreId,
     contactName,
     email,
     tel,

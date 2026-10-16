@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
 import { submitApplication, startPaidApplication } from "./actions";
+import { ApplyStoreFields } from "./store-fields";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
@@ -153,32 +154,14 @@ export default async function ApplyPage({
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
           <form action={submitApplication}>
-            <div className="field">
-              <span className="muted">店舗名・会社名 *</span>
-              <input type="text" name="companyName" required />
-            </div>
+            <ApplyStoreFields prefOptions={PREF_OPTIONS} />
             <div className="field">
               <span className="muted">ご担当者名 *</span>
               <input type="text" name="contactName" required />
             </div>
             <div className="field">
-              <span className="muted">電話番号</span>
-              <input type="tel" name="tel" />
-            </div>
-            <div className="field">
               <span className="muted">メールアドレス *</span>
               <input type="email" name="email" required />
-            </div>
-            <div className="field">
-              <span className="muted">都道府県</span>
-              <select name="pref" defaultValue="">
-                <option value="">選択してください</option>
-                {PREF_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
             </div>
             <div className="field">
               <span className="muted">カテゴリ</span>
