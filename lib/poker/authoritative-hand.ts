@@ -70,6 +70,16 @@ export class AuthoritativeHand {
       result:this.#result?{showdown:this.#result.showdown,payouts:{...this.#result.payouts},winners:[...this.#result.winners]}:null,
     };
   }
+  /** Read-only receipt lookup lets a room acknowledge retries even after a deadline. */
+  replay(authenticatedSeatId:string,input:unknown) {
+    if(!this.#order.includes(authenticatedSeatId))throw new Error("Unknown actor seat");
+    const c=parseCommand(input);
+    if(c.handId!==this.#id)throw new Error("Wrong hand");
+    const receipt=this.#receipts.get(authenticatedSeatId+":"+c.actionId);
+    if(!receipt)return null;
+    if(receipt.fingerprint!==JSON.stringify(c))throw new Error("Action ID reused with different payload");
+    return {replayed:true,acceptedRevision:receipt.revision,state:this.snapshot(authenticatedSeatId)};
+  }
   /** Synchronous within this owner: no awaits between version check and commit.
    * A retry returns the latest personalized snapshot, but never reapplies a wager.
    * A changed payload with the same per-seat actionId is rejected.

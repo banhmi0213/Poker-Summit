@@ -36,4 +36,4 @@ Railway creation/deployment remains deferred by user request until development i
 
 ## Seating owner follow-up
 
-`SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 133 tests.
+`SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 145 tests, including server deadline behavior documented in `poker-turn-deadlines.md`.
