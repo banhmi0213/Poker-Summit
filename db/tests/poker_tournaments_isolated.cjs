@@ -21,9 +21,14 @@ const SA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',SB='bbbbbbbb-bbbb-4bbb-8bbb-bbbb
  alter table storage.objects enable row level security;grant select,insert,update,delete on storage.objects to authenticated;
  create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;`);
  await db.exec(fs.readFileSync('supabase/migrations/20261015173721_poker_tournament_settings.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261015175743_poker_tournament_organizer_prizes.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261016071559_poker_tournament_store_access.sql','utf8'));
  const auth=async(id,role='authenticated')=>{await db.exec('reset role');await db.query("select set_config('app.uid',$1,false)",[id]);await db.exec(`set role ${role}`);};
  const insert=async(owner,title,published=false,structure=defaultStructure)=>db.query('insert into poker_tournaments(owner_store_id,title,starts_at,published,structure) values($1,$2,now(),$3,$4) returning id',[owner,title,published,JSON.stringify(structure)]);
  await auth(ADMIN);const global=(await insert(null,'global')).rows[0].id;check(Boolean(global));
+ await auth(A);await assert.rejects(()=>insert(SA,'unpermitted'));checks++;
+ await assert.rejects(()=>db.query('insert into poker_tournament_store_access(store_id,enabled) values($1,true)',[SA]));checks++;
+ await auth(ADMIN);await db.query('insert into poker_tournament_store_access(store_id,enabled) values($1,true)',[SA]);checks++;
  await auth(A);const own=(await insert(SA,'A draft')).rows[0].id;const published=(await insert(SA,'A published',true)).rows[0].id;check(Boolean(own)&&Boolean(published));
  await assert.rejects(()=>insert(SB,'spoof B'));checks++;
  await assert.rejects(()=>insert(null,'spoof admin'));checks++;
@@ -38,11 +43,37 @@ const SA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',SB='bbbbbbbb-bbbb-4bbb-8bbb-bbbb
   const bad={...defaultStructure,...patch};await assert.rejects(()=>insert(SA,'invalid',false,bad));checks++;
  }
  const missing={...defaultStructure};delete missing.anteType;await assert.rejects(()=>insert(SA,'missing',false,missing));checks++;
- await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/file.png`]);checks++;
+ await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/${SA}/file.png`]);checks++;
  await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${B}/file.png`]));checks++;
  await auth(STRANGER);await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${STRANGER}/file.png`]));checks++;
  await auth(A);await db.query("select set_config('app.suspended','true',false)");await assert.rejects(()=>insert(SA,'suspended'));checks++;
  await db.exec('reset role');check((await db.query('select count(*)::int as n from poker_tournaments')).rows[0].n===3);
+ await db.query("select set_config('app.suspended','false',false)");
+ await auth(B);check((await db.query('select store_id from poker_tournament_store_access')).rows.length===0);
+ await assert.rejects(()=>db.query('insert into poker_tournament_store_access(store_id,enabled) values($1,true)',[SB]));checks++;
+ check((await db.query('update poker_tournament_store_access set enabled=false where store_id=$1 returning store_id',[SA])).rows.length===0);
+ await auth(ADMIN);await db.query('insert into poker_tournament_store_access(store_id,enabled) values($1,true)',[SB]);
+ await auth(A);await assert.rejects(()=>db.query('update poker_tournaments set owner_store_id=$1 where id=$2',[SB,own]));checks++;
+ // Same owner, second store: approval is per store, never per login.
+ const SC='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+ await db.exec('reset role');await db.query('insert into stores values($1,$2,$3)',[SC,A,'C']);
+ await auth(A);await assert.rejects(()=>insert(SC,'same-owner unpermitted'));checks++;
+ await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/${SC}/denied.png`]));checks++;
+ // Existing legacy file is only accessible while its actual tournament store is approved.
+ await db.query('update poker_tournaments set image_path=$1,image_url=$2 where id=$3',[`${A}/legacy.png`,'https://example.com/legacy.png',own]);
+ await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/legacy.png`]);checks++;
+ await auth(ADMIN);await db.query('insert into poker_tournament_store_access(store_id,enabled) values($1,true)',[SC]);
+ await db.query('update poker_tournament_store_access set enabled=false where store_id=$1',[SA]);
+ await auth(A);check((await db.query('update poker_tournaments set title=$1 where id=$2 returning id',['denied after revoke',own])).rows.length===0);
+ await assert.rejects(()=>insert(SA,'denied after revoke'));checks++;
+ check((await db.query('select id from poker_tournaments where id=$1',[own])).rows.length===1);
+ await assert.rejects(()=>db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/${SA}/revoked.png`]));checks++;
+ check((await db.query('delete from storage.objects where name=$1 returning id',[`${A}/legacy.png`])).rows.length===0);
+ await insert(SC,'approved second store');checks++;
+ await db.query('insert into storage.objects(bucket_id,name) values($1,$2)',['poker-tournament-images',`${A}/${SC}/allowed.png`]);checks++;
+ await auth(ADMIN);check((await db.query('update poker_tournaments set title=$1 where id=$2 returning id',['admin after revoke',own])).rows.length===1);
+ await db.query("select set_config('app.suspended','true',false)");
+ check((await db.query('update poker_tournament_store_access set enabled=true where store_id=$1 returning store_id',[SA])).rows.length===0);
  console.log(`PASS: migration applied in isolated PostgreSQL; ${checks} schema/RLS/storage assertions. No remote database accessed.`);
  await db.close();
 })().catch(e=>{console.error(e);process.exitCode=1;});

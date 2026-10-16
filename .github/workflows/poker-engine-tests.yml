@@ -9,6 +9,10 @@ on:
       - "db/tests/poker*"
       - "app/poker-demo/**"
       - "app/poker-tournaments/**"
+      - "app/admin/poker-tournaments/**"
+      - "app/store/(authenticated)/profile/poker-tournaments/**"
+      - "app/store/(authenticated)/store-sidebar.tsx"
+      - "app/store/(authenticated)/layout.tsx"
       - "app/poker-lobby/**"
       - "tests/poker-*.test.cjs"
       - "package.json"
@@ -22,6 +26,10 @@ on:
       - "db/tests/poker*"
       - "app/poker-demo/**"
       - "app/poker-tournaments/**"
+      - "app/admin/poker-tournaments/**"
+      - "app/store/(authenticated)/profile/poker-tournaments/**"
+      - "app/store/(authenticated)/store-sidebar.tsx"
+      - "app/store/(authenticated)/layout.tsx"
       - "app/poker-lobby/**"
       - "tests/poker-*.test.cjs"
       - "package.json"
@@ -51,3 +59,9 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Run poker regression tests
         run: npm run test:poker
+      - name: Install isolated PostgreSQL test runtime
+        run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10
+      - name: Verify tournament ownership and permission policies
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_tournaments_isolated.cjs

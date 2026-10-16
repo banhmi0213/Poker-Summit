@@ -1,3 +1,4 @@
+import { loadTournamentAccess, TOURNAMENT_ACCESS_MESSAGE } from "./tournament-access";
 import { createClient } from "@/lib/supabase/server";
 import { createStoreClient } from "@/lib/supabase/store-server";
 import { validateTournamentDetails, validateStructure, type PokerTournament } from "./tournament";
@@ -11,7 +12,7 @@ export type TournamentFormState = {
     id?: string;
 };
 const columns = "id,title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes";
-export async function tournamentManager(scope: "admin" | "store") {
+export async function tournamentActor(scope: "admin" | "store") {
     const client = scope === "admin" ? await createClient() : await createStoreClient();
     const { data: { user } } = await client.auth.getUser();
     if (!user)
@@ -24,13 +25,18 @@ export async function tournamentManager(scope: "admin" | "store") {
         if (error || data !== true)
             throw new Error("運営権限が必要です。");
     }
+    return { client, user };
+}
+export async function tournamentManager(scope: "admin" | "store") {
+    const { client, user } = await tournamentActor(scope);
     let stores = client.from("stores").select("id,name");
     if (scope === "store")
         stores = stores.eq("owner_user_id", user.id);
     const { data: owned, error } = await stores.order("name");
     if (error)
         throw new Error(error.message);
-    return { client, user, stores: owned ?? [] };
+    const access = scope === "store" ? await loadTournamentAccess(client, (owned ?? []).map(s => s.id)) : null;
+    return { client, user, stores: (owned ?? []).map(s => ({ ...s, tournamentEnabled: scope === "admin" || Boolean(access?.enabledIds.has(s.id)) })), accessError: access?.error ?? false };
 }
 export async function loadManagedTournaments(scope: "admin" | "store") {
     const context = await tournamentManager(scope);
@@ -53,6 +59,8 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
         const owner = String(form.get("owner_store_id") ?? "") || null;
         if ((owner && !stores.some(s => s.id === owner)) || (scope === "store" && !owner))
             throw new Error("主催店舗の権限を確認してください。");
+        if (scope === "store" && !stores.some(s => s.id === owner && s.tournamentEnabled))
+            throw new Error(TOURNAMENT_ACCESS_MESSAGE);
         const title = String(form.get("title") ?? "").trim();
         if (!title || title.length > 120)
             throw new Error("大会名は1〜120文字で入力してください。");
@@ -76,7 +84,7 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
             if (error || !data)
                 throw new Error("この大会を編集できません。");
             existing = data as PokerTournament;
-            if (scope === "store" && !stores.some(s => s.id === existing!.owner_store_id))
+            if (scope === "store" && !stores.some(s => s.id === existing!.owner_store_id && s.tournamentEnabled))
                 throw new Error("編集権限がありません。");
         }
         let image_url = existing?.image_url ?? null, image_path = existing?.image_path ?? null;
@@ -94,7 +102,7 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
             const webp = String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" && String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
             if (!((file.type === "image/png" && png) || (file.type === "image/jpeg" && jpg) || (file.type === "image/webp" && webp)))
                 throw new Error("画像形式が一致しません。");
-            image_path = `${user.id}/${randomUUID()}.${png ? "png" : jpg ? "jpg" : "webp"}`;
+            image_path = `${user.id}/${owner ?? "admin"}/${randomUUID()}.${png ? "png" : jpg ? "jpg" : "webp"}`;
             const { error } = await client.storage.from("poker-tournament-images").upload(image_path, bytes, { contentType: file.type, upsert: false });
             if (error)
                 throw new Error("画像を保存できません。保存先の準備状況をご確認ください。");
