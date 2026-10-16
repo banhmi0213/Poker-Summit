@@ -396,7 +396,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     <details className={styles.demoInfo}><summary>デモについて</summary><h1>オンラインポーカー テーブル試作</h1><p>チップと進行はブラウザ内のデモです。会員残高とは連携していません。</p></details>
     <aside className={styles.desktopStructure} aria-label="大会ストラクチャー">{tournament ? <TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/> : <><h2>リングゲーム</h2><p>SB 50 / BB 100</p><p>ブラウザ内のゲーム進行デモです。</p><a href="/poker-lobby">ロビーへ戻る</a></>}</aside>
     {tournament && <div className={styles.gameClock}><TournamentPanel tournament={tournament} serverNow={serverNow} gameLinked/></div>}
-    {tournament && <details className={styles.tournamentStatus} open={tournamentComplete}><summary>大会状況・結果：残り {remainingIds.length}人{tournamentComplete?"・大会終了":""}</summary><div role="status">
+    {tournament && <div className={styles.statusDock}><details className={styles.tournamentStatus} open={tournamentComplete}><summary>大会状況・結果：残り {remainingIds.length}人{tournamentComplete?"・大会終了":""}</summary><div role="status">
       {handActive && handTerms ? <p>現在のハンド：LV{handTerms.level} ／ SB {handTerms.sb.toLocaleString()} / BB {handTerms.bb.toLocaleString()} ／ Ante {handTerms.ante.toLocaleString()}（{handTerms.anteType==="bb"?"BBアンティ・BB優先":handTerms.anteType==="per-player"?"全員アンティ":"なし"}）</p> : <p>現在のハンド：未開始（強制ベット未徴収）</p>}
       {clock?.phase==="scheduled"?<p>開始待ち：開始時刻になったら「大会デモを開始」を押してください。</p>:clock?.phase==="break"?<p>休憩中：進行中のハンドは継続し、新しいハンドは休憩終了後に開始できます。</p>:<p>レベル変更は次のハンドから適用します。</p>}
       {handActive && <p>このハンドで徴収したアンティ合計：{betting.players.reduce((n,p)=>n+(p.anteCommitted??0),0).toLocaleString()}（POTに含む・コール額には含まない）</p>}
@@ -405,7 +405,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {tournamentOutcome && !remainingIds.includes("you") && <p>あなたは脱落しました。残ったプレイヤーの進行を確認できます。</p>}
       {tournamentComplete && <section aria-label="大会終了結果"><p><strong>大会終了・優勝：{playerName(tournamentOutcome!.champion!)}</strong></p><p>結果ログを確認してから退出できます。</p><button type="button" className={styles.reset} onClick={() => window.location.assign("/poker-lobby")}>退出する</button></section>}
       {Boolean(tournamentOutcome?.eliminated.length) && <details aria-label="大会結果ログ" open={tournamentComplete}><summary>大会結果ログ（デモ順位）</summary><ul>{tournamentOutcome?.champion && <li>1位：{playerName(tournamentOutcome.champion)}</li>}{tournamentOutcome?.eliminated.map(p=><li key={p.id}>{p.place===p.tiedThrough?`${p.place}位`:`同順位（${p.place}〜${p.tiedThrough}位）`}：{playerName(p.id)}</li>)}</ul><small>このブラウザ内のデモ結果です。会員戦績・プライズ付与には未連携です。</small></details>}
-    </div></details>}
+    </div></details></div>}
     <div className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"} data-street={streetStep}>
       {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
         {awardWinners.map(id => <div key={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>

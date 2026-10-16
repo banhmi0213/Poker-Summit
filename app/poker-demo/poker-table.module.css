@@ -416,3 +416,27 @@
  .controls{padding:9px}.controls .turn{font-size:11px}
  .demoInfo{right:22px}
 }
+
+/* Stable information anchor and matching sidebars; mobile seat anchors are retained. */
+.statusDock{min-width:0}
+@media(min-width:900px){
+ .gameMain{max-width:1380px}
+ .shell{grid-template-columns:clamp(200px,22vw,300px) minmax(280px,520px) clamp(200px,22vw,300px)}
+ .heading{grid-column:1/-1;padding-right:0;position:relative}
+ .heading span{padding-inline:130px}
+ .heading .menuToggle{position:absolute;left:0;top:0}
+ .heading .topExit{position:absolute;right:0;top:0}
+ .demoInfo{top:20px;right:80px}
+ .desktopStructure{box-sizing:border-box;width:100%}
+ .desktopStructure table{font-size:11px}.desktopStructure th{font-size:10px}.desktopStructure th,.desktopStructure td{padding:7px 4px}
+ .showdownFive,.showdownSix{top:65%;bottom:auto}
+ .bet_p5,.bet_p6{top:77%;bottom:auto}
+ .statusDock{grid-column:3;grid-row:2;position:relative;min-height:42px;align-self:start;z-index:8}
+ .statusDock .tournamentStatus,.statusDock .tournamentStatus[open]{position:absolute;top:0;left:0;right:auto;width:100%;margin:0;box-sizing:border-box}
+ .statusDock .tournamentStatus[open]{max-height:min(60dvh,500px);overflow:auto;box-shadow:0 12px 24px #0008}
+ .actionColumn{display:flex;flex-direction:column;align-self:stretch}
+ .actionColumn>.controls,.actionColumn>.resultOverlay,.actionColumn>.spectatorPanel{flex-shrink:0}
+ .actionColumn>.controls,.actionColumn>.resultOverlay,.actionColumn>.spectatorPanel{margin-top:auto}
+ .actionColumn>.resultOverlay+.controls{margin-top:0}
+ .quickBets{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
