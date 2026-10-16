@@ -440,3 +440,7 @@
  .actionColumn>.resultOverlay+.controls{margin-top:0}
  .quickBets{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
+@media(min-width:900px){
+ .demoInfo{left:calc(50% + 150px);right:auto;top:20px}
+ .actionColumn{padding-bottom:6px;box-sizing:border-box}
+}
