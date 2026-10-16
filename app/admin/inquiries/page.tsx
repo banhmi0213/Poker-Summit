@@ -118,6 +118,7 @@ export default async function AdminInquiriesPage({ searchParams }: { searchParam
 
             {i.email && (
               <form action={replyToInquiry.bind(null, i.id)} style={{ display: "grid", gap: 6 }}>
+                <input type="hidden" name="tab" value={tab} />
                 <textarea
                   name="body"
                   rows={5}
