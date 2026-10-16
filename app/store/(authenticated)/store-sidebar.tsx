@@ -3,6 +3,7 @@ import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
 
 // 以前は求人・クーポン・イベント・お知らせ・写真・プランを/store/profile
 // 1ページ内のアンカーリンク(#jobs等)としてまとめていたが、「求人を押した
@@ -13,6 +14,7 @@ import { usePathname } from "next/navigation";
 // して」との指示により独立ページにせず、店舗管理(店舗情報)ページの中に
 // 残しているため、ここには項目を作らない(2026/09/30)。
 const STORE_LINKS: { href: string; label: string }[] = [
+  { href: "/store/profile/messages", label: "運営からのお知らせ" },
   { href: "/store/profile", label: "店舗情報" },
   { href: "/store/profile/analytics", label: "アクセス統計" },
   { href: "/store/profile/menu", label: "料金・メニュー" },
@@ -21,18 +23,20 @@ const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile/coupons", label: "クーポン" },
   { href: "/store/profile/jobs", label: "求人" },
   { href: "/store/profile/spot-jobs", label: "スポット求人" },
-  { href: "/store/profile/notices", label: "お知らせ" },
+  { href: "/store/profile/notices", label: "店舗のお知らせ" },
   { href: "/store/profile/plan", label: "プラン・お支払い" },
 ];
 
 export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?: boolean }) {
   const pathname = usePathname();
+  const counts = useAttentionCounts("store");
+  const total = (counts.job_applications ?? 0) + (counts.messages ?? 0);
 
   return (
     <nav className="app-sidebar">
       <div className="brand wordmark">
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-        <small>店舗管理画面</small>
+        <small>店舗管理画面{total > 0 && <CountBadge count={total} label="未確認の合計" />}</small>
       </div>
       {STORE_LINKS.map((l) => {
         const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
@@ -45,6 +49,8 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
             className={`side-link${active ? " active" : ""}`}
           >
             {l.label}{l.href==="/store/profile/spot-jobs"&&<NotificationBadge actor="store"/>}
+            {l.href === "/store/profile/jobs" && <CountBadge count={counts.job_applications} label="新着応募" />}
+            {l.href === "/store/profile/messages" && <CountBadge count={counts.messages} label="未読のお知らせ" />}
           </Link>
         );
       })}

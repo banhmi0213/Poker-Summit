@@ -74,6 +74,20 @@ export async function sendBulkEmailToStores(formData: FormData) {
     }
   }
 
+  // 店舗管理画面の「運営からのお知らせ」にも残す(契約中の全店舗。メールが届かなくても画面で読める、2026/10)
+  let inboxCount = 0;
+  {
+    const svc = createServiceRoleClient();
+    const { data: activeContracts } = await svc.from("store_contracts").select("store_id").eq("status", "active");
+    const storeIds = Array.from(new Set((activeContracts ?? []).map((c) => c.store_id as string).filter(Boolean)));
+    if (storeIds.length) {
+      const { error: inboxError } = await svc
+        .from("store_messages")
+        .insert(storeIds.map((store_id) => ({ store_id, title: subject, body })));
+      if (!inboxError) inboxCount = storeIds.length;
+    }
+  }
+
   await logAdminAction(supabase, "store_bulk_email_sent", "store_contract", undefined, {
     subject,
     sentCount: result.sent.length,
@@ -81,6 +95,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
     failed: result.failed,
     lineScope,
     lineSent,
+    inboxCount,
   });
 
   const jar = await cookies();

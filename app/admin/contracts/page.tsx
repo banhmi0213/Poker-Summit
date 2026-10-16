@@ -30,6 +30,11 @@ export default async function AdminContractsPage({
   searchParams: { q?: string; status?: string };
 }) {
   const supabase = await createClient();
+  // この画面を開いた時刻を記録し、メニューの「新しい契約」の印を消す(2026/10)
+  {
+    const { data: me } = await supabase.auth.getUser();
+    if (me.user) await supabase.from("admin_seen").upsert({ user_id: me.user.id, section: "contracts", seen_at: new Date().toISOString() });
+  }
   const q = searchParams.q?.trim() ?? "";
   const status = searchParams.status ?? "all";
 
