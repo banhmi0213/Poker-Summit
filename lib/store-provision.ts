@@ -13,9 +13,6 @@ import { generateStorePassword } from "@/lib/password-policy";
 // ============================================================================
 
 
-function randomLoginId(storeId: string) {
-    return `store-${storeId.slice(0, 8)}`;
-}
 
 type ListingApplicationRow = {
     id: string;
@@ -101,14 +98,21 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
         throw new Error(contractError.message);
     }
 
-const loginId = randomLoginId(storeId);
-    const password = generateStorePassword();
-
-const { error: loginError } = await supabase.rpc("system_issue_store_login", {
-    p_store_id: storeId,
-    p_login_id: loginId,
-    p_password: password,
-});
+// ログインIDは店舗ごとに必ず別(店舗IDから作る)。万一ほかの店と同じIDになった場合は
+// 店舗IDの桁数を増やして作り直す(DB側でも同じIDは発行できず、1ログイン=1店舗の制約あり)。
+const password = generateStorePassword();
+let loginId = "";
+let loginError: { message: string } | null = null;
+for (const len of [8, 12, 32]) {
+    loginId = `store-${storeId.replace(/-/g, "").slice(0, len)}`;
+    const { error } = await supabase.rpc("system_issue_store_login", {
+        p_store_id: storeId,
+        p_login_id: loginId,
+        p_password: password,
+    });
+    loginError = error;
+    if (!error || !error.message.includes("このログインIDは既に使用されています")) break;
+}
     if (loginError) {
         throw new Error(loginError.message);
     }

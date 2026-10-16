@@ -16,9 +16,6 @@ import { generateStorePassword } from "@/lib/password-policy";
 import { normalizeCity } from "@/lib/city";
 
 
-function randomLoginId(storeId: string) {
-  return `store-${storeId.slice(0, 8)}`;
-}
 
 export async function setStoreStatus(id: string, status: string) {
   const supabase = await createClient();
@@ -267,14 +264,19 @@ export async function updateStoreByAdmin(formData: FormData) {
 
 export async function issueStoreLogin(storeId: string) {
   const supabase = await createClient();
-  const loginId = randomLoginId(storeId);
   const password = generateStorePassword();
-
-  const { error } = await supabase.rpc("admin_issue_store_login", {
-    p_store_id: storeId,
-    p_login_id: loginId,
-    p_password: password,
-  });
+  // ログインIDは店舗ごとに必ず別。万一重なったら桁数を増やして作り直す(lib/store-provision.ts と同じ)
+  let loginId = "";
+  let error: { message: string } | null = null;
+  for (const len of [8, 12, 32]) {
+    loginId = `store-${storeId.replace(/-/g, "").slice(0, len)}`;
+    ({ error } = await supabase.rpc("admin_issue_store_login", {
+      p_store_id: storeId,
+      p_login_id: loginId,
+      p_password: password,
+    }));
+    if (!error || !error.message.includes("既に使用されています")) break;
+  }
 
   if (error) {
     throw new Error(error.message);
