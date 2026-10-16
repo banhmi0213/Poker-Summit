@@ -12,6 +12,7 @@ import {
   useCoupon,
 } from "@/app/member-actions";
 import { reportStore, reportJob } from "@/app/report-actions";
+import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -678,16 +679,7 @@ export default async function StoreDetailPage({
                   <DetailIcon name="phone" />電話をかける
                 </a>
               )}
-              <form
-                action={async () => {
-                  "use server";
-                  await reportJob(j.id, path);
-                }}
-              >
-                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  通報
-                </button>
-              </form>
+              <ReportForm kind="job" label="通報" action={reportJob.bind(null, j.id, path)} />
             </div>
           </div>
         ))}
@@ -725,9 +717,7 @@ export default async function StoreDetailPage({
         )}
         <div className="sd-store-support">
           <Link href="/contact" className="btn">お問い合わせ</Link>
-          <form action={async () => { "use server"; await reportStore(store.id, path); }}>
-            <button type="submit" className="btn">店舗情報の問題を報告</button>
-          </form>
+          <ReportForm kind="store" label="店舗情報の問題を報告" action={reportStore.bind(null, store.id, path)} buttonStyle={{ fontSize: undefined }} />
         </div>
       </main>
       <PortalFooter />
