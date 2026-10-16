@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -53,6 +53,7 @@ export async function approveApplication(id: string) {
   });
 
   revalidatePath("/admin/listing-applications");
+  revalidatePublicData();
   revalidatePath("/admin/stores");
 }
 
@@ -86,4 +87,5 @@ export async function revertApplication(id: string) {
   await logAdminAction(supabase, "application_revert", "listing_application", id);
 
   revalidatePath("/admin/listing-applications");
+  revalidatePublicData();
 }

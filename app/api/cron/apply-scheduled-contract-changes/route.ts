@@ -1,3 +1,4 @@
+import { revalidatePublicData } from "@/lib/revalidate";
 import {deliverMatchingNotifications} from "@/lib/matching-notification-delivery";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -36,6 +37,7 @@ function isAuthorized(req: NextRequest): boolean {
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
+    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -52,6 +54,7 @@ export async function GET(req: NextRequest) {
     .not("pending_plan_id", "is", null)
     .lte("pending_plan_effective_at", nowIso);
   if (planError) {
+    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: planError.message }, { status: 500 });
   }
 
@@ -64,6 +67,7 @@ export async function GET(req: NextRequest) {
     .not("pending_removed_at", "is", null)
     .lte("pending_removed_at", nowIso);
   if (addonError) {
+    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: addonError.message }, { status: 500 });
   }
 
@@ -77,6 +81,7 @@ export async function GET(req: NextRequest) {
     .not("fincode_customer_id", "like", "session:%")
     .lte("current_period_end", nowIso);
   if (renewalError) {
+    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: renewalError.message }, { status: 500 });
   }
 
@@ -144,6 +149,8 @@ export async function GET(req: NextRequest) {
 
   // アドオン単独で毎月カード決済している行(fincode_subscription_id = own_billing)の更新
   const addonResults = await renewOwnBilledAddons(supabase, nowIso);
+
+  revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
 
   return NextResponse.json({ processed: results.length, results, addonResults });
 }

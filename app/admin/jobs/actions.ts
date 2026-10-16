@@ -1,7 +1,7 @@
 "use server";
 
 import { readJobRole } from "@/lib/job-categories";
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
@@ -16,6 +16,7 @@ export async function setJobStatus(id: string, status: string) {
 
   await logAdminAction(supabase, `job_status_${status}`, "job", id);
   revalidatePath("/admin/jobs");
+  revalidatePublicData();
 }
 
 export async function deleteJob(id: string) {
@@ -28,6 +29,7 @@ export async function deleteJob(id: string) {
 
   await logAdminAction(supabase, "job_delete", "job", id);
   revalidatePath("/admin/jobs");
+  revalidatePublicData();
 }
 
 // 以前は admin が任意の店舗を選んで代理で求人を作成する createJobByAdmin が
@@ -67,6 +69,7 @@ export async function updateJobByAdmin(formData: FormData) {
 
   await logAdminAction(supabase, "job_edit", "job", jobId);
   revalidatePath("/admin/jobs");
+  revalidatePublicData();
 
   // 独立した編集ページ(/admin/jobs/[id]/edit)から呼ばれるようになったので、
   // 保存後は一覧に戻す(admin/stores の編集ページと同じパターン)。

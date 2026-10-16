@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -17,6 +17,7 @@ export async function setPostStatus(id: string, status: string) {
 
   await logAdminAction(supabase, `board_post_${status}`, "board_post", id);
   revalidatePath("/admin/board");
+  revalidatePublicData();
 }
 
 export async function setReplyStatus(id: string, status: string) {
@@ -32,6 +33,7 @@ export async function setReplyStatus(id: string, status: string) {
 
   await logAdminAction(supabase, `board_reply_${status}`, "board_reply", id);
   revalidatePath("/admin/board");
+  revalidatePublicData();
 }
 
 export async function deletePostByAdmin(id: string) {

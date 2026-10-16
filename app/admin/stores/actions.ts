@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
@@ -126,6 +126,7 @@ export async function setStoreOwnerByEmail(formData: FormData) {
   await logAdminAction(supabase, "store_set_owner", "store", storeId, { email });
 
   revalidatePath("/admin/stores");
+  revalidatePublicData();
 }
 
 export async function createStoreByAdmin(formData: FormData) {
@@ -292,6 +293,7 @@ export async function issueStoreLogin(storeId: string) {
   });
 
   revalidatePath("/admin/stores");
+  revalidatePublicData();
   redirect("/admin/stores");
 }
 

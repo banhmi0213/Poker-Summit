@@ -1,3 +1,4 @@
+import { revalidatePublicData } from "@/lib/revalidate";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import {
@@ -45,6 +46,7 @@ type Result = { step: string; id: string; ok: boolean; detail?: string };
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
+    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const svc = createServiceRoleClient();
@@ -309,6 +311,8 @@ export async function GET(req: NextRequest) {
     });
     results.push({ step: "addon_stopped", id: inv.id, ok: true });
   }
+
+  revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
 
   return NextResponse.json({ today, processed: results.length, results });
 }
