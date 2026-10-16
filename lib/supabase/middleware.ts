@@ -105,7 +105,7 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
     response = NextResponse.rewrite(url);
-  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(hasMemberSessionCookie(request) && (await isAdminSession(supabase)))) {
+  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(hasMemberSessionCookie(request) && (await canBypassPrelaunch(supabase)))) {
     // 先行登録モード(2026/10): 一般向けページは先行会員登録の案内ページに差し替える。
     // トップ(/)は検索結果に案内ページが出るよう通常の200で返し、それ以外のページは
     // 「一時的に閉じている」ことを検索エンジンに伝えるため 503 + Retry-After で返す
@@ -151,7 +151,7 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
 function isPrelaunchExempt(pathname: string) {
   const exact = ["/prelaunch", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
   if (exact.includes(pathname)) return true;
-  const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/account/dealer", "/_next/"];
+  const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/account/dealer", "/account/delete", "/_next/"];
   return pathname === "/admin" || prefixes.some((p) => pathname.startsWith(p));
 }
 
@@ -160,11 +160,21 @@ function hasMemberSessionCookie(request: NextRequest) {
   return request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token") && !c.name.startsWith(STORE_AUTH_COOKIE_NAME));
 }
 
-/** 運営としてログインしているか(先行登録モード中も運営はサイト全体を確認できるようにする) */
-async function isAdminSession(supabase: ReturnType<typeof createServerClient>) {
+/**
+ * 先行登録モード中もサイト全体を見られるアカウントの追加分(運営以外)。
+ * 決済代行(KOMOJU)・カード会社の審査担当が、サイトの中身を確認できるようにするため(2026/10)。
+ * 審査が終わってアカウントを削除すれば、ここに残っていても何も起きない。
+ */
+const PRELAUNCH_PREVIEW_EMAILS = ["support-jp@komoju.com"];
+
+/** 運営としてログインしているか、審査用アカウントか(先行登録モード中もサイト全体を確認できるようにする) */
+async function canBypassPrelaunch(supabase: ReturnType<typeof createServerClient>) {
   try {
     const { data } = await supabase.rpc("is_admin");
-    return data === true;
+    if (data === true) return true;
+    const { data: u } = await supabase.auth.getUser();
+    const email = u.user?.email?.toLowerCase();
+    return !!email && PRELAUNCH_PREVIEW_EMAILS.includes(email);
   } catch {
     return false;
   }
