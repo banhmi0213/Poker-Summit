@@ -28,3 +28,6 @@ Railway resources/deployment remain deferred until development is complete, per 
 ## Verification
 
 12 room regressions cover duplicate seating, strict readiness, sparse physical seat order, hidden identities/tokens, cross-member token abuse, payload actor/stack spoofing, waiting/post-hand leave, live seat locks, repeated start, exactly-once retry after reconnection and 100 session rotations with stale-token rejection. Earlier 121 regressions remain, plus 12 deadline regressions (157 total); CI also runs 42 isolated SQL policy checks and 2 React demo lifecycle tests.
+
+Recovery primitives and the prepared, unapplied database migration are documented in
+[poker-room-persistence.md](./poker-room-persistence.md). Persistence is not wired to a running server.

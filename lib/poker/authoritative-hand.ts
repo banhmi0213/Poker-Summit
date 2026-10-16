@@ -31,21 +31,41 @@ function parseCommand(input:unknown):Command {
 }
 const copyCards=(cards:readonly Card[])=>cards.map(c=>({...c}));
 
+const restoreToken=Symbol("trusted hand restore");
+type Initial={entries:{id:string;stack:number}[];buttonIndex:number;terms:HandTerms;table?:{order:string[];positions:BlindPositions}};
+export type HandCheckpoint={version:1;id:string;initial:Initial;deal:ReturnType<typeof dealDemoHandAtTable>;commands:{actor:string;command:Command}[]};
 export class AuthoritativeHand {
-  #id=randomUUID(); #revision=0; #round:BettingRound; #street=0;
+  #initial:Initial; #commands:{actor:string;command:Command}[]=[];
+  #id:string=randomUUID(); #revision=0; #round:BettingRound; #street=0;
   #order:string[]; #positions:BlindPositions; #terms:HandTerms;
   #deal:ReturnType<typeof dealDemoHandAtTable>; #result:Result|null=null;
   #starting:Record<string,number>;
   #receipts=new Map<string,{fingerprint:string;revision:number}>();
-  constructor(entries:readonly {id:string;stack:number}[],buttonIndex:number,terms:HandTerms,table?:{order:readonly string[];positions:BlindPositions}) {
+  constructor(entries:readonly {id:string;stack:number}[],buttonIndex:number,terms:HandTerms,table?:{order:readonly string[];positions:BlindPositions},restore?:{token:symbol;id:string;deal:ReturnType<typeof dealDemoHandAtTable>}) {
     if(entries.some(p=>typeof p.id!=="string"||(!/^[a-zA-Z0-9_-]{1,80}$/.test(p.id)||Object.hasOwn(Object.prototype,p.id)||p.id==="prototype")))throw new Error("Invalid seat ID");
     const order=table?[...table.order]:entries.map(p=>p.id);
     if(table&&JSON.stringify(order.filter(id=>entries.some(p=>p.id===id)))!==JSON.stringify(entries.map(p=>p.id)))throw new Error("Entries must follow physical seat order");
+    this.#initial=structuredClone({entries:[...entries],buttonIndex,terms,table:table?{order:[...table.order],positions:table.positions}:undefined});
     this.#starting=Object.fromEntries(entries.map(p=>[p.id,p.stack]));
     const forced=startForcedHand(entries,buttonIndex,terms,table?{...table.positions}:undefined);
     this.#round=forced.round;this.#order=order;this.#positions={...forced.positions};this.#terms={...forced.terms};
-    this.#deal=dealDemoHandAtTable(this.#order,entries.map(p=>p.id),this.#positions.button);
+    if(restore&&restore.token!==restoreToken)throw new Error("Invalid restore capability");
+    this.#deal=restore?structuredClone(restore.deal):dealDemoHandAtTable(this.#order,entries.map(p=>p.id),this.#positions.button);
+    if(restore)this.#id=restore.id;
     this.#progress();
+  }
+  /** Sensitive server-only state. Encrypt before storage; never send over transport. */
+  checkpoint():HandCheckpoint {return structuredClone({version:1,id:this.#id,initial:this.#initial,deal:this.#deal,commands:this.#commands});}
+  /** Replays accepted commands against the SAME private deal, rebuilding receipts/accounting. */
+  static restore(saved:HandCheckpoint) {
+    if(saved?.version!==1||typeof saved.id!=="string"||!Array.isArray(saved.commands)||saved.commands.length>4096)throw new Error("Invalid hand checkpoint");
+    const i=saved.initial,deal=saved.deal;
+    if(!i||!Array.isArray(i.entries)||!deal||!Array.isArray(deal.board)||deal.board.length!==5||!deal.holes)throw new Error("Invalid saved deal");
+    const cards=[...deal.board,...i.entries.flatMap(p=>{const h=deal.holes[p.id];if(!Array.isArray(h)||h.length!==2)throw new Error("Invalid saved hole");return h;})];
+    if(cards.some(c=>!c||!Number.isInteger(c.rank)||c.rank<2||c.rank>14||!['c','d','h','s'].includes(c.suit))||new Set(cards.map(c=>c.rank+c.suit)).size!==cards.length)throw new Error("Invalid saved cards");
+    const hand=new AuthoritativeHand(i.entries,i.buttonIndex,i.terms,i.table,{token:restoreToken,id:saved.id,deal});
+    for(const entry of saved.commands) {const r=hand.act(entry.actor,entry.command);if(r.replayed)throw new Error("Duplicate saved command");}
+    return hand;
   }
   #progress() {
     while(this.#round.toAct===null&&!this.#result) {
@@ -110,7 +130,7 @@ export class AuthoritativeHand {
     const prior={round:this.#round,street:this.#street,result:this.#result};
     try {this.#round=applyBettingAction(this.#round,authenticatedSeatId,c.action);this.#progress();}
     catch(error){this.#round=prior.round;this.#street=prior.street;this.#result=prior.result;throw error;}
-    this.#revision++;this.#receipts.set(key,{fingerprint,revision:this.#revision});
+    this.#revision++;this.#receipts.set(key,{fingerprint,revision:this.#revision});this.#commands.push({actor:authenticatedSeatId,command:structuredClone(c)});
     return {replayed:false,acceptedRevision:this.#revision,state:this.snapshot(authenticatedSeatId)};
   }
 }

@@ -31,3 +31,6 @@ Railway setup/deployment is still deferred until all development completes. No m
 ## Validation
 
 12 added tests bring regression count to 169. They cover exact start/level/break boundaries, late initial levels, frozen current hand, BB/per-player/no-ante charges, break actions and timeout continuation, final-level continuation, copied configuration/snapshots, invalid time/config rejection, backward/catch-up time, upcoming-break metadata, malicious timestamp/term attempts and single-sample hand/deadline consistency. Existing 20 full server tournaments, 100 hand simulations, 100 reconnect rotations, 42 SQL policy checks and 2 React lifecycle checks remain covered.
+
+Recovery primitives and the prepared, unapplied database migration are documented in
+[poker-room-persistence.md](./poker-room-persistence.md). Persistence is not wired to a running server.

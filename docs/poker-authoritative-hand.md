@@ -39,3 +39,6 @@ Railway creation/deployment remains deferred by user request until development i
 `SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 157 tests, including server deadline behavior documented in `poker-turn-deadlines.md`.
 
 Trusted physical seat order and explicit blind positions may now be passed to a hand to preserve dead-button/empty-SB progression. Private viewers and actors must still belong to the current hand, not merely its physical seat order. `finishTournament()` exposes pure terminal ante-aware accounting to the room owner; it is not a client command. See `poker-server-tournaments.md`.
+
+Recovery primitives and the prepared, unapplied database migration are documented in
+[poker-room-persistence.md](./poker-room-persistence.md). Persistence is not wired to a running server.

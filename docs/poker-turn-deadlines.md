@@ -32,3 +32,6 @@ Railway is still deferred until development completion, as requested. No product
 12 new tests with an injected clock cover exact expiry, early/duplicate/stale/forged callbacks, free checks vs owed folds, manual-action races, reconnect/disconnected actors, late receipt retry, late-scheduler single-step behavior, backward/invalid clocks, protected action IDs and forced all-in terminal state. All prior 133 regressions remain: 145 total. CI also retains 42 isolated PostgreSQL checks and 2 React demo lifecycle tests.
 
 Opt-in tournament continuation now gives each new hand a fresh ID and versioned deadline. Retired callbacks and actions cannot affect the next hand. See `poker-server-tournaments.md`. Regression count is now 157.
+
+Recovery primitives and the prepared, unapplied database migration are documented in
+[poker-room-persistence.md](./poker-room-persistence.md). Persistence is not wired to a running server.

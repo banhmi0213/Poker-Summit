@@ -1,13 +1,14 @@
 /** Server-owned room with optional tournament continuation. Member IDs are trusted context,
- * never client payload fields. One owner per room; persistence/transport are not included.
+ * never client payload fields. One owner per room; checkpoint primitives do not install persistence/transport.
  */
 import { randomUUID } from "node:crypto";
-import { AuthoritativeHand } from "./authoritative-hand";
+import { AuthoritativeHand, type HandCheckpoint } from "./authoritative-hand";
 import type { HandTerms } from "./tournament-hand";
 import { initialTournamentPositions,nextTournamentPositions,type TournamentPositions,type TournamentOutcome } from "./tournament-table";
 
 export type TurnDeadline={handId:string;revision:number;actor:string;expiresAt:number};
 type Seat={memberId:string;stack:number;connectionId:string|null};
+export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number};
 export class SeatedHandRoom {
   #seats=new Map<number,Seat>(); #hand:AuthoritativeHand|null=null; #revision=0;
   #startingStack:number; #terms:HandTerms;
@@ -22,6 +23,22 @@ export class SeatedHandRoom {
     const turnMs=options.turnMs??20000;
     if(!Number.isSafeInteger(turnMs)||turnMs<1||turnMs>300000||(options.now!==undefined&&typeof options.now!=="function"))throw new Error("Invalid server clock policy");
     this.#startingStack=startingStack;this.#terms={...terms};this.#turnMs=turnMs;this.#now=options.now??Date.now;
+  }
+  /** Server-only checkpoint; connection capabilities are deliberately omitted. */
+  checkpoint():RoomCheckpoint {
+    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow});
+  }
+  /** Only load an authenticated/decrypted server checkpoint. Restored sockets must reconnect. */
+  static restore(input:RoomCheckpoint,now:()=>number=Date.now) {
+    const s=structuredClone(input);
+    if(s?.version!==1||!Array.isArray(s.seats)||s.seats.length>6||!Number.isSafeInteger(s.revision)||s.revision<0||!Number.isSafeInteger(s.lastNow)||s.lastNow<0)throw new Error("Invalid room checkpoint");
+    const room=new SeatedHandRoom(s.startingStack,s.terms,{now,turnMs:s.turnMs,tournament:s.tournament});
+    const members=new Set<string>();
+    for(const [n,seat] of s.seats){room.seat(seat.memberId,n);if(members.has(seat.memberId)||!Number.isSafeInteger(seat.stack)||seat.stack<0)throw new Error("Invalid saved seat");members.add(seat.memberId);room.#seats.set(n,{...seat,connectionId:null});}
+    room.#hand=s.hand?AuthoritativeHand.restore(s.hand):null;room.#revision=s.revision;room.#positions=s.positions;room.#outcome=s.outcome;room.#settledHandId=s.settledHandId;room.#handNumber=s.handNumber;room.#turn=s.turn;room.#lastNow=s.lastNow;
+    const h=room.#hand?.snapshot(null),t=room.#turn;
+    if((h?.toAct??null)!==(t?.actor??null)||t&&(t.handId!==h?.handId||t.revision!==h?.revision||!Number.isSafeInteger(t.expiresAt)||t.expiresAt<0))throw new Error("Invalid saved deadline");
+    return room;
   }
   #readNow() {
     const value=this.#now();

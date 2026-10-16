@@ -38,3 +38,6 @@ Railway remains deferred until all development completes. This stage is internal
 ## Schedule boundary follow-up
 
 `ScheduledTournamentRoom` now owns validated schedule selection and blocks initial/next deals before start or in breaks. Existing hands/timeouts continue; final levels remain active. Use that wrapper for schedule-governed play, rather than letting a transport supply blind terms. See `poker-scheduled-room.md`. Total regression coverage is 169 tests.
+
+Recovery primitives and the prepared, unapplied database migration are documented in
+[poker-room-persistence.md](./poker-room-persistence.md). Persistence is not wired to a running server.

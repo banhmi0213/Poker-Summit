@@ -1,11 +1,12 @@
 /** Trusted schedule wrapper around an in-process authoritative tournament room.
- * No network/authentication/persistence is installed here. All time is server-owned.
+ * No network/authentication or automatic persistence is installed here. All time is server-owned.
  */
-import { SeatedHandRoom, type TurnDeadline } from "./seated-hand-room";
+import { SeatedHandRoom, type TurnDeadline, type RoomCheckpoint } from "./seated-hand-room";
 import { tournamentClock,validateStructure,type TournamentStructure } from "./tournament";
 import { tournamentHandTerms } from "./tournament-hand";
 
 type RoomSnapshot=ReturnType<SeatedHandRoom["publicSnapshot"]>;
+export type ScheduledCheckpoint={version:1;structure:TournamentStructure;startsAt:string;lastNow:number;room:RoomCheckpoint};
 export class ScheduledTournamentRoom {
   #room:SeatedHandRoom; #structure:TournamentStructure; #startsAt:string;
   #clock:()=>number; #lastNow=0; #sample:number|null=null; #turnMs:number;
@@ -20,6 +21,14 @@ export class ScheduledTournamentRoom {
     const first=this.#structure.periods[0];
     this.#room=new SeatedHandRoom(this.#structure.startingStack,{level:1,index:0,sb:first.sb,bb:first.bb,ante:first.ante,anteType:this.#structure.anteType},
       {tournament:true,turnMs:this.#turnMs,now:()=>this.#sample??this.#readNow()});
+  }
+  /** Sensitive server-only checkpoint. No live connection tokens. */
+  checkpoint():ScheduledCheckpoint {return structuredClone({version:1,structure:this.#structure,startsAt:this.#startsAt,lastNow:this.#lastNow,room:this.#room.checkpoint()});}
+  static restore(input:ScheduledCheckpoint,options:{now?:()=>number}={}) {
+    const s=structuredClone(input);
+    if(s?.version!==1||!Number.isSafeInteger(s.lastNow)||s.lastNow<0||!s.room?.tournament||s.room.startingStack!==s.structure?.startingStack)throw new Error("Invalid scheduled checkpoint");
+    const room=new ScheduledTournamentRoom({structure:s.structure,starts_at:s.startsAt},{now:options.now,turnMs:s.room.turnMs});
+    room.#lastNow=s.lastNow;room.#room=SeatedHandRoom.restore(s.room,()=>room.#sample??room.#readNow());return room;
   }
   #readNow() {
     const now=this.#clock();
