@@ -22,6 +22,7 @@ type Draft = { savedAt: number; submitted?: boolean; values: Record<string, stri
 const restoredFields = new WeakSet<Element>();
 const handledForms = new WeakSet<HTMLFormElement>();
 let notify: ((key: string) => void) | null = null;
+let discarding = false; // 「破棄する」の直後は保存しない
 
 function storage(): Storage | null {
   try {
@@ -101,7 +102,7 @@ function readDraft(key: string): Draft | null {
 }
 
 function saveForm(form: HTMLFormElement, submitted = false) {
-  if (!eligibleForm(form)) return;
+  if (discarding || !eligibleForm(form)) return;
   const key = formKey(form);
   const s = storage();
   if (!key || !s) return;
@@ -194,7 +195,13 @@ export function FormDraftKeeper() {
       const form = (el as Field | null)?.form;
       if (!form || !eligibleField(el!)) return;
       window.clearTimeout(timers.get(form));
-      timers.set(form, window.setTimeout(() => saveForm(form), 300));
+      timers.set(
+        form,
+        window.setTimeout(() => {
+          timers.delete(form);
+          saveForm(form);
+        }, 300),
+      );
     };
     const onSubmit = (e: Event) => {
       const form = e.target;
@@ -241,6 +248,7 @@ export function FormDraftKeeper() {
   if (restoredKeys.length === 0) return null;
 
   const discard = () => {
+    discarding = true;
     const s = storage();
     restoredKeys.forEach((k) => s?.removeItem(k));
     window.location.reload();
