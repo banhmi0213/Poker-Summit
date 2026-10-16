@@ -457,3 +457,7 @@
  .bet_p5{top:calc(65% - 34px);left:calc(9% + 34px);bottom:auto}
  .bet_p6{top:calc(65% - 34px);left:auto;right:calc(9% + 34px);bottom:auto;transform:translateX(50%)}
 }
+@media(min-width:900px){
+ .gameClock aside>div>div{grid-template-columns:80px 6ch}
+ .gameClock aside>div>div>span{white-space:nowrap}
+}
