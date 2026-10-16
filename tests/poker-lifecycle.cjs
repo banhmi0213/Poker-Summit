@@ -17,9 +17,9 @@ const {create,act}=require(process.env.POKER_REACT_RENDERER_MODULE||'react-test-
 const text=node=>node==null?'':typeof node==='string'||typeof node==='number'?String(node):Array.isArray(node)?node.map(text).join(''):text(node.children);
 async function lifecycle(youBust=false){
  calls=[];if(youBust)[holes.you,holes.p2]=[holes.p2,holes.you];
- let now=Date.parse('2026-10-16T10:00:00Z'),counter=0,renderer;const timers=new Map(),oldNow=Date.now,oldWindow=global.window,oldDocument=global.document;
+ let exitPath=null;let now=Date.parse('2026-10-16T10:00:00Z'),counter=0,renderer;const timers=new Map(),oldNow=Date.now,oldWindow=global.window,oldDocument=global.document;
  const schedule=(fn,delay=0,repeat=0)=>{const id=++counter;timers.set(id,{fn,at:now+delay,repeat});return id;};
- Date.now=()=>now;global.window={setTimeout:(fn,ms)=>schedule(fn,ms),clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>schedule(fn,ms,ms),clearInterval:id=>timers.delete(id)};
+ Date.now=()=>now;global.window={location:{assign:path=>{exitPath=path;}},setTimeout:(fn,ms)=>schedule(fn,ms),clearTimeout:id=>timers.delete(id),setInterval:(fn,ms)=>schedule(fn,ms,ms),clearInterval:id=>timers.delete(id)};
  global.document={addEventListener(){},removeEventListener(){}};
  const advance=async ms=>{const target=now+ms;for(let i=0;;i++){assert.ok(i<10000);const candidate=[...timers].filter(([,t])=>t.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];if(!candidate)break;const [id,t]=candidate;now=t.at;timers.delete(id);if(t.repeat)timers.set(id,{...t,at:now+t.repeat});await act(async()=>{t.fn();});}now=target;};
  const button=name=>renderer.root.findAllByType('button').find(b=>text(b)===name);
@@ -43,6 +43,7 @@ async function lifecycle(youBust=false){
   }
   assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);assert.match(text(renderer.toJSON()),/残り 1人 ／ 開始 6人/);assert.match(text(renderer.toJSON()),/あなたは脱落しました/);
   assert.match(text(renderer.toJSON()),youBust?/同順位（3〜6位）：TEST/:/2位：TEST/);assert.ok(button('大会終了').props.disabled);assert.equal(calls.length,youBust?3:1);
+  assert.equal(renderer.root.findByType('details').props.open,true);assert.match(text(renderer.toJSON()),/大会結果ログ/);await click(button('退出する'));assert.equal(exitPath,'/poker-lobby');assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);
  }finally{
   if(renderer)await act(async()=>renderer.unmount());if(youBust)[holes.you,holes.p2]=[holes.p2,holes.you];Date.now=oldNow;global.window=oldWindow;global.document=oldDocument;Module._load=originalLoad;Module._resolveFilename=originalResolve;
  }
