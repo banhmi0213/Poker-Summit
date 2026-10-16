@@ -65,6 +65,12 @@ Vary on Origin/Authorization/connection and nosniff. Do not log authorization/co
 An abort observed before dispatch prevents an operation; after dispatch a durable commit must not
 be undone because the socket/request went away. Use the action ID to resolve retries.
 
+## Runtime
+
+The currently resolved Supabase SDK requires Node.js >=22. CI uses Node.js 24, matching local
+verification. Node.js 20 fails SDK initialization because native WebSocket is unavailable; do not
+mask that with an authentication test mock. Verify the intended deployment runtime before mounting.
+
 ## Deployment still needed
 
 Connect the real room admission policy/registry, lifecycle/scheduler, routing/proxy/TLS, request/auth
