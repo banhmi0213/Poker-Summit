@@ -91,9 +91,12 @@ export function ApplyStoreFields({ prefOptions }: { prefOptions: string[] }) {
       <input type="hidden" name="matchedStoreId" value={selected} />
       {candidates.length > 0 && (
         <div style={{ border: "1px solid #e2c06a", background: "#fffaf0", borderRadius: 8, padding: "10px 12px", margin: "0 0 14px" }}>
-          <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 700 }}>すでにPoker Summitに掲載されているお店ですか？</p>
-          <p className="muted" style={{ margin: "0 0 8px", fontSize: 12 }}>
-            選ぶと、今の店舗ページ（写真・営業時間など）をそのまま引き継いで店舗管理画面をお渡しします。
+          <p style={{ margin: "0 0 6px", fontSize: 13.5, fontWeight: 700 }}>あなたのお店の店舗ページがすでにあります</p>
+          <p className="muted" style={{ margin: "0 0 6px", fontSize: 12, lineHeight: 1.7 }}>
+            Poker Summitでは、公開されている情報をもとに全国のポーカー店をご紹介しています。下のお店を選んでお申込みいただくと、このページの情報（写真・営業時間・紹介文など）をお店で直接編集・管理できるようになります。
+          </p>
+          <p className="muted" style={{ margin: "0 0 8px", fontSize: 11.5, lineHeight: 1.7 }}>
+            ※掲載内容の修正や掲載停止のご希望は、<a href="/contact" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "underline" }}>お問い合わせフォーム</a>からご連絡ください。
           </p>
           {candidates.map((c) => (
             <label key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, padding: "6px 0", opacity: c.has_owner ? 0.55 : 1 }}>
