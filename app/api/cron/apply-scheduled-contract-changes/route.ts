@@ -128,6 +128,38 @@ export async function GET(req: NextRequest) {
       }
 
       const isRenewal = !!contract.current_period_end && contract.current_period_end <= nowIso;
+      // 二重決済の防止: 直近25日以内に更新の決済が成功しているのに期間が延びていない場合
+      // (決済後の保存に失敗した等)は、もう一度決済せずに期間だけ直す
+      if (isRenewal) {
+        const since = new Date(Date.now() - 25 * 86400_000).toISOString();
+        const { data: recent } = await supabase
+          .from("billing_events")
+          .select("occurred_at")
+          .eq("store_contract_id", storeContractId)
+          .eq("event_type", "success")
+          .eq("source", "card_renewal")
+          .like("note", "契約更新の決済%") // アドオン単独の更新(同じ source)は除く
+          .gte("occurred_at", since)
+          .order("occurred_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (recent?.occurred_at) {
+          const d = new Date(Date.parse(recent.occurred_at as string));
+          const day = d.getUTCDate();
+          d.setUTCDate(1);
+          d.setUTCMonth(d.getUTCMonth() + 1);
+          d.setUTCDate(Math.min(day, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()));
+          await supabase.from("store_contracts").update({ current_period_end: d.toISOString() }).eq("id", storeContractId);
+          await supabase.from("audit_log").insert({
+            action: "card_renewal_double_charge_prevented",
+            target_type: "store_contract",
+            target_id: storeContractId,
+            detail: { lastSuccessAt: recent.occurred_at, fixedPeriodEnd: d.toISOString() },
+          });
+          results.push({ storeContractId, ok: true, detail: "直近に決済済みのため再決済せず期間を修正" });
+          continue;
+        }
+      }
       try {
         const { chargedAmount } = await applyContractBillingChange({
           storeContractId,
@@ -230,6 +262,11 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
     const addon = Array.isArray(row.addons) ? row.addons[0] : row.addons;
     if (!contract || contract.status !== "active" || !contract.fincode_customer_id || String(contract.fincode_customer_id).startsWith("session:")) continue;
     const overdueDays = (Date.now() - Date.parse(row.current_period_end)) / 86400_000;
+    // 金額が入っていない行は決済しない(0円決済・誤った金額の防止)
+    if (!Number.isInteger(row.fee) || row.fee <= 0) {
+      out.push({ id: row.id, ok: false, detail: `金額が不正のため決済しませんでした(fee=${row.fee})` });
+      continue;
+    }
 
     const charge = await chargeSavedCard({
       orderId: newOrderId("ar", row.id),

@@ -315,7 +315,8 @@ ${lead}
 請求書番号: ${invoice.invoice_number}
 ${isAddon ? `内容: アドオン「${invoice.plan_name}」` : `プラン: ${invoice.plan_name}（${cycleLabel(invoice.months, invoice.discount_label)}）`}
 ご請求金額: ${amount}
-お支払期限: ${due}
+${isAddon ? "" : `ご利用期間: ${invoice.period_start && invoice.period_end ? `${formatJpDate(invoice.period_start)}〜${formatJpDate(invoice.period_end)}` : `ご入金確認日から${invoice.months}か月`}
+`}お支払期限: ${due}
 
 ■ お振込先
 ${bankText}

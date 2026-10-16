@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "@/lib/revalidate";
+import { effectivePlanFee } from "@/lib/price-lock";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -91,10 +92,12 @@ export async function issueInvoiceAction(formData: FormData) {
   const svc = createServiceRoleClient();
   const { data: contract } = await svc
     .from("store_contracts")
-    .select("id, store_id, contact_name, contact_email, current_period_end, stores(name)")
+    .select("id, store_id, contact_name, contact_email, current_period_end, plan_id, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)")
     .eq("id", contractId)
     .maybeSingle();
-  const { data: plan } = await svc.from("plans").select("id, name, monthly_fee").eq("id", planId).maybeSingle();
+  const { data: planRow } = await svc.from("plans").select("id, name, monthly_fee").eq("id", planId).maybeSingle();
+  // 年内お申込み特典(料金据え置き)中の同じプランなら、据え置き料金で請求する(自動の更新請求と同じ計算。lib/price-lock.ts)
+  const plan = planRow && contract ? { ...planRow, monthly_fee: effectivePlanFee(contract as any, planRow.id, planRow.monthly_fee) } : planRow;
   if (!contract || !plan) back({ error: "契約またはプランが見つかりません。" });
   const email = contract!.contact_email as string | null;
   if (!email) back({ error: "契約に連絡先メールアドレスが登録されていません。契約店舗の画面で登録してください。" });
