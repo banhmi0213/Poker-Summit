@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "@/lib/revalidate";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 import { sendInquiryReplyEmail } from "@/lib/email";
@@ -37,25 +38,32 @@ export async function replyToInquiry(id: string, formData: FormData) {
   const supabase = await createClient();
   const body = String(formData.get("body") ?? "").trim();
   const finish = formData.get("finish") === "1";
-  if (!body) throw new Error("返信の本文を入力してください。");
-  if (body.length > 5000) throw new Error("返信の本文が長すぎます(5000文字まで)。");
+  // エラーは画面の上に出す(以前はエラー画面に飛んでいた)
+  const fail = (message: string): never => redirect(`/admin/inquiries?error=${encodeURIComponent(message)}#inq-${id}`);
+  if (!body) fail("返信の本文を入力してください。");
+  if (body.length > 5000) fail("返信の本文が長すぎます(5000文字まで)。");
 
   const { data: inquiry, error: readError } = await supabase
     .from("inquiries")
     .select("id, name, email, subject, message, created_at")
     .eq("id", id)
     .maybeSingle();
-  if (readError || !inquiry) throw new Error("お問い合わせが見つかりません。");
-  if (!inquiry.email) throw new Error("このお問い合わせにはメールアドレスがありません。");
+  if (readError || !inquiry) fail("お問い合わせが見つかりません。");
+  if (!inquiry!.email) fail("このお問い合わせにはメールアドレスがありません。");
 
-  await sendInquiryReplyEmail({
-    to: inquiry.email,
-    name: inquiry.name,
-    subject: inquiry.subject,
-    body,
-    original: inquiry.message ?? "",
-    receivedAt: new Date(inquiry.created_at),
-  });
+  try {
+    await sendInquiryReplyEmail({
+      to: inquiry!.email,
+      name: inquiry!.name,
+      subject: inquiry!.subject,
+      body,
+      original: inquiry!.message ?? "",
+      receivedAt: new Date(inquiry!.created_at),
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    fail(`メールを送れませんでした（宛先：${inquiry!.email}）。アドレスが正しいか確認してください。詳細：${msg.slice(0, 200)}`);
+  }
 
   const {
     data: { user },
@@ -64,4 +72,5 @@ export async function replyToInquiry(id: string, formData: FormData) {
   await supabase.from("inquiries").update({ status: finish ? "done" : "in_progress" }).eq("id", id);
   await logAdminAction(supabase, "inquiry_replied", "inquiry", id, { finish });
   revalidatePath("/admin/inquiries");
+  redirect(`/admin/inquiries?sent=1#inq-${id}`);
 }

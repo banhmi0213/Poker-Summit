@@ -32,7 +32,7 @@ const TABS = [
 
 // お問い合わせ管理(2026/10 作り直し)。この画面からメールで返信でき、返信の履歴と運営メモが残る。
 // 「対応中」=返信したがまだやり取りが続くもの、「対応済み」=やり取りが終わったもの。
-export default async function AdminInquiriesPage({ searchParams }: { searchParams: { tab?: string } }) {
+export default async function AdminInquiriesPage({ searchParams }: { searchParams: { tab?: string; error?: string; sent?: string } }) {
   const supabase = await createClient();
   const tab = TABS.some((t) => t.key === searchParams.tab) ? searchParams.tab! : "open";
 
@@ -56,6 +56,9 @@ export default async function AdminInquiriesPage({ searchParams }: { searchParam
         やり取りが終わったら「対応済み」に。営業メールなど返信不要なものは、そのまま「対応済みにする」を押してください。
       </p>
 
+      {searchParams.error && <p className="err" style={{ marginBottom: 12 }}>{searchParams.error}</p>}
+      {searchParams.sent && <p style={{ marginBottom: 12, color: "#1f7a3a", fontWeight: 700 }}>返信メールを送りました。</p>}
+
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {TABS.map((t) => (
           <Link key={t.key} href={`/admin/inquiries?tab=${t.key}`} className={`btn ${tab === t.key ? "primary" : ""}`} style={{ fontSize: 12.5 }}>
@@ -69,7 +72,7 @@ export default async function AdminInquiriesPage({ searchParams }: { searchParam
       {inquiries?.map((i) => {
         const history = repliesBy.get(i.id) ?? [];
         return (
-          <div className="card" key={i.id} style={{ display: "grid", gap: 10 }}>
+          <div className="card" key={i.id} id={`inq-${i.id}`} style={{ display: "grid", gap: 10, scrollMarginTop: 80 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" }}>
               <div>
                 <h3 style={{ margin: 0 }}>{i.subject || "（件名なし）"}</h3>
