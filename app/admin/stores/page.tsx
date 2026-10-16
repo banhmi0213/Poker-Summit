@@ -136,6 +136,7 @@ export default async function AdminStoresPage({
     { count: listedCount },
     { data: logins },
     { data: pendingChangeRequests },
+    { count: pendingStoreCount },
   ] = await Promise.all([
     showListedCount ? buildListedCountQuery() : Promise.resolve({ count: null as number | null }),
     supabase.rpc("admin_list_store_logins"),
@@ -144,6 +145,8 @@ export default async function AdminStoresPage({
       .select("id, store_id, field, current_value, proposed_value, requested_by, requested_at, stores(name)")
       .eq("status", "pending")
       .order("requested_at", { ascending: true }),
+    // メニューの「店舗管理」の件数の印の内訳(承認待ちの店舗)。どこにあるか分かるよう上に案内を出す(2026/10)
+    supabase.from("stores").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
   const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
 
@@ -216,6 +219,13 @@ export default async function AdminStoresPage({
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             このコードを店舗にお伝えください。店舗はLINEミニアプリの初回起動時にこのコードを入力して、自分のLINEアカウントとこの店舗を連携します（24時間有効・1回のみ使用可）。
           </p>
+        </div>
+      )}
+
+      {(pendingStoreCount ?? 0) > 0 && status !== "pending" && (
+        <div className="card" style={{ borderColor: "#aa3b28", marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <strong>承認待ちの店舗が {pendingStoreCount}件 あります。</strong>
+          <Link href="/admin/stores?status=pending" className="btn primary">承認待ちを表示する</Link>
         </div>
       )}
 
