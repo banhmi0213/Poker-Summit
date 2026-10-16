@@ -25,7 +25,7 @@ const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile/plan", label: "プラン・お支払い" },
 ];
 
-export function StoreSidebar() {
+export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -36,6 +36,7 @@ export function StoreSidebar() {
       </div>
       {STORE_LINKS.map((l) => {
         const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
+        if (l.href === "/store/profile/poker-tournaments" && !tournamentEnabled) return <span key={l.href} className="side-link" aria-disabled="true" title="運営から利用を許可された店舗のみ使用できます" style={{ color: "#777", background: "#eee", opacity: .65, cursor: "not-allowed" }}>{l.label}<small style={{ display: "block", fontSize: 11 }}>運営の利用許可が必要です</small></span>;
         return (
           <Link
             key={l.href}

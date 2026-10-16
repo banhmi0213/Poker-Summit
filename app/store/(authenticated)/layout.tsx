@@ -1,3 +1,4 @@
+import { loadTournamentAccess } from "@/lib/poker/tournament-access";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -30,11 +31,14 @@ export default async function StoreLayout({
   // user.emailは内部的なダミーアドレス("loginId@login.poker-summit.jp")
   // なので、店舗オーナーには馴染みのある「発行したログインID」部分だけを
   // 表示する(@より前)。
+  const { data: stores, error: storesError } = await supabase.from("stores").select("id").eq("owner_user_id", user.id);
+  const access = await loadTournamentAccess(supabase, storesError ? [] : (stores ?? []).map(s => s.id));
+  const tournamentEnabled = access.enabledIds.size > 0;
   const loginId = user.email?.split("@")[0] ?? "";
 
   return (
     <div className="app-shell">
-      <StoreSidebar />
+      <StoreSidebar tournamentEnabled={tournamentEnabled} />
       <div className="app-main">
         <div className="app-topbar" style={{ justifyContent: "flex-end" }}>
           <div style={{ display: "flex", gap: 8 }}>
