@@ -53,7 +53,11 @@ entire checkpoint update. Logs include hand ID/number, winners, payouts and elim
 accounting, without holes, future board, member identifiers or connection tokens. These logs are
 not wallet transfers or prize issuance. No public log-reading endpoint/UI is included.
 
-## Required future owner integration
+## Owner integration
+
+The queue/commit/recovery boundary is now implemented in
+[DurableRoomOwner](./poker-durable-owner.md). Use it rather than calling the raw primitives from
+transport. It serializes reads and writes, waits for commit before returning, and halts on failure.
 
 Before transport is live: apply/review the migration in its intended environment, manage keys and
 backups, verify member identity, serialize operations in one room owner, load existing state before
@@ -70,12 +74,12 @@ uncertain save, since the prior deal may already be committed.
 
 ## Verification
 
-- `npm run test:poker`: 187 total regressions, including 18 persistence cases: encrypted roundtrip,
+- `npm run test:poker`: 209 total regressions, including 18 persistence cases: encrypted roundtrip,
   all streets, replay receipts, socket invalidation, overdue turns, next levels, full tournament
   restarts through champion, key rotation/tampering, save conflicts and ambiguous response retries.
 - `POKER_PGLITE_MODULE=<isolated PGlite module> node db/tests/poker_persistence_isolated.cjs`:
-  32 PostgreSQL checks; actual adapter/RPC save/load and encrypted restoration, CAS, immutable atomic
-  terminal logging, permission denial and RLS defense if SELECT grants accidentally broaden.
+  43 PostgreSQL checks; actual adapter/RPC save/load and encrypted restoration, CAS, immutable atomic
+  terminal logging, durable-owner lost-response recovery, permission denial and RLS defense if SELECT grants accidentally broaden.
 - CI also runs the earlier 42 SQL checks, 2 React lifecycle tests and Vercel Preview build.
 
 No manual UI verification is needed for this stage. Production merge and Railway remain deferred.
