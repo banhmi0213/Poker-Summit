@@ -72,3 +72,6 @@ queue bounds, invalid commands and a six-player tournament through champion with
 Supabase RPC adapter plus this owner recovering a lost terminal acknowledgement, a single result
 log, replay after reconnect, fresh startup and rejection of the stale owner. Existing engine,
 privacy, schedule and UI regressions remain in CI.
+
+Authenticated Request/Response composition is now available in
+[poker-player-requests.md](./poker-player-requests.md). It is not yet mounted in a running service.

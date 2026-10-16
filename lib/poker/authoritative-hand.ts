@@ -134,3 +134,6 @@ export class AuthoritativeHand {
     return {replayed:false,acceptedRevision:this.#revision,state:this.snapshot(authenticatedSeatId)};
   }
 }
+
+/** Shared strict grammar for the player request boundary; derives no actor identity. */
+export {parseCommand as parseHandCommand};
