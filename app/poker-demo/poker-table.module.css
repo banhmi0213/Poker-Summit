@@ -336,3 +336,5 @@
 .felt{position:absolute;left:0;right:0;top:128px;margin:0}
 .table[data-street="0"] .felt{top:42%}
 @media(max-width:480px){.topSeats .seatAvatarRow .seatPositionBadge{top:14px}.felt{top:116px}}
+
+.tournamentStatus{padding:10px 12px;border:1px solid #bda15e;border-radius:10px;background:#142d42;color:#f5e6c2;font-size:12px;line-height:1.7;margin:10px 0}.tournamentStatus p{margin:4px 0}
