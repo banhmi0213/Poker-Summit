@@ -3,7 +3,7 @@
 import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
-import { applyContractBillingChange, schedulePlanDowngrade, cancelScheduledPlanChange } from "@/lib/contracts-billing";
+import { applyProratedPlanUpgrade, schedulePlanDowngrade, cancelScheduledPlanChange } from "@/lib/contracts-billing";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendPlanChangeEmail } from "@/lib/email";
@@ -147,12 +147,8 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
 
   if (isUpgradeOrSame) {
     try {
-      const result = await applyContractBillingChange({
-        storeContractId: contract.id,
-        newPlanId: requestedPlanId,
-        newAddonIds: currentAddonIds,
-        resolvesPendingPlan: true,
-      });
+      // 残りの日数分の差額だけ決済し、次の更新日は変えない(lib/proration.ts、2026/10)
+      const result = await applyProratedPlanUpgrade({ storeContractId: contract.id, newPlanId: requestedPlanId });
       await supabase.from("plan_change_requests").insert({
         store_id: storeId,
         store_contract_id: contract.id,
@@ -172,7 +168,11 @@ async function requestPlanChangeImpl(formData: FormData): Promise<string> {
         amount: result.chargedAmount,
       });
       revalidatePath("/store/profile/plan");
-      return `プランを変更しました（${(result.chargedAmount ?? 0).toLocaleString("ja-JP")}円を決済しました）。`;
+      return result.prorated
+        ? result.chargedAmount > 0
+          ? `プランを変更しました（残り${result.remainingDays}日分の差額 ${result.chargedAmount.toLocaleString("ja-JP")}円を決済しました。次回の更新日から新しい月額になります）。`
+          : "プランを変更しました（差額は0円のため決済はありません。次回の更新日から新しい月額になります）。"
+        : `プランを変更しました（${(result.chargedAmount ?? 0).toLocaleString("ja-JP")}円を決済しました）。`;
     } catch (e) {
       await supabase.from("plan_change_requests").insert({
         store_id: storeId,

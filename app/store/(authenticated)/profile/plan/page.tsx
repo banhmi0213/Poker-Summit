@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { effectivePlanFee, isPriceLockActive } from "@/lib/price-lock";
+import { prorateUpgrade } from "@/lib/proration";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -356,11 +357,24 @@ export default async function StorePlanPage({
                 <option value="" disabled>
                   選択してください
                 </option>
-                {(allPlans ?? []).map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.id === contract?.plan_id}>
-                    {`${p.name}（¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）${p.id === contract?.plan_id ? "・現在のプラン" : ""}`}
-                  </option>
-                ))}
+                {(allPlans ?? []).map((p) => {
+                  // 上げる場合は「今日の決済額(残り日数分の差額)」、下げる場合は「次の更新日から」を選択肢に表示
+                  const curFee = contract ? effectivePlanFee(contract as any, (contract as any).plan_id, ((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0) : 0;
+                  const pr = prorateUpgrade({ oldMonthly: curFee, newMonthly: p.monthly_fee ?? 0, periodEndIso: (contract as any)?.current_period_end ?? null });
+                  const extra =
+                    p.id === contract?.plan_id
+                      ? "・現在のプラン"
+                      : (p.monthly_fee ?? 0) >= ((contract as any)?.plans?.monthly_fee ?? 0)
+                        ? pr.charge === null
+                          ? `・今日の決済 ¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}`
+                          : `・今日の決済 ¥${pr.charge.toLocaleString("ja-JP")}（残り${pr.remainingDays}日分の差額）`
+                        : "・次の更新日から";
+                  return (
+                    <option key={p.id} value={p.id} disabled={p.id === contract?.plan_id}>
+                      {`${p.name}（¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）${extra}`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="field">
@@ -371,7 +385,7 @@ export default async function StorePlanPage({
               プラン変更を申請する
             </PendingSubmitButton>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              料金が上がるプランへの変更は、送信時にカード決済が即時実行され、成功次第すぐに反映されます(日割りなし・満額請求)。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映されます。
+              料金が上がるプランへの変更は、送信時に<strong>残りの日数分の差額だけ</strong>をカードで決済し、すぐに反映します（変更した当日は数えず、1円未満は切り捨て）。次回の更新日は変わらず、更新日からは新しいプランの月額になります。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映します。
             </p>
           </form>
         )}

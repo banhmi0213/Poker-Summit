@@ -1,5 +1,6 @@
 import { revalidatePath } from "@/lib/revalidate";
 import { effectivePlanFee } from "@/lib/price-lock";
+import { prorateUpgrade } from "@/lib/proration";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { chargeSavedCard, newOrderId } from "@/lib/komoju";
 import { recordStoreHistory } from "@/lib/store-update";
@@ -31,7 +32,7 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   const { data, error } = await supabase
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at"
+      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, current_period_end, price_lock_plan_id, price_lock_fee, price_lock_ended_at"
     )
     .eq("id", storeContractId)
     .single();
@@ -315,4 +316,97 @@ export async function cancelScheduledAddonRemovals(storeContractId: string): Pro
     .eq("store_contract_id", storeContractId)
     .not("pending_removed_at", "is", null);
   if (error) throw new Error(error.message);
+}
+
+
+/**
+ * 毎月払いのカード契約で、金額が上がるプランへ途中で変える(2026/10)。
+ * 残りの日数分の差額だけを決済し、次の更新日は変えない(lib/proration.ts)。
+ * 契約期間が終わっている等で日割りできない場合は、従来どおり満額で新しい1か月を始める。
+ */
+export async function applyProratedPlanUpgrade(params: { storeContractId: string; newPlanId: string }): Promise<{
+  chargedAmount: number;
+  remainingDays: number;
+  periodEnd: string | null;
+  prorated: boolean;
+}> {
+  const supabase = createServiceRoleClient();
+  const contract = await loadContract(supabase, params.storeContractId);
+  if (!contract.fincode_customer_id) throw new Error("この契約にはカード情報が登録されていません。運営にお問い合わせください。");
+
+  const [{ data: oldPlan }, { data: newPlan }] = await Promise.all([
+    supabase.from("plans").select("id, name, monthly_fee").eq("id", contract.plan_id).maybeSingle(),
+    supabase.from("plans").select("id, name, monthly_fee").eq("id", params.newPlanId).maybeSingle(),
+  ]);
+  if (!newPlan) throw new Error("プランが見つかりません。");
+  const oldMonthly = oldPlan ? effectivePlanFee(contract, oldPlan.id, oldPlan.monthly_fee ?? 0) : 0;
+  const newMonthly = newPlan.monthly_fee ?? 0;
+  const p = prorateUpgrade({ oldMonthly, newMonthly, periodEndIso: contract.current_period_end as string | null });
+
+  // 日割りできない(契約期間が切れている・不明)ときは、満額で新しい1か月を始める従来の処理
+  if (p.charge === null) {
+    const { data: addonRows } = await supabase
+      .from("store_contract_addons")
+      .select("addon_id")
+      .eq("store_contract_id", contract.id)
+      .eq("billing_method", "card")
+      .is("fincode_subscription_id", null);
+    const r = await applyContractBillingChange({
+      storeContractId: contract.id,
+      newPlanId: params.newPlanId,
+      newAddonIds: ((addonRows ?? []) as any[]).map((a) => a.addon_id as string),
+      resolvesPendingPlan: true,
+    });
+    return { chargedAmount: r.chargedAmount, remainingDays: 0, periodEnd: r.newPeriodEnd, prorated: false };
+  }
+
+  if (p.charge > 0) {
+    const charge = await chargeSavedCard({
+      orderId: newOrderId("u", contract.id),
+      customerId: contract.fincode_customer_id,
+      amount: p.charge,
+      metadata: { store_contract_id: contract.id },
+    });
+    if (charge.status !== "CAPTURED") {
+      await supabase.from("billing_events").insert({
+        store_contract_id: contract.id,
+        event_type: "failed",
+        amount: p.charge,
+        source: "contract_change",
+        note: `プラン変更(日割り差額)の決済失敗: status=${charge.status} ${charge.error_code ?? ""}`.slice(0, 500),
+      });
+      throw new Error("決済が完了しませんでした。カード情報をご確認ください。");
+    }
+  }
+
+  const nowIso = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("store_contracts")
+    .update({
+      plan_id: params.newPlanId,
+      pending_plan_id: null,
+      pending_plan_effective_at: null,
+      updated_at: nowIso,
+    })
+    .eq("id", contract.id);
+  if (updateError) throw new Error(updateError.message);
+
+  await supabase.from("billing_events").insert({
+    store_contract_id: contract.id,
+    event_type: "success",
+    amount: p.charge,
+    source: "contract_change",
+    note: `プラン変更の日割り差額(${oldPlan?.name ?? "旧プラン"}→${newPlan.name}・残り${p.remainingDays}日/${p.periodDays}日・月額差${p.diffMonthly}円)`,
+  });
+  revalidatePath("/", "layout");
+  revalidatePath(`/stores/${contract.store_id}`);
+  await recordStoreHistory(supabase, {
+    storeId: contract.store_id,
+    actorType: "web",
+    actorLabel: "web:self-serve-billing",
+    field: "contract_plan_prorated_upgrade",
+    oldValue: { planId: contract.plan_id },
+    newValue: { planId: params.newPlanId, chargedAmount: p.charge, remainingDays: p.remainingDays, periodDays: p.periodDays },
+  });
+  return { chargedAmount: p.charge, remainingDays: p.remainingDays, periodEnd: contract.current_period_end as string | null, prorated: true };
 }
