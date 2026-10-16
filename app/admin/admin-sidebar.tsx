@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
 
 const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin", label: "ダッシュボード" },
@@ -33,6 +34,18 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/system", label: "システム" },
 ];
 
+// メニュー横の赤い件数の印(要対応・未確認)。admin_attention_counts() のキーと対応(2026/10)
+const BADGE_KEYS: Record<string, string> = {
+  "/admin/stores": "stores_pending",
+  "/admin/contracts": "contracts",
+  "/admin/billing": "billing",
+  "/admin/addon-orders": "addon_orders",
+  "/admin/listing-applications": "listing_applications",
+  "/admin/reports": "reports",
+  "/admin/dealer-chat-reports": "dealer_chat_reports",
+  "/admin/inquiries": "inquiries",
+};
+
 // /admin/stores と /admin/stores/import のように一方が他方のURLの接頭辞に
 // なっているリンクが複数あるため、単純な startsWith だけで判定すると
 // 例えば /admin/stores/import を開いた時に「店舗管理」「店舗取込(Google)」
@@ -47,6 +60,8 @@ function matchesPath(href: string, pathname: string | null): boolean {
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const counts = useAttentionCounts("admin");
+  const total = Object.values(BADGE_KEYS).reduce((n, k) => n + (counts[k] ?? 0), 0);
 
   const activeHref = ADMIN_LINKS.filter((l) => matchesPath(l.href, pathname)).sort(
     (a, b) => b.href.length - a.href.length
@@ -56,7 +71,7 @@ export function AdminSidebar() {
     <nav className="app-sidebar">
       <div className="brand wordmark">
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-        <small>総合管理画面</small>
+        <small>総合管理画面{total > 0 && <CountBadge count={total} label="要対応の合計" />}</small>
       </div>
       {ADMIN_LINKS.map((l) => {
         const active = l.href === activeHref;
@@ -68,6 +83,7 @@ export function AdminSidebar() {
             className={`side-link${active ? " active" : ""}`}
           >
             {l.label}
+            {BADGE_KEYS[l.href] && <CountBadge count={counts[BADGE_KEYS[l.href]]} />}
           </Link>
         );
       })}
