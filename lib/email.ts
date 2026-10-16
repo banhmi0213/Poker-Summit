@@ -10,6 +10,9 @@
 // ============================================================================
 
 const FROM_ADDRESS = "Poker Summit <info@pokersummit.jp>";
+// 送信専用(返信を受けない)アドレス(2026/10)。会員向け・本人確認やセキュリティのお知らせに使う。
+// 店舗向けの請求・契約まわりは、返信で問い合わせてもらえるよう info@ のまま。
+const NOREPLY_ADDRESS = "Poker Summit <noreply@pokersummit.jp>";
 
 function getResendApiKey(): string | null {
   return process.env.RESEND_API_KEY || null;
@@ -21,6 +24,8 @@ async function sendEmail(params: {
   text: string;
   attachments?: Array<{ filename: string; content: Uint8Array }>;
   bcc?: string | null;
+  /** true なら送信専用アドレス(noreply@)から送る */
+  noreply?: boolean;
 }): Promise<void> {
   const apiKey = getResendApiKey();
   if (!apiKey) {
@@ -36,7 +41,7 @@ const res = await fetch("https://api.resend.com/emails", {
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
-    from: FROM_ADDRESS,
+    from: params.noreply ? NOREPLY_ADDRESS : FROM_ADDRESS,
     to: [params.to],
     subject: params.subject,
     text: params.text,
@@ -322,7 +327,8 @@ ${warning}
 請求書（PDF）を添付しております。${isNewApplication ? "" : `店舗管理画面の「プラン・お支払い」からもダウンロードできます。
 ${siteUrl}/store/profile/plan`}
 
-ご不明な点は ${FROM_ADDRESS.replace(/^.*<|>$/g, "")} までお問い合わせください。
+ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
 
 Poker Summit運営事務局`;
 
@@ -357,7 +363,8 @@ export async function sendSuspensionNoticeEmail(params: {
 請求書は店舗管理画面の「プラン・お支払い」からダウンロードできます。
 ${siteUrl}/store/profile/plan
 
-行き違いでお振り込み済みの場合や、ご不明な点がございましたら info@pokersummit.jp までご連絡ください。
+行き違いでお振り込み済みの場合や、ご不明な点がございましたら、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${getSiteUrl()}/contact
 
 Poker Summit運営事務局`;
 
@@ -419,7 +426,8 @@ ${body}
 店舗管理画面「プラン・お支払い」
 ${siteUrl}/store/profile/plan
 
-ご不明な点は info@pokersummit.jp までお問い合わせください。
+ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${getSiteUrl()}/contact
 
 Poker Summit運営事務局`;
 
@@ -502,8 +510,9 @@ ${siteUrl}/contact
 
 オープンまで、今しばらくお待ちください。
 
-Poker Summit運営事務局`;
-    await sendEmail({ to: params.to, subject: "【Poker Summit】先行会員登録が完了しました", text });
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+    await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】先行会員登録が完了しました", text });
     return;
   }
   const text = `${params.name ? `${params.name} 様` : "Poker Summit会員の皆さま"}
@@ -539,7 +548,7 @@ ${siteUrl}/contact
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
 
-  await sendEmail({
+  await sendEmail({ noreply: true,
     to: params.to,
     subject: "【Poker Summit】会員登録が完了しました",
     text,
@@ -572,7 +581,7 @@ ${siteUrl}/contact
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ to: params.to, subject: "【Poker Summit】ログインのお知らせ", text });
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】ログインのお知らせ", text });
 }
 
 /** メールアドレス登録・変更時の確認コード */
@@ -589,7 +598,7 @@ export async function sendEmailVerificationCode(params: { to: string; code: stri
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
 }
 
 /** 連絡先メールアドレスが変更されたことを、変更前のアドレスへ知らせる */
@@ -610,7 +619,7 @@ ${siteUrl}/contact
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ to: params.to, subject: "【Poker Summit】連絡先メールアドレス変更のお知らせ", text });
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】連絡先メールアドレス変更のお知らせ", text });
 }
 
 /** カードの継続決済に失敗したときの店舗向け通知 */
@@ -633,11 +642,10 @@ ${siteUrl}/store/profile/plan
 
 決済は毎日自動で再試行します。${params.suspendOn} までに決済が確認できない場合、店舗ページの掲載を一時停止いたします（決済が確認でき次第、再開します）。
 
-ご不明な点はお問い合わせフォームよりご連絡ください。
+ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
 ${siteUrl}/contact
 
-Poker Summit運営事務局
-※このメールは送信専用です。`;
+Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済ができませんでした", text });
 }
 
@@ -667,8 +675,7 @@ ${siteUrl}/store/profile/plan
 心当たりのない決済の場合は、お問い合わせフォームからご連絡ください。
 ${siteUrl}/contact
 
-Poker Summit運営事務局
-※このメールは送信専用です。`;
+Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済完了のお知らせ", text });
 }
 
@@ -689,8 +696,7 @@ Poker Summit をご利用いただきありがとうございます。
 この操作に心当たりがない場合は、すぐにお問い合わせフォームからご連絡ください。
 ${siteUrl}/contact
 
-Poker Summit運営事務局
-※このメールは送信専用です。`;
+Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】お支払いカード登録のお知らせ", text });
 }
 
@@ -737,7 +743,7 @@ ${params.link}
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
 }
 
 /** 振込の請求書がお支払期限を過ぎた翌日のお知らせ(猶予7日のうちに入金をお願いする、2026/10) */
@@ -766,9 +772,9 @@ export async function sendOverdueGraceNoticeEmail(params: {
 請求書・お振込先は店舗管理画面の「プラン・お支払い」からご確認いただけます。
 ${siteUrl}/store/profile/plan
 
-行き違いでお振り込み済みの場合はご容赦ください。ご不明な点は info@pokersummit.jp までご連絡ください。
+行き違いでお振り込み済みの場合はご容赦ください。ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
 
-Poker Summit運営事務局
-※このメールは送信専用です。`;
+Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: `【Poker Summit】お支払期限を過ぎています（請求書 ${params.invoiceNumber}）`, text });
 }

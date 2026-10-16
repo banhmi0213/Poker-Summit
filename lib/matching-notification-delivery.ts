@@ -13,7 +13,7 @@ export async function deliverMatchingNotifications(record:string|null=null){
    if(!recipient){state='skipped';detail='recipient_unavailable';}
    else if(!token){detail='configuration_missing';}
    else{
-    const response=await fetch(item.channel==='line'?'https://api.line.me/v2/bot/message/push':'https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json',...(item.channel==='line'?{'X-Line-Retry-Key':item.notification_id}:{'Idempotency-Key':item.notification_id})},body:JSON.stringify(item.channel==='line'?{to:recipient,messages:[{type:'text',text:content.text}]}:{from:'Poker Summit <info@pokersummit.jp>',to:[recipient],subject:content.subject,text:content.text}),signal:AbortSignal.timeout(6000),cache:'no-store'});
+    const response=await fetch(item.channel==='line'?'https://api.line.me/v2/bot/message/push':'https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json',...(item.channel==='line'?{'X-Line-Retry-Key':item.notification_id}:{'Idempotency-Key':item.notification_id})},body:JSON.stringify(item.channel==='line'?{to:recipient,messages:[{type:'text',text:content.text}]}:{from:'Poker Summit <noreply@pokersummit.jp>',to:[recipient],subject:content.subject,text:content.text}),signal:AbortSignal.timeout(6000),cache:'no-store'});
     // LINE 409 means this same retry key was accepted previously.
     if(response.ok||(item.channel==='line'&&response.status===409))state='sent';else detail=`provider_http_${response.status}`;
    }
