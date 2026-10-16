@@ -38,8 +38,9 @@ export async function replyToInquiry(id: string, formData: FormData) {
   const supabase = await createClient();
   const body = String(formData.get("body") ?? "").trim();
   const finish = formData.get("finish") === "1";
-  // エラーは画面の上に出す(以前はエラー画面に飛んでいた)
-  const fail = (message: string): never => redirect(`/admin/inquiries?error=${encodeURIComponent(message)}#inq-${id}`);
+  const tab = String(formData.get("tab") ?? "open").replace(/[^a-z_]/g, "") || "open";
+  // エラーは画面の上に出す(以前はエラー画面に飛んでいた)。開いていたタブに戻るので、書いた返信も復元される
+  const fail = (message: string): never => redirect(`/admin/inquiries?tab=${tab}&error=${encodeURIComponent(message)}#inq-${id}`);
   if (!body) fail("返信の本文を入力してください。");
   if (body.length > 5000) fail("返信の本文が長すぎます(5000文字まで)。");
 
@@ -62,7 +63,10 @@ export async function replyToInquiry(id: string, formData: FormData) {
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    fail(`メールを送れませんでした（宛先：${inquiry!.email}）。アドレスが正しいか確認してください。詳細：${msg.slice(0, 200)}`);
+    const reason = /example\.com|testing email|Invalid `to`/i.test(msg)
+      ? "テスト用・存在しないアドレスには送れません。"
+      : `詳細：${msg.slice(0, 160)}`;
+    fail(`メールを送れませんでした（宛先：${inquiry!.email}）。${reason}`);
   }
 
   const {
@@ -72,5 +76,5 @@ export async function replyToInquiry(id: string, formData: FormData) {
   await supabase.from("inquiries").update({ status: finish ? "done" : "in_progress" }).eq("id", id);
   await logAdminAction(supabase, "inquiry_replied", "inquiry", id, { finish });
   revalidatePath("/admin/inquiries");
-  redirect(`/admin/inquiries?sent=1#inq-${id}`);
+  redirect(`/admin/inquiries?tab=${tab}&sent=1#inq-${id}`);
 }
