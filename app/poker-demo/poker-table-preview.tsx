@@ -394,6 +394,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       </div>
     </div>
     <details className={styles.demoInfo}><summary>デモについて</summary><h1>オンラインポーカー テーブル試作</h1><p>チップと進行はブラウザ内のデモです。会員残高とは連携していません。</p></details>
+    <aside className={styles.desktopStructure} aria-label="大会ストラクチャー">{tournament ? <TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/> : <><h2>リングゲーム</h2><p>SB 50 / BB 100</p><p>ブラウザ内のゲーム進行デモです。</p><a href="/poker-lobby">ロビーへ戻る</a></>}</aside>
     {tournament && <div className={styles.gameClock}><TournamentPanel tournament={tournament} serverNow={serverNow} gameLinked/></div>}
     {tournament && <details className={styles.tournamentStatus} open={tournamentComplete}><summary>大会状況・結果：残り {remainingIds.length}人{tournamentComplete?"・大会終了":""}</summary><div role="status">
       {handActive && handTerms ? <p>現在のハンド：LV{handTerms.level} ／ SB {handTerms.sb.toLocaleString()} / BB {handTerms.bb.toLocaleString()} ／ Ante {handTerms.ante.toLocaleString()}（{handTerms.anteType==="bb"?"BBアンティ・BB優先":handTerms.anteType==="per-player"?"全員アンティ":"なし"}）</p> : <p>現在のハンド：未開始（強制ベット未徴収）</p>}

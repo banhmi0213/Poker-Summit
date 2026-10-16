@@ -390,3 +390,29 @@
  .gameMain{flex:1 1 0;min-height:0;max-height:720px;width:100%;max-width:1160px}
  .table{max-height:500px}
 }
+
+/* Reference layout: structure / portrait table / actions. */
+.desktopStructure{display:none}
+.mobileSiteBar{position:relative;z-index:70;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 12px;background:#142637;color:#f9df9c;font-size:12px}
+.mobileSiteBar a{color:inherit;text-decoration:none;font-weight:700}
+.mobileSiteBar button,.mobileFooterToggle{border:1px solid #a28b51;border-radius:7px;background:#183246;color:#ffe09a;padding:8px 10px;font-size:11px;cursor:pointer}
+.gameHeader{display:none}.gameHeader[data-open=true]{display:block;position:absolute;top:44px;left:0;right:0;z-index:65;max-height:70dvh;overflow:auto;box-shadow:0 12px 30px #0007}
+.mobileFooterToggle{position:fixed;right:8px;bottom:max(8px,env(safe-area-inset-bottom));z-index:70}
+.gameFooter{display:none}.gameFooter[data-open=true]{display:block;position:fixed;z-index:65;left:8px;right:8px;bottom:52px;max-height:65dvh;overflow:auto;overscroll-behavior:contain;background:#fff;border:1px solid #bda15e;border-radius:12px;box-shadow:0 0 35px #0008;color:#172638}
+.gamePage{position:relative}.gameMain{padding-bottom:58px}
+@media(min-width:900px){
+ .mobileSiteBar,.mobileFooterToggle,.gameFooter,.gameFooter[data-open=true]{display:none}
+ .gameHeader,.gameHeader[data-open=true]{display:block;position:relative;top:auto;max-height:none;overflow:visible;box-shadow:none}
+ .gameMain{max-width:1300px;max-height:900px;padding:10px 12px 12px}
+ .shell{grid-template-columns:190px minmax(0,520px) 300px;grid-template-rows:42px auto minmax(0,1fr);justify-content:center;gap:10px 18px;padding:8px 18px 12px}
+ .heading{grid-column:2/4;padding-right:145px}
+ .desktopStructure{display:block;grid-column:1;grid-row:2/4;min-height:0;overflow:auto;overscroll-behavior:contain;font-size:11px;line-height:1.6;background:#142d42;border-radius:10px;padding:6px;color:#f5e6c2}
+ .desktopStructure h2{font-size:14px}.desktopStructure a{color:#ffe09a}
+ .desktopStructure table{font-size:10px;background:#f9f3e5;color:#223344;border-radius:8px}.desktopStructure th,.desktopStructure td{padding:6px 3px;overflow-wrap:anywhere}.desktopStructure th{font-size:9px}.desktopStructure p{margin:6px 0}.desktopStructure small{font-size:10px}.desktopStructure :global(.table-wrap){overflow-x:auto}
+ .gameClock{grid-column:2}.gameClock aside strong{max-width:160px}
+ .table{grid-column:2;max-height:none;margin:18px 10px 6px;border-radius:46%/25%}
+ .tournamentStatus{grid-column:3}.tournamentStatus[open]{width:300px;right:18px}
+ .actionColumn{grid-column:3}
+ .controls{padding:9px}.controls .turn{font-size:11px}
+ .demoInfo{right:22px}
+}
