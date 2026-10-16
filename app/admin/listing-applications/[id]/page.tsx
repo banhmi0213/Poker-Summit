@@ -44,8 +44,20 @@ export default async function AdminListingApplicationDetailPage({
         <table>
           <tbody>
             <tr>
-              <th style={{ width: 140 }}>店舗名・会社名</th>
-              <td>{a.company_name}</td>
+              <th style={{ width: 140 }}>申込み名義</th>
+              <td>{a.company_name}（{a.applicant_type === "company" ? "会社名" : "店舗名"}）</td>
+            </tr>
+            <tr>
+              <th>店舗名</th>
+              <td>{a.store_name || a.company_name}</td>
+            </tr>
+            <tr>
+              <th>店舗の住所</th>
+              <td>{a.address || "（未入力）"}</td>
+            </tr>
+            <tr>
+              <th>掲載中の店舗</th>
+              <td>{a.matched_store_id ? <a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">結び付けあり（店舗ページを開く ↗）</a> : "なし（新しい店舗として掲載）"}</td>
             </tr>
             <tr>
               <th>ご担当者名</th>

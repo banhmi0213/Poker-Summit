@@ -100,7 +100,11 @@ export default async function AdminListingApplicationsPage({
           <tbody>
             {applications.map((a) => (
               <tr key={a.id}>
-                <td>{a.company_name}</td>
+                <td>
+                  {a.company_name}
+                  {a.store_name && a.store_name !== a.company_name && <div className="muted" style={{ fontSize: 12 }}>店舗: {a.store_name}</div>}
+                  {a.matched_store_id && <div style={{ fontSize: 12 }}><a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">掲載中の店舗と結び付け ↗</a></div>}
+                </td>
                 <td>{a.contact_name}</td>
                 <td>
                   <div>{a.email}</div>

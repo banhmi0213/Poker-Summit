@@ -39,23 +39,40 @@ export async function provisionPaidStoreFromApplication(params: {
     const supabase = createServiceRoleClient();
     const { application } = params;
 
-const { data: store, error: storeError } = await supabase
-    .from("stores")
-    .insert({
-        name: application.company_name,
-        category: application.category,
-        pref: application.pref,
-        tel: application.tel,
-        status: "approved",
-        source_application_id: application.id,
-    })
-    .select("id")
-    .single();
-
-if (storeError || !store) {
-    throw new Error(storeError?.message ?? "店舗の作成に失敗しました。");
+// 掲載中の店舗と結び付いた申込み(フォームで「このお店です」を選んだもの)は、新しく作らずに
+// その店舗に契約と店舗管理アカウントを付ける(写真・営業時間などをそのまま引き継ぐ、重複防止。2026/10)。
+const { data: appExtra } = await supabase
+    .from("listing_applications")
+    .select("store_name, address, matched_store_id")
+    .eq("id", application.id)
+    .maybeSingle();
+let storeId: string;
+const matchedId = (appExtra?.matched_store_id as string | null) ?? null;
+if (matchedId) {
+    const { data: existing } = await supabase.from("stores").select("id, owner_user_id, status").eq("id", matchedId).maybeSingle();
+    if (!existing) throw new Error("結び付け先の店舗が見つかりません。");
+    if (existing.owner_user_id) throw new Error("結び付け先の店舗には、すでに店舗管理アカウントが発行されています。");
+    storeId = existing.id as string;
+    await supabase.from("stores").update({ source_application_id: application.id }).eq("id", storeId);
+} else {
+    const { data: store, error: storeError } = await supabase
+        .from("stores")
+        .insert({
+            name: (appExtra?.store_name as string | null) || application.company_name,
+            category: application.category,
+            pref: application.pref,
+            tel: application.tel,
+            address: (appExtra?.address as string | null) || null,
+            status: "approved",
+            source_application_id: application.id,
+        })
+        .select("id")
+        .single();
+    if (storeError || !store) {
+        throw new Error(storeError?.message ?? "店舗の作成に失敗しました。");
+    }
+    storeId = store.id as string;
 }
-    const storeId = store.id as string;
 
 // current_period_end: 初回課金した「今」を起点に1ヶ月後まで(2026/10、
 // プラン・アドオンの自己決済機能で「日割りなし、決済日起点で翌月同日
