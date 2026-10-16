@@ -778,3 +778,32 @@ ${siteUrl}/contact
 Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: `【Poker Summit】お支払期限を過ぎています（請求書 ${params.invoiceNumber}）`, text });
 }
+
+/** お問い合わせへの返信(総合管理の「お問い合わせ」から送る、2026/10)。返信を受けられるよう info@ から送る */
+export async function sendInquiryReplyEmail(params: {
+  to: string;
+  name: string | null;
+  subject: string | null;
+  body: string;
+  original: string;
+  receivedAt: Date;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.receivedAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const quoted = params.original
+    .split("\n")
+    .map((l) => `> ${l}`)
+    .join("\n");
+  const text = `${params.name ? `${params.name} 様` : "お問い合わせいただいた方へ"}
+
+${params.body}
+
+Poker Summit運営事務局
+${siteUrl}
+ご不明な点は、このメールへのご返信でお問い合わせいただけます。
+
+―――― お問い合わせ内容（${when}） ――――
+${quoted}`;
+  const subject = params.subject?.trim() ? `Re: ${params.subject.trim()}【Poker Summit】` : "【Poker Summit】お問い合わせへのご回答";
+  await sendEmail({ to: params.to, subject, text });
+}

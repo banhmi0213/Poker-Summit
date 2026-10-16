@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createReply, reportPost, reportReply } from "../actions";
+import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -137,16 +138,7 @@ export default async function BoardPostPage({
               )}
               <h1 style={{ fontSize: 19 }}>{post.title}</h1>
             </div>
-            <form
-              action={async () => {
-                "use server";
-                await reportPost(post.id);
-              }}
-            >
-              <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                🚩 通報する
-              </button>
-            </form>
+            <ReportForm kind="post" label="🚩 通報する" action={reportPost.bind(null, post.id)} buttonStyle={{ fontSize: 12 }} />
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
             {/* アイコンから投稿者のプロフィールへ(2026/10、「サミットから
@@ -218,16 +210,7 @@ export default async function BoardPostPage({
                     </span>
                   </div>
                 </div>
-                <form
-                  action={async () => {
-                    "use server";
-                    await reportReply(r.id, post.id);
-                  }}
-                >
-                  <button type="submit" className="btn" style={{ fontSize: 11 }}>
-                    🚩
-                  </button>
-                </form>
+                <ReportForm kind="reply" label="🚩" action={reportReply.bind(null, r.id, post.id)} buttonStyle={{ fontSize: 11 }} />
               </div>
               <div style={{ fontSize: 13.5, marginTop: 2, whiteSpace: "pre-wrap" }}>{r.body}</div>
               {r.image_url && (

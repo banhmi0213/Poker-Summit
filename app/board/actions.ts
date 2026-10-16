@@ -175,7 +175,7 @@ export async function createReply(formData: FormData) {
   revalidatePath("/");
 }
 
-export async function reportPost(postId: string) {
+export async function reportPost(postId: string, formData?: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -185,7 +185,8 @@ export async function reportPost(postId: string) {
     target_type: "post",
     target_id: postId,
     reporter_user_id: user?.id ?? null,
-    reason: "ユーザーからの通報",
+    reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
+    detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
   });
 
   if (error) {
@@ -195,7 +196,7 @@ export async function reportPost(postId: string) {
   revalidatePath(`/board/${postId}`);
 }
 
-export async function reportReply(replyId: string, postId: string) {
+export async function reportReply(replyId: string, postId: string, formData?: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -205,7 +206,8 @@ export async function reportReply(replyId: string, postId: string) {
     target_type: "reply",
     target_id: replyId,
     reporter_user_id: user?.id ?? null,
-    reason: "ユーザーからの通報",
+    reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
+    detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
   });
 
   if (error) {
