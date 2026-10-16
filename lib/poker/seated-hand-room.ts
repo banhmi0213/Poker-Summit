@@ -85,15 +85,17 @@ export class SeatedHandRoom {
   /** Trusted server scheduling operation, not a player command. Start only once.
    * Disconnected seats cannot be silently skipped or charged on initial start.
    */
-  startHand(buttonSeat:number) {
+  startHand(buttonSeat:number) {return this.startHandWithTerms(buttonSeat,this.#terms);}
+  /** Trusted schedule wrapper may select the current level at INITIAL deal time. */
+  startHandWithTerms(buttonSeat:number,terms:HandTerms) {
     if(this.#hand)throw new Error("Hand already started");
     const entries=[...this.#seats].sort((a,b)=>a[0]-b[0]);
     if(entries.length<2||!this.#seats.has(buttonSeat)||entries.some(([,s])=>!s.connectionId))throw new Error("Players are not ready");
     const now=this.#readNow();
     const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
     const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;
-    const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),this.#terms,positions?{order:this.#order,positions}:undefined);
-    this.#hand=hand;this.#positions=positions;this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+    const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),terms,positions?{order:this.#order,positions}:undefined);
+    this.#hand=hand;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
   }
   /** Trusted tournament scheduler only. A captured completed hand ID makes retries safe.
    * Survivors carry stacks; disconnected survivors remain in play with server deadlines.

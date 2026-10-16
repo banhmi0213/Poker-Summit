@@ -34,3 +34,7 @@ Railway remains deferred until all development completes. This stage is internal
 ## Verification
 
 12 new tests (157 regressions total) cover chip carryover, early/stale/duplicate next requests, dead button/vacant SB server dealing and settlement, heads-up positions, eliminated reconnect privacy, post-award elimination, invalid/changed terms, retired action/timer isolation, copied and stable rankings, reserved/offline seats and champion termination. 20 deterministic full six-to-one server tournaments verify no re-entry/refill and total-chip conservation across every hand. The older 100 single-hand simulations, 100 connection rotations, 42 isolated PostgreSQL checks and 2 React lifecycle tests remain in CI.
+
+## Schedule boundary follow-up
+
+`ScheduledTournamentRoom` now owns validated schedule selection and blocks initial/next deals before start or in breaks. Existing hands/timeouts continue; final levels remain active. Use that wrapper for schedule-governed play, rather than letting a transport supply blind terms. See `poker-scheduled-room.md`. Total regression coverage is 169 tests.
