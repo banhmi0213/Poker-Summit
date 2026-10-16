@@ -34,7 +34,7 @@ function snippet(text: string | null | undefined, n = 160) {
 export default async function AdminReportsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; from?: string; to?: string };
+  searchParams: { status?: string; from?: string; to?: string; error?: string };
 }) {
   const supabase = await createClient();
   const status = searchParams.status ?? "open";
@@ -138,6 +138,8 @@ export default async function AdminReportsPage({
         利用者からの通報です。内容を確かめて、問題があれば「非表示にする」「店舗情報を直す」などで対応し、最後に「対応済み」にしてください。
         問題がなければ「問題なし(却下)」にします。
       </p>
+
+      {searchParams.error && <p className="err" style={{ marginBottom: 12 }}>{searchParams.error}</p>}
 
       <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
         {filters.map((f) => (
