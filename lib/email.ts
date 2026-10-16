@@ -463,8 +463,49 @@ Poker Summit`;
 }
 
 // 会員登録の完了メール(2026/10)。メールアドレスの確認が済んだとき(app/auth/confirm)に1回だけ送る。
-export async function sendWelcomeEmail(params: { to: string; name: string | null }): Promise<void> {
+export async function sendWelcomeEmail(params: {
+  to: string;
+  name: string | null;
+  /** 先行登録モード中の登録なら true(オープン前に開けるリンクだけの先行会員版を送る) */
+  prelaunch?: boolean;
+  xUrl?: string | null;
+}): Promise<void> {
   const siteUrl = getSiteUrl();
+  if (params.prelaunch) {
+    const text = `${params.name ? `${params.name} 様` : "Poker Summit先行会員の皆さま"}
+
+このたびはPoker Summitに先行会員としてご登録いただき、誠にありがとうございます。
+先行会員登録が完了しました。
+
+Poker Summitは現在、オープンに向けて準備を進めています。
+サイトのオープン日や、先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。
+${params.xUrl ? `
+▼公式X
+${params.xUrl}
+` : ""}
+■ 先行会員限定トーナメントについて
+m HOLD’EMアプリで開催する限定トーナメントにご招待します。
+トーナメントの参加IDは、後ほどこのメールアドレスにお送りします。
+※参加にはアプリ内アイテム（ダイヤ）が必要です。
+※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。
+
+■ ポーカーディーラーの方へ
+オープン前からディーラー登録ができます。
+登録しておくと、オープン後すぐに店舗のスポット求人への応募や、店舗からのお仕事のオファーを受けられます。
+▼ディーラー登録はこちら
+${siteUrl}/account/dealer
+
+オープン後は、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご利用いただけます。
+
+ご不明な点がございましたら、お問い合わせフォームよりお気軽にご連絡ください。
+${siteUrl}/contact
+
+オープンまで、今しばらくお待ちください。
+
+Poker Summit運営事務局`;
+    await sendEmail({ to: params.to, subject: "【Poker Summit】先行会員登録が完了しました", text });
+    return;
+  }
   const text = `${params.name ? `${params.name} 様` : "Poker Summit会員の皆さま"}
 
 このたびはPoker Summitにご登録いただき、誠にありがとうございます。

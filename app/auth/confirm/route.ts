@@ -38,9 +38,17 @@ export async function GET(req: NextRequest) {
   if ((type === "signup" || type === "email") && !data.user.user_metadata?.welcome_email_sent_at) {
     try {
       if (data.user.email) {
+        // 先行登録モード中は、オープン前に開けるリンクだけの「先行会員版」を送る
+        const { data: flags } = await createServiceRoleClient()
+          .from("site_settings")
+          .select("prelaunch_mode, prelaunch_x_url")
+          .eq("id", true)
+          .maybeSingle();
         await sendWelcomeEmail({
           to: data.user.email,
           name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
+          prelaunch: !!flags?.prelaunch_mode,
+          xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
         });
       }
       await createServiceRoleClient().auth.admin.updateUserById(data.user.id, {
