@@ -369,6 +369,8 @@
  .tournamentStatus[open]{position:absolute;right:24px;top:60px;width:340px;box-sizing:border-box;max-height:calc(100% - 80px);overflow:auto;box-shadow:0 15px 40px #0008}
  .table{grid-column:1;grid-row:3;align-self:stretch;min-height:0;height:auto;margin:20px 14px 4px;padding:12px 8px 15px}
  .table .felt,.table[data-street="0"] .felt{top:40%}
+ .showdownFive,.showdownSix{top:52%;bottom:auto}
+ .bet_p5,.bet_p6{top:64%;bottom:auto}
  .actionColumn{grid-column:2;grid-row:3;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
  .controls{padding:10px;gap:6px}
  .controls small{font-size:10px;line-height:1.4}
