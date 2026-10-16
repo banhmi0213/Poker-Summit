@@ -1,3 +1,4 @@
+import { revalidatePublicData } from "@/lib/revalidate";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sweepArea } from "@/lib/store-sweep";
@@ -98,5 +99,6 @@ export async function GET(req: NextRequest) {
       await sendStoreMaintenanceDigest({ to: settings.notify_email, newCandidates, closed }).catch(() => null);
     }
   }
+  revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
   return NextResponse.json(result);
 }

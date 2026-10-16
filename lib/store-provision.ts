@@ -1,3 +1,4 @@
+import { revalidatePublicData } from "@/lib/revalidate";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { generateStoreLinkCode } from "@/lib/store-update";
 import { sendStoreCredentialsEmail } from "@/lib/email";
@@ -179,5 +180,7 @@ try {
     });
 }
 
-return { storeId, loginId, password, lineCode };
+// 新しく掲載になった店をTOP・一覧へすぐ出す(webhook・入金確認どちらから呼ばれても)
+    revalidatePublicData();
+    return { storeId, loginId, password, lineCode };
 }

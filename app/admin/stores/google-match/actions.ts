@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { matchNextStores } from "@/lib/google-match";
@@ -71,6 +71,7 @@ export async function resolveGoogleMatch(formData: FormData) {
     detail: { placeId },
   });
   revalidatePath("/admin/stores/google-match");
+  revalidatePublicData();
 }
 
 /** 照合をやり直す(結果を消して未確認に戻す) */
@@ -84,4 +85,5 @@ export async function resetGoogleMatch(formData: FormData) {
     .eq("id", storeId)
     .is("google_place_id", null);
   revalidatePath("/admin/stores/google-match");
+  revalidatePublicData();
 }

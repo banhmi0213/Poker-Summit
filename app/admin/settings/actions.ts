@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidateTag } from "next/cache";
-import { revalidatePath } from "@/lib/revalidate";
+import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 
@@ -57,6 +57,7 @@ export async function updateListingSettings(formData: FormData) {
 
   await logAdminAction(supabase, "settings_update_listing", "site_settings");
   revalidatePath("/admin/settings");
+  revalidatePublicData();
 }
 
 export async function updateNotifySettings(formData: FormData) {
@@ -85,6 +86,7 @@ export async function updateNotifySettings(formData: FormData) {
 
   await logAdminAction(supabase, "settings_update_notify", "site_settings");
   revalidatePath("/admin/settings");
+  revalidatePublicData();
 }
 
 export async function updateMaintenanceSettings(formData: FormData) {
