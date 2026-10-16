@@ -9,6 +9,7 @@ import { settleCompletedHand } from "./hand-settlement";
 import { startForcedHand, type HandTerms } from "./tournament-hand";
 import type { BlindPositions } from "./settlement";
 import type { Card } from "./engine";
+import { finishTournamentHand, type Elimination } from "./tournament-table";
 
 type Command={handId:string;revision:number;actionId:string;action:BettingAction};
 type Result=NonNullable<ReturnType<typeof settleCompletedHand>>;
@@ -34,12 +35,16 @@ export class AuthoritativeHand {
   #id=randomUUID(); #revision=0; #round:BettingRound; #street=0;
   #order:string[]; #positions:BlindPositions; #terms:HandTerms;
   #deal:ReturnType<typeof dealDemoHandAtTable>; #result:Result|null=null;
+  #starting:Record<string,number>;
   #receipts=new Map<string,{fingerprint:string;revision:number}>();
-  constructor(entries:readonly {id:string;stack:number}[],buttonIndex:number,terms:HandTerms) {
+  constructor(entries:readonly {id:string;stack:number}[],buttonIndex:number,terms:HandTerms,table?:{order:readonly string[];positions:BlindPositions}) {
     if(entries.some(p=>typeof p.id!=="string"||(!/^[a-zA-Z0-9_-]{1,80}$/.test(p.id)||Object.hasOwn(Object.prototype,p.id)||p.id==="prototype")))throw new Error("Invalid seat ID");
-    const forced=startForcedHand(entries,buttonIndex,terms);
-    this.#round=forced.round;this.#order=entries.map(p=>p.id);this.#positions={...forced.positions};this.#terms={...forced.terms};
-    this.#deal=dealDemoHandAtTable(this.#order,this.#order,this.#positions.button);
+    const order=table?[...table.order]:entries.map(p=>p.id);
+    if(table&&JSON.stringify(order.filter(id=>entries.some(p=>p.id===id)))!==JSON.stringify(entries.map(p=>p.id)))throw new Error("Entries must follow physical seat order");
+    this.#starting=Object.fromEntries(entries.map(p=>[p.id,p.stack]));
+    const forced=startForcedHand(entries,buttonIndex,terms,table?{...table.positions}:undefined);
+    this.#round=forced.round;this.#order=order;this.#positions={...forced.positions};this.#terms={...forced.terms};
+    this.#deal=dealDemoHandAtTable(this.#order,entries.map(p=>p.id),this.#positions.button);
     this.#progress();
   }
   #progress() {
@@ -58,7 +63,7 @@ export class AuthoritativeHand {
    * Returning fresh objects prevents consumers from mutating internal state.
    */
   snapshot(viewerId:string|null) {
-    if(viewerId!==null&&!this.#order.includes(viewerId))throw new Error("Unknown viewer seat");
+    if(viewerId!==null&&!this.#round.players.some(p=>p.id===viewerId))throw new Error("Unknown viewer seat");
     const count=this.#street===0?0:this.#street===1?3:this.#street===2?4:5;
     return {
       handId:this.#id,revision:this.#revision,street:["preflop","flop","turn","river","showdown"][this.#street],
@@ -70,9 +75,14 @@ export class AuthoritativeHand {
       result:this.#result?{showdown:this.#result.showdown,payouts:{...this.#result.payouts},winners:[...this.#result.winners]}:null,
     };
   }
+  /** Server-only terminal accounting; preserves ante-aware elimination ordering. */
+  finishTournament(prior:readonly Elimination[]=[]) {
+    if(!this.#result)throw new Error("Hand is not settled");
+    return finishTournamentHand(this.#round,this.#starting,this.#result.payouts,this.#terms.anteType,prior);
+  }
   /** Read-only receipt lookup lets a room acknowledge retries even after a deadline. */
   replay(authenticatedSeatId:string,input:unknown) {
-    if(!this.#order.includes(authenticatedSeatId))throw new Error("Unknown actor seat");
+    if(!this.#round.players.some(p=>p.id===authenticatedSeatId))throw new Error("Unknown actor seat");
     const c=parseCommand(input);
     if(c.handId!==this.#id)throw new Error("Wrong hand");
     const receipt=this.#receipts.get(authenticatedSeatId+":"+c.actionId);
@@ -85,7 +95,7 @@ export class AuthoritativeHand {
    * A changed payload with the same per-seat actionId is rejected.
    */
   act(authenticatedSeatId:string,input:unknown) {
-    if(!this.#order.includes(authenticatedSeatId))throw new Error("Unknown actor seat");
+    if(!this.#round.players.some(p=>p.id===authenticatedSeatId))throw new Error("Unknown actor seat");
     const c=parseCommand(input);
     if(c.handId!==this.#id)throw new Error("Wrong hand");
     const key=authenticatedSeatId+":"+c.actionId,fingerprint=JSON.stringify(c),receipt=this.#receipts.get(key);

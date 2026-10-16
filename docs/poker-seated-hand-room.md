@@ -1,6 +1,6 @@
 # Authenticated seating and connection ownership preparation
 
-`SeatedHandRoom` wraps one `AuthoritativeHand` with a six-seat lobby and current connection ownership. It does not create a WebSocket service, authenticate users, persist state or alter the existing browser demo. A trusted scheduler can now invoke its deadline callback (see `poker-turn-deadlines.md`). `authenticatedMemberId` must come from a verified transport session, never a request-selected account ID.
+`SeatedHandRoom` wraps the current `AuthoritativeHand` with a six-seat lobby and current connection ownership. It does not create a WebSocket service, authenticate users, persist state or alter the existing browser demo. A trusted scheduler can now invoke its deadline callback (see `poker-turn-deadlines.md`). `authenticatedMemberId` must come from a verified transport session, never a request-selected account ID.
 
 ## Lifecycle
 
@@ -11,7 +11,7 @@
 5. `disconnect(member, connectionId)` retires that token only. It preserves the seat, current turn, all private cards, stacks and hand version. A new connect retrieves the same live hand with a new token. Stale disconnect callbacks must be caught/ignored by the future transport; they cannot mark a replacement socket disconnected.
 6. `leave(member, connectionId)` frees the seat only before the hand starts or after settlement. It retires the connection. Live-hand seat release/replacement/refunds are rejected, so a client cannot erase commitments by leaving. A disconnected live seat remains reserved. The original turn deadline remains in force. The trusted scheduler may now check/fold the actor on expiry even when disconnected; reconnect does not reset it.
 
-This is a SINGLE-HAND room. After settlement, departed membership may be removed while the public historical hand result remains. A replacement or another start is still rejected; a next-hand/tournament coordinator must manage carried stacks, button/dead seats and eliminations rather than constructing a free refill here. No wallet debit/credit or prize delivery occurs.
+By default this remains a SINGLE-HAND room. Opt-in `{tournament:true}` enables the trusted `nextHand(previousHandId, terms?)` coordinator, carried stacks, physical dead-button positions, post-award elimination and champion termination (see `poker-server-tournaments.md`). Tournament survivors cannot release their reserved seat between hands; busted players may leave or reconnect as spectators. Initial start and new seating still cannot be repeated. No wallet debit/credit or prize delivery occurs.
 
 ## Integration boundaries
 
@@ -27,4 +27,4 @@ Railway resources/deployment remain deferred until development is complete, per 
 
 ## Verification
 
-12 room regressions cover duplicate seating, strict readiness, sparse physical seat order, hidden identities/tokens, cross-member token abuse, payload actor/stack spoofing, waiting/post-hand leave, live seat locks, repeated start, exactly-once retry after reconnection and 100 session rotations with stale-token rejection. Earlier 121 regressions remain, plus 12 deadline regressions (145 total); CI also runs 42 isolated SQL policy checks and 2 React demo lifecycle tests.
+12 room regressions cover duplicate seating, strict readiness, sparse physical seat order, hidden identities/tokens, cross-member token abuse, payload actor/stack spoofing, waiting/post-hand leave, live seat locks, repeated start, exactly-once retry after reconnection and 100 session rotations with stale-token rejection. Earlier 121 regressions remain, plus 12 deadline regressions (157 total); CI also runs 42 isolated SQL policy checks and 2 React demo lifecycle tests.

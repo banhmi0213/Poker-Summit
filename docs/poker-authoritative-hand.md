@@ -24,7 +24,7 @@ The server advances streets only after betting completes; board lengths are 0/3/
 
 ## Reconnection and deployment limits
 
-A reconnect can request a fresh personalized snapshot from the SAME live owner. This is not persistent recovery after server restart. No WebSocket endpoint, auth/session binding, seating, wallet updates, timers, disconnect policy, next-hand coordinator, multi-table or durable result storage is shipped here.
+A reconnect can request a fresh personalized snapshot from the SAME live owner. This is not persistent recovery after server restart. No WebSocket endpoint, auth/session binding, seating, wallet updates, timers, disconnect policy, automatic next-hand scheduling, multi-table or durable result storage is shipped here.
 
 A future transport MUST provide one exclusive owner per hand or a shared transactional compare-and-swap over revision + command receipt + new state. Creating independent owners on multiple replicas is unsafe. Persist accepted state and receipt atomically before acknowledging a durable command. Never use the current demo deal endpoint to broadcast opponent hands.
 
@@ -36,4 +36,6 @@ Railway creation/deployment remains deferred by user request until development i
 
 ## Seating owner follow-up
 
-`SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 145 tests, including server deadline behavior documented in `poker-turn-deadlines.md`.
+`SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 157 tests, including server deadline behavior documented in `poker-turn-deadlines.md`.
+
+Trusted physical seat order and explicit blind positions may now be passed to a hand to preserve dead-button/empty-SB progression. Private viewers and actors must still belong to the current hand, not merely its physical seat order. `finishTournament()` exposes pure terminal ante-aware accounting to the room owner; it is not a client command. See `poker-server-tournaments.md`.

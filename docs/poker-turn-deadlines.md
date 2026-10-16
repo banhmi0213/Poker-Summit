@@ -23,10 +23,12 @@ The trusted clock must return a nonnegative safe integer with room for adding th
 
 ## Limits
 
-No running network service or timer registration is shipped. A future WebSocket/owner scheduler must actually arrange and invoke these callbacks. No heartbeat detection, time-bank extensions, pause/resume, persistent crash recovery, next-hand scheduling, wallet or official result writes are added. One exclusive live owner or shared transactional CAS remains required; this alone is not multi-replica coordination.
+No running network service or timer registration is shipped. A future WebSocket/owner scheduler must actually arrange and invoke these callbacks. No heartbeat detection, time-bank extensions, pause/resume, persistent crash recovery, autonomous next-hand scheduling, wallet or official result writes are added. One exclusive live owner or shared transactional CAS remains required; this alone is not multi-replica coordination.
 
 Railway is still deferred until development completion, as requested. No production game behavior or screen changes in this stage.
 
 ## Validation
 
 12 new tests with an injected clock cover exact expiry, early/duplicate/stale/forged callbacks, free checks vs owed folds, manual-action races, reconnect/disconnected actors, late receipt retry, late-scheduler single-step behavior, backward/invalid clocks, protected action IDs and forced all-in terminal state. All prior 133 regressions remain: 145 total. CI also retains 42 isolated PostgreSQL checks and 2 React demo lifecycle tests.
+
+Opt-in tournament continuation now gives each new hand a fresh ID and versioned deadline. Retired callbacks and actions cannot affect the next hand. See `poker-server-tournaments.md`. Regression count is now 157.

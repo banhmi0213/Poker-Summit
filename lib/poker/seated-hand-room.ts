@@ -1,18 +1,24 @@
-/** Server-owned single-hand room. Authenticated member IDs are trusted transport context,
+/** Server-owned room with optional tournament continuation. Member IDs are trusted context,
  * never client payload fields. One owner per room; persistence/transport are not included.
  */
 import { randomUUID } from "node:crypto";
 import { AuthoritativeHand } from "./authoritative-hand";
 import type { HandTerms } from "./tournament-hand";
+import { initialTournamentPositions,nextTournamentPositions,type TournamentPositions,type TournamentOutcome } from "./tournament-table";
 
 export type TurnDeadline={handId:string;revision:number;actor:string;expiresAt:number};
 type Seat={memberId:string;stack:number;connectionId:string|null};
 export class SeatedHandRoom {
   #seats=new Map<number,Seat>(); #hand:AuthoritativeHand|null=null; #revision=0;
   #startingStack:number; #terms:HandTerms;
+  #tournament:boolean; #positions:TournamentPositions|null=null; #outcome:TournamentOutcome|null=null;
+  #settledHandId:string|null=null; #handNumber=0;
+  #order=Array.from({length:6},(_,i)=>`seat-${i+1}`);
   #turn:TurnDeadline|null=null; #now:()=>number; #turnMs:number; #lastNow=0;
-  constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number}={}) {
+  constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean}={}) {
     if(!Number.isSafeInteger(startingStack)||startingStack<1||startingStack>Math.floor(Number.MAX_SAFE_INTEGER/6))throw new Error("Invalid starting stack");
+    if(options.tournament!==undefined&&typeof options.tournament!=="boolean")throw new Error("Invalid tournament policy");
+    this.#tournament=options.tournament??false;
     const turnMs=options.turnMs??20000;
     if(!Number.isSafeInteger(turnMs)||turnMs<1||turnMs>300000||(options.now!==undefined&&typeof options.now!=="function"))throw new Error("Invalid server clock policy");
     this.#startingStack=startingStack;this.#terms={...terms};this.#turnMs=turnMs;this.#now=options.now??Date.now;
@@ -22,7 +28,15 @@ export class SeatedHandRoom {
     if(!Number.isSafeInteger(value)||value<0||value>Number.MAX_SAFE_INTEGER-this.#turnMs)throw new Error("Invalid server time");
     this.#lastNow=Math.max(this.#lastNow,value);return this.#lastNow;
   }
+  #syncSettlement() {
+    const h=this.#hand?.snapshot(null);
+    if(!this.#tournament||!h?.result||h.handId===this.#settledHandId)return;
+    const outcome=this.#hand!.finishTournament(this.#outcome?.eliminated??[]);
+    this.#outcome=outcome;this.#settledHandId=h.handId;
+    for(const [n,s] of this.#seats)s.stack=outcome.stacks[`seat-${n}`]??0;
+  }
   #armTurn(now:number) {
+    this.#syncSettlement();
     const h=this.#hand?.snapshot(null);
     this.#turn=h?.toAct&&!h.result?{handId:h.handId,revision:h.revision,actor:h.toAct,expiresAt:now+this.#turnMs}:null;
   }
@@ -36,8 +50,11 @@ export class SeatedHandRoom {
     return entry;
   }
   #snapshot(viewerSeat:number|null) {
-    const hand=this.#hand?.snapshot(viewerSeat===null?null:`seat-${viewerSeat}`)??null;
-    return {revision:this.#revision,phase:hand?.result?"complete":hand?"playing":"waiting",youSeat:viewerSeat,turn:this.#turn?{...this.#turn}:null,
+    const publicHand=this.#hand?.snapshot(null)??null;
+    const id=viewerSeat===null?null:`seat-${viewerSeat}`;
+    const hand=id&&publicHand?.players.some(p=>p.id===id)?this.#hand!.snapshot(id):publicHand;
+    const outcome=this.#outcome?{...this.#outcome,stacks:{...this.#outcome.stacks},liveIds:[...this.#outcome.liveIds],eliminated:this.#outcome.eliminated.map(p=>({...p}))}:null;
+    return {revision:this.#revision,mode:this.#tournament?"tournament":"single-hand",phase:outcome?.champion?"finished":hand?.result?"complete":hand?"playing":"waiting",handNumber:this.#handNumber,tournament:outcome,youSeat:viewerSeat,turn:this.#turn?{...this.#turn}:null,
       seats:Array.from({length:6},(_,i)=>{const s=this.#seats.get(i+1);return {seat:i+1,id:`seat-${i+1}`,occupied:Boolean(s),connected:Boolean(s?.connectionId)};}),hand};
   }
   /** Auth-to-member binding must already be verified. Stack is room policy, not client input. */
@@ -73,8 +90,27 @@ export class SeatedHandRoom {
     const entries=[...this.#seats].sort((a,b)=>a[0]-b[0]);
     if(entries.length<2||!this.#seats.has(buttonSeat)||entries.some(([,s])=>!s.connectionId))throw new Error("Players are not ready");
     const now=this.#readNow();
-    const hand=new AuthoritativeHand(entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack})),entries.findIndex(([n])=>n===buttonSeat),this.#terms);
-    this.#hand=hand;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+    const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
+    const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;
+    const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),this.#terms,positions?{order:this.#order,positions}:undefined);
+    this.#hand=hand;this.#positions=positions;this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+  }
+  /** Trusted tournament scheduler only. A captured completed hand ID makes retries safe.
+   * Survivors carry stacks; disconnected survivors remain in play with server deadlines.
+   */
+  nextHand(expectedHandId:string,terms:HandTerms=this.#terms) {
+    if(!this.#tournament||!this.#hand||!this.#positions||!this.#outcome)throw new Error("No completed tournament hand");
+    const before=this.#hand.snapshot(null);
+    if(before.handId!==expectedHandId||!before.result)throw new Error("Previous hand is not current and complete");
+    if(this.#outcome.champion)throw new Error("Tournament already finished");
+    const live=this.#order.filter(id=>(this.#outcome!.stacks[id]??0)>0);
+    const positions=nextTournamentPositions(this.#order,live,this.#positions);
+    const players=live.map(id=>({id,stack:this.#outcome!.stacks[id]}));
+    const now=this.#readNow();
+    const hand=new AuthoritativeHand(players,0,terms,{order:this.#order,positions});
+    // Everything above validates before replacing the previous hand/receipt owner.
+    this.#hand=hand;this.#positions=positions;this.#terms={...terms};this.#handNumber++;this.#armTurn(now);this.#revision++;
+    return this.publicSnapshot();
   }
   act(authenticatedMemberId:string,connectionId:string,payload:unknown) {
     const [n]=this.#connection(authenticatedMemberId,connectionId);
@@ -111,6 +147,7 @@ export class SeatedHandRoom {
   leave(authenticatedMemberId:string,connectionId:string) {
     const [n]=this.#connection(authenticatedMemberId,connectionId);
     if(this.#hand&&!this.#hand.snapshot(null).result)throw new Error("Cannot release a seat during a live hand");
+    if(this.#tournament&&this.#hand&&!this.#outcome?.champion&&(this.#seats.get(n)?.stack??0)>0)throw new Error("Tournament survivor seat remains reserved");
     this.#seats.delete(n);this.#revision++;return this.publicSnapshot();
   }
 }
