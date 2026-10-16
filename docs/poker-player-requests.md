@@ -85,5 +85,5 @@ use a service-role storage client for user identity. No endpoint is publicly act
 23 request/auth regressions: real SDK Auth/RPC request headers, fresh user/suspension checks and
 identity isolation, rejected metadata/roles/bans/deletions, admission denial, strict schemas,
 origin/method/body limits, stolen/replaced capabilities, receipts/stale packets, owner save gating,
-generic failures/no caching, and composed authentication plus durable seating. Full suite: 248 Node
-regressions; CI also runs 156 isolated PostgreSQL checks and 2 React lifecycle cases plus Preview build.
+generic failures/no caching, and composed authentication plus durable seating. Full suite: 273 Node
+regressions; CI also runs 169 isolated PostgreSQL checks and 2 React lifecycle cases plus Preview build.

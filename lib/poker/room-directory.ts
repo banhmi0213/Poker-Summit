@@ -1,11 +1,14 @@
 /** Backend-only directory/admission adapter. Never instantiate with a user-session client. */
+import type {TournamentControl} from './scheduled-tournament-room';
 import {pokerUUID} from './request-auth';
 import {validateStructure,type TournamentStructure} from './tournament';
 export type PlayerOperation='seat'|'connect'|'state'|'spectate'|'act'|'disconnect'|'leave';
 export type RoomAccess={memberId:string;roomId:string;operation:PlayerOperation};
 export type RoomConfig={tournamentId:string;starts_at:string;structure:TournamentStructure};
 export type RoomBinding=RoomConfig&{roomId:string;capacity:2|6;allowSpectators:boolean;enabled:boolean};
+export type RoomControl=TournamentControl&{roomId:string};
 export interface RoomDirectory {
+ control(id:string):Promise<RoomControl|null>;
  tournament(id:string):Promise<RoomConfig|null>;
  binding(id:string):Promise<RoomBinding|null>;
  authorize(access:RoomAccess):Promise<boolean>;
@@ -30,6 +33,12 @@ export class SupabaseRoomDirectory implements RoomDirectory {
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
  async tournament(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_tournament_config',{p_tournament:id});if(data===null)return null;const c=roomConfig(data as RoomConfig);if(c.tournamentId!==id)throw new Error('Tournament binding mismatch');return c;}
  async binding(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_binding',{p_room:id});if(data===null)return null;const b=roomBinding(data as RoomBinding);if(b.roomId!==id)throw new Error('Room binding mismatch');return b;}
+ async control(id:string):Promise<RoomControl|null>{
+  id=roomUUID(id);const data=await this.#rpc('poker_room_control',{p_room:id});if(data===null)return null;const c=data as RoomControl;
+  if(roomUUID(c.roomId)!==id||typeof c.enabled!=='boolean'||typeof c.published!=='boolean'||!Number.isSafeInteger(c.expectedCount)||c.expectedCount<2||c.expectedCount>6||!Array.isArray(c.members)||c.members.length>c.expectedCount)throw new Error('Invalid room control');
+  const members=c.members.map(roomUUID);if(new Set(members).size!==members.length)throw new Error('Invalid room roster');
+  return {roomId:id,enabled:c.enabled,published:c.published,expectedCount:c.expectedCount,members};
+ }
  async authorize(access:RoomAccess){
   const roomId=roomUUID(access.roomId),memberId=roomUUID(access.memberId);
   if(!['seat','connect','state','spectate','act','disconnect','leave'].includes(access.operation))return false;

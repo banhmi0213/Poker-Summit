@@ -71,16 +71,16 @@ one process. No server is started by constructing the registry.
 
 `registry.playerHandler({origins,auth})` composes the Supabase identity verifier, fresh admission RPC
 and registry lookup with durable dispatch. Players cannot call provision/recover/start/next/timers.
-The future scheduler MUST wait for the complete assigned starting roster to seat/connect before
-initial dealing; the lower-level engine alone only knows occupied seats. Start/timeout orchestration,
-roster-readiness reporting, operator admission controls, network limits and client UI remain separate
-work. No player-visible room listing/admission list or member identifiers are broadcast.
+The registered auto-start path and timer driver now enforce full-roster readiness; see
+[poker-room-scheduler.md](./poker-room-scheduler.md). The lower-level trusted start API still only
+knows occupied seats. Worker deployment, operator admission controls, network limits and client UI
+remain separate work. No player-visible room listing/admission list or member identifiers are broadcast.
 
 ## Verification
 
-16 new Node regressions (248 total): frozen config, wrong bindings, provision failure/uncertainty,
+16 directory/registry Node regressions (273 total): frozen config, wrong bindings, provision failure/uncertainty,
 coalesced loads, lookup/provision races, queue bounds, fresh admission and explicit recovery.
-71 new isolated PostgreSQL checks execute actual migrations/RPC adapters, registry, HTTP dispatch,
+84 isolated PostgreSQL checks execute actual migrations/RPC adapters, registry, HTTP dispatch,
 2/6-person assignments, duplicate table denial, immutable roster/config/pristine guards, spectator
 policy, unpublishing continuity, Auth deletion and privilege/RLS denial. CI retains earlier 85 SQL
 checks and 2 React lifecycle cases plus Preview build. No real credentials or production DB used.

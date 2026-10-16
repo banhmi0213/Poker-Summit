@@ -1,12 +1,12 @@
 /** Backend owner boundary: no room mutation/read can escape an unresolved durable commit.
  * Transport must verify member identity and route a room to ONE owner. No socket/server is started.
  */
-import {ScheduledTournamentRoom} from './scheduled-tournament-room';
+import {ScheduledTournamentRoom,type TournamentControl} from './scheduled-tournament-room';
 import {prepareRoomSave,restoreRoom,type KeyRing,type RoomStore} from './room-persistence';
 import type {TurnDeadline} from './seated-hand-room';
 
 type Config=ConstructorParameters<typeof ScheduledTournamentRoom>[0];
-type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;maxPending?:number;expectedConfig?:Config};
+type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxPending?:number;expectedConfig?:Config};
 const unavailable=()=>new Error('Room unavailable; durable recovery required');
 function checkConfig(room:ScheduledTournamentRoom,config?:Config){
  if(!config)return;
@@ -27,7 +27,7 @@ export class DurableRoomOwner {
   }
   /** Create only a genuinely new room. Initial CAS commit must succeed before use. */
   static async create(config:Config,options:Options) {
-    const owner=new DurableRoomOwner(new ScheduledTournamentRoom(config,{now:options.now,turnMs:options.turnMs}),0,options);
+    const owner=new DurableRoomOwner(new ScheduledTournamentRoom(config,{now:options.now,turnMs:options.turnMs,handPauseMs:options.handPauseMs}),0,options);
     await owner.#persist(owner.#room,0);owner.#halted=false;return owner;
   }
   /** No fallback to a fresh room when load/decryption fails or the room is missing.
@@ -87,6 +87,8 @@ export class DurableRoomOwner {
     let captured:unknown;try{captured=structuredClone(payload);}catch{return Promise.reject(new Error('Invalid action payload'));}
     return this.#mutate(r=>r.act(member,connection,captured),r=>!r.replayed);
   }
+  /** Scheduler only. Decision + readiness check + mutation share this owner's FIFO/commit. */
+  advance(control:TournamentControl){const captured=structuredClone(control);return this.#mutate(r=>r.advance(captured),r=>r.changed);}
   expireTurn(deadline:TurnDeadline) {
     let captured:TurnDeadline;try{captured=structuredClone(deadline);}catch{return Promise.reject(new Error('Invalid deadline'));}
     return this.#mutate(r=>r.expireTurn(captured),r=>r.expired);

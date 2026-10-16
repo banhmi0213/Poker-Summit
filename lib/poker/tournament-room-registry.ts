@@ -3,7 +3,7 @@ import {DurableRoomOwner} from './durable-room-owner';
 import type {KeyRing,RoomStore} from './room-persistence';
 import {roomUUID,roomConfig,roomBinding,type RoomDirectory,type RoomAccess} from './room-directory';
 import {createSupabasePokerPlayerHandler} from './player-request-handler';
-type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;maxRooms?:number};
+type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxRooms?:number};
 export class TournamentRoomRegistry {
  #owners=new Map<string,Promise<DurableRoomOwner|null>>();#options:Options;#limit:number;
  constructor(options:Options){const limit=options.maxRooms??128;if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw new Error('Invalid room registry limit');this.#options={...options,keys:structuredClone(options.keys)};this.#limit=limit;}
@@ -31,6 +31,13 @@ export class TournamentRoomRegistry {
   return this.#reserve(roomId,async()=>{const raw=await this.#options.directory.tournament(tournament);if(!raw)throw new Error('Published tournament not found');const config=roomConfig(raw);if(config.tournamentId!==tournament)throw new Error('Tournament identity mismatch');
    const owner=await DurableRoomOwner.create(config,{...this.#options,roomId,expectedConfig:config});
    await this.#options.directory.provision({...config,roomId,...copied,enabled:true},ids);return owner;});
+ }
+ /** Fresh backend control for every timer decision; missing/disabled rooms do not auto-start. */
+ async advance(id:string){
+  const roomId=roomUUID(id),control=await this.#options.directory.control(roomId);
+  if(!control||control.roomId!==roomId)return null;
+  if(!control.enabled)return null;
+  const owner=await this.owner(roomId);if(!owner)return null;return owner.advance(control);
  }
  /** Explicit operator recovery; halted owners are never silently replaced per player request. */
  async recover(id:string){const owner=await this.owner(id);if(!owner)throw new Error('Managed room not found');return owner.recover();}
