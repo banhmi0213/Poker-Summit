@@ -13,3 +13,12 @@
 .section{margin-top:var(--section-space)}
 .section h2{margin-bottom:var(--heading-space)}
 .panel{padding:var(--card-space)}
+
+/* Desktop reading size and contrast for the gold actions. */
+@media(min-width:861px){
+ .facts span{font-size:12px}.facts strong{font-size:14px}
+ .description{font-size:15px}.details>div,.participation>div{font-size:14px}
+ .help,.relatedItem small,.relatedItem span{font-size:12px}
+ .primary,.sections a:first-child{color:#2a1c06}
+ .primary,.outline{min-height:44px;font-size:14px}
+}

@@ -63,3 +63,5 @@
 .section{margin-block:var(--section-space)}
 .grid{gap:var(--grid-space)}
 .copy{padding:var(--card-space)}
+
+@media(min-width:861px){.toolbar nav a[aria-current]{color:#2a1c06}.copy p{font-size:14px}.meta{color:#665744}}

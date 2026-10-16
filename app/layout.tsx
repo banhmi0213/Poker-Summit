@@ -3,6 +3,7 @@ import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_DESCRIPTION, SITE_NAME, SITE_
 import "./globals.css";
 import "./admin/major-tournaments/tournament.css";
 import "./spacing.css";
+import "./pc-readability.css";
 import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
