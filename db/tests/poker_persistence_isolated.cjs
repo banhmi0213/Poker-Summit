@@ -20,7 +20,7 @@ try {
  const bad=prepareRoomSave(id,3,r,ring).request;bad.result.winners=['seat-99'];await assert.rejects(store.save(bad));checks++;ok((await store.load(id)).version,3);
  const wrong=structuredClone(same.request);wrong.sealed.data='modified';await assert.rejects(store.save(wrong));checks++;ok((await store.load(id)).version,3);
  const done=await restoreRoom(store,id,ring,{now:()=>T});ok(done.room.publicSnapshot().hand.result,r.publicSnapshot().hand.result);ok(done.room.publicSnapshot().tournament,r.publicSnapshot().tournament);
- const saved=JSON.stringify(await store.load(id));ok(saved.includes('m1'),false);ok(saved.includes(tokens[1]),false);
+ const saved=JSON.stringify(await store.load(id));ok(saved.includes(JSON.stringify('m1')),false);ok(saved.includes(tokens[1]),false);
  await db.exec('reset role');ok((await db.query("select count(*)::int as n from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='poker_private' and c.relrowsecurity")).rows[0].n,2);
  for(const role of ['anon','authenticated']){await db.exec('set role '+role);for(const query of ['select public.poker_room_load($1)','select * from poker_private.room_checkpoints where room_id=$1','select * from poker_private.hand_results where room_id=$1']){await assert.rejects(db.query(query,[id]));checks++;}await assert.rejects(db.query('select public.poker_room_save($1,0,$2,$3,null)',[id,randomUUID(),JSON.stringify(first.request.sealed)]));checks++;await db.exec('reset role');}
  // Even if table grants accidentally broaden, no permissive RLS policy exists.
