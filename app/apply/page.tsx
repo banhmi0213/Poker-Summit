@@ -29,7 +29,11 @@ export default async function ApplyPage({
     .eq("id", true)
     .maybeSingle();
   const acceptingNew = settings?.listing_accept_new ?? true;
-  const billing = await getBillingSettings();
+  const billingBase = await getBillingSettings();
+  // カード払いを一般に止めている間も、運営(総合管理にログイン中)だけはカードを選べる(決済画面の確認用、2026/10)
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const adminCardPreview = !billingBase.cardPaymentEnabled && isAdmin === true;
+  const billing = adminCardPreview ? { ...billingBase, cardPaymentEnabled: true } : billingBase;
   const priceLock = await getPriceLockCampaign();
 
   const { data: plans } = await supabase
@@ -191,6 +195,11 @@ export default async function ApplyPage({
                     ))}
                   </select>
                 </div>
+                {adminCardPreview && (
+                  <p className="muted" style={{ fontSize: 12, color: "#b45309", margin: "0 0 6px" }}>
+                    ※運営のみ表示：クレジットカード払いは現在一般のお客様には表示していません（確認用）
+                  </p>
+                )}
                 <ApplyBillingFields
                   cardEnabled={billing.cardPaymentEnabled}
                   cycles={BILLING_CYCLES.map((m) => {
