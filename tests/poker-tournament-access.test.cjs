@@ -56,3 +56,8 @@ test('permitted store menu restores the online tournament link',()=>{
  const html=renderToStaticMarkup(React.createElement(StoreSidebar,{tournamentEnabled:true}));
  assert.match(html,/href="\/store\/profile\/poker-tournaments"/);assert.doesNotMatch(html,/aria-disabled="true"/);
 });
+test('demo deal requests accept only surviving fixed seats and reject invalid rosters',async()=>{
+ setup();const {requestDemoDeal}=req(root+'/app/poker-demo/actions.ts');
+ for(const [button,live] of [[6,['you','p2']],[0,['you','foreign']],[0,['you','you']],[0,['you']],[0,'not-an-array']])await assert.rejects(()=>requestDemoDeal(button,live));
+ const deal=await requestDemoDeal(0,['you','p2']);assert.deepEqual(Object.keys(deal.holes),['p2','you']);assert.equal(deal.board.length,5);assert.equal(writes,0);
+});

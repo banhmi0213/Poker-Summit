@@ -146,3 +146,19 @@ require('node:test').test('scheduled and break pages keep full stacks, no forced
   assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000 chips/);assert.match(html,/POT <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
  }
 });
+require('node:test').test('heads-up render combines BTN/SB, deals only two live hands and marks unused seats empty',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const tournament={id:'sample',title:'HU',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
+ const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
+ const initialDeal=dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],['you','p2'],'you');
+ const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal,tournament,initialSeatIds:['you','p2'],serverNow:Date.parse(tournament.starts_at)}));
+ assert.match(html,/残り 2人 ／ 開始 2人・ヘッズアップ/);assert.match(html,/>BTN\/SB</);assert.equal((html.match(/class="cardBack"/g)||[]).length,2);assert.equal((html.match(/class="eliminatedTag">空席/g)||[]).length,4);assert.match(html,/POT <strong>150/);assert.doesNotMatch(html,/相手のフォールド確認/);
+});
+require('node:test').test('when your seat is outside the current hand, cards and action controls stay inactive',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
+ const tournament={id:'sample',title:'FOLLOW',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null},ids=['p2','p4'];
+ const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],ids,'p2'),tournament,initialSeatIds:ids,serverNow:Date.parse(tournament.starts_at)}));
+ assert.doesNotMatch(html,/class="hole"/);assert.match(html,/脱落・進行確認中/);
+ const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,4);
+ assert.match(html,/<button class="reset" type="button">デモをリセット<\/button>/);
+});
