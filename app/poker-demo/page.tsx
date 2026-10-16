@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PortalHeader } from "@/app/portal-header";
-import { PortalFooter } from "@/app/portal-footer";
-import { BottomTabs } from "@/app/bottom-tabs";
 import { dealDemoHandAtTable } from "@/lib/poker/demo-deal";
 import { defaultStructure, validateStructure, type PokerTournament } from "@/lib/poker/tournament";
 import PokerTablePreview from "./poker-table-preview";
+import styles from "./poker-table.module.css";
 
 export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
 
@@ -39,15 +37,14 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const button=initialSeatIds.includes("p6")?"p6":initialSeatIds[0];
   const displayName = typeof user?.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
     ? user.user_metadata.display_name.trim() : user ? "会員" : "デモユーザー";
-  return <div className="portal">
-    <PortalHeader userEmail={user?.email} />
-    <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
+  return <div className={styles.gamePage}>
+    <main className={styles.gameMain}>
+      {isPreview && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast">1分レベル・BBアンティ検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&ante=per-player">1分レベル・全員アンティ検証</a></p>}
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast&scenario=short">200チップ・脱落検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&scenario=heads-up">2人卓・優勝確定の検証</a></p>}
       {shortScenario && <p>検証専用：開始{initialSeatIds.length}人・各200チップ。保存された大会設定・会員残高には影響しません。</p>}
+      </details>}
       <PokerTablePreview initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={!tournament && searchParams?.mode === "spectate"} />
     </main>
-    <PortalFooter />
-    <BottomTabs />
   </div>;
 }

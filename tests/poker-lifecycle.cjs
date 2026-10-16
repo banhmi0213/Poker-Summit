@@ -43,7 +43,7 @@ async function lifecycle(youBust=false){
   }
   assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);assert.match(text(renderer.toJSON()),/残り 1人 ／ 開始 6人/);assert.match(text(renderer.toJSON()),/あなたは脱落しました/);
   assert.match(text(renderer.toJSON()),youBust?/同順位（3〜6位）：TEST/:/2位：TEST/);assert.ok(button('大会終了').props.disabled);assert.equal(calls.length,youBust?3:1);
-  assert.equal(renderer.root.findByType('details').props.open,true);assert.match(text(renderer.toJSON()),/大会結果ログ/);await click(button('退出する'));assert.equal(exitPath,'/poker-lobby');assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);
+  assert.equal(renderer.root.findByProps({'aria-label':'大会結果ログ'}).props.open,true);assert.match(text(renderer.toJSON()),/大会結果ログ/);await click(button('退出する'));assert.equal(exitPath,'/poker-lobby');assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);
  }finally{
   if(renderer)await act(async()=>renderer.unmount());if(youBust)[holes.you,holes.p2]=[holes.p2,holes.you];Date.now=oldNow;global.window=oldWindow;global.document=oldDocument;Module._load=originalLoad;Module._resolveFilename=originalResolve;
  }
