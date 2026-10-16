@@ -33,7 +33,7 @@ export function postBlinds(
   return { positions: pos, players, pot: players.reduce((sum, p) => sum + p.totalCommitted, 0) };
 }
 
-export type ShowdownEntry = Pick<BettingPlayer, "id" | "totalCommitted" | "folded"> & { hole: readonly [Card, Card] };
+export type ShowdownEntry = Pick<BettingPlayer, "id" | "totalCommitted" | "folded" | "sharedAnte"> & { hole: readonly [Card, Card] };
 export type ShowdownAward = { pot: number; winners: string[]; each: number; oddChips: string[] };
 /** Splits side pots, with odd chips allocated clockwise from the button. */
 export function settleShowdown(entries: readonly ShowdownEntry[], board: readonly Card[], clockwiseIds: readonly string[], buttonId: string) {

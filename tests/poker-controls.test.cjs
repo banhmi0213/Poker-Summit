@@ -94,7 +94,7 @@ require('node:test').test('tournament sample renders top clock, structure menu a
  const ids=['you','p5','p3','p2','p4','p6'],r=createBettingRound(ids.map(id=>({id,stack:1000})),100,'you');
  const tournament={id:'sample',title:'TEST CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  const html=render(r,{tournament,serverNow:Date.parse(tournament.starts_at)}).html;
- assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>ストラクチャー<\/button>/);assert.match(html,/50\/100・アンティなし/);
+ assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>ストラクチャー<\/button>/);assert.match(html,/大会設定連動デモ/);
 });
 require('node:test').test('structure table renders all levels, break and late registration details',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
@@ -130,4 +130,19 @@ require('node:test').test('structure editor exposes mobile steppers with correct
  const html=renderToStaticMarkup(React.createElement(Editor));
  assert.match(html,/行1 sbを10増やす/);assert.match(html,/行1 minutesを1増やす/);assert.match(html,/レイトレジスト終了レベルを1増やす/);assert.match(html,/data-label="SB"/);assert.match(html,/data-label="分"/);
  assert.match(html,/aria-label="行2 sb"[^>]*value="75"/);
+});
+require('node:test').test('real tournament initial render applies starting stack, blind level and BBA',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const structure={...structuredClone(defaultStructure),startingStack:20000};structure.periods[0]={...structure.periods[0],sb:200,bb:400,ante:400};structure.periods=structure.periods.slice(0,1);structure.lateRegLevel=1;
+ const tournament={id:'sample',title:'LIVE SETTINGS',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure,image_url:null};
+ const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)}));
+ assert.match(html,/SB 200 \/ BB 400/);assert.match(html,/19,800 chips/);assert.match(html,/PLAYER 5<\/span><small>19,200/);assert.match(html,/POT <strong>1,000/);assert.match(html,/アンティ合計：400/);assert.match(html,/BBアンティ・BB優先/);assert.doesNotMatch(html,/50\/100・アンティなし/);
+});
+require('node:test').test('scheduled and break pages keep full stacks, no forced pot, no cards and disabled actions',()=>{
+ const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
+ const tournament={id:'sample',title:'WAIT',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
+ for(const offset of [-1,80*60000]){
+  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)+offset}));
+  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000 chips/);assert.match(html,/POT <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
+ }
 });

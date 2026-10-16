@@ -45,3 +45,6 @@ Migration 20261016071559 adds poker_tournament_store_access. No initial permissi
 Admin-only RLS protects permission writes. Restrictive policies gate tournament inserts and both old/new states of updates, so revocation blocks already-open clients. Storage paths for new uploads include user/store IDs; permission checks bind images to the exact store (legacy paths require an existing matching tournament). Existing tournament data, images and publication remain intact on revocation; admins can continue managing all tournaments. No store has been granted access automatically.
 
 Verification: 74 Node regression tests; isolated PostgreSQL 42 schema/RLS/storage assertions covering self-grant rejection, exact-store ownership, multiple stores for one user, revoke, legacy images and suspension. Live project rollback-only transaction passed 11 assertions with real owner/admin helpers, preserving existing rows and leaving zero permission/test rows. GitHub Actions now runs isolated PostgreSQL tests using pinned PGlite 0.5.10.
+
+## Next implementation
+See [poker-tournament-play.md](poker-tournament-play.md) for local demo integration of starting stack, hand-boundary blind changes and antes. The earlier 50/100-only preview limitation is superseded by this integration; online participation, results and prizes remain outside scope.
