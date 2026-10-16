@@ -39,9 +39,14 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   return data;
 }
 
+// 1か月後(月末は月末に丸める。1/31 → 2/28。以前は 3/3 にずれていた)
 function addOneMonthIso(from: Date = new Date()): string {
   const d = new Date(from);
-  d.setMonth(d.getMonth() + 1);
+  const day = d.getUTCDate();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() + 1);
+  const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+  d.setUTCDate(Math.min(day, lastDay));
   return d.toISOString();
 }
 

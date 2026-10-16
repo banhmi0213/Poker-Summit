@@ -175,7 +175,14 @@ export async function createInvoice(params: {
   settings: BillingSettings;
 }): Promise<InvoiceRow> {
   const svc = createServiceRoleClient();
+  // 金額の安全確認: 月額が正の整数でなければ請求書を作らない(0円・マイナス・小数の請求を防ぐ)
+  if (!Number.isInteger(params.plan.monthly_fee) || params.plan.monthly_fee <= 0) {
+    throw new Error(`プランの月額が正しくありません（${params.plan.monthly_fee}）。請求書は作成していません。`);
+  }
   const q = quote(params.plan.monthly_fee, params.months, discountFor(params.settings, params.months));
+  if (!Number.isInteger(q.total) || q.total <= 0 || q.total > params.plan.monthly_fee * params.months) {
+    throw new Error(`請求金額の計算が正しくありません（${q.total}円）。請求書は作成していません。`);
+  }
   const today = todayJst();
   const periodStart = params.periodStart ?? null;
   const { data, error } = await svc
@@ -240,6 +247,27 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
   const inv = invoice as InvoiceRow;
   if (inv.status === "canceled") throw new Error("取り消し済みの請求書です。");
   if (inv.status === "paid") return { alreadyPaid: true as const };
+  // 二重処理の防止: 「入金確認」が同時に2回押されても、店舗の発行・期間の延長は1回だけにする。
+  // paid_at を先に入れた方だけが処理を続ける(失敗したら戻す)。
+  {
+    const { data: claimed } = await svc
+      .from("invoices")
+      .update({ paid_at: new Date().toISOString() })
+      .eq("id", invoiceId)
+      .eq("status", "unpaid")
+      .is("paid_at", null)
+      .select("id");
+    if (!claimed?.length) return { alreadyPaid: true as const };
+  }
+  try {
+    return await confirmClaimedInvoice(svc, inv, adminUserId, note);
+  } catch (e) {
+    await svc.from("invoices").update({ paid_at: null }).eq("id", invoiceId).eq("status", "unpaid");
+    throw e;
+  }
+}
+
+async function confirmClaimedInvoice(svc: ReturnType<typeof createServiceRoleClient>, inv: InvoiceRow, adminUserId: string | null, note?: string) {
 
   if (inv.kind === "addon") {
     const { confirmAddonInvoice } = await import("@/lib/addon-orders");
@@ -387,7 +415,8 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
 
 export async function cancelInvoice(invoiceId: string, adminUserId: string | null) {
   const svc = createServiceRoleClient();
-  const { error } = await svc.from("invoices").update({ status: "canceled" }).eq("id", invoiceId).eq("status", "unpaid");
+  // 入金確認の処理中(paid_at が入っている)のものは取り消さない
+  const { error } = await svc.from("invoices").update({ status: "canceled" }).eq("id", invoiceId).eq("status", "unpaid").is("paid_at", null);
   if (error) throw new Error(error.message);
   // アドオン注文の請求なら注文も取り消す
   const { data: inv } = await svc.from("invoices").select("addon_order_id").eq("id", invoiceId).maybeSingle();

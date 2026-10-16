@@ -68,6 +68,11 @@ export async function createAddonInvoice(params: {
   const svc = createServiceRoleClient();
   const settings = await getBillingSettings(svc);
   if (!params.lines.length) throw new Error("請求する内容がありません。");
+  for (const l of params.lines) {
+    if (!Number.isInteger(l.unitPrice) || l.unitPrice <= 0 || !Number.isInteger(l.quantity) || l.quantity <= 0) {
+      throw new Error(`アドオンの金額・数量が正しくありません（${l.addonName}：${l.unitPrice}円×${l.quantity}）。請求書は作成していません。`);
+    }
+  }
   const total = params.lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const periodStart = params.periodStart ?? null;
   const periodEnd = periodStart ? addDays(addMonths(periodStart, 1), -1) : null;
