@@ -8,6 +8,7 @@ import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
 import { searchStoreCandidates } from "@/lib/store-match";
+import { guardPublicForm } from "@/lib/form-guard";
 
 // 申込み名義・店舗名・住所と、掲載中の店舗との結び付け(2026/10)。
 // - 店舗名で申し込む: 店舗名だけ必須(請求書の宛名も店舗名)
@@ -86,6 +87,11 @@ async function notifyNewListingApplication(
 }
 
 export async function submitApplication(formData: FormData) {
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで。他人のアドレスへの請求書メールの大量送信を防ぐ)
+  {
+    const blocked = await guardPublicForm(formData, "apply", 5);
+    if (blocked) redirect(`/apply?error=${encodeURIComponent(blocked)}`);
+  }
       const supabase = await createClient();
 
   const { data: settings } = await supabase
@@ -179,6 +185,11 @@ function getSiteUrl(): string {
 }
 
 export async function startPaidApplication(formData: FormData) {
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで。他人のアドレスへの請求書メールの大量送信を防ぐ)
+  {
+    const blocked = await guardPublicForm(formData, "apply", 5);
+    if (blocked) redirect(`/apply?error=${encodeURIComponent(blocked)}`);
+  }
       const supabase = await createClient();
 
   const { data: settings } = await supabase

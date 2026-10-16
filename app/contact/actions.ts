@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendInquiryNotificationEmail } from "@/lib/email";
+import { guardPublicForm } from "@/lib/form-guard";
 
 export async function submitInquiry(formData: FormData) {
   const supabase = await createClient();
@@ -17,6 +18,10 @@ export async function submitInquiry(formData: FormData) {
   if (!name || !email || !message) {
     redirect("/contact?error=" + encodeURIComponent("必須項目を入力してください。"));
   }
+
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで)
+  const blocked = await guardPublicForm(formData, "inquiry", 5);
+  if (blocked) redirect("/contact?error=" + encodeURIComponent(blocked));
 
   const { error } = await supabase.from("inquiries").insert({
     name,

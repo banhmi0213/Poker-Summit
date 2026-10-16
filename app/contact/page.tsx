@@ -1,3 +1,4 @@
+import { TurnstileWidget } from "@/app/turnstile-widget";
 import Link from "next/link";
 import { submitInquiry } from "./actions";
 import { createClient } from "@/lib/supabase/server";
@@ -76,6 +77,7 @@ export default async function ContactPage({
                 <span className="muted">お問い合わせ内容 *</span>
                 <textarea name="message" rows={5} required />
               </div>
+              <TurnstileWidget note="送信できない場合は info@pokersummit.jp までメールでご連絡ください。" />
               <button type="submit" className="btn primary" style={{ width: "100%" }}>
                 送信する
               </button>
