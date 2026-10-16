@@ -259,9 +259,12 @@ export function FormDraftKeeper() {
       role="status"
       style={{
         position: "fixed",
-        left: "50%",
-        bottom: 16,
-        transform: "translateX(-50%)",
+        left: 0,
+        right: 0,
+        margin: "0 auto",
+        width: "fit-content",
+        // スマホ下部のタブメニューに重ならない高さ
+        bottom: "calc(76px + env(safe-area-inset-bottom, 0px))",
         zIndex: 1000,
         background: "#1f2937",
         color: "#fff",
@@ -275,7 +278,7 @@ export function FormDraftKeeper() {
         maxWidth: "calc(100vw - 32px)",
       }}
     >
-      <span>入力途中の内容を復元しました</span>
+      <span style={{ whiteSpace: "nowrap" }}>入力途中の内容を復元しました</span>
       <button
         type="button"
         onClick={discard}
