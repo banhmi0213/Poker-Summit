@@ -18,6 +18,8 @@ export function GaPageView({ measurementId }: { measurementId: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   useEffect(() => {
+    // 管理画面にいる間は、スクロール・フォーム操作などの自動計測も含めて送らない
+    (window as unknown as Record<string, boolean>)[`ga-disable-${measurementId}`] = !!pathname && EXCLUDE.test(pathname);
     if (!pathname || EXCLUDE.test(pathname)) return;
     // ページのタイトルが入れ替わるのを少し待ってから送る
     const t = window.setTimeout(() => {
