@@ -70,6 +70,13 @@ export function ReportForm({
         placeholder="詳しい内容（任意）。例：〇月に閉店した、電話番号が違う など"
         style={{ fontSize: 14 }}
       />
+      <input
+        type="email"
+        name="reporterEmail"
+        maxLength={254}
+        placeholder="返事がほしい場合のメールアドレス（任意・ログイン中なら登録アドレスに返信）"
+        style={{ fontSize: 14 }}
+      />
       <div style={{ display: "flex", gap: 8 }}>
         <SubmitButton />
         <button type="button" className="btn" style={{ fontSize: 12.5 }} onClick={() => setOpen(false)}>

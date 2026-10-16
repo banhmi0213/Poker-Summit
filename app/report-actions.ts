@@ -29,6 +29,7 @@ async function submitReport(
     target_id: targetId,
     reason,
     detail,
+    reporter_email: (() => { const e = String(formData?.get("reporterEmail") ?? "").trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 ? e : null; })(),
     reporter_user_id: user?.id ?? null,
   });
 
