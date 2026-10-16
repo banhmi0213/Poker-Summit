@@ -1,3 +1,4 @@
+import { TurnstileWidget } from "@/app/turnstile-widget";
 import Link from "next/link";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
@@ -230,6 +231,7 @@ export default async function ApplyPage({
                 <a href="/privacy" target="_blank" rel="noopener" style={LINK_STYLE}>プライバシーポリシー</a>に同意します
               </span>
             </label>
+            <TurnstileWidget note="送信できない場合は info@pokersummit.jp までメールでご連絡ください。" />
             <button
               type="submit"
               formAction={submitApplication}
