@@ -245,7 +245,9 @@ export async function startPaidApplication(formData: FormData) {
 
   const billingSettings = await getBillingSettings(createServiceRoleClient());
   if (billingMethod === "card") {
-          if (!billingSettings.cardPaymentEnabled) {
+          // カード払いを一般に止めている間も、運営だけは確認用に申し込める
+          const { data: isAdmin } = await (await createClient()).rpc("is_admin");
+          if (!billingSettings.cardPaymentEnabled && isAdmin !== true) {
                     redirect(`/apply?error=${encodeURIComponent("現在クレジットカードでのお申込みは受け付けておりません。銀行振込をお選びください。")}`);
           }
           if (billingCycle !== 1) {
