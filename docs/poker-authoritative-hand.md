@@ -33,3 +33,7 @@ Railway creation/deployment remains deferred by user request until development i
 ## Validation
 
 12 new tests cover privacy, safe copies, authenticated-actor separation, strict malformed input rejection, stale/wrong-hand packets, exact retries, action ID conflicts, competing versions, all streets, folded-card secrecy, fold victory, all-in runout and ante-only starts. 100 complete 2-6 player simulated hands verify private-card filtering and chip conservation. Existing 109 regressions remain (121 total). CI also retains 42 isolated PostgreSQL checks and 2 React demo lifecycle tests.
+
+## Seating owner follow-up
+
+`SeatedHandRoom` now supplies an in-process member-to-seat and current-connection wrapper around this class. See `poker-seated-hand-room.md`. It does not yet validate real login credentials, provide network transport or durable recovery. Total regression coverage is now 133 tests.
