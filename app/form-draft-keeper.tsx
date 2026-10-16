@@ -74,17 +74,13 @@ function pageKey(): string {
   return url.pathname + (q ? `?${q}` : "");
 }
 
-// 同じページに複数フォームがあっても取り違えないよう、何番目のフォームか+入力欄の構成で区別
+// 同じページの何番目のフォームかで区別する(欄の構成は条件付き表示で変わるのでキーには含めない)。
+// 復元は名前が一致する欄にだけ行うので、取り違えても他の欄を壊さない
 function formKey(form: HTMLFormElement): string | null {
   const forms = Array.from(document.forms).filter(eligibleForm);
   const index = forms.indexOf(form);
   if (index < 0) return null;
-  const names = fieldEntries(form)
-    .map(([k]) => k)
-    .join("|");
-  let h = 0;
-  for (let i = 0; i < names.length; i++) h = (Math.imul(31, h) + names.charCodeAt(i)) | 0;
-  return `${PREFIX}${pageKey()}#${index}:${(h >>> 0).toString(36)}`;
+  return `${PREFIX}${pageKey()}#${index}`;
 }
 
 function readDraft(key: string): Draft | null {
@@ -109,7 +105,9 @@ function saveForm(form: HTMLFormElement, submitted = false) {
   const key = formKey(form);
   const s = storage();
   if (!key || !s) return;
-  const values: Record<string, string | boolean> = {};
+  // いま表示されていない欄(切替で隠れた欄など)の値も残しておく
+  const prev = readDraft(key);
+  const values: Record<string, string | boolean> = prev && !prev.submitted ? { ...prev.values } : {};
   let hasContent = false;
   for (const [k, el] of fieldEntries(form)) {
     if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
@@ -121,7 +119,7 @@ function saveForm(form: HTMLFormElement, submitted = false) {
     }
   }
   try {
-    if (!hasContent && !submitted) {
+    if (!hasContent && !submitted && !prev) {
       s.removeItem(key);
       return;
     }
