@@ -81,6 +81,10 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
               ログアウト
             </button>
           </form>
+          {/* 先行登録中でも自分で退会できるようにする(2026/10) */}
+          <p style={{ marginTop: 10, fontSize: 12 }}>
+            <Link href="/account/delete" style={{ color: "#8a6d3b" }}>退会はこちら</Link>
+          </p>
         </div>
       </div>
     </div>
