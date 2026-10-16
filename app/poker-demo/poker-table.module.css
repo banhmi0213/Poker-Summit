@@ -466,3 +466,8 @@
  .bet_p5{left:25%}
  .bet_p6{left:75%;right:auto;transform:translateX(-50%)}
 }
+/* Reserve the full final-level message width without changing the next-blind row. */
+@media(min-width:900px){
+ .gameClock aside>div>div{grid-template-columns:80px minmax(6ch,max-content)}
+ .gameClock aside b{font-size:clamp(13px,1.4vw,20px);text-align:right}
+}
