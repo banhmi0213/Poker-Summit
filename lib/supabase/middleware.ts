@@ -151,7 +151,7 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
 function isPrelaunchExempt(pathname: string) {
   const exact = ["/prelaunch", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
   if (exact.includes(pathname)) return true;
-  const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/_next/"];
+  const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/account/dealer", "/_next/"];
   return pathname === "/admin" || prefixes.some((p) => pathname.startsWith(p));
 }
 

@@ -20,9 +20,6 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
     supabase.auth.getUser(),
   ]);
   const loggedIn = !!auth.user;
-  const message =
-    settings?.prelaunch_message ||
-    "全国のアミューズメントポーカー店・トーナメント・イベント情報をまとめて探せるポーカー総合情報サイト「Poker Summit」が、まもなくオープンします。";
 
   if (!loggedIn) return RegistrationPage({searchParams, early: true});
 
@@ -37,22 +34,17 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
         </h1>
 
         <div className="card" style={{ textAlign: "left", lineHeight: 1.9, marginBottom: 20 }}>
-          {loggedIn ? (
-            <p>
-              先行会員としてのご登録が完了しています。サイトのオープンまで、もうしばらくお待ちください。
-              <br />
-              オープン日や先行会員限定トーナメントの詳細は、メールと公式Xでお知らせします。
-            </p>
-          ) : (
-            <>
-              <p style={{ whiteSpace: "pre-wrap", marginBottom: 14 }}>{message}</p>
-              <div style={{ background: "#fff7e6", border: "1px solid #e6c98a", borderRadius: 10, padding: "12px 14px" }}>
-                <strong>🏆 先行会員特典</strong>
-                <br />
-                先行会員限定のトーナメントを開催予定です。詳細は公式Xで発表します。
-              </div>
-            </>
-          )}
+          {/* ここに来るのはログイン済みの先行会員だけ(未ログインは上で登録画面を返す) */}
+          <p>
+            先行会員としてのご登録が完了しています。サイトのオープンまで、もうしばらくお待ちください。
+            <br />
+            オープン日や先行会員限定トーナメントの詳細は、メールと公式Xでお知らせします。
+          </p>
+          <p style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee3cc", fontSize: 13.5 }}>
+            ポーカーディーラーの方は、オープン前からディーラー登録ができます。
+            <br />
+            <Link href="/account/dealer" style={{ fontWeight: 700 }}>ディーラー登録はこちら →</Link>
+          </p>
         </div>
 
         {!loggedIn && (
