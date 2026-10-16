@@ -1,7 +1,7 @@
 "use server";
 
 import { readJobRole } from "@/lib/job-categories";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";

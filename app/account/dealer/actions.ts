@@ -2,7 +2,7 @@
 import { validDealerWage } from "@/lib/dealer-wage";
 import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { DEALER_GAMES, validDealerAvailability } from "@/lib/dealers";
 import { normalizeDealerPhone,validDealerContacts } from "@/lib/dealer-contacts";

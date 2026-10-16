@@ -1,6 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { logAdminAction } from "@/lib/audit";
 export async function saveTournament(_: {error?:string;success?:string;id?:string}, form:FormData): Promise<{error?:string;success?:string;id?:string}> {

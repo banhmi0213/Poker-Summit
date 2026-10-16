@@ -1,6 +1,6 @@
 "use server";
 import {redirect} from "next/navigation";
-import {revalidatePath} from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import {createClient} from "@/lib/supabase/server";
 import {UUID} from "@/lib/spot-jobs";
 export async function resolveReport(form:FormData){

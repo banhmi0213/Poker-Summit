@@ -1,6 +1,6 @@
 "use server";
 import { randomUUID } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
 import { BLOG_CATEGORIES, type BlogBlock } from "@/lib/blog";

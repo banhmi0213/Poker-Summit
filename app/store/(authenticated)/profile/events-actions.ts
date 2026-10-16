@@ -3,7 +3,7 @@ import { assertAllowedStoreText } from "@/lib/content-rules";
 
 import { parseEventDates } from "@/lib/event-dates";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
 

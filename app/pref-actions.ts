@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { PREF_OPTIONS } from "@/lib/constants";
 import { reverseGeocodeToPref } from "@/lib/geocode";
 import {

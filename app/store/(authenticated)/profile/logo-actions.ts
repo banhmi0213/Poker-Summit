@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath } from "@/lib/revalidate";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { recordStoreHistory } from "@/lib/store-update";
 
