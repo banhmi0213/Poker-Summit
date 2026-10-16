@@ -7,6 +7,8 @@ import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
 import Script from "next/script";
+import { Suspense } from "react";
+import { GaPageView } from "./ga-page-view";
 
 // Google アナリティクス(GA4、2026/10)。本番(pokersummit.jp)だけで計測し、プレビュー環境では読み込まない。
 const GA_MEASUREMENT_ID = "G-M5QMYFSCHJ";
@@ -53,9 +55,13 @@ export default function RootLayout({
         {ENABLE_ANALYTICS && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-            <Script id="ga4-init" strategy="afterInteractive">
-              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
+            <Script id="ga4-init" strategy="beforeInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:false});`}
             </Script>
+            {/* ページ表示はここから送る(管理画面は数えない) */}
+            <Suspense fallback={null}>
+              <GaPageView measurementId={GA_MEASUREMENT_ID} />
+            </Suspense>
           </>
         )}
       </body>
