@@ -461,3 +461,8 @@
  .gameClock aside>div>div{grid-template-columns:80px 6ch}
  .gameClock aside>div>div>span{white-space:nowrap}
 }
+/* PC lower bets share the upper bets' vertical axes; retain their existing height. */
+@media(min-width:900px){
+ .bet_p5{left:25%}
+ .bet_p6{left:75%;right:auto;transform:translateX(-50%)}
+}
