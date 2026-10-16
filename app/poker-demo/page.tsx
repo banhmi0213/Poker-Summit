@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dealDemoHandAtTable } from "@/lib/poker/demo-deal";
 import { defaultStructure, validateStructure, type PokerTournament } from "@/lib/poker/tournament";
 import PokerTablePreview from "./poker-table-preview";
+import { PortalHeader } from "@/app/portal-header";
 import styles from "./poker-table.module.css";
 
 export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
@@ -38,6 +39,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const displayName = typeof user?.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
     ? user.user_metadata.display_name.trim() : user ? "会員" : "デモユーザー";
   return <div className={styles.gamePage}>
+    <div className={styles.gameHeader}><PortalHeader userEmail={user?.email}/></div>
     <main className={styles.gameMain}>
       {isPreview && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast">1分レベル・BBアンティ検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&ante=per-player">1分レベル・全員アンティ検証</a></p>}

@@ -341,7 +341,7 @@
 
 .inactiveSeat{opacity:.48}.eliminatedTag{font-size:10px;border:1px solid #8b9aa7;border-radius:5px;padding:2px 5px;color:#d4dce3;background:#273b4d;white-space:nowrap}
 
-/* Dedicated game route: the portal navigation is deliberately not mounted. */
+/* Dedicated game route with portal header and its responsive navigation drawer. */
 .gamePage{min-height:100dvh;background:#0d1b28;color:#f8f1e4}
 .gameMain{padding:12px 8px max(12px,env(safe-area-inset-bottom));margin:auto}
 .previewLinks{position:relative;z-index:50;max-width:540px;margin:0 auto 8px;background:#172b3c;border:1px solid #8c784b;border-radius:8px;padding:7px;font-size:11px;color:#fff}
@@ -382,4 +382,11 @@
  .demoSteps{gap:5px}.demoSteps>button{padding:8px 9px;font-size:11px}
  .resultOverlay{margin:0 0 8px;padding:8px}.resultDeltas{gap:4px;margin-top:6px}
  .menuPanel{max-height:calc(100% - 80px)}
+}
+
+.gameHeader{position:relative;z-index:60;flex:0 0 auto}
+@media(min-width:900px){
+ .gamePage{display:flex;flex-direction:column}
+ .gameMain{flex:1 1 0;min-height:0;max-height:720px;width:100%;max-width:1160px}
+ .table{max-height:500px}
 }
