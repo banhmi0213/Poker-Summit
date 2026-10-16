@@ -444,3 +444,16 @@
  .demoInfo{left:calc(50% + 150px);right:auto;top:20px}
  .actionColumn{padding-bottom:6px;box-sizing:border-box}
 }
+
+.previousResult{display:none}
+@media(min-width:900px){
+ .previousResult{display:block}
+ .gameClock aside>div{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"title readout" "blind blind" "next next";gap:4px 8px}
+ .gameClock aside>div>strong{grid-area:title;max-width:none}
+ .gameClock aside>div>div{grid-area:readout;margin:0;display:grid;grid-template-columns:7ch 6ch;gap:6px;align-items:center}
+ .gameClock aside b{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:20px}
+ .gameClock aside>div>p{grid-area:blind;min-width:0}
+ .gameClock aside>div>p+small{grid-area:next;min-height:15px}
+ .bet_p5{top:calc(65% - 34px);left:calc(9% + 34px);bottom:auto}
+ .bet_p6{top:calc(65% - 34px);left:auto;right:calc(9% + 34px);bottom:auto;transform:translateX(50%)}
+}
