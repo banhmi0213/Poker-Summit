@@ -96,7 +96,6 @@ export async function sendStoreCredentialsEmail(params: {
 URL: ${siteUrl}/store/login
 ログインID: ${params.loginId}
 パスワード: ${params.password}
-※初回ログイン後、店舗管理画面の「パスワード変更」から、ご自身で決めたパスワードに変更することをおすすめします。
 
 ■ LINE連携コード(24時間有効・1回限り)
 ${params.lineCode}
