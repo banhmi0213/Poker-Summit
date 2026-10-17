@@ -3061,3 +3061,10 @@ p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
 /* 表(横スクロールの枠の中)は、見出し・ボタン・短い値を1行に保つ(表のほうを横に広げる) */
 .table-wrap th, .table-wrap .btn, .table-wrap button { white-space: nowrap; }
 .table-wrap td { min-width: 6.5em; }
+
+/* フッターの都道府県一覧(スマホ): 1つだけ次の行に落ちないよう、5列にそろえる(2026/10) */
+@media (max-width: 600px) {
+  .footer-areas__row { display: grid; grid-template-columns: 5.4em repeat(5, auto); justify-content: start; gap: 3px 9px; }
+  .footer-areas__region { grid-row: span 2; }
+  .footer-areas { font-size: 12px; }
+}
