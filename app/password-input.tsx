@@ -8,7 +8,8 @@ export function PasswordInput(props: Omit<InputHTMLAttributes<HTMLInputElement>,
   const { style, ...rest } = props;
   return (
     <span style={{ position: "relative", display: "block", width: "100%" }}>
-      <input {...rest} data-no-draft type={visible ? "text" : "password"} style={{ ...style, width: "100%", paddingRight: 44, boxSizing: "border-box" }} />
+      {/* 表示中(type="text")でもiPhoneが先頭を大文字にしたり自動修正したりしないように */}
+      <input autoCapitalize="none" autoCorrect="off" spellCheck={false} {...rest} data-no-draft type={visible ? "text" : "password"} style={{ ...style, width: "100%", paddingRight: 44, boxSizing: "border-box" }} />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}

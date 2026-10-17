@@ -102,7 +102,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             </label>
             <label className={styles.field}>
               <span>m HOLD’EM ID <b className={styles.optional}>任意</b></span>
-              <input type="text" name="mHoldemId" maxLength={M_HOLDEM_ID_MAX_LENGTH} autoComplete="off" spellCheck={false} placeholder="IDを入力" aria-describedby="m-holdem-notice" />
+              <input type="text" name="mHoldemId" autoCapitalize="none" autoCorrect="off" maxLength={M_HOLDEM_ID_MAX_LENGTH} autoComplete="off" spellCheck={false} placeholder="IDを入力" aria-describedby="m-holdem-notice" />
             </label>
             <div id="m-holdem-notice" className={styles.notice}>
               <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>

@@ -125,7 +125,7 @@ export default async function AdminStoreEditPage({
 
           <div className="field">
             <span className="muted">電話番号</span>
-            <input type="text" name="tel" defaultValue={store.tel ?? ""} />
+            <input type="tel" name="tel" autoComplete="tel" defaultValue={store.tel ?? ""} />
           </div>
 
           <div className="field">

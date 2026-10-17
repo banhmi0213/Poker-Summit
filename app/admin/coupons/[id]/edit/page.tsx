@@ -68,7 +68,7 @@ export default async function AdminCouponEditPage({
 
           <div className="field">
             <span className="muted">クーポンコード</span>
-            <input type="text" name="code" defaultValue={coupon.code ?? ""} />
+            <input type="text" name="code" autoCapitalize="none" autoCorrect="off" spellCheck={false} defaultValue={coupon.code ?? ""} />
           </div>
 
           <div className="field">

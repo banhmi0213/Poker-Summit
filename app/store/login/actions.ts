@@ -15,7 +15,8 @@ import { sendLoginNotificationEmail } from "@/lib/email";
 // 変換してからサインインする。DB側はloginIdをlower(trim())してから
 // メールアドレスを組み立てて登録しているため、ここでも同じ正規化をする。
 export async function storeSignIn(formData: FormData) {
-  const loginId = String(formData.get("loginId") ?? "").trim();
+  // 日本語入力のまま打った全角英数字・記号も半角にそろえる(iPhoneで全角になっていてもログインできるように)
+  const loginId = String(formData.get("loginId") ?? "").normalize("NFKC").replace(/\s/g, "");
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
 

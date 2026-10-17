@@ -80,7 +80,7 @@ export default async function AdminCouponsPage({
           <CouponCategorySelect value={""} />
           <div className="field">
             <span className="muted">クーポンコード</span>
-            <input type="text" name="code" />
+            <input type="text" name="code" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
           </div>
           <div className="field">
             <span className="muted">有効期限</span>
