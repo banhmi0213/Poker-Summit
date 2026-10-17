@@ -40,12 +40,3 @@
 /* Match Summit dimensions with full subjects inside the photographic safe area. */
 .wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; }
 .wide .jobsArtwork img { position: absolute; left: 0; top: 50%; width: 100%; height: auto; max-width: none; transform: translateY(-51.25%); }
-
-/* Mobile sections get readable copy beside the full photo, not a tiny PC strip. */
-.mobileArtwork{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:center;min-height:150px;background:linear-gradient(120deg,#fff8e7,#edd7ac);line-height:1.6;border-radius:10px;overflow:hidden}
-.mobileCopy{padding:16px 12px;color:#382719;min-width:0}
-.mobileCopy strong{display:block;font-family:"Noto Serif JP",serif;font-size:19px;font-weight:800;line-height:1.65;overflow-wrap:anywhere;text-wrap:pretty}
-.mobileCopy p{margin:7px 0;color:#514536;font-size:12px;line-height:1.8}
-.mobileCopy span{display:block;color:#78521a;font-size:12px;font-weight:700;margin-top:8px;line-height:1.7}
-.wide .banner .mobileArtwork>img{position:static;transform:none;width:100%;height:auto;aspect-ratio:1;object-fit:contain;max-width:100%}
-@media(min-width:768px){.mobileArtwork{display:none}}

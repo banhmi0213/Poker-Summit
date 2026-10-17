@@ -7,17 +7,3 @@
 .names a:focus-visible, .artwork:focus-visible { outline: 2px solid #b98a32; outline-offset: -2px; }
 
 .line { display: block; white-space: nowrap; }
-
-.mobileHeading,.rankNumber{display:none}
-@media(max-width:767px){
- .banner{border:1px solid #dbc393;box-sizing:border-box;background:linear-gradient(120deg,#fffaf0,#f7ecd5)}
- .artwork{display:none}
- .mobileHeading{display:block;padding:17px 16px 12px}
- .mobileHeading>a{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#382719;font-size:20px;font-weight:800;line-height:1.6;font-family:"Noto Serif JP",serif}
- .mobileHeading span{font-family:Georgia,serif;white-space:nowrap;font-size:14px;color:#78521a;border:1px solid #d7b66c;border-radius:20px;padding:3px 10px}
- .names{position:static;width:auto;height:auto;padding:0 16px 12px;display:block}
- .names li{display:block;border-top:1px solid #e6d6b6}
- .names a{display:block;position:relative;font-size:14px!important;line-height:1.8;padding:10px 0 10px 36px;text-align:left;overflow:visible;overflow-wrap:anywhere;-webkit-line-clamp:unset;min-height:44px;box-sizing:border-box}
- .names .line{display:inline;white-space:normal}
- .rankNumber{display:grid;place-items:center;position:absolute;left:0;top:12px;width:25px;height:25px;border-radius:50%;background:#78521a;color:white;font-family:Georgia,serif;font-size:15px;line-height:1}
-}
