@@ -3052,3 +3052,11 @@ th {
    本文は最後の行が短くなりすぎないように、見出し・ボタン・バッジは行の長さをそろえる */
 body { text-wrap: pretty; }
 h1, h2, h3, h4, .btn, button, .badge, label, legend, summary, th { text-wrap: balance; }
+
+/* 短い言葉(リンク・ボタン・ラベル・表の見出しなど)は途中で折り返さない。
+   入りきらないときだけ折り返す(はみ出し防止)。日本語の本文は文節で折り返す(対応ブラウザのみ) */
+a, strong, b, small, label, dt, th, td, time, .badge, .btn, button, legend, summary {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+p, li, dd, div { word-break: auto-phrase; }
