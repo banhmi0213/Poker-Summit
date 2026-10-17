@@ -159,7 +159,9 @@ export default async function AdminMembersPage({
               <td className="tabular">{favCounts.get(m.id) ?? 0}</td>
               <td className="tabular">{appliedCounts.get(m.id) ?? 0}</td>
               <td>
-                {unconfirmed.has(m.id) ? (
+                {String(m.email ?? "").endsWith("@withdrawn.invalid") ? (
+                  <span className="badge" style={{ background: "rgba(120, 120, 120, 0.16)", color: "#555" }}>退会済み</span>
+                ) : unconfirmed.has(m.id) ? (
                   <span className="badge" style={{ background: "rgba(120, 120, 120, 0.16)", color: "#555" }}>
                     メール未確認
                   </span>
