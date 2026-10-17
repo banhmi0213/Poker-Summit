@@ -1,5 +1,7 @@
 "use server";
 
+import { authErrorMessage } from "@/lib/auth-error";
+
 import { loginDestination } from "@/lib/login-destination";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -31,7 +33,7 @@ export async function signIn(formData: FormData) {
   if (error) {
     await recordLoginFailure("member", email, meta);
     redirect(
-      `/login?error=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`
+      `/login?error=${encodeURIComponent(authErrorMessage(error.message))}&next=${encodeURIComponent(next)}`
     );
   }
   await recordLoginSuccess("member", email, meta, data.user?.id ?? null);

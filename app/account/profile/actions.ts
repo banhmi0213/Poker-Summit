@@ -1,5 +1,7 @@
 "use server";
 
+import { authErrorMessage } from "@/lib/auth-error";
+
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "@/lib/revalidate";
@@ -44,7 +46,7 @@ export async function updateProfile(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/account/profile?error=${encodeURIComponent(error.message)}`);
+    redirect(`/account/profile?error=${encodeURIComponent(authErrorMessage(error.message))}`);
   }
 
   // display_nameもprofilesへミラーしておく(2026/10追加)。会員プロフィール

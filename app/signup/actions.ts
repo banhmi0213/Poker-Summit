@@ -1,5 +1,7 @@
 "use server";
 
+import { authErrorMessage } from "@/lib/auth-error";
+
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -55,7 +57,7 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   });
 
   if (error) {
-    redirect(`${path}?error=${encodeURIComponent(error.message)}`);
+    redirect(`${path}?error=${encodeURIComponent(authErrorMessage(error.message))}`);
   }
 
   // 登録時のIPアドレスを記録(重複登録の見回り用。新規登録のときだけ)
