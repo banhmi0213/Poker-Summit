@@ -1,0 +1,18 @@
+/* Online-only additions. The approved demo geometry remains unchanged. */
+.clock{border:1px solid #9e854e;border-radius:10px;background:#142d42;color:#f5e6c2;padding:10px 12px;margin:10px 0;font-size:12px}
+.clock>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center}
+.clock>div>div{display:flex;gap:10px;align-items:center}.clock b{font-variant-numeric:tabular-nums;white-space:nowrap}.clock p,.clock small{grid-column:1/-1;margin:0;line-height:1.6;overflow-wrap:anywhere}
+.clock small{min-height:18px}.structureScroll{overflow-x:auto}.structureScroll table{width:100%;border-collapse:collapse}.structureScroll th,.structureScroll td{padding:7px 4px;text-align:center;white-space:nowrap}.structureScroll tr[data-current=true]{background:#e0bd75;color:#172b3c}.connectionControls{display:flex;gap:6px;flex-wrap:wrap}
+.connectionControls button{background:#315566;border:1px solid #7f9eaa;color:#fff;border-radius:8px;padding:10px 8px;min-height:44px;font-size:12px;cursor:pointer}.connectionControls button:disabled{opacity:.45;cursor:not-allowed}
+.topBet{top:104px;left:50%;bottom:auto}
+@media(max-width:480px){.topBet{top:94px}.clock>div{grid-template-columns:1fr}.clock>div>div{justify-content:space-between}}
+@media(min-width:900px){.clock{margin:0}.clock>div>div{min-width:0}.clock b{font-size:clamp(13px,1.4vw,20px)}}
+.connectionDot{position:absolute;right:0;bottom:0;width:9px;height:9px;border:1px solid #142d42;border-radius:50%;background:#e5a754}.connectionDot[data-connected=true]{background:#6fd391}
+.statusDock{position:relative;min-height:42px;z-index:8}.statusDock>details{position:absolute;top:0;left:0;width:100%;margin:0;max-height:60dvh;overflow:auto}
+
+.raiseButton{background:#e5b74f;color:#152235;border:0;border-radius:8px;padding:12px;font-weight:700;min-height:44px;cursor:pointer}.raiseButton:disabled{opacity:.45;cursor:not-allowed}
+
+@media(max-width:360px){.communityCards span{width:26px;height:39px;font-size:15px}}
+.results{grid-template-columns:repeat(2,minmax(0,1fr))}.results>span{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;white-space:nowrap;font-size:10px}
+.actionButtons{grid-template-columns:repeat(3,minmax(0,1fr))}.quickBets button{font-size:11px}.quickBets button:last-child{font-size:10px;white-space:nowrap}
+@media(max-width:480px){.lowerCards{transform:translateY(-13px)}}
