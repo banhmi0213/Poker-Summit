@@ -37,35 +37,6 @@
   object-fit: cover;
 }
 
-.arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  color: #fff;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-
-.arrow:hover {
-  background: rgba(0, 0, 0, 0.65);
-}
-
-.prev {
-  left: 10px;
-}
-
-.next {
-  right: 10px;
-}
-
 .dots {
   position: absolute;
   left: 0;
@@ -102,7 +73,6 @@
   background: #fff;
 }
 
-.arrow:focus-visible,
 .dot:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
@@ -113,11 +83,7 @@
     border-radius: 10px;
   }
 
-  .arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
+
 }
 
 /* The large advertising slider lifts as a whole, without affecting swipe controls. */
@@ -129,4 +95,4 @@
 @media (prefers-reduced-motion: reduce) { .slider { transition: none !important; } .slider:hover { transform: none !important; } }
 
 /* Feedback belongs to the tapped link, not the slider container (swipe-safe). */
-@media (hover:none) and (pointer:coarse){.slide a:active{filter:brightness(1.045)}.arrow:active,.dot:active{filter:brightness(1.15)}}
+@media (hover:none) and (pointer:coarse){.slide a:active{filter:brightness(1.045)}.dot:active{filter:brightness(1.15)}}

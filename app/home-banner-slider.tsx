@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./home-banner-slider.module.css";
+import { shuffleBannerIds } from "@/lib/banner-order";
 
 // TOPページ「開催予定のトーナメント・イベント」直上のバナースライダー
 // (2026/10追加)。表示する行は総合管理画面 > バナー管理で position='top'
 // として登録したもの(lib/banners.ts の getTopBanners で取得)。
-// 1件なら静止表示、2件以上で5秒ごとの自動切替・前後矢印・ドット・
+// 1件なら静止表示、2件以上で5秒ごとの自動切替・ドット・
 // スワイプ(横スクロールのscroll-snap)に対応する。ホバー/フォーカス/
 // タッチ中と prefers-reduced-motion のときは自動切替しない。
 
@@ -74,6 +75,19 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [visible, setVisible] = useState(false);
   const count = banners.length;
+  const bannerKey = JSON.stringify(banners.map(b => b.id));
+  const [order, setOrder] = useState<string[]>([]);
+  const ready = count < 2 || (order.length === count && banners.every(b => order.includes(b.id)));
+  const slides = ready && count > 1 ? order.map(id => banners.find(b => b.id === id)!) : banners;
+
+  // Shuffle on each browser mount, not on the server where a cached order would
+  // be shared by all visitors. Keep the reserved slot hidden until ready so the
+  // first banner and impression are random too.
+  useEffect(() => {
+    setOrder(shuffleBannerIds(JSON.parse(bannerKey)));
+    setIndex(0);
+    if (trackRef.current) trackRef.current.scrollLeft = 0;
+  }, [bannerKey]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -100,13 +114,13 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
 
   // 各バナーが初めて表示されたときに1回だけbanner_impressionsへ記録する。
   useEffect(() => {
-    if (!visible) return;
-    const banner = banners[index];
+    if (!visible || !ready) return;
+    const banner = slides[index];
     if (banner && !seen.current.has(banner.id)) {
       seen.current.add(banner.id);
       track("impression", banner.id);
     }
-  }, [visible, index, banners]);
+  }, [visible, ready, index, slides]);
 
   const goTo = useCallback(
     (target: number) => {
@@ -129,10 +143,10 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
 
   const paused = hovered || focused || touching;
   useEffect(() => {
-    if (count < 2 || paused || reducedMotion || !visible) return;
+    if (count < 2 || !ready || paused || reducedMotion || !visible) return;
     const timer = window.setTimeout(() => goTo(index + 1), INTERVAL_MS);
     return () => window.clearTimeout(timer);
-  }, [count, paused, reducedMotion, visible, index, goTo]);
+  }, [count, ready, paused, reducedMotion, visible, index, goTo]);
 
   if (count === 0) return null;
 
@@ -140,11 +154,12 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
     <section
       ref={rootRef}
       className={styles.slider}
+      style={{ visibility: ready ? "visible" : "hidden" }}
       aria-roledescription={count > 1 ? "carousel" : undefined}
       aria-label="おすすめ"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      // キーボード操作でのフォーカス中だけ止める。矢印・ドットをマウスで
+      // キーボード操作でのフォーカス中だけ止める。ドットをマウスで
       // クリックした後もフォーカスが残るため、それでは止めない。
       onFocus={(e) => {
         try {
@@ -161,7 +176,7 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
       onTouchCancel={() => setTouching(false)}
     >
       <div ref={trackRef} className={styles.track} onScroll={count > 1 ? onScroll : undefined}>
-        {banners.map((b, i) => (
+        {slides.map((b, i) => (
           <div
             key={b.id}
             className={styles.slide}
@@ -175,24 +190,8 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
       </div>
       {count > 1 && (
         <>
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.prev}`}
-            aria-label="前のバナー"
-            onClick={() => goTo(index - 1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.next}`}
-            aria-label="次のバナー"
-            onClick={() => goTo(index + 1)}
-          >
-            ›
-          </button>
           <div className={styles.dots}>
-            {banners.map((b, i) => (
+            {slides.map((b, i) => (
               <button
                 key={b.id}
                 type="button"
