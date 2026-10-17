@@ -85,7 +85,7 @@ export default async function AdminAdminsPage({
         />
       </form>
 
-      <table>
+      <div className="table-wrap"><table>
         <thead>
           <tr>
             <th>メールアドレス</th>
@@ -166,7 +166,7 @@ export default async function AdminAdminsPage({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

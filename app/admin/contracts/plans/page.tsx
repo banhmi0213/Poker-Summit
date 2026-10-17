@@ -41,7 +41,7 @@ export default async function ContractPlansPage() {
         </Link>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(380px, 100%), 1fr))", gap: 20 }}>
         <section>
           <h2 style={{ fontSize: 16, marginBottom: 10 }}>月額プラン</h2>
 
