@@ -3042,3 +3042,8 @@ th {
   .app-menu-links.open { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; padding-top:4px; }
   .app-menu-links.open .side-link { width:auto; white-space:normal; flex:none; text-align:left; }
 }
+
+/* 総合管理・店舗管理の補足文字を濃くする(白・クリーム背景で薄く読みにくかったため、2026/10)。
+   公開ページの配色は変えない */
+.app-shell { --muted: #66594a; }
+.app-shell .muted { color: #66594a; }
