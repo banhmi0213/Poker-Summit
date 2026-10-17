@@ -98,7 +98,7 @@ export default async function StoreEventsPage() {
       </div>
       <div className="field">
         <span>{ev ? "バナー画像を差し替える（任意）" : "バナー画像（任意）"}</span>
-        <input type="file" name="bannerImage" accept="image/*" capture="environment" />
+        <input type="file" name="bannerImage" accept="image/*" />
       </div>
       {ev?.banner_image_url && (
         <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 8, margin: "-4px 0 14px", fontSize: 14 }}>

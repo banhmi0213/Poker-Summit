@@ -67,7 +67,7 @@ export default async function StoreMenuPage() {
           </div>
           <div className="field">
             <span className="muted">画像（任意）</span>
-            <input type="file" name="image" accept="image/*" capture="environment" />
+            <input type="file" name="image" accept="image/*" />
           </div>
           <button type="submit" className="btn primary">
             追加する
@@ -137,7 +137,7 @@ export default async function StoreMenuPage() {
               </div>
               <div className="field">
                 <span className="muted">画像を差し替える（任意）</span>
-                <input type="file" name="image" accept="image/*" capture="environment" />
+                <input type="file" name="image" accept="image/*" />
               </div>
               {it.image_url && (
                 <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>

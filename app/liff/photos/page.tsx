@@ -81,7 +81,6 @@ export default function LiffPhotosPage() {
             ref={inputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={(e) => handleSelect(e.target.files?.[0] ?? null)}
           />
         </div>
