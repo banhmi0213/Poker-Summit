@@ -1,6 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { STORE_AUTH_COOKIE_NAME } from "@/lib/constants";
+import { PREVIEW_COOKIE, hasPreviewAccess } from "@/lib/preview-access";
 
 // 会員・総合管理画面(デフォルトCookie)と店舗管理画面(STORE_AUTH_COOKIE_NAME、
 // lib/supabase/store-server.ts参照)は別々のCookieにセッションを持つため、
@@ -105,7 +106,7 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
     response = NextResponse.rewrite(url);
-  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(hasMemberSessionCookie(request) && (await canBypassPrelaunch(supabase)))) {
+  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(await hasPreviewAccess(request.cookies.get(PREVIEW_COOKIE)?.value)) && !(hasMemberSessionCookie(request) && (await canBypassPrelaunch(supabase)))) {
     // 先行登録モード(2026/10): 一般向けページは先行会員登録の案内ページに差し替える。
     // トップ(/)は検索結果に案内ページが出るよう通常の200で返し、それ以外のページは
     // 「一時的に閉じている」ことを検索エンジンに伝えるため 503 + Retry-After で返す
@@ -149,7 +150,7 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
 
 /** 先行登録モード中も開けるページ(運営・店舗管理・会員登録/ログイン・規約類・API等) */
 function isPrelaunchExempt(pathname: string) {
-  const exact = ["/prelaunch", "/withdrawn", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
+  const exact = ["/prelaunch", "/preview", "/withdrawn", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
   if (exact.includes(pathname)) return true;
   const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/account/dealer", "/account/delete", "/_next/"];
   return pathname === "/admin" || prefixes.some((p) => pathname.startsWith(p));
