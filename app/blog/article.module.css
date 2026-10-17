@@ -9,5 +9,6 @@
 /* Keep the narrower reading measure, with the same outer spacing. */
 .page.page{padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
 /* 目次: 1〜2文字だけ次の行に落ちないよう語の切れ目で折り返す。小見出しは番号を付けず字下げで区別 */
-.toc a{word-break:auto-phrase;overflow-wrap:normal;text-wrap:pretty}
+.toc a{word-break:normal;overflow-wrap:anywhere;text-wrap:pretty}
+@supports (word-break:auto-phrase){.toc a{word-break:auto-phrase}}
 .toc li.tocSub{list-style:none;position:relative}

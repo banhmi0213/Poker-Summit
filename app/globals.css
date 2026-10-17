@@ -3061,9 +3061,14 @@ h1, h2, h3, h4, .btn, button, .badge, label, legend, summary, th { text-wrap: ba
 
 /* 短い言葉(リンク・ボタン・ラベル・表の見出しなど)は途中で折り返さない。
    入りきらないときだけ折り返す(はみ出し防止)。日本語の本文は文節で折り返す(対応ブラウザのみ) */
-a { word-break: keep-all; overflow-wrap: anywhere; }
+a { overflow-wrap: anywhere; }
 .badge { white-space: nowrap; }
-p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
+/* 文節で折り返す指定(auto-phrase)はChrome系だけが対応。iPhoneのSafariなど未対応のブラウザで
+   keep-all だけが効くと日本語が改行できずはみ出すため、対応ブラウザに限って使う(2026/10) */
+@supports (word-break: auto-phrase) {
+  a { word-break: keep-all; }
+  p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
+}
 /* 表(横スクロールの枠の中)は、見出し・ボタン・短い値を1行に保つ(表のほうを横に広げる) */
 .table-wrap th, .table-wrap .btn, .table-wrap button { white-space: nowrap; }
 .table-wrap td { min-width: 6.5em; }
