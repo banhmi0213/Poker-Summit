@@ -126,7 +126,7 @@ export default function LiffCouponsPage() {
 
       <div className="card" style={{ marginBottom: 16 }}>
         {step === "form" && (
-          <form onSubmit={handleReview}>
+          <form data-allow-resubmit onSubmit={handleReview}>
             <div className="field">
               <span className="muted">タイトル *</span>
               <input

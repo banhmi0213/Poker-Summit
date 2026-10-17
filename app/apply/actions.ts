@@ -131,6 +131,20 @@ export async function submitApplication(formData: FormData) {
                   );
   }
 
+  // 二重送信の防止: 同じ内容の申込み(問い合わせ)が10分以内にあれば、新しく作らない
+  {
+          const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+          const { data: dup } = await createServiceRoleClient()
+                    .from("listing_applications")
+                    .select("id")
+                    .ilike("email", email)
+                    .eq("company_name", companyName)
+                    .is("plan_id", null)
+                    .gte("created_at", since)
+                    .limit(1);
+          if (dup && dup.length > 0) redirect("/apply?done=1");
+  }
+
   const { error } = await supabase.from("listing_applications").insert({
           company_name: companyName,
           applicant_type: applicantType,
@@ -264,6 +278,23 @@ export async function startPaidApplication(formData: FormData) {
           if (billingCycle !== 1) {
                     redirect(`/apply?error=${encodeURIComponent("6か月・12か月のまとめ払いは銀行振込でのお支払いのみとなります。")}`);
           }
+  }
+
+  // 二重送信の防止: 同じ内容の振込申込みが10分以内にあれば、新しく作らず完了画面へ
+  // (ボタンの連打で請求書が何通も届かないように)
+  if (billingMethod === "bank_transfer") {
+          const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+          const { data: dup } = await createServiceRoleClient()
+                    .from("listing_applications")
+                    .select("id")
+                    .ilike("email", email)
+                    .eq("company_name", companyName)
+                    .eq("plan_id", planId)
+                    .eq("billing_cycle_months", billingCycle)
+                    .eq("billing_method", "bank_transfer")
+                    .gte("created_at", since)
+                    .limit(1);
+          if (dup && dup.length > 0) redirect("/apply?done=transfer");
   }
 
   const { data: application, error: insertError } = await supabase
