@@ -31,6 +31,7 @@ export default async function AdminMemberDetailPage({
     { data: applications },
     { data: participations },
     { data: couponUses },
+    { data: previousAccounts },
   ] = await Promise.all([
     supabase
       .from("favorite_stores")
@@ -52,7 +53,10 @@ export default async function AdminMemberDetailPage({
       .from("coupon_uses")
       .select("used_at, coupons(id, title)")
       .eq("user_id", member.id),
+    // 同じメールアドレス・電話番号で以前退会したアカウント(評価・実績・利用停止を引き継いでいる)
+    supabase.rpc("admin_member_previous_accounts", { p_user_id: member.id }),
   ]);
+  const withdrawn = String(member.email ?? "").endsWith("@withdrawn.invalid");
 
   return (
     <div>
@@ -78,6 +82,28 @@ export default async function AdminMemberDetailPage({
         )}
       </p>
 
+      {withdrawn && (
+        <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>
+          退会済みのアカウントです。ディーラーマッチングの記録を残すためにアカウントだけ残しています（個人情報は削除済み・ログイン不可）。
+        </p>
+      )}
+
+      {(previousAccounts ?? []).length > 0 && (
+        <div className="card" style={{ marginBottom: 20, borderLeft: "4px solid var(--critical)" }}>
+          <strong>以前退会したアカウントと同じ人の可能性があります</strong>
+          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13.5, lineHeight: 1.8 }}>
+            {(previousAccounts as any[]).map((p) => (
+              <li key={p.previous_user_id}>
+                {p.matched_by === "phone" ? "電話番号" : "メールアドレス"}が一致（退会日: {p.withdrawn_at ? formatDate(p.withdrawn_at) : "不明"}）
+                {p.was_suspended && <span style={{ color: "var(--critical)", fontWeight: 700 }}>・退会時に利用停止中 → この会員も自動で利用停止にしました</span>}
+                ・<Link href={`/admin/members/${p.previous_user_id}`}>前のアカウント</Link>
+              </li>
+            ))}
+          </ul>
+          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>ディーラーの評価・実績は前のアカウントの分も合わせて店舗に表示されます。</p>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
         <form
           action={async () => {
@@ -99,7 +125,7 @@ export default async function AdminMemberDetailPage({
             パスワードリセットメール送信
           </button>
         </form>
-        {!member.is_admin && (
+        {!member.is_admin && !withdrawn && (
           <form
             action={async () => {
               "use server";
@@ -112,7 +138,7 @@ export default async function AdminMemberDetailPage({
               className="btn"
               style={{ background: "var(--critical)", color: "#fff", borderColor: "var(--critical)" }}
             >
-              この会員を完全に削除する
+              この会員を削除（退会扱い）する
             </button>
           </form>
         )}
