@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/app/password-input";
 import Link from "next/link";
 import { SignupSubmitButton } from "./submit-button";
 import { signUp, prelaunchSignUp } from "./actions";
@@ -90,8 +91,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             <label className={styles.field}>
               <span>パスワード <b className={styles.required}>必須</b></span>
               <small>{PASSWORD_RULE_LABEL}</small>
-              <input
-                type="password"
+              <PasswordInput
                 name="password"
                 required
                 minLength={PASSWORD_MIN_LENGTH}

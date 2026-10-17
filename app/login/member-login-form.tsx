@@ -1,5 +1,7 @@
 "use client";
 
+import { PasswordInput } from "@/app/password-input";
+
 import { useFormStatus } from "react-dom";
 import { signIn } from "./actions";
 
@@ -24,7 +26,7 @@ export function MemberLoginForm({ next }: { next: string }) {
   }}>
     <input type="hidden" name="next" value={next} />
     <label className="field"><span>メールアドレス</span><input type="email" name="email" required autoComplete="username email" /></label>
-    <label className="field"><span>パスワード</span><input type="password" name="password" required enterKeyHint="go" autoComplete="current-password" /></label>
+    <label className="field"><span>パスワード</span><PasswordInput name="password" required enterKeyHint="go" autoComplete="current-password" /></label>
     <SubmitButton />
   </form>;
 }
