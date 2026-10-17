@@ -42,7 +42,7 @@ export function PrefAreaSelect({
         onChange={(e) => setPref(e.target.value)}
         style={selectStyle}
       >
-        <option value="">{`${prefLabel}: すべて`}</option>
+        <option value="">{prefLabel === "都道府県" ? "都道府県：全国" : "都道府県：すべて"}</option>
         {prefOptions.map((p) => (
           <option key={p} value={p}>
             {p}
