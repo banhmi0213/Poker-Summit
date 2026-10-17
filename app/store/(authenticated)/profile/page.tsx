@@ -365,11 +365,13 @@ export default async function StoreProfilePage({
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{openJobCount}</div>
-              <div className="muted small">掲載中の求人（全{totalJobCount}件）</div>
+              <div className="muted small">掲載中の求人</div>
+              <div className="muted" style={{ fontSize: 11 }}>全{totalJobCount}件中</div>
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{activeCouponCount}</div>
-              <div className="muted small">発行中のクーポン（お気に入り{couponFavoriteCount}件）</div>
+              <div className="muted small">発行中のクーポン</div>
+              <div className="muted" style={{ fontSize: 11 }}>お気に入り {couponFavoriteCount}件</div>
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>♥ {favoriteCount}</div>
@@ -377,7 +379,8 @@ export default async function StoreProfilePage({
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>★ {jobFavoriteCount}</div>
-              <div className="muted small">求人のお気に入り数（全求人合計）</div>
+              <div className="muted small">求人のお気に入り数</div>
+              <div className="muted" style={{ fontSize: 11 }}>全求人の合計</div>
             </div>
           </div>
 

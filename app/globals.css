@@ -3060,4 +3060,4 @@ a { word-break: keep-all; overflow-wrap: anywhere; }
 p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
 /* 表(横スクロールの枠の中)は、見出し・ボタン・短い値を1行に保つ(表のほうを横に広げる) */
 .table-wrap th, .table-wrap .btn, .table-wrap button { white-space: nowrap; }
-.table-wrap td { min-width: 5em; }
+.table-wrap td { min-width: 6.5em; }

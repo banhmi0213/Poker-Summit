@@ -158,10 +158,10 @@ export default async function StoreAnalyticsPage() {
       <h2 style={{ fontSize: 16, marginBottom: 10 }}>今週の閲覧数の推移（日次）</h2>
       <div className="card">
         <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120 }}>
-          {dailyList.map(([day, count]) => (
+          {dailyList.map(([day, count], idx) => (
             <div
               key={day}
-              style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
+              style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}
               title={`${day}: ${count}件`}
             >
               <div
@@ -172,8 +172,9 @@ export default async function StoreAnalyticsPage() {
                   borderRadius: 3,
                 }}
               />
-              <span style={{ fontSize: 10.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
-                {Number(day.slice(5, 7))}/{Number(day.slice(8, 10))}
+              {/* 日数が多いときは日付を間引いて、重なり・はみ出しを防ぐ */}
+              <span style={{ fontSize: 10.5, color: "var(--muted)", whiteSpace: "nowrap", minHeight: 14 }}>
+                {idx % Math.ceil(dailyList.length / 7) === 0 || idx === dailyList.length - 1 ? `${Number(day.slice(5, 7))}/${Number(day.slice(8, 10))}` : ""}
               </span>
             </div>
           ))}

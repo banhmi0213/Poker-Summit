@@ -54,3 +54,5 @@
 
 /* Align the page shell with the shared PC/mobile gutters. */
 .page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
+/* スマホの2列タイル: 「お気に入り店舗」などを1行に収める(アイコンと余白を少し詰める、2026/10) */
+@media(max-width:500px){.tile{padding:12px 24px 12px 12px;gap:8px}.menuIcon{font-size:24px}.tile b{right:10px;font-size:22px}.menuText strong{font-size:clamp(11.5px,3.45vw,13px)}}
