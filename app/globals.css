@@ -3047,3 +3047,8 @@ th {
    公開ページの配色は変えない */
 .app-shell { --muted: #66594a; }
 .app-shell .muted { color: #66594a; }
+
+/* 文字の折り返し(2026/10): 1〜2文字だけ次の行に落ちる「字余り」を防ぐ。
+   本文は最後の行が短くなりすぎないように、見出し・ボタン・バッジは行の長さをそろえる */
+body { text-wrap: pretty; }
+h1, h2, h3, h4, .btn, button, .badge, label, legend, summary, th { text-wrap: balance; }

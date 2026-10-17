@@ -40,7 +40,7 @@
 .spotBanner::after{content:""}
 .spotBanner:hover{border-color:#b58a2d;background:linear-gradient(110deg,#e9d5a2,#f8efd9)}
 .spotCopy{display:flex;flex-direction:column;gap:5px;min-width:0;align-items:center;text-align:center}
-.spotCopy small{font-size:11px;color:#765629;line-height:1.5}
+.spotCopy small{font-size:clamp(10.5px,3.1vw,12px);color:#765629;line-height:1.5}
 .spotCopy strong{font-size:16px;font-weight:700;line-height:1.5}
 .dealerIcon{display:block;position:relative;flex-shrink:0;width:50px;height:48px}
 .backCard,.frontCard{position:absolute;display:block;width:25px;height:34px;border:1.5px solid #977020;border-radius:4px;background:#fffaf0;box-sizing:border-box;color:#77500f;box-shadow:0 1px 2px #68451212}
@@ -50,7 +50,7 @@
 .frontCard{top:7px;left:5px;transform:rotate(-13deg)}
 .pokerChip{position:absolute;left:25px;top:27px;width:20px;height:20px;border:3px dashed #fff5d8;border-radius:50%;background:#bc9233;box-shadow:0 0 0 1.4px #977020;box-sizing:border-box;display:grid;place-items:center}
 .pokerChip>span{width:8px;height:8px;border:1px solid #fff5d8;border-radius:50%;box-sizing:border-box}
-@media(max-width:600px){.pageHeading{flex-wrap:wrap;gap:18px}.spotBanner{width:100%;grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;padding:13px 12px}.dealerIcon{transform:scale(.85);transform-origin:left center}.spotCopy small{max-width:200px}}
+@media(max-width:600px){.pageHeading{flex-wrap:wrap;gap:18px}.spotBanner{width:100%;grid-template-columns:40px minmax(0,1fr) 40px;gap:6px;padding:13px 12px}.dealerIcon{transform:scale(.85);transform-origin:left center}.spotCopy small{max-width:none}}
 
 /* Align the page shell with the shared PC/mobile gutters. */
 .page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
