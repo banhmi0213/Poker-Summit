@@ -650,7 +650,7 @@ export default async function StoreDetailPage({
           <div className="card sd-job-card" key={j.id}>
             <Link href={`/jobs/${j.id}`}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <h3><ReadableName name={j.title} /></h3>
+                <h3 style={{ flex: 1, minWidth: 0 }}><ReadableName name={j.title} /></h3>
                 {j.job_type && <span className="badge">{j.job_type}</span>}
               </div>
               {j.salary && <p className="muted">{j.salary}</p>}
