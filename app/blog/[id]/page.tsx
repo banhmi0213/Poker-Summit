@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { classifyDevice } from "@/lib/device";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
 import { createClient } from "@/lib/supabase/server";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
 import { PortalHeader } from "@/app/portal-header";
@@ -39,8 +39,9 @@ export default async function BlogArticlePage({ params, searchParams }: { params
  if (error || !data) notFound();
  const entry = data as BlogEntry;
  // Public views only: admin previews should not inflate BLOG analytics.
- if (!preview) {
-  const hdrs = await headers();
+ const viewHdrs = await headers();
+ if (!preview && !isBotUserAgent(viewHdrs.get("user-agent"))) {
+  const hdrs = viewHdrs;
   const referrer = hdrs.get("referer") ?? null;
   const device = classifyDevice(hdrs.get("user-agent"));
   supabase.from("page_views").insert({
