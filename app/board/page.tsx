@@ -309,7 +309,7 @@ export default async function BoardPage({
                     <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
                     <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
                   </span>
-                  <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>
+                  <span className="muted" style={{ color: "var(--text-2)", whiteSpace: "nowrap" }}>{formatDate(p.created_at)}</span>
                   <span className="muted">💬 {replyCounts[p.id] ?? 0}</span>
                 </div>
               </Link>
