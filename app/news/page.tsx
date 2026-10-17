@@ -7,7 +7,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PrefSelector } from "@/app/pref-selector";
 import { PrefGeoDetector } from "@/app/pref-geo-detector";
-import { PREF_OPTIONS } from "@/lib/constants";
+import { PREF_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
 import { getCurrentPref } from "@/lib/current-pref";
 import { staticPageMetadata } from "@/lib/seo";
 
@@ -92,7 +92,7 @@ export default async function NewsPage() {
           {notices?.map((n: any) => (
             <Link href={`/stores/${n.store_id}`} key={n.id} className="card" style={{ display: "block" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                {n.stores?.category && <span className="badge">{n.stores.category}</span>}
+                {n.stores?.category && <span className="badge">{CATEGORY_LABEL[n.stores.category] ?? n.stores.category}</span>}
                 {n.pref && <span className="badge outline">{n.pref}</span>}
               </div>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{n.title}</div>

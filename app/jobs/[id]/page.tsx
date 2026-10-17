@@ -185,7 +185,7 @@ export default async function JobDetailPage({
           </div>
           <div className="info-row">
             <div className="k">仕事内容</div>
-            <div>{j.description || "-"}</div>
+            <div style={{ whiteSpace: "pre-wrap" }}>{j.description || "-"}</div>
           </div>
           <div className="info-row">
             <div className="k">応募状況</div>

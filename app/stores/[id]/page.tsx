@@ -584,7 +584,7 @@ export default async function StoreDetailPage({
                 {c.discount && <span className="badge">{c.discount}</span>}
               </div>
               <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る ›</Link>
-              {c.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{c.description}</p>}
+              {c.description && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{c.description}</p>}
               <div className="muted" style={{ marginTop: 6 }}>
                 {c.code && <>クーポンコード: {c.code} </>}
                 {c.valid_until && <>(有効期限: {c.valid_until})</>}

@@ -13,6 +13,7 @@ function Paragraph({text=""}:{text?:string}) {
  const parts=text.split(/(https?:\/\/[^\s]+)/g);
  return <p>{parts.map((part,i)=>/^https?:\/\//.test(part)?<a key={i} href={part} target="_blank" rel="noopener noreferrer">{part}</a>:part)}</p>;
 }
+// imageRights(画像の権利情報)は運営の記録用。公開ページには表示しない(2026/10)
 export function ArticleContent({ title, category, summary, image, imageAlt, body, stores, authorName="", authorProfile="", publishedAt, updatedAt, showToc=true, references=[], imageRights="", articleSlug="" }: {
  title:string; category:string; summary:string; image:string; imageAlt?:string; body:BlogBlock[]; stores:BlogStore[];
  authorName?:string; authorProfile?:string; publishedAt?:string|null; updatedAt?:string; showToc?:boolean; references?:BlogEntry["reference_sources"]; imageRights?:string; articleSlug?:string;
@@ -24,7 +25,7 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
    {(authorName||publishedAt) && <div className={styles.byline}>{authorName&&<span>著者：{authorName}</span>}{publishedAt&&<time>公開日：{date(publishedAt)}</time>}{updatedAt&&publishedAt&&date(updatedAt)!==date(publishedAt)&&<time>更新日：{date(updatedAt)}</time>}</div>}
    {authorProfile&&<p className={styles.authorProfile}>{authorProfile}</p>}
   </header>
-  {image && <figure className={styles.cover}><img loading="lazy" decoding="async" src={image} alt={imageAlt || title} />{imageRights&&<figcaption className={styles.imageRights}>画像：{imageRights}</figcaption>}</figure>}
+  {image && <figure className={styles.cover}><img loading="lazy" decoding="async" src={image} alt={imageAlt || title} /></figure>}
   {showToc&&headings.length>0&&<nav className={styles.toc} aria-label="目次"><strong>目次</strong><ol>{headings.map(({b,i})=><li key={i} className={b.type==="heading3"?styles.tocSub:undefined}><a href={`#${blogHeadingId(b.text||"",i)}`}>{b.text}</a></li>)}</ol></nav>}
   <div className={styles.body}>{body.map((block,i)=>{
    const id=blogHeadingId(block.text||"",i);
