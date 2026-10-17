@@ -40,3 +40,8 @@
 /* Match Summit dimensions with full subjects inside the photographic safe area. */
 .wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; }
 .wide .jobsArtwork img { position: absolute; left: 0; top: 50%; width: 100%; height: auto; max-width: none; transform: translateY(-51.25%); }
+
+/* Phone only: modest proportional enlargement using the existing artwork. */
+@media(max-width:767px){
+ .wide{width:calc(100% + 24px);margin-left:-12px}
+}
