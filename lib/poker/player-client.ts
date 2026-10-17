@@ -7,12 +7,12 @@ export class PlayerClientError extends Error {
  constructor(readonly status:number){super(status===0||status>=500?'通信結果を確認できません。':'接続または操作を確認してください。');}
 }
 export class PokerPlayerClient {
- #stopUpdates:(()=>void)|null=null;#generation=0;
+ #stopUpdates:(()=>void)|null=null;#generation=0;#disconnecting=false;
  #connection:string|null=null;#state:PlayerSnapshot|null=null;#pending:Command|null=null;#queue:Promise<unknown>=Promise.resolve();#closed=false;
  #endpoint:string;#token:()=>Promise<string|null>;#fetch:typeof fetch;#id:()=>string;
  constructor(options:{endpoint:string;token:()=>Promise<string|null>;fetch?:typeof fetch;id?:()=>string}){
   if(!/^\/api\/poker\/rooms\/[a-f0-9-]{36}$/i.test(options.endpoint))throw Error('Invalid player endpoint');
-  this.#endpoint=options.endpoint;this.#token=options.token;this.#fetch=options.fetch??fetch;this.#id=options.id??(()=>crypto.randomUUID());
+  this.#endpoint=options.endpoint;this.#token=options.token;this.#fetch=options.fetch??globalThis.fetch.bind(globalThis);this.#id=options.id??(()=>crypto.randomUUID());
  }
  get state(){return this.#state?structuredClone(this.#state):null;}
  get pending(){return this.#pending!==null;}
@@ -44,7 +44,7 @@ export class PokerPlayerClient {
   try{const result=await this.#send({type:'act',command:this.#pending},true);const state=this.#accept(result.state);this.#pending=null;return state;}
   catch(error){if(error instanceof PlayerClientError&&error.status>=400&&error.status<500&&![408,429].includes(error.status))this.#pending=null;throw error;}
  }
- disconnect(){return this.#serial(async()=>{if(this.#pending)throw new PlayerClientError(409);try{return await this.#send({type:'disconnect'},true);}finally{this.#state=null;this.#connection=null;}});}
+ disconnect(){return this.#serial(async()=>{if(this.#pending)throw new PlayerClientError(409);this.#disconnecting=true;try{return await this.#send({type:'disconnect'},true);}finally{this.#disconnecting=false;this.#stopUpdates?.();this.#state=null;this.#connection=null;}});}
  /** Optional invalidation channel. State still comes from serialized authenticated HTTP reads. */
  watch(eventsOrigin:string,onChange:()=>void,onLost:()=>void,Socket:typeof WebSocket=WebSocket){return this.#serial(async()=>{
   this.#stopUpdates?.();const origin=new URL(eventsOrigin);
@@ -52,7 +52,7 @@ export class PokerPlayerClient {
   const token=await this.#token(),connection=this.#connection;if(!token||!connection||this.#closed)throw new PlayerClientError(401);
   let disposed=false,ready=false,lastRevision=-1;const socket=new Socket(eventsOrigin+this.#endpoint+'/events');
   const stop=()=>{if(disposed)return;disposed=true;clearTimeout(deadline);socket.close();if(this.#stopUpdates===stop)this.#stopUpdates=null;};
-  const lost=()=>{if(disposed)return;stop();this.#generation++;this.#connection=null;this.#state=null;onLost();};
+  const lost=()=>{if(disposed)return;stop();if(this.#disconnecting)return;this.#generation++;this.#connection=null;this.#state=null;onLost();};
   const deadline=setTimeout(lost,10000);
   socket.onopen=()=>{if(!disposed)socket.send(JSON.stringify({type:'subscribe',token,connectionId:connection}));};
   socket.onmessage=event=>{if(disposed)return;try{const value=JSON.parse(event.data);if(!value||Object.keys(value).sort().join(',')!=='revision,type'||!['ready','changed'].includes(value.type)||!Number.isSafeInteger(value.revision)||value.revision<0||value.revision<lastRevision)throw Error();if(!ready&&value.type!=='ready')throw Error();ready=true;lastRevision=value.revision;clearTimeout(deadline);onChange();}catch{lost();}};
