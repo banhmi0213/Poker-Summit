@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SignupSubmitButton } from "./submit-button";
 import { signUp, prelaunchSignUp } from "./actions";
 import { PREF_OPTIONS } from "@/lib/constants";
 import styles from "./signup.module.css";
@@ -119,9 +120,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
                 <div className="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-language="ja" data-size="flexible" style={{ margin: "0 0 14px" }} />
               </>
             )}
-            <button type="submit" className={styles.submit}>
-              {early ? "先行会員登録する" : "無料会員登録する"} <span aria-hidden="true">→</span>
-            </button>
+            <SignupSubmitButton className={styles.submit} label={early ? "先行会員登録する" : "無料会員登録する"} />
           </form>
           <p className={styles.confirmation}>登録後、確認メールをお送りします。</p>
           <p className={styles.help}>
