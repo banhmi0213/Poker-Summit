@@ -1,3 +1,4 @@
+import compose from "./compose.module.css";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -207,8 +208,9 @@ export default async function BoardPage({
         </form>
 
         {user ? (
-          <div className="card">
-            <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
+          <details className={`card ${compose.compose}`}>
+            <summary><span className={compose.plus} aria-hidden>＋</span>新しく投稿する</summary>
+            <div className={compose.body}>
             <form action={createPost}>
               <div className="field">
                 <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
@@ -244,7 +246,8 @@ export default async function BoardPage({
                 投稿する
               </button>
             </form>
-          </div>
+            </div>
+          </details>
         ) : (
           // 投稿には会員登録が必要(2026/10、「サミット投稿・観覧・返信には
           // 会員登録が必要」との指示)。一覧自体は誰でも見れるが、投稿フォーム
