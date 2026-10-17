@@ -3025,3 +3025,20 @@ th {
   .ps-region-hero__right-headline { text-wrap: balance; }
   .ps-region-hero__right-tagline { flex-wrap: wrap; line-height: 1.5; }
 }
+
+/* ===== 管理画面のメニュー(スマホは「メニュー」ボタンで開閉、2026/10) ===== */
+.app-menu-toggle { display:none; }
+.app-menu-links { display:contents; }
+@media (max-width:860px) {
+  .app-sidebar { flex-wrap:wrap !important; overflow-x:visible !important; align-items:center; gap:8px; }
+  .app-sidebar .brand { flex:1 1 auto !important; width:auto !important; }
+  .app-menu-toggle {
+    display:inline-flex; align-items:center; gap:6px; margin-left:auto;
+    padding:10px 14px; border:1px solid var(--border, #e5dcc8); border-radius:10px;
+    background:#fff; font-size:14px; font-weight:700; color:inherit; cursor:pointer; min-height:44px;
+  }
+  .app-menu-current { font-weight:400; font-size:12.5px; color:#8a7656; max-width:9em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .app-menu-links { display:none; width:100%; }
+  .app-menu-links.open { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; padding-top:4px; }
+  .app-menu-links.open .side-link { width:auto; white-space:normal; flex:none; text-align:left; }
+}

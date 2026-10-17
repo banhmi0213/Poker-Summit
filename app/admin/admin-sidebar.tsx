@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ADMIN_ATTENTION_ITEMS, CountBadge, useAttentionCounts } from "@/app/attention-counts";
 
 const ADMIN_LINKS: { href: string; label: string }[] = [
@@ -60,6 +61,9 @@ function matchesPath(href: string, pathname: string | null): boolean {
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  // スマホでは「メニュー」ボタンで一覧を開く(横スクロールだと他の項目に気づけないため、2026/10)
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
   const counts = useAttentionCounts("admin");
   const total = Object.values(BADGE_KEYS).reduce((n, k) => n + (counts[k] ?? 0), 0);
 
@@ -73,6 +77,11 @@ export function AdminSidebar() {
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         <small>総合管理画面{total > 0 && <CountBadge count={total} label="要対応の合計" />}</small>
       </div>
+      <button type="button" className="app-menu-toggle" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+        <span aria-hidden="true">{menuOpen ? "✕" : "☰"}</span> メニュー{!menuOpen && (ADMIN_LINKS.find((l) => l.href === activeHref)?.label) ? <span className="app-menu-current">（{(ADMIN_LINKS.find((l) => l.href === activeHref)?.label)}）</span> : null}
+        {!menuOpen && total > 0 && <CountBadge count={total} label="未対応の合計" />}
+      </button>
+      <div className={`app-menu-links${menuOpen ? " open" : ""}`}>
       {ADMIN_LINKS.map((l) => {
         const active = l.href === activeHref;
         return (
@@ -87,6 +96,7 @@ export function AdminSidebar() {
           </Link>
         );
       })}
+      </div>
     </nav>
   );
 }
