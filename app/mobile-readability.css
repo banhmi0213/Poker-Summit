@@ -105,13 +105,14 @@
   .ps-region-stat__label { font-size: 11.5px !important; }
   .ps-region-stat::before { display: none !important; }
   .ps-region-stat + .ps-region-stat { border-left: 1px solid #eee3cc; }
+  .ps-region-stat:nth-child(n) { grid-column: auto !important; border-top: 0 !important; }
 
   /* 1件だけのときは片側が空かないよう横いっぱいに */
   .home-feed .home-grid > :only-child { grid-column: 1 / -1; }
 
   /* 店舗カードの種類(アミューズメントポーカー等)を「…」で切らない */
   .home-feed .home-store-card .home-store-copy:has(.home-store-counts) .home-store-meta-row { flex-wrap: wrap; row-gap: 4px; }
-  .home-feed .home-store-card .home-store-meta-row .home-tag { max-width: 100% !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap; font-size: 10.5px !important; }
+  .home-feed .home-store-card .home-store-meta-row .home-tag { max-width: 100% !important; overflow: visible !important; text-overflow: clip !important; white-space: normal !important; font-size: 10.5px !important; letter-spacing: -.02em; }
   .home-feed .home-store-card .home-store-meta-row .home-card-cta { margin-left: auto; font-size: 11.5px; }
   .home-feed .home-store-card .home-store-copy:has(.home-store-counts) .home-location { white-space: normal !important; text-overflow: clip !important; overflow: visible !important; }
   .home-feed .home-event-copy p:has(> .readable-name:empty) { display: none; }
@@ -146,6 +147,12 @@
   .ep-kind-tabs { flex-wrap: nowrap !important; gap: 6px !important; }
   .ep-kind-tabs a { flex: 1 1 auto; text-align: center; padding: 8px 6px !important; font-size: 13px !important; white-space: nowrap; }
   .ep-card-meta > span, .ep-card-meta b { font-size: 11.5px !important; }
+  /* イベントの絞り込み: 2つずつ並べて縦に長くなりすぎないように */
+  .ep-search { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px 10px !important; align-items: end; }
+  .ep-search > label { min-width: 0; margin: 0 !important; }
+  .ep-search > label.ep-keyword { grid-column: 1 / -1; }
+  .ep-search > label :is(select, input) { width: 100%; min-width: 0; box-sizing: border-box; }
+  .ep-search > button { grid-column: 1 / -1; min-height: 46px; justify-content: center; }
 
   /* クーポン一覧: 画像まわりの余白を詰め、説明の字を大きく */
   .cp-page .coupon-card__media > img { height: auto !important; max-height: 240px; }
