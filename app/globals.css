@@ -3068,3 +3068,10 @@ p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
   .footer-areas__region { grid-row: span 2; }
   .footer-areas { font-size: 12px; }
 }
+
+/* スマホの小さいページ見出しバナー: 見出しが1〜2文字だけ3行目に落ちないよう、文字の幅を広げて少し小さく(2026/10) */
+@media(max-width:860px) {
+  .compact-portal-banner { grid-template-columns:61% 39%; }
+  .compact-portal-banner__copy { padding:16px 12px 16px 14px; }
+  .compact-portal-banner :is(h1,h2) { font-size:16.5px; line-height:1.45; }
+}
