@@ -57,3 +57,11 @@
 /* スマホの2列タイル: 「お気に入り店舗」などを1行に収める(アイコンと余白を少し詰める、2026/10) */
 @media(max-width:500px){.tile{padding:12px 24px 12px 12px;gap:8px}.menuIcon{font-size:24px}.tile b{right:10px;font-size:22px}.menuText strong{font-size:clamp(11.5px,3.45vw,13px)}}
 @media(max-width:600px){.spotBanner{grid-template-columns:34px minmax(0,1fr) 34px;padding:13px 10px}}
+/* スマホ: マイページのボタンを2列にそろえる(幅をそろえて見やすく、2026/10) */
+@media(max-width:600px){
+.summaryActions{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+.summaryActions>div{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px!important;align-items:stretch!important}
+.summaryActions>div>div{display:contents!important}
+.summaryActions :global(.btn),.summaryActions form{width:100%;box-sizing:border-box;justify-content:center}
+.summaryActions form :global(.btn){width:100%}
+}
