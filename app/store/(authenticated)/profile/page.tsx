@@ -658,7 +658,7 @@ export default async function StoreProfilePage({
                 <input type="hidden" name="storeId" value={store.id} />
                 <div className="field">
                   <span className="muted">写真を追加（スマホの写真ライブラリ・カメラから選択できます）</span>
-                  <input type="file" name="photo" accept="image/*" capture="environment" required />
+                  <input type="file" name="photo" accept="image/*" required />
                 </div>
                 <button type="submit" className="btn primary">
                   アップロードする

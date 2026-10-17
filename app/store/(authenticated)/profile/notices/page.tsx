@@ -57,7 +57,7 @@ export default async function StoreNoticesPage() {
           </div>
           <div className="field">
             <span className="muted">画像（任意）</span>
-            <input type="file" name="image" accept="image/*" capture="environment" />
+            <input type="file" name="image" accept="image/*" />
           </div>
           <button type="submit" className="btn primary">
             お知らせを掲載する
@@ -122,7 +122,7 @@ export default async function StoreNoticesPage() {
               </div>
               <div className="field">
                 <span className="muted">画像を差し替える（任意）</span>
-                <input type="file" name="image" accept="image/*" capture="environment" />
+                <input type="file" name="image" accept="image/*" />
               </div>
               {n.image_url && (
                 <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>

@@ -3110,3 +3110,9 @@ input[type=datetime-local][data-empty]:not(:focus) {
 input[type=date][data-empty]:not(:focus) { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2790%27%20height%3D%2724%27%3E%3Ctext%20x%3D%270%27%20y%3D%2717%27%20font-size%3D%2716%27%20fill%3D%27%238a7f6e%27%20font-family%3D%27-apple-system%2CBlinkMacSystemFont%2CHiragino%20Sans%2CHiragino%20Kaku%20Gothic%20ProN%2CNoto%20Sans%20JP%2Csans-serif%27%3E%E6%97%A5%E4%BB%98%E3%82%92%E9%81%B8%E3%81%B6%3C%2Ftext%3E%3C%2Fsvg%3E") !important; }
 input[type=datetime-local][data-empty]:not(:focus) { background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2790%27%20height%3D%2724%27%3E%3Ctext%20x%3D%270%27%20y%3D%2717%27%20font-size%3D%2716%27%20fill%3D%27%238a7f6e%27%20font-family%3D%27-apple-system%2CBlinkMacSystemFont%2CHiragino%20Sans%2CHiragino%20Kaku%20Gothic%20ProN%2CNoto%20Sans%20JP%2Csans-serif%27%3E%E6%97%A5%E6%99%82%E3%82%92%E9%81%B8%E3%81%B6%3C%2Ftext%3E%3C%2Fsvg%3E") !important; }
 input:is([type=date],[type=datetime-local])[data-empty]:not(:focus)::-webkit-datetime-edit { color: transparent; }
+
+/* iPhoneは16px未満の入力欄を押すと画面が勝手に拡大されるため、スマホではすべての入力欄を16pxにそろえる(2026/10) */
+@media (max-width: 767px) {
+  input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=submit]):not([type=button]):not([type=range]):not([type=color]),
+  select, textarea { font-size: 16px !important; }
+}
