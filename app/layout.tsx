@@ -9,6 +9,7 @@ import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
 import { EmailNormalizer } from "./email-normalizer";
+import { SubmitGuard } from "./submit-guard";
 import Script from "next/script";
 import { Suspense } from "react";
 import { GaPageView } from "./ga-page-view";
@@ -56,6 +57,7 @@ export default function RootLayout({
         <ImageUploadCompressor />
         <FormDraftKeeper />
         <EmailNormalizer />
+        <SubmitGuard />
         {ENABLE_ANALYTICS && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />

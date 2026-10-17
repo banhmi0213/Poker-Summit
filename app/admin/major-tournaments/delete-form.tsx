@@ -8,7 +8,7 @@ function DeleteButton() {
 }
 export function TournamentDelete({id,title}:{id:string;title:string}) {
  const [state,action]=useFormState(deleteTournament,{});
- return <form action={action} onSubmit={event=>{
+ return <form data-allow-resubmit action={action} onSubmit={event=>{
    if(!window.confirm(`「${title}」を削除しますか？公開ページからも削除されます。この操作は取り消せません。`))event.preventDefault();
  }} style={{display:"inline-block"}}>
   <input type="hidden" name="id" value={id}/>

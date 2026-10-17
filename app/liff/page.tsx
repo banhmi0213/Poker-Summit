@@ -137,7 +137,7 @@ export default function LiffDashboardPage() {
         <p className="muted" style={{ marginBottom: 12, fontSize: 13.5 }}>
           {linking ? "連携しています…" : "店舗管理画面の「LINE連携コードを発行する」で表示されたコードを入力してください。"}
         </p>
-        <form onSubmit={handleLink}>
+        <form data-allow-resubmit onSubmit={handleLink}>
           <div className="field">
             <span className="muted">ワンタイムコード</span>
             <input

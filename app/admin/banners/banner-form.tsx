@@ -262,7 +262,7 @@ export function BannerForm({ banner, defaultDevice = "all" }: { banner?: Editabl
 
 export function DeleteBannerButton({ action, title }: { action: () => Promise<void>; title: string }) {
   return (
-    <form
+    <form data-allow-resubmit
       action={action}
       onSubmit={(e) => {
         if (!window.confirm(`「${title}」を削除しますか？\n画像と表示・クリックの計測データも削除され、元に戻せません。`)) {
