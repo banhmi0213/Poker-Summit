@@ -40,7 +40,7 @@
 .spotBanner::after{content:""}
 .spotBanner:hover{border-color:#b58a2d;background:linear-gradient(110deg,#e9d5a2,#f8efd9)}
 .spotCopy{display:flex;flex-direction:column;gap:5px;min-width:0;align-items:center;text-align:center}
-.spotCopy small{font-size:clamp(10.5px,3.1vw,12px);color:#765629;line-height:1.5}
+.spotCopy small{font-size:clamp(9.5px,2.9vw,12px);white-space:nowrap;color:#765629;line-height:1.5}
 .spotCopy strong{font-size:16px;font-weight:700;line-height:1.5}
 .dealerIcon{display:block;position:relative;flex-shrink:0;width:50px;height:48px}
 .backCard,.frontCard{position:absolute;display:block;width:25px;height:34px;border:1.5px solid #977020;border-radius:4px;background:#fffaf0;box-sizing:border-box;color:#77500f;box-shadow:0 1px 2px #68451212}
@@ -56,3 +56,4 @@
 .page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
 /* スマホの2列タイル: 「お気に入り店舗」などを1行に収める(アイコンと余白を少し詰める、2026/10) */
 @media(max-width:500px){.tile{padding:12px 24px 12px 12px;gap:8px}.menuIcon{font-size:24px}.tile b{right:10px;font-size:22px}.menuText strong{font-size:clamp(11.5px,3.45vw,13px)}}
+@media(max-width:600px){.spotBanner{grid-template-columns:34px minmax(0,1fr) 34px;padding:13px 10px}}
