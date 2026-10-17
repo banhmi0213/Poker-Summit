@@ -38,8 +38,13 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             確認メールをお送りしました
           </h2>
           <p className="muted">
-            メール内のリンクから登録を完了してください。
+            ご入力いただいたメールアドレスに確認メールを送りました。メール内のリンクを押すと登録が完了し、そのままログインした状態になります。
           </p>
+          <ul className="muted" style={{ margin: "12px 0 0", paddingLeft: 18, fontSize: 13, lineHeight: 1.8 }}>
+            <li>リンクの有効期限は1時間です。</li>
+            <li>届かない場合は、迷惑メールフォルダもご確認ください（送信元：noreply@pokersummit.jp）。</li>
+            <li>1時間を過ぎた場合や見つからない場合は、同じメールアドレスでもう一度登録すると確認メールが届き直します。</li>
+          </ul>
           <Link href="/login" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
             ログインへ
           </Link>
