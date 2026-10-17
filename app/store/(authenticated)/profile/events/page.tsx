@@ -144,7 +144,7 @@ export default async function StoreEventsPage() {
         const published = ev.status === "published";
         const start = fmt(ev.start_at);
         const sameDay = !!ev.start_at && !!ev.end_at && new Date(ev.start_at).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" }) === new Date(ev.end_at).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
-        const end = sameDay ? new Date(ev.end_at).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" }) : fmt(ev.end_at);
+        const end = sameDay ? new Date(ev.end_at as string).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" }) : fmt(ev.end_at);
         return (
           <div className={`card ${s.item} ${published && !isPast ? "" : s.closed}`} key={ev.id}>
             <h3 className={s.itemTitle}><ReadableName name={ev.title} /></h3>
