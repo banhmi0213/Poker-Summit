@@ -9,6 +9,7 @@ import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
 import { EmailNormalizer } from "./email-normalizer";
+import { DateEmptyMarker } from "./date-empty-marker";
 import { SubmitGuard } from "./submit-guard";
 import Script from "next/script";
 import { Suspense } from "react";
@@ -57,6 +58,7 @@ export default function RootLayout({
         <ImageUploadCompressor />
         <FormDraftKeeper />
         <EmailNormalizer />
+        <DateEmptyMarker />
         <SubmitGuard />
         {ENABLE_ANALYTICS && (
           <>
