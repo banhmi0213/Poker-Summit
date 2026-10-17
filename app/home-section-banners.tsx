@@ -9,13 +9,14 @@ function DeviceSectionBanners({ banners, layout, device, pickup }: { banners: Ho
   return (
     <div className={`${device === "pc" ? "banner-pc-only" : "banner-mobile-only"} ${layout === "four" ? styles.four : styles.wide} ${pickup ? styles.pickup : ""}`} aria-label="掲載バナー">
       {visible.map((b) => {
-        const imageUrl = b.image_url === "/images/jobs-banner-light-v6.webp" ? "/images/jobs-banner-gold-v7.png" : b.image_url === "/images/coupon-banner-light-v3.webp" ? "/images/coupon-banner-gold-v4.png" : b.image_url;
+        const isPickupArtwork = b.image_url?.endsWith("/d5fb6e30-3b52-4af7-8c67-32dbff32849f.webp");
+        const imageUrl = isPickupArtwork ? "/images/pickup-gold-v2.webp" : b.image_url === "/images/jobs-banner-light-v6.webp" ? "/images/jobs-banner-gold-v7.png" : b.image_url === "/images/coupon-banner-light-v3.webp" ? "/images/coupon-banner-gold-v4.png" : b.image_url;
         const isCouponArtwork = imageUrl === "/images/coupon-banner-gold-v4.png";
         const isJobsArtwork = b.image_url === "/images/jobs-banner-light-v6.webp";
-        const image = <img src={imageUrl} alt={b.title} width={isJobsArtwork ? 2066 : undefined} height={isJobsArtwork ? 761 : undefined} loading="lazy" decoding={isJobsArtwork ? "async" : undefined} style={isCouponArtwork ? { objectFit: "cover" } : b.image_url?.match(/-banner-light-v\d+\.webp$/) ? { aspectRatio: isJobsArtwork ? "2066 / 761" : "auto", objectFit: "contain" } : undefined} />;
+        const image = <img src={imageUrl} alt={b.title} width={isJobsArtwork ? 2066 : undefined} height={isJobsArtwork ? 761 : undefined} loading="lazy" decoding={isJobsArtwork ? "async" : undefined} style={isCouponArtwork || isPickupArtwork ? { objectFit: "cover" } : b.image_url?.match(/-banner-light-v\d+\.webp$/) ? { aspectRatio: isJobsArtwork ? "2066 / 761" : "auto", objectFit: "contain" } : undefined} />;
         return b.link_url ? (
-          <a key={b.id} className={`${styles.banner} ${isJobsArtwork ? styles.jobsArtwork : isCouponArtwork ? styles.couponArtwork : ""}`} href={b.link_url} target={b.external ? "_blank" : undefined} rel={b.external ? "noopener noreferrer" : undefined}>{image}</a>
-        ) : <div key={b.id} className={`${styles.banner} ${isJobsArtwork ? styles.jobsArtwork : isCouponArtwork ? styles.couponArtwork : ""}`}>{image}</div>;
+          <a key={b.id} className={`${styles.banner} ${isJobsArtwork ? styles.jobsArtwork : isCouponArtwork ? styles.couponArtwork : isPickupArtwork ? styles.pickupArtwork : ""}`} href={b.link_url} target={b.external ? "_blank" : undefined} rel={b.external ? "noopener noreferrer" : undefined}>{image}</a>
+        ) : <div key={b.id} className={`${styles.banner} ${isJobsArtwork ? styles.jobsArtwork : isCouponArtwork ? styles.couponArtwork : isPickupArtwork ? styles.pickupArtwork : ""}`}>{image}</div>;
       })}
     </div>
   );

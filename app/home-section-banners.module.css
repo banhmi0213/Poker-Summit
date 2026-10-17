@@ -49,3 +49,7 @@
 /* Remove generated canvas padding without scaling either image axis independently. */
 .wide .couponArtwork { position: relative; aspect-ratio: 2146 / 229; }
 .wide .couponArtwork img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; aspect-ratio:auto; }
+
+/* Preserve PICK UP size; remove only the outer image canvas padding. */
+.wide .pickupArtwork { position:relative; aspect-ratio:1600 / 193; }
+.wide .pickupArtwork img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 52%; aspect-ratio:auto; }
