@@ -15,6 +15,7 @@ function checkConfig(room:ScheduledTournamentRoom,config?:Config){
 }
 export class DurableRoomOwner {
   #room:ScheduledTournamentRoom;
+  #observers=new Set<()=>void>();
   #roomId:string; #store:RoomStore; #keys:KeyRing; #now?:()=>number;
   #expectedConfig?:Config;
   #version:number; #halted=true; #tail:Promise<void>=Promise.resolve(); #pending=0; #limit:number;
@@ -41,6 +42,9 @@ export class DurableRoomOwner {
     await owner.#persist(saved.room,saved.version);owner.#halted=false;return owner;
   }
   get health(){return {status:this.#halted?'halted' as const:'ready' as const,version:this.#version,pending:this.#pending};}
+  /** Server-only commit invalidation. Observers never receive cards, capabilities or checkpoints. */
+  subscribe(observer:()=>void){if(this.#observers.size>=1024)throw new Error('Observer limit reached');this.#observers.add(observer);return ()=>{this.#observers.delete(observer);};}
+  #notify(){for(const observer of this.#observers){try{observer();}catch{/* observers cannot roll back or halt a committed hand */}}}
   #enqueue<T>(operation:()=>Promise<T>|T,recovery=false):Promise<T> {
     if(this.#pending>=this.#limit)return Promise.reject(new Error('Room queue is full'));
     this.#pending++;
@@ -69,7 +73,7 @@ export class DurableRoomOwner {
         if(JSON.stringify(after)!==JSON.stringify(before)){this.#halted=true;throw unavailable();}
         throw error;
       }
-      if(changed(result))await this.#persist(this.#room,this.#version);
+      if(changed(result)){await this.#persist(this.#room,this.#version);this.#notify();}
       return result;
     });
   }
@@ -79,6 +83,7 @@ export class DurableRoomOwner {
   seat(member:string,seat:number){return this.#mutate(r=>r.seat(member,seat));}
   connect(member:string){return this.#mutate(r=>r.connect(member));}
   disconnect(member:string,connection:string){return this.#mutate(r=>r.disconnect(member,connection));}
+  disconnectConnection(connection:string){return this.#mutate(r=>r.disconnectConnection(connection),changed=>changed);}
   leave(member:string,connection:string){return this.#mutate(r=>r.leave(member,connection));}
   startHand(buttonSeat:number){return this.#mutate(r=>r.startHand(buttonSeat));}
   nextHand(previousHandId:string){return this.#mutate(r=>r.nextHand(previousHandId));}
@@ -105,7 +110,7 @@ export class DurableRoomOwner {
       checkConfig(saved.room,this.#expectedConfig);
       await this.#persist(saved.room,saved.version);
       const state=saved.room.publicSnapshot();
-      this.#room=saved.room;this.#halted=false;return state;
+      this.#room=saved.room;this.#halted=false;this.#notify();return state;
     }catch{this.#halted=true;throw unavailable();}
   },true);}
 }

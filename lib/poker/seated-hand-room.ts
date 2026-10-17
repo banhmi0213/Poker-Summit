@@ -97,6 +97,11 @@ export class SeatedHandRoom {
   disconnect(authenticatedMemberId:string,connectionId:string) {
     const [,s]=this.#connection(authenticatedMemberId,connectionId);s.connectionId=null;this.#revision++;
   }
+  /** Transport cleanup only. An obsolete capability must not disconnect a replacement. */
+  disconnectConnection(connectionId:string) {
+    const entry=[...this.#seats.values()].find(s=>s.connectionId===connectionId);
+    if(!entry)return false;entry.connectionId=null;this.#revision++;return true;
+  }
   /** Private refresh/reconnect state; neither member ID nor seat can be chosen by an action. */
   snapshot(authenticatedMemberId:string,connectionId:string) {
     return this.#snapshot(this.#connection(authenticatedMemberId,connectionId)[0]);

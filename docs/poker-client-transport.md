@@ -1,6 +1,6 @@
 # Authoritative room transport and connection screen
 
-This adds the first browser-to-owner transport. It uses same-origin HTTP POST and sequential one-second polling, **not WebSocket**. `/poker-demo` remains the approved local simulation and is unchanged. `/poker-online/<room UUID>` is a separate authenticated integration screen, not linked as a live lobby table yet. No guest authorization, room provisioning, production database change or Railway service is installed.
+This adds the first browser-to-owner transport. It uses same-origin HTTP POST and sequential one-second polling, **not WebSocket by default; an optional commit-notification channel is now described in [poker-websocket.md](poker-websocket.md)**. `/poker-demo` remains the approved local simulation and is unchanged. `/poker-online/<room UUID>` is a separate authenticated integration screen, not linked as a live lobby table yet. No guest authorization, room provisioning, production database change or Railway service is installed.
 
 ## Explicit server composition
 
@@ -16,7 +16,7 @@ The connection capability is held only in memory. No URL, storage, analytics or 
 
 Only server-projected board/own holes/public showdown holes, chip amounts, positions, legal actions and payouts are rendered. No client deal, chip mutation, winner calculation or authoritative timer exists. Final-level wording stays visible; a champion shows the exit link. Polling stops on errors and does not run while an action needs confirmation. Teardown or auth-account change clears private cards and prevents late responses from repopulating the old client. Reload loses an uncertain in-memory command, so the user must reconnect and inspect the current server state before acting; no browser command persistence is introduced.
 
-The screen is a responsive integration table with navigation back to the site/lobby, not the finished demo layout/animation replacement. Seat requests still require backend assignment and current admission. The UI does not create a seat entitlement. The clock/turn authority remains server-side. Closing a tab does not send a reliable disconnect; presence leases/heartbeats and WebSocket push remain future work. This transport does not yet support leave controls, time-bank/AUTO actions, structure details, lobby entry/assignment or production startup discovery. A single process can run the separately composed scheduler; this change launches none.
+The screen is a responsive integration table with navigation back to the site/lobby, not the finished demo layout/animation replacement. Seat requests still require backend assignment and current admission. The UI does not create a seat entitlement. The clock/turn authority remains server-side. Closing a tab does not send a reliable disconnect; optional authenticated WebSocket subscriptions now add commit notifications and heartbeat-driven disconnects; HTTP-only tab-close detection remains unavailable. This transport does not yet support leave controls, time-bank/AUTO actions, structure details, lobby entry/assignment or production startup discovery. A single process can run the separately composed scheduler; this change launches none.
 
 ## Verification
 

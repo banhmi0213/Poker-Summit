@@ -24,9 +24,9 @@ export function OnlineTableView({state}:{state:PlayerSnapshot|null}){
   {state?.phase==='finished'&&<p role="status">大会終了 · 優勝 プレイヤー {state.tournament?.champion?.replace('seat-','')} <a href="/poker-lobby">退出する</a></p>}
  </>;
 }
-export default function OnlineTable({roomId,enabled}:{roomId:string;enabled:boolean}){
+export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string;enabled:boolean;eventsOrigin?:string}){
  const client=useRef<PokerPlayerClient|null>(null),busyRef=useRef(false),pollMode=useRef<'spectator'|'player'|null>(null);
- const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('接続確認用の画面です。'),[amount,setAmount]=useState('');
+ const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('接続確認用の画面です。'),[amount,setAmount]=useState(''),[connectionEpoch,setConnectionEpoch]=useState(0);
  async function run(operation:(c:PokerPlayerClient)=>Promise<unknown>){
   const c=client.current;if(!c||busyRef.current)return;busyRef.current=true;setBusy(true);
   try{await operation(c);if(client.current===c){setState(c.state);setMessage(c.pending?'前の操作の結果確認が必要です。':'接続中');}}
@@ -42,6 +42,12 @@ export default function OnlineTable({roomId,enabled}:{roomId:string;enabled:bool
   const timer=setInterval(()=>{if(pollMode.current&&!busyRef.current&&!c.pending)void run(x=>pollMode.current==='player'?x.refresh():x.spectate());},1000);
   return()=>{clearInterval(timer);subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
+ useEffect(()=>{
+  const c=client.current;if(!c||!eventsOrigin||connectionEpoch===0)return;
+  let cancelled=false,stop:(()=>void)|undefined;
+  void c.watch(eventsOrigin,()=>{if(!cancelled&&pollMode.current==='player'&&!busyRef.current&&!c.pending)void run(x=>x.refresh());},()=>{if(cancelled)return;pollMode.current=null;setState(null);setMessage('リアルタイム接続が切れました。再接続してください。');}).then(cleanup=>{if(cancelled)cleanup();else stop=cleanup;}).catch(()=>{if(!cancelled){pollMode.current=null;setState(null);setMessage('リアルタイム接続を開始できません。再接続してください。');}});
+  return()=>{cancelled=true;stop?.();};
+ },[eventsOrigin,connectionEpoch]);
  useEffect(()=>setAmount(''),[state?.hand?.handId,state?.hand?.revision]);
  const legal=state?.hand?.legal,locked=busy||pending||!enabled;
  const wager=Number(amount||legal?.minRaiseTo),validWager=Number.isSafeInteger(wager)&&legal?.minRaiseTo!=null&&legal.maxRaiseTo!=null&&wager>=legal.minRaiseTo&&wager<=legal.maxRaiseTo;
@@ -51,9 +57,9 @@ export default function OnlineTable({roomId,enabled}:{roomId:string;enabled:bool
   {!enabled&&<p role="status">オンライン対戦サーバーはまだ公開していません。現在のデモはロビーから利用できます。</p>}
   <p role="status">{message}</p>
   <div className={styles.controls}>
-   <button disabled={busy||!enabled} onClick={()=>void run(async c=>{await c.connect();pollMode.current='player';})}>接続・再接続</button>
+   <button disabled={busy||!enabled} onClick={()=>void run(async c=>{await c.connect();pollMode.current='player';setConnectionEpoch(v=>v+1);})}>接続・再接続</button>
    <button disabled={locked} onClick={()=>void run(async c=>{await c.spectate();pollMode.current='spectator';})}>観戦</button>
-   {[1,2,3,4,5,6].map(seat=><button key={seat} disabled={locked||state?.seats.some(s=>s.seat===seat&&s.occupied)} onClick={()=>void run(async c=>{await c.seat(seat);await c.connect();pollMode.current='player';})}>{seat}番席に着席</button>)}
+   {[1,2,3,4,5,6].map(seat=><button key={seat} disabled={locked||state?.seats.some(s=>s.seat===seat&&s.occupied)} onClick={()=>void run(async c=>{await c.seat(seat);await c.connect();pollMode.current='player';setConnectionEpoch(v=>v+1);})}>{seat}番席に着席</button>)}
    {pending&&<button disabled={busy} onClick={()=>void run(async c=>{await c.retry();pollMode.current='player';})}>前の操作の結果を確認</button>}
   </div>
   <OnlineTableView state={state}/>
@@ -64,6 +70,6 @@ export default function OnlineTable({roomId,enabled}:{roomId:string;enabled:bool
    <label>ベット後の合計 <input aria-label="ベット後の合計" type="number" inputMode="numeric" min={legal?.minRaiseTo??0} max={legal?.maxRaiseTo??0} value={amount||legal?.minRaiseTo||''} onChange={e=>setAmount(e.target.value)} disabled={locked||!legal?.raise}/></label>
    <button disabled={locked||!legal?.raise||!validWager} onClick={()=>void run(c=>c.act({type:state?.hand?.players.some(p=>!p.folded&&p.committed>0)?'raise':'bet',amount:wager}))}>{legal?.shortAllInOnly?'オールイン':'ベット・レイズ'}</button>
   </div>
-  <p>通信は1秒間隔で更新します。操作結果が不明な間は新しいベットを停止します。</p>
+  <p>{eventsOrigin?'更新通知を即時に受信し、1秒間隔でも状態を確認します。':'通信は1秒間隔で更新します。'}操作結果が不明な間は新しいベットを停止します。</p>
  </main>;
 }
