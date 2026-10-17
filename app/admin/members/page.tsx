@@ -15,7 +15,12 @@ export default async function AdminMembersPage({
   const q = searchParams.q?.trim().toLowerCase() ?? "";
 
   const supabase = await createClient();
-  const { data: members, error } = await supabase.rpc("admin_list_members");
+  const [{ data: members, error }, { data: unconfirmedIds }] = await Promise.all([
+    supabase.rpc("admin_list_members"),
+    supabase.rpc("admin_unconfirmed_member_ids"),
+  ]);
+  // 確認メールのリンクをまだ押していない会員(ログインできず、会員数にも数えない)
+  const unconfirmed = new Set<string>(((unconfirmedIds ?? []) as unknown[]).map((v: any) => (typeof v === "string" ? v : v?.admin_unconfirmed_member_ids)));
 
   let list = members ?? [];
   if (q) {
@@ -96,6 +101,12 @@ export default async function AdminMembersPage({
         「同一IP」は、同じIPアドレスから7日以内に別の会員登録があった会員です。スマホ回線や店舗Wi-Fiなどでは別人でも同じIPになることがあるため、自動では止めていません。
       </p>
 
+      {unconfirmed.size > 0 && (
+        <p className="muted" style={{ fontSize: 12, margin: "-6px 0 12px" }}>
+          「メール未確認」は、登録後に確認メールのリンクをまだ押していない人です（ログインできず、会員数にも数えていません）。
+        </p>
+      )}
+
       <div className="table-wrap"><table>
         <thead>
           <tr>
@@ -148,7 +159,11 @@ export default async function AdminMembersPage({
               <td className="tabular">{favCounts.get(m.id) ?? 0}</td>
               <td className="tabular">{appliedCounts.get(m.id) ?? 0}</td>
               <td>
-                {m.suspended ? (
+                {unconfirmed.has(m.id) ? (
+                  <span className="badge" style={{ background: "rgba(120, 120, 120, 0.16)", color: "#555" }}>
+                    メール未確認
+                  </span>
+                ) : m.suspended ? (
                   <span
                     className="badge"
                     style={{ background: "rgba(230, 80, 80, 0.14)", color: "var(--critical)" }}
