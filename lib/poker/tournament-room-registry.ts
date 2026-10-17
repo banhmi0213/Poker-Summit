@@ -42,6 +42,6 @@ export class TournamentRoomRegistry {
  }
  /** Explicit operator recovery; halted owners are never silently replaced per player request. */
  async recover(id:string){const owner=await this.owner(id);if(!owner)throw new Error('Managed room not found');return owner.recover();}
- lobbyHandler(options:Omit<Parameters<typeof createSupabasePokerLobbyHandler>[0],'assignments'>){return createSupabasePokerLobbyHandler({...options,assignments:member=>this.#options.directory.assignments(member)});}
+ lobbyHandler(options:Omit<Parameters<typeof createSupabasePokerLobbyHandler>[0],'assignments'|'registrations'>){return createSupabasePokerLobbyHandler({...options,assignments:member=>this.#options.directory.assignments(member),registrations:{catalog:member=>this.#options.directory.registrationCatalog(member),change:(member,tournament,action)=>this.#options.directory.changeRegistration(member,tournament,action)}});}
  playerHandler(options:Omit<Parameters<typeof createSupabasePokerPlayerHandler>[0],'authorize'|'owner'>){return createSupabasePokerPlayerHandler({...options,authorize:a=>this.authorize(a),owner:id=>this.owner(id)});}
 }

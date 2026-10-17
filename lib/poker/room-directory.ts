@@ -1,3 +1,4 @@
+import {registrationCatalog,registrationOutcome,type RegistrationSummary,type RegistrationOutcome} from './registration';
 /** Backend-only directory/admission adapter. Never instantiate with a user-session client. */
 import type {TournamentControl} from './scheduled-tournament-room';
 import {pokerUUID} from './request-auth';
@@ -17,6 +18,8 @@ export function roomAssignments(data:unknown):RoomAssignment[]{
  });
 }
 export interface RoomDirectory {
+ registrationCatalog(member:string):Promise<RegistrationSummary[]>;
+ changeRegistration(member:string,tournament:string,action:'register'|'cancel'):Promise<RegistrationOutcome>;
  assignments(member:string):Promise<RoomAssignment[]>;
  control(id:string):Promise<RoomControl|null>;
  tournament(id:string):Promise<RoomConfig|null>;
@@ -41,6 +44,8 @@ type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:u
 export class SupabaseRoomDirectory implements RoomDirectory {
  constructor(private client:RpcClient){}
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
+ async registrationCatalog(member:string){return registrationCatalog(await this.#rpc('poker_registration_catalog',{p_member:roomUUID(member)}));}
+ async changeRegistration(member:string,tournament:string,action:'register'|'cancel'){const id=roomUUID(tournament);if(!['register','cancel'].includes(action))throw Error('Invalid registration action');return registrationOutcome(await this.#rpc('poker_registration_change',{p_member:roomUUID(member),p_tournament:id,p_action:action}),id);}
  async assignments(member:string){return roomAssignments(await this.#rpc('poker_room_assignments',{p_member:roomUUID(member)}));}
  async tournament(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_tournament_config',{p_tournament:id});if(data===null)return null;const c=roomConfig(data as RoomConfig);if(c.tournamentId!==id)throw new Error('Tournament binding mismatch');return c;}
  async binding(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_binding',{p_room:id});if(data===null)return null;const b=roomBinding(data as RoomBinding);if(b.roomId!==id)throw new Error('Room binding mismatch');return b;}

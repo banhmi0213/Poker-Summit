@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
+import TournamentRegistration from "./tournament-registration";
 import AssignedRooms from "./assigned-rooms";
 import PokerLobbyPreview from "./poker-lobby-preview";
 
@@ -18,7 +19,7 @@ export default async function PokerLobbyPage() {
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      {user&&<AssignedRooms enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>}
+      {user&&<><AssignedRooms enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/><TournamentRegistration enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/></>}
       <PokerLobbyPreview configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
     </main>
     <PortalFooter />
