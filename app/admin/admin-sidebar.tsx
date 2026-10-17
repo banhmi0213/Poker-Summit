@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
+import { ADMIN_ATTENTION_ITEMS, CountBadge, useAttentionCounts } from "@/app/attention-counts";
 
 const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin", label: "ダッシュボード" },
@@ -83,7 +83,7 @@ export function AdminSidebar() {
             className={`side-link${active ? " active" : ""}`}
           >
             {l.label}
-            {BADGE_KEYS[l.href] && <CountBadge count={counts[BADGE_KEYS[l.href]]} />}
+            {BADGE_KEYS[l.href] && <CountBadge count={counts[BADGE_KEYS[l.href]]} label={ADMIN_ATTENTION_ITEMS.find((i) => i.key === BADGE_KEYS[l.href])?.label} />}
           </Link>
         );
       })}

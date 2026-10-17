@@ -123,8 +123,8 @@ export default async function AdminBillingPage({
                     className="card"
                     style={{ borderColor: overdue ? "#d1453b" : undefined, background: overdue ? "rgba(209,69,59,0.05)" : undefined }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-                      <div>
+                    <div style={{ display: "flex", justifyContent: "flex-start", gap: "8px 32px", flexWrap: "wrap", alignItems: "flex-start" }}>
+                      <div style={{ minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 15 }}>
                           {inv.bill_to_name}
                           <span className="badge" style={{ marginLeft: 8, fontSize: 10.5 }}>
@@ -140,8 +140,9 @@ export default async function AdminBillingPage({
                           {inv.period_start ? `・期間 ${formatJpDate(inv.period_start)}〜${inv.period_end ? formatJpDate(inv.period_end) : ""}` : "・期間は入金確認日から"}
                         </div>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: 18, fontWeight: 800 }}>{yen(inv.total_amount)}</div>
+                      <div style={{ textAlign: "left", background: "#faf6ec", borderRadius: 8, padding: "6px 12px" }}>
+                        <div className="muted" style={{ fontSize: 11 }}>請求額（税込）</div>
+                        <div style={{ fontSize: 20, fontWeight: 800 }}>{yen(inv.total_amount)}</div>
                         <div style={{ fontSize: 12.5, color: overdue ? "#d1453b" : undefined, fontWeight: overdue ? 700 : 400 }}>
                           {inv.status === "paid"
                             ? `入金確認 ${inv.paid_at ? formatJpDate(isoToJstDate(inv.paid_at)) : ""}`

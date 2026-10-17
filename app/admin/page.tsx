@@ -1,3 +1,4 @@
+import { AttentionSummary } from "./attention-summary";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/lib/constants";
@@ -187,6 +188,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
 
   return (
     <div>
+      <AttentionSummary />
       <div className="app-topbar" style={{ marginBottom: 10 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>アクセス統計</h1>
         <span className="muted" style={{ fontSize: 12.5 }}>
