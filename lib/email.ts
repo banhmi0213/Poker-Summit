@@ -89,22 +89,25 @@ export async function sendStoreCredentialsEmail(params: {
   const siteUrl = getSiteUrl();
   const text = `${params.companyName} 様
 
-  このたびはPoker Summitへの掲載お申し込み・お支払い手続きをいただき、誠にありがとうございます。
-  決済が完了し、店舗管理アカウントを発行いたしました。
+このたびはPoker Summitへの掲載お申し込み・お支払い手続きをいただき、誠にありがとうございます。
+お支払いを確認し、店舗管理アカウントを発行いたしました。
 
-  ■ 店舗管理画面ログイン情報
-  URL: ${siteUrl}/store/login
-  ログインID: ${params.loginId}
-  パスワード: ${params.password}
+■ 店舗管理画面ログイン情報
+URL: ${siteUrl}/store/login
+ログインID: ${params.loginId}
+パスワード: ${params.password}
+※初回ログイン後、店舗管理画面の「パスワード変更」から、ご自身で決めたパスワードに変更することをおすすめします。
 
-  ■ LINE連携コード(24時間有効・1回限り)
-  ${params.lineCode}
-  LINE公式アカウントの店舗用メニューから、店舗アカウントとの初回連携を行う際にご利用ください。
+■ LINE連携コード(24時間有効・1回限り)
+${params.lineCode}
+LINE公式アカウントの店舗用メニューから、店舗アカウントとの初回連携を行う際にご利用ください。
+※24時間を過ぎた場合も、店舗管理画面のトップにある「LINE連携コードを発行する」から、いつでも新しいコードを発行できます。
 
-  ※このメールに記載の情報は第三者に共有せず、大切に保管してください。
-  ※LINE連携コードは24時間を過ぎると無効になります。有効期限が切れてしまった場合や、ログイン情報を紛失した場合は、運営までお問い合わせください。
+※このメールに記載の情報は第三者に共有せず、大切に保管してください。
+※ログイン情報を紛失した場合は、お問い合わせフォームよりご連絡ください。
+${siteUrl}/contact
 
-  Poker Summit運営事務局`;
+Poker Summit運営事務局`;
 
 await sendEmail({
   to: params.to,
