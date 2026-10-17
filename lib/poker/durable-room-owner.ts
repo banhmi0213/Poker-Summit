@@ -41,6 +41,8 @@ export class DurableRoomOwner {
     const owner=new DurableRoomOwner(saved.room,saved.version,options);
     await owner.#persist(saved.room,saved.version);owner.#halted=false;return owner;
   }
+  /** Wait for accepted operations without mutating or exposing the checkpoint. */
+  async drain(){await this.#tail;}
   get health(){return {status:this.#halted?'halted' as const:'ready' as const,version:this.#version,pending:this.#pending};}
   /** Server-only commit invalidation. Observers never receive cards, capabilities or checkpoints. */
   subscribe(observer:()=>void){if(this.#observers.size>=1024)throw new Error('Observer limit reached');this.#observers.add(observer);return ()=>{this.#observers.delete(observer);};}

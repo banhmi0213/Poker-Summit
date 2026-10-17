@@ -12,9 +12,10 @@ After durable registration binding, trusted bootstrap code can call
 restore from arming timers. Already accepted durable writes are not cancelled.
 The health getter returns aggregate counts only, never cards or member IDs.
 
-This module is not a running service. Database discovery, actual HTTP/WebSocket
-bootstrap, registration notification wiring and graceful draining of scheduler
-writes remain separate integration work. No Railway service or production
+This module is not a running service. The HTTP/WebSocket composition and registration notification are implemented
+in `room-service.ts`; database discovery and deployment configuration remain
+separate integration work. Runtime shutdown now drains accepted scheduler
+decisions as well as startup operations. No Railway service or production
 migration is activated by importing it. Use one authoritative process only;
 there is no distributed leader lease.
 

@@ -6,15 +6,17 @@ import {roomUUID} from './room-directory';
 import type {TournamentRoomRegistry} from './tournament-room-registry';
 import {RoomScheduler} from './room-scheduler';
 type Registry=Pick<TournamentRoomRegistry,'owner'|'advance'|'recover'>;
-type Driver=Pick<RoomScheduler,'start'|'stop'|'close'>;
+type Driver=Pick<RoomScheduler,'start'|'stop'|'close'>&Partial<Pick<RoomScheduler,'drain'>>;
 export class RoomRuntime {
  #registry:Registry;#driver:Driver;#limit:number;#closed=false;
+ #recovering=new Set<string>();
  #pending=new Map<string,Promise<void>>();#active=new Set<string>();#failed=new Set<string>();
  constructor(registry:Registry,options:{maxRooms?:number;driver?:Driver}={}){
   this.#registry=registry;this.#limit=options.maxRooms??128;
   if(!Number.isSafeInteger(this.#limit)||this.#limit<1||this.#limit>10000)throw new Error('Invalid runtime limit');
   this.#driver=options.driver??new RoomScheduler(registry,{maxRooms:this.#limit,onError:id=>{this.#active.delete(id);this.#failed.add(id);}});
  }
+ isActive(raw:string){return !this.#closed&&this.#active.has(roomUUID(raw))&&!this.#failed.has(roomUUID(raw));}
  get health(){return {closed:this.#closed,active:this.#active.size,pending:this.#pending.size,failed:this.#failed.size};}
  /** Validate the entire bounded manifest before any I/O. An error on one room
   * does not stop independent rooms; only aggregate counts are returned. */
@@ -44,11 +46,11 @@ export class RoomRuntime {
  }
  /** Explicit only: no timer/request automatically clears quarantine. */
  async recover(raw:string){
-  const id=roomUUID(raw);if(this.#closed||this.#pending.has(id)||!this.#failed.has(id))throw new Error('Room not recoverable');
+  const id=roomUUID(raw);if(this.#closed||this.#pending.has(id)||this.#recovering.has(id)||!this.#failed.has(id))throw new Error('Room not recoverable');
   // Keep the failed marker until recovery finishes, preventing activation races.
-  await this.#registry.recover(id);if(this.#closed)return;
-  this.#failed.delete(id);await this.activate(id);
+  this.#recovering.add(id);try{await this.#registry.recover(id);if(this.#closed)return;
+  this.#failed.delete(id);await this.activate(id);}finally{this.#recovering.delete(id);}
  }
  /** Stop future ticks, then await startup I/O already accepted. */
- async close(){this.#closed=true;this.#driver.close();await Promise.allSettled([...this.#pending.values()]);this.#active.clear();}
+ async close(){this.#closed=true;const draining=this.#driver.drain?.();this.#driver.close();await Promise.allSettled([...this.#pending.values()]);await draining;this.#active.clear();}
 }

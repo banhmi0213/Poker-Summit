@@ -5,7 +5,7 @@ import {DurableRoomOwner} from './durable-room-owner';
 import {restoreRoom,type KeyRing,type RoomStore} from './room-persistence';
 import {roomUUID,roomConfig,roomBinding,type RoomDirectory,type RoomAccess} from './room-directory';
 import {createSupabasePokerPlayerHandler} from './player-request-handler';
-type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxRooms?:number};
+type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxRooms?:number;onRoomBound?:(roomId:string)=>Promise<void>};
 export class TournamentRoomRegistry {
  #owners=new Map<string,Promise<DurableRoomOwner|null>>();#finalizing=new Map<string,{count:number;task:Promise<import('./registration-management').RegistrationManagementStatus>}>();#options:Options;#limit:number;
  constructor(options:Options){const limit=options.maxRooms??128;if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw new Error('Invalid room registry limit');this.#options={...options,keys:structuredClone(options.keys)};this.#limit=limit;}
@@ -54,9 +54,13 @@ export class TournamentRoomRegistry {
      return created??DurableRoomOwner.load({...this.#options,roomId,expectedConfig:plan});
     });
    }
-   return this.#options.directory.managementStatus(tid);
+   const status=await this.#options.directory.managementStatus(tid);
+   if(!status.finalization?.assigned||status.finalization.roomId!==roomId)throw new Error('Binding not confirmed');
+   await this.#options.onRoomBound?.(roomId);return status;
   });this.#finalizing.set(tid,{count:expectedCount,task});void task.finally(()=>{if(this.#finalizing.get(tid)?.task===task)this.#finalizing.delete(tid);}).catch(()=>{});return task;
  }
+ /** Shutdown barrier; transport and timers must stop accepting work first. */
+ async drain(){await Promise.allSettled([...this.#finalizing.values()].map(p=>p.task));const owners=await Promise.allSettled([...this.#owners.values()]);await Promise.all(owners.map(p=>p.status==='fulfilled'?p.value?.drain():undefined));}
  /** Fresh backend control for every timer decision; missing/disabled rooms do not auto-start. */
  async advance(id:string){
   const roomId=roomUUID(id),control=await this.#options.directory.control(roomId);

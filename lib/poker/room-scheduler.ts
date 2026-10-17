@@ -5,6 +5,7 @@ type Timer={set:(callback:()=>void,delay:number)=>unknown;clear:(handle:unknown)
 type Job={timer:unknown|null;inflight:Promise<void>|null;again:boolean};
 type Options={now?:()=>number;pollMs?:number;maxRooms?:number;timer?:Timer;onError?:(roomId:string)=>void};
 export class RoomScheduler {
+ #running=new Set<Promise<void>>();
  #jobs=new Map<string,Job>();#registry:Pick<TournamentRoomRegistry,'advance'>;#now:()=>number;#poll:number;#limit:number;#timer:Timer;#onError:(id:string)=>void;
  constructor(registry:Pick<TournamentRoomRegistry,'advance'>,options:Options={}){
   this.#registry=registry;this.#now=options.now??Date.now;this.#poll=options.pollMs??1000;this.#limit=options.maxRooms??128;this.#onError=options.onError??(()=>{});
@@ -31,9 +32,11 @@ export class RoomScheduler {
    const until=result?.nextWakeAt===null||result?.nextWakeAt===undefined?this.#poll:Math.max(1,result.nextWakeAt-now);
    const delay=job.again?1:Math.min(this.#poll,until);job.again=false;
    const handle=this.#timer.set(()=>{if(job.timer!==handle)return;job.timer=null;void this.#pump(id,job).catch(()=>{});},delay);job.timer=handle;
-  }).catch(()=>{if(this.#jobs.get(id)===job){this.stop(id);try{this.#onError(id);}catch{/* reporting never resumes a failed room */}}throw new Error('Room scheduler stopped; operator recovery required');}).finally(()=>{if(job.inflight===running)job.inflight=null;});
-  job.inflight=running;return running;
+  }).catch(()=>{if(this.#jobs.get(id)===job){this.stop(id);try{this.#onError(id);}catch{/* reporting never resumes a failed room */}}throw new Error('Room scheduler stopped; operator recovery required');}).finally(()=>{this.#running.delete(running);if(job.inflight===running)job.inflight=null;});
+  job.inflight=running;this.#running.add(running);return running;
  }
  stop(id:string){const roomId=roomUUID(id),job=this.#jobs.get(roomId);if(!job)return;this.#jobs.delete(roomId);if(job.timer!==null)this.#timer.clear(job.timer);job.timer=null;}
+ /** Stop future ticks and await the durable decisions already accepted. */
+ async drain(){const running=[...this.#running];this.close();await Promise.allSettled(running);}
  close(){for(const id of this.#jobs.keys())this.stop(id);}
 }
