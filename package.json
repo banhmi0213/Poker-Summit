@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test:poker": "node --test tests/poker-*.test.cjs",
     "build:poker-server": "node scripts/build-poker-server.cjs",
-    "start:poker-server": "node .poker-server/lib/poker/room-server-entry.js"
+    "start:poker-server": "node .poker-server/lib/poker/room-server-entry.js",
+    "check:poker-staging": "node .poker-server/lib/poker/staging-check-entry.js"
   },
   "dependencies": {
     "next": "^14.2.0",
