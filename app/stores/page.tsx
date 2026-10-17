@@ -300,7 +300,8 @@ export default async function StoresPage({
         )}
 
         <ExpandableSearchForm
-          className=""
+          collapse={false}
+          className="sl-filter"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
           {/* region isn't its own dropdown here (only q / pref / category are),
