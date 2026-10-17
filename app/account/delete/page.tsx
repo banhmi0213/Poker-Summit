@@ -23,7 +23,8 @@ export default async function DeleteAccountPage({
       <div className="card" style={{ borderColor: "var(--critical)" }}>
         {searchParams.error && <p className="err">{searchParams.error}</p>}
         <p style={{ marginBottom: 10 }}>
-          退会すると、アカウント（{user.email}）とお気に入り・応募履歴・投稿との紐付けなど、このアカウントに関する情報が削除されます。
+          退会すると、このアカウントとお気に入り・応募履歴・投稿との紐付けなど、アカウントに関する情報が削除されます。
+          <span style={{ display: "block", marginTop: 6, fontSize: 13.5, color: "var(--muted)", overflowWrap: "anywhere" }}>対象のアカウント：{user.email}</span>
         </p>
         <p className="muted" style={{ fontSize: 12.5, marginBottom: 18 }}>
           ※掲示板への投稿自体は残りますが、投稿者アカウントとの紐付けは解除されます。
