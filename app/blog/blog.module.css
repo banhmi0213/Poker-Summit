@@ -65,3 +65,5 @@
 .copy{padding:var(--card-space)}
 
 @media(min-width:861px){.toolbar nav a[aria-current]{color:#2a1c06}.copy p{font-size:14px}.meta{color:#665744}}
+
+@media(max-width:767px){.copy p{font-size:14px;line-height:1.85}.meta{font-size:12px;color:#665744;flex-wrap:wrap}.toolbar nav a[aria-current]{color:#2a1c06}.toolbar nav a{min-height:44px;box-sizing:border-box}.copy h3{line-height:1.7}}

@@ -29,7 +29,7 @@ export default async function ContactPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ maxWidth: 480 }}>
+      <div className="container public-contact" style={{ maxWidth: 480 }}>
         <h1 style={{ fontSize: 20, marginBottom: 6 }}>{advertising ? "広告掲載のお問い合わせ" : "お問い合わせ"}</h1>
         <p className="muted" style={{ marginBottom: 20 }}>
           {advertising ? "掲載したい内容やご希望の期間をお知らせください" : "掲載や広告、不具合報告などお気軽にご連絡ください。"}

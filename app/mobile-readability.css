@@ -1,0 +1,98 @@
+/* Public mobile typography and layout only; desktop and management retain their styles. */
+@media (max-width: 767px) {
+  :is(.home-feed,.sl-page,.ep-page,.cp-page,.sd-page,.jobs-page,.public-contact,.public-login,.community-page,.detail-readable) {
+    --muted:#665744; --accent-text:#78521a;
+  }
+  :is(.sl-page,.ep-page,.cp-page,.sd-page,.jobs-page,.public-contact,.public-login,.community-page,.detail-readable) {
+    min-width:0; box-sizing:border-box;
+  }
+  :is(.public-contact,.public-login,.jobs-page,.community-page,.detail-readable) :is(input:not([type=checkbox]):not([type=radio]),select,textarea) {
+    font-size:16px; min-height:46px; max-width:100%; box-sizing:border-box;
+  }
+  :is(.public-contact,.public-login) .field { color:#302316; font-size:14px; line-height:1.7; }
+  :is(.public-contact,.public-login) .muted { color:#665744; }
+  :is(.public-contact,.public-login) button[type=submit] { min-height:48px; font-size:16px; }
+  :is(.public-contact,.public-login) .err { overflow-wrap:anywhere; line-height:1.75; }
+
+  .bottom-tabs .bt-item { font-size:12px; color:#665744; min-height:58px; box-sizing:border-box; }
+  .bottom-tabs .bt-item.active { color:#78521a; }
+  :is(.public-contact,.public-login,.jobs-page,.community-page,.detail-readable) :is(input,textarea)::placeholder { color:#756b5e; opacity:1; }
+  .home-feed .home-section-head { align-items:baseline; gap:12px; }
+  .home-feed .home-section-head h2 { font-size:19px; line-height:1.5; }
+  .home-feed .home-section-head>a { flex-shrink:0; color:#78521a; font-size:12px; padding:8px 0; }
+  .home-feed h3 { color:#302316; font-size:14px; line-height:1.6; }
+  .home-feed p { color:#665744; font-size:13px; line-height:1.75; }
+  .home-feed .home-store-card>a { display:flex; flex-direction:column; height:100%; }
+  .home-feed .home-store-card .home-store-copy:has(.home-store-counts) {
+    flex:1; display:flex; flex-direction:column; min-height:230px;
+    padding:34px 10px 12px; gap:6px; box-sizing:border-box;
+  }
+  .home-feed .home-store-copy h3 { font-size:14px; line-height:1.6; margin:0; }
+  .home-feed .home-store-card .home-store-copy:has(.home-store-counts) h3 { line-height:1.6; }
+  .home-feed .home-store-copy .home-location { font-size:12px!important; color:#665744; }
+  .home-feed .home-store-card .home-store-meta-row { flex-wrap:wrap; gap:7px; }
+  .home-feed .home-store-card .home-store-meta-row .home-tag { max-width:100%; font-size:11px; color:#78521a; }
+  .home-feed .home-store-card .home-store-meta-row .home-card-cta { font-size:12px; color:#78521a; line-height:1.6; }
+  .home-feed .home-store-card .home-store-copy .home-store-counts {
+    position:static; grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px 5px; padding-top:9px; margin-top:auto;
+  }
+  .home-feed .home-store-count { flex-direction:row; justify-content:center; gap:4px; line-height:1.5; }
+  .home-feed .home-store-count-number { font-size:12px; color:#78521a; }
+  .home-feed .home-store-count-label { font-size:11px; color:#665744; }
+  .home-feed .home-event-date span { font-size:12px; color:#665744; }
+  .home-feed .home-event-copy h3 { font-size:14px; line-height:1.6; }
+  .home-feed .home-coupon-copy small,.home-feed .home-post p { font-size:12px; color:#665744; line-height:1.7; }
+  .home-feed .home-card-cta { font-size:12px; color:#78521a; }
+  .home-feed .home-job-salary { font-size:15px; color:#78521a; line-height:1.6; }
+  .home-feed .home-region-nav a { font-size:13px; color:#78521a; min-height:40px; box-sizing:border-box; }
+  .home-feed .store-display-name-detail { font-size:12px; line-height:1.6; }
+  :is(.home-feed,.sl-page,.ep-page,.jobs-page,.detail-readable) .readable-name .name-word {
+    max-width:100%; white-space:normal; overflow-wrap:anywhere; word-break:normal;
+  }
+
+  .ep-page .ep-card-copy h3 { font-size:16px; line-height:1.6; }
+  .ep-page .ep-card-copy p { font-size:13px; line-height:1.75; color:#665744; }
+  .ep-page .ep-kind-tabs a { min-height:44px; display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; }
+  .cp-page :is(.coupon-card__store,.coupon-card__meta-line) { font-size:13px; color:#665744; line-height:1.75; }
+  .cp-page .coupon-card__body h3 { font-size:18px; line-height:1.6; }
+  .jobs-page .card h3 { font-size:17px; line-height:1.6; }
+  .jobs-page .card .muted { font-size:13px; line-height:1.75; }
+
+  .sd-page .sd-info-list dd { font-size:14px; line-height:1.8; }
+  .sd-page .sd-info-list dt { font-size:13px; color:#514536; }
+  .sd-page .sd-info-list>div { padding-top:8px; padding-bottom:8px; }
+  .sd-page .sd-content-grid { grid-template-columns:minmax(0,1fr); gap:20px; }
+  .sd-page .sd-content-side { padding-left:0; border-left:0; }
+  .sd-page .sd-section h2 { font-size:19px; line-height:1.6; margin-bottom:12px!important; }
+  .sd-page .sd-menu-card { height:auto; min-height:150px; padding:12px 12px 48px!important; }
+  .sd-page .sd-menu-thumb { width:88px; flex-basis:88px; height:88px; }
+  .sd-page .sd-menu-card h3,.sd-page .sd-event-copy h3,.sd-page .sd-coupon-card h3 { font-size:15px!important; line-height:1.6; }
+  .sd-page .sd-menu-price { font-size:14px; color:#514536; }
+  .sd-page .sd-menu-card .muted { font-size:13px; line-height:1.75; color:#514536; }
+  .sd-page .sd-content-side .card p,.sd-page .sd-content-side #store-notices .card p { font-size:14px!important; line-height:1.8; }
+  .sd-page .sd-content-side #store-notices .card p.small,.sd-page .sd-coupon-card>.muted { font-size:12px!important; }
+  .sd-page :is(.sd-menu-more,.sd-event-detail,.sd-see-all) { font-size:13px!important; color:#78521a; }
+  .sd-page .sd-bottom-row { grid-template-columns:minmax(0,1fr); gap:18px; padding:16px 12px; }
+  .sd-page .sd-bottom-row .sd-schedule-heading p { font-size:12px; line-height:1.7; }
+  .sd-page .sd-bottom-row .sd-schedule-toggle { font-size:13px; min-height:44px; }
+  .sd-page .sd-bottom-row #store-jobs { display:block; }
+  .sd-page .sd-bottom-row #store-jobs h2 { font-size:17px!important; margin-bottom:10px!important; }
+  .sd-page .sd-bottom-row #store-jobs .card h3 { font-size:15px; line-height:1.6; }
+  .sd-page .sd-bottom-row #store-jobs .card .muted { font-size:13px; line-height:1.75; }
+  .detail-readable .info-row { gap:12px; line-height:1.8; overflow-wrap:anywhere; }
+  .detail-readable .info-row .k { color:#514536; font-size:13px; }
+
+  .ml-page .ml-venue { font-size:13px; color:#665744; line-height:1.75; }
+  .ml-page .ml-description,.ml-page .ml-guide p { font-size:14px; color:#514536; line-height:1.85; }
+  .ml-page .ml-detail { font-size:14px; color:#78521a; min-height:44px; box-sizing:border-box; }
+  .ml-page .ml-active { color:#2a1c06; }
+  .mt-sample .mt-facts :is(small,span),.mt-sample .mt-caption { font-size:12px!important; color:#665744; }
+  .mt-sample .mt-panel>p { font-size:15px; line-height:1.9; }
+  .mt-sample .mt-hero-meta { font-size:13px; line-height:1.8; }
+}
+@media(max-width:359px){
+ .home-feed .home-section-head{flex-wrap:wrap;gap:0 10px}
+ .home-feed .home-store-count{flex-direction:column;gap:0}
+ .sd-page .sd-menu-thumb{width:70px;flex-basis:70px;height:70px}
+}

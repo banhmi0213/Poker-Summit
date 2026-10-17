@@ -7,3 +7,5 @@
 
 /* Align the page shell with the shared PC/mobile gutters. */
 .page.page{max-width:var(--page-max);padding:var(--page-top) var(--page-gutter) var(--page-bottom)}
+
+@media(max-width:767px){.page{--muted:#665744}.page h1{line-height:1.6;overflow-wrap:anywhere}.page input,.page select{font-size:16px}}

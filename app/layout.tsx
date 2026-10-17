@@ -4,6 +4,7 @@ import "./globals.css";
 import "./admin/major-tournaments/tournament.css";
 import "./spacing.css";
 import "./pc-readability.css";
+import "./mobile-readability.css";
 import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";

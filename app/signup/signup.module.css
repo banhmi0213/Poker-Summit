@@ -91,3 +91,17 @@
 @media(max-width:760px){.tournamentPromo{margin:18px 0 0;padding:15px}.tournamentPromo h2{font-size:16px;gap:8px}.tournamentPromo p{font-size:12px}.tournamentFollow{display:block}.tournamentFollow p{margin-bottom:10px}.xFollowButton{width:100%;font-size:14px;min-height:44px}.earlyIntro{padding-bottom:50px}}
 /* 見出しは「先行会員限定／トーナメント／開催決定！」の切れ目でだけ改行する(スマホで「定！」だけ落ちないように) */
 .tournamentTitle{word-break:keep-all;overflow-wrap:anywhere}
+
+/* Mobile notices and form labels remain readable at actual phone widths. */
+@media(max-width:760px){
+ .field{font-size:14px;line-height:1.6}.field small{font-size:12px;color:#665744;line-height:1.75}
+ .field input::placeholder{color:#756b5e;opacity:1}
+ .lead{font-size:14px;line-height:1.85}
+ .notice{font-size:13px;line-height:1.8}.notice p{font-size:12px;line-height:1.8}
+ .consent{font-size:13px;line-height:1.8;gap:10px}.consent input{width:20px;height:20px;margin-top:2px}
+ .confirmation,.help{font-size:12px;line-height:1.8;color:#665744}
+ .tournamentPromo p{font-size:14px;line-height:1.8}.tournamentPromo .tournamentNote{font-size:12px;color:#66502d;line-height:1.8}
+ .tournamentFollow p{font-size:13px;min-width:0}.tournamentPromo h2{font-size:17px;line-height:1.7}
+ .footer,.storeLinks{font-size:12px;line-height:1.8;color:#665744}.footer nav{gap:8px 16px}.footer a{display:inline-block;padding:5px 0}
+ .headerLabel{font-size:12px}.back{font-size:13px;padding:6px 0}
+}
