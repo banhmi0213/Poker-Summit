@@ -96,21 +96,3 @@
  .home-feed .home-store-count{flex-direction:column;gap:0}
  .sd-page .sd-menu-thumb{width:70px;flex-basis:70px;height:70px}
 }
-
-/* Give the section introduction banners more presence on phones only. */
-@media(max-width:767px){
-  .compact-portal-banner{min-height:220px}
-  .compact-portal-banner .compact-portal-banner__copy{padding:20px 16px;gap:9px}
-  .compact-portal-banner :is(h1,h2){font-size:24px;line-height:1.5}
-  .compact-portal-banner p{font-size:14px;line-height:1.75}
-  .compact-portal-banner small{font-size:12px;line-height:1.75}
-  .compact-portal-banner .compact-portal-banner__eyebrow{font-size:10px;line-height:1.6;letter-spacing:.6px;overflow-wrap:anywhere}
-}
-@media(max-width:599px){
-  .compact-portal-banner{min-height:200px;grid-template-columns:55% 45%}
-  .compact-portal-banner .compact-portal-banner__copy{padding:18px 12px;gap:8px}
-  .compact-portal-banner :is(h1,h2){font-size:clamp(19px,5vw,22px);line-height:1.5}
-  .compact-portal-banner p{font-size:13px}
-  .compact-portal-banner small{font-size:12px}
-  .compact-portal-banner .compact-portal-banner__eyebrow{font-size:9px}
-}
