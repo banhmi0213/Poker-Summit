@@ -17,6 +17,9 @@ export default async function ContactPage({
 }) {
   const params = searchParams;
   const advertising = params.category === "advertising";
+  const categories = advertising
+    ? INQUIRY_CATEGORIES.filter(c => c !== "不具合報告").map(c => c === "掲載について" ? "店舗掲載について" : c)
+    : INQUIRY_CATEGORIES;
 
   const supabase = await createClient();
   const {
@@ -70,7 +73,7 @@ export default async function ContactPage({
                 <span className="muted">カテゴリ</span>
                 <select name="category" defaultValue={advertising ? "広告掲載について" : ""}>
                   <option value="">選択してください</option>
-                  {INQUIRY_CATEGORIES.map((c) => (
+                  {categories.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
