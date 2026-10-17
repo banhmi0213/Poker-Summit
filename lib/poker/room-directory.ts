@@ -7,7 +7,17 @@ export type RoomAccess={memberId:string;roomId:string;operation:PlayerOperation}
 export type RoomConfig={tournamentId:string;starts_at:string;structure:TournamentStructure};
 export type RoomBinding=RoomConfig&{roomId:string;capacity:2|6;allowSpectators:boolean;enabled:boolean};
 export type RoomControl=TournamentControl&{roomId:string};
+export type RoomAssignment={roomId:string;tournamentId:string;title:string;starts_at:string;capacity:2|6;published:boolean};
+export function roomAssignments(data:unknown):RoomAssignment[]{
+ if(!Array.isArray(data)||data.length>64)throw new Error('Invalid room assignments');
+ const rooms=new Set<string>(),tournaments=new Set<string>();
+ return data.map(row=>{const roomId=roomUUID(row?.roomId),tournamentId=roomUUID(row?.tournamentId),start=Date.parse(row.starts_at);
+  if(rooms.has(roomId)||tournaments.has(tournamentId)||typeof row.title!=='string'||!row.title.trim()||[...row.title].length>200||typeof row.starts_at!=='string'||!Number.isSafeInteger(start)||start<0||![2,6].includes(row.capacity)||typeof row.published!=='boolean')throw new Error('Invalid room assignments');rooms.add(roomId);tournaments.add(tournamentId);
+  return {roomId,tournamentId,title:row.title,starts_at:new Date(start).toISOString(),capacity:row.capacity,published:row.published};
+ });
+}
 export interface RoomDirectory {
+ assignments(member:string):Promise<RoomAssignment[]>;
  control(id:string):Promise<RoomControl|null>;
  tournament(id:string):Promise<RoomConfig|null>;
  binding(id:string):Promise<RoomBinding|null>;
@@ -31,6 +41,7 @@ type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:u
 export class SupabaseRoomDirectory implements RoomDirectory {
  constructor(private client:RpcClient){}
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
+ async assignments(member:string){return roomAssignments(await this.#rpc('poker_room_assignments',{p_member:roomUUID(member)}));}
  async tournament(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_tournament_config',{p_tournament:id});if(data===null)return null;const c=roomConfig(data as RoomConfig);if(c.tournamentId!==id)throw new Error('Tournament binding mismatch');return c;}
  async binding(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_binding',{p_room:id});if(data===null)return null;const b=roomBinding(data as RoomBinding);if(b.roomId!==id)throw new Error('Room binding mismatch');return b;}
  async control(id:string):Promise<RoomControl|null>{

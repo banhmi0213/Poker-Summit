@@ -29,6 +29,7 @@ export class PokerPlayerClient {
  }
  #accept(state:PlayerSnapshot){if(!state||!Number.isSafeInteger(state.revision)||!Number.isSafeInteger(state.serverNow)||!Array.isArray(state.seats))throw new PlayerClientError(0);this.#state=structuredClone(state);return this.state!;}
  /** Explicit reconnect prevents two tabs repeatedly stealing each other's connection. */
+ join(){return this.#serial(async()=>{this.#stopUpdates?.();this.#state=null;this.#connection=null;const result=await this.#send({type:'join'});if(typeof result?.connectionId!=='string')throw new PlayerClientError(0);this.#connection=result.connectionId;return this.#accept(result.state);});}
  connect(){return this.#serial(async()=>{this.#stopUpdates?.();this.#state=null;this.#connection=null;const result=await this.#send({type:'connect'});if(typeof result?.connectionId!=='string')throw new PlayerClientError(0);this.#connection=result.connectionId;return this.#accept(result.state);});}
  seat(seat:number){return this.#serial(async()=>{if(this.#pending)throw new PlayerClientError(409);this.#state=null;return this.#accept(await this.#send({type:'seat',seat}));});}
  refresh(){return this.#serial(async()=>this.#accept(await this.#send({type:'state'},true)));}

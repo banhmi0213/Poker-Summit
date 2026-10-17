@@ -38,7 +38,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   const supabase=createClient();const c=new PokerPlayerClient({endpoint:`/api/poker/rooms/${roomId}`,token:async()=>{const {data:{session}}=await supabase.auth.getSession();return session?.access_token??null;}});client.current=c;
   // Session data supplies a credential only; the service re-verifies identity and admission.
   let userId:string|undefined;
-  const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{if(userId!==undefined&&userId!==(session?.user.id??'')){c.close();client.current=null;pollMode.current=null;setState(null);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
+  const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||userId!==undefined&&userId!==(session?.user.id??'')){c.close();client.current=null;pollMode.current=null;setState(null);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
   const timer=setInterval(()=>{if(pollMode.current&&!busyRef.current&&!c.pending)void run(x=>pollMode.current==='player'?x.refresh():x.spectate());},1000);
   return()=>{clearInterval(timer);subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
@@ -55,11 +55,11 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   <header><a href="/">Poker Summit</a><a href="/poker-lobby">ロビーへ戻る</a></header>
   <h1>オンライン対戦 接続確認</h1>
   {!enabled&&<p role="status">オンライン対戦サーバーはまだ公開していません。現在のデモはロビーから利用できます。</p>}
-  <p role="status">{message}</p>
+  <p role="status">{message}</p><p>割り当て済みの参加者は、参加ボタンで空席に自動着席します。</p>
   <div className={styles.controls}>
-   <button disabled={busy||!enabled} onClick={()=>void run(async c=>{await c.connect();pollMode.current='player';setConnectionEpoch(v=>v+1);})}>接続・再接続</button>
+   <button disabled={busy||!enabled} onClick={()=>void run(async c=>{await c.join();pollMode.current='player';setConnectionEpoch(v=>v+1);})}>参加・接続・再接続</button>
    <button disabled={locked} onClick={()=>void run(async c=>{await c.spectate();pollMode.current='spectator';})}>観戦</button>
-   {[1,2,3,4,5,6].map(seat=><button key={seat} disabled={locked||state?.seats.some(s=>s.seat===seat&&s.occupied)} onClick={()=>void run(async c=>{await c.seat(seat);await c.connect();pollMode.current='player';setConnectionEpoch(v=>v+1);})}>{seat}番席に着席</button>)}
+
    {pending&&<button disabled={busy} onClick={()=>void run(async c=>{await c.retry();pollMode.current='player';})}>前の操作の結果を確認</button>}
   </div>
   <OnlineTableView state={state}/>

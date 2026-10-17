@@ -1,3 +1,4 @@
+import {createSupabasePokerLobbyHandler} from './lobby-request-handler';
 /** One registry per trusted server process. No cross-process lease/election or listening server. */
 import {DurableRoomOwner} from './durable-room-owner';
 import type {KeyRing,RoomStore} from './room-persistence';
@@ -41,5 +42,6 @@ export class TournamentRoomRegistry {
  }
  /** Explicit operator recovery; halted owners are never silently replaced per player request. */
  async recover(id:string){const owner=await this.owner(id);if(!owner)throw new Error('Managed room not found');return owner.recover();}
+ lobbyHandler(options:Omit<Parameters<typeof createSupabasePokerLobbyHandler>[0],'assignments'>){return createSupabasePokerLobbyHandler({...options,assignments:member=>this.#options.directory.assignments(member)});}
  playerHandler(options:Omit<Parameters<typeof createSupabasePokerPlayerHandler>[0],'authorize'|'owner'>){return createSupabasePokerPlayerHandler({...options,authorize:a=>this.authorize(a),owner:id=>this.owner(id)});}
 }

@@ -81,6 +81,7 @@ export class DurableRoomOwner {
   publicSnapshot(){return this.#enqueue(()=>this.#room.publicSnapshot());}
   snapshot(member:string,connection:string){return this.#enqueue(()=>this.#room.snapshot(member,connection));}
   seat(member:string,seat:number){return this.#mutate(r=>r.seat(member,seat));}
+  join(member:string,allowNewSeat:boolean){return this.#mutate(r=>r.join(member,allowNewSeat));}
   connect(member:string){return this.#mutate(r=>r.connect(member));}
   disconnect(member:string,connection:string){return this.#mutate(r=>r.disconnect(member,connection));}
   disconnectConnection(connection:string){return this.#mutate(r=>r.disconnectConnection(connection),changed=>changed);}

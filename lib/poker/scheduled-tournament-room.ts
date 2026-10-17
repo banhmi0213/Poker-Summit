@@ -76,6 +76,7 @@ export class ScheduledTournamentRoom {
     if(now<due)return result("pause",false,due);
     this.#room.nextHand(state.hand!.handId,this.#terms(now));return result("next-hand",true,this.#room.publicSnapshot().turn?.expiresAt??null);
   });}
+  join(member:string,allowNewSeat:boolean){return this.#run(now=>{const result=this.#room.join(member,allowNewSeat);return {...result,state:this.#project(result.state,now)};});}
   disconnectConnection(connection:string){return this.#run(()=>this.#room.disconnectConnection(connection));}
   publicSnapshot(){return this.#run(now=>this.#project(this.#room.publicSnapshot(),now));}
   snapshot(member:string,connection:string){return this.#run(now=>this.#project(this.#room.snapshot(member,connection),now));}

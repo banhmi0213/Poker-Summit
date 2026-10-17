@@ -86,6 +86,12 @@ export class SeatedHandRoom {
     this.#seats.set(seatNumber,{memberId:authenticatedMemberId,stack:this.#startingStack,connectionId:null});this.#revision++;
     return this.publicSnapshot();
   }
+  /** One owner transaction: reconnect an existing seat or choose the first physical vacancy. */
+  join(member:string,allowNewSeat:boolean){
+    if(typeof allowNewSeat!=='boolean')throw new Error('Invalid join policy');
+    if(!this.#member(member)){if(!allowNewSeat||this.#hand)throw new Error('New seating unavailable');const seat=this.#order.findIndex((_,i)=>!this.#seats.has(i+1))+1;if(seat===0)throw new Error('Table full');this.seat(member,seat);}
+    return this.connect(member);
+  }
   /** Rotate every reconnect; send this token only to that authenticated connection.
    * Older sockets cannot act, fetch private cards or disconnect the replacement.
    */
