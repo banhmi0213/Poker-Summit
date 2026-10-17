@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DetailIcon } from "./detail-icon";
 import { StoreDetailViewContext } from "./detail-tab-link";
 
-type Panel = { id: string; label: string; content: ReactNode };
+type Panel = { id: string; label: string; shortLabel?: string; content: ReactNode };
 
 export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedule?: ReactNode }) {
   const [active, setActive] = useState<number | null>(null);
@@ -19,7 +19,7 @@ export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedul
     <div className="sd-tabbed-content">
       <div className="sd-tabs" role="tablist" aria-label="店舗情報の各項目">
         {panels.map((panel, index) => (
-          <button key={panel.id} type="button" role="tab"
+          <button key={panel.id} type="button" role="tab" aria-label={panel.label}
             id={"tab-" + panel.id} aria-controls={"panel-" + panel.id}
             aria-selected={active === index || (active === null && index === 0)}
             tabIndex={active === index || (active === null && index === 0) ? 0 : -1}
@@ -36,7 +36,7 @@ export function StoreDetailTabs({ panels, schedule }: { panels: Panel[]; schedul
               setActive(next);
               buttons.current[next]?.focus({ preventScroll: true });
             }}>
-            <DetailIcon name={(["menu", "calendar", "ticket", "notice", "briefcase"] as const)[index]} />{panel.label}
+            <DetailIcon name={(["menu", "calendar", "ticket", "notice", "briefcase"] as const)[index]} />{panel.shortLabel ? <><span className="sd-tab-full">{panel.label}</span><span className="sd-tab-short">{panel.shortLabel}</span></> : panel.label}
           </button>
         ))}
       </div>

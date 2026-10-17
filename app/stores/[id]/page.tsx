@@ -511,7 +511,7 @@ export default async function StoreDetailPage({
             </section>
             </>
           ) },
-          { id: "events", label: "トーナメント・イベント", content: (
+          { id: "events", label: "トーナメント・イベント", shortLabel: "大会・イベント", content: (
             <>
 <section id="store-events" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
