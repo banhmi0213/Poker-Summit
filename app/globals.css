@@ -3091,3 +3091,13 @@ p, li, dd, div, label, small, strong, td { word-break: auto-phrase; }
 .job-role-filter input { position:absolute; inset:0; opacity:0; margin:0; cursor:pointer; }
 .job-role-filter label:has(input:focus-visible) { outline:2px solid var(--accent); outline-offset:2px; }
 @media(min-width:720px) { .job-role-filter > div { flex-wrap:wrap; } .job-role-filter label { flex:0 0 auto; min-width:7.5em; } }
+
+/* iPhoneのSafariは日付・日時の入力欄に独自の最低幅があり、枠や画面からはみ出すことがある。スマホでは幅に収める(2026/10) */
+@media (max-width: 767px) {
+  input:is([type=date], [type=datetime-local], [type=time], [type=month]) {
+    -webkit-appearance: none; appearance: none;
+    display: block; min-width: 0; max-width: 100%; box-sizing: border-box;
+    min-height: 44px; text-align: left;
+  }
+  input:is([type=date], [type=datetime-local], [type=time], [type=month])::-webkit-date-and-time-value { text-align: left; }
+}
