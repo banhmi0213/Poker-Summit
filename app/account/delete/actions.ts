@@ -28,5 +28,5 @@ export async function deleteOwnAccount(formData: FormData) {
   }
 
   await supabase.auth.signOut();
-  redirect("/?withdrawn=1");
+  redirect("/withdrawn");
 }
