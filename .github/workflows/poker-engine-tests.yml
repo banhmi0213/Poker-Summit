@@ -8,6 +8,8 @@ on:
       - "supabase/migrations/*poker*.sql"
       - "db/tests/poker*"
       - "app/poker-demo/**"
+      - "app/poker-online/**"
+      - "app/api/poker/rooms/**"
       - "app/poker-tournaments/**"
       - "app/admin/poker-tournaments/**"
       - "app/store/(authenticated)/profile/poker-tournaments/**"
@@ -25,6 +27,8 @@ on:
       - "supabase/migrations/*poker*.sql"
       - "db/tests/poker*"
       - "app/poker-demo/**"
+      - "app/poker-online/**"
+      - "app/api/poker/rooms/**"
       - "app/poker-tournaments/**"
       - "app/admin/poker-tournaments/**"
       - "app/store/(authenticated)/profile/poker-tournaments/**"
@@ -76,4 +80,4 @@ jobs:
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
-        run: node --test tests/poker-lifecycle.cjs
+        run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs
