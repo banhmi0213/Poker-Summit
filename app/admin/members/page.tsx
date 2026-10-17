@@ -56,6 +56,15 @@ export default async function AdminMembersPage({
   if (dupOnly) list = list.filter((m: any) => sameIpCount(m.id) > 0);
   const dupTotal = (members ?? []).filter((m: any) => sameIpCount(m.id) > 0).length;
 
+  // 退会理由(任意回答・誰の退会かは記録していない)
+  const { data: withdrawalReasons } = await supabase
+    .from("withdrawal_reasons")
+    .select("reason, comment, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const reasonCounts = new Map<string, number>();
+  for (const r of withdrawalReasons ?? []) if (r.reason) reasonCounts.set(r.reason, (reasonCounts.get(r.reason) ?? 0) + 1);
+
   const userIds = list.map((m: any) => m.id);
   const [{ data: favStores }, { data: appliedJobs }] = await Promise.all([
     userIds.length > 0
@@ -199,6 +208,27 @@ export default async function AdminMembersPage({
           ))}
         </tbody>
       </table></div>
+
+      <details style={{ marginTop: 24 }}>
+        <summary style={{ cursor: "pointer", fontWeight: 700 }}>退会理由（直近{(withdrawalReasons ?? []).length}件・任意回答）</summary>
+        {(withdrawalReasons ?? []).length === 0 ? (
+          <p className="muted" style={{ marginTop: 8 }}>まだありません。</p>
+        ) : (
+          <div style={{ marginTop: 10, display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[...reasonCounts.entries()].sort((a, b) => b[1] - a[1]).map(([r, c]) => (
+                <span key={r} className="badge">{r}：{c}件</span>
+              ))}
+            </div>
+            {(withdrawalReasons ?? []).filter((r: any) => r.comment).map((r: any, i: number) => (
+              <div key={i} className="card" style={{ padding: "8px 12px", fontSize: 13.5 }}>
+                <div className="muted" style={{ fontSize: 12 }}>{formatDate(r.created_at)}{r.reason ? `・${r.reason}` : ""}</div>
+                <div style={{ whiteSpace: "pre-wrap" }}>{r.comment}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </details>
     </div>
   );
 }
