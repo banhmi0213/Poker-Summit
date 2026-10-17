@@ -3,6 +3,7 @@ import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
 
 // 以前は求人・クーポン・イベント・お知らせ・写真・プランを/store/profile
@@ -29,6 +30,9 @@ const STORE_LINKS: { href: string; label: string }[] = [
 
 export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?: boolean }) {
   const pathname = usePathname();
+  // スマホでは「メニュー」ボタンで一覧を開く(横スクロールだと他の項目に気づけないため、2026/10)
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
   const counts = useAttentionCounts("store");
   const total = (counts.job_applications ?? 0) + (counts.messages ?? 0);
 
@@ -38,6 +42,11 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         <small>店舗管理画面{total > 0 && <CountBadge count={total} label="未確認の合計" />}</small>
       </div>
+      <button type="button" className="app-menu-toggle" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+        <span aria-hidden="true">{menuOpen ? "✕" : "☰"}</span> メニュー{!menuOpen && (STORE_LINKS.find((l) => (l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href)))?.label) ? <span className="app-menu-current">（{(STORE_LINKS.find((l) => (l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href)))?.label)}）</span> : null}
+        {!menuOpen && total > 0 && <CountBadge count={total} label="未対応の合計" />}
+      </button>
+      <div className={`app-menu-links${menuOpen ? " open" : ""}`}>
       {STORE_LINKS.map((l) => {
         const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
         if (l.href === "/store/profile/poker-tournaments" && !tournamentEnabled) return <span key={l.href} className="side-link" aria-disabled="true" title="運営から利用を許可された店舗のみ使用できます" style={{ color: "#777", background: "#eee", opacity: .65, cursor: "not-allowed" }}>{l.label}<small style={{ display: "block", fontSize: 11 }}>運営の利用許可が必要です</small></span>;
@@ -54,6 +63,7 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
           </Link>
         );
       })}
+      </div>
     </nav>
   );
 }
