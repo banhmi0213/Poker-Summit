@@ -580,7 +580,7 @@ export default async function StoreProfilePage({
               </div>
               <div className="field">
                 <span className="muted">電話番号</span>
-                <input type="text" name="tel" defaultValue={store.tel ?? ""} />
+                <input type="tel" name="tel" autoComplete="tel" defaultValue={store.tel ?? ""} />
               </div>
               <div className="field">
                 <span className="muted">営業時間</span>
@@ -599,15 +599,15 @@ export default async function StoreProfilePage({
                 </div>
                 <div className="field">
                   <span className="muted">LINE公式アカウントURL</span>
-                  <input type="text" name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
                 </div>
                 <div className="field">
                   <span className="muted">Xアカウント</span>
-                  <input type="text" name="xUrl" placeholder="https://x.com/..." defaultValue={store.x_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="xUrl" placeholder="https://x.com/..." defaultValue={store.x_url ?? ""} />
                 </div>
                 <div className="field">
                   <span className="muted">Instagram</span>
-                  <input type="text" name="instagramUrl" placeholder="https://instagram.com/..." defaultValue={store.instagram_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="instagramUrl" placeholder="https://instagram.com/..." defaultValue={store.instagram_url ?? ""} />
                 </div>
               </div>
               <div className="field">

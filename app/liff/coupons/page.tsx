@@ -169,6 +169,7 @@ export default function LiffCouponsPage() {
               <span className="muted">利用上限回数</span>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={form.usageLimit}
                 onChange={(e) => setForm({ ...form, usageLimit: e.target.value })}
@@ -301,6 +302,7 @@ function CouponRow({
             <span className="muted">利用上限回数</span>
             <input
               type="number"
+              inputMode="numeric"
               min={0}
               value={draft.usageLimit}
               onChange={(e) => setDraft({ ...draft, usageLimit: e.target.value })}

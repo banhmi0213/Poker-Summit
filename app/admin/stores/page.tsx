@@ -370,7 +370,7 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">電話番号</span>
-            <input type="text" name="tel" />
+            <input type="tel" name="tel" autoComplete="tel" />
           </div>
           <div className="field">
             <span className="muted">営業時間</span>

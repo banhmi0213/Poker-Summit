@@ -51,6 +51,10 @@ export default function StoreLoginPage({
                 placeholder="例: store-xxxxxxxx"
                 required
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="email"
               />
             </div>
             <div className="field">

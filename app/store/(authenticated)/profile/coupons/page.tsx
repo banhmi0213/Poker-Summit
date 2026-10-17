@@ -61,7 +61,7 @@ export default async function StoreCouponsPage() {
       <CouponCategorySelect value={c?.offer_type ?? ""} />
       <div className="field">
         <span>クーポンコード</span>
-        <input type="text" name="code" defaultValue={c?.code ?? ""} />
+        <input type="text" name="code" autoCapitalize="none" autoCorrect="off" spellCheck={false} defaultValue={c?.code ?? ""} />
       </div>
       <div className="field">
         <span>有効期限</span>

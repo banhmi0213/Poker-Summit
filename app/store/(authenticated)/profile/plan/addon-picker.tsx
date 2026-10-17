@@ -95,6 +95,7 @@ export function AddonPicker({
                     件数
                     <input
                       type="number"
+                      inputMode="numeric"
                       name={`quantity_${a.id}`}
                       min={1}
                       max={a.maxQuantity}
