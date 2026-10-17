@@ -50,7 +50,7 @@ export class ScheduledTournamentRoom {
   #project(state:RoomSnapshot,now:number) {
     const c=tournamentClock(this.#structure,this.#startsAt,now);
     const occupied=state.seats.filter(s=>s.occupied),ready=occupied.length>=2&&occupied.every(s=>s.connected);
-    return {...state,serverNow:now,clock:{...c,period:{...c.period},next:c.next?{...c.next}:null,following:this.#structure.periods[c.index+1]?{...this.#structure.periods[c.index+1]}:null},
+    return {...state,serverNow:now,startsAt:this.#startsAt,structure:structuredClone(this.#structure),clock:{...c,period:{...c.period},next:c.next?{...c.next}:null,following:this.#structure.periods[c.index+1]?{...this.#structure.periods[c.index+1]}:null},
       canStartHand:((state.phase==="waiting"&&ready)||state.phase==="complete")&&c.phase!=="scheduled"&&c.phase!=="break"};
   }
   /** One trusted decision per invocation, sharing the same server clock sample. */
