@@ -199,21 +199,22 @@ export default async function CouponsPage({
               name="sort"
               defaultValue={sort}
               style={{
-                padding: "7px 9px",
+                padding: "8px 10px",
+                minHeight: 40,
                 borderRadius: 6,
                 border: "1px solid var(--border-strong)",
                 background: "var(--surface-2)",
-                fontSize: 12.5,
+                fontSize: 14,
               }}
             >
               <option value="expiry">有効期限が近い順</option>
               <option value="new">新着順</option>
             </select>
-            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5 }}>
-              <input type="checkbox" name="onlyAvailable" value="1" defaultChecked={onlyAvailable} />
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, minHeight: 40, cursor: "pointer" }}>
+              <input type="checkbox" name="onlyAvailable" value="1" defaultChecked={onlyAvailable} style={{ width: 18, height: 18 }} />
               利用可能のみ
             </label>
-            <button type="submit" className="btn" style={{ fontSize: 12 }}>
+            <button type="submit" className="btn" style={{ fontSize: 14, minHeight: 40 }}>
               並び替え
             </button>
           </form>
@@ -253,10 +254,10 @@ export default async function CouponsPage({
                   )}
                   <div className="coupon-card__store">
                     {c.stores?.name && <ReadableName name={c.stores.name} />}
-                    {location && <>　{location}</>}
+                    {location && <div style={{ marginTop: 2 }}>📍 {location}</div>}
                   </div>
                   <div className="coupon-card__meta-line">
-                    有効期限：{c.valid_until ?? "設定なし"}
+                    有効期限：{c.valid_until ? String(c.valid_until).replaceAll("-", "/") : "設定なし"}
                   </div>
                   {c.description && (
                     <div className="coupon-card__meta-line">{truncate(c.description, 28)}</div>

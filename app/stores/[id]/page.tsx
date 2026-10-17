@@ -223,6 +223,11 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
   return [business, breadcrumb];
 }
 
+// 未登録の項目: 「店舗に／お問い合わせください」の切れ目でだけ折り返す
+function AskStore() {
+  return <><span style={{ display: "inline-block" }}>店舗に</span><span style={{ display: "inline-block" }}>お問い合わせください</span></>;
+}
+
 // 住所の番地(1-1-22 など)や部屋番号が途中で改行されないよう、数字のかたまりは1つにまとめる
 function keepNumbersTogether(text: string) {
   return text.split(/([0-9０-９]+(?:[-－ー‐−][0-9０-９]+)*(?:号室|号|階|F)?)/).map((part, i) =>
@@ -481,8 +486,8 @@ export default async function StoreDetailPage({
                   {(store.google_hours_text as string[]).map((line) => <span key={line} style={{ display: "block" }}>{formatGoogleHoursLine(line)}</span>)}
                   <span className="muted" style={{ display: "block", fontSize: 11, marginTop: 4 }}>※Googleマップの情報です。変更されている場合があるので、来店前に店舗のSNS等でご確認ください。</span>
                 </>
-              ) : "店舗にお問い合わせください"}</dd></div>
-              <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || "最寄り駅は店舗にお問い合わせください"}</dd></div>
+              ) : <AskStore />}</dd></div>
+              <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || <AskStore />}</dd></div>
               <div><dt><DetailIcon name="pin" />住所</dt><dd>{keepNumbersTogether(store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録")}</dd></div>
               <div><dt><DetailIcon name="phone" />電話番号</dt><dd>{store.tel ? <a href={`tel:${phone}`}>{store.tel}</a> : "未登録"}</dd></div>
             </dl>
