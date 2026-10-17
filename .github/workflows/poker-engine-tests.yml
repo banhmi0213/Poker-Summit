@@ -18,6 +18,8 @@ on:
       - "app/poker-lobby/**"
       - "tests/poker-*.cjs"
       - "tests/helpers/poker*"
+      - "scripts/build-poker-server.cjs"
+      - "tsconfig.json"
       - "package.json"
       - "package-lock.json"
   push:
@@ -38,6 +40,8 @@ on:
       - "app/poker-lobby/**"
       - "tests/poker-*.cjs"
       - "tests/helpers/poker*"
+      - "scripts/build-poker-server.cjs"
+      - "tsconfig.json"
       - "package.json"
       - "package-lock.json"
   workflow_dispatch:

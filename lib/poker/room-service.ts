@@ -28,7 +28,7 @@ export function createPokerRoomService(options:Options){
  const unavailable=()=>Response.json({ok:false,error:'temporarily_unavailable'},{status:503,headers:{'Cache-Control':'no-store, private'}});
  function tracked(task:()=>Promise<Response>){if(closing||!started)return Promise.resolve(unavailable());const promise=Promise.resolve().then(task);accepted.add(promise);void promise.finally(()=>accepted.delete(promise)).catch(()=>{});return promise;}
  const player=(request:Request,id:string)=>tracked(()=>runtime.isActive(id)?rawPlayer(request,id):Promise.resolve(unavailable()));
- const server=createPokerRoomHTTPServer(player,{lobbyHandler:request=>tracked(()=>rawLobby(request)),managerHandler:request=>tracked(()=>rawManager(request))});
+ const server=createPokerRoomHTTPServer(player,{health:()=>({ready:started&&!closing&&!runtime.health.closed&&runtime.health.pending===0&&runtime.health.failed===0}),lobbyHandler:request=>tracked(()=>rawLobby(request)),managerHandler:request=>tracked(()=>rawManager(request))});
  let sockets:ReturnType<typeof attachPokerRoomWebSocket>|null=null;
  const close=()=>{
   if(closeTask)return closeTask;closing=true;started=false;

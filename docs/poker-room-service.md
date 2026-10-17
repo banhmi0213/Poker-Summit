@@ -30,8 +30,9 @@ rolled back when shutdown starts. Repeated closes share one result.
 This is a composition API, not a deployment script. Database discovery,
 validated configuration and explicit signal hooks are now prepared in
 `room-server.ts`; see [startup and recovery](poker-room-startup.md).
-A runnable host entrypoint/build, TLS/reverse proxy configuration, platform
-readiness integration and production database rollout remain to be wired
+A dedicated host entrypoint/build and coarse probes are now prepared.
+TLS/reverse proxy configuration, platform readiness integration and production
+database rollout remain to be wired
 and verified before Railway deployment. No migration is applied here.
 There is no cross-process leader lease: use exactly one authoritative process;
 rolling deployments must not run two owners for the same room concurrently.

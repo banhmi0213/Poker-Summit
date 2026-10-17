@@ -55,9 +55,9 @@ shutdown before calling the host callback. It does not forcibly exit; the host
 entrypoint owns exit status, readiness and a platform shutdown deadline. The
 returned function removes only these registered handlers.
 
-A runnable deployment entrypoint/build, platform health route, TLS, secret
-injection and rollout remain deployment preparation. This factory alone does
-not change `npm start` or deploy a listener on Vercel/Railway.
+The dedicated executable/build and coarse health routes are now prepared below.
+TLS, secret injection, proxy integration and rollout remain deployment work.
+The factory does not change `npm start` or deploy a listener on Vercel/Railway.
 
 ## Recovery procedure
 
@@ -82,3 +82,46 @@ not change `npm start` or deploy a listener on Vercel/Railway.
 
 Verification uses isolated PostgreSQL with actual migration/ACL checks and
 loopback HTTP integration, not live production or multi-session lock testing.
+
+## Dedicated executable (Node 24)
+
+Install dependencies, then run `npm run build:poker-server` and
+`npm run start:poker-server`. The dedicated TypeScript dependency graph compiles
+strictly to `.poker-server/`; it does not compile Next pages and does not require
+new runtime dependencies. The generated directory is ignored by git and Next
+TypeScript checking. Build with development dependencies available; the built
+process needs the existing production dependencies. No automatic dotenv loader
+is installed: pass server-only variables through the process environment.
+Never put backend secrets or checkpoint keys in NEXT_PUBLIC variables.
+
+Required variables: POKER_SUPABASE_URL, POKER_SUPABASE_SECRET_KEY,
+POKER_SUPABASE_PUBLIC_KEY, POKER_ROOM_KEYS_JSON, POKER_ROOM_ACTIVE_KEY and
+POKER_ROOM_ORIGINS. Optional: PORT (default 3001), POKER_ROOM_HOST (default
+127.0.0.1) and POKER_ROOM_MAX_ROOMS (default 128). See the configuration section
+above for validation. A public reverse proxy needs a deliberately chosen listen
+host, exact origins and TLS; this change does not configure any platform.
+
+GET or HEAD `/healthz` reports that the HTTP process is alive. GET or HEAD
+`/readyz` returns 200 only while listening, not closing, and with no pending
+restorations or quarantined rooms; otherwise 503. JSON is only `{ok:boolean}`:
+no room IDs, configuration, stack traces, keys or participant data. Responses
+are uncached. Other methods are rejected. These are coarse runtime probes,
+not a fresh Supabase connectivity/authentication test or a guarantee that every
+room scheduler is healthy. A quarantined room makes global readiness fail;
+healthy rooms remain available for diagnosis/recovery. Discovery failure prevents
+listening altogether. Probe URLs must bypass application authentication in the
+future host proxy; do not expose administrative recovery publicly.
+
+SIGTERM/SIGINT coalesce into one close operation. Readiness drops immediately;
+timers and new admission stop, and accepted requests and durable writes drain
+before normal exit. Shutdown has a fixed 15-second hard stop with exit code 1.
+A supervisor must treat this as an uncertain shutdown and restore committed
+state, never create replacement deals. Startup/close errors use fixed event
+names and nonzero exits, without printing underlying error/configuration data.
+One authoritative process only: this does not add a distributed lease or make
+rolling overlap/multiple replicas safe. Keep Railway deployment deferred.
+
+Regression tests compile and launch the actual executable against a local
+startup-RPC fixture, query probes, and send SIGTERM. Host lifecycle tests cover
+coalescing, startup failure, close failure and stuck shutdown. They use no remote
+Supabase service and apply no migrations.
