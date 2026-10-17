@@ -172,8 +172,8 @@ export default async function StoreAnalyticsPage() {
                   borderRadius: 3,
                 }}
               />
-              <span style={{ fontSize: 9.5, color: "var(--muted)" }}>
-                {day.slice(5)}
+              <span style={{ fontSize: 10.5, color: "var(--muted)", whiteSpace: "nowrap" }}>
+                {Number(day.slice(5, 7))}/{Number(day.slice(8, 10))}
               </span>
             </div>
           ))}
