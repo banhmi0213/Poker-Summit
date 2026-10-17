@@ -2,7 +2,7 @@ import { ReadableName } from "@/app/readable-name";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
-import { updateStoreProfile, updateMyStoreContactEmail, confirmMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
+import { updateStoreProfile, updateMyStoreContactEmail, confirmMyStoreContactEmail, issueMyStoreLineLinkCode, updateMyStoreNotifyChannel } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
 import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
 import { uploadStoreBanner, deleteStoreBanner } from "./banner-actions";
@@ -21,7 +21,7 @@ import {
 export default async function StoreProfilePage({
   searchParams,
 }: {
-  searchParams: { lineCode?: string; emailCode?: string; emailError?: string; emailDone?: string };
+  searchParams: { lineCode?: string; emailCode?: string; emailError?: string; emailDone?: string; notifySaved?: string; error?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -176,6 +176,37 @@ export default async function StoreProfilePage({
               </span>
             )}
           </div>
+
+          {/* 応募・チャットのお知らせの受け取り方(2026/10)。LINE・メールの両方がある店舗だけ選べる */}
+          {store.line_user_id && activeContract?.contact_email && (
+            <div id="notify-channel" className="card" style={{ marginBottom: 16, scrollMarginTop: 80 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>🔔 応募・チャットのお知らせの受け取り方</p>
+              <p className="muted" style={{ fontSize: 12.5, marginBottom: 10 }}>
+                求人への応募や、ディーラーとのチャット・応募のお知らせを、どこで受け取るか選べます。お支払い・契約など大事なお知らせは、LINEとメールの両方にお送りします。
+              </p>
+              {searchParams.error && <p className="err" style={{ marginBottom: 8 }}>{searchParams.error}</p>}
+              {searchParams.notifySaved && (
+                <p style={{ color: "#1f7a3a", fontWeight: 700, fontSize: 13, marginBottom: 8 }}>保存しました。</p>
+              )}
+              <form action={updateMyStoreNotifyChannel} data-no-draft style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <input type="hidden" name="storeId" value={store.id} />
+                {[
+                  { v: "both", label: "LINEとメールの両方（おすすめ）" },
+                  { v: "line", label: "LINEのみ" },
+                  { v: "email", label: "メールのみ" },
+                ].map((o) => (
+                  <label key={o.v} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, padding: "6px 10px", border: "1px solid var(--border, #e5e0d5)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="radio" name="channel" value={o.v} defaultChecked={(store.notify_channel ?? "both") === o.v} />
+                    {o.label}
+                  </label>
+                ))}
+                <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>保存する</button>
+              </form>
+              <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+                送り先：LINE（連携済み）／メール（{activeContract.contact_email}）
+              </p>
+            </div>
+          )}
 
           {/* 検索で上に出るための入力のすすめ(営業時間・紹介文が空の店舗だけに出す) */}
           {(() => {
