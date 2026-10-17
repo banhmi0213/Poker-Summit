@@ -11,7 +11,7 @@ import { loginLockMessage, recordLoginFailure, recordLoginLocked, recordLoginSuc
 // 専用の店舗ログイン画面(/store/login, app/store/login/actions.ts)に
 // 分離した。
 export async function signIn(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
 

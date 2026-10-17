@@ -18,7 +18,7 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   if (formData.get("termsVersion") !== TERMS_VERSION || formData.get("privacyVersion") !== PRIVACY_VERSION) {
     redirect(`${path}?error=${encodeURIComponent("規約が更新されました。ページを更新して内容をご確認ください。")}`);
   }
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));

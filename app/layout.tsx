@@ -7,6 +7,7 @@ import "./pc-readability.css";
 import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
+import { EmailNormalizer } from "./email-normalizer";
 import Script from "next/script";
 import { Suspense } from "react";
 import { GaPageView } from "./ga-page-view";
@@ -53,6 +54,7 @@ export default function RootLayout({
         <BackToTop />
         <ImageUploadCompressor />
         <FormDraftKeeper />
+        <EmailNormalizer />
         {ENABLE_ANALYTICS && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />

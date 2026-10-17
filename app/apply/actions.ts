@@ -112,7 +112,7 @@ export async function submitApplication(formData: FormData) {
   if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
   const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const email = String(formData.get("email") ?? "").trim();
+      const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
       const emailConfirm = String(formData.get("emailConfirm") ?? "").trim();
       if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
               redirect(`/apply?error=${encodeURIComponent("メールアドレスと確認用のメールアドレスが一致しません。もう一度ご確認ください。")}`);
@@ -208,7 +208,7 @@ export async function startPaidApplication(formData: FormData) {
   if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
   const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const email = String(formData.get("email") ?? "").trim();
+      const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
       const emailConfirm = String(formData.get("emailConfirm") ?? "").trim();
       if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
               redirect(`/apply?error=${encodeURIComponent("メールアドレスと確認用のメールアドレスが一致しません。もう一度ご確認ください。")}`);
