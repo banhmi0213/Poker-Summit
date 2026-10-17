@@ -36,6 +36,9 @@ export default function AdvertisingPage() {
           <p>Poker Summit 広告掲載のご案内</p>
           <a className={styles.button} href="#inquiry">広告掲載を相談する <span aria-hidden="true">→</span></a>
         </div>
+        <div className={styles.heroShowcase} aria-hidden="true">
+          <Placement /><Placement mobile />
+        </div>
       </section>
       <section className={styles.section}>
         <h2 className={styles.heading}><Finger />広告掲載について</h2>
