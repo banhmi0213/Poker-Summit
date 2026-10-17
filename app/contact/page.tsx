@@ -13,9 +13,10 @@ export const metadata = staticPageMetadata({ title: "お問い合わせ", descri
 export default async function ContactPage({
   searchParams,
 }: {
-  searchParams: { error?: string; done?: string };
+  searchParams: { error?: string; done?: string; category?: string };
 }) {
   const params = searchParams;
+  const advertising = params.category === "advertising";
 
   const supabase = await createClient();
   const {
@@ -26,9 +27,9 @@ export default async function ContactPage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className="container" style={{ maxWidth: 480 }}>
-        <h1 style={{ fontSize: 20, marginBottom: 6 }}>お問い合わせ</h1>
+        <h1 style={{ fontSize: 20, marginBottom: 6 }}>{advertising ? "広告掲載のお問い合わせ" : "お問い合わせ"}</h1>
         <p className="muted" style={{ marginBottom: 20 }}>
-          掲載や広告、不具合報告などお気軽にご連絡ください。
+          {advertising ? "掲載したい内容やご希望の期間をお知らせください" : "掲載や広告、不具合報告などお気軽にご連絡ください。"}
         </p>
 
         {params.done ? (
@@ -46,8 +47,15 @@ export default async function ContactPage({
           <div className="card">
             {params.error && <p className="err">{params.error}</p>}
             <form action={submitInquiry}>
+              {advertising && <>
+                <input type="hidden" name="inquiry_type" value="advertising" />
+                <div className="field">
+                  <label htmlFor="ad-company">会社名・店舗名 *</label>
+                  <input id="ad-company" name="company" type="text" required maxLength={200} autoComplete="organization" />
+                </div>
+              </>}
               <div className="field">
-                <span className="muted">お名前 *</span>
+                <span className="muted">{advertising ? "担当者名 *" : "お名前 *"}</span>
                 <input type="text" name="name" required defaultValue={user?.user_metadata?.name ?? ""} />
               </div>
               <div className="field">
@@ -60,7 +68,7 @@ export default async function ContactPage({
               </div>
               <div className="field">
                 <span className="muted">カテゴリ</span>
-                <select name="category" defaultValue="">
+                <select name="category" defaultValue={advertising ? "広告掲載について" : ""}>
                   <option value="">選択してください</option>
                   {INQUIRY_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -71,11 +79,11 @@ export default async function ContactPage({
               </div>
               <div className="field">
                 <span className="muted">件名 *</span>
-                <input type="text" name="subject" required />
+                <input type="text" name="subject" required defaultValue={advertising ? "広告掲載のご相談" : ""} />
               </div>
               <div className="field">
                 <span className="muted">お問い合わせ内容 *</span>
-                <textarea name="message" rows={5} required />
+                <textarea name="message" rows={5} required placeholder={advertising ? "掲載したい内容・リンク先・ご希望の掲載期間などをご記入ください" : undefined} />
               </div>
               <TurnstileWidget note="送信できない場合は info@pokersummit.jp までメールでご連絡ください。" />
               <button type="submit" className="btn primary" style={{ width: "100%" }}>
