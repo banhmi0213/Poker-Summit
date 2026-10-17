@@ -18,7 +18,7 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
         <div className="home-store-logo">{store.logo_url ? <img src={store.logo_url} alt="" loading="lazy" /> : <StoreFallbackLogo />}</div>
         <h3><StoreDisplayName name={store.name} /></h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
         <div className="home-store-meta-row">
-          {store.category && <span className="home-tag">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
+          {store.category && <span className="home-tag">{tagWords(CATEGORY_LABEL[store.category] ?? store.category)}</span>}
           <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
         </div>
         <VerifiedStoreBadge flags={flags} />
@@ -30,4 +30,14 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
       </div>
     </Link>
   </article>;
+}
+
+// 「アミューズメントポーカー」が狭いカードで折り返すとき、「ー」1文字だけ次の行に落ちないよう、語の切れ目でだけ折り返す
+function tagWords(label: string) {
+  const m = label.match(/^(.+?)(ポーカー.*)$/);
+  if (!m) return label;
+  return <>
+    <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>{m[1]}</span><wbr />
+    <span style={{ display: "inline-block", whiteSpace: "nowrap" }}>{m[2]}</span>
+  </>;
 }
