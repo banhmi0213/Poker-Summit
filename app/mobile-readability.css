@@ -166,7 +166,7 @@
 @media (max-width: 767px) {
   /* 小さすぎる字の残り(学習コース・大会一覧) */
   [class*="learn_achievementExample"] small, [class*="learn_available"], [class*="learn_planned"] { font-size: 11.5px !important; }
-  .ml-scope, .ml-cover span, .ml-venue { font-size: 11.5px !important; }
+  .ml-scope, .ml-cover > div > span:not(.readable-name):not(.name-word), .ml-venue { font-size: 11.5px !important; }
   /* 「← 戻る」リンク・求人の☆・ブログの並び替えを指で押しやすく */
   .ml-back, [class*="blog_back"] a, a[class*="blog_back"], [class*="detail_back"], .container > a[href="/"]:first-child, [class*="blog_sectionHead"] a { display: inline-flex; align-items: center; min-height: 36px; }
   .job-fav-btn { min-width: 40px; min-height: 40px; }
