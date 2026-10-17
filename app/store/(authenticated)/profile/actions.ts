@@ -39,7 +39,7 @@ export async function updateStoreProfile(formData: FormData) {
   const description = String(formData.get("description") ?? "");
   assertAllowedStoreText(name, description);
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const xUrl = String(formData.get("xUrl") ?? "").trim();
   const instagramUrl = String(formData.get("instagramUrl") ?? "").trim();
   const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
