@@ -84,7 +84,7 @@ export default async function AdminListingApplicationsPage({
       )}
 
       {applications && applications.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名・会社名</th>
@@ -166,7 +166,7 @@ export default async function AdminListingApplicationsPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       {applications?.some((a) => a.message) && (

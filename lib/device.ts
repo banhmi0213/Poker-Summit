@@ -9,3 +9,12 @@ export function classifyDevice(userAgent: string | null): "mobile" | "tablet" | 
   if (/mobi|iphone|ipod|android/.test(ua)) return "mobile";
   return "pc";
 }
+
+/**
+ * 検索エンジンのクローラーやSNSのリンクプレビューなど、人ではないアクセスか(2026/10)。
+ * 閲覧数(page_views)に数えないために使う。
+ */
+export function isBotUserAgent(userAgent: string | null): boolean {
+  if (!userAgent) return true;
+  return /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora link preview|whatsapp|headless|lighthouse|pagespeed|vercel|curl|wget|python-requests|axios|node-fetch|go-http-client/i.test(userAgent);
+}

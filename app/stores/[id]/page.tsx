@@ -16,7 +16,7 @@ import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
-import { classifyDevice } from "@/lib/device";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
 import { StorePhotoGallery } from "./store-photo-gallery";
 import { ReferenceSlice } from "./reference-slice";
 import { DetailTabLink } from "./detail-tab-link";
@@ -302,10 +302,14 @@ export default async function StoreDetailPage({
   const referrer = hdrs.get("referer") ?? null;
   const device = classifyDevice(hdrs.get("user-agent"));
 
-  supabase
-    .from("page_views")
-    .insert({ path, store_id: store.id, referrer, device })
-    .then(() => {});
+  // 閲覧数には人のアクセスだけを数える(クローラー・運営の確認は除く)
+  const viewerIsAdmin = user ? (await supabase.rpc("is_admin")).data === true : false;
+  if (!isBotUserAgent(hdrs.get("user-agent")) && !viewerIsAdmin) {
+    supabase
+      .from("page_views")
+      .insert({ path, store_id: store.id, referrer, device })
+      .then(() => {});
+  }
 
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();

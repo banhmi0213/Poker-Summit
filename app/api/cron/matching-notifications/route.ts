@@ -16,3 +16,10 @@ export async function POST(request:NextRequest){
  }
  try{return NextResponse.json(await deliverMatchingNotifications(record));}catch{return NextResponse.json({error:'Delivery unavailable'},{status:503});}
 }
+
+// 送りそびれた通知の再送(Vercel Cron から1時間ごと)。応募・チャット直後の送信が
+// 一時的に失敗しても、ここで拾い直す(2026/10)。
+export async function GET(request:NextRequest){
+ if(!authorized(request))return NextResponse.json({error:'Unauthorized'},{status:401});
+ try{return NextResponse.json(await deliverMatchingNotifications(null));}catch{return NextResponse.json({error:'Delivery unavailable'},{status:503});}
+}

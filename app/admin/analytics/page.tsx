@@ -576,7 +576,7 @@ async function OverviewTab({
             絞り込む
           </button>
         </form>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名</th>
@@ -609,7 +609,7 @@ async function OverviewTab({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -659,7 +659,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
       </div>
       <div className="card">
         <h3>カテゴリ別サマリー</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>カテゴリ</th>
@@ -678,7 +678,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -727,7 +727,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>記事別アクセス状況</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead><tr><th>記事</th><th>カテゴリ</th><th>状態</th><th>今日</th><th>7日</th><th>30日</th><th>累計</th></tr></thead>
           <tbody>
             {rows.length === 0 && <tr><td colSpan={7} className="muted">記事がありません。</td></tr>}
@@ -743,7 +743,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -802,7 +802,7 @@ async function BannerTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>バナー詳細</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>バナー</th>
@@ -837,7 +837,7 @@ async function BannerTab({ supabase, since }: any) {
               );
             })}
           </tbody>
-        </table>
+        </table></div>
         <div style={{ marginTop: 14 }}>
           <Link href="/admin/banners" className="btn" style={{ fontSize: 12.5 }}>
             バナー管理を開く →
