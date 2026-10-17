@@ -12,13 +12,13 @@ type Options={
  auth:Parameters<typeof createSupabasePokerAuthenticator>[0];
  origins:readonly string[];
  /** Trusted manifest from configuration/discovery; never client-supplied. */
- roomIds:readonly string[];
+ roomIds?:readonly string[];
  host?:string;port?:number;
 };
 export function createPokerRoomService(options:Options){
  const host=options.host??'127.0.0.1',port=options.port??0;
  if(typeof host!=='string'||!host||!Number.isSafeInteger(port)||port<0||port>65535)throw Error('Invalid listener configuration');
- const roomIds=[...options.roomIds],origins=[...options.origins];let runtime:RoomRuntime;
+ const roomIds=options.roomIds===undefined?null:[...options.roomIds],origins=[...options.origins];let runtime:RoomRuntime;
  const registry=new TournamentRoomRegistry({...options.registry,onRoomBound:id=>runtime.activate(id)});
  runtime=new RoomRuntime(registry,{maxRooms:options.registry.maxRooms});
  const rawPlayer=registry.playerHandler({origins,auth:options.auth}),rawLobby=registry.lobbyHandler({origins,auth:options.auth}),rawManager=registry.managerHandler({origins,auth:options.auth});
@@ -48,7 +48,8 @@ export function createPokerRoomService(options:Options){
   if(startTask)return startTask;
   startTask=(async()=>{
    try{
-    await runtime.start(roomIds);if(closing)throw Error('Service closed');
+    const discovered=roomIds??await options.registry.directory.startupRooms(options.registry.maxRooms??128);
+    if(closing)throw Error('Service closed');await runtime.start(discovered);if(closing)throw Error('Service closed');
     // Attach only after restoration. Failed rooms remain unavailable while
     // healthy rooms and manager/lobby routes can operate.
     sockets=attachPokerRoomWebSocket(server,{origins,handler:player,owner:id=>registry.owner(id)});

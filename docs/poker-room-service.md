@@ -8,7 +8,8 @@ loopback on an ephemeral port; deployment must explicitly supply host and port.
 
 The trusted caller supplies an existing dedicated backend directory/store,
 encryption key ring, public Auth verification configuration, exact web origins,
-and a bounded manifest of **already bound** room IDs. No browser request can
+and optionally a bounded manifest of **already bound** room IDs. Without that
+override, the trusted directory discovers enabled bindings before restoration. No browser request can
 supply the startup manifest, restore arbitrary checkpoints or create a new deal.
 Restore finishes before the listener opens. Corrupt/missing rooms stay
 quarantined and return 503 even if the player would otherwise be admitted.
@@ -26,10 +27,12 @@ finalization and owner operations. Scheduler draining also waits for decisions
 whose timer was already stopped. A pending save is not cancelled or treated as
 rolled back when shutdown starts. Repeated closes share one result.
 
-This is a composition API, not a deployment script. Database room discovery,
-secret/environment parsing, signal handlers, TLS/reverse proxy configuration,
-platform readiness integration and production database rollout remain to be
-wired and verified before Railway deployment. No migration is applied here.
+This is a composition API, not a deployment script. Database discovery,
+validated configuration and explicit signal hooks are now prepared in
+`room-server.ts`; see [startup and recovery](poker-room-startup.md).
+A runnable host entrypoint/build, TLS/reverse proxy configuration, platform
+readiness integration and production database rollout remain to be wired
+and verified before Railway deployment. No migration is applied here.
 There is no cross-process leader lease: use exactly one authoritative process;
 rolling deployments must not run two owners for the same room concurrently.
 No browser/table layout is changed.
