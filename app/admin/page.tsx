@@ -495,7 +495,7 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
-        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} />
+        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
         <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
