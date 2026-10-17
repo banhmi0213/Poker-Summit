@@ -300,7 +300,6 @@ export default async function StoresPage({
         )}
 
         <ExpandableSearchForm
-          collapse={false}
           className="sl-filter"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
