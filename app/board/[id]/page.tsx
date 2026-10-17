@@ -138,7 +138,7 @@ export default async function BoardPostPage({
               )}
               <h1 style={{ fontSize: 19 }}>{post.title}</h1>
             </div>
-            <ReportForm kind="post" label="🚩 通報する" action={reportPost.bind(null, post.id)} buttonStyle={{ fontSize: 12 }} />
+            <ReportForm kind="post" label="🚩 通報する" action={reportPost.bind(null, post.id)} buttonStyle={{ fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }} />
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
             {/* アイコンから投稿者のプロフィールへ(2026/10、「サミットから

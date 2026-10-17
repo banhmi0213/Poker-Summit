@@ -68,7 +68,7 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-hero .mt-eyebrow{color:#e3c17c;margin-bottom:18px}
 .mt-tag{display:inline-block;font-size:11px;border:1px solid #bda16a;color:#f1dab0;border-radius:30px;padding:5px 12px}
 .mt-hero h1{font-size:42px;line-height:1.14;letter-spacing:.02em;margin:14px 0 10px;font-family:Georgia,serif;color:#fff;border:0;padding:0}
-.mt-hero h1 span{color:#e5c487}
+.mt-hero h1 span{color:inherit}
 .mt-hero-content>p{font-size:14px;color:#f1e7d3}
 .mt-hero-meta{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:12px;color:#f0debb;margin-top:25px}
 .mt-facts{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #e7ddcc;border-radius:12px;background:#fff;margin:18px 0}
@@ -117,7 +117,7 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-hero-content{width:50%;box-sizing:border-box;padding:26px 30px;color:#563814}
 .mt-hero .mt-eyebrow{color:#8b6427;font-size:9px;margin-bottom:10px}
 .mt-tag{color:#755321;border-color:#b59050;background:rgba(255,255,255,.25);font-size:10px;padding:4px 10px}
-.mt-hero h1{font-size:28px;line-height:1.35;margin:10px 0;color:#fff}
+.mt-hero h1{font-size:28px;line-height:1.35;margin:10px 0;color:#382714}
 .mt-hero-meta{color:#563814;font-size:11px;line-height:1.7;gap:5px 16px;margin-top:12px}
 @media(max-width:900px){.mt-hero h1{font-size:26px}}
 @media(max-width:600px){.mt-hero{min-height:200px}.mt-hero-content{padding:20px 16px}.mt-hero h1{font-size:22px}.mt-hero .mt-eyebrow{font-size:7px;line-height:1.6}.mt-hero-photo{background-size:auto 155%;background-position:99% 50%}.mt-hero-meta{font-size:10px;gap:4px}}
