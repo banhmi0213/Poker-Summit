@@ -151,7 +151,13 @@
   .ep-search { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px 10px !important; align-items: end; }
   .ep-search > label { min-width: 0; margin: 0 !important; }
   .ep-search > label.ep-keyword { grid-column: 1 / -1; }
-  .ep-search > label :is(select, input) { width: 100%; min-width: 0; box-sizing: border-box; }
+  .ep-search { align-items: start !important; }
+  .ep-search > label :is(select, input) { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; height: 46px !important; font-size: 16px !important; }
+  /* iPhoneのSafariは日付欄に独自の最低幅があり枠からはみ出すため、見た目の既定を外して幅に収める */
+  .ep-search input[type=date] { -webkit-appearance: none; appearance: none; display: block; text-align: left; line-height: 44px; padding-top: 0 !important; padding-bottom: 0 !important; }
+  .ep-search input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
+  /* 一覧の見出しは1行に収まる大きさに */
+  .ep-list-heading h2 { white-space: nowrap; font-size: min(21px, calc((100vw - 104px) / 16)) !important; }
   .ep-search > button { grid-column: 1 / -1; min-height: 46px; justify-content: center; }
 
   /* クーポン一覧: 画像まわりの余白を詰め、説明の字を大きく */
