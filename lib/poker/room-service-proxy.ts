@@ -16,3 +16,5 @@ async function forward(request:Request,path:string,serviceOrigin:string|undefine
 
 export function forwardPokerRoomRequest(request:Request,roomId:string,origin:string|undefined,fetcher:typeof fetch=fetch){if(!/^[a-f0-9-]{36}$/i.test(roomId))return Promise.resolve(Response.json({ok:false,error:'invalid_request'},{status:400,headers:{'Cache-Control':'no-store'}}));return forward(request,'/api/poker/rooms/'+roomId,origin,fetcher);}
 export function forwardPokerLobbyRequest(request:Request,origin:string|undefined,fetcher:typeof fetch=fetch){return forward(request,'/api/poker/lobby',origin,fetcher);}
+
+export function forwardRegistrationManagementRequest(request:Request,origin:string|undefined,fetcher:typeof fetch=fetch){return forward(request,'/api/poker/registration-management',origin,fetcher);}

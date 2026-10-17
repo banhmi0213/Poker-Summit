@@ -1,3 +1,4 @@
+import {managementStatus,type RegistrationManagementStatus} from './registration-management';
 import {registrationCatalog,registrationOutcome,type RegistrationSummary,type RegistrationOutcome} from './registration';
 /** Backend-only directory/admission adapter. Never instantiate with a user-session client. */
 import type {TournamentControl} from './scheduled-tournament-room';
@@ -17,7 +18,12 @@ export function roomAssignments(data:unknown):RoomAssignment[]{
   return {roomId,tournamentId,title:row.title,starts_at:new Date(start).toISOString(),capacity:row.capacity,published:row.published};
  });
 }
+export type RegistrationPlan=RoomBinding&{members:string[]};
+export function registrationPlan(value:unknown,tournamentId:string):RegistrationPlan{const raw=value as RegistrationPlan,binding=roomBinding({...raw,enabled:true});if(binding.tournamentId!==roomUUID(tournamentId)||binding.allowSpectators||!Array.isArray(raw.members)||raw.members.length<2||raw.members.length>6||binding.capacity!==(raw.members.length===2?2:6))throw Error('Invalid registration plan');const members=raw.members.map(roomUUID);if(new Set(members).size!==members.length)throw Error('Duplicate frozen member');return {...binding,members};}
 export interface RoomDirectory {
+ managementStatus(tournament:string):Promise<RegistrationManagementStatus>;
+ configureRegistration(tournament:string,capacity:number,enabled:boolean):Promise<RegistrationManagementStatus>;
+ freezeRegistration(tournament:string,expectedCount:number):Promise<RegistrationPlan>;
  registrationCatalog(member:string):Promise<RegistrationSummary[]>;
  changeRegistration(member:string,tournament:string,action:'register'|'cancel'):Promise<RegistrationOutcome>;
  assignments(member:string):Promise<RoomAssignment[]>;
@@ -44,6 +50,9 @@ type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:u
 export class SupabaseRoomDirectory implements RoomDirectory {
  constructor(private client:RpcClient){}
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
+ async managementStatus(tournament:string){const id=roomUUID(tournament);return managementStatus(await this.#rpc('poker_registration_management_status',{p_tournament:id}),id);}
+ async configureRegistration(tournament:string,capacity:number,enabled:boolean){const id=roomUUID(tournament);if(!Number.isSafeInteger(capacity)||capacity<2||capacity>600||typeof enabled!=='boolean')throw Error('Invalid registration policy');await this.#rpc('poker_registration_configure',{p_tournament:id,p_capacity:capacity,p_enabled:enabled});return this.managementStatus(id);}
+ async freezeRegistration(tournament:string,expectedCount:number){const id=roomUUID(tournament);if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>6)throw Error('Invalid expected roster');const plan=registrationPlan(await this.#rpc('poker_registration_freeze',{p_tournament:id,p_expected:expectedCount}),id);if(plan.members.length!==expectedCount)throw Error('Frozen roster count mismatch');return plan;}
  async registrationCatalog(member:string){return registrationCatalog(await this.#rpc('poker_registration_catalog',{p_member:roomUUID(member)}));}
  async changeRegistration(member:string,tournament:string,action:'register'|'cancel'){const id=roomUUID(tournament);if(!['register','cancel'].includes(action))throw Error('Invalid registration action');return registrationOutcome(await this.#rpc('poker_registration_change',{p_member:roomUUID(member),p_tournament:id,p_action:action}),id);}
  async assignments(member:string){return roomAssignments(await this.#rpc('poker_room_assignments',{p_member:roomUUID(member)}));}

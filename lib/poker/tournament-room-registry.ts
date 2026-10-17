@@ -1,12 +1,13 @@
+import {createSupabaseRegistrationManagerHandler} from './registration-manager-handler';
 import {createSupabasePokerLobbyHandler} from './lobby-request-handler';
 /** One registry per trusted server process. No cross-process lease/election or listening server. */
 import {DurableRoomOwner} from './durable-room-owner';
-import type {KeyRing,RoomStore} from './room-persistence';
+import {restoreRoom,type KeyRing,type RoomStore} from './room-persistence';
 import {roomUUID,roomConfig,roomBinding,type RoomDirectory,type RoomAccess} from './room-directory';
 import {createSupabasePokerPlayerHandler} from './player-request-handler';
 type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxRooms?:number};
 export class TournamentRoomRegistry {
- #owners=new Map<string,Promise<DurableRoomOwner|null>>();#options:Options;#limit:number;
+ #owners=new Map<string,Promise<DurableRoomOwner|null>>();#finalizing=new Map<string,{count:number;task:Promise<import('./registration-management').RegistrationManagementStatus>}>();#options:Options;#limit:number;
  constructor(options:Options){const limit=options.maxRooms??128;if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw new Error('Invalid room registry limit');this.#options={...options,keys:structuredClone(options.keys)};this.#limit=limit;}
  /** Admission is NEVER cached. Caller identity must already be Auth-verified. */
  authorize(access:RoomAccess){return this.#options.directory.authorize(structuredClone(access));}
@@ -33,6 +34,29 @@ export class TournamentRoomRegistry {
    const owner=await DurableRoomOwner.create(config,{...this.#options,roomId,expectedConfig:config});
    await this.#options.directory.provision({...config,roomId,...copied,enabled:true},ids);return owner;});
  }
+ /** Single-table handoff. Freeze once, retain the SAME plan/room on every retry. */
+ finalizeRegistration(id:string,expectedCount:number,beforeBind:()=>Promise<void>=async()=>{}){
+  const tid=roomUUID(id),pending=this.#finalizing.get(tid);if(pending){if(pending.count!==expectedCount)return Promise.reject(new Error('Roster count changed'));return pending.task;}if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>6)return Promise.reject(new Error('Require 2-6 players'));if(this.#finalizing.size>=this.#limit)return Promise.reject(new Error('Finalization capacity reached'));
+  const task=Promise.resolve().then(async()=>{
+   const plan=await this.#options.directory.freezeRegistration(tid,expectedCount),roomId=plan.roomId;
+   const binding=await this.#options.directory.binding(roomId);
+   if(binding){
+    const control=await this.#options.directory.control(roomId);
+    if(!binding.enabled||binding.capacity!==plan.capacity||binding.allowSpectators||JSON.stringify(roomConfig(binding))!==JSON.stringify(roomConfig(plan))||!control||!control.enabled||control.expectedCount!==plan.members.length||control.members.some(m=>!plan.members.includes(m)))throw new Error('Finalization binding mismatch');
+    await this.owner(roomId);
+   }else{
+    if(this.#owners.has(roomId))throw new Error('Room operation in progress');
+    await this.#reserve(roomId,async()=>{
+     const saved=await restoreRoom(this.#options.store,roomId,this.#options.keys,{now:this.#options.now});let created:DurableRoomOwner|undefined;
+     if(saved){const c=saved.room.checkpoint();if(saved.version!==1||c.room.seats.length||c.room.hand||c.room.revision!==0||c.room.handNumber!==0||JSON.stringify(roomConfig({tournamentId:tid,starts_at:c.startsAt,structure:c.structure}))!==JSON.stringify(roomConfig(plan)))throw new Error('Unbound checkpoint requires reconciliation');}
+     else created=await DurableRoomOwner.create(plan,{...this.#options,roomId,expectedConfig:plan});
+     await beforeBind();await this.#options.directory.provision(plan,plan.members);
+     return created??DurableRoomOwner.load({...this.#options,roomId,expectedConfig:plan});
+    });
+   }
+   return this.#options.directory.managementStatus(tid);
+  });this.#finalizing.set(tid,{count:expectedCount,task});void task.finally(()=>{if(this.#finalizing.get(tid)?.task===task)this.#finalizing.delete(tid);}).catch(()=>{});return task;
+ }
  /** Fresh backend control for every timer decision; missing/disabled rooms do not auto-start. */
  async advance(id:string){
   const roomId=roomUUID(id),control=await this.#options.directory.control(roomId);
@@ -42,6 +66,7 @@ export class TournamentRoomRegistry {
  }
  /** Explicit operator recovery; halted owners are never silently replaced per player request. */
  async recover(id:string){const owner=await this.owner(id);if(!owner)throw new Error('Managed room not found');return owner.recover();}
+ managerHandler(options:Omit<Parameters<typeof createSupabaseRegistrationManagerHandler>[0],'status'|'configure'|'finalize'>){return createSupabaseRegistrationManagerHandler({...options,status:id=>this.#options.directory.managementStatus(id),configure:(id,capacity,enabled)=>this.#options.directory.configureRegistration(id,capacity,enabled),finalize:(id,count,guard)=>this.finalizeRegistration(id,count,guard)});}
  lobbyHandler(options:Omit<Parameters<typeof createSupabasePokerLobbyHandler>[0],'assignments'|'registrations'>){return createSupabasePokerLobbyHandler({...options,assignments:member=>this.#options.directory.assignments(member),registrations:{catalog:member=>this.#options.directory.registrationCatalog(member),change:(member,tournament,action)=>this.#options.directory.changeRegistration(member,tournament,action)}});}
  playerHandler(options:Omit<Parameters<typeof createSupabasePokerPlayerHandler>[0],'authorize'|'owner'>){return createSupabasePokerPlayerHandler({...options,authorize:a=>this.authorize(a),owner:id=>this.owner(id)});}
 }
