@@ -17,6 +17,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/listing-applications", label: "掲載申込" },
   { href: "/admin/jobs", label: "求人管理" },
   { href: "/admin/events", label: "イベント管理" },
+  { href: "/admin/poker-statistics", label: "ポーカー成績・ランキング" },
   { href: "/admin/poker-tournaments", label: "オンライン大会設定" },
   { href: "/admin/coupons", label: "クーポン管理" },
   { href: "/admin/board", label: "掲示板管理" },

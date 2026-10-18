@@ -27,7 +27,7 @@ export function openCheckpoint(roomId:string,version:number,sealed:SealedCheckpo
 }
 function terminalResult(room:ScheduledTournamentRoom) {
  const s=room.publicSnapshot(),h=s.hand;
- return h?.result?{handId:h.handId,handNumber:s.handNumber,...h.result,tournament:s.tournament}:null;
+ return h?.result?{handId:h.handId,handNumber:s.handNumber,...h.result,tournament:s.tournament,participants:room.checkpoint().room.seats.map(([seat,p])=>({seatId:`seat-${seat}`,memberId:p.memberId}))}:null;
 }
 /** Prepare once; retry this EXACT request on ambiguous network failure (fresh encryption differs).
  * Do not acknowledge/broadcast a mutation until commit resolves. On conflict/failure stop the
