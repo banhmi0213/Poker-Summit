@@ -192,7 +192,14 @@ export async function GET(req: NextRequest) {
       } catch (chargeError) {
         // 決済したか分からない(処理中・結果不明): 失敗扱いにしない(掲載停止もしない)。運営が確認する
         if (isPaymentPendingError(chargeError)) {
-          results.push({ storeContractId, ok: false, detail: `結果確認待ち: ${chargeError.message}` });
+          // 同時に動いた別の実行が決済中だった場合は、少し待って、そちらで更新が済んだかを確かめる
+          await new Promise((r) => setTimeout(r, 8000));
+          const { data: after } = await supabase.from("store_contracts").select("current_period_end").eq("id", storeContractId).maybeSingle();
+          if (isRenewal && after?.current_period_end && after.current_period_end > new Date().toISOString()) {
+            results.push({ storeContractId, ok: true, detail: "同時に動いた別の実行で決済・更新済み(二重には決済していません)" });
+          } else {
+            results.push({ storeContractId, ok: false, detail: `結果確認待ち: ${chargeError.message}` });
+          }
           continue;
         }
         // 決済できなかった: 毎日再試行し、猶予日数を過ぎたら掲載を止める(決済できた時点で再開)
@@ -321,6 +328,15 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
       description: `アドオン更新（${addon?.name ?? "アドオン"}・契約 ${contract.id}）`,
     });
     if (charge.status === "BUSY" || charge.status === "UNKNOWN") {
+      if (charge.status === "BUSY") {
+        // 同時に動いた別の実行が決済中: 少し待って、そちらで更新が済んだかを確かめる
+        await new Promise((r) => setTimeout(r, 8000));
+        const { data: after } = await supabase.from("store_contract_addons").select("current_period_end").eq("id", row.id).maybeSingle();
+        if (after?.current_period_end && after.current_period_end > new Date().toISOString()) {
+          out.push({ id: row.id, ok: true, detail: "同時に動いた別の実行で決済・更新済み(二重には決済していません)" });
+          continue;
+        }
+      }
       // 決済したか分からない: 失敗扱いにせず、運営の確認を待つ
       out.push({ id: row.id, ok: false, detail: `結果確認待ち(${charge.status}): ${charge.error}` });
       continue;
