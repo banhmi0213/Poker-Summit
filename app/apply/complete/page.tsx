@@ -46,6 +46,16 @@ export default async function ApplyCompletePage({
     );
   }
 
+  if (application.payment_status === "charge_unknown") {
+    return (
+      <Card title="お支払いの結果を確認しています">
+        <p className="muted">
+          通信の状況により、カード決済の結果をすぐに確認できませんでした。二重にお支払いいただくことがないよう、運営で決済の状況を確認してから、ご登録のメールアドレスにご連絡いたします。もう一度お申し込みいただく必要はありません。
+        </p>
+      </Card>
+    );
+  }
+
   if (application.payment_status !== "active") {
     return (
       <Card title="処理中です">

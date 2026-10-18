@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { chargeSavedCard, customerIdFromSession, newOrderId } from "@/lib/komoju";
+import { customerIdFromSession } from "@/lib/komoju";
+import { chargeOnce } from "@/lib/payment-ledger";
+import { alertAdmin } from "@/lib/admin-alert";
 import { provisionPaidStoreFromApplication } from "@/lib/store-provision";
 
 // ============================================================================
@@ -41,7 +43,7 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 
   // すでに処理済み(二重POST・戻るボタンでの再送信など)なら再処理せず
   // そのまま表示ページへ。
-  if (application.payment_status === "active" || application.payment_status === "charged_pending_manual") {
+  if (application.payment_status === "active" || application.payment_status === "charged_pending_manual" || application.payment_status === "charge_unknown") {
     return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, {
       status: 303,
     });
@@ -100,26 +102,38 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     .from("listing_applications")
     .update({ payment_status: "processing" })
     .eq("id", applicationId)
-    .not("payment_status", "in", "(processing,active,charged_pending_manual)")
+    .not("payment_status", "in", "(processing,active,charged_pending_manual,charge_unknown)")
     .select("id");
   if (!claimed?.length) {
     return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, { status: 303 });
   }
 
-  const orderId = newOrderId("apply", applicationId);
-  const charge = await chargeSavedCard({
-    orderId,
+  // 何の支払いか: 「この申込みの初月分」(戻るボタン・再読み込み・二重送信でも1回だけ。lib/payment-ledger.ts)
+  const charge = await chargeOnce({
+    purpose: "apply",
+    groupKey: `apply:${applicationId}`,
     customerId,
     amount: plan.monthly_fee,
-    metadata: { listing_application_id: applicationId },
+    refs: { listingApplicationId: applicationId },
+    context: { kind: "apply", applicationId },
+    description: `新規申込みの初月分（${application.company_name}）`,
   });
+
+  if (charge.status === "BUSY" || charge.status === "UNKNOWN") {
+    // 決済したか分からない: 失敗にしない(もう一度決済させない)。運営が確認して続きを行う
+    await supabase
+      .from("listing_applications")
+      .update({ payment_status: "charge_unknown", payment_note: `決済の結果確認待ち: ${charge.error}`.slice(0, 500) })
+      .eq("id", applicationId);
+    return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, { status: 303 });
+  }
 
   if (charge.status !== "CAPTURED") {
     await supabase
       .from("listing_applications")
       .update({
         payment_status: "failed",
-        payment_note: `決済失敗: status=${charge.status} ${charge.error_code ?? ""}`.slice(0, 500),
+        payment_note: `決済失敗: ${charge.error}`.slice(0, 500),
       })
       .eq("id", applicationId);
     return NextResponse.redirect(
@@ -129,6 +143,7 @@ async function handle(req: NextRequest): Promise<NextResponse> {
       { status: 303 }
     );
   }
+  const orderId = charge.attemptId;
 
   // ここから先はお金が実際に取れている状態。以降で失敗しても「失敗した
   // ことにして終わり」にはできない — 運営の手動フォロー行きにする。
@@ -157,6 +172,12 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         }`,
       })
       .eq("id", applicationId);
+    await alertAdmin("決済済みの新規申込みで店舗の発行に失敗しました", [
+      `申込み: ${application.company_name}（${application.email}）`,
+      `金額: ${plan.monthly_fee.toLocaleString("ja-JP")}円（決済済み）`,
+      `内容: ${e instanceof Error ? e.message : String(e)}`,
+      "総合管理の「決済の監視」から「店舗を発行する」を押すと、もう一度発行します（二重には作りません）。",
+    ]);
     return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, {
       status: 303,
     });

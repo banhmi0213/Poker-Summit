@@ -53,12 +53,14 @@ export async function confirmPaymentAction(formData: FormData) {
 export async function cancelInvoiceAction(formData: FormData) {
   const user = await requireAdmin();
   const invoiceId = String(formData.get("invoiceId") ?? "");
+  let result: Awaited<ReturnType<typeof cancelInvoice>> | null = null;
   try {
-    await cancelInvoice(invoiceId, user.id);
+    result = await cancelInvoice(invoiceId, user.id);
   } catch (e) {
     back({ error: e instanceof Error ? e.message : String(e) });
   }
   revalidatePath(BILLING_PATH);
+  if (!result?.canceled) back({ error: result?.reason ?? "取り消せませんでした。" });
   back({ ok: "請求書を取り消しました。" });
 }
 
@@ -92,7 +94,7 @@ export async function issueInvoiceAction(formData: FormData) {
   const svc = createServiceRoleClient();
   const { data: contract } = await svc
     .from("store_contracts")
-    .select("id, store_id, contact_name, contact_email, current_period_end, plan_id, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)")
+    .select("id, store_id, contact_name, contact_email, current_period_end, billing_anchor_day, plan_id, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)")
     .eq("id", contractId)
     .maybeSingle();
   const { data: planRow } = await svc.from("plans").select("id, name, monthly_fee").eq("id", planId).maybeSingle();
@@ -121,6 +123,7 @@ export async function issueInvoiceAction(formData: FormData) {
       months,
       periodStart,
       settings,
+      anchorDay: periodStart === nextStart ? ((contract as any).billing_anchor_day ?? null) : null,
     });
     await svc.from("audit_log").insert({
       actor_user_id: user.id,
