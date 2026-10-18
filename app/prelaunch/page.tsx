@@ -36,12 +36,12 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
         <div className="card" style={{ textAlign: "left", lineHeight: 1.9, marginBottom: 20 }}>
           {/* ここに来るのはログイン済みの先行会員だけ(未ログインは上で登録画面を返す) */}
           <p>
-            先行会員としてのご登録が完了しています。サイトのオープンまで、もうしばらくお待ちください。
+            先行会員としてのご登録が完了しています。サイトのオープンまでもうしばらくお待ちください。
             <br />
-            オープン日や先行会員限定トーナメントの詳細は、メールと公式Xでお知らせします。
+            オープン日や先行会員限定トーナメントの詳細はメールと公式Xでお知らせします。
           </p>
           <p style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee3cc", fontSize: 13.5 }}>
-            ポーカーディーラーの方は、オープン前からディーラー登録ができます。
+            ポーカーディーラーの方はオープン前からディーラー登録ができます。
             <br />
             <Link href="/account/dealer" style={{ fontWeight: 700 }}>ディーラー登録はこちら →</Link>
           </p>
@@ -60,8 +60,8 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
 
         {settings?.prelaunch_x_url && (
           <p style={{ marginBottom: 20 }}>
-            <a href={settings.prelaunch_x_url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 700 }}>
-              最新情報は公式X(旧Twitter)で →
+            <a href={settings.prelaunch_x_url} target="_blank" rel="noopener noreferrer" className="btn primary" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 48, padding: "12px 28px", borderRadius: 8, fontWeight: 700, color: "#382714", background: "linear-gradient(135deg,#f3dda3,#c3983c)", border: "1px solid #b68a35", textDecoration: "none", boxShadow: "0 3px 10px rgba(135,98,30,0.14)" }}>
+              公式Xをフォロー →
             </a>
           </p>
         )}
