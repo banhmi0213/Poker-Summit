@@ -3121,3 +3121,7 @@ input:is([type=date],[type=datetime-local])[data-empty]:not(:focus)::-webkit-dat
   input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=submit]):not([type=button]):not([type=range]):not([type=color]),
   select, textarea { font-size: 16px !important; }
 }
+
+/* 入力欄に打ち込んだ文字は中太(500)で読みやすく。入力前の案内文字(placeholder)は普通の太さで区別する(2026/10) */
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select, textarea { font-weight: 500; }
+input::placeholder, textarea::placeholder { font-weight: 400; }
