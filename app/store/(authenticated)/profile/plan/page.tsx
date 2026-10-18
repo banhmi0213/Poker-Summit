@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CARD_BRANDS_NOTE } from "@/lib/constants";
+import { CARD_BRANDS_NOTE, CARD_SAVE_NOTE } from "@/lib/constants";
 import { effectivePlanFee, isPriceLockActive } from "@/lib/price-lock";
 import { prorateUpgrade } from "@/lib/proration";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
@@ -236,7 +236,7 @@ export default async function StorePlanPage({
                 <br />
                 {CARD_BRANDS_NOTE}
                 <br />
-                KOMOJUの画面では「今後の支払いに備えて支払い方法を保存します」にチェックを入れてから「保存」を押してください。
+                {CARD_SAVE_NOTE}
               </div>
             </div>
             <form action={startCardRegistration}>

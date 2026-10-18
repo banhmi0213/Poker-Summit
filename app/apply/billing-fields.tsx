@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CARD_BRANDS_NOTE } from "@/lib/constants";
+import { CARD_BRANDS_NOTE, CARD_SAVE_NOTE } from "@/lib/constants";
 
 // お支払い方法とお支払いサイクル。クレジットカードは毎月の自動決済のみなので、
 // カードを選んだらサイクルは「毎月払い」に固定してグレーアウト(選べない)にする。
@@ -38,9 +38,10 @@ export function ApplyBillingFields({
               クレジットカード（毎月の自動決済）
             </label>
           )}
-          {cardEnabled && CARD_BRANDS_NOTE && (
+          {cardEnabled && (
             <span className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
               {CARD_BRANDS_NOTE}
+              {isCard && <><br />{CARD_SAVE_NOTE}</>}
             </span>
           )}
         </div>
