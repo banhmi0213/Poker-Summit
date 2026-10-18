@@ -31,6 +31,19 @@ export async function signIn(formData: FormData) {
   });
 
   if (error) {
+    // メール確認がまだの人(パスワードは正しい)には、確認メールを自動で送り直す(2026/10/18)。
+    // 確認メールが遅れて届かず期限切れになった人が、自分で登録を完了できるように。
+    if (/email not confirmed/i.test(error.message)) {
+      const { error: resendError } = await supabase.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: "https://pokersummit.jp/mypage" },
+      });
+      const msg = resendError
+        ? `メールアドレスの確認が済んでいません。${authErrorMessage(resendError.message)}`
+        : "メールアドレスの確認が済んでいないため、確認メールを送り直しました。メール内のリンクを押すと登録が完了します（有効期限24時間・迷惑メールフォルダもご確認ください）。";
+      redirect(`/login?error=${encodeURIComponent(msg)}&next=${encodeURIComponent(next)}`);
+    }
     await recordLoginFailure("member", email, meta);
     redirect(
       `/login?error=${encodeURIComponent(authErrorMessage(error.message))}&next=${encodeURIComponent(next)}`
