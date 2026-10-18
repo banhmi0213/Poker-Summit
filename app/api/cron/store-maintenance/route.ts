@@ -23,6 +23,7 @@ import { sendStoreMaintenanceDigest } from "@/lib/email";
 // ============================================================================
 
 export const maxDuration = 300;
+export const dynamic = "force-dynamic"; // 毎回データベースの最新を読む(キャッシュしない)
 
 const AREAS_PER_RUN = 16; // 全国約460地域 → 約1か月で1周
 const CHECKS_PER_RUN = 30; // 掲載約800店 → 約1か月で1周

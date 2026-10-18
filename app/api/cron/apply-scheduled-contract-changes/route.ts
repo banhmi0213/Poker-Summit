@@ -27,6 +27,7 @@ const CARD_GRACE_DAYS = 7;
 // ============================================================================
 
 export const maxDuration = 300;
+export const dynamic = "force-dynamic"; // 毎回データベースの最新を読む(キャッシュしない)
 
 function isAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
