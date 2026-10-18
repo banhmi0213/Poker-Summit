@@ -139,3 +139,8 @@ All scoped tables have RLS. Security advisors report INFO only for eight
 intentionally service-only tables with RLS and no client policy; no client policy
 was added to silence those notices. This is database access-control verification,
 not an actual Auth login or a public browser game test.
+
+### 結果の確認時間（2026-10-19）
+- サーバーのハンド間隔の標準値を4秒から8秒へ変更。旧標準値4秒の保存済みルームは復元時に8秒へ移行し、それ以外の明示設定値は維持する。
+- 接続中に受信した直前の勝者・ハンド番号・各席の収支を、次ハンド中も結果欄に表示する。現在のカード・操作は最新のサーバー状態を使用する。
+- 保持するのは結果の集計値のみ。手札や接続情報は履歴に保持せず、未接続・ログアウト・画面の再読み込みで消去する。永続的なハンド履歴の閲覧機能とは別。

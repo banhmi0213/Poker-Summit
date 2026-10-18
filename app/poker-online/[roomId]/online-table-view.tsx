@@ -1,5 +1,5 @@
 'use client';
-import {useState,type ReactNode} from 'react';
+import {useEffect,useState,type ReactNode} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import {onlineTableSeats,onlineTurnSeconds} from '@/lib/poker/table-presentation';
 import {cardLabel,isRedCard} from '@/lib/poker/card-display';
@@ -19,6 +19,14 @@ function Structure({state}:{state:PlayerSnapshot|null}){
   <div className={styles.structureScroll}><table><thead><tr><th>LV</th><th>SB / BB</th><th>Ante</th><th>分</th></tr></thead><tbody>{state.structure.periods.map((p,i)=><tr key={i} data-current={i===state.clock.index} aria-current={i===state.clock.index?'step':undefined}><td>{p.kind==='break'?'休憩':++level}</td><td>{p.kind==='break'?'—':`${chips(p.sb)} / ${chips(p.bb)}`}</td><td>{p.kind==='break'?'—':chips(p.ante)}</td><td>{p.minutes}</td></tr>)}</tbody></table></div>
   <p>ブラインド変更は次のハンドから適用します。休憩中も進行中のハンドは継続します。</p>
  </>:<p>接続後に大会の設定を表示します。</p>}<a href="/poker-lobby">ロビーへ戻る</a></>;
+}
+function ResultSummary({state}:{state:PlayerSnapshot|null}){
+ const current=state?.hand?.result?{number:state.handNumber,winners:[...state.hand.result.winners],deltas:onlineTableSeats(state).map(s=>({id:s.seat.id,delta:s.delta}))}:null;
+ const [previous,setPrevious]=useState<typeof current>(null);
+ useEffect(()=>{if(!state)setPrevious(null);else if(current)setPrevious(current);},[state]);
+ // Store only already-public outcome totals; never retain hole cards or credentials.
+ const result=state?(current??previous):null;
+ return <div className={`${shared.resultOverlay} ${current?'':shared.previousResult}`} role="status"><strong>{result?`ハンド ${result.number}${current?' 結果':'（直前の結果）'}：${result.winners.map(names).join('・')} がPOT獲得`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{(result?.deltas??(state?onlineTableSeats(state).map(s=>({id:s.seat.id,delta:null})):[])).map(s=><span key={s.id} className={s.delta===null||s.delta===0?shared.resultEven:s.delta>0?shared.resultGain:shared.resultLoss}>{names(s.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${chips(s.delta)}`}</b></span>)}</div></div>;
 }
 export function OnlineTableView({state,children,onExit}:{state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void}){
  const [menu,setMenu]=useState(false),hand=state?.hand,seats=state?onlineTableSeats(state):[],seconds=state?onlineTurnSeconds(state):null;
@@ -48,7 +56,7 @@ export function OnlineTableView({state,children,onExit}:{state:PlayerSnapshot|nu
    <div className={shared.felt}><div className={shared.pot}>POT <strong>{chips(hand?.pot??0)}</strong></div><div className={`${shared.cards} ${styles.communityCards}`} aria-label="共通カード">{hand?.board.map((c,i)=><span key={i} className={isRedCard(c)?shared.red:''}>{cardLabel(c)}</span>)}</div><div className={shared.street}>{hand?`${streetLabels[hand.street]??hand.street} · ハンド ${state?.handNumber}`:'参加者の接続を待っています'}</div></div>
   </div>
   <div className={shared.actionColumn}>
-   <div className={`${shared.resultOverlay} ${hand?.result?'':shared.previousResult}`} role="status"><strong>{hand?.result?`${hand.result.winners.map(names).join('・')} がPOT獲得`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{seats.map(s=><span key={s.seat.id} className={s.delta===null?shared.resultEven:s.delta>0?shared.resultGain:s.delta<0?shared.resultLoss:shared.resultEven}>{names(s.seat.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${chips(s.delta)}`}</b></span>)}</div></div>
+   <ResultSummary state={state}/>
    {state?.phase==='finished'&&<div className={shared.spectatorPanel} role="status">大会終了 · 優勝 {state.tournament?.champion?names(state.tournament.champion):'確定待ち'}{onExit?<button type="button" onClick={onExit}>退出する</button>:<a href="/poker-lobby">退出する</a>}</div>}
    {children}
   </div>

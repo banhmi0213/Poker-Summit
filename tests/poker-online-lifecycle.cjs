@@ -54,3 +54,18 @@ test('server-sampled expired turn and invalid raise totals disable wagering with
 test('background HTTP reads do not blink or lock foreground controls',async t=>{const f=await harness(t);await f.click('接続・再接続');const gate=defer();f.hold(gate);await f.poll();assert.equal(Boolean(f.button('接続・再接続').props.disabled),false);assert.equal(Boolean(f.button('コール').props.disabled),false);await act(async()=>gate.resolve());});
 for(const failure of [0,503])test(`temporary read failure ${failure} hides actions then recovers with same connection and no automatic join`,async t=>{const f=await harness(t);await f.click('接続・再接続');const oldNow=Date.now;let now=oldNow();Date.now=()=>now;t.after(()=>Date.now=oldNow);f.failRead(failure);await f.poll();assert.ok(f.button('コール').props.disabled);assert.match(text(f.renderer.toJSON()),failure===0?/通信エラー/:/503/);const count=f.packets.length;await f.poll();assert.equal(f.packets.length,count);now+=1100;await f.poll();assert.match(text(f.renderer.toJSON()),/接続中/);assert.equal(f.button('コール').props.disabled,false);assert.equal(f.packets.filter(p=>p.type==='join').length,1);});
 test('revoked connection does not retry or automatically take over another tab',async t=>{const f=await harness(t);await f.click('接続・再接続');f.failRead(409);await f.poll();assert.ok(f.button('コール').props.disabled);assert.match(text(f.renderer.toJSON()),/409/);const count=f.packets.length;await f.poll();assert.equal(f.packets.length,count);});
+
+test('completed result remains during next hand and is cleared on connection loss',async t=>{
+ const now=Date.parse('2026-10-16T10:00:00Z'),room=new ScheduledTournamentRoom({starts_at:new Date(now).toISOString(),structure:{startingStack:1000,anteType:'none',lateRegLevel:0,reentry:false,periods:[{kind:'level',minutes:10,sb:50,bb:100,ante:0,note:''}]}},{now:()=>now});
+ room.seat('A',1);room.seat('B',2);const a=room.connect('A');room.connect('B');room.startHand(1);
+ let state=room.snapshot('A',a.connectionId);room.act('A',a.connectionId,{handId:state.hand.handId,revision:state.hand.revision,actionId:'result-test',action:{type:'fold'}});
+ state=room.snapshot('A',a.connectionId);
+ const View=require('../app/poker-online/[roomId]/online-table-view.tsx').OnlineTableView;let renderer;
+ t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());});
+ await act(async()=>renderer=create(React.createElement(View,{state})));
+ assert.match(text(renderer.toJSON()),/ハンド 1 結果/);
+ room.nextHand(state.hand.handId);await act(async()=>renderer.update(React.createElement(View,{state:room.snapshot('A',a.connectionId)})));
+ assert.match(text(renderer.toJSON()),/ハンド 1（直前の結果）/);assert.match(text(renderer.toJSON()),/増減 \+50/);
+ await act(async()=>renderer.update(React.createElement(View,{state:null})));
+ assert.ok(!text(renderer.toJSON()).includes('直前の結果'));
+});

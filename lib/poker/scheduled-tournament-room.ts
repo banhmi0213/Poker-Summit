@@ -19,7 +19,7 @@ export class ScheduledTournamentRoom {
     this.#structure={startingStack:normalized.startingStack,anteType:normalized.anteType,lateRegLevel:normalized.lateRegLevel,reentry:normalized.reentry,
       periods:normalized.periods.map(p=>({kind:p.kind,minutes:p.minutes,sb:p.sb,bb:p.bb,ante:p.ante,note:p.note}))};
     this.#startsAt=new Date(start).toISOString();this.#clock=options.now??Date.now;this.#turnMs=options.turnMs??20000;
-    this.#handPauseMs=options.handPauseMs??4000;
+    this.#handPauseMs=options.handPauseMs??8000;
     if(!Number.isSafeInteger(this.#handPauseMs)||this.#handPauseMs<0||this.#handPauseMs>60000)throw new Error("Invalid hand pause");
     const first=this.#structure.periods[0];
     this.#room=new SeatedHandRoom(this.#structure.startingStack,{level:1,index:0,sb:first.sb,bb:first.bb,ante:first.ante,anteType:this.#structure.anteType},
@@ -30,7 +30,7 @@ export class ScheduledTournamentRoom {
   static restore(input:ScheduledCheckpoint,options:{now?:()=>number}={}) {
     const s=structuredClone(input);
     if(s?.version!==1||!Number.isSafeInteger(s.lastNow)||s.lastNow<0||!s.room?.tournament||s.room.startingStack!==s.structure?.startingStack)throw new Error("Invalid scheduled checkpoint");
-    const room=new ScheduledTournamentRoom({structure:s.structure,starts_at:s.startsAt},{now:options.now,turnMs:s.room.turnMs,handPauseMs:s.handPauseMs});
+    const room=new ScheduledTournamentRoom({structure:s.structure,starts_at:s.startsAt},{now:options.now,turnMs:s.room.turnMs,handPauseMs:s.handPauseMs===4000?8000:s.handPauseMs});
     room.#lastNow=s.lastNow;room.#room=SeatedHandRoom.restore(s.room,()=>room.#sample??room.#readNow());return room;
   }
   #readNow() {

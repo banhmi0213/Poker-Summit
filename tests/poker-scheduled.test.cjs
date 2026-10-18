@@ -45,3 +45,16 @@ test('player time/term overrides reject; start captures one sample and stale nex
  const f=setup();const h=f.room.startHand(6),n=Number(h.hand.toAct.slice(5));assert.throws(()=>f.room.act('m'+n,f.tokens[n],{...command(h,{type:'call'}),now:T-999999}));assert.deepEqual(f.room.publicSnapshot(),h);fold(f);const done=f.room.publicSnapshot();f.setNow(60000);const next=f.room.nextHand(done.hand.handId,{sb:1,bb:1,ante:0});assert.equal(next.hand.terms.bb,150);assert.throws(()=>f.room.nextHand(done.hand.handId));assert.deepEqual(f.room.publicSnapshot(),next);
  let reads=0;const r=new ScheduledTournamentRoom(config(),{now:()=>{reads++;return T+59999+reads;},turnMs:1000});r.seat('a',1);r.seat('b',6);r.connect('a');r.connect('b');const before=reads,s=r.startHand(6);assert.equal(reads,before+1);assert.equal(s.turn.expiresAt,s.serverNow+1000);assert.equal(s.hand.terms.level,s.clock.level);
 });
+
+test('default result pause lasts eight seconds, including restored legacy default rooms',()=>{
+ const f=setup();f.room.startHand(6);fold(f);
+ const checkpoint=f.room.checkpoint();assert.equal(checkpoint.handPauseMs,8000);
+ const control={enabled:true,published:true,members:['m1','m6'],expectedCount:2};
+ f.setNow(7999);assert.equal(f.room.advance(control).event,'pause');
+ f.setNow(8000);assert.equal(f.room.advance(control).event,'next-hand');
+ checkpoint.handPauseMs=4000;
+ const restored=ScheduledTournamentRoom.restore(checkpoint,{now:()=>T+7999});
+ assert.equal(restored.advance(control).event,'pause');
+ checkpoint.handPauseMs=25;
+ assert.equal(ScheduledTournamentRoom.restore(checkpoint,{now:()=>T}).checkpoint().handPauseMs,25);
+});
