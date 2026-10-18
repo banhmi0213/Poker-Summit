@@ -130,7 +130,7 @@ function classifyPayment(payment: KomojuPayment): RawCharge {
     return { kind: "failed", error: `status=${status}`, payment };
   }
   // pending / authorized / refunded など、決済完了とも失敗とも言えない状態
-  return { kind: "unknown", error: `status=${status || "(なし)"}`, payment };
+  return { kind: "unknown", error: describePayment(payment), payment };
 }
 
 /**
@@ -187,8 +187,17 @@ export async function findPaymentsByOrderNum(orderNum: string): Promise<KomojuPa
  * - failed: 決済されていない(見つからない・失敗だけ)
  * - unknown: 処理中などでまだ分からない / KOMOJUに問い合わせできなかった
  */
-export async function lookupOrder(orderNum: string): Promise<RawCharge> {
+export async function lookupOrder(orderNum: string, paymentId?: string | null): Promise<RawCharge> {
   try {
+    // KOMOJUの決済ID が分かっているときは、それを直接見る(一覧の検索には処理中の決済が出ないことがある)
+    if (paymentId) {
+      const p = await komojuFetch<any>("GET", `/payments/${encodeURIComponent(paymentId)}`);
+      const st = String(p?.status ?? "").toLowerCase();
+      const detail = describePayment(p);
+      if (st === "captured" || st === "refunded") return { kind: "captured", payment: p };
+      if (["failed", "cancelled", "canceled", "expired"].includes(st)) return { kind: "failed", error: detail, payment: p };
+      return { kind: "unknown", error: detail, payment: p };
+    }
     const payments = await findPaymentsByOrderNum(orderNum);
     const captured = payments.find((p) => String(p.status).toLowerCase() === "captured" || String(p.status).toLowerCase() === "refunded");
     if (captured) return { kind: "captured", payment: captured };
@@ -198,6 +207,21 @@ export async function lookupOrder(orderNum: string): Promise<RawCharge> {
   } catch (e) {
     return { kind: "unknown", error: `KOMOJUに確認できませんでした: ${e instanceof Error ? e.message : String(e)}` };
   }
+}
+
+/** 決済の状態を運営向けに短く書く(処理中の理由を調べるため。カード番号などは含まない) */
+function describePayment(p: any): string {
+  const d = p?.payment_details ?? {};
+  const parts = [
+    `status=${p?.status ?? "?"}`,
+    d?.type ? `type=${d.type}` : null,
+    d?.brand ? `brand=${d.brand}` : null,
+    d?.redirect_url ? "本人認証(3Dセキュア)の画面あり" : null,
+    p?.payment_deadline ? `期限=${p.payment_deadline}` : null,
+    d?.failure_reason || p?.failure_reason ? `理由=${d?.failure_reason ?? p?.failure_reason}` : null,
+    p?.refunds?.length ? `返金${p.refunds.length}件` : null,
+  ].filter(Boolean);
+  return parts.join(" / ");
 }
 
 /** 返金(全額または一部) */
