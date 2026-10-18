@@ -10,15 +10,19 @@ function formatDate(value: string) {
 export default async function AdminMembersPage({
   searchParams,
 }: {
-  searchParams: { q?: string; dup?: string };
+  searchParams: { q?: string; dup?: string; mh?: string };
 }) {
   const q = searchParams.q?.trim().toLowerCase() ?? "";
 
   const supabase = await createClient();
-  const [{ data: members, error }, { data: unconfirmedIds }] = await Promise.all([
+  const [{ data: members, error }, { data: unconfirmedIds }, { data: mHoldemRows }] = await Promise.all([
     supabase.rpc("admin_list_members"),
     supabase.rpc("admin_unconfirmed_member_ids"),
+    supabase.rpc("admin_member_m_holdem_ids"),
   ]);
+  // 会員登録・マイページで入力された m HOLD'EM ID(主催トーナメントの参加に必要)
+  const mHoldemById = new Map<string, string>(((mHoldemRows ?? []) as { user_id: string; m_holdem_id: string }[]).map((r) => [r.user_id, r.m_holdem_id]));
+  const mhOnly = searchParams.mh === "1";
   // 確認メールのリンクをまだ押していない会員(ログインできず、会員数にも数えない)
   const unconfirmed = new Set<string>(((unconfirmedIds ?? []) as unknown[]).map((v: any) => (typeof v === "string" ? v : v?.admin_unconfirmed_member_ids)));
 
@@ -26,9 +30,13 @@ export default async function AdminMembersPage({
   if (q) {
     list = list.filter(
       (m: any) =>
-        m.email?.toLowerCase().includes(q) || m.store_name?.toLowerCase().includes(q)
+        m.email?.toLowerCase().includes(q) ||
+        m.store_name?.toLowerCase().includes(q) ||
+        mHoldemById.get(m.id)?.toLowerCase().includes(q)
     );
   }
+  if (mhOnly) list = list.filter((m: any) => mHoldemById.has(m.id));
+  const mhTotal = (members ?? []).filter((m: any) => mHoldemById.has(m.id)).length;
 
   // 登録時のIPアドレス(重複登録の見回り用)。同じIPから7日以内に登録された会員の数を出す。
   const { data: signupLogs } = await supabase
@@ -92,7 +100,7 @@ export default async function AdminMembersPage({
           type="text"
           name="q"
           defaultValue={q}
-          placeholder="メールアドレス・店舗名で検索"
+          placeholder="メールアドレス・店舗名・m HOLD'EM IDで検索"
           style={{ maxWidth: 280 }}
         />
         <button type="submit" className="btn" style={{ marginLeft: 8 }}>
@@ -104,6 +112,13 @@ export default async function AdminMembersPage({
           style={{ marginLeft: 8 }}
         >
           同じIPからの登録のみ（{dupTotal}）
+        </Link>
+        <Link
+          href={mhOnly ? "/admin/members" : "/admin/members?mh=1"}
+          className={`btn${mhOnly ? " primary" : ""}`}
+          style={{ marginLeft: 8 }}
+        >
+          m HOLD&apos;EM ID登録ありのみ（{mhTotal}）
         </Link>
       </form>
       <p className="muted" style={{ fontSize: 12, margin: "-6px 0 12px" }}>
@@ -120,6 +135,7 @@ export default async function AdminMembersPage({
         <thead>
           <tr>
             <th>メールアドレス</th>
+            <th>m HOLD&apos;EM ID</th>
             <th>登録日</th>
             <th>種別</th>
             <th>紐づく店舗</th>
@@ -132,7 +148,7 @@ export default async function AdminMembersPage({
         <tbody>
           {list.length === 0 && (
             <tr>
-              <td colSpan={8} className="muted">
+              <td colSpan={9} className="muted">
                 該当する会員がいません。
               </td>
             </tr>
@@ -140,6 +156,7 @@ export default async function AdminMembersPage({
           {list.map((m: any) => (
             <tr key={m.id}>
               <td>{m.email}</td>
+              <td style={{ overflowWrap: "anywhere" }}>{mHoldemById.get(m.id) ?? <span className="muted">—</span>}</td>
               <td>
                 {formatDate(m.created_at)}
                 {sameIpCount(m.id) > 0 && (
