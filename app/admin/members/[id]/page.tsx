@@ -32,6 +32,7 @@ export default async function AdminMemberDetailPage({
     { data: participations },
     { data: couponUses },
     { data: previousAccounts },
+    { data: mHoldemRows },
   ] = await Promise.all([
     supabase
       .from("favorite_stores")
@@ -55,7 +56,9 @@ export default async function AdminMemberDetailPage({
       .eq("user_id", member.id),
     // 同じメールアドレス・電話番号で以前退会したアカウント(評価・実績・利用停止を引き継いでいる)
     supabase.rpc("admin_member_previous_accounts", { p_user_id: member.id }),
+    supabase.rpc("admin_member_m_holdem_ids"),
   ]);
+  const mHoldemId = ((mHoldemRows ?? []) as { user_id: string; m_holdem_id: string }[]).find((r) => r.user_id === member.id)?.m_holdem_id ?? null;
   const withdrawn = String(member.email ?? "").endsWith("@withdrawn.invalid");
 
   return (
@@ -80,6 +83,11 @@ export default async function AdminMemberDetailPage({
             利用停止中
           </span>
         )}
+      </p>
+
+      <p style={{ marginBottom: 20, fontSize: 14 }}>
+        <strong>m HOLD&apos;EM ID：</strong>
+        {mHoldemId ? <span style={{ userSelect: "all" }}>{mHoldemId}</span> : <span className="muted">未登録</span>}
       </p>
 
       {withdrawn && (

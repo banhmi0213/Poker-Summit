@@ -863,14 +863,14 @@ export async function sendAdminAlertEmail(params: { to: string; subject: string;
 export async function sendMemberDigestEmail(params: {
   to: string;
   dayLabel: string;
-  members: Array<{ email: string; at: string; confirmed: boolean }>;
+  members: Array<{ email: string; at: string; confirmed: boolean; mHoldemId?: string | null }>;
   total: number;
 }): Promise<void> {
   const siteUrl = getSiteUrl();
   const lines = [
     `${params.dayLabel}の新規会員登録は ${params.members.length}人 でした（会員の合計 ${params.total}人）。`,
     "",
-    ...params.members.map((m) => `・${m.at}  ${m.email}${m.confirmed ? "" : "（メール未確認）"}`),
+    ...params.members.map((m) => `・${m.at}  ${m.email}  m HOLD'EM ID: ${m.mHoldemId || "未登録"}${m.confirmed ? "" : "（メール未確認）"}`),
     "",
     "「メール未確認」は、登録後の確認メールのリンクをまだ押していない方です。",
     "",

@@ -33,8 +33,12 @@ export async function GET(req: NextRequest) {
       await finishCronRun(runId, "member-digest", { jobLabel: "新規会員のまとめメール", summary: { skipped: "通知オフまたは宛先なし" }, failures: [] });
       return NextResponse.json({ skipped: true });
     }
-    const { data, error } = await svc.rpc("member_signup_digest", { p_since: since.toISOString(), p_until: until.toISOString() });
+    const [{ data, error }, { data: idRows }] = await Promise.all([
+      svc.rpc("member_signup_digest", { p_since: since.toISOString(), p_until: until.toISOString() }),
+      svc.rpc("member_m_holdem_ids_between", { p_since: since.toISOString(), p_until: until.toISOString() }),
+    ]);
     if (error) throw new Error(error.message);
+    const mHoldemByEmail = new Map<string, string>(((idRows ?? []) as Array<{ email: string; m_holdem_id: string }>).map((r) => [r.email, r.m_holdem_id]));
     const rows = (data ?? []) as Array<{ email: string | null; created_at: string | null; confirmed: boolean | null; total_members: number }>;
     const members = rows
       .filter((r) => r.email && r.created_at)
@@ -42,6 +46,7 @@ export async function GET(req: NextRequest) {
         email: r.email as string,
         at: new Date(r.created_at as string).toLocaleTimeString("ja-JP", { timeZone: "Asia/Tokyo", hour: "2-digit", minute: "2-digit" }),
         confirmed: !!r.confirmed,
+        mHoldemId: mHoldemByEmail.get(r.email as string) ?? null,
       }));
     const total = Number(rows[0]?.total_members ?? 0);
     if (members.length > 0) {
