@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { setMemberSuspended, sendMemberPasswordReset, deleteMember } from "../actions";
+import { setMemberSuspended, sendMemberPasswordReset, deleteMember, confirmMemberEmail } from "../actions";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 function formatDate(value: string) {
   const d = new Date(value);
@@ -58,6 +59,10 @@ export default async function AdminMemberDetailPage({
     supabase.rpc("admin_member_previous_accounts", { p_user_id: member.id }),
     supabase.rpc("admin_member_m_holdem_ids"),
   ]);
+  // メール確認の状態と「登録完了メール」を送ったか(確認済みにするボタンの表示用)
+  const { data: authInfo } = await createServiceRoleClient().auth.admin.getUserById(member.id);
+  const emailConfirmed = !!authInfo?.user?.email_confirmed_at;
+  const welcomeSent = !!authInfo?.user?.user_metadata?.welcome_email_sent_at;
   const mHoldemId = ((mHoldemRows ?? []) as { user_id: string; m_holdem_id: string }[]).find((r) => r.user_id === member.id)?.m_holdem_id ?? null;
   const withdrawn = String(member.email ?? "").endsWith("@withdrawn.invalid");
 
@@ -109,6 +114,27 @@ export default async function AdminMemberDetailPage({
             ))}
           </ul>
           <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>ディーラーの評価・実績は前のアカウントの分も合わせて店舗に表示されます。</p>
+        </div>
+      )}
+
+      {!member.is_admin && !member.store_id && !withdrawn && (!emailConfirmed || !welcomeSent) && (
+        <div className="card" style={{ marginBottom: 20, borderLeft: "4px solid #e0a028" }}>
+          <strong>{emailConfirmed ? "登録完了メールがまだ送られていません" : "メールアドレスの確認がまだです（ログインできません）"}</strong>
+          <p className="muted" style={{ fontSize: 13, margin: "6px 0 10px", lineHeight: 1.7 }}>
+            {emailConfirmed
+              ? "運営で確認済みにした会員です。ボタンを押すと「登録が完了しました」メールを送り、ログインできることを本人に知らせます。"
+              : "確認メールが届かない・期限切れになった方の救済用です。押すと確認済みになり、登録時のパスワードでログインできるようになります。あわせて「登録が完了しました」メールを送ります。本人のメールアドレスかは確認できていない点にご注意ください。"}
+          </p>
+          <form
+            action={async () => {
+              "use server";
+              await confirmMemberEmail(member.id);
+            }}
+          >
+            <button type="submit" className="btn primary">
+              {emailConfirmed ? "登録完了メールを送る" : "メール確認済みにする"}
+            </button>
+          </form>
         </div>
       )}
 
