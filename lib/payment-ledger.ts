@@ -52,11 +52,12 @@ function idemKeyFor(purpose: ChargePurpose, groupKey: string, attemptNo: number)
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** 結果が分からなかった決済を、KOMOJUに問い合わせて確かめる(必要なら同じ番号で1回だけ再送) */
-async function settleUnknown(params: { idemKey: string; customerId: string; amount: number; metadata: Record<string, string> }): Promise<RawCharge> {
+async function settleUnknown(params: { idemKey: string; customerId: string; amount: number; metadata: Record<string, string>; paymentId?: string | null }): Promise<RawCharge> {
   await sleep(2500);
-  const looked = await lookupOrder(params.idemKey);
+  const looked = await lookupOrder(params.idemKey, params.paymentId ?? null);
   if (looked.kind === "captured" || looked.kind === "unknown") return looked;
   if (looked.payment) return looked; // 失敗した決済の記録がある = 決済されていない
+  if (params.paymentId) return { kind: "unknown", error: "KOMOJUの決済IDはあるが確認できませんでした" };
   // KOMOJU に記録が無い = 最初のリクエストは届いていない可能性が高い。
   // 同じ冪等キーで再送すれば、もし届いていても KOMOJU が同じ結果を返すだけで二重にはならない(24時間以内)。
   return createPaymentOnce({ idemKey: params.idemKey, customerId: params.customerId, amount: params.amount, metadata: params.metadata });
@@ -150,7 +151,7 @@ export async function chargeOnce(params: {
 
   let result = await createPaymentOnce({ idemKey, customerId: params.customerId, amount: params.amount, metadata });
   if (result.kind === "unknown") {
-    result = await settleUnknown({ idemKey, customerId: params.customerId, amount: params.amount, metadata });
+    result = await settleUnknown({ idemKey, customerId: params.customerId, amount: params.amount, metadata, paymentId: result.payment?.id ?? null });
   }
 
   const nowIso = new Date().toISOString();
@@ -188,7 +189,7 @@ export async function reconcileAttempt(attemptId: string, adminUserId: string | 
   const { data: row } = await svc.from("payment_attempts").select("*").eq("id", attemptId).maybeSingle();
   if (!row) throw new Error("決済の記録が見つかりません。");
   if (row.status === "captured" || row.status === "failed") return { status: row.status, detail: "確定済みです。" };
-  const looked = await lookupOrder(row.idem_key as string);
+  const looked = await lookupOrder(row.idem_key as string, (row.komoju_payment_id as string | null) ?? null);
   const nowIso = new Date().toISOString();
   if (looked.kind === "captured") {
     await svc.from("payment_attempts").update({ status: "captured", komoju_payment_id: looked.payment.id ?? null, resolved_by: adminUserId, resolved_note: "KOMOJUで決済済みを確認", updated_at: nowIso }).eq("id", attemptId);
