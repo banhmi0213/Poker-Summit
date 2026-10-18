@@ -281,3 +281,7 @@ export const MEMBER_ROLE_OPTIONS = [
   "ディーラー",
   "フリーディーラー",
 ];
+
+// 使えるカードの案内(2026/10/18)。KOMOJUの本番審査はVisa/Mastercardが完了、JCB・AMEX・Diners・Discoverは審査中。
+// 審査が終わったら、この文言を変える(または空にする)だけで、申込み画面・店舗管理の案内がまとめて変わる。
+export const CARD_BRANDS_NOTE = "現在ご利用いただけるカードはVisa・Mastercardです。JCB・AMEX・Dinersは準備中のため、銀行振込をお選びください。";

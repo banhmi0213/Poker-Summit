@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
 
 // お支払い方法とお支払いサイクル。クレジットカードは毎月の自動決済のみなので、
 // カードを選んだらサイクルは「毎月払い」に固定してグレーアウト(選べない)にする。
@@ -36,6 +37,11 @@ export function ApplyBillingFields({
               <input type="radio" name="billingMethod" value="card" checked={isCard} onChange={() => setMethod("card")} />
               クレジットカード（毎月の自動決済）
             </label>
+          )}
+          {cardEnabled && CARD_BRANDS_NOTE && (
+            <span className="muted" style={{ fontSize: 12, lineHeight: 1.6 }}>
+              {CARD_BRANDS_NOTE}
+            </span>
           )}
         </div>
       </div>
