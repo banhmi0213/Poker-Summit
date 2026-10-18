@@ -7,3 +7,5 @@
 .panel article{padding:12px 0!important}.panel article h3{margin:0 0 6px}.panel article p{margin:6px 0}.panel nav[aria-label$="ページ"]{margin-top:14px;display:flex;align-items:center;gap:12px}
 
 .shell button{font-family:inherit}
+/* Scope portal tokens so global table/card rules retain the dark palette. */
+.shell{color-scheme:dark;--surface:#142b3e;--surface-2:#1b3448;--surface-3:#213a4d;--text:#e9eff5;--text-2:#afc3d1;--muted:#9ab0c0;--border:#2a4355;--grid:#294458}
