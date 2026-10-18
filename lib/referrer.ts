@@ -12,7 +12,7 @@ export function classifyReferrer(referrer: string | null): "検索エンジン" 
   } catch {
     return "外部サイト・提携先";
   }
-  if (host.includes("poker-summit")) return "直接アクセス";
+  if (host.includes("poker-summit") || host.includes("pokersummit")) return "直接アクセス";
   if (SEARCH_ENGINES.some((s) => host.includes(s))) return "検索エンジン";
   if (SOCIAL.some((s) => host.includes(s))) return "SNS経由";
   return "外部サイト・提携先";

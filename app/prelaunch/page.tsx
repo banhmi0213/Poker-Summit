@@ -4,6 +4,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_DESCRIPTION } from "@/lib/seo";
 import { signOut } from "@/app/login/actions";
+import { headers } from "next/headers";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 // 先行登録モード中に一般向けページの代わりに出す、先行会員登録の案内ページ(2026/10)。
 // middleware(lib/supabase/middleware.ts)が site_settings.prelaunch_mode のときにここへ差し替える。
@@ -21,7 +24,23 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
   ]);
   const loggedIn = !!auth.user;
 
-  if (!loggedIn) return RegistrationPage({searchParams, early: true});
+  if (!loggedIn) {
+    // 先行登録ページの表示回数を記録する(総合管理 > アクセス統計 > 先行登録、2026/10/18)。
+    // 人のアクセスだけ(クローラー・リンクの先読みは除く)。送信後のエラー表示・完了表示の再表示は数えない。
+    const hdrs = await headers();
+    const ua = hdrs.get("user-agent");
+    const isPrefetch = hdrs.get("next-router-prefetch") === "1" || hdrs.get("purpose") === "prefetch" || hdrs.get("sec-purpose")?.includes("prefetch");
+    if (!isBotUserAgent(ua) && !isPrefetch && !searchParams?.error && !searchParams?.done) {
+      try {
+        await createServiceRoleClient()
+          .from("page_views")
+          .insert({ path: "/prelaunch", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua) });
+      } catch {
+        // 記録に失敗しても登録画面は出す
+      }
+    }
+    return RegistrationPage({searchParams, early: true});
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#fffaf0 0%,#f6ead2 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px" }}>
