@@ -2,7 +2,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{Module}=require('node:module'),ts=require('typescript'),React=require('react');
 const root=path.resolve(__dirname,'..'),load=Module._load,resolve=Module._resolveFilename;
 let authCallback,unsubscribed=false;
-Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='@/lib/supabase/client')return {createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'test-token'}}}),onAuthStateChange:fn=>{authCallback=fn;return {data:{subscription:{unsubscribe:()=>unsubscribed=true}}};}}})};return load.call(this,name,parent,...args);};
+Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='next/link')return ({href,children,...props})=>React.createElement('a',{href,...props},children);if(name==='@/lib/supabase/client')return {createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'test-token'}}}),onAuthStateChange:fn=>{authCallback=fn;return {data:{subscription:{unsubscribe:()=>unsubscribed=true}}};}}})};return load.call(this,name,parent,...args);};
 Module._resolveFilename=function(name,parent,...args){if(name.startsWith('@/'))name=root+'/'+name.slice(2);try{return resolve.call(this,name,parent,...args);}catch(e){for(const ext of ['.ts','.tsx'])try{return resolve.call(this,name+ext,parent,...args);}catch{}throw e;}};
 for(const ext of ['.ts','.tsx'])require.extensions[ext]=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,f);
 require.extensions['.css']=m=>m.exports={__esModule:true,default:new Proxy({},{get:(_,key)=>key})};
@@ -80,3 +80,19 @@ test('completed result remains during next hand and is cleared on connection los
  const ring=f.renderer.root.findByProps({role:'progressbar'});assert.equal(ring.props['aria-valuenow'],40);assert.match(ring.props.style.background,/conic-gradient/);
  assert.equal(f.packets.filter(p=>p.type==='time-bank').length,1);
  });
+
+test('poker workspace links lobby and account and switches only the selected panel',async t=>{
+ const Workspace=require('../app/poker-ui/workspace.tsx').PokerWorkspace;let renderer;t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());});
+ await act(async()=>renderer=create(React.createElement(Workspace,{kind:'lobby',panes:[{id:'tables',label:'参加卓',eyebrow:'TABLES',description:'卓を選ぶ',content:React.createElement('p',null,'Own room content')},{id:'records',label:'大会履歴',eyebrow:'HISTORY',description:'履歴を見る',content:React.createElement('p',null,'History content')}]})));
+ assert.match(text(renderer.toJSON()),/Own room content/);assert.ok(!text(renderer.toJSON()).includes('History content'));
+ assert.ok(renderer.root.findAllByType('a').some(a=>a.props.href==='/mypage/poker'));
+ await act(async()=>renderer.root.findAllByType('button').find(b=>text(b).includes('大会履歴')).props.onClick());
+ assert.match(text(renderer.toJSON()),/History content/);assert.ok(!text(renderer.toJSON()).includes('Own room content'));
+});
+test('account history uses page navigation instead of stacking every result',async t=>{
+ const View=require('../app/poker-tournaments/statistics-view.tsx').StatisticsView;let renderer;t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());});
+ const data={asOf:'2026-10-19T00:00:00Z',players:[],ring:[],upcoming:[],history:Array.from({length:7},(_,i)=>({tournament_id:String(i),title:'大会'+i,finished_at:'2026-10-18T00:00:00Z',row:{memberId:'member',name:'Member',place:1,tiedThrough:1}}))};
+ await act(async()=>renderer=create(React.createElement(View,{data,section:'history'})));
+ assert.equal(renderer.root.findAllByType('tbody')[0].findAllByType('tr').length,5);assert.ok(!text(renderer.toJSON()).includes('大会6'));
+ await act(async()=>renderer.root.findAllByType('button').find(b=>text(b)==='次へ').props.onClick());assert.match(text(renderer.toJSON()),/大会6/);assert.equal(renderer.root.findAllByType('tbody')[0].findAllByType('tr').length,2);
+});
