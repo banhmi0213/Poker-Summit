@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { purchaseAddonAction } from "../addon-purchase-actions";
 
@@ -135,6 +136,7 @@ export function AddonPicker({
               クレジットカード
             </label>
           )}
+          {canUseCard && CARD_BRANDS_NOTE && <span className="muted" style={{ fontSize: 12, flexBasis: "100%" }}>{CARD_BRANDS_NOTE}</span>}
           <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input
               type="radio"

@@ -1,4 +1,5 @@
 import { TurnstileWidget } from "@/app/turnstile-widget";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
 import { RequestKeyInput } from "@/app/request-key-input";
 import Link from "next/link";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
@@ -255,7 +256,7 @@ export default async function ApplyPage({
             {plans && plans.length > 0 && (
               <p className="muted" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.7 }}>
                 銀行振込の場合は、お申込み後に請求書（PDF）をメールでお送りします。ご入金の確認後に店舗管理アカウントを発行します。
-                {billing.cardPaymentEnabled ? "クレジットカードの場合はカード登録画面へ進みます。" : ""}
+                {billing.cardPaymentEnabled ? `クレジットカードの場合はカード登録画面へ進みます。${CARD_BRANDS_NOTE}` : ""}
               </p>
             )}
           </form>
@@ -358,7 +359,7 @@ function PricingSection({ plans, billing, priceLockDeadline }: { plans: PriceIte
           <li>銀行振込の場合、お申込み後に請求書（適格請求書）をメールでお送りします。お支払期限は請求書の発行から{billing.dueDays}日以内です。ご入金の確認後に掲載を開始します。</li>
           <li>契約はお選びいただいた期間ごとに自動更新します。銀行振込の場合は契約期間が終わる7日前に次回分の請求書をお送りします。お支払期限から7日を過ぎてもご入金が確認できない場合、店舗ページの公開を停止し、ご入金の確認後に再開します。</li>
           {billing.cardPaymentEnabled && (
-            <li>クレジットカードの場合、プランのアップグレードはその場で決済し、ダウングレードは現在の契約期間の終了時に反映します。</li>
+            <li>クレジットカードの場合、プランのアップグレードはその場で決済し、ダウングレードは現在の契約期間の終了時に反映します。{CARD_BRANDS_NOTE}</li>
           )}
           <li>解約・自動更新の停止は、更新日前に<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からご連絡ください。お支払い済みの料金（まとめ払いを含む）の日割り・月割りでの返金は原則行っておりません。</li>
           <li>当サービスは賭博・換金を目的とした決済は一切行いません。お支払いの対象は店舗掲載・広告・オプション等のサービス利用料金です。</li>

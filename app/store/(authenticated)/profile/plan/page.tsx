@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
 import { effectivePlanFee, isPriceLockActive } from "@/lib/price-lock";
 import { prorateUpgrade } from "@/lib/proration";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
@@ -232,6 +233,8 @@ export default async function StorePlanPage({
               </div>
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                 カード番号は決済代行会社(KOMOJU)の画面で入力します。Poker Summit には保存されません。
+                <br />
+                {CARD_BRANDS_NOTE}
                 <br />
                 KOMOJUの画面では「今後の支払いに備えて支払い方法を保存します」にチェックを入れてから「保存」を押してください。
               </div>
