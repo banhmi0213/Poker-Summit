@@ -14,6 +14,7 @@ const {PGlite}=require(process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite'),
  create table poker_private.hand_results(room_id uuid,hand_id uuid,result jsonb,created_at timestamptz default now(),primary key(room_id,hand_id));
  grant usage on schema public,auth to authenticated,anon;grant usage on schema poker_private to service_role;grant select,insert on poker_private.hand_results to service_role;grant select,insert,update on poker_private.room_checkpoints to service_role;`);
  const file=fs.readdirSync(path.resolve(__dirname,'../../supabase/migrations')).find(f=>f.endsWith('_poker_statistics.sql'));await db.exec(fs.readFileSync(path.resolve(__dirname,'../../supabase/migrations',file),'utf8'));
+ const privateFile=fs.readdirSync(path.resolve(__dirname,'../../supabase/migrations')).find(f=>f.endsWith('_poker_statistics_private_reader.sql'));await db.exec(fs.readFileSync(path.resolve(__dirname,'../../supabase/migrations',privateFile),'utf8'));
  const ids=[1,2,3].map(i=>`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`),tid='10000000-0000-4000-8000-000000000001',rid='20000000-0000-4000-8000-000000000001';
  for(let i=0;i<ids.length;i++)await db.query('insert into auth.users values($1,$2)',[ids[i],JSON.stringify({display_name:'Member'+(i+1)})]);
  await db.query('insert into public.poker_tournaments values($1,$2,now())',[tid,'Test']);await db.query('insert into poker_private.tournament_rooms values($1,$2)',[rid,tid]);
