@@ -4,13 +4,14 @@ import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import type {BettingAction} from '@/lib/poker/betting';
 import shared from '../../poker-demo/poker-table.module.css';
 import styles from './table.module.css';
-type Props={state:PlayerSnapshot|null;busy:boolean;pending:boolean;enabled:boolean;message:string;onJoin:()=>void;onSpectate:()=>void;onRetry:()=>void;onAct:(action:BettingAction)=>void};
-export function OnlineControls({state,busy,pending,enabled,message,onJoin,onSpectate,onRetry,onAct}:Props){
+type Props={state:PlayerSnapshot|null;busy:boolean;pending:boolean;enabled:boolean;message:string;onJoin:()=>void;onSpectate:()=>void;onRetry:()=>void;onTimeBank?:()=>void;onAct:(action:BettingAction)=>void};
+export function OnlineControls({state,busy,pending,enabled,message,onJoin,onSpectate,onRetry,onAct,onTimeBank}:Props){
  const [amount,setAmount]=useState('');useEffect(()=>setAmount(''),[state?.hand?.handId,state?.hand?.revision]);
  const legal=state?.hand?.legal,locked=busy||pending||!enabled||Boolean(state?.turn&&state.turn.expiresAt<=state.serverNow),wager=Number(amount||legal?.minRaiseTo);
  const valid=Number.isSafeInteger(wager)&&legal?.minRaiseTo!=null&&legal.maxRaiseTo!=null&&wager>=legal.minRaiseTo&&wager<=legal.maxRaiseTo;
  return <div className={shared.controls}>
   <div className={shared.turn}>{legal?'あなたの番':state?.phase==='finished'?'大会終了':state?.phase==='complete'?'次のハンドを待っています':state?.hand?.toAct?`プレイヤー ${state.hand.toAct.replace('seat-','')}の番`:'開始待ち'}</div>
+  <button type="button" className={styles.bankButton} disabled={locked||!legal||!state?.timeBank?.remaining||!onTimeBank} onClick={onTimeBank}>◷ タイムバンク +{state?.timeBank?.seconds??20}秒（残り{state?.timeBank?.remaining??0}回）</button>
   {!enabled&&<p role="status">オンライン対戦サーバーはまだ公開していません。現在のデモはロビーから利用できます。</p>}
   <p role="status">{message}</p>{!state&&<p>割り当て済みの参加者は、参加ボタンで空席に自動着席します。</p>}
   <div className={styles.connectionControls}><button type="button" disabled={busy||!enabled} onClick={onJoin}>参加・接続・再接続</button><button type="button" disabled={locked} onClick={onSpectate}>観戦</button>{pending&&<button type="button" disabled={busy} onClick={onRetry}>前の操作の結果を確認</button>}</div>

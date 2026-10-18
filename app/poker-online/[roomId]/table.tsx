@@ -55,6 +55,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
    onJoin={()=>void run(async c=>{await c.join();retryAt.current=0;readFailures.current=0;pollMode.current='player';setConnectionEpoch(v=>v+1);})}
    onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();pollMode.current='spectator';setConnectionEpoch(0);})}
    onRetry={()=>void run(async c=>{await c.retry();pollMode.current='player';})}
+   onTimeBank={()=>void run(c=>c.timeBank())}
    onAct={action=>void run(c=>c.act(action))}/>
   </OnlineTableView>
   {exitOpen&&<div className={shared.seatOverlay}><div className={shared.seatDialog} role="dialog" aria-modal="true" aria-labelledby="online-exit-title"><h2 id="online-exit-title">ゲームを退出しますか？</h2><p>退出しても大会のチップや進行は維持されます。</p>{pending&&<p>先に前の操作の結果を確認してください。</p>}<div className={shared.seatDialogActions}><button type="button" onClick={()=>setExitOpen(false)}>キャンセル</button><button type="button" disabled={busy||pending} onClick={()=>{if(!client.current||!state||state.youSeat===null){window.location.assign('/poker-lobby');return;}void run(async c=>{await c.disconnect();pollMode.current=null;window.location.assign('/poker-lobby');});}}>退出する</button></div></div></div>}

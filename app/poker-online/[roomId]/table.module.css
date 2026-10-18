@@ -16,3 +16,7 @@
 .results{grid-template-columns:repeat(2,minmax(0,1fr))}.results>span{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;white-space:nowrap;font-size:10px}
 .actionButtons{grid-template-columns:repeat(3,minmax(0,1fr))}.quickBets button{font-size:11px}.quickBets button:last-child{font-size:10px;white-space:nowrap}
 @media(max-width:480px){.lowerCards{transform:translateY(-13px)}}
+
+/* Position geometry is inline to outrank the shared demo seat selectors. */
+.positionBadge{pointer-events:none}
+.bankButton{width:100%;min-height:40px;border:1px solid #dfbd7b;border-radius:8px;background:#243e52;color:#f6cf79;font-weight:700;cursor:pointer;margin:4px 0 8px}.bankButton:disabled{opacity:.45;cursor:not-allowed}

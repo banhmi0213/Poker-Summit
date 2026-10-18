@@ -8,12 +8,13 @@ import { initialTournamentPositions,nextTournamentPositions,type TournamentPosit
 
 export type TurnDeadline={handId:string;revision:number;actor:string;expiresAt:number};
 type Seat={memberId:string;stack:number;connectionId:string|null};
-export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null};
+export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null;timeBanks?:[string,number][]};
 export class SeatedHandRoom {
   #seats=new Map<number,Seat>(); #hand:AuthoritativeHand|null=null; #revision=0;
   #startingStack:number; #terms:HandTerms;
   #tournament:boolean; #positions:TournamentPositions|null=null; #outcome:TournamentOutcome|null=null;
   #settledHandId:string|null=null; #handNumber=0; #completedAt:number|null=null;
+  #timeBanks=new Map<string,number>();
   #order=Array.from({length:6},(_,i)=>`seat-${i+1}`);
   #turn:TurnDeadline|null=null; #now:()=>number; #turnMs:number; #lastNow=0;
   constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean}={}) {
@@ -26,7 +27,7 @@ export class SeatedHandRoom {
   }
   /** Server-only checkpoint; connection capabilities are deliberately omitted. */
   checkpoint():RoomCheckpoint {
-    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt});
+    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt,timeBanks:[...this.#timeBanks]});
   }
   /** Only load an authenticated/decrypted server checkpoint. Restored sockets must reconnect. */
   static restore(input:RoomCheckpoint,now:()=>number=Date.now) {
@@ -36,6 +37,7 @@ export class SeatedHandRoom {
     const members=new Set<string>();
     for(const [n,seat] of s.seats){room.seat(seat.memberId,n);if(members.has(seat.memberId)||!Number.isSafeInteger(seat.stack)||seat.stack<0)throw new Error("Invalid saved seat");members.add(seat.memberId);room.#seats.set(n,{...seat,connectionId:null});}
     room.#hand=s.hand?AuthoritativeHand.restore(s.hand):null;room.#revision=s.revision;room.#positions=s.positions;room.#outcome=s.outcome;room.#settledHandId=s.settledHandId;room.#handNumber=s.handNumber;room.#turn=s.turn;room.#lastNow=s.lastNow;
+    for(const [id,revision] of s.timeBanks??[]){if(!room.#seats.has(Number(id.replace('seat-','')))||!/^seat-[1-6]$/.test(id)||!Number.isSafeInteger(revision)||revision<0||room.#timeBanks.has(id))throw new Error("Invalid saved time bank");room.#timeBanks.set(id,revision);}
     const h=room.#hand?.snapshot(null),t=room.#turn;
     room.#completedAt=h?.result?(s.completedAt??s.lastNow):null;
     if(room.#completedAt!==null&&(!Number.isSafeInteger(room.#completedAt)||room.#completedAt<0||room.#completedAt>s.lastNow)||!h?.result&&s.completedAt!=null)throw new Error("Invalid completion time");
@@ -74,7 +76,7 @@ export class SeatedHandRoom {
     const id=viewerSeat===null?null:`seat-${viewerSeat}`;
     const hand=id&&publicHand?.players.some(p=>p.id===id)?this.#hand!.snapshot(id):publicHand;
     const outcome=this.#outcome?{...this.#outcome,stacks:{...this.#outcome.stacks},liveIds:[...this.#outcome.liveIds],eliminated:this.#outcome.eliminated.map(p=>({...p}))}:null;
-    return {revision:this.#revision,mode:this.#tournament?"tournament":"single-hand",phase:outcome?.champion?"finished":hand?.result?"complete":hand?"playing":"waiting",handNumber:this.#handNumber,completedAt:this.#completedAt,tournament:outcome,youSeat:viewerSeat,turn:this.#turn?{...this.#turn}:null,
+    return {revision:this.#revision,mode:this.#tournament?"tournament":"single-hand",phase:outcome?.champion?"finished":hand?.result?"complete":hand?"playing":"waiting",handNumber:this.#handNumber,completedAt:this.#completedAt,tournament:outcome,youSeat:viewerSeat,timeBank:{seconds:20,remaining:id&&!this.#timeBanks.has(id)?1:0},turnDurationMs:this.#turnMs+(this.#turn&&this.#timeBanks.get(this.#turn.actor)===this.#turn.revision?20000:0),turn:this.#turn?{...this.#turn}:null,
       seats:Array.from({length:6},(_,i)=>{const s=this.#seats.get(i+1);return {seat:i+1,id:`seat-${i+1}`,occupied:Boolean(s),connected:Boolean(s?.connectionId)};}),hand};
   }
   /** Auth-to-member binding must already be verified. Stack is room policy, not client input. */
@@ -137,7 +139,7 @@ export class SeatedHandRoom {
     const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
     const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;
     const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),terms,positions?{order:this.#order,positions}:undefined);
-    this.#hand=hand;this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+    this.#hand=hand;this.#timeBanks.clear();this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
   }
   /** Trusted tournament scheduler only. A captured completed hand ID makes retries safe.
    * Survivors carry stacks; disconnected survivors remain in play with server deadlines.
@@ -153,7 +155,7 @@ export class SeatedHandRoom {
     const now=this.#readNow();
     const hand=new AuthoritativeHand(players,0,terms,{order:this.#order,positions});
     // Everything above validates before replacing the previous hand/receipt owner.
-    this.#hand=hand;this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber++;this.#armTurn(now);this.#revision++;
+    this.#hand=hand;this.#timeBanks.clear();this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber++;this.#armTurn(now);this.#revision++;
     return this.publicSnapshot();
   }
   act(authenticatedMemberId:string,connectionId:string,payload:unknown) {
@@ -167,6 +169,17 @@ export class SeatedHandRoom {
     const result=this.#hand.act(`seat-${n}`,payload);
     if(!result.replayed){this.#revision++;this.#armTurn(now);}
     return {replayed:result.replayed,acceptedRevision:result.acceptedRevision,state:this.#snapshot(n)};
+  }
+  /** One server-owned extension per player per hand. A duplicate for the same
+   * turn is a read-only replay, including after an acknowledgement was lost. */
+  timeBank(member:string,connection:string,handId:string,revision:number){
+    const [n]=this.#connection(member,connection),id=`seat-${n}`,h=this.#hand?.snapshot(null),t=this.#turn;
+    if(!h||h.handId!==handId||!Number.isSafeInteger(revision)||revision<0)throw new Error("Invalid time bank turn");
+    if(this.#timeBanks.get(id)===revision)return {replayed:true,state:this.#snapshot(n)};
+    const now=this.#readNow();
+    if(!t||t.actor!==id||t.revision!==revision||h.result||now>=t.expiresAt||this.#timeBanks.has(id)||!Number.isSafeInteger(t.expiresAt+20000))throw new Error("Time bank unavailable");
+    this.#timeBanks.set(id,revision);this.#turn={...t,expiresAt:t.expiresAt+20000};this.#revision++;
+    return {replayed:false,state:this.#snapshot(n)};
   }
   /** Trusted scheduler callback: compare the captured hand/revision/actor first.
    * No connection token is needed, but this method must never be a public endpoint.

@@ -11,7 +11,7 @@ const text=n=>n==null?'':typeof n==='string'||typeof n==='number'?String(n):Arra
 const defer=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {resolve,promise};};
 async function harness(t,extra={}){const oldFetch=global.fetch,oldSet=global.setInterval,oldClear=global.clearInterval;let tick,cleared=false,renderer,drop=false,hold=null,readFailure=null;const packets=[];const now=Date.parse('2026-10-16T10:00:00Z'),room=new ScheduledTournamentRoom({starts_at:new Date(now).toISOString(),structure:{startingStack:1000,anteType:'bb',lateRegLevel:1,reentry:false,periods:[{kind:'level',minutes:1,sb:50,bb:100,ante:100,note:''}]}},{now:()=>now});room.seat('A',1);room.seat('B',6);room.connect('A');room.connect('B');room.startHand(6);let connection;
  global.setInterval=fn=>{tick=fn;return 123;};global.clearInterval=()=>cleared=true;
- global.fetch=async(url,init)=>{const body=JSON.parse(init.body);packets.push(body);if(body.type==='state'&&readFailure!==null){const status=readFailure;readFailure=null;if(status===0)throw Error('temporary network failure');return Response.json({ok:false},{status});}let result;if(body.type==='connect'||body.type==='join'){result=room.connect('B');connection=result.connectionId;}else if(body.type==='state')result=room.snapshot('B',connection);else if(body.type==='spectate')result=room.publicSnapshot();else if(body.type==='disconnect')result=room.disconnect('B',connection);else if(body.type==='act'){result=room.act('B',connection,body.command);if(drop){drop=false;throw Error('lost ack');}}else throw Error('unexpected');if(hold)await hold.promise;return Response.json({ok:true,result});};
+ global.fetch=async(url,init)=>{const body=JSON.parse(init.body);packets.push(body);if(body.type==='state'&&readFailure!==null){const status=readFailure;readFailure=null;if(status===0)throw Error('temporary network failure');return Response.json({ok:false},{status});}let result;if(body.type==='connect'||body.type==='join'){result=room.connect('B');connection=result.connectionId;}else if(body.type==='time-bank')result=room.timeBank('B',connection,body.handId,body.revision);else if(body.type==='state')result=room.snapshot('B',connection);else if(body.type==='spectate')result=room.publicSnapshot();else if(body.type==='disconnect')result=room.disconnect('B',connection);else if(body.type==='act'){result=room.act('B',connection,body.command);if(drop){drop=false;throw Error('lost ack');}}else throw Error('unexpected');if(hold)await hold.promise;return Response.json({ok:true,result});};
  await act(async()=>{renderer=create(React.createElement(Table,{roomId:'00000000-0000-4000-8000-000000000001',enabled:true,...extra}));});
  const button=name=>renderer.root.findAllByType('button').find(b=>text(b).includes(name));
  const click=async name=>{const b=button(name);assert.ok(b);assert.equal(Boolean(b.props.disabled),false);await act(async()=>{b.props.onClick();});};
@@ -69,3 +69,14 @@ test('completed result remains during next hand and is cleared on connection los
  await act(async()=>renderer.update(React.createElement(View,{state:null})));
  assert.ok(!text(renderer.toJSON()).includes('直前の結果'));
 });
+
+ test('time bank button extends server deadline once and the active avatar renders its countdown',async t=>{
+ const f=await harness(t);await f.click('接続・再接続');
+ const View=require('../app/poker-online/[roomId]/online-table-view.tsx').OnlineTableView;
+ const before=f.renderer.root.findByType(View).props.state.turn.expiresAt;
+ const bank=()=>f.renderer.root.findAllByType('button').find(b=>text(b).includes('タイムバンク'));
+ assert.equal(bank().props.disabled,false);await act(async()=>bank().props.onClick());
+ assert.equal(f.renderer.root.findByType(View).props.state.turn.expiresAt,before+20000);assert.equal(bank().props.disabled,true);
+ const ring=f.renderer.root.findByProps({role:'progressbar'});assert.equal(ring.props['aria-valuenow'],40);assert.match(ring.props.style.background,/conic-gradient/);
+ assert.equal(f.packets.filter(p=>p.type==='time-bank').length,1);
+ });

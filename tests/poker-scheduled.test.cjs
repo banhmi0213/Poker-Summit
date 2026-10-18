@@ -58,3 +58,19 @@ test('default result pause lasts eight seconds, including restored legacy defaul
  checkpoint.handPauseMs=25;
  assert.equal(ScheduledTournamentRoom.restore(checkpoint,{now:()=>T}).checkpoint().handPauseMs,25);
 });
+
+test('time bank extends only current player, replays once, survives restore and resets next hand',()=>{
+ const f=setup();f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),other=n===1?6:1;
+ assert.throws(()=>f.room.timeBank('m'+other,f.tokens[other],s.hand.handId,s.hand.revision));
+ assert.throws(()=>f.room.timeBank('m'+n,'obsolete',s.hand.handId,s.hand.revision));
+ const before=s.turn.expiresAt,command={...s.turn};
+ const used=f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);assert.equal(used.replayed,false);assert.equal(used.state.turn.expiresAt,before+20000);assert.equal(used.state.timeBank.remaining,0);
+ assert.equal(f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision).replayed,true);assert.equal(f.room.publicSnapshot().turn.expiresAt,before+20000);
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});const connected=restored.connect('m'+n);assert.equal(connected.state.timeBank.remaining,0);assert.equal(connected.state.turn.expiresAt,before+20000);
+ f.setNow(before-T);assert.equal(f.room.expireTurn(command).expired,false);
+ fold(f);s=f.room.publicSnapshot();f.room.nextHand(s.hand.handId);assert.equal(f.room.snapshot('m'+n,f.tokens[n]).timeBank.remaining,1);
+});
+test('time bank is rejected at exact deadline without changing chips or turn deadline',()=>{
+ const f=setup();f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));f.setNow(s.turn.expiresAt-T);
+ assert.throws(()=>f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision));assert.equal(f.room.publicSnapshot().turn.expiresAt,s.turn.expiresAt);assert.equal(chips(f.room.publicSnapshot()),20000);
+});

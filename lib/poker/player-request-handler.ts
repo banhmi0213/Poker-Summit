@@ -11,6 +11,7 @@ function exact(value:Record<string,unknown>,keys:string[]){if(Object.keys(value)
 function parse(value:unknown){
  const body=object(value),type=body.type;
  if(type==='seat'){exact(body,['type','seat']);if(!Number.isSafeInteger(body.seat)||Number(body.seat)<1||Number(body.seat)>6)throw new RequestError(400);return {type,seat:Number(body.seat)} as const;}
+ if(type==='time-bank'){exact(body,['type','handId','revision']);if(typeof body.handId!=='string'||body.handId.length>80||!Number.isSafeInteger(body.revision)||Number(body.revision)<0)throw new RequestError(400);return {type,handId:body.handId,revision:Number(body.revision)} as const;}
  if(type==='act'){exact(body,['type','command']);try{const command=parseHandCommand(body.command);if(command.actionId.startsWith('timeout_'))throw Error();return {type,command} as const;}catch{throw new RequestError(400);}}
  if(type==='join'||type==='connect'||type==='state'||type==='spectate'||type==='disconnect'||type==='leave'){exact(body,['type']);return {type} as const;}
  throw new RequestError(400);
@@ -41,12 +42,12 @@ export function createPokerPlayerHandler(dependencies:Dependencies){
    roomId=roomId.toLowerCase();
    const header=request.headers.get('authorization')??'',match=/^Bearer ([A-Za-z0-9._~-]+)$/i.exec(header);
    if(!match||match[1].length>8192)throw new RequestError(401);
-   const body=parse(await readPokerJSON(request)),needsConnection=['state','act','disconnect','leave'].includes(body.type),connection=request.headers.get('x-poker-connection');
+   const body=parse(await readPokerJSON(request)),needsConnection=['state','act','time-bank','disconnect','leave'].includes(body.type),connection=request.headers.get('x-poker-connection');
    if(needsConnection?(!connection||!pokerUUID.test(connection)):connection!==null)throw new RequestError(400);
    const verified=await dependencies.verify(match[1]);
    if(!verified||!pokerUUID.test(verified.memberId))throw new RequestError(401);
    const memberId=verified.memberId.toLowerCase();
-   if(await dependencies.authorize({memberId,roomId,operation:body.type==='join'?'connect':body.type})!==true)throw new RequestError(403);
+   if(await dependencies.authorize({memberId,roomId,operation:body.type==='join'?'connect':body.type==='time-bank'?'act':body.type})!==true)throw new RequestError(403);
    if(request.signal.aborted)throw new RequestError(400);
    const owner=await dependencies.owner(roomId);if(!owner)throw new RequestError(404);
    const allowNewSeat=body.type==='join'?await dependencies.authorize({memberId,roomId,operation:'seat'}):false;
@@ -59,6 +60,7 @@ export function createPokerPlayerHandler(dependencies:Dependencies){
      case 'join':result=await owner.join(memberId,allowNewSeat===true);break;
      case 'state':result=await owner.snapshot(memberId,connection!);break;
      case 'spectate':result=await owner.publicSnapshot();break;
+     case 'time-bank':result=await owner.timeBank(memberId,connection!,body.handId,body.revision);break;
      case 'act':result=await owner.act(memberId,connection!,body.command);break;
      case 'disconnect':result=await owner.disconnect(memberId,connection!);break;
      case 'leave':result=await owner.leave(memberId,connection!);break;
