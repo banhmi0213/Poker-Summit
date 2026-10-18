@@ -38,9 +38,6 @@ export default function LoginPage({
           <p className="muted" style={{ marginTop: 14, fontSize: 12.5 }}>
             会員登録がまだの方は<Link href="/signup">こちらから登録</Link>
           </p>
-          <p className="muted" style={{ marginTop: 8, fontSize: 12.5 }}>
-            閲覧用のログインIDをお持ちの方は<Link href="/preview">こちら</Link>
-          </p>
         </div>
       </div>
       <PortalFooter hideManagementLinks />
