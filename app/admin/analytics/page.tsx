@@ -11,6 +11,7 @@ import {
 } from "@/lib/analytics";
 import { classifyReferrer } from "@/lib/referrer";
 import { fetchAllRows } from "@/lib/fetch-all-rows";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 type SP = {
   tab?: string;
@@ -179,6 +180,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
 
   const tabs: { key: string; label: string }[] = [
     { key: "overview", label: "全体アクセス" },
+    { key: "prelaunch", label: "先行登録" },
     { key: "category", label: "カテゴリー" },
     { key: "blog", label: "BLOG記事" },
     { key: "banner", label: "バナー効果" },
@@ -293,6 +295,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       )}
       {tab === "blog" && <BlogAnalyticsTab supabase={supabase} since={since} />}
       {tab === "banner" && <BannerTab supabase={supabase} since={since} />}
+      {tab === "prelaunch" && <PrelaunchTab since={since} />}
       {tab === "issues" && <IssuesTab issues={issues} />}
       {(tab === "overview" || !tab) && (
         <OverviewTab
@@ -875,6 +878,133 @@ function IssuesTab({ issues }: { issues: AnalyticsIssue[] }) {
             </Link>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// 先行登録ページの訪問数と新規会員数(2026/10/18)。
+// 訪問 = 先行登録ページ(/prelaunch。トップ等から差し替えで表示)を未ログインの人が開いた回数。
+// 新規会員 = 会員登録の数(店舗管理ログイン・運営は除く)。auth.users は service_role の関数で集計する。
+async function PrelaunchTab({ since }: { since: Date }) {
+  const svc = createServiceRoleClient();
+  const [{ data: views }, { data: signups }] = await Promise.all([
+    fetchAllRows(() =>
+      svc.from("page_views").select("created_at, referrer, device").eq("path", "/prelaunch").gte("created_at", since.toISOString())
+    ),
+    svc.rpc("member_signup_daily", { p_since: since.toISOString() }),
+  ]);
+  const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null }[];
+  const signupRows = (signups ?? []) as { day: string; signups: number; confirmed: number }[];
+
+  const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
+  const days = new Map<string, { views: number; signups: number; confirmed: number }>();
+  const dayRow = (d: string) => {
+    if (!days.has(d)) days.set(d, { views: 0, signups: 0, confirmed: 0 });
+    return days.get(d)!;
+  };
+  viewRows.forEach((v) => dayRow(jstDay(v.created_at)).views++);
+  signupRows.forEach((r) => {
+    const row = dayRow(String(r.day).slice(0, 10));
+    row.signups += Number(r.signups);
+    row.confirmed += Number(r.confirmed);
+  });
+  const dayList = Array.from(days.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+
+  const totalViews = viewRows.length;
+  const totalSignups = signupRows.reduce((n, r) => n + Number(r.signups), 0);
+  const totalConfirmed = signupRows.reduce((n, r) => n + Number(r.confirmed), 0);
+  const rate = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)}%` : "—");
+
+  const countBy = (keyOf: (v: (typeof viewRows)[number]) => string) => {
+    const m = new Map<string, number>();
+    viewRows.forEach((v) => m.set(keyOf(v), (m.get(keyOf(v)) ?? 0) + 1));
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
+  };
+  const bySource = countBy((v) => classifyReferrer(v.referrer));
+  const byHost = countBy((v) => {
+    if (!v.referrer) return "（なし・直接）";
+    try {
+      return new URL(v.referrer).hostname;
+    } catch {
+      return "（不明）";
+    }
+  }).slice(0, 10);
+  const DEVICE: Record<string, string> = { mobile: "スマホ", tablet: "タブレット", pc: "パソコン" };
+  const byDevice = countBy((v) => DEVICE[v.device ?? ""] ?? "不明");
+
+  const stat = (label: string, value: string, sub?: string) => (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="muted" style={{ fontSize: 12.5, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{value}</div>
+      {sub && <div className="muted" style={{ fontSize: 12 }}>{sub}</div>}
+    </div>
+  );
+  const listCard = (title: string, rows: [string, number][]) => (
+    <div className="card">
+      <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>{title}</h3>
+      {rows.length === 0 ? (
+        <p className="muted small">まだ記録がありません。</p>
+      ) : (
+        rows.map(([k, n]) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+            <span style={{ overflowWrap: "anywhere" }}>{k}</span>
+            <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+              {n.toLocaleString()} <span className="muted" style={{ fontWeight: 400 }}>({rate(n, totalViews)})</span>
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 12 }}>
+        訪問 = 先行登録ページを未ログインの人が開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月18日の夜からです。
+        <br />
+        新規会員 = 会員登録の数（店舗管理ログイン・運営は除く）。登録率 = 新規会員 ÷ 訪問。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("訪問", totalViews.toLocaleString())}
+        {stat("新規会員", totalSignups.toLocaleString(), `うちメール確認済み ${totalConfirmed.toLocaleString()}`)}
+        {stat("登録率", rate(totalSignups, totalViews))}
+      </div>
+
+      <div className="card" style={{ marginBottom: 14, overflowX: "auto" }}>
+        <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>日ごと</h3>
+        {dayList.length === 0 ? (
+          <p className="muted small">まだ記録がありません。</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+            <thead>
+              <tr className="muted" style={{ textAlign: "right" }}>
+                <th style={{ textAlign: "left", padding: "6px 4px" }}>日付</th>
+                <th style={{ padding: "6px 4px" }}>訪問</th>
+                <th style={{ padding: "6px 4px" }}>新規会員</th>
+                <th style={{ padding: "6px 4px" }}>確認済み</th>
+                <th style={{ padding: "6px 4px" }}>登録率</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dayList.map(([d, r]) => (
+                <tr key={d} style={{ textAlign: "right", borderTop: "1px solid var(--border)" }}>
+                  <td style={{ textAlign: "left", padding: "6px 4px", whiteSpace: "nowrap" }}>{`${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.views.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px", fontWeight: 700 }}>{r.signups.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.confirmed.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{rate(r.signups, r.views)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+        {listCard("どこから来たか", bySource)}
+        {listCard("参照元のサイト（上位10）", byHost)}
+        {listCard("端末", byDevice)}
       </div>
     </div>
   );
