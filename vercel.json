@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/matching-notifications",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/member-digest",
+      "schedule": "5 0 * * *"
     }
   ]
 }

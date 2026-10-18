@@ -72,6 +72,7 @@ export async function updateNotifySettings(formData: FormData) {
       notify_new_listing: formData.get("notifyNewListing") === "1",
       notify_new_report: formData.get("notifyNewReport") === "1",
       notify_inquiry: formData.get("notifyInquiry") === "1",
+      notify_member_digest: formData.get("notifyMemberDigest") === "1",
       notify_banner_anomaly: formData.get("notifyBannerAnomaly") === "1",
       auto_notify_listing_result: formData.get("autoNotifyListingResult") === "1",
       auto_notify_important: formData.get("autoNotifyImportant") === "1",
