@@ -220,7 +220,7 @@ function JobRow({
     <div className="card" style={{ marginBottom: 10 }}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
         <h3 style={{ fontSize: 14.5 }}><ReadableName name={job.title} /></h3>
-        <span className="badge">{job.status === "open" ? "募集中" : "停止中"}</span>
+        <span className="badge">{job.status === "open" ? "募集中" : "募集終了"}</span>
       </div>
       {job.job_type && <p className="muted" style={{ fontSize: 12.5, marginTop: 4 }}>{job.job_type}</p>}
       <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>

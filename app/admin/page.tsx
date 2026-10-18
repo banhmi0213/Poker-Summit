@@ -1,4 +1,5 @@
 import { AttentionSummary } from "./attention-summary";
+import { isCouponExpired } from "@/lib/coupon-expiry";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/lib/constants";
@@ -111,7 +112,7 @@ async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
       .select("id, company_name")
       .in("status", ["pending", "unconfirmed"]),
     supabase.from("listing_applications").select("id, company_name, store_id").eq("status", "approved"),
-    supabase.from("coupons").select("id, title, valid_until").eq("active", true).not("valid_until", "is", null),
+    supabase.from("coupons").select("id, title, valid_until, expires_at").eq("active", true).not("valid_until", "is", null),
   ]);
 
   (pendingStores ?? []).forEach((s: any) =>
@@ -150,7 +151,7 @@ async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
   });
 
   (coupons ?? []).forEach((c: any) => {
-    if (c.valid_until < today) {
+    if (isCouponExpired(c)) {
       issues.push({ cls: "outline", icon: "🎟️", text: `クーポン「${c.title}」の有効期限が切れています`, href: "/admin/coupons" });
     } else if (c.valid_until <= in7.toISOString().slice(0, 10)) {
       issues.push({ cls: "warning", icon: "🎟️", text: `クーポン「${c.title}」が近日中に終了します`, href: "/admin/coupons" });

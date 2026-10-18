@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { couponExpiryLabel, notExpiredFilter } from "@/lib/coupon-expiry";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -279,9 +280,10 @@ export default async function StoreDetailPage({
       .order("posted_at", { ascending: false }),
     supabase
       .from("coupons")
-      .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+      .select("id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count")
       .eq("store_id", params.id)
       .eq("active", true)
+      .or(notExpiredFilter()) // 期限(期限日の営業終了)を過ぎたクーポンは出さない
       .order("created_at", { ascending: false }),
     supabase
       .from("store_notices")
@@ -587,7 +589,7 @@ export default async function StoreDetailPage({
               {c.description && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{c.description}</p>}
               <div className="muted" style={{ marginTop: 6 }}>
                 {c.code && <>クーポンコード: {c.code} </>}
-                {c.valid_until && <>(有効期限: {c.valid_until})</>}
+                {c.valid_until && <>(有効期限: {couponExpiryLabel(c)})</>}
               </div>
               <Link className="btn primary sd-coupon-view" href={`/coupons/${c.id}`}>クーポンを見る</Link>
               <form

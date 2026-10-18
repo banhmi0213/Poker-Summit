@@ -1,4 +1,5 @@
 import { couponCategoryLabel } from "@/lib/coupon-categories";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -115,7 +116,7 @@ export default async function StoreCouponsPage() {
       )}
 
       {couponList.map((c) => {
-        const expired = !!c.valid_until && c.valid_until < today;
+        const expired = isCouponExpired(c);
         return (
           <div className={`card ${s.item} ${c.active && !expired ? "" : s.closed}`} key={c.id}>
             <h3 className={s.itemTitle}><ReadableName name={c.title} /></h3>
@@ -128,7 +129,7 @@ export default async function StoreCouponsPage() {
             <div className={s.facts}>
               {c.discount && <span>{c.discount}</span>}
               <span className={s.sub}>
-                有効期限 {c.valid_until ? c.valid_until.replaceAll("-", "/") : "なし"} ・ 利用 {c.used_count ?? 0}
+                有効期限 {couponExpiryLabel(c) ?? "なし"} ・ 利用 {c.used_count ?? 0}
                 {c.usage_limit != null ? `/${c.usage_limit}` : ""}件
               </span>
             </div>

@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { isEventEnded } from "@/lib/event-end";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -40,6 +41,7 @@ export default async function EventsPage({ searchParams }: {
   ]);
   if (error) throw new Error("イベントを読み込めませんでした。");
   let events: any[] = [...(data ?? []), ...domesticEvents].filter((e: any) => {
+    if (isEventEnded(e, now)) return false; // 終わった大会・イベントは出さない(2026/10/18)
     if (!matchesEventLocation(e, { pref, region, area })) return false;
     if (q && ![e.title, e.description, e.location, e.stores?.name].some(v => v?.toLowerCase().includes(q.toLowerCase()))) return false;
     if (!matchesEventDate(e, date)) return false;
@@ -88,7 +90,7 @@ export default async function EventsPage({ searchParams }: {
       <div className="ep-list-heading"><h2>開催予定のトーナメント・イベント</h2><span>{events.length}件</span></div>
       {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
       <div className="ep-grid">{events.map((e: any) => {
-        const isPast = !!(e.end_at || e.start_at) && (e.end_at || e.start_at) < now;
+        const isPast = isEventEnded(e, now);
         const isLive = !!e.start_at && e.start_at <= now && !isPast;
         return <Link key={e.id} href={e.href || `/events/${e.id}`} className="ep-card">
           <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <EventSign title={e.title} category={e.category} startAt={e.start_at} dateOnly={e.all_day} venue={e.stores?.name || e.location} />}</div>
