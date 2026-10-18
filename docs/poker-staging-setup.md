@@ -1,28 +1,65 @@
 # Isolated public staging setup
 
-Status on 2026-10-17: staging resources created; not deployed or connected.
-After the user selected a separate Free project and confirmed the same organization,
-creation was quoted at $0/month. Supabase poker-summit-staging is ACTIVE_HEALTHY
-in ap-northeast-1, ref mjdgylgzhsygcgtuceow. A scoped foundation and all ten poker
-migrations (three configuration plus seven backend) were applied ONLY there.
-Production still has seven backend migrations unapplied. No production rows copied.
+Status on 2026-10-19 (Japan): staging deployed; authenticated two-account
+registration/finalization verified; stable live multiplayer NOT yet verified.
 
-Railway project 0f62a717-2c59-4ac2-95c9-acb6ddd460ed, staging environment
-7c17c451-e705-4d5e-abf2-eef7bb2988f2, service poker-room-server
-(a8fb2457-ff22-4930-afc4-10905b42afc8) is configured but has no source or deployment.
-Its reserved service URL is https://poker-room-server-staging.up.railway.app;
-this is NOT a healthy/deployed endpoint. Public Auth URL/key, a fresh private
-checkpoint keyring, Node 24 and listener/capacity values are stored in Railway.
-No key values are in this document/repository. The service secret and exact
-Preview origin are still missing. No paid plan upgrade performed; actual Trial
-balance/verification has not been observed through the available account tools.
+Supabase poker-summit-staging, ref mjdgylgzhsygcgtuceow, Tokyo: scoped
+foundation plus ten poker migrations applied only here. No production rows copied.
+This is not a complete portal schema clone; the Preview homepage returns 500,
+while login, lobby and demo return 200. Production backend migrations remain
+unapplied. No paid upgrade performed.
 
-Vercel access now works, but the connected Poker Summit team
-(team_enzgtM1j8Cn1ais7W0AW7P5H) lists no projects and lookup of poker-summit
-returns 404, both with that team and default scope. Existing CI Preview success
-is not evidence that the connected integration can edit that project. Correct
-project/team access must be established before setting branch-only variables.
-No new Vercel project was created and no existing environment settings changed.
+Railway project 0f62a717-2c59-4ac2-95c9-acb6ddd460ed, environment
+7c17c451-e705-4d5e-abf2-eef7bb2988f2, service
+ a8fb2457-ff22-4930-afc4-10905b42afc8 (poker-room-server) has one authority.
+Deployment f535b6d8-f454-4d44-b999-c3c1b6ddd20a, commit a732d356, reached
+SUCCESS; poker_server_ready and public healthz/readyz 200 were verified.
+https://poker-room-server-staging.up.railway.app is the backend origin.
+Credentials/keyring stay in platform variables; never regenerate the keyring.
+The deployment emitted dependency vulnerability warnings; audit remains open.
+
+Vercel branch-only Preview is connected to staging:
+https://poker-summit-git-chatgpt-poker-authoritative-hand-poker-summit.vercel.app
+Public URL/key, backend HTTPS/WSS origins, site URL and the server-only staging
+service key override apply only to this branch. Production/shared settings were
+not edited. Deployment GstCj7Qnd61p1o1iqvEFrvDXHPur reached Ready.
+Direct and Next lobby requests without Auth both returned 401 as expected.
+
+Two dedicated user-created, confirmed Auth accounts logged in through the real
+Next login page; both distinct successful audit identities were verified. The
+user authorized temporary admin access for the first-created staging account;
+only that account was granted active admin, with an audit record. The second
+remains a participant. Future account/event permissions must be selectable via
+operator/hosting-store management with explicit authority boundaries.
+
+Free/no-prize two-player tournament 4c897051-f202-48a8-9822-377e9220f8b9
+received both registrations through UI. Operator finalization froze room
+3f791b01-efa0-4bba-ac6a-0e8630b9648c. Initial provision failed because a
+manually seeded PostgreSQL microsecond timestamp was normalized to milliseconds
+by JavaScript. While pristine/unbound, both event and manifest were truncated
+to the SAME milliseconds without changing roster/room/checkpoint. Operator
+retry bound the same room; assigned=true and two admissions were verified.
+Do not reuse this expired schedule or mutate a running checkpoint to reset it.
+Future manually seeded times must use JavaScript-compatible precision.
+
+User screenshots confirmed both accounts could seat; then one disconnected and
+background HTTP updates made connection controls blink every second. HTTP logs
+showed successful room requests, but did not establish why that browser lost
+connection. No live game/privacy/conservation/restart approval was recorded.
+The user exited both views; gameplay verification is on hold.
+
+Current frontend change separates background refresh from foreground busy state,
+coalesces reads and ignores old read results after newer operations/session loss.
+Transient read failures hide private state/actions, preserve the capability and
+retry with 1–10 second backoff. 4xx auth/permission/conflict failures stop polling;
+there is no automatic join/takeover or automatic action retry. WebSocket loss
+still clears private state and requires explicit reconnect. Error status is
+shown without tokens or server exception text. This addresses confirmed blink
+and premature read-failure teardown, not a proven fix for every socket loss.
+
+Validation: 401 Node tests, strict backend build, and React lifecycle checks
+including delayed read, network/503 recovery and revoked-connection behavior.
+Deployed stable two-account Auth/WSS gameplay and the dependency audit remain open.
 
 ## Concrete configuration
 
@@ -41,8 +78,8 @@ callback URLs. Actual account login/getUser and suspension checks still need
 validation; `/auth/v1/settings` reachability is not login proof.
 
 The dedicated server needs the staging secret key and a new checkpoint keyring.
-The Next Preview needs only staging public Auth keys plus fixed backend HTTPS
-and WSS origins. Scope Vercel settings to Preview and this Git branch; never
+The Next Preview needs staging public Auth keys, the server-only staging service
+key used by login auditing, and fixed backend HTTPS/WSS origins. Scope Vercel settings to Preview and this Git branch; never
 change shared Production values or deploy unrelated previews against staging.
 The frontend and backend must use the SAME Supabase target and public key.
 Use exactly one backend authority, with external TLS termination, exact app
