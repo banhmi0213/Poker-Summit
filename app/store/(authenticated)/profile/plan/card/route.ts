@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { customerIdFromSession } from "@/lib/komoju";
-import { applyContractBillingChange } from "@/lib/contracts-billing";
+import { applyContractBillingChange, isPaymentPendingError } from "@/lib/contracts-billing";
 import { sendCardRegisteredEmail } from "@/lib/email";
 import { notifyStoreLine } from "@/lib/store-line";
 
@@ -78,7 +78,8 @@ export async function GET(req: NextRequest) {
         source: "card_renewal",
       });
       return back(req, "ok", `カードを登録し、${chargedAmount.toLocaleString("ja-JP")}円の決済が完了しました。`);
-    } catch {
+    } catch (e) {
+      if (isPaymentPendingError(e)) return back(req, "error", `カードは登録しました。${e.message}`);
       return back(req, "error", "カードは登録しましたが、決済ができませんでした。カード会社にご確認ください。");
     }
   }

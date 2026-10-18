@@ -40,8 +40,9 @@ export async function purchaseAddonAction(formData: FormData) {
     const items = addonIds.map((addonId) => ({ addonId, quantity: Number(formData.get(`quantity_${addonId}`) ?? 1) || 1 }));
     const paymentMethod = String(formData.get("paymentMethod") ?? "bank_transfer") === "card" ? "card" : "bank_transfer";
     const note = String(formData.get("note") ?? "").trim().slice(0, 1000) || null;
+    const requestKey = String(formData.get("requestKey") ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 64) || null;
     if (!items.length) throw new Error("お申し込みするアドオンを選んでください。");
-    return purchaseAddons({ storeId, items, paymentMethod, note });
+    return purchaseAddons({ storeId, items, paymentMethod, note, requestKey });
   });
 }
 

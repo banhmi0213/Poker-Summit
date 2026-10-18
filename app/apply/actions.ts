@@ -86,6 +86,17 @@ async function notifyNewListingApplication(
   }
 }
 
+// 同じ画面からの二重送信の番号(app/request-key-input.tsx)。DBの一意制約で、同じ番号の申込みは1件しか作れない
+function readRequestKey(formData: FormData): string | null {
+  const v = String(formData.get("requestKey") ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 64);
+  return v.length >= 16 ? v : null;
+}
+
+/** insert が「同じ番号の申込みがすでにある」(一意制約)で失敗したか */
+function isDuplicateRequest(error: { code?: string; message?: string } | null): boolean {
+  return !!error && error.code === "23505" && /request_key/.test(`${error.message ?? ""} ${(error as any).details ?? ""}`);
+}
+
 export async function submitApplication(formData: FormData) {
   // ロボット対策と回数制限(同じ回線から1時間に5回まで。他人のアドレスへの請求書メールの大量送信を防ぐ)
   {
@@ -145,7 +156,9 @@ export async function submitApplication(formData: FormData) {
           if (dup && dup.length > 0) redirect("/apply?done=1");
   }
 
+  const requestKey = readRequestKey(formData);
   const { error } = await supabase.from("listing_applications").insert({
+          request_key: requestKey,
           company_name: companyName,
           applicant_type: applicantType,
           store_name: storeName,
@@ -159,6 +172,7 @@ export async function submitApplication(formData: FormData) {
           message: message || null,
   });
 
+  if (isDuplicateRequest(error)) redirect("/apply?done=1"); // 二重送信: 最初の1件で受付済み
   if (error) {
           redirect(`/apply?error=${encodeURIComponent(error.message)}`);
   }
@@ -297,9 +311,11 @@ export async function startPaidApplication(formData: FormData) {
           if (dup && dup.length > 0) redirect("/apply?done=transfer");
   }
 
+  const requestKey = readRequestKey(formData);
   const { data: application, error: insertError } = await supabase
         .from("listing_applications")
         .insert({
+                  request_key: requestKey,
                   company_name: companyName,
                   applicant_type: applicantType,
                   store_name: storeName,
@@ -319,6 +335,8 @@ export async function startPaidApplication(formData: FormData) {
         .select("id")
         .single();
 
+  // 二重送信: 最初の1件で受付済み(振込は請求書も1通だけ。カードは最初の送信の決済ページで続ける)
+  if (isDuplicateRequest(insertError)) redirect(billingMethod === "bank_transfer" ? "/apply?done=transfer" : `/apply?error=${encodeURIComponent("お申込みを受け付けています。開いている決済ページでお手続きを続けてください。")}`);
   if (insertError || !application) {
           redirect(`/apply?error=${encodeURIComponent(insertError?.message ?? "申込みに失敗しました。")}`);
           return;
@@ -362,6 +380,8 @@ export async function startPaidApplication(formData: FormData) {
                                         target_id: invoice.id,
                                         detail: { error: mailError instanceof Error ? mailError.message : String(mailError) },
                               });
+                              const { alertAdmin } = await import("@/lib/admin-alert");
+                              await alertAdmin("新規申込みの請求書メールを送れませんでした", [`請求書 ${invoice.invoice_number}（${companyName}・${email}）`, `内容: ${mailError instanceof Error ? mailError.message : String(mailError)}`, "入金管理の「メールで再送」から送り直してください。"], "/admin/billing");
                     }
           } catch (e) {
                     invoiceFailed = e instanceof Error ? e.message : String(e);

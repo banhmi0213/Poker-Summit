@@ -111,21 +111,41 @@ export type KomojuPayment = {
   payment_details?: { type?: string; last_four_digits?: string; brand?: string } | null;
 };
 
-/** 互換用の結果形式(呼び出し側は status === "CAPTURED" で成功判定する) */
-export type ChargeResult = { id: string | null; status: string; error_code: string | null };
+/**
+ * 決済1回の結果。
+ * - captured: 決済できた
+ * - failed: 決済されていないことが確実(カードが通らなかった・KOMOJUが受け付けなかった)
+ * - unknown: 決済されたかどうか分からない(通信が切れた・時間切れ・KOMOJU側の障害・処理中)
+ *   → 失敗扱いにして再決済すると二重請求になりうるので、必ず確かめてから次に進む(lib/payment-ledger.ts)
+ */
+export type RawCharge =
+  | { kind: "captured"; payment: KomojuPayment }
+  | { kind: "failed"; error: string; payment?: KomojuPayment | null }
+  | { kind: "unknown"; error: string; payment?: KomojuPayment | null };
+
+function classifyPayment(payment: KomojuPayment): RawCharge {
+  const status = String(payment.status ?? "").toLowerCase();
+  if (status === "captured") return { kind: "captured", payment };
+  if (status === "failed" || status === "cancelled" || status === "canceled" || status === "expired") {
+    return { kind: "failed", error: `status=${status}`, payment };
+  }
+  // pending / authorized / refunded など、決済完了とも失敗とも言えない状態
+  return { kind: "unknown", error: `status=${status || "(なし)"}`, payment };
+}
 
 /**
- * 登録済みカード(customer)にその場で課金する。成功なら status "CAPTURED"。
- * 失敗しても例外にせず、status にKOMOJUの状態、error_code に理由を入れて返す。
+ * 登録済みカード(customer)への課金を1回だけ送る。直接呼ばず、lib/payment-ledger.ts の chargeOnce() を使うこと。
+ * idemKey は KOMOJU の冪等キー(X-KOMOJU-IDEMPOTENCY)と注文番号(external_order_num)の両方に使う。
+ * 同じ idemKey で再送しても、KOMOJU は24時間以内なら同じ結果を返し、二重に決済しない。
  */
-export async function chargeSavedCard(params: {
-  orderId: string;
+export async function createPaymentOnce(params: {
+  idemKey: string;
   customerId: string;
   amount: number;
   metadata?: Record<string, string>;
-}): Promise<ChargeResult> {
+}): Promise<RawCharge> {
   if (!Number.isInteger(params.amount) || params.amount <= 0) {
-    return { id: null, status: "INVALID_AMOUNT", error_code: `amount=${params.amount}` };
+    return { kind: "failed", error: `金額が正しくありません(amount=${params.amount})` };
   }
   try {
     const payment = await komojuFetch<KomojuPayment>(
@@ -135,30 +155,52 @@ export async function chargeSavedCard(params: {
         amount: params.amount,
         currency: "JPY",
         customer: params.customerId,
-        external_order_num: params.orderId,
+        external_order_num: params.idemKey,
         capture: true,
         ...(params.metadata ? { metadata: params.metadata } : {}),
       },
-      params.orderId
+      params.idemKey
     );
-    const status = String(payment.status ?? "").toLowerCase();
-    return {
-      id: payment.id ?? null,
-      status: status === "captured" ? "CAPTURED" : status.toUpperCase() || "UNKNOWN",
-      error_code: status === "captured" ? null : `status=${status}`,
-    };
+    return classifyPayment(payment);
   } catch (e) {
-    if (e instanceof KomojuError) return { id: null, status: "ERROR", error_code: `${e.code ?? e.status}: ${e.message}` };
-    return { id: null, status: "ERROR", error_code: e instanceof Error ? e.message : String(e) };
+    if (e instanceof KomojuError) {
+      // 409 = 同じ冪等キーの最初のリクエストがまだ処理中。5xx = KOMOJU側の障害。どちらも結果不明。
+      if (e.status === 409 || e.status >= 500) return { kind: "unknown", error: e.message };
+      // それ以外の4xx(カードが通らない・内容の誤りなど)は決済されていない
+      return { kind: "failed", error: e.message };
+    }
+    // 通信エラー・時間切れ(KOMOJUに届いて決済されている可能性がある)
+    return { kind: "unknown", error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** 注文番号(external_order_num)でKOMOJUの決済を探す。結果不明の決済を確かめるのに使う */
+export async function findPaymentsByOrderNum(orderNum: string): Promise<KomojuPayment[]> {
+  const json = await komojuFetch<any>("GET", `/payments?external_order_num=${encodeURIComponent(orderNum)}&per_page=50`);
+  const list = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+  return (list as KomojuPayment[]).filter((p) => p && p.external_order_num === orderNum);
+}
+
+/**
+ * 注文番号の決済をKOMOJUで確かめた結果。
+ * - captured: 決済済み(1件でも captured があれば)
+ * - failed: 決済されていない(見つからない・失敗だけ)
+ * - unknown: 処理中などでまだ分からない / KOMOJUに問い合わせできなかった
+ */
+export async function lookupOrder(orderNum: string): Promise<RawCharge> {
+  try {
+    const payments = await findPaymentsByOrderNum(orderNum);
+    const captured = payments.find((p) => String(p.status).toLowerCase() === "captured" || String(p.status).toLowerCase() === "refunded");
+    if (captured) return { kind: "captured", payment: captured };
+    const undecided = payments.find((p) => !["failed", "cancelled", "canceled", "expired"].includes(String(p.status).toLowerCase()));
+    if (undecided) return { kind: "unknown", error: `status=${undecided.status}`, payment: undecided };
+    return { kind: "failed", error: payments.length ? `status=${payments.map((p) => p.status).join(",")}` : "KOMOJUに決済がありません" };
+  } catch (e) {
+    return { kind: "unknown", error: `KOMOJUに確認できませんでした: ${e instanceof Error ? e.message : String(e)}` };
   }
 }
 
 /** 返金(全額または一部) */
 export async function refundPayment(paymentId: string, amount?: number): Promise<KomojuPayment> {
   return komojuFetch<KomojuPayment>("POST", `/payments/${encodeURIComponent(paymentId)}/refund`, amount ? { amount } : {});
-}
-
-/** 注文番号を毎回ユニークにする(KOMOJUの external_order_num と冪等キーに使う) */
-export function newOrderId(prefix: string, seed: string): string {
-  return `${prefix}-${seed.replace(/-/g, "").slice(0, 12)}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 }

@@ -276,38 +276,51 @@ export async function updateContract(formData: FormData) {
   revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
 }
 
-export async function setContractStatus(contractId: string, status: "active" | "canceled") {
+async function requireAdminUser() {
   const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("store_contracts")
-    .update({
-      status,
-      canceled_at: status === "canceled" ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", contractId);
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  if (status === "canceled") {
-    await supabase.from("billing_events").insert({
-      store_contract_id: contractId,
-      event_type: "canceled",
-      source: "manual",
-    });
-  }
-
-  await logAdminAction(supabase, status === "canceled" ? "contract_cancel" : "contract_reactivate", "store_contract", contractId);
-
-  revalidatePath(CONTRACTS_PATH);
-  revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("ログインしてください。");
+  const { data: adminRow } = await supabase.from("admin_users").select("user_id").eq("user_id", user.id).maybeSingle();
+  if (!adminRow) throw new Error("運営権限がありません。");
+  return user;
 }
 
-// 手動での決済結果記録。fincode Webhook連携が入るまでの運用手段であり、
-// 連携後もWebhookが失敗した際の手動フォロー用として残す想定。
+// 解約(2026/10/18): すぐには止めず、契約期間の終わり(満期)で終了して店舗ページを削除する(lib/contract-cancel.ts)
+export async function scheduleContractCancelAction(contractId: string) {
+  const user = await requireAdminUser();
+  const { scheduleContractCancel } = await import("@/lib/contract-cancel");
+  let message = "";
+  let failed = false;
+  try {
+    message = await scheduleContractCancel(contractId, user.id);
+  } catch (e) {
+    failed = true;
+    message = e instanceof Error ? e.message : String(e);
+  }
+  revalidatePath(CONTRACTS_PATH);
+  revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
+  redirect(`${CONTRACTS_PATH}/${contractId}?${failed ? "error" : "ok"}=${encodeURIComponent(message)}`);
+}
+
+export async function undoContractCancelAction(contractId: string) {
+  const user = await requireAdminUser();
+  const { undoContractCancel } = await import("@/lib/contract-cancel");
+  let message = "";
+  let failed = false;
+  try {
+    message = await undoContractCancel(contractId, user.id);
+  } catch (e) {
+    failed = true;
+    message = e instanceof Error ? e.message : String(e);
+  }
+  revalidatePath(CONTRACTS_PATH);
+  revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
+  redirect(`${CONTRACTS_PATH}/${contractId}?${failed ? "error" : "ok"}=${encodeURIComponent(message)}`);
+}
+
+// 手動での決済結果記録(運営が手作業で記録する場合の運用手段)。
 export async function recordManualBillingEvent(formData: FormData) {
   const supabase = await createClient();
 

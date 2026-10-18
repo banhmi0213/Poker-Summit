@@ -1,7 +1,7 @@
 // ============================================================================
 // Resend(メール送信)APIラッパー(サーバー専用)
 //
-// 月額掲載契約(fincode初回課金)が成功した店舗に、ログインID/パスワード/
+// 月額掲載契約(カード初回課金)が成功した店舗に、ログインID/パスワード/
 // LINE連携コードを自動メール送信するために追加(2026/09/30)。
 // 送信元ドメインはpokersummit.jp(Resend側で送信ドメイン認証・DNS設定が
 // 必要)。RESEND_API_KEYが未設定の環境ではメール送信をスキップし、
@@ -844,4 +844,17 @@ ${siteUrl}/contact
 
 Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: `【Poker Summit】${params.title}`, text });
+}
+
+/** 運営向けの警告(決済の結果不明・自動処理の失敗など)。site_settings.notify_email 宛て */
+export async function sendAdminAlertEmail(params: { to: string; subject: string; lines: string[]; link?: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = [
+    ...params.lines,
+    "",
+    params.link ? `確認する: ${siteUrl}${params.link}` : `確認する: ${siteUrl}/admin/billing/monitor`,
+    "",
+    "Poker Summit（自動送信）",
+  ].join("\n");
+  await sendEmail({ to: params.to, subject: `【Poker Summit 要確認】${params.subject}`, text });
 }

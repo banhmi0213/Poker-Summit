@@ -1,4 +1,5 @@
 import { TurnstileWidget } from "@/app/turnstile-widget";
+import { RequestKeyInput } from "@/app/request-key-input";
 import Link from "next/link";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
@@ -161,6 +162,7 @@ export default async function ApplyPage({
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
           <form action={submitApplication}>
+            <RequestKeyInput />
             <ApplyStoreFields prefOptions={PREF_OPTIONS} />
             <div className="field">
               <span className="muted">ご担当者名 *</span>

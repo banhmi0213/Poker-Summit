@@ -6,6 +6,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { addonFeeFor, type AddonRow, ADDON_COLUMNS } from "@/lib/addons";
+import { addMonthsAnchored, freshPeriodEnd, jstMidnightIso } from "@/lib/billing-dates";
 import {
   addDays,
   addMonths,
@@ -64,6 +65,8 @@ export async function createAddonInvoice(params: {
   periodStart?: string | null; // 月額の更新分: 'YYYY-MM-DD'
   addonOrderId?: string | null;
   storeContractAddonId?: string | null;
+  /** 月額の更新分: 毎月の更新日(store_contract_addons.billing_anchor_day) */
+  anchorDay?: number | null;
 }): Promise<InvoiceRow> {
   const svc = createServiceRoleClient();
   const settings = await getBillingSettings(svc);
@@ -75,7 +78,7 @@ export async function createAddonInvoice(params: {
   }
   const total = params.lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
   const periodStart = params.periodStart ?? null;
-  const periodEnd = periodStart ? addDays(addMonths(periodStart, 1), -1) : null;
+  const periodEnd = periodStart ? addDays(addMonthsAnchored(periodStart, 1, params.anchorDay ?? null), -1) : null;
   const items = params.lines.map((l) => ({
     label: `Poker Summit アドオン　${l.addonName}`,
     sub: l.monthly
@@ -127,6 +130,8 @@ export async function createAddonInvoice(params: {
       target_id: (data as InvoiceRow).id,
       detail: { error: e instanceof Error ? e.message : String(e) },
     });
+    const { alertAdmin } = await import("@/lib/admin-alert");
+    await alertAdmin("請求書メールを送れませんでした", [`請求書 ${(data as InvoiceRow).invoice_number}（${params.billToName}・${params.billToEmail}）`, `内容: ${e instanceof Error ? e.message : String(e)}`, "入金管理の「メールで再送」から送り直してください。"], "/admin/billing");
   }
   return data as InvoiceRow;
 }
@@ -142,7 +147,8 @@ export async function fulfillPaidAddonOrder(orderId: string) {
   if (o.billing_type === "monthly") {
     // 振込で払う月額アドオンを有効化(1か月)
     if (!o.store_contract_id || !o.addon_id) throw new Error("契約またはアドオンが見つかりません。");
-    const periodEndIso = jstDateToIso(addMonths(todayJst(), 1));
+    const fresh = freshPeriodEnd(); // 日本時間の今日から1か月(更新日 = 今日の日付)
+    const periodEndIso = fresh.periodEndIso;
     const { data: existing } = await svc
       .from("store_contract_addons")
       .select("id")
@@ -152,7 +158,7 @@ export async function fulfillPaidAddonOrder(orderId: string) {
     if (existing) {
       await svc
         .from("store_contract_addons")
-        .update({ current_period_end: periodEndIso, pending_removed_at: null, billing_method: "bank_transfer", fee: o.unit_price })
+        .update({ current_period_end: periodEndIso, billing_anchor_day: fresh.anchorDay, pending_removed_at: null, billing_method: "bank_transfer", fee: o.unit_price })
         .eq("id", existing.id);
     } else {
       const { error } = await svc.from("store_contract_addons").insert({
@@ -161,6 +167,7 @@ export async function fulfillPaidAddonOrder(orderId: string) {
         fee: o.unit_price,
         billing_method: "bank_transfer",
         current_period_end: periodEndIso,
+        billing_anchor_day: fresh.anchorDay,
       });
       if (error) throw new Error(error.message);
     }
@@ -217,11 +224,12 @@ export async function confirmAddonInvoice(inv: InvoiceRow & { addon_order_id?: s
     // 月額アドオンの更新分: 期間を1か月延ばす
     const { data: row } = await svc
       .from("store_contract_addons")
-      .select("id, current_period_end")
+      .select("id, current_period_end, billing_anchor_day")
       .eq("id", inv.store_contract_addon_id)
       .maybeSingle();
     const start = inv.period_start ?? (row?.current_period_end ? isoToJstDate(row.current_period_end) : todayJst());
-    const nextIso = jstDateToIso(addMonths(start, 1));
+    // 更新日(billing_anchor_day)を変えずに1か月(31日始まりでも 2月で28日にずれたままにならない)
+    const nextIso = jstMidnightIso(addMonthsAnchored(start, 1, (row as any)?.billing_anchor_day ?? null));
     if (row) {
       await svc.from("store_contract_addons").update({ current_period_end: nextIso }).eq("id", row.id);
     }
@@ -239,6 +247,8 @@ export async function purchaseAddons(params: {
   items: Array<{ addonId: string; quantity: number }>;
   paymentMethod: "card" | "bank_transfer";
   note: string | null;
+  /** 画面を開いたときに作る番号。同じ画面からの二重送信を見分ける */
+  requestKey?: string | null;
 }): Promise<string> {
   const svc = createServiceRoleClient();
   if (!params.items.length) throw new Error("お申し込みするアドオンを選んでください。");
@@ -246,7 +256,7 @@ export async function purchaseAddons(params: {
   const [{ data: contract }, { data: store }, settings, { data: addonRows }] = await Promise.all([
     svc
       .from("store_contracts")
-      .select("id, status, plan_id, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method, pending_removed_at)")
+      .select("id, status, cancel_at_period_end, plan_id, fincode_customer_id, contact_name, contact_email, store_contract_addons(id, addon_id, billing_method, pending_removed_at)")
       .eq("store_id", params.storeId)
       .maybeSingle(),
     svc.from("stores").select("id, name, pref").eq("id", params.storeId).maybeSingle(),
@@ -254,6 +264,7 @@ export async function purchaseAddons(params: {
     svc.from("addons").select(ADDON_COLUMNS).in("id", params.items.map((i) => i.addonId)),
   ]);
   if (!contract || contract.status !== "active") throw new Error("有効な契約がありません。運営にお問い合わせください。");
+  if ((contract as any).cancel_at_period_end) throw new Error("解約のご予定があるため、アドオンのお申し込みはできません。解約を取り消す場合は運営にお問い合わせください。");
   if (!store) throw new Error("店舗が見つかりません。");
 
   const method = params.paymentMethod;
@@ -328,7 +339,10 @@ export async function purchaseAddons(params: {
   if (method === "bank_transfer") {
     const orderIds: string[] = [];
     for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
-    const invoice = await createAddonInvoice({
+    // 請求書を作れなかったときは注文を取り消す(入金待ちのまま残って、申し込み直せなくなるのを防ぐ)
+    let invoice: InvoiceRow;
+    try {
+      invoice = await createAddonInvoice({
       storeId: params.storeId,
       storeContractId: contract.id,
       billToName: store.name,
@@ -340,8 +354,20 @@ export async function purchaseAddons(params: {
         quantity: l.quantity,
         monthly: l.addon.billing_type === "monthly",
       })),
-    });
-    await svc.from("addon_orders").update({ invoice_id: invoice.id }).in("id", orderIds);
+      });
+    } catch (e) {
+      await svc
+        .from("addon_orders")
+        .update({ status: "canceled", admin_note: `請求書の作成に失敗したため取消: ${e instanceof Error ? e.message : String(e)}`.slice(0, 500) })
+        .in("id", orderIds)
+        .eq("status", "awaiting_payment");
+      throw new Error("請求書を作成できませんでした。お手数ですが、もう一度お試しいただくか運営にお問い合わせください。");
+    }
+    const { error: linkError } = await svc.from("addon_orders").update({ invoice_id: invoice.id }).in("id", orderIds);
+    if (linkError) {
+      const { alertAdmin } = await import("@/lib/admin-alert");
+      await alertAdmin("アドオンの注文と請求書を結び付けられませんでした", [`${store.name}・請求書 ${invoice.invoice_number}`, `内容: ${linkError.message}`, "入金確認の前に、総合管理の「アドオン注文」で確認してください。"], "/admin/addon-orders");
+    }
     return `請求書（${invoice.total_amount.toLocaleString("ja-JP")}円）をメールでお送りしました。ご入金の確認後にご利用いただけます。`;
   }
 
@@ -349,41 +375,99 @@ export async function purchaseAddons(params: {
   //  月額アドオンは初月分をここで決済し、2か月目からは cron(apply-scheduled-contract-changes)が
   //  アドオンごとの契約期間(current_period_end)の終わりに同じカードへ決済する。
   const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  // 何の支払いか(二重請求の防止。lib/payment-ledger.ts):
+  //  月額を含む: 「この店舗の、今日の、この月額アドオンの申込み」(別の画面から同時に申し込んでも1回だけ)
+  //  都度のみ: 「この画面からの申込み」(連打・二重送信でも1回だけ。別の機会の追加購入はできる)
+  const { createHash, randomUUID } = await import("crypto");
+  const { jstToday } = await import("@/lib/billing-dates");
+  const monthlyIds = lines.filter((l) => l.addon.billing_type === "monthly").map((l) => l.addon.id).sort();
+  const lineSig = createHash("sha256").update(lines.map((l) => `${l.addon.id}x${l.quantity}`).sort().join(",")).digest("hex").slice(0, 16);
+  const groupKey = monthlyIds.length
+    ? `addon_purchase:${params.storeId}:${jstToday()}:${lineSig}`
+    : `addon_purchase:${params.storeId}:${(params.requestKey || randomUUID()).slice(0, 64)}:${lineSig}`;
+
+  {
+    const { data: done } = await svc.from("addon_orders").select("id, status").eq("payment_group_key", groupKey).neq("status", "canceled");
+    if ((done ?? []).some((o: any) => o.status !== "awaiting_payment")) return "このお申し込みはすでに受け付けています（二重には決済していません）。";
+    if ((done ?? []).length) throw new Error("同じお申し込みを処理中、またはお支払いの結果を確認中です。二重には決済していません。しばらくしてから画面を更新してご確認ください。");
+  }
+
   const orderIds: string[] = [];
-  for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment" }));
-  const { chargeSavedCard, newOrderId } = await import("@/lib/komoju");
-  const fincodeOrderId = newOrderId("a", orderIds[0]);
-  const charge = await chargeSavedCard({
-    orderId: fincodeOrderId,
+  for (const l of lines) orderIds.push(await insertOrder(l, { status: "awaiting_payment", payment_group_key: groupKey }));
+  const { chargeOnce } = await import("@/lib/payment-ledger");
+  const charge = await chargeOnce({
+    purpose: "addon_purchase",
+    groupKey,
     customerId: contract.fincode_customer_id!,
     amount: total,
-    metadata: { store_contract_id: contract.id },
+    refs: { storeContractId: contract.id, storeId: params.storeId },
+    context: { kind: "addon_purchase", orderIds, note: params.note },
+    description: `アドオン購入（${store.name}・${lines.map((l) => `${l.addon.name}×${l.quantity}`).join("、")}）`,
   });
-  if (charge.status !== "CAPTURED") {
+  if (charge.status === "BUSY") {
+    // 同じ申込みを別のリクエストが処理中(二重送信)。こちらで作った注文は取り消す
+    await svc.from("addon_orders").update({ status: "canceled", admin_note: "二重送信のため取消(決済は1回のみ)" }).in("id", orderIds);
+    throw new Error("同じお申し込みを処理中、またはお支払いの結果を確認中です。二重には決済していません。しばらくしてから画面を更新してご確認ください。");
+  }
+  if (charge.status === "UNKNOWN") {
+    await svc.from("addon_orders").update({ admin_note: "要確認: カード決済の結果不明(総合管理の決済の監視から確認)" }).in("id", orderIds);
+    throw new Error("お支払いの結果を確認しています。二重にお支払いいただくことがないよう、運営で確認してからご連絡します。");
+  }
+  if (charge.status === "FAILED") {
     await svc
       .from("addon_orders")
-      .update({ status: "canceled", fincode_order_id: fincodeOrderId, admin_note: `カード決済失敗: ${charge.status} ${charge.error_code ?? ""}` })
+      .update({ status: "canceled", admin_note: `カード決済失敗: ${charge.error}`.slice(0, 500) })
       .in("id", orderIds);
     throw new Error("カード決済が完了しませんでした。カード情報をご確認いただくか、銀行振込をお選びください。");
   }
+  if (charge.replayed) {
+    // ありえないはずだが、決済済みの申込みに注文を重ねて作らない
+    await svc.from("addon_orders").update({ status: "canceled", admin_note: "決済済みの申込みと重複のため取消" }).in("id", orderIds);
+    return "このお申し込みはすでに受け付けています（二重には決済していません）。";
+  }
+  return finalizeCardAddonOrders({ orderIds, attemptId: charge.attemptId, amount: charge.amount, storeId: params.storeId, note: params.note });
+}
+
+/**
+ * カード決済できたアドオン注文を有効にする(購入時、または結果不明を運営が「決済済み」と確認したあと)。
+ * awaiting_payment の注文だけを対象にするので、2回呼んでも二重にはならない。
+ */
+export async function finalizeCardAddonOrders(params: { orderIds: string[]; attemptId: string; amount: number; storeId: string; note: string | null }): Promise<string> {
+  const svc = createServiceRoleClient();
   const nowIso = new Date().toISOString();
-  await svc.from("addon_orders").update({ fincode_order_id: fincodeOrderId, paid_at: nowIso }).in("id", orderIds);
+  // 対象の注文を「決済済み」に確保(同時に呼ばれても片方だけが進む)
+  const { data: claimed } = await svc
+    .from("addon_orders")
+    .update({ fincode_order_id: params.attemptId, paid_at: nowIso, status: "paid", admin_note: null })
+    .in("id", params.orderIds)
+    .eq("status", "awaiting_payment")
+    .select("id, addon_id, addon_name, quantity, unit_price, billing_type, store_contract_id");
+  const orders = (claimed ?? []) as Array<{ id: string; addon_id: string | null; addon_name: string; quantity: number; unit_price: number; billing_type: string; store_contract_id: string | null }>;
+  if (!orders.length) return "このお申し込みはすでに受け付けています（二重には決済していません）。";
+  const contractId = orders[0].store_contract_id;
+  const [{ data: store }, { data: contract }] = await Promise.all([
+    svc.from("stores").select("name").eq("id", params.storeId).maybeSingle(),
+    contractId ? svc.from("store_contracts").select("id, contact_email").eq("id", contractId).maybeSingle() : Promise.resolve({ data: null as any }),
+  ]);
+  const storeName = (store?.name as string | undefined) ?? "店舗";
+  const label = orders.map((o) => (o.quantity > 1 ? `${o.addon_name}×${o.quantity}` : o.addon_name)).join("、");
+
   await svc.from("billing_events").insert({
-    store_contract_id: contract.id,
+    store_contract_id: contractId,
     event_type: "success",
-    amount: total,
+    amount: params.amount,
     source: "contract_change",
-    note: `アドオン購入(${lines.map((l) => `${l.addon.name}×${l.quantity}`).join("、")})`,
+    note: `アドオン購入(${orders.map((o) => `${o.addon_name}×${o.quantity}`).join("、")})`,
   });
 
-  if (contract.contact_email) {
+  if (contract?.contact_email) {
     try {
       const { sendPaymentReceiptEmail } = await import("@/lib/email");
       await sendPaymentReceiptEmail({
         to: contract.contact_email,
-        storeName: store.name,
-        amount: total,
-        description: `アドオンのお申し込み（${lines.map((l) => (l.quantity > 1 ? `${l.addon.name}×${l.quantity}` : l.addon.name)).join("、")}）`,
+        storeName,
+        amount: params.amount,
+        description: `アドオンのお申し込み（${label}）`,
         periodEnd: null,
         at: new Date(),
       });
@@ -391,48 +475,50 @@ export async function purchaseAddons(params: {
       // 通知はベストエフォート
     }
   }
-
   {
     const { notifyStoreLine, PLAN_PAGE_URL, yen } = await import("@/lib/store-line");
-    await notifyStoreLine(
-      { storeId: params.storeId },
-      `${yen(total)}のカード決済が完了しました（アドオン：${lines.map((l) => l.addon.name).join("、")}）。\n${PLAN_PAGE_URL}`
-    );
+    await notifyStoreLine({ storeId: params.storeId }, `${yen(params.amount)}のカード決済が完了しました（アドオン：${orders.map((o) => o.addon_name).join("、")}）。\n${PLAN_PAGE_URL}`);
   }
 
   // ここから先はお金を取れている。失敗しても止めずに、運営が直せるよう記録を残す。
-  const periodEndIso = jstDateToIso(addMonths(todayJst(), 1));
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i];
-    const orderId = orderIds[i];
-    if (l.addon.billing_type !== "monthly") {
-      await fulfillPaidAddonOrder(orderId);
+  const { freshPeriodEnd } = await import("@/lib/billing-dates");
+  const period = freshPeriodEnd();
+  const addonIds = orders.map((o) => o.addon_id).filter(Boolean) as string[];
+  const { data: addonRows } = addonIds.length ? await svc.from("addons").select(ADDON_COLUMNS).in("id", addonIds) : { data: [] as any[] };
+  for (const o of orders) {
+    const addon = ((addonRows ?? []) as AddonRow[]).find((a) => a.id === o.addon_id);
+    if (o.billing_type !== "monthly") {
+      await fulfillPaidAddonOrder(o.id);
       continue;
     }
     // fincode_subscription_id に OWN_BILLING を入れた行 = アドオン単独で毎月決済する行(cronが更新)
-    const subscriptionId = OWN_BILLING;
-    const subError: string | null = null;
     const { error: rowError } = await svc.from("store_contract_addons").insert({
-      store_contract_id: contract.id,
-      addon_id: l.addon.id,
-      fee: l.unitPrice,
+      store_contract_id: contractId,
+      addon_id: o.addon_id,
+      fee: o.unit_price,
       billing_method: "card",
-      current_period_end: periodEndIso,
-      fincode_subscription_id: subscriptionId,
+      current_period_end: period.periodEndIso,
+      billing_anchor_day: period.anchorDay,
+      fincode_subscription_id: OWN_BILLING,
     });
+    const needsFulfillment = !!addon?.needs_fulfillment;
     await svc
       .from("addon_orders")
       .update({
-        status: l.addon.needs_fulfillment ? "paid" : "completed",
-        completed_at: l.addon.needs_fulfillment ? null : nowIso,
-        admin_note: subError || rowError ? `要確認: ${subError ? `毎月の課金設定に失敗(${subError})` : ""}${rowError ? ` 有効化に失敗(${rowError.message})` : ""}` : null,
+        status: needsFulfillment ? "paid" : "completed",
+        completed_at: needsFulfillment ? null : nowIso,
+        admin_note: rowError ? `要確認: 有効化に失敗(${rowError.message})` : null,
       })
-      .eq("id", orderId);
-    if (l.addon.needs_fulfillment) await notifyAdmin(store.name, l.addon.name, 1, l.unitPrice, "card", params.note);
+      .eq("id", o.id);
+    if (rowError) {
+      const { alertAdmin } = await import("@/lib/admin-alert");
+      await alertAdmin("決済済みのアドオンを有効にできませんでした", [`${storeName}・${o.addon_name}`, `内容: ${rowError.message}`, "総合管理の「アドオン注文」から確認してください。"], "/admin/addon-orders");
+    }
+    if (needsFulfillment) await notifyAdmin(storeName, o.addon_name, 1, o.unit_price, "card", params.note);
   }
 
-  const monthlyNames = lines.filter((l) => l.addon.billing_type === "monthly").map((l) => l.addon.name);
-  return `${total.toLocaleString("ja-JP")}円を決済しました。${
+  const monthlyNames = orders.filter((o) => o.billing_type === "monthly").map((o) => o.addon_name);
+  return `${params.amount.toLocaleString("ja-JP")}円を決済しました。${
     monthlyNames.length ? `月額アドオン（${monthlyNames.join("、")}）は来月から毎月自動で決済されます。` : ""
   }`;
 }

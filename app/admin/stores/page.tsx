@@ -66,7 +66,9 @@ export default async function AdminStoresPage({
       .order("id", { ascending: false })
       // カテゴリ「その他」= ポーカー店ではない取り込みデータ(パチンコ店・ゲームセンター等、全て却下済み)。
       // 一覧には出さない(2026/10)。
-      .neq("category", "other");
+      .neq("category", "other")
+      // 解約して契約期間が終わった店舗(status=closed)は一覧に出さない(2026/10/18「総合からも削除」)
+      .neq("status", "closed");
 
     if (status !== "all") {
       q0 = q0.eq("status", status);

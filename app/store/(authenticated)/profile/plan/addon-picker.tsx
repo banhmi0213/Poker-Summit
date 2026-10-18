@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { purchaseAddonAction } from "../addon-purchase-actions";
 
@@ -28,6 +28,11 @@ export function AddonPicker({
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [qty, setQty] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<"card" | "bank_transfer">(canUseCard ? "card" : "bank_transfer");
+  // この画面からの申込みの番号(連打・二重送信で2回決済しないように。lib/addon-orders.ts)
+  const [requestKey, setRequestKey] = useState("");
+  useEffect(() => {
+    setRequestKey(typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  }, []);
 
   const { monthlyTotal, oneTimeTotal } = useMemo(() => {
     let monthlyTotal = 0;
@@ -117,6 +122,7 @@ export function AddonPicker({
 
   return (
     <form action={purchaseAddonAction} style={{ display: "grid", gap: 10 }}>
+      <input type="hidden" name="requestKey" value={requestKey} />
       {group("monthly", "月額のアドオン")}
       {group("one_time", "都度払いのアドオン")}
 
