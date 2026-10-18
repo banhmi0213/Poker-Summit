@@ -858,3 +858,25 @@ export async function sendAdminAlertEmail(params: { to: string; subject: string;
   ].join("\n");
   await sendEmail({ to: params.to, subject: `【Poker Summit 要確認】${params.subject}`, text });
 }
+
+/** 1日1回の新規会員まとめ(運営向け。site_settings.notify_email 宛て) */
+export async function sendMemberDigestEmail(params: {
+  to: string;
+  dayLabel: string;
+  members: Array<{ email: string; at: string; confirmed: boolean }>;
+  total: number;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const lines = [
+    `${params.dayLabel}の新規会員登録は ${params.members.length}人 でした（会員の合計 ${params.total}人）。`,
+    "",
+    ...params.members.map((m) => `・${m.at}  ${m.email}${m.confirmed ? "" : "（メール未確認）"}`),
+    "",
+    "「メール未確認」は、登録後の確認メールのリンクをまだ押していない方です。",
+    "",
+    `会員の一覧: ${siteUrl}/admin/members`,
+    "",
+    "Poker Summit（自動送信。総合管理の「サイト設定」→ 通知設定で止められます）",
+  ];
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.dayLabel}の新規会員登録 ${params.members.length}人（合計${params.total}人）`, text: lines.join("\n") });
+}

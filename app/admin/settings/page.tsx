@@ -179,6 +179,12 @@ export default async function AdminSettingsPage({
                   desc="会員・店舗からお問い合わせが届いた時に通知します"
                 />
                 <ToggleRow
+                  name="notifyMemberDigest"
+                  defaultChecked={s.notify_member_digest ?? true}
+                  title="新規会員のまとめ（1日1回）"
+                  desc="前日に会員登録があった日だけ、毎朝9時ごろに人数と一覧を送ります"
+                />
+                <ToggleRow
                   name="notifyBannerAnomaly"
                   defaultChecked={s.notify_banner_anomaly ?? true}
                   title="バナー計測異常"
