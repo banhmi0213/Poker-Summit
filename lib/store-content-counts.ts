@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { notEndedEventFilter } from "@/lib/event-end";
+import { notExpiredFilter } from "@/lib/coupon-expiry";
 
 export type StoreContentCounts = { events: number; coupons: number; notices: number; jobs: number };
 export const EMPTY_STORE_COUNTS: StoreContentCounts = { events: 0, coupons: 0, notices: 0, jobs: 0 };
@@ -11,9 +13,9 @@ export async function getStoreContentCounts(supabase: SupabaseClient, ids: strin
   const now = new Date().toISOString();
   const results = await Promise.all([
     supabase.from("events").select("store_id").in("store_id", storeIds).eq("status", "published")
-      .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`),
+      .or(notEndedEventFilter()),
     supabase.from("coupons").select("store_id").in("store_id", storeIds).eq("active", true)
-      .or(`valid_until.is.null,valid_until.gte.${now}`),
+      .or(notExpiredFilter()),
     supabase.from("store_notices").select("store_id").in("store_id", storeIds).eq("status", "published"),
     supabase.from("jobs").select("store_id").in("store_id", storeIds).eq("status", "open"),
   ]);

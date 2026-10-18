@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -64,7 +65,7 @@ export async function MyPageContent({
       .from("favorite_jobs")
       .select("jobs(id, title, status, store_id, stores(name, pref))")
       .eq("user_id", user.id),
-    supabase.from("favorite_coupons").select("coupons(id, title, discount, valid_until, active, stores(name))").eq("user_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("favorite_coupons").select("coupons(id, title, discount, valid_until, expires_at, active, stores(name))").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase
       .from("job_applications")
       .select("applied_at, jobs(id, title, status, store_id, stores(name, pref))")
@@ -80,7 +81,7 @@ export async function MyPageContent({
       .eq("user_id", user.id),
     supabase
       .from("coupons")
-      .select("id, title, valid_until, usage_limit, used_count, store_id, stores(name)")
+      .select("id, title, valid_until, expires_at, usage_limit, used_count, store_id, stores(name)")
       .eq("active", true),
     supabase
       .from("board_posts")
@@ -112,7 +113,7 @@ export async function MyPageContent({
   const appliedJobIds = new Set((applications ?? []).map((a: any) => a.jobs?.id));
   const usedCouponIds = new Set((couponUseRows ?? []).map((r: any) => r.coupon_id));
   const unusedCoupons = (allActiveCoupons ?? []).filter(
-    (c: any) => !usedCouponIds.has(c.id) && (c.usage_limit == null || (c.used_count ?? 0) < c.usage_limit)
+    (c: any) => !usedCouponIds.has(c.id) && !isCouponExpired(c) && (c.usage_limit == null || (c.used_count ?? 0) < c.usage_limit)
   );
   const usedCoupons = (allActiveCoupons ?? []).filter((c: any) => usedCouponIds.has(c.id));
 
@@ -378,8 +379,8 @@ export async function MyPageContent({
               {favCoupons.length === 0 ? <p className="muted small" style={{ marginBottom: 22 }}>保存したクーポンはありません。</p> : favCoupons.map((c: any) => (
                 <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}><ReadableName name={c.title} /></Link> : <strong><ReadableName name={c.title} />（掲載終了）</strong>}
-                    <div className="muted small">{c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}</div>
+                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}><ReadableName name={c.title} />{isCouponExpired(c) && "（期限切れ）"}</Link> : <strong><ReadableName name={c.title} />（掲載終了）</strong>}
+                    <div className="muted small">{c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}</div>
                   </div>
                   <form action={async () => { "use server"; await setFavoriteCoupon(c.id, false); }}>
                     <button type="submit" className="btn" style={{ fontSize: 12 }}>解除</button>
@@ -397,7 +398,7 @@ export async function MyPageContent({
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}
                       </div>
                     </Link>
                     <Link href={`/coupons/${c.id}`} className="btn primary" style={{ fontSize: 12 }}>
@@ -415,7 +416,7 @@ export async function MyPageContent({
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}
                       </div>
                     </Link>
                     <span className="badge good">✓ 使用済み</span>

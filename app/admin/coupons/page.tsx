@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { setCouponActive, deleteCoupon, createCouponByAdmin } from "./actions";
@@ -20,7 +21,7 @@ export default async function AdminCouponsPage({
 
   let query = supabase
     .from("coupons")
-    .select("id, title, discount, code, valid_until, usage_limit, used_count, active, store_id, stores(name)")
+    .select("id, title, discount, code, valid_until, expires_at, usage_limit, used_count, active, store_id, stores(name)")
     .order("created_at", { ascending: false });
 
   if (status === "active") {
@@ -149,7 +150,7 @@ export default async function AdminCouponsPage({
           </thead>
           <tbody>
             {coupons.map((c: any) => {
-              const expired = c.valid_until && c.valid_until < today;
+              const expired = isCouponExpired(c);
               return (
                 <tr key={c.id}>
                   <td>{c.stores?.name ?? ""}</td>
@@ -157,7 +158,7 @@ export default async function AdminCouponsPage({
                   <td>{c.discount ?? ""}</td>
                   <td>{c.code ?? ""}</td>
                   <td>
-                    {c.valid_until ?? ""}
+                    {couponExpiryLabel(c) ?? ""}
                     {expired && (
                       <span className="badge" style={{ marginLeft: 6 }}>
                         期限切れ

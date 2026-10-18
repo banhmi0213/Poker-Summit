@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { isEventEnded } from "@/lib/event-end";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -88,7 +89,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const e = event as any;
   const store = e.stores?.status === "approved" ? e.stores : null;
   const path = `/events/${e.id}`;
-  const isPast = Boolean((e.end_at || e.start_at) && new Date(e.end_at || e.start_at).getTime() < Date.now());
+  const isPast = isEventEnded(e);
   let joined = false, saved = false;
   if (user) {
     const [p,f] = await Promise.all([

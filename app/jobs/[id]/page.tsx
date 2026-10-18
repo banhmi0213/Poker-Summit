@@ -164,7 +164,7 @@ export default async function JobDetailPage({
           )}
           {j.job_type && <span className="badge outline">{j.job_type}</span>}
           <span className={`badge ${j.status === "open" ? "good" : "outline"}`}>
-            {j.status === "open" ? "● 公開中" : "停止中"}
+            {j.status === "open" ? "● 募集中" : "募集終了"}
           </span>
         </div>
 

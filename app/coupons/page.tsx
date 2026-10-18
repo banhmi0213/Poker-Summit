@@ -12,12 +12,12 @@ import { PREF_OPTIONS, CATEGORY_LABEL, COUPON_OFFER_TYPE_OPTIONS } from "@/lib/c
 import { PrefAreaSelect } from "@/app/pref-area-select";
 import { CouponBannerLightbox } from "./coupon-banner-lightbox";
 import { staticPageMetadata } from "@/lib/seo";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 
 export const metadata = staticPageMetadata({ title: "ポーカー店のクーポン・お得情報", description: "全国のアミューズメントポーカー店・ポーカーバーで使えるクーポンやキャンペーン情報。来店前にお得な特典をチェックできます。", path: "/coupons" });
 
-function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
-  const today = new Date().toISOString().slice(0, 10);
-  if (c.valid_until && c.valid_until < today) return "expired";
+function couponStatus(c: { valid_until: string | null; expires_at?: string | null; usage_limit: number | null; used_count: number | null }) {
+  if (isCouponExpired(c)) return "expired";
   if (c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit) return "exhausted";
   return "active";
 }
@@ -81,12 +81,13 @@ export default async function CouponsPage({
   const { data: rawCoupons } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
+      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
     )
     .eq("active", true);
 
+  // 期限(期限日の営業終了)を過ぎたクーポンは一覧に出さない(2026/10/18)
   let coupons = (rawCoupons ?? []).filter(
-    (c: any) => c.stores?.status === "approved" || c.stores?.status === "listed"
+    (c: any) => (c.stores?.status === "approved" || c.stores?.status === "listed") && !isCouponExpired(c)
   );
   coupons = coupons.filter((c: any) => matchesCouponLocation(c.stores, pref, area, region));
   if (offerType) coupons = coupons.filter((c: any) => c.offer_type === offerType);
@@ -257,7 +258,7 @@ export default async function CouponsPage({
                     {location && <div style={{ marginTop: 2 }}>📍 {location}</div>}
                   </div>
                   <div className="coupon-card__meta-line">
-                    有効期限：{c.valid_until ? String(c.valid_until).replaceAll("-", "/") : "設定なし"}
+                    有効期限：{couponExpiryLabel(c) ?? "設定なし"}
                   </div>
                   {c.description && (
                     <div className="coupon-card__meta-line">{truncate(c.description, 28)}</div>

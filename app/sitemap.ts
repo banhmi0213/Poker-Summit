@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { isCouponExpired } from "@/lib/coupon-expiry";
 import { SITE_URL } from "@/lib/seo";
 import { CITY_PAGE_MIN_STORES, cityPageHref, cityPageKeys, prefPageHref } from "@/lib/city";
 import { createClient } from "@/lib/supabase/server";
@@ -59,14 +60,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const [{data:events},{data:jobs},{data:coupons},{data:tournaments}]=await Promise.all([
   supabase.from("events").select("id,updated_at,start_at,end_at,stores(status)").eq("status","published"),
   supabase.from("jobs").select("id,updated_at,stores(status)").eq("status","open"),
-  supabase.from("coupons").select("id,updated_at,valid_until,stores(status)").eq("active",true),
+  supabase.from("coupons").select("id,updated_at,valid_until,expires_at,stores(status)").eq("active",true),
   supabase.from("major_tournaments").select("id,updated_at").eq("active",true),
  ]);
  const listed=(row:any)=>{const st=Array.isArray(row.stores)?row.stores[0]:row.stores;return !st||PUBLIC_STORE_STATUSES.includes(st.status);};
  const lm=(v:string|null|undefined)=>v?new Date(v):now;
  const eventPages=(events||[]).filter(listed).map((e:any)=>({url:`${base}/events/${e.id}`,lastModified:lm(e.updated_at)}));
  const jobPages=(jobs||[]).filter(listed).map((j:any)=>({url:`${base}/jobs/${j.id}`,lastModified:lm(j.updated_at)}));
- const couponPages=(coupons||[]).filter(listed).filter((c:any)=>!c.valid_until||c.valid_until>=today).map((c:any)=>({url:`${base}/coupons/${c.id}`,lastModified:lm(c.updated_at)}));
+ const couponPages=(coupons||[]).filter(listed).filter((c:any)=>!isCouponExpired(c,now)).map((c:any)=>({url:`${base}/coupons/${c.id}`,lastModified:lm(c.updated_at)}));
  const tournamentPages=(tournaments||[]).map((t:any)=>({url:`${base}/major-tournaments/${t.id}`,lastModified:lm(t.updated_at)}));
 
  // 固定ページの更新日: 一覧ページはその中身の一番新しい更新日、TOPは全体で一番新しい日。
