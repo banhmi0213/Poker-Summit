@@ -145,7 +145,7 @@ export async function MyPageContent({
       <PortalHeader userEmail={user.email} />
       <div className={`container ${styles.page}`}>
         <div className={styles.pageHeading}>
-          <h1 style={{ fontSize: 22, margin: 0 }}>マイページ</h1>
+          <h1 style={{ fontSize: 22, margin: 0 }}>マイページ</h1><Link href="/mypage/poker" className="btn">オンラインポーカー：大会履歴・残高・順位</Link>
           {dealerProfile && (
             <Link href="/spot-jobs" className={styles.spotBanner}>
               <span className={styles.dealerIcon} aria-hidden="true">
