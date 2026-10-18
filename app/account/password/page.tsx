@@ -30,7 +30,7 @@ export default async function ChangePasswordPage({
           <div style={{ textAlign: "center", padding: "8px 0" }}>
             <p style={{ fontWeight: 700, color: "var(--good)", marginBottom: 6 }}>✓ パスワードを変更しました</p>
             <p className="muted small" style={{ marginBottom: 16 }}>次回から新しいパスワードでログインしてください。</p>
-            <a className="btn primary" style={{ width: "100%" }} href={params.from === "admin" ? "/admin" : "/mypage"}>
+            <a className="btn primary" style={{ width: "100%", display: "flex", justifyContent: "center" }} href={params.from === "admin" ? "/admin" : "/mypage"}>
               {params.from === "admin" ? "総合管理画面へ" : "マイページへ"}
             </a>
           </div>
