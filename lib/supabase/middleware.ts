@@ -150,7 +150,7 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
 
 /** 先行登録モード中も開けるページ(運営・店舗管理・会員登録/ログイン・規約類・API等) */
 function isPrelaunchExempt(pathname: string) {
-  const exact = ["/prelaunch", "/preview", "/withdrawn", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
+  const exact = ["/tournaments/first-freeroll", "/prelaunch", "/preview", "/withdrawn", "/maintenance", "/login", "/login/forgot", "/admin-login", "/terms", "/privacy", "/tokushoho", "/disclaimer", "/company", "/robots.txt", "/sitemap.xml"];
   if (exact.includes(pathname)) return true;
   const prefixes = ["/admin/", "/store/", "/signup", "/auth/", "/api/", "/apply", "/contact", "/liff", "/go/", "/account/password", "/account/dealer", "/account/delete", "/_next/"];
   return pathname === "/admin" || prefixes.some((p) => pathname.startsWith(p));
