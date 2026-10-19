@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { CARD_BRANDS_NOTE, CARD_SAVE_NOTE } from "@/lib/constants";
 
-// お支払い方法とお支払いサイクル。クレジットカードは毎月の自動決済のみなので、
-// カードを選んだらサイクルは「毎月払い」に固定してグレーアウト(選べない)にする。
-// 無効にした select は送信されないが、サーバー側は未指定なら毎月払い(1)として扱う。
+// お支払い方法とお支払いサイクル。2026/10/19〜 カードでもまとめ払い(6か月・12か月)を選べる
+// (期間の終わりに同じサイクルで自動更新。更新の7日前にメールでお知らせ)。
 export function ApplyBillingFields({
   cardEnabled,
   cycles,
@@ -42,7 +41,7 @@ export function ApplyBillingFields({
           {cardEnabled && (
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
               <input ref={cardRef} type="radio" name="billingMethod" value="card" onChange={() => setMethod("card")} />
-              クレジットカード（毎月の自動決済）
+              クレジットカード（自動決済）
             </label>
           )}
           {cardEnabled && (
@@ -53,24 +52,18 @@ export function ApplyBillingFields({
           )}
         </div>
       </div>
-      <div className="field" style={isCard ? { opacity: 0.5 } : undefined}>
-        <span className="muted">お支払いサイクル（銀行振込の場合）</span>
-        <select
-          name="billingCycle"
-          value={isCard ? "1" : cycle}
-          disabled={isCard}
-          onChange={(e) => setCycle(e.target.value)}
-          style={isCard ? { cursor: "not-allowed" } : undefined}
-        >
+      <div className="field">
+        <span className="muted">お支払いサイクル</span>
+        <select name="billingCycle" value={cycle} onChange={(e) => setCycle(e.target.value)}>
           {cycles.map((c) => (
             <option key={c.value} value={String(c.value)}>
               {c.label}
             </option>
           ))}
         </select>
-        {isCard && (
-          <span className="muted" style={{ fontSize: 12, marginTop: 4, display: "block" }}>
-            クレジットカードは毎月払いのみです
+        {isCard && cycle !== "1" && (
+          <span className="muted" style={{ fontSize: 12, marginTop: 4, display: "block", lineHeight: 1.6 }}>
+            お申し込み時に{cycle}か月分をカードでお支払いいただきます。期間の終わりに同じサイクルで自動更新します（更新の7日前にメールでお知らせします）。月額のアドオンは毎月別にお支払いいただきます。
           </span>
         )}
       </div>

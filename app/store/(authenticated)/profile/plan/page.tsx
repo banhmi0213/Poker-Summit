@@ -77,6 +77,8 @@ export default async function StorePlanPage({
     ]);
 
   const isTransfer = (contract as any)?.billing_method === "bank_transfer";
+  // カードのまとめ払い(6か月・12か月、2026/10/19〜): プラン変更は振込と同じくお問い合わせで
+  const cardPrepayMonths = !isTransfer && [6, 12].includes(Number((contract as any)?.billing_cycle_months)) ? Number((contract as any).billing_cycle_months) : 0;
   // カード登録の途中(session:...)は未登録扱い
   const hasCard = !!contract?.fincode_customer_id && !String(contract.fincode_customer_id).startsWith("session:");
   const [{ data: invoiceRows }, billing] = await Promise.all([
@@ -149,7 +151,7 @@ export default async function StorePlanPage({
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="muted">お支払い方法</div>
           <div style={{ fontWeight: 700, fontSize: 15, marginTop: 2 }}>
-            {isTransfer ? `銀行振込（${cycleLabel((contract as any)?.billing_cycle_months ?? 1)}）` : "クレジットカード"}
+            {isTransfer ? `銀行振込（${cycleLabel((contract as any)?.billing_cycle_months ?? 1)}）` : cardPrepayMonths ? `クレジットカード（${cycleLabel(cardPrepayMonths)}）` : "クレジットカード"}
           </div>
           {isTransfer && (
             <p className="muted" style={{ fontSize: 12, margin: "4px 0 0", lineHeight: 1.7 }}>
@@ -345,9 +347,9 @@ export default async function StorePlanPage({
               </button>
             </form>
           </div>
-        ) : isTransfer ? (
+        ) : isTransfer || cardPrepayMonths ? (
           <div className="card" style={{ background: "var(--surface-2)", fontSize: 13.5, lineHeight: 1.8 }}>
-            銀行振込でご契約中のため、プランやお支払いサイクル（毎月・6か月・12か月）の変更は
+            {cardPrepayMonths ? "まとめ払いでご契約中のため、" : "銀行振込でご契約中のため、"}プランやお支払いサイクル（毎月・6か月・12か月）の変更は
             <a href="/contact" style={{ textDecoration: "underline", fontWeight: 600 }}>お問い合わせフォーム</a>
             からご連絡ください。変更後の内容で請求書をお送りします。
           </div>
