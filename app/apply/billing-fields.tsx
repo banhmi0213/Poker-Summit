@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CARD_BRANDS_NOTE, CARD_SAVE_NOTE } from "@/lib/constants";
 
 // お支払い方法とお支払いサイクル。クレジットカードは毎月の自動決済のみなので、
@@ -16,6 +16,13 @@ export function ApplyBillingFields({
   const [method, setMethod] = useState<"bank_transfer" | "card">("bank_transfer");
   const [cycle, setCycle] = useState("1");
   const isCard = method === "card";
+  // ページの読み込み直後(画面の準備が終わる前)にカードを押すと、準備が終わった瞬間に
+  // 「銀行振込」に戻ってしまい、カードを選んだつもりが振込で申し込まれることがあった(2026/10/19)。
+  // ラジオボタンは画面側の選択をそのまま使い(defaultChecked)、準備が終わった時点の選択を読み取る。
+  const cardRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (cardRef.current?.checked) setMethod("card");
+  }, []);
 
   return (
     <>
@@ -27,14 +34,14 @@ export function ApplyBillingFields({
               type="radio"
               name="billingMethod"
               value="bank_transfer"
-              checked={method === "bank_transfer"}
+              defaultChecked
               onChange={() => setMethod("bank_transfer")}
             />
             銀行振込（請求書払い）
           </label>
           {cardEnabled && (
             <label style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14 }}>
-              <input type="radio" name="billingMethod" value="card" checked={isCard} onChange={() => setMethod("card")} />
+              <input ref={cardRef} type="radio" name="billingMethod" value="card" onChange={() => setMethod("card")} />
               クレジットカード（毎月の自動決済）
             </label>
           )}
