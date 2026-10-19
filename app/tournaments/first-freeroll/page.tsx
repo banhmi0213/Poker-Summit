@@ -29,7 +29,7 @@ const APP_URL = "https://app.adjust.com/egwr7v0";
 const steps = [
   ["先行会員登録済みの会員", "先行会員登録を完了していることをご確認ください。本大会は先行会員登録済みの方が対象です。"],
   ["m HOLD’EM IDをマイページに登録", "PokerSummitのマイページで、ご自身のm HOLD’EM IDを登録してください。登録済みのIDはご自身では変更できません。"],
-  ["アプリと必要なダイヤを準備", "m HOLD’EMアプリと、参加に必要なアプリ内アイテム（ダイヤ）をご準備ください。必要数は後日ご案内します。"],
+  ["アプリと必要なダイヤを準備", "m HOLD’EMアプリと、参加に必要なアプリ内アイテム（ダイヤ）をご準備ください。"],
   ["大会ルームに入室", "開催前にご案内するルーム情報・入室方法をご確認のうえ、指定の時間にご入室ください。"],
 ];
 export default function FirstFreerollPage() {
@@ -58,7 +58,7 @@ export default function FirstFreerollPage() {
         <li><span className={styles.number}>2</span><span className={styles.claimIcon}><Icon kind="gift" /></span><div><h3>登録IDと照合後<br />賞品をお渡し</h3><p>お送りいただいたスクリーンショットのIDと、PokerSummitに登録されたm HOLD’EM IDを照合後、賞品をお渡しします。</p></div></li>
       </ol><div className={styles.claimReminder}>m HOLD’EMアプリのマイページで、プレイヤー名とIDが1画面にセットで写っているスクリーンショットをお送りください。</div><div className={styles.deadline}><strong>提出期限：<time dateTime="2026-11-01T23:59:00+09:00">2026年11月1日（日）23:59</time>（日本時間）</strong><p>期限を過ぎた場合や、登録したアドレス以外から送られた場合は、賞品をお渡しできません。</p></div></section>
       <section className={`${styles.section} ${styles.noticeSection}`}><h2><span className={styles.headingIcon} aria-hidden="true">!</span>注意事項<small>IMPORTANT NOTES</small></h2><ul className={styles.notes}><li>参加にはアプリ内アイテム（ダイヤ）が必要です。</li><li>登録したm HOLD’EM IDと参加IDを一致させてください。</li><li>通常の会員登録のみでは、本大会の参加対象となりません。</li><li>大会の最新情報・ルーム情報は開催前にご案内します。</li><li>本大会はPokerSummit主催です。サミー株式会社・m HOLD’EMの公認・協賛大会ではありません。</li></ul></section>
-      <div className={styles.finalCta}><a className={styles.goldButton} href={APP_URL} target="_blank" rel="noopener noreferrer">大会に参加する</a><p>m HOLD’EM公式のアプリリンクへ移動します。未インストールの場合はダウンロードしてご参加ください。</p></div>
+      <div className={styles.finalCta}><a className={styles.goldButton} href={APP_URL} target="_blank" rel="noopener noreferrer">大会に参加する</a><p>m HOLD’EM公式のアプリリンクへ移動します。</p></div>
     </main><footer className={styles.footer}><Link href="/"><img src="/images/logo.webp" alt="PokerSummit" /></Link></footer>
   </div>;
 }
