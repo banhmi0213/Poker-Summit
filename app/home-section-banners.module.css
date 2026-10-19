@@ -1,41 +1,18 @@
 .wide, .four { width: 100%; }
 .wide { display: grid; grid-template-columns: minmax(0, 1fr); }
 .four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.banner { display: block; overflow: hidden; border-radius: 10px; min-width: 0; line-height: 0; }
+.banner { composes: hoverable from "./home-banner-hover.module.css"; display: block; overflow: hidden; border-radius: 10px; min-width: 0; line-height: 0; }
 .banner img { display: block; width: 100%; height: auto; aspect-ratio: 10 / 1; object-fit: cover; object-position: center; }
 .four .banner img { aspect-ratio: 3 / 2; }
 @media (max-width: 720px) { .wide .banner img { aspect-ratio: 6 / 1; } }
 @media (max-width: 720px) { .four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 
-/* Keep all admin-managed section banners visually consistent with store cards. */
-.banner { border: 1px solid transparent; transition: transform .26s ease, box-shadow .26s ease, border-color .26s ease; }
-@media (hover: hover) and (pointer: fine) {
-  .banner:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(82,55,19,.14); border-color: rgba(188,144,57,.35); }
-}
-.banner:focus-visible { outline: 2px solid #b98a32; outline-offset: 3px; }
-@media (prefers-reduced-motion: reduce) { .banner { transition: none !important; } .banner:hover { transform: none !important; } }
-
-@media (hover:none) and (pointer:coarse){.banner:active{transform:scale(.988);box-shadow:0 4px 14px rgba(82,55,19,.16);border-color:rgba(188,144,57,.32)}}
-@media (prefers-reduced-motion:reduce){.banner:active{transform:none!important}}
-
-/* Wide artwork stays still and has no decorative frame on hover or touch. */
-.wide .banner { border: 0; transition: none; -webkit-tap-highlight-color: transparent; }
-.wide .banner:hover, .wide .banner:active { transform: none; box-shadow: none; border-color: transparent; }
-.wide .banner img { aspect-ratio: auto; object-fit: contain; }
-
-/* PICK UP banner only: subtle gold lift while keeping other wide banners static. */
-.pickup .banner { transition: transform .24s ease, box-shadow .24s ease; }
-@media (hover: hover) and (pointer: fine) {
-  .pickup .banner:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(134, 93, 25, .23); }
-}
-@media (hover: none) and (pointer: coarse) {
-  .pickup .banner:active { transform: scale(.992); box-shadow: 0 5px 16px rgba(134, 93, 25, .18); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .pickup .banner { transition: none; }
-  .pickup .banner:hover, .pickup .banner:active { transform: none; }
-}
-
+/* Share the same lift and shadow for PICK UP and all other wide banners. */
+.banner{border:1px solid transparent}
+.banner:focus-visible{outline:2px solid #b98a32;outline-offset:3px}
+.wide .banner{border:0;-webkit-tap-highlight-color:transparent}
+.wide .banner img{aspect-ratio:auto;object-fit:contain}
+.pickup{width:100%}
 
 /* Match Summit dimensions with full subjects inside the photographic safe area. */
 .wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; }

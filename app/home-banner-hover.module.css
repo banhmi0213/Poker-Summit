@@ -1,0 +1,4 @@
+/* One pointer-hover treatment for the homepage's horizontal banners. */
+.hoverable{transition:transform .24s ease,box-shadow .24s ease}
+@media(hover:hover) and (pointer:fine){.hoverable:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(134,93,25,.23)}}
+@media(prefers-reduced-motion:reduce){.hoverable{transition:none!important}.hoverable:hover{transform:none!important}}

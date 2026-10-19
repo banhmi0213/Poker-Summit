@@ -1,4 +1,4 @@
-.banner { position: relative; width: 100%; container-type: inline-size; border-radius: 10px; overflow: hidden; background: #fff7e7; }
+.banner { composes: hoverable from "./home-banner-hover.module.css"; position: relative; width: 100%; container-type: inline-size; border-radius: 10px; overflow: hidden; background: #fff7e7; }
 .artwork { display: block; line-height: 0; -webkit-tap-highlight-color: transparent; }
 .artwork img { display: block; width: 100%; height: auto; }
 .names { position: absolute; left: 74.5%; top: 24%; width: 20%; height: 64%; display: grid; grid-template-rows: repeat(3, 1fr); list-style: none; padding: 0; margin: 0; }
