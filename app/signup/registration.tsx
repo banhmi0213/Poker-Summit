@@ -9,6 +9,8 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
+import { PRELAUNCH_TOURNAMENT } from "@/lib/prelaunch";
+import { SignupFunnelTracker } from "./funnel-tracker";
 
 export function RegistrationPage({ searchParams, early = false }: { searchParams: { error?: string; done?: string }; early?: boolean }) {
   const params = searchParams;
@@ -29,11 +31,17 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
             <p>先行登録いただいた方を、m HOLD’EMアプリで開催する限定トーナメントにご招待します。</p>
             <p className={styles.tournamentNote}>※参加にはアプリ内アイテム（ダイヤ）が必要です。<br />※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。</p>
-            <div className={styles.tournamentFollow}><p>日程・参加方法・プライズは公式Xで発表します <span aria-hidden="true">→</span></p><a className={styles.xFollowButton} href="https://x.com/poker_summit" target="_blank" rel="noopener noreferrer">公式Xをフォロー <span aria-hidden="true">↗</span></a></div>
+            <dl className={styles.tournamentFacts}>
+              <div><dt>開催日時</dt><dd>{PRELAUNCH_TOURNAMENT.dateLabel}</dd></div>
+              <div><dt>プライズ</dt><dd>{PRELAUNCH_TOURNAMENT.prizeLabel}</dd></div>
+            </dl>
+            {/* スマホでは最初の画面にフォームが入らないので、主役のボタンは登録フォームへ(2026/10/19)。公式Xは控えめなリンクに */}
+            <a className={styles.xFollowButton + " " + styles.jumpToForm} href="#signup-form">無料で先行登録する <span aria-hidden="true">↓</span></a>
+            <p className={styles.tournamentXLink}>参加方法・最新情報は<a href="https://x.com/poker_summit" target="_blank" rel="noopener noreferrer">公式X</a>でお知らせします</p>
           </aside>}
           <img className={styles.photo} src="/images/member-registration-approved-photo.webp" alt="Poker Summitのロゴが入ったテーブルでカードを配るディーラー" width={668} height={525} />
         </section>
-        <section className={styles.panel} aria-label="会員登録フォーム">
+        <section className={styles.panel} id="signup-form" aria-label="会員登録フォーム">
       {params.done ? (
         <div className={styles.success}>
           <h2 className={styles.heading}>
@@ -56,9 +64,10 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
           <h2 className={styles.heading}>{early ? "無料で先行登録" : "無料会員登録"}</h2>
           <p className={styles.badge}>無料・年会費なし</p>
           {params.error && <p className={styles.error} role="alert">{params.error}</p>}
-          <form action={early ? prelaunchSignUp : signUp}>
+          <form action={early ? prelaunchSignUp : signUp} id="registration-form">
+            {early && <SignupFunnelTracker formId="registration-form" />}
             <label className={styles.field}>
-              <span>ハンドルネーム</span>
+              <span>ハンドルネーム <b className={styles.optional}>任意</b></span>
               <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" />
             </label>
             <label className={styles.field}>
@@ -77,6 +86,10 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
                 できるようにして」との指示)。他の会員から見える会員プロフィール
                 ページ(/members/[id])に出すかどうかを選べる。 */}
+            {early ? (
+              // 先行登録では入力を減らす(2026/10/19)。公開設定はあとからマイページで変えられる
+              <input type="hidden" name="prefPublic" value="public" />
+            ) : (
             <label className={styles.field}>
               <span>都道府県の公開設定</span>
               <select name="prefPublic" defaultValue="public">
@@ -84,6 +97,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
                 <option value="private">非公開（自分だけに表示）</option>
               </select>
             </label>
+            )}
             <label className={styles.field}>
               <span>メールアドレス <b className={styles.required}>必須</b></span>
               <input type="email" name="email" required autoComplete="email" placeholder="例）example@example.com" />
@@ -106,7 +120,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             </label>
             <div id="m-holdem-notice" className={styles.notice}>
               <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>
-              <p>未入力でも会員登録できます。{early ? "サイトのオープン後に、マイページから登録・変更できます。" : "マイページから後で登録・変更できます。"}IDは一般公開されません。</p>
+              <p>未入力でも会員登録できます。マイページから後で登録・変更できます。IDは一般公開されません。</p>
             </div>
             <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
             <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
@@ -122,7 +136,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             )}
             <SignupSubmitButton className={styles.submit} label={early ? "先行会員登録する" : "無料会員登録する"} />
           </form>
-          <p className={styles.confirmation}>登録後、確認メールをお送りします。</p>
+          <p className={styles.confirmation}>登録後、確認メールをお送りします。{early && "都道府県の公開・非公開はマイページで変更できます。"}</p>
           <p className={styles.help}>
             すでにアカウントをお持ちの方は<Link href="/login">こちらからログイン</Link>
           </p>
