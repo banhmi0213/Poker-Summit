@@ -8,7 +8,7 @@ export {OnlineTableView} from './online-table-view';
 import shared from '../../poker-demo/poker-table.module.css';
 export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string;enabled:boolean;eventsOrigin?:string}){
  const client=useRef<PokerPlayerClient|null>(null),busyRef=useRef(false),refreshing=useRef(false),readEpoch=useRef(0),retryAt=useRef(0),readFailures=useRef(0),pollMode=useRef<'spectator'|'player'|null>(null);
- const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('参加ボタンから接続してください。'),[connectionEpoch,setConnectionEpoch]=useState(0),[exitOpen,setExitOpen]=useState(false);
+ const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('参加ボタンから接続してください。'),[connectionEpoch,setConnectionEpoch]=useState(0),[exitOpen,setExitOpen]=useState(false),[exitDeadline,setExitDeadline]=useState<number|null>(null);
  async function run(operation:(c:PokerPlayerClient)=>Promise<unknown>){
   const c=client.current;if(!c||busyRef.current)return;busyRef.current=true;readEpoch.current++;setBusy(true);
   try{await operation(c);if(client.current===c){setState(c.state);setMessage(c.pending?'前の操作の結果確認が必要です。':'接続中');}}
@@ -35,15 +35,21 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   }finally{if(client.current===c)refreshing.current=false;}
  }
  useEffect(()=>{
-  setState(null);setPending(false);setBusy(false);setConnectionEpoch(0);pollMode.current=null;busyRef.current=false;refreshing.current=false;readEpoch.current++;retryAt.current=0;readFailures.current=0;
+  setExitDeadline(null);setState(null);setPending(false);setBusy(false);setConnectionEpoch(0);pollMode.current=null;busyRef.current=false;refreshing.current=false;readEpoch.current++;retryAt.current=0;readFailures.current=0;
   if(!enabled)return;
   const supabase=createClient();const c=new PokerPlayerClient({endpoint:`/api/poker/rooms/${roomId}`,token:async()=>{const {data:{session}}=await supabase.auth.getSession();return session?.access_token??null;}});client.current=c;
   // Session data supplies a credential only; the service re-verifies identity and admission.
   let userId:string|undefined;
-  const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||userId!==undefined&&userId!==(session?.user.id??'')){c.close();client.current=null;pollMode.current=null;setState(null);setPending(false);setBusy(false);busyRef.current=false;setConnectionEpoch(0);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
+  const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||userId!==undefined&&userId!==(session?.user.id??'')){c.close();client.current=null;pollMode.current=null;setExitDeadline(null);setState(null);setPending(false);setBusy(false);busyRef.current=false;setConnectionEpoch(0);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
   const timer=setInterval(()=>{if(pollMode.current&&!busyRef.current&&!c.pending)void refresh();},1000);
   return()=>{clearInterval(timer);subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
+ useEffect(()=>{if(state?.autoExitAt!=null)setExitDeadline(current=>current??Date.now()+Math.max(0,state.autoExitAt!-state.serverNow));},[state?.autoExitAt]);
+ useEffect(()=>{
+  if(exitDeadline===null)return;
+  const timer=setTimeout(()=>{pollMode.current=null;client.current?.close();window.location.assign('/poker-lobby');},Math.max(0,exitDeadline-Date.now()));
+  return()=>clearTimeout(timer);
+ },[exitDeadline]);
  useEffect(()=>{
   const c=client.current;if(!c||!eventsOrigin||connectionEpoch===0)return;
   let cancelled=false,stop:(()=>void)|undefined;
