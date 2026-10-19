@@ -13,6 +13,7 @@ type Options={
  origins:readonly string[];
  /** Trusted manifest from configuration/discovery; never client-supplied. */
  roomIds?:readonly string[];
+ onDiagnostic?:NonNullable<ConstructorParameters<typeof RoomRuntime>[1]>['onDiagnostic'];
  host?:string;port?:number;
 };
 export function createPokerRoomService(options:Options){
@@ -20,7 +21,7 @@ export function createPokerRoomService(options:Options){
  if(typeof host!=='string'||!host||!Number.isSafeInteger(port)||port<0||port>65535)throw Error('Invalid listener configuration');
  const roomIds=options.roomIds===undefined?null:[...options.roomIds],origins=[...options.origins];let runtime:RoomRuntime;
  const registry=new TournamentRoomRegistry({...options.registry,onRoomBound:id=>runtime.activate(id)});
- runtime=new RoomRuntime(registry,{maxRooms:options.registry.maxRooms});
+ runtime=new RoomRuntime(registry,{maxRooms:options.registry.maxRooms,onDiagnostic:options.onDiagnostic});
  const rawPlayer=registry.playerHandler({origins,auth:options.auth}),rawLobby=registry.lobbyHandler({origins,auth:options.auth}),rawManager=registry.managerHandler({origins,auth:options.auth});
  let closing=false,started=false,startTask:Promise<AddressInfo>|null=null,closeTask:Promise<void>|null=null;
  let entryTimer:ReturnType<typeof setInterval>|null=null,entryTask:Promise<unknown>|null=null;

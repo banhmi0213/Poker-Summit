@@ -47,15 +47,21 @@ export async function restoreRoom(store:RoomStore,roomId:string,ring:KeyRing,opt
 /** Dedicated backend service-role client only; never reuse a browser/user-session client. */
 type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
 export class SupabaseRoomStore implements RoomStore {
- constructor(private client:RpcClient){}
+ constructor(private client:RpcClient,private report:(event:{roomId:string;operation:'load'|'save';reason:string})=>void=()=>{}){}
+ #failure(roomId:string,operation:'load'|'save',error:unknown){
+  // Never emit PostgREST messages/details: they may contain SQL, keys or payloads.
+  const code=typeof error==='object'&&error!==null&&'code' in error?error.code:null;
+  const reason=['P0001','57014','40001','40P01','42501','23505','PGRST002'].includes(String(code))?String(code):'unclassified';
+  try{this.report({roomId,operation,reason});}catch{}
+ }
  async load(roomId:string):Promise<SavedRoom|null> {
-  identity(roomId,1);const {data,error}=await this.client.rpc('poker_room_load',{p_room:roomId});if(error)throw new Error('Room load failed');
+  identity(roomId,1);const {data,error}=await this.client.rpc('poker_room_load',{p_room:roomId});if(error){this.#failure(roomId,'load',error);throw new Error('Room load failed');}
   if(data===null)return null;
   const s=data as SavedRoom;if(!Number.isSafeInteger(s?.version)||s.version<1||!s.sealed)throw new Error('Invalid stored room');return s;
  }
  async save(r:SaveRequest) {
   const {data,error}=await this.client.rpc('poker_room_save',{p_room:r.roomId,p_expected:r.expectedVersion,p_write:r.writeId,p_sealed:r.sealed,p_result:r.result});
-  if(error)throw new Error('Room save failed; reload owner before serving');
+  if(error){this.#failure(r.roomId,'save',error);throw new Error('Room save failed; reload owner before serving');}
   if(!Number.isSafeInteger(data)||Number(data)!==r.expectedVersion+1)throw new Error('Invalid save response');return Number(data);
  }
 }

@@ -43,3 +43,43 @@ test('an actual timer callback drives one durable expiry and rearms the next tim
  const f=await setup(6),timers=new Timers(),expired=deferred();let calls=0;const scheduler=new RoomScheduler({advance:async()=>{const r=await f.owner.advance(f.control);calls++;if(calls===2)expired.resolve(r);return r;}},{timer:timers,now:f.options.now});
  await scheduler.start(f.options.roomId);const state=await f.owner.publicSnapshot(),handle=timers.entries.keys().next().value;f.set(state.turn.expiresAt);timers.fire(handle);const result=await expired.promise;await new Promise(resolve=>setImmediate(resolve));assert.equal(result.event,'timed-out');assert.equal(result.state.hand.revision,1);assert.equal(timers.entries.size,1);assert.equal(scheduler.activeRooms,1);scheduler.close();assert.equal(timers.entries.size,0);
 });
+
+test('two idle heads-up players keep seats/chips across 1000 durable decisions and reconnect after reload',async()=>{
+ const f=await setup(2,{turnMs:20000,handPauseMs:8000});
+ f.control.seatedStart=true;
+ let timeoutCount=0;
+ for(let i=0;i<1000;i++){
+  const r=await f.owner.advance(f.control),s=r.state;
+  assert.equal(f.owner.health.status,'ready');
+  if(s.hand)assert.equal(s.hand.players.reduce((n,p)=>n+p.stack,0)+s.hand.pot,2000);
+  if(r.event==='timed-out')timeoutCount++;
+  if(s.phase==='finished')break;
+  if(s.turn)f.set(s.turn.expiresAt);
+  else if(r.nextWakeAt!==null)f.set(r.nextWakeAt);
+  else f.set(s.completedAt+8000);
+ }
+ assert.ok(timeoutCount>10);
+ const before=await f.owner.publicSnapshot(),loaded=await DurableRoomOwner.load(f.options);
+ const connected=await loaded.connect(members[0]);
+ assert.deepEqual(connected.state.hand.players.map(p=>({...p,hole:null})),before.hand.players);
+ assert.equal(connected.state.hand.handId,before.hand.handId);
+ assert.equal(connected.state.seats.filter(p=>p.occupied).length,2);
+});
+
+test('only a failed control read retries; three backoffs preserve owner and bounded failure stops polling',async()=>{
+ const {RoomControlUnavailable}=require('../lib/poker/room-directory.ts');
+ const id=randomUUID(),timers=new Timers(),events=[];let broken=true,calls=0;
+ const scheduler=new RoomScheduler({advance:async()=>{calls++;if(broken)throw new RoomControlUnavailable();return {event:'playing',nextWakeAt:T+1000};}},{timer:timers,now:()=>T,onDiagnostic:e=>events.push(e)});
+ await scheduler.start(id);assert.equal(scheduler.activeRooms,1);
+ for(const delay of [1000,2000]){const [handle,timer]=timers.entries.entries().next().value;assert.equal(timer.ms,delay);timers.fire(handle);await new Promise(r=>setImmediate(r));}
+ broken=false;let handle=timers.entries.keys().next().value;assert.equal(timers.entries.get(handle).ms,4000);timers.fire(handle);await new Promise(r=>setImmediate(r));assert.equal(calls,4);assert.equal(scheduler.activeRooms,1);
+ broken=true;await scheduler.wake(id);
+ for(let i=0;i<3;i++){timers.fire(timers.entries.keys().next().value);await new Promise(r=>setImmediate(r));}
+ assert.equal(scheduler.activeRooms,0);assert.equal(timers.entries.size,0);assert.equal(events.at(-1).reason,'control-read-unavailable');
+ assert.ok(!JSON.stringify(events).includes('secret'));scheduler.close();
+});
+
+test('malformed control is not a retryable I/O failure, and reporting cannot revive a failed driver',async()=>{
+ const id=randomUUID();const directory=new SupabaseRoomDirectory({rpc:async()=>({data:{roomId:id,enabled:'bad'},error:null})});
+ const f=driver({advance:()=>directory.control(id)});await assert.rejects(f.scheduler.start(id),/operator recovery/);assert.equal(f.timers.entries.size,0);assert.equal(f.scheduler.activeRooms,0);
+});

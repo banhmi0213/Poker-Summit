@@ -11,10 +11,10 @@ export class RoomRuntime {
  #registry:Registry;#driver:Driver;#limit:number;#closed=false;
  #recovering=new Set<string>();
  #pending=new Map<string,Promise<void>>();#active=new Set<string>();#failed=new Set<string>();
- constructor(registry:Registry,options:{maxRooms?:number;driver?:Driver}={}){
+ constructor(registry:Registry,options:{maxRooms?:number;driver?:Driver;onDiagnostic?:NonNullable<ConstructorParameters<typeof RoomScheduler>[1]>['onDiagnostic']}={}){
   this.#registry=registry;this.#limit=options.maxRooms??128;
   if(!Number.isSafeInteger(this.#limit)||this.#limit<1||this.#limit>10000)throw new Error('Invalid runtime limit');
-  this.#driver=options.driver??new RoomScheduler(registry,{maxRooms:this.#limit,onError:id=>{this.#active.delete(id);this.#failed.add(id);}});
+  this.#driver=options.driver??new RoomScheduler(registry,{maxRooms:this.#limit,onDiagnostic:options.onDiagnostic,onError:id=>{this.#active.delete(id);this.#failed.add(id);}});
  }
  isActive(raw:string){return !this.#closed&&this.#active.has(roomUUID(raw))&&!this.#failed.has(roomUUID(raw));}
  get health(){return {closed:this.#closed,active:this.#active.size,pending:this.#pending.size,failed:this.#failed.size};}
