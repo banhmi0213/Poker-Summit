@@ -10,7 +10,7 @@ export function onlineSoundEvents(previous:SoundMarker|null,state:PlayerSnapshot
  // First projection/reconnect is a baseline; never replay a historical win or deal.
  if(previous){
   if(previous.handId!==marker.handId||marker.board>previous.board)sounds.push('deal');
-  else if(marker.handId===previous.handId&&marker.revision!==previous.revision&&!marker.result)sounds.push('action');
+  if(marker.handId===previous.handId&&marker.revision!==previous.revision&&previous.actor!==null)sounds.push('action');
   if(marker.result&&!previous.result&&previous.handId===marker.handId)sounds.push('win');
   if(marker.you!==null&&marker.actor===`seat-${marker.you}`&&!marker.result&&(marker.actor!==previous.actor||marker.revision!==previous.revision||marker.handId!==previous.handId))sounds.push('turn');
  }
