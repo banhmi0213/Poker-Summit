@@ -26,7 +26,9 @@ export async function updateProfile(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const mHoldemId = normalizeMHoldemId(formData.has("mHoldemId") ? formData.get("mHoldemId") : user.user_metadata?.m_holdem_id);
+  // m HOLD'EM ID は一度登録したら本人は変更できない(2026/10/19、複垢対策)。
+  // 未登録のときだけ、ここで1回登録できる(member_m_holdem_ids。変更は総合管理のみ)
+  const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
   const idError = mHoldemIdError(mHoldemId);
   if (idError) redirect(`/account/profile?error=${encodeURIComponent(idError)}`);
   const pref = String(formData.get("pref") ?? "").trim();
@@ -42,11 +44,19 @@ export async function updateProfile(formData: FormData) {
   }
 
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: name, pref, pref_public: prefPublic, m_holdem_id: mHoldemId || null },
+    data: { display_name: name, pref, pref_public: prefPublic },
   });
 
   if (error) {
     redirect(`/account/profile?error=${encodeURIComponent(authErrorMessage(error.message))}`);
+  }
+
+  if (mHoldemId) {
+    const { data: current } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", user.id).maybeSingle();
+    if (!current) {
+      const { error: idSetError } = await supabase.rpc("set_my_m_holdem_id", { p_id: mHoldemId });
+      if (idSetError) redirect(`/account/profile?error=${encodeURIComponent(idSetError.message)}`);
+    }
   }
 
   // display_nameもprofilesへミラーしておく(2026/10追加)。会員プロフィール

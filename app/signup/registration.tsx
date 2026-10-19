@@ -134,7 +134,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             </label>
             <div id="m-holdem-notice" className={styles.notice}>
               <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>
-              <p>未入力でも会員登録できます。マイページから後で登録・変更できます。IDは一般公開されません。</p>
+              <p>未入力でも会員登録できます（あとからマイページで登録できます）。IDは一般公開されません。<strong>一度登録すると変更できませんので、お間違えのないようご入力ください。</strong></p>
             </div>
             <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
             <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
