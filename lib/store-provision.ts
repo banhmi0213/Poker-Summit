@@ -84,8 +84,15 @@ if (already) {
 }
 
 // 日本時間の今日から1か月(以前は世界標準時で計算し、1/31 → 3/3 のようにずれていた。lib/billing-dates.ts)
-const fresh = freshPeriodEnd();
 const isTransfer = params.billing?.method === "bank_transfer";
+// カードのまとめ払い(6か月・12か月、2026/10/19〜): 申込みで選んだ月数の期間にする
+let cardCycleMonths = 1;
+if (!isTransfer) {
+    const { data: appCycle } = await supabase.from("listing_applications").select("billing_cycle_months").eq("id", application.id).maybeSingle();
+    const m = Number(appCycle?.billing_cycle_months ?? 1);
+    cardCycleMonths = m === 6 || m === 12 ? m : 1;
+}
+const fresh = freshPeriodEnd(new Date(), cardCycleMonths);
 
 const contractRow = {
     store_id: storeId,
@@ -101,7 +108,7 @@ const contractRow = {
     current_period_end: isTransfer ? params.billing!.currentPeriodEndIso : fresh.periodEndIso,
     billing_anchor_day: isTransfer ? params.billing!.anchorDay ?? null : fresh.anchorDay,
     billing_method: isTransfer ? "bank_transfer" : "card",
-    billing_cycle_months: isTransfer ? params.billing!.cycleMonths : 1,
+    billing_cycle_months: isTransfer ? params.billing!.cycleMonths : cardCycleMonths,
 };
 // 店舗ごとに契約は1つ(store_id は一意)。やり直しのときは前回作った契約を同じ内容で上書きする
 const { error: contractError } = await supabase.from("store_contracts").upsert(contractRow, { onConflict: "store_id" });

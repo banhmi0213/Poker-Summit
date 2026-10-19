@@ -652,6 +652,38 @@ Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済ができませんでした", text });
 }
 
+/** カードのまとめ払い(6か月・12か月)の自動更新の事前お知らせ(更新の7日前、2026/10/19) */
+export async function sendPrepayRenewalNoticeEmail(params: {
+  to: string;
+  storeName: string;
+  planName: string;
+  months: number;
+  amount: number;
+  renewOn: string; // 更新日(YYYY年M月D日)
+  deadline: string; // 変更・解約の連絡期限(更新日の前日)
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+
+ご契約中の「${params.planName}（${params.months}か月まとめ払い）」は、${params.renewOn} に自動更新されます。
+更新日に、ご登録のクレジットカードで ${params.amount.toLocaleString("ja-JP")}円（${params.months}か月分・税込）を決済します。
+
+■ 引き続きご利用いただく場合
+お手続きは不要です。
+
+■ プラン・お支払い方法の変更、または解約をご希望の場合
+${params.deadline} までに、お問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+ご契約内容は店舗管理画面の「プラン・お支払い」から確認できます。
+${siteUrl}/store/profile/plan
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.renewOn}にご契約が自動更新されます`, text });
+}
+
 /** カード決済が完了したことの店舗向けお知らせ(契約の更新・カード登録時の決済) */
 export async function sendPaymentReceiptEmail(params: {
   to: string;

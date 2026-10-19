@@ -287,4 +287,4 @@ export const MEMBER_ROLE_OPTIONS = [
 export const CARD_BRANDS_NOTE = "現在ご利用いただけるカードはVisa・Mastercardです。JCB・AMEX・Dinersは準備中のため、銀行振込をお選びください。";
 
 // カード払いでカードを保存していただく理由の案内(2026/10/18)。申込み画面・店舗管理のカード登録の前に出す
-export const CARD_SAVE_NOTE = "カード払いは毎月の自動決済のため、決済代行会社（KOMOJU）にカードを保存していただきます（KOMOJUの画面で「今後の支払いに備えて支払い方法を保存します」にチェックしてください）。カード番号はPoker Summitには保存されません。カードを保存したくない場合は銀行振込をお選びください。";
+export const CARD_SAVE_NOTE = "カード払いは更新時に自動で決済するため、決済代行会社（KOMOJU）にカードを保存していただきます（KOMOJUの画面で「今後の支払いに備えて支払い方法を保存します」にチェックしてください）。カード番号はPoker Summitには保存されません。カードを保存したくない場合は銀行振込をお選びください。";

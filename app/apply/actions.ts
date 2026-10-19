@@ -7,7 +7,7 @@ import { createPaymentSession } from "@/lib/komoju";
 import { beginHostedAttempt, attachHostedSession, abandonHostedAttempt } from "@/lib/payment-ledger";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
-import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
+import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, quote, discountFor, type BillingCycle } from "@/lib/bank-transfer";
 import { searchStoreCandidates } from "@/lib/store-match";
 import { guardPublicForm } from "@/lib/form-guard";
 
@@ -290,9 +290,6 @@ export async function startPaidApplication(formData: FormData) {
           if (!billingSettings.cardPaymentEnabled && isAdmin !== true) {
                     redirect(`/apply?error=${encodeURIComponent("現在クレジットカードでのお申込みは受け付けておりません。銀行振込をお選びください。")}`);
           }
-          if (billingCycle !== 1) {
-                    redirect(`/apply?error=${encodeURIComponent("6か月・12か月のまとめ払いは銀行振込でのお支払いのみとなります。")}`);
-          }
   }
 
   // 二重送信の防止: 同じ内容の振込申込みが10分以内にあれば、新しく作らず完了画面へ
@@ -411,13 +408,16 @@ export async function startPaidApplication(formData: FormData) {
           // 本人認証(3Dセキュア)もこの画面で行える。2か月目以降は登録されたカードにサーバーから決済する。
           // 戻り先 /apply/complete/callback でセッションの結果を確かめる。戻らずに画面を閉じた人は
           // 自動処理(/api/cron/payment-sessions)が確かめて店舗を発行する。
+          // カードもまとめ払い(6か月・12か月)を選べる(2026/10/19)。金額は振込と同じ計算(割引込み・税込)
+          const cardDiscount = discountFor(billingSettings, billingCycle);
+          const firstAmount = quote(plan!.monthly_fee, billingCycle, cardDiscount).total;
           const begun = await beginHostedAttempt({
                     purpose: "apply",
                     groupKey: `apply:${application.id}`,
-                    amount: plan!.monthly_fee,
+                    amount: firstAmount,
                     refs: { listingApplicationId: application.id },
-                    context: { kind: "apply", applicationId: application.id },
-                    description: `新規申込みの初月分（${companyName}）`,
+                    context: { kind: "apply", applicationId: application.id, months: billingCycle },
+                    description: `新規申込みの${billingCycle === 1 ? "初月分" : `${billingCycle}か月分（まとめ払い）`}（${companyName}）`,
           });
           if (begun.status !== "NEW") {
                     throw new Error(begun.status === "BUSY" && !begun.attemptId ? "決済の準備ができませんでした。時間をおいてもう一度お試しください。" : "この申込みのお支払いはすでに手続き中です。");
@@ -427,7 +427,7 @@ export async function startPaidApplication(formData: FormData) {
           try {
                     session = await createPaymentSession({
                               idemKey: begun.idemKey,
-                              amount: plan!.monthly_fee,
+                              amount: firstAmount,
                               returnUrl,
                               email,
                               externalCustomerId: `app-${application.id}`,

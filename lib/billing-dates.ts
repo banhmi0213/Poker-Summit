@@ -67,24 +67,27 @@ export function renewedPeriodEnd(params: {
   anchorDay: number | null;
   graceDays: number;
   now?: Date;
+  /** 何か月分の期間か(カードのまとめ払いは 6・12。省略時は1か月) */
+  months?: number;
 }): { periodEndIso: string; anchorDay: number } {
   const now = params.now ?? new Date();
+  const months = params.months && params.months > 0 ? params.months : 1;
   const today = jstToday(now);
   if (params.previousPeriodEndIso) {
     const prevStart = jstDateOf(params.previousPeriodEndIso); // 前の期間の終わり = 新しい期間の始まり
     const anchor = params.anchorDay ?? dayOf(prevStart);
     const lateDays = (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${prevStart}T00:00:00Z`)) / 86_400_000;
     if (lateDays <= params.graceDays) {
-      return { periodEndIso: jstMidnightIso(addMonthsAnchored(prevStart, 1, anchor)), anchorDay: anchor };
+      return { periodEndIso: jstMidnightIso(addMonthsAnchored(prevStart, months, anchor)), anchorDay: anchor };
     }
   }
   const anchor = dayOf(today);
-  return { periodEndIso: jstMidnightIso(addMonthsAnchored(today, 1, anchor)), anchorDay: anchor };
+  return { periodEndIso: jstMidnightIso(addMonthsAnchored(today, months, anchor)), anchorDay: anchor };
 }
 
-/** 今日(日本時間)から1か月の期間の終わり。即時の変更・新規契約用 */
-export function freshPeriodEnd(now: Date = new Date()): { periodEndIso: string; anchorDay: number } {
+/** 今日(日本時間)から1か月(まとめ払いは months か月)の期間の終わり。即時の変更・新規契約用 */
+export function freshPeriodEnd(now: Date = new Date(), months: number = 1): { periodEndIso: string; anchorDay: number } {
   const today = jstToday(now);
   const anchor = dayOf(today);
-  return { periodEndIso: jstMidnightIso(addMonthsAnchored(today, 1, anchor)), anchorDay: anchor };
+  return { periodEndIso: jstMidnightIso(addMonthsAnchored(today, months > 0 ? months : 1, anchor)), anchorDay: anchor };
 }

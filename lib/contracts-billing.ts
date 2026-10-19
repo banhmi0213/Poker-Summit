@@ -5,6 +5,7 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { createHash } from "crypto";
 import { chargeOnce, periodGroupKey } from "@/lib/payment-ledger";
 import { freshPeriodEnd, renewedPeriodEnd } from "@/lib/billing-dates";
+import { getBillingSettings, quote, discountFor, isBillingCycle } from "@/lib/bank-transfer";
 import { alertAdmin } from "@/lib/admin-alert";
 import { recordStoreHistory } from "@/lib/store-update";
 import { addonFeeFor } from "@/lib/addons";
@@ -35,7 +36,7 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   const { data, error } = await supabase
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, current_period_end, billing_anchor_day, cancel_at_period_end, price_lock_plan_id, price_lock_fee, price_lock_ended_at"
+      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, current_period_end, billing_anchor_day, cancel_at_period_end, price_lock_plan_id, price_lock_fee, price_lock_ended_at, billing_cycle_months"
     )
     .eq("id", storeContractId)
     .single();
@@ -58,6 +59,14 @@ export class PaymentPendingError extends Error {
 }
 
 export const CANCEL_SCHEDULED_MESSAGE = "解約のご予定があるため、プラン・アドオンの変更や決済はできません。解約を取り消す場合は運営にお問い合わせください。";
+
+export const PREPAY_CHANGE_MESSAGE = "まとめ払い（6か月・12か月）でご契約中のため、プランやお支払いサイクルの変更はお問い合わせフォームからご連絡ください。";
+
+/** カード契約のまとめ払いの月数(1・6・12)。それ以外は1 */
+export function cardCycleMonths(contract: { billing_cycle_months?: number | null }): 1 | 6 | 12 {
+  const m = Number(contract.billing_cycle_months ?? 1);
+  return isBillingCycle(m) ? m : 1;
+}
 
 export const BUSY_MESSAGE = "同じお手続きを処理しているか、お支払いの結果を確認中です。二重には決済していません。しばらくしてから画面を更新して、結果をご確認ください。";
 
@@ -88,6 +97,9 @@ export async function applyContractBillingChange(params: {
     throw new Error("この契約にはカード情報が登録されていません。運営にお問い合わせください。");
   }
   if (contract.cancel_at_period_end) throw new Error(CANCEL_SCHEDULED_MESSAGE);
+  // まとめ払い(6か月・12か月)の契約は、期間の終わりの自動更新だけ。途中の変更はお問い合わせで(振込と同じ)
+  const months = cardCycleMonths(contract as any);
+  if (months > 1 && params.source !== "card_renewal") throw new Error(PREPAY_CHANGE_MESSAGE);
 
   const { data: plan, error: planError } = await supabase
     .from("plans")
@@ -111,10 +123,13 @@ export async function applyContractBillingChange(params: {
     .filter((a) => a.billing_type !== "one_time")
     .map((a) => ({ ...a, fee: addonFeeFor(a, pref) as number }));
 
-  const addonFeeTotal = addons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
   // 年内お申込み特典: 据え置き中の同じプランなら据え置き料金で請求する(lib/price-lock.ts)
   const planFee = effectivePlanFee(contract, plan.id, plan.monthly_fee ?? 0);
-  const total = planFee + addonFeeTotal;
+  // まとめ払いの更新: プランの月額 × 月数(まとめ払いの割引込み)。月額アドオンは毎月別に決済する(この決済には含めない)
+  const prepay = months > 1;
+  const chargedAddons = prepay ? [] : addons;
+  const addonFeeTotal = chargedAddons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
+  const total = prepay ? quote(planFee, months as 6 | 12, discountFor(await getBillingSettings(supabase), months as 6 | 12)).total : planFee + addonFeeTotal;
 
   const isRenewal = params.source === "card_renewal";
   // 何の支払いか: 更新なら「この契約のこの期間の更新」、即時の変更なら「この期間中のこの構成への変更」
@@ -124,7 +139,7 @@ export async function applyContractBillingChange(params: {
     (isRenewal
       ? periodGroupKey("renewal", contract.id, contract.current_period_end)
       : periodGroupKey("change", contract.id, contract.current_period_end, configHash));
-  const description = `${isRenewal ? "契約更新" : "プラン・アドオン変更"}（契約 ${contract.id}・${plan.name}${addons.length ? " + " + addons.map((a) => a.name).join("、") : ""}）`;
+  const description = `${isRenewal ? "契約更新" : "プラン・アドオン変更"}（契約 ${contract.id}・${plan.name}${prepay ? `・${months}か月まとめ払い` : ""}${chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""}）`;
   const charge = await chargeOnce({
     purpose: isRenewal ? "renewal" : "change",
     groupKey,
@@ -160,8 +175,8 @@ export async function applyContractBillingChange(params: {
   const nowIso = new Date().toISOString();
   // 期間の計算は日本時間の暦日で(lib/billing-dates.ts)。更新は更新日を変えず、即時の変更は今日から1か月。
   const period = isRenewal
-    ? renewedPeriodEnd({ previousPeriodEndIso: contract.current_period_end, anchorDay: contract.billing_anchor_day ?? null, graceDays: CARD_GRACE_DAYS })
-    : freshPeriodEnd();
+    ? renewedPeriodEnd({ previousPeriodEndIso: contract.current_period_end, anchorDay: contract.billing_anchor_day ?? null, graceDays: CARD_GRACE_DAYS, months })
+    : freshPeriodEnd(new Date(), months);
   const newPeriodEnd = period.periodEndIso;
 
   const contractUpdate: Record<string, unknown> = {
@@ -205,6 +220,8 @@ export async function applyContractBillingChange(params: {
       .eq("status", "payment_suspended");
   }
 
+  // まとめ払いの更新ではアドオンの行は触らない(月額アドオンは毎月別に決済している)
+  if (!prepay) {
   // store_contract_addons を新しい構成に丸ごと置き換える(保留中の解除
   // 予約もここで全部クリアされる=新しい期間がまっさらにスタートする)。
   // 既にある行は残し(PICK UP表示が一瞬外れないように)、外れたものだけ消して、増えたものを足す。
@@ -234,14 +251,15 @@ export async function applyContractBillingChange(params: {
       .insert({ store_contract_id: contract.id, addon_id: a.id, fee: a.fee, billing_method: "card" });
     if (insertError) throw new Error(insertError.message);
   }
+  }
 
   await supabase.from("billing_events").insert({
     store_contract_id: contract.id,
     event_type: "success",
     amount: chargedTotal,
     source: params.source ?? "contract_change",
-    note: `${params.source === "card_renewal" ? "契約更新の決済" : "プラン・アドオン変更の即時決済"}(${plan.name}${
-      addons.length ? " + " + addons.map((a) => a.name).join("、") : ""
+    note: `${params.source === "card_renewal" ? "契約更新の決済" : "プラン・アドオン変更の即時決済"}(${plan.name}${prepay ? `・${months}か月まとめ払い` : ""}${
+      chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""
     })`,
   });
 
@@ -255,7 +273,7 @@ export async function applyContractBillingChange(params: {
         to: contract.contact_email,
         storeName: (storeInfo?.name as string | undefined) ?? "店舗",
         amount: chargedTotal,
-        description: `契約更新（${plan.name}${addons.length ? " + " + addons.map((a) => a.name).join("、") : ""}）`,
+        description: `契約更新（${plan.name}${prepay ? `・${months}か月分` : ""}${chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""}）`,
         periodEnd: `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
         at: new Date(),
       });
@@ -292,10 +310,11 @@ export async function schedulePlanDowngrade(params: {
   const supabase = createServiceRoleClient();
   const { data: contract, error } = await supabase
     .from("store_contracts")
-    .select("id, current_period_end")
+    .select("id, current_period_end, billing_method, billing_cycle_months")
     .eq("id", params.storeContractId)
     .single();
   if (error || !contract) throw new Error(error?.message ?? "契約が見つかりません。");
+  if (cardCycleMonths(contract as any) > 1) throw new Error(PREPAY_CHANGE_MESSAGE);
 
   // current_period_endが無い(極めて古い契約等)場合は、次回のcron実行で
   // 即適用される形にフォールバックする。
@@ -373,6 +392,7 @@ export async function applyProratedPlanUpgrade(params: { storeContractId: string
   const contract = await loadContract(supabase, params.storeContractId);
   if (!contract.fincode_customer_id) throw new Error("この契約にはカード情報が登録されていません。運営にお問い合わせください。");
   if (contract.cancel_at_period_end) throw new Error(CANCEL_SCHEDULED_MESSAGE);
+  if (cardCycleMonths(contract as any) > 1) throw new Error(PREPAY_CHANGE_MESSAGE);
 
   const [{ data: oldPlan }, { data: newPlan }] = await Promise.all([
     supabase.from("plans").select("id, name, monthly_fee").eq("id", contract.plan_id).maybeSingle(),

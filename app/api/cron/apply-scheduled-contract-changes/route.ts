@@ -7,7 +7,9 @@ import { chargeOnce, periodGroupKey, reconcileStaleAttempts } from "@/lib/paymen
 import { addMonthsAnchored, jstDateOf, jstMidnightIso, renewedPeriodEnd } from "@/lib/billing-dates";
 import { finalizeDueCancellations } from "@/lib/contract-cancel";
 import { startCronRun, finishCronRun, checkCronAlive, type CronFailure } from "@/lib/cron-run";
-import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail } from "@/lib/email";
+import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail, sendPrepayRenewalNoticeEmail } from "@/lib/email";
+import { getBillingSettings, quote, discountFor } from "@/lib/bank-transfer";
+import { effectivePlanFee } from "@/lib/price-lock";
 import { notifyStoreLine, PLAN_PAGE_URL, yen } from "@/lib/store-line";
 
 
@@ -120,7 +122,7 @@ export async function GET(req: NextRequest) {
     try {
       const { data: contract, error: contractFetchError } = await supabase
         .from("store_contracts")
-        .select("id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, status, cancel_at_period_end, billing_method, current_period_end, contact_email, suspended_for_nonpayment_at, stores(name, status)")
+        .select("id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, status, cancel_at_period_end, billing_method, billing_cycle_months, current_period_end, contact_email, suspended_for_nonpayment_at, stores(name, status)")
         .eq("id", storeContractId)
         .single();
       if (contractFetchError || !contract) throw new Error(contractFetchError?.message ?? "契約が見つかりません。");
@@ -166,9 +168,10 @@ export async function GET(req: NextRequest) {
           .limit(1)
           .maybeSingle();
         if (recent?.occurred_at) {
-          // 決済した日(日本時間)から1か月後の同じ日を次の更新日にする
+          // 決済した日(日本時間)から1か月(まとめ払いは6・12か月)後の同じ日を次の更新日にする
           const paidDay = jstDateOf(recent.occurred_at as string);
-          const d = new Date(jstMidnightIso(addMonthsAnchored(paidDay, 1)));
+          const cycle = [6, 12].includes(Number((contract as any).billing_cycle_months)) ? Number((contract as any).billing_cycle_months) : 1;
+          const d = new Date(jstMidnightIso(addMonthsAnchored(paidDay, cycle)));
           await supabase.from("store_contracts").update({ current_period_end: d.toISOString(), billing_anchor_day: Number(paidDay.slice(8, 10)) }).eq("id", storeContractId);
           await supabase.from("audit_log").insert({
             action: "card_renewal_double_charge_prevented",
@@ -217,6 +220,13 @@ export async function GET(req: NextRequest) {
     return [] as Array<{ id: string; ok: boolean; detail?: string }>;
   });
 
+  // カードのまとめ払い(6か月・12か月)の自動更新の7日前に、店舗へお知らせする(2026/10/19、ユーザー指示)
+  const notices = await sendPrepayRenewalNotices(supabase).catch((e) => {
+    failures.push({ step: "まとめ払いの更新のお知らせ", detail: e instanceof Error ? e.message : String(e) });
+    return [] as Array<{ id: string; ok: boolean; detail?: string }>;
+  });
+  for (const r of notices) if (!r.ok) failures.push({ step: "まとめ払いの更新のお知らせ", id: r.id, detail: r.detail ?? "" });
+
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
 
   for (const r of results) if (!r.ok) failures.push({ step: "契約の更新・変更の決済", id: r.storeContractId, detail: r.detail ?? "" });
@@ -230,6 +240,7 @@ export async function GET(req: NextRequest) {
     addonRenewed: addonResults.filter((r) => r.ok).length,
     reconciled: reconciled.length,
     canceledContracts: cancellations.filter((r) => r.ok).length,
+    renewalNotices: notices.filter((r) => r.ok).length,
   };
   await finishCronRun(runId, "card-billing", { jobLabel: "カード決済・契約更新", summary, failures });
 
@@ -392,6 +403,56 @@ async function renewOwnBilledAddons(supabase: Supa, nowIso: string) {
       } else {
         out.push({ id: row.id, ok: false, detail: charge.error });
       }
+    }
+  }
+  return out;
+}
+
+
+/** まとめ払いのカード契約で、更新日の7日前になったものに自動更新のお知らせを送る(期間ごとに1回) */
+async function sendPrepayRenewalNotices(supabase: Supa) {
+  const out: Array<{ id: string; ok: boolean; detail?: string }> = [];
+  const now = Date.now();
+  const until = new Date(now + 7 * 86400_000).toISOString();
+  const { data: rows } = await supabase
+    .from("store_contracts")
+    .select("id, plan_id, billing_cycle_months, current_period_end, renewal_notice_for, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name), plans!store_contracts_plan_id_fkey(name, monthly_fee)")
+    .eq("status", "active")
+    .eq("cancel_at_period_end", false)
+    .eq("billing_method", "card")
+    .in("billing_cycle_months", [6, 12])
+    .gt("current_period_end", new Date(now).toISOString())
+    .lte("current_period_end", until);
+  if (!rows?.length) return out;
+  const settings = await getBillingSettings(supabase);
+  for (const c of rows as any[]) {
+    if (c.renewal_notice_for && Date.parse(c.renewal_notice_for) === Date.parse(c.current_period_end)) continue;
+    if (!c.contact_email) {
+      out.push({ id: c.id, ok: false, detail: "連絡先メールが無いため、更新のお知らせを送れません" });
+      continue;
+    }
+    try {
+      const plan = Array.isArray(c.plans) ? c.plans[0] : c.plans;
+      const store = Array.isArray(c.stores) ? c.stores[0] : c.stores;
+      const months = Number(c.billing_cycle_months) as 6 | 12;
+      const amount = quote(effectivePlanFee(c, c.plan_id, plan?.monthly_fee ?? 0), months, discountFor(settings, months)).total;
+      const label = (iso: string) => {
+        const d = new Date(Date.parse(iso) + 9 * 3600 * 1000);
+        return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+      };
+      await sendPrepayRenewalNoticeEmail({
+        to: c.contact_email,
+        storeName: store?.name ?? "店舗",
+        planName: plan?.name ?? "ご契約プラン",
+        months,
+        amount,
+        renewOn: label(c.current_period_end),
+        deadline: label(new Date(Date.parse(c.current_period_end) - 86400_000).toISOString()),
+      });
+      await supabase.from("store_contracts").update({ renewal_notice_for: c.current_period_end }).eq("id", c.id);
+      out.push({ id: c.id, ok: true });
+    } catch (e) {
+      out.push({ id: c.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
     }
   }
   return out;
