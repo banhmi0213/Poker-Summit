@@ -95,6 +95,9 @@ export async function MyPageContent({
   // profilesテーブルに持たせている(他人の投稿者アイコンを一覧でまとめて
   // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
   const { data: dealerProfile } = await supabase.from("dealer_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+  // m HOLD'EM ID(一度登録したら本人は変更できない。member_m_holdem_ids)
+  const { data: mHoldemRow } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", user.id).maybeSingle();
+  const mHoldemId = (mHoldemRow?.m_holdem_id as string | undefined) ?? "";
   const { data: myProfile } = await supabase
     .from("profiles")
     .select("avatar_url, pref_public, role, bio, email_public")
@@ -243,7 +246,7 @@ export async function MyPageContent({
             <dl className={styles.memberFacts}>
               <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
               <div><dt>▦ 登録日</dt><dd>{joinedAt || "未設定"}</dd></div>
-              <div><dt>m HOLD’EM ID</dt><dd>{String(user.user_metadata?.m_holdem_id || "未登録")}<small>（非公開）</small></dd></div>
+              <div><dt>m HOLD’EM ID</dt><dd>{mHoldemId || "未登録"}<small>（非公開）</small></dd></div>
               <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
@@ -478,7 +481,7 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} mHoldemId={String(user.user_metadata?.m_holdem_id || "")} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
+        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} mHoldemId={mHoldemId} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
           <section className={styles.infoPanel}>
             <h2>♟ プロフィール</h2>
             <dl>

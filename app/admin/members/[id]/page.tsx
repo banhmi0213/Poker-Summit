@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { setMemberSuspended, sendMemberPasswordReset, deleteMember, confirmMemberEmail } from "../actions";
+import { setMemberSuspended, sendMemberPasswordReset, deleteMember, confirmMemberEmail, adminSetMemberMHoldemId } from "../actions";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 function formatDate(value: string) {
@@ -90,10 +90,24 @@ export default async function AdminMemberDetailPage({
         )}
       </p>
 
-      <p style={{ marginBottom: 20, fontSize: 14 }}>
+      <p style={{ marginBottom: 6, fontSize: 14 }}>
         <strong>m HOLD&apos;EM ID：</strong>
         {mHoldemId ? <span style={{ userSelect: "all" }}>{mHoldemId}</span> : <span className="muted">未登録</span>}
       </p>
+      {/* 本人は登録後に変更できない(複垢対策)。入力間違いの訂正は運営がここで行う */}
+      <details style={{ marginBottom: 20 }}>
+        <summary className="muted" style={{ cursor: "pointer", fontSize: 12.5 }}>IDを訂正する（本人は変更できません）</summary>
+        <form
+          action={async (formData: FormData) => {
+            "use server";
+            await adminSetMemberMHoldemId(member.id, formData);
+          }}
+          style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}
+        >
+          <input name="mHoldemId" defaultValue={mHoldemId ?? ""} maxLength={64} autoComplete="off" style={{ maxWidth: 240 }} placeholder="空にすると削除" />
+          <button type="submit" className="btn">保存する</button>
+        </form>
+      </details>
 
       {withdrawn && (
         <p className="muted" style={{ marginBottom: 16, fontSize: 13 }}>

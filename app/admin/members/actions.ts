@@ -91,3 +91,14 @@ export async function confirmMemberEmail(userId: string): Promise<void> {
   revalidatePath("/admin/members");
   revalidatePath(`/admin/members/${userId}`);
 }
+
+/** 会員の m HOLD'EM ID を運営が訂正する(本人は登録後に変更できないため。2026/10/19)。空にすると削除 */
+export async function adminSetMemberMHoldemId(userId: string, formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const value = String(formData.get("mHoldemId") ?? "").trim();
+  const { error } = await supabase.rpc("admin_set_member_m_holdem_id", { p_user_id: userId, p_id: value });
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, value ? "member_m_holdem_id_set" : "member_m_holdem_id_clear", "member", userId);
+  revalidatePath("/admin/members");
+  revalidatePath(`/admin/members/${userId}`);
+}
