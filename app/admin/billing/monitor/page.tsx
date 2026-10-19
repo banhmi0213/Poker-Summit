@@ -21,7 +21,7 @@ const PURPOSE_LABEL: Record<string, string> = {
   addon_purchase: "アドオン購入",
 };
 const STATUS_LABEL: Record<string, string> = { pending: "処理中", captured: "決済済み", failed: "失敗", unknown: "結果不明" };
-const JOB_LABEL: Record<string, string> = { "card-billing": "カード決済・契約更新（毎日 午前3時）", "bank-transfer": "振込の請求・入金確認（毎日 午前9時）", "member-digest": "新規会員のまとめメール（毎日 午前9時）" };
+const JOB_LABEL: Record<string, string> = { "card-billing": "カード決済・契約更新（毎日 午前3時）", "bank-transfer": "振込の請求・入金確認（毎日 午前9時）", "member-digest": "新規会員のまとめメール（毎日 午前9時）", "payment-sessions": "カード支払い画面の結果確認（10分ごと）" };
 
 const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
 const jst = (iso: string | null) => (iso ? new Date(iso).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
@@ -39,7 +39,8 @@ export default async function BillingMonitorPage({ searchParams }: { searchParam
       .order("created_at", { ascending: false }),
     svc.from("cron_runs").select("*").order("started_at", { ascending: false }).limit(20),
   ]);
-  const openList = (open ?? []) as any[];
+  // KOMOJUの支払い画面でお客様が操作中のもの(初回の申込み)は、24時間までは確認待ちに出さない(自動処理が確かめる)
+  const openList = ((open ?? []) as any[]).filter((a) => !(a.status === "pending" && a.context?.hosted && Date.now() - Date.parse(a.created_at) < 24 * 3600 * 1000));
   const apps = (stuckApps ?? []) as any[];
 
   return (
