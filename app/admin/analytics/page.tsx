@@ -888,22 +888,35 @@ function IssuesTab({ issues }: { issues: AnalyticsIssue[] }) {
 // 新規会員 = 会員登録の数(店舗管理ログイン・運営は除く)。auth.users は service_role の関数で集計する。
 async function PrelaunchTab({ since }: { since: Date }) {
   const svc = createServiceRoleClient();
-  const [{ data: views }, { data: signups }] = await Promise.all([
+  const [{ data: views }, { data: signups }, { data: funnel }] = await Promise.all([
     fetchAllRows(() =>
       svc.from("page_views").select("created_at, referrer, device").eq("path", "/prelaunch").gte("created_at", since.toISOString())
     ),
     svc.rpc("member_signup_daily", { p_since: since.toISOString() }),
+    // ページ内の動き(2026/10/19〜): 登録へボタン・入力開始・登録ボタン(app/signup/funnel-tracker.tsx)
+    fetchAllRows(() =>
+      svc.from("page_views").select("created_at, path").in("path", ["/prelaunch#cta_click", "/prelaunch#form_start", "/prelaunch#submit"]).gte("created_at", since.toISOString())
+    ),
   ]);
+  const funnelRows = (funnel ?? []) as { created_at: string; path: string }[];
   const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null }[];
   const signupRows = (signups ?? []) as { day: string; signups: number; confirmed: number }[];
 
   const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
-  const days = new Map<string, { views: number; signups: number; confirmed: number }>();
+  const days = new Map<string, { views: number; signups: number; confirmed: number; cta: number; start: number; submit: number }>();
   const dayRow = (d: string) => {
-    if (!days.has(d)) days.set(d, { views: 0, signups: 0, confirmed: 0 });
+    if (!days.has(d)) days.set(d, { views: 0, signups: 0, confirmed: 0, cta: 0, start: 0, submit: 0 });
     return days.get(d)!;
   };
   viewRows.forEach((v) => dayRow(jstDay(v.created_at)).views++);
+  const FUNNEL_KEY: Record<string, "cta" | "start" | "submit"> = { "/prelaunch#cta_click": "cta", "/prelaunch#form_start": "start", "/prelaunch#submit": "submit" };
+  funnelRows.forEach((f) => {
+    const k = FUNNEL_KEY[f.path];
+    if (k) dayRow(jstDay(f.created_at))[k]++;
+  });
+  const totalCta = funnelRows.filter((f) => f.path === "/prelaunch#cta_click").length;
+  const totalStart = funnelRows.filter((f) => f.path === "/prelaunch#form_start").length;
+  const totalSubmit = funnelRows.filter((f) => f.path === "/prelaunch#submit").length;
   signupRows.forEach((r) => {
     const row = dayRow(String(r.day).slice(0, 10));
     row.signups += Number(r.signups);
@@ -964,11 +977,18 @@ async function PrelaunchTab({ since }: { since: Date }) {
         訪問 = 先行登録ページを未ログインの人が開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月18日の夜からです。
         <br />
         新規会員 = 会員登録の数（店舗管理ログイン・運営は除く）。登録率 = 新規会員 ÷ 訪問。
+        <br />
+        ページ内の動き（2026年10月19日から）：「登録へ」= スマホの「無料で先行登録する」ボタンを押した回数、「入力開始」= フォームに入力し始めた回数、「送信」= 登録ボタンを押した回数。
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
         {stat("訪問", totalViews.toLocaleString())}
         {stat("新規会員", totalSignups.toLocaleString(), `うちメール確認済み ${totalConfirmed.toLocaleString()}`)}
         {stat("登録率", rate(totalSignups, totalViews))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("「登録へ」ボタン", totalCta.toLocaleString(), `訪問の ${rate(totalCta, totalViews)}`)}
+        {stat("入力開始", totalStart.toLocaleString(), `訪問の ${rate(totalStart, totalViews)}`)}
+        {stat("送信", totalSubmit.toLocaleString(), `入力開始の ${rate(totalSubmit, totalStart)}`)}
       </div>
 
       <div className="card" style={{ marginBottom: 14, overflowX: "auto" }}>
@@ -981,6 +1001,9 @@ async function PrelaunchTab({ since }: { since: Date }) {
               <tr className="muted" style={{ textAlign: "right" }}>
                 <th style={{ textAlign: "left", padding: "6px 4px" }}>日付</th>
                 <th style={{ padding: "6px 4px" }}>訪問</th>
+                <th style={{ padding: "6px 4px" }}>登録へ</th>
+                <th style={{ padding: "6px 4px" }}>入力開始</th>
+                <th style={{ padding: "6px 4px" }}>送信</th>
                 <th style={{ padding: "6px 4px" }}>新規会員</th>
                 <th style={{ padding: "6px 4px" }}>確認済み</th>
                 <th style={{ padding: "6px 4px" }}>登録率</th>
@@ -991,6 +1014,9 @@ async function PrelaunchTab({ since }: { since: Date }) {
                 <tr key={d} style={{ textAlign: "right", borderTop: "1px solid var(--border)" }}>
                   <td style={{ textAlign: "left", padding: "6px 4px", whiteSpace: "nowrap" }}>{`${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`}</td>
                   <td style={{ padding: "6px 4px" }}>{r.views.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.cta.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.start.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.submit.toLocaleString()}</td>
                   <td style={{ padding: "6px 4px", fontWeight: 700 }}>{r.signups.toLocaleString()}</td>
                   <td style={{ padding: "6px 4px" }}>{r.confirmed.toLocaleString()}</td>
                   <td style={{ padding: "6px 4px" }}>{rate(r.signups, r.views)}</td>

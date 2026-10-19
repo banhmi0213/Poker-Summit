@@ -105,3 +105,14 @@
  .footer,.storeLinks{font-size:12px;line-height:1.8;color:#665744}.footer nav{gap:8px 16px}.footer a{display:inline-block;padding:5px 0}
  .headerLabel{font-size:12px}.back{font-size:13px;padding:6px 0}
 }
+
+/* 先行登録: 大会の日時・プライズ、フォームへのボタン、公式Xリンク(2026/10/19) */
+.tournamentFacts{display:flex;gap:8px;margin:10px 0 0;flex-wrap:wrap}
+.tournamentFacts div{flex:1 1 140px;padding:7px 10px;border:1px solid #e2c88e;border-radius:8px;background:#fffaf0}
+.tournamentFacts dt{font-size:10.5px;color:#8a6a35;letter-spacing:.06em}
+.tournamentFacts dd{margin:2px 0 0;font-size:15px;font-weight:700;font-family:"Noto Serif JP",serif;color:#3e2810;line-height:1.5}
+.jumpToForm{display:none;margin-top:12px}
+.tournamentXLink{margin-top:9px!important;font-size:11.5px!important;color:#765323}
+.tournamentXLink a{color:#6a4614;font-weight:700;text-decoration:underline;text-underline-offset:3px;margin:0 2px}
+.panel{scroll-margin-top:12px}
+@media(max-width:760px){.jumpToForm{display:flex;width:100%;font-size:15px;min-height:48px}.tournamentFacts dd{font-size:16px}.tournamentXLink{font-size:13px!important;text-align:center}}
