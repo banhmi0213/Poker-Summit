@@ -36,7 +36,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
               <div><dt>プライズ</dt><dd>{PRELAUNCH_TOURNAMENT.prizeLabel}</dd></div>
             </dl>
             {/* スマホでは最初の画面にフォームが入らないので、主役のボタンは登録フォームへ(2026/10/19)。公式Xは控えめなリンクに */}
-            <a className={styles.xFollowButton + " " + styles.jumpToForm} href="#signup-form">無料で先行登録する <span aria-hidden="true">↓</span></a>
+            <a className={styles.xFollowButton + " " + styles.jumpToForm} href="#signup-form">無料で先行登録する</a>
             <p className={styles.tournamentXLink}>参加方法・最新情報は<a href="https://x.com/poker_summit" target="_blank" rel="noopener noreferrer">公式X</a>でお知らせします</p>
           </aside>}
           <img className={styles.photo} src="/images/member-registration-approved-photo.webp" alt="Poker Summitのロゴが入ったテーブルでカードを配るディーラー" width={668} height={525} />

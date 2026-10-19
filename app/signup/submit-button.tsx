@@ -7,7 +7,7 @@ export function SignupSubmitButton({ className, label }: { className?: string; l
   const { pending } = useFormStatus();
   return (
     <button type="submit" className={className} disabled={pending} aria-busy={pending}>
-      {pending ? "送信中…" : label} {!pending && <span aria-hidden="true">→</span>}
+      {pending ? "送信中…" : label}
     </button>
   );
 }
