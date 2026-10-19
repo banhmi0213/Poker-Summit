@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { createCardRegistrationSession } from "@/lib/komoju";
+import { createPaymentSession } from "@/lib/komoju";
+import { beginHostedAttempt, attachHostedSession, abandonHostedAttempt } from "@/lib/payment-ledger";
 import { sendListingApplicationNotificationEmail } from "@/lib/email";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
@@ -405,19 +406,42 @@ export async function startPaidApplication(formData: FormData) {
       let failureMessage: string | null = null;
 
   try {
-          // KOMOJUのカード登録ページ(customerモードのセッション)を作ってリダイレクトする。
-          // 登録完了後は /apply/complete/callback に戻り、そこで初月分を決済する。
-          // セッションIDは申込みに保存しておき、戻り先でKOMOJUに問い合わせて結果を確認する
-          // (DB列は fincode 時代の fincode_customer_id を流用。完了後は customer_id に置き換わる)。
-          const returnUrl = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
-          const session = await createCardRegistrationSession({
-                    returnUrl,
-                    email,
-                    externalCustomerId: `app-${application.id}`,
+          // 初月分の支払い＋カード登録を、お客様がKOMOJUの画面で行う(customer_payment モード、2026/10/19)。
+          // KOMOJUサポートの案内(#52272)により、以前の「カード登録だけ → サーバーから初回決済」から変更。
+          // 本人認証(3Dセキュア)もこの画面で行える。2か月目以降は登録されたカードにサーバーから決済する。
+          // 戻り先 /apply/complete/callback でセッションの結果を確かめる。戻らずに画面を閉じた人は
+          // 自動処理(/api/cron/payment-sessions)が確かめて店舗を発行する。
+          const begun = await beginHostedAttempt({
+                    purpose: "apply",
+                    groupKey: `apply:${application.id}`,
+                    amount: plan!.monthly_fee,
+                    refs: { listingApplicationId: application.id },
+                    context: { kind: "apply", applicationId: application.id },
+                    description: `新規申込みの初月分（${companyName}）`,
           });
+          if (begun.status !== "NEW") {
+                    throw new Error("この申込みのお支払いはすでに手続き中です。");
+          }
+          const returnUrl = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
+          let session;
+          try {
+                    session = await createPaymentSession({
+                              idemKey: begun.idemKey,
+                              amount: plan!.monthly_fee,
+                              returnUrl,
+                              email,
+                              externalCustomerId: `app-${application.id}`,
+                              metadata: { attempt_id: begun.attemptId, purpose: "apply", listing_application_id: application.id },
+                    });
+          } catch (e) {
+                    await abandonHostedAttempt(begun.attemptId, `決済ページを作れませんでした: ${e instanceof Error ? e.message : String(e)}`);
+                    throw e;
+          }
           if (!session.session_url) {
+                    await abandonHostedAttempt(begun.attemptId, "決済ページのURLを取得できませんでした。");
                     throw new Error("決済ページのURLを取得できませんでした。");
           }
+          await attachHostedSession(begun.attemptId, session.id);
           const svc = createServiceRoleClient();
           await svc
             .from("listing_applications")

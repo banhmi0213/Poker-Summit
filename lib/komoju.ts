@@ -99,6 +99,68 @@ export async function createCardRegistrationSession(params: {
   });
 }
 
+/**
+ * 初回の支払い＋カード登録を、お客様がKOMOJUの画面で行うセッション(customer_payment モード、2026/10/19)。
+ * KOMOJUサポートの案内(#52272): 初回はお客様が操作できるこの方式で。本人認証(3Dセキュア)もこの画面で行える。
+ * 2回目以降は、このとき登録されたカード(customer)にサーバーから決済する(createPaymentOnce)。
+ * idemKey を注文番号(external_order_num)と冪等キーに使い、決済の照合・二重作成の防止に使う。
+ */
+export async function createPaymentSession(params: {
+  idemKey: string;
+  amount: number;
+  returnUrl: string;
+  email?: string | null;
+  externalCustomerId?: string | null;
+  metadata?: Record<string, string>;
+}): Promise<KomojuSession> {
+  return komojuFetch<KomojuSession>(
+    "POST",
+    "/sessions",
+    {
+      mode: "customer_payment",
+      amount: params.amount,
+      currency: "JPY",
+      return_url: params.returnUrl,
+      default_locale: "ja",
+      payment_types: ["credit_card"],
+      ...(params.email ? { email: params.email } : {}),
+      ...(params.externalCustomerId ? { external_customer_id: params.externalCustomerId } : {}),
+      payment_data: {
+        external_order_num: params.idemKey,
+        ...(params.metadata ? { metadata: params.metadata } : {}),
+      },
+    },
+    params.idemKey
+  );
+}
+
+/**
+ * 支払いセッションの結果。
+ * - open: お客様がまだ画面で操作中(決済されていない・まだ決済されうる)
+ * - captured / failed / unknown: RawCharge と同じ意味
+ */
+export type SessionOutcome =
+  | { kind: "open"; customerId: string | null }
+  | (RawCharge & { customerId: string | null });
+
+export async function paymentSessionOutcome(sessionId: string): Promise<SessionOutcome> {
+  const session = await getSession(sessionId);
+  const anySession = session as any;
+  const payment = (session.payment ?? null) as any;
+  const customerId: string | null = session.customer_id ?? payment?.customer ?? payment?.customer_id ?? null;
+  const sStatus = String(session.status ?? "").toLowerCase();
+  if (payment && payment.id) {
+    const r = classifyPayment(payment as KomojuPayment);
+    return { ...r, customerId } as SessionOutcome;
+  }
+  if (sStatus === "pending") return { kind: "open", customerId };
+  if (sStatus === "cancelled" || sStatus === "canceled" || sStatus === "expired") {
+    return { kind: "failed", error: `session=${sStatus}`, customerId };
+  }
+  // completed なのに決済が無い等: 分からないので確認待ちにする
+  return { kind: "unknown", error: `session=${sStatus}${anySession?.payment ? "" : " / 決済なし"}`, customerId };
+}
+
 export async function getSession(sessionId: string): Promise<KomojuSession> {
   return komojuFetch<KomojuSession>("GET", `/sessions/${encodeURIComponent(sessionId)}`);
 }

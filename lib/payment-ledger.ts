@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "crypto";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { createPaymentOnce, lookupOrder, type RawCharge } from "@/lib/komoju";
+import { createPaymentOnce, lookupOrder, paymentSessionOutcome, type RawCharge, type SessionOutcome } from "@/lib/komoju";
 import { alertAdmin } from "@/lib/admin-alert";
 
 // ============================================================================
@@ -189,6 +189,20 @@ export async function reconcileAttempt(attemptId: string, adminUserId: string | 
   const { data: row } = await svc.from("payment_attempts").select("*").eq("id", attemptId).maybeSingle();
   if (!row) throw new Error("決済の記録が見つかりません。");
   if (row.status === "captured" || row.status === "failed") return { status: row.status, detail: "確定済みです。" };
+  // KOMOJUの画面でお客様が支払う決済(初回の申込み)は、支払いセッションの状態で確かめる
+  const sessionId = (row.context as any)?.sessionId as string | undefined;
+  if (sessionId) {
+    const out = await settleHostedAttempt(attemptId, await paymentSessionOutcome(sessionId).catch((e) => ({ kind: "unknown", error: `KOMOJUに確認できませんでした: ${e instanceof Error ? e.message : String(e)}`, customerId: null }) as SessionOutcome), adminUserId);
+    if (out.status === "open") {
+      // 24時間たっても支払われていないセッションは、もう使われないものとして終える(決済はされていない)
+      if (Date.now() - Date.parse(row.created_at as string) > 24 * 3600 * 1000) {
+        await svc.from("payment_attempts").update({ status: "failed", error: "お客様が支払いを完了しないまま24時間が過ぎました", updated_at: new Date().toISOString() }).eq("id", attemptId).eq("status", "pending");
+        return { status: "failed", detail: "お客様が支払いを完了していません（24時間経過）。" };
+      }
+      return { status: "unknown", detail: "お客様がまだKOMOJUの画面で支払っていません。" };
+    }
+    return { status: out.status as "captured" | "failed" | "unknown", detail: out.detail };
+  }
   const looked = await lookupOrder(row.idem_key as string, (row.komoju_payment_id as string | null) ?? null);
   const nowIso = new Date().toISOString();
   if (looked.kind === "captured") {
@@ -219,4 +233,121 @@ export async function reconcileStaleAttempts(): Promise<Array<{ id: string; stat
 export function periodGroupKey(prefix: string, id: string, periodEndIso: string | null | undefined, extra?: string): string {
   const day = periodEndIso ? new Date(Date.parse(periodEndIso) + 9 * 3600 * 1000).toISOString().slice(0, 10) : "none";
   return [prefix, id, day, extra].filter(Boolean).join(":");
+}
+
+
+// ============================================================================
+// KOMOJUの画面でお客様が支払う決済(初回の申込み・2026/10/19)
+// サーバーから決済する chargeOnce() と同じ台帳(payment_attempts)を使う。
+//   1. beginHostedAttempt: 支払いの記録を「処理中」で作る(同じ支払いは同時に1件だけ)
+//   2. お客様をKOMOJUの支払い画面へ(注文番号 = idemKey)
+//   3. settleHostedAttempt: 戻ってきたとき・自動処理で、セッションの結果を記録する
+// 戻らずに画面を閉じた人も、自動処理(/api/cron/payment-sessions)がセッションを確かめて続きを行う。
+// ============================================================================
+
+export type HostedBegin =
+  | { status: "NEW"; attemptId: string; idemKey: string }
+  | { status: "CAPTURED"; attemptId: string }
+  | { status: "BUSY"; attemptId: string | null; sessionId: string | null; error: string };
+
+export async function beginHostedAttempt(params: {
+  purpose: ChargePurpose;
+  groupKey: string;
+  amount: number;
+  refs: Refs;
+  context?: Record<string, unknown>;
+  description: string;
+}): Promise<HostedBegin> {
+  const svc = createServiceRoleClient();
+  const { data: existing } = await svc
+    .from("payment_attempts")
+    .select("id, status, context")
+    .eq("group_key", params.groupKey)
+    .in("status", ["pending", "captured", "unknown"])
+    .maybeSingle();
+  if (existing) {
+    if (existing.status === "captured") return { status: "CAPTURED", attemptId: existing.id as string };
+    return { status: "BUSY", attemptId: existing.id as string, sessionId: ((existing.context as any)?.sessionId as string) ?? null, error: "同じお支払いを処理中です。" };
+  }
+  const { data: last } = await svc.from("payment_attempts").select("attempt_no").eq("group_key", params.groupKey).order("attempt_no", { ascending: false }).limit(1).maybeSingle();
+  const attemptNo = ((last?.attempt_no as number | undefined) ?? 0) + 1;
+  const idemKey = idemKeyFor(params.purpose, params.groupKey, attemptNo);
+  const { data: inserted, error } = await svc
+    .from("payment_attempts")
+    .insert({
+      group_key: params.groupKey,
+      attempt_no: attemptNo,
+      idem_key: idemKey,
+      purpose: params.purpose,
+      status: "pending",
+      amount: params.amount,
+      customer_id: null,
+      store_contract_id: params.refs.storeContractId ?? null,
+      store_contract_addon_id: params.refs.storeContractAddonId ?? null,
+      listing_application_id: params.refs.listingApplicationId ?? null,
+      store_id: params.refs.storeId ?? null,
+      context: { ...(params.context ?? {}), description: params.description, hosted: true },
+    })
+    .select("id")
+    .single();
+  if (error || !inserted) return { status: "BUSY", attemptId: null, sessionId: null, error: `決済の準備ができませんでした: ${error?.message ?? "不明"}` };
+  return { status: "NEW", attemptId: inserted.id as string, idemKey };
+}
+
+/** 支払いセッションのIDを記録に残す(戻ってこなかったときに自動処理が確かめるため) */
+export async function attachHostedSession(attemptId: string, sessionId: string): Promise<void> {
+  const svc = createServiceRoleClient();
+  const { data: row } = await svc.from("payment_attempts").select("context").eq("id", attemptId).maybeSingle();
+  await svc.from("payment_attempts").update({ context: { ...((row?.context as object) ?? {}), sessionId }, updated_at: new Date().toISOString() }).eq("id", attemptId);
+}
+
+/** セッションの作成に失敗したとき(KOMOJUの画面に進んでいない = 決済されていない) */
+export async function abandonHostedAttempt(attemptId: string, error: string): Promise<void> {
+  const svc = createServiceRoleClient();
+  await svc.from("payment_attempts").update({ status: "failed", error: error.slice(0, 1000), updated_at: new Date().toISOString() }).eq("id", attemptId).eq("status", "pending");
+}
+
+/**
+ * セッションの結果を記録する。
+ * - captured: 決済済み(customer_id も残す)。以前「失敗」にしていても、KOMOJUで決済済みなら決済済みに直す
+ * - failed: 決済されていない
+ * - unknown: 確認待ち(運営にメール)
+ * - open: お客様がまだ支払い画面にいる(何もしない)
+ */
+export async function settleHostedAttempt(attemptId: string, outcome: SessionOutcome, adminUserId: string | null = null): Promise<{ status: "captured" | "failed" | "unknown" | "open"; detail: string; customerId: string | null; paymentId: string | null }> {
+  const svc = createServiceRoleClient();
+  const nowIso = new Date().toISOString();
+  const { data: row } = await svc.from("payment_attempts").select("*").eq("id", attemptId).maybeSingle();
+  if (!row) throw new Error("決済の記録が見つかりません。");
+  const customerId = outcome.customerId ?? ((row.customer_id as string | null) ?? null);
+  if (outcome.kind === "open") return { status: "open", detail: "支払い画面で操作中です。", customerId, paymentId: null };
+  if (outcome.kind === "captured") {
+    if (row.status !== "captured") {
+      if (outcome.payment.amount != null && Number(outcome.payment.amount) !== Number(row.amount)) {
+        await alertAdmin("カード決済の金額が依頼と違います", [String((row.context as any)?.description ?? ""), `依頼: ${row.amount}円 / KOMOJU: ${outcome.payment.amount}円`, `注文番号: ${row.idem_key}`]);
+      }
+      await svc
+        .from("payment_attempts")
+        .update({ status: "captured", komoju_payment_id: outcome.payment.id ?? null, customer_id: customerId, error: null, updated_at: nowIso, ...(adminUserId ? { resolved_by: adminUserId, resolved_note: "KOMOJUで決済済みを確認" } : {}) })
+        .eq("id", attemptId);
+    }
+    return { status: "captured", detail: "KOMOJUで決済済みです。", customerId, paymentId: outcome.payment.id ?? null };
+  }
+  if (outcome.kind === "failed") {
+    if (row.status === "pending" || row.status === "unknown") {
+      await svc.from("payment_attempts").update({ status: "failed", komoju_payment_id: outcome.payment?.id ?? null, error: outcome.error.slice(0, 1000), updated_at: nowIso }).eq("id", attemptId);
+    }
+    return { status: "failed", detail: "決済されていません。", customerId, paymentId: outcome.payment?.id ?? null };
+  }
+  if (row.status === "pending") {
+    await svc.from("payment_attempts").update({ status: "unknown", komoju_payment_id: outcome.payment?.id ?? null, customer_id: customerId, error: outcome.error.slice(0, 1000), updated_at: nowIso }).eq("id", attemptId);
+    await alertAdmin("カード決済の結果が確認できていません", [
+      String((row.context as any)?.description ?? ""),
+      `金額: ${Number(row.amount).toLocaleString("ja-JP")}円`,
+      `注文番号: ${row.idem_key}`,
+      `内容: ${outcome.error}`,
+      "総合管理の「決済の監視」で「KOMOJUで確認する」を押すと、結果を確かめて続きの処理を行います。",
+    ]);
+  }
+  return { status: "unknown", detail: outcome.error, customerId, paymentId: outcome.payment?.id ?? null };
 }

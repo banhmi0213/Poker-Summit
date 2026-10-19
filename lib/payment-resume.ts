@@ -20,7 +20,7 @@ export async function resolveAndResume(attemptId: string, adminUserId: string | 
         .from("listing_applications")
         .update({ payment_status: "failed", payment_note: "KOMOJUで未決済を確認(結果不明から確定)" })
         .eq("id", row.listing_application_id)
-        .in("payment_status", ["charge_unknown", "processing"]);
+        .in("payment_status", ["charge_unknown", "processing", "awaiting_card"]);
     }
     if (row.purpose === "addon_purchase" && Array.isArray(ctx.orderIds)) {
       await svc.from("addon_orders").update({ status: "canceled", admin_note: "カード決済されていなかったため取消" }).in("id", ctx.orderIds).eq("status", "awaiting_payment");
