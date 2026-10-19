@@ -8,6 +8,6 @@
  .toggle:focus-visible{outline:2px solid #ffe0a3;outline-offset:3px}
 }
 /* On large PCs the rail sits entirely outside the unchanged 1380px game area. */
-@media(min-width:1980px){.dock{right:max(12px,calc((100vw - 1380px)/2 - 292px))}}
+@media(min-width:1980px){.dock{right:max(12px,calc((100vw - 1380px)/2 - 292px));top:max(100px,calc((100dvh - 900px)/2 + 44px));bottom:auto;height:min(900px,calc(100dvh - 112px))}}
 /* Compact PCs open a floating panel; they retain the original table dimensions. */
 @media(min-width:900px) and (max-width:1979px){.dock{top:auto;left:12px;right:auto;width:clamp(220px,22vw,280px);height:min(660px,75dvh)}.layout[data-open=false] .dock{height:auto}.dock>section,.dock>p{display:none}}
