@@ -1,4 +1,5 @@
 "use client";
+import type {RingTable} from '@/lib/poker/ring-tables';
 import {SummitChipBalance} from "@/app/poker-ui/chip-balance";
 import PrizeView from "../poker-tournaments/prize-view";
 
@@ -8,7 +9,7 @@ import type { TournamentStructure } from "@/lib/poker/tournament";
 import styles from "./poker-lobby.module.css";
 
 type GameType = "ring" | "tournament";
-const ringTables = [
+const demoRingTables = [
   { id: "ring-01", title: "SUMMIT BLUE 01", blind: "50 / 100", players: "4 / 6", status: "対戦中", seats: 2 },
   { id: "ring-02", title: "SUMMIT GREEN 02", blind: "10 / 20", players: "5 / 6", status: "対戦中", seats: 1 },
   { id: "ring-03", title: "SUMMIT GOLD 03", blind: "100 / 200", players: "6 / 6", status: "満席", seats: 0 },
@@ -18,7 +19,7 @@ const tournaments = [
   { id: "tourney-02", title: "SUMMIT NIGHT CUP", entry: "無料", players: "24 / 36", status: "進行中", level: "8分", joinable: false },
 ];
 
-export default function PokerLobbyPreview({ isGuestPreview, configuredTournaments = [], compact=false }: { compact?:boolean;isGuestPreview: boolean; configuredTournaments?: {id:string;title:string;starts_at:string;structure:TournamentStructure;image_url:string|null;organizer_name?:string;prizes?:import("@/lib/poker/tournament").TournamentPrize[]}[] }) {
+export default function PokerLobbyPreview({ isGuestPreview, configuredTournaments = [], configuredRings=[],ringError=false, compact=false }: { configuredRings?:RingTable[];ringError?:boolean;compact?:boolean;isGuestPreview: boolean; configuredTournaments?: {id:string;title:string;starts_at:string;structure:TournamentStructure;image_url:string|null;organizer_name?:string;prizes?:import("@/lib/poker/tournament").TournamentPrize[]}[] }) {
   const [page,setPage]=useState(0);
   const [type, setType] = useState<GameType>("ring");
   const [selected, setSelected] = useState<{ title: string; action: "join" | "watch" } | null>(null);
@@ -31,11 +32,12 @@ export default function PokerLobbyPreview({ isGuestPreview, configuredTournament
       <button type="button" role="tab" aria-selected={type === "ring"} className={type === "ring" ? styles.active : ""} onClick={() => {setPage(0);setType("ring");}}>リングゲーム</button>
       <button type="button" role="tab" aria-selected={type === "tournament"} className={type === "tournament" ? styles.active : ""} onClick={() => {setPage(0);setType("tournament");}}>トーナメント</button>
     </div>
-    <div className={styles.sectionHeading}><h2>{type === "ring" ? "開催中のテーブル" : "トーナメント一覧"}</h2><span>{type === "ring" ? ringTables.length : tournaments.length} 件 · デモ</span></div>
+    {type==='ring'&&<section aria-label="運営登録のリング卓"><div className={styles.sectionHeading}><h2>公開リング卓</h2><span>{configuredRings.length} 件</span></div>{ringError?<p role="alert">卓設定を読み込めませんでした。時間をおいて再読み込みしてください。</p>:!configuredRings.length?<p>現在、公開されているリング卓設定はありません。</p>:<div className={styles.list}>{configuredRings.map(t=><article className={styles.item} key={t.id}><div className={styles.emblem} aria-hidden="true"><span>♠</span><small>NLH</small></div><div className={styles.details}><div className={styles.itemTop}><strong>{t.title}</strong><span className={styles.live}>対戦準備中</span></div><p>SB {t.sb.toLocaleString()} / BB {t.bb.toLocaleString()} · {t.capacity}人卓</p><p>持込 {t.min_buy_in.toLocaleString()}〜{t.max_buy_in.toLocaleString()} チップ</p>{t.note&&<p>{t.note}</p>}<small>着席・会員チップによる対戦は準備中です。</small></div></article>)}</div>}</section>}
+    <div className={styles.sectionHeading}><h2>{type === "ring" ? "練習用サンプル卓" : "トーナメント一覧"}</h2><span>{type === "ring" ? demoRingTables.length : tournaments.length} 件 · デモ</span></div>
     {!compact && type === "tournament" && configuredTournaments.length > 0 && <div className={styles.list}>{configuredTournaments.map(t=><article key={t.id} className={styles.item}>{t.image_url&&<img src={t.image_url} alt={`${t.title}の大会画像`} style={{width:80,height:80,objectFit:"cover",borderRadius:8,opacity:0.25}}/>}<div className={styles.details}><strong>{t.title}</strong><PrizeView tournament={t}/><p>{new Date(t.starts_at).toLocaleString("ja-JP",{timeZone:"Asia/Tokyo"})}（日本時間）</p><p>初期チップ {t.structure.startingStack.toLocaleString()} ／ レイトレジスト LV{t.structure.lateRegLevel}終了まで</p><Link className="btn" href={`/poker-demo?tournament=${t.id}`}>ストラクチャー・時計を確認</Link><small>開催設定のみ公開中。参加登録は未提供です。</small></div></article>)}</div>}
     {type === "tournament" && <p>以下はサンプル大会です。<Link href="/poker-demo?game=tournament">タイマー・ストラクチャーのサンプルを見る</Link></p>}
     <div className={styles.list}>
-      {type === "ring" ? (compact?ringTables.slice(page*2,page*2+2):ringTables).map(t => <article className={styles.item} key={t.id}>
+      {type === "ring" ? (compact?demoRingTables.slice(page*2,page*2+2):demoRingTables).map(t => <article className={styles.item} key={t.id}>
         <div className={styles.emblem} aria-hidden="true"><span>♠</span><small>NLH</small></div>
         <div className={styles.details}><div className={styles.itemTop}><strong>{t.title}</strong><span className={t.seats ? styles.live : styles.full}>{t.status}</span></div><p>ブラインド {t.blind} · 6 MAX</p><p>♟ {t.players} 人 · 空席 {t.seats}</p><div className={styles.actions}><button type="button" disabled={!t.seats} onClick={() => setSelected({ title: t.title, action: "join" })}>参加する</button><button type="button" onClick={() => setSelected({ title: t.title, action: "watch" })}>観戦する</button></div></div>
       </article>) : tournaments.map(t => <article className={styles.item} key={t.id}>
