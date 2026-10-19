@@ -420,7 +420,7 @@ export async function startPaidApplication(formData: FormData) {
                     description: `新規申込みの初月分（${companyName}）`,
           });
           if (begun.status !== "NEW") {
-                    throw new Error("この申込みのお支払いはすでに手続き中です。");
+                    throw new Error(begun.status === "BUSY" && !begun.attemptId ? "決済の準備ができませんでした。時間をおいてもう一度お試しください。" : "この申込みのお支払いはすでに手続き中です。");
           }
           const returnUrl = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
           let session;
