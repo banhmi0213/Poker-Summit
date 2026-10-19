@@ -40,7 +40,7 @@ export async function tournamentManager(scope: "admin" | "store") {
 }
 export async function loadManagedTournaments(scope: "admin" | "store") {
     const context = await tournamentManager(scope);
-    let query = context.client.from("poker_tournaments").select(columns).order("starts_at");
+    let query = context.client.from("poker_tournaments").select(columns).is("deleted_at",null).order("starts_at");
     if (scope === "store")
         query = query.in("owner_store_id", context.stores.map(s => s.id));
     const { data, error } = await query;
@@ -127,4 +127,16 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
             await cleanup();
         return { ok: false, message: error instanceof Error ? error.message : "保存に失敗しました。" };
     }
+}
+
+export async function removeManagedTournament(form:FormData):Promise<TournamentFormState>{
+ try{
+  const {client}=await tournamentActor('admin');
+  const id=String(form.get('id')??''),title=String(form.get('title')??'');
+  if(!/^[a-f0-9-]{36}$/i.test(id)||!title||String(form.get('confirmation')??'')!==title)throw Error('削除確認欄に大会名を正確に入力してください。');
+  const {error}=await client.rpc('poker_admin_tournament_remove',{p_id:id,p_title:title});
+  if(error)throw Error(error.message.includes('active')?'対戦中、または終了から10分以内の大会は削除できません。':error.message.includes('changed')?'大会名が変更されています。再読み込みしてください。':'大会を削除できませんでした。権限と保存状態をご確認ください。');
+  for(const path of ['/admin/poker-tournaments','/store/profile/poker-tournaments','/poker-lobby','/mypage/poker'])revalidatePath(path);
+  return {ok:true,message:'大会を一覧から削除しました。成績・履歴・ログは保持されています。'};
+ }catch(error){return {ok:false,message:error instanceof Error?error.message:'削除できませんでした。'};}
 }
