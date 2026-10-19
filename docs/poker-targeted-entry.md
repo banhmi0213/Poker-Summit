@@ -1,4 +1,4 @@
-# Targeted tournament entry (prepared; deployment blocked)
+# Targeted tournament entry (staging)
 
 Saved admin/authorized-store tournaments can designate 2–6 verified account emails. Private manager-only lookup resolves them to immutable Auth UUIDs; ordinary members receive only their own eligibility boolean. Target changes close ten minutes before start, cannot remove registered members and never expose target emails in the lobby.
 
@@ -10,10 +10,10 @@ The mode is persisted in encrypted checkpoints. Existing manually configured tou
 
 Local validation before publication: 413 automated tests, 35 React lifecycle checks, 109 isolated PostgreSQL management/admission checks. Node backend and Next builds were also checked. Entire-repository type checking has pre-existing unrelated errors; do not describe it as fully passing.
 
-## Deployment dependency
+## Staging release
 
-Supabase staging apply_migration returned INVALID_ARGUMENT / Invalid or expired requestState. Read-only catalog verification confirmed the new tables/functions are absent. Do not deploy the new dedicated backend or describe the feature as available until the migration is successfully applied and verified. No production database or existing tournament/checkpoint was changed.
+On 2026-10-19, after Supabase reconnection, `poker_targeted_entry` was successfully applied to staging project mjdgylgzhsygcgtuceow. Catalog checks confirmed the tables/functions exist, anonymous manager execution is denied and authenticated direct target reads are denied. Initial automatic settings and due-room lists are empty; no real tournament roster or checkpoint was reset.
 
-After reconnecting Supabase, apply the targeted_entry migration to staging mjdgylgzhsygcgtuceow only, check ACL/RLS and test RPCs, then publish the branch update and pin/deploy Railway staging to that commit. Keep the existing keyring, one replica and overlap zero. Confirm Railway SUCCESS/readyz and Vercel Ready before real-account validation.
+The tested implementation commit is 9642b9b35cb152172086d30422ea958108fa4bca. It was integrated into the existing authoritative-hand Preview branch. Railway staging uses the targeted-entry source branch pinned to that implementation commit, with the existing keyring, one replica and overlap zero. Production is unchanged. Real-account registration/seating validation is still required.
 
 User verification: create a new future tournament at least 15 minutes ahead, save it, open its target settings and add 2–6 existing verified account emails. Register from eligible accounts, confirm a non-eligible account has no registration button, enter/join the assigned room within ten minutes of start, and verify automatic start with only checked-in seats. Never reset the existing two-account test tournament as part of this check.
