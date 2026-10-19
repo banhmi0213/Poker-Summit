@@ -8,11 +8,11 @@ At start, occupied seats of registered eligible members form the initial roster.
 
 The mode is persisted in encrypted checkpoints. Existing manually configured tournaments retain their full-roster start behavior. The first version supports a single 2–6-person table; multiple-table balancing and automatic rescheduling/cancellation after insufficient attendance are not implemented.
 
-Local validation before publication: 413 automated tests, 35 React lifecycle checks, 109 isolated PostgreSQL management/admission checks. Node backend and Next builds were also checked. Entire-repository type checking has pre-existing unrelated errors; do not describe it as fully passing.
+Local validation before publication: 413 automated tests, 35 React lifecycle checks, 110 isolated PostgreSQL management/admission checks. Node backend and Next builds were also checked. Entire-repository type checking has pre-existing unrelated errors; do not describe it as fully passing.
 
 ## Staging release
 
-On 2026-10-19, after Supabase reconnection, `poker_targeted_entry` was successfully applied to staging project mjdgylgzhsygcgtuceow. Catalog checks confirmed the tables/functions exist, anonymous manager execution is denied and authenticated direct target reads are denied. Initial automatic settings and due-room lists are empty; no real tournament roster or checkpoint was reset.
+On 2026-10-19, after Supabase reconnection, `poker_targeted_entry` was successfully applied to staging project mjdgylgzhsygcgtuceow. Catalog checks confirmed the tables/functions exist, anonymous manager execution is denied and authenticated direct target reads are denied. A stale manual受付 configuration cannot overwrite automatic target settings. Initial automatic settings and due-room lists are empty; no real tournament roster or checkpoint was reset.
 
 The tested implementation commit is 9642b9b35cb152172086d30422ea958108fa4bca. It was integrated into the existing authoritative-hand Preview branch. Railway staging uses the targeted-entry source branch pinned to that implementation commit, with the existing keyring, one replica and overlap zero. Production is unchanged. Real-account registration/seating validation is still required.
 
