@@ -20,3 +20,13 @@
 /* Position geometry is inline to outrank the shared demo seat selectors. */
 .positionBadge{pointer-events:none}
 .bankButton{width:100%;min-height:40px;border:1px solid #dfbd7b;border-radius:8px;background:#243e52;color:#f6cf79;font-weight:700;cursor:pointer;margin:4px 0 8px}.bankButton:disabled{opacity:.45;cursor:not-allowed}
+
+.payoutFlight{position:absolute;inset:0;pointer-events:none;z-index:18;--coin-left:50%;--coin-top:88%}
+.payoutFlight[data-slot='p2']{--coin-top:7%}
+.payoutFlight[data-slot='p3']{--coin-left:6%;--coin-top:23%}
+.payoutFlight[data-slot='p4']{--coin-left:94%;--coin-top:23%}
+.payoutFlight[data-slot='p5']{--coin-left:6%;--coin-top:59%}
+.payoutFlight[data-slot='p6']{--coin-left:94%;--coin-top:59%}
+.payoutFlight i{position:absolute;left:50%;top:42%;display:grid;place-items:center;width:22px;height:22px;border:2px dashed #fff2b3;border-radius:50%;background:#b88418;color:#fff3bc;box-shadow:0 0 12px #f5c357;font-style:normal;animation:collectPot .8s ease-in forwards}
+@keyframes collectPot{0%{transform:translate(-50%,-50%) scale(.85);opacity:1}85%{opacity:1}100%{left:var(--coin-left);top:var(--coin-top);transform:translate(-50%,-50%) scale(.5);opacity:0}}
+@media(prefers-reduced-motion:reduce){.payoutFlight i{animation:none;opacity:0}}

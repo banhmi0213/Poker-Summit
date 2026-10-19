@@ -1,4 +1,5 @@
 'use client';
+import {resultPresentation} from '@/lib/poker/result-presentation';
 import {SummitMark} from '@/app/poker-ui/brand-mark';
 import {useEffect,useState,type ReactNode} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
@@ -29,19 +30,26 @@ function ResultSummary({state}:{state:PlayerSnapshot|null}){
  const result=state?(current??previous):null;
  return <div className={`${shared.resultOverlay} ${current?'':shared.previousResult}`} role="status"><strong>{result?`ハンド ${result.number}${current?' 結果':'（直前の結果）'}：${result.winners.map(names).join('・')} がPOT獲得`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{(result?.deltas??(state?onlineTableSeats(state).map(s=>({id:s.seat.id,delta:null})):[])).map(s=><span key={s.id} className={s.delta===null||s.delta===0?shared.resultEven:s.delta>0?shared.resultGain:shared.resultLoss}>{names(s.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${chips(s.delta)}`}</b></span>)}</div></div>;
 }
-export function OnlineTableView({state,children,onExit}:{state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void}){
+export function OnlineTableView({state:source,children,onExit}:{state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void}){
+ const [animationNow,setAnimationNow]=useState<number|null>(null);
+ useEffect(()=>{setAnimationNow(null);if(!source?.hand?.result||source.completedAt===null)return;
+  const start=performance.now(),at=source.serverNow;
+  if(resultPresentation(source,at).remainingMs<=0)return;
+  const timer=setInterval(()=>{const now=at+performance.now()-start;setAnimationNow(now);if(resultPresentation(source,now).remainingMs<=0)clearInterval(timer);},80);return()=>clearInterval(timer);
+ },[source?.hand?.handId,source?.completedAt,Boolean(source?.hand?.result)]);
+ const frame=source?resultPresentation(source,Math.max(source.serverNow,animationNow??0)):null,state=frame?.state??null;
  const [menu,setMenu]=useState(false),hand=state?.hand,seats=state?onlineTableSeats(state):[],seconds=state?onlineTurnSeconds(state):null;
  const seatClasses={p2:shared.topSeats,p3:shared.edgeSeatThree,p4:shared.edgeSeatFour,p5:shared.edgeSeatFive,p6:shared.edgeSeatSix,you:shared.self};
  const cardClasses={p2:shared.showdownTwo,p3:shared.showdownThree,p4:shared.showdownFour,p5:shared.showdownFive,p6:shared.showdownSix,you:''};
  const street=hand?.street==='preflop'?0:hand?.street==='flop'?1:hand?.street==='turn'?2:3;
- const next=state?.clock.following,clockText=!state?'未接続':state.clock.phase==='final'?'最終レベル継続':`${Math.floor(state.clock.remaining/60).toString().padStart(2,'0')}:${(state.clock.remaining%60).toString().padStart(2,'0')}`;
+ const next=state?.phase==='finished'?null:state?.clock.following,clockText=!state?'未接続':state.phase==='finished'?'大会終了':state.clock.phase==='final'?'最終レベル継続':`${Math.floor(state.clock.remaining/60).toString().padStart(2,'0')}:${(state.clock.remaining%60).toString().padStart(2,'0')}`;
  const exit=onExit?<button type="button" className={shared.topExit} aria-label="ゲームを退出" onClick={onExit}>↪</button>:<a className={shared.topExit} aria-label="ゲームを退出" href="/poker-lobby">↪</a>;
  return <section className={shared.shell} aria-label="オンラインポーカーテーブル">
   <div className={shared.heading}><button type="button" className={shared.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menu} aria-controls="online-game-menu" onClick={()=>setMenu(v=>!v)}>☰</button><span>POKER SUMMIT · TEXAS HOLD'EM</span>{exit}</div>
   {menu&&<div className={shared.menuBackdrop} aria-hidden="true" onClick={()=>setMenu(false)}/>}
   <div id="online-game-menu" className={shared.menuPanel} hidden={!menu}><div className={shared.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={()=>setMenu(false)}>×</button></div><Structure state={state}/></div>
   <aside className={shared.desktopStructure} aria-label="大会ストラクチャー"><Structure state={state}/></aside>
-  <div className={shared.gameClock}><aside className={styles.clock}><div><strong>{!state?'オンライン対戦':state.clock.phase==='scheduled'?'開始待ち':state.clock.phase==='break'?'休憩中':state.phase==='waiting'&&state.seats.filter(s=>s.occupied).length<2?'着席者不足':'トーナメント'}</strong><div><span>LEVEL {state?.clock.level??'—'}</span><b>{clockText}</b></div><p>現在のハンド：{hand?`SB ${chips(hand.terms.sb)} / BB ${chips(hand.terms.bb)} · Ante ${chips(hand.terms.ante)}`:'開始待ち'}</p><small>{next?next.kind==='break'?`次：休憩 ${next.minutes}分`:`次ブラインド：${chips(next.sb)} / ${chips(next.bb)} · Ante ${chips(next.ante)}`:state?'次のレベルはありません':'接続を待っています'}</small></div></aside></div>
+  <div className={shared.gameClock}><aside className={styles.clock}><div><strong>{!state?'オンライン対戦':state.phase==='finished'?'大会終了':state.clock.phase==='scheduled'?'開始待ち':state.clock.phase==='break'?'休憩中':state.phase==='waiting'&&state.seats.filter(s=>s.occupied).length<2?'着席者不足':'トーナメント'}</strong><div><span>LEVEL {state?.clock.level??'—'}</span><b>{clockText}</b></div><p>現在のハンド：{hand?`SB ${chips(hand.terms.sb)} / BB ${chips(hand.terms.bb)} · Ante ${chips(hand.terms.ante)}`:'開始待ち'}</p><small>{next?next.kind==='break'?`次：休憩 ${next.minutes}分`:`次ブラインド：${chips(next.sb)} / ${chips(next.bb)} · Ante ${chips(next.ante)}`:state?.phase==='finished'?'ブラインドタイマー停止':state?'次のレベルはありません':'接続を待っています'}</small></div></aside></div>
   <div className={`${shared.statusDock} ${styles.statusDock}`}><details className={shared.tournamentStatus}><summary>大会情報{state?.tournament?` · 残り ${state.tournament.liveIds.length}人`:''}</summary><p>ハンド {state?.handNumber??0}</p>{state?.tournament?.eliminated.map(e=><p key={e.id}>{e.place===e.tiedThrough?`${e.place}位`:`${e.place}〜${e.tiedThrough}位` }：{names(e.id)}</p>)}<p>再接続してもチップと進行状況は維持されます。</p></details></div>
   <div className={shared.table} data-street={street} data-showdown={Boolean(hand?.result?.showdown)} aria-label="サーバーのテーブル状態">
    {seats.map(({seat,slot,player,isYou,stack,positions,payout})=><div key={seat.id} className={seatClasses[slot]} data-seat={seat.seat} data-slot={slot}>
@@ -54,11 +62,12 @@ export function OnlineTableView({state,children,onExit}:{state:PlayerSnapshot|nu
    </div>)}
    <div className={shared.opponentCardsLayer} aria-label="各プレイヤーのハンド">{seats.filter(s=>s.slot!=='you'&&s.player&&!s.player.folded).map(s=><div key={s.seat.id} className={`${shared.showdownPosition} ${cardClasses[s.slot]} ${s.slot==='p5'||s.slot==='p6'?styles.lowerCards:''}`} style={s.slot==='p2'?{left:'calc(50% + 44px)'}:s.slot==='p3'||s.slot==='p5'?{left:'calc(-2% + 72px)'}:{right:'calc(-2% + 72px)'}}><Hole cards={s.player!.hole} small/></div>)}</div>
    <div className={shared.streetBets} aria-label="各席のベット額">{seats.filter(s=>s.committed>0).map(s=><div key={s.seat.id} className={`${shared.streetBet} ${shared[`bet_${s.slot}`]} ${s.slot==='p2'?styles.topBet:''}`} aria-label={`${names(s.seat.id)}：ベット ${s.committed}`}><span className={shared.betChip} aria-hidden="true">♠</span><span>{street===0&&hand?.positions.sb===s.seat.id?'SB ':street===0&&hand?.positions.bb===s.seat.id?'BB ':''}{chips(s.committed)}</span></div>)}</div>
+   {frame?.collecting&&seats.filter(s=>s.payout>0).map(s=><div key={`${hand!.handId}-${s.seat.id}`} className={styles.payoutFlight} data-slot={s.slot} aria-label={`${names(s.seat.id)}へPOT ${chips(s.payout)}を移動`}>{[0,1,2,3,4].map(i=><i key={i} style={{animationDelay:`${i*70}ms`}}>♠</i>)}</div>)}
    <div className={shared.felt}><div className={shared.pot}>POT <strong>{chips(hand?.pot??0)}</strong></div><div className={`${shared.cards} ${styles.communityCards}`} aria-label="共通カード">{hand?.board.map((c,i)=><span key={i} className={isRedCard(c)?shared.red:''}>{cardLabel(c)}</span>)}</div><div className={shared.street}>{hand?`${streetLabels[hand.street]??hand.street} · ハンド ${state?.handNumber}`:'参加者の接続を待っています'}</div></div>
   </div>
   <div className={shared.actionColumn}>
    <ResultSummary state={state}/>
-   {state?.phase==='finished'&&<div className={shared.spectatorPanel} role="status">大会終了 · 優勝 {state.tournament?.champion?names(state.tournament.champion):'確定待ち'}{onExit?<button type="button" onClick={onExit}>退出する</button>:<a href="/poker-lobby">退出する</a>}</div>}
+   {state?.phase==='finished'&&<div className={shared.spectatorPanel} role="status">大会終了 · 優勝 {state.tournament?.champion?names(state.tournament.champion):'確定待ち'}<p>結果は保存されます。終了から10分でロビーへ戻ります。</p>{onExit?<button type="button" onClick={onExit}>退出する</button>:<a href="/poker-lobby">退出する</a>}</div>}
    {children}
   </div>
  </section>;
