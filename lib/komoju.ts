@@ -23,6 +23,18 @@ function secretKey(): string {
   return key;
 }
 
+/**
+ * いま使っているKOMOJUのキーが本番(Live)かテストかを、キーの先頭(sk_live_ / sk_test_)で判定する(2026/10/19)。
+ * キーそのものは画面に出さない。Vercelの環境変数を変えても、デプロイし直すまで古いキーのまま動く点に注意。
+ */
+export function komojuKeyMode(): "live" | "test" | "missing" | "unknown" {
+  const key = process.env.KOMOJU_SECRET_KEY ?? "";
+  if (!key) return "missing";
+  if (key.startsWith("sk_live_")) return "live";
+  if (key.startsWith("sk_test_")) return "test";
+  return "unknown";
+}
+
 export class KomojuError extends Error {
   status: number;
   code: string | null;

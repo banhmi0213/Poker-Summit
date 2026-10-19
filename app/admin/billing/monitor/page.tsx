@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { resolveAttemptAction, provisionApplicationAction } from "./actions";
+import { komojuKeyMode } from "@/lib/komoju";
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,22 @@ export default async function BillingMonitorPage({ searchParams }: { searchParam
         カード決済の結果が分からないときは、二重請求を防ぐため自動での再決済を止めて、ここに表示します（運営にもメールが届きます）。
         「KOMOJUで確認する」を押すと、KOMOJUに決済があるかを確かめて、決済済みなら続きの処理（期間の延長・店舗の発行など）を行います。新たに決済はしません。
       </p>
+
+      {(() => {
+        // いま本番サイトが使っているKOMOJUのキーの種類(キーそのものは出さない)
+        const mode = komojuKeyMode();
+        const label = { live: "本番（Live）", test: "テスト", missing: "未設定", unknown: "判別できません" }[mode];
+        return (
+          <div className="card" style={{ marginBottom: 14, borderColor: mode === "live" ? undefined : "#d1453b" }}>
+            <strong>KOMOJUの接続先：{label}</strong>
+            {mode !== "live" && (
+              <p className="muted small" style={{ marginTop: 4 }}>
+                本番のカード決済には本番（Live）のキーが必要です。Vercelの環境変数 KOMOJU_SECRET_KEY を確認し、変えたあとはデプロイし直してください（デプロイするまで反映されません）。
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       {searchParams.ok && <p style={{ color: "#2e7d32", marginBottom: 12 }}>✅ {searchParams.ok}</p>}
       {searchParams.error && <p className="err">{searchParams.error}</p>}
