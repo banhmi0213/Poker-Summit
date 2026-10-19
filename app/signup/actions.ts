@@ -47,6 +47,14 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
     redirect(`${path}?error=${encodeURIComponent("ロボットでないことの確認ができませんでした。もう一度お試しください。")}`);
   }
 
+  // 1つの m HOLD'EM ID は1アカウントだけ(2026/10/19)
+  if (mHoldemId) {
+    const { data: taken } = await createServiceRoleClient().rpc("m_holdem_id_taken", { p_id: mHoldemId });
+    if (taken === true) {
+      redirect(`${path}?error=${encodeURIComponent("このm HOLD’EM IDはすでに別のアカウントで登録されています。ご自身のIDの場合は、IDを空欄にして登録したあとお問い合わせください。")}`);
+    }
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
