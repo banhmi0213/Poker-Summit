@@ -80,7 +80,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
                 </span>
                 {searchParams?.mhError && <p style={{ color: "#c0392b", fontSize: 12.5, margin: "0 0 8px" }} role="alert">{searchParams.mhError}</p>}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <input name="mHoldemId" required autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={M_HOLDEM_ID_MAX_LENGTH} placeholder="IDを入力" style={{ flex: "1 1 180px", minHeight: 44, fontSize: 16 }} />
+                  <input name="mHoldemId" required autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={M_HOLDEM_ID_MAX_LENGTH} placeholder="IDを入力" style={{ flex: "1 1 180px", minWidth: 0, width: "100%", boxSizing: "border-box", minHeight: 44, fontSize: 16 }} />
                   <button type="submit" className="btn primary" style={{ minHeight: 44, padding: "0 20px", fontWeight: 700, color: "#382714", background: "linear-gradient(135deg,#f3dda3,#c3983c)", border: "1px solid #b68a35", borderRadius: 8 }}>登録する</button>
                 </div>
               </form>
