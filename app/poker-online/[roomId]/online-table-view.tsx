@@ -1,7 +1,9 @@
 'use client';
+import {onlineSoundEvents,type SoundMarker} from '@/lib/poker/sound-events';
+import type {PokerSound} from '@/lib/poker/online-sounds';
 import {resultPresentation} from '@/lib/poker/result-presentation';
 import {SummitMark} from '@/app/poker-ui/brand-mark';
-import {useEffect,useState,type ReactNode} from 'react';
+import {useEffect,useRef,useState,type ReactNode} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import {onlineTableSeats,onlineTurnSeconds} from '@/lib/poker/table-presentation';
 import {cardLabel,isRedCard} from '@/lib/poker/card-display';
@@ -14,13 +16,13 @@ const chips=(n:number|null)=>n===null?'開始待ち':n.toLocaleString();
 function Hole({cards,small=false}:{cards:readonly Card[]|null;small?:boolean}){
  return <div className={small?shared.miniCards:shared.hole}>{cards?cards.map((c,i)=><span key={i} className={isRedCard(c)?shared.redCard:shared.blackCard}>{cardLabel(c)}</span>):[0,1].map(i=><span key={i} className={shared.cardBack} aria-label="裏向きカード"><SummitMark className={shared.thumbLogo}/></span>)}</div>;
 }
-function Structure({state}:{state:PlayerSnapshot|null}){
+function Structure({state,onExit}:{state:PlayerSnapshot|null;onExit?:()=>void}){
  let level=0;
  return <><h2>ストラクチャー</h2>{state?.structure?<>
   <p>初期チップ {chips(state.structure.startingStack)}</p><p>アンティ：{state.structure.anteType==='bb'?'BBアンティ':state.structure.anteType==='per-player'?'全員アンティ':'なし'}</p>
   <div className={styles.structureScroll}><table><thead><tr><th>LV</th><th>SB / BB</th><th>Ante</th><th>分</th></tr></thead><tbody>{state.structure.periods.map((p,i)=><tr key={i} data-current={i===state.clock.index} aria-current={i===state.clock.index?'step':undefined}><td>{p.kind==='break'?'休憩':++level}</td><td>{p.kind==='break'?'—':`${chips(p.sb)} / ${chips(p.bb)}`}</td><td>{p.kind==='break'?'—':chips(p.ante)}</td><td>{p.minutes}</td></tr>)}</tbody></table></div>
   <p>ブラインド変更は次のハンドから適用します。休憩中も進行中のハンドは継続します。</p>
- </>:<p>接続後に大会の設定を表示します。</p>}<a href="/poker-lobby">ロビーへ戻る</a></>;
+ </>:<p>接続後に大会の設定を表示します。</p>}<a href="/poker-lobby" onClick={event=>{if(onExit){event.preventDefault();onExit();}}}>ロビーへ戻る</a></>;
 }
 function ResultSummary({state}:{state:PlayerSnapshot|null}){
  const current=state?.hand?.result?{number:state.handNumber,winners:[...state.hand.result.winners],deltas:onlineTableSeats(state).map(s=>({id:s.seat.id,delta:s.delta}))}:null;
@@ -30,7 +32,7 @@ function ResultSummary({state}:{state:PlayerSnapshot|null}){
  const result=state?(current??previous):null;
  return <div className={`${shared.resultOverlay} ${current?'':shared.previousResult}`} role="status"><strong>{result?`ハンド ${result.number}${current?' 結果':'（直前の結果）'}：${result.winners.map(names).join('・')} がPOT獲得`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{(result?.deltas??(state?onlineTableSeats(state).map(s=>({id:s.seat.id,delta:null})):[])).map(s=><span key={s.id} className={s.delta===null||s.delta===0?shared.resultEven:s.delta>0?shared.resultGain:shared.resultLoss}>{names(s.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${chips(s.delta)}`}</b></span>)}</div></div>;
 }
-export function OnlineTableView({state:source,children,onExit}:{state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void}){
+export function OnlineTableView({state:source,children,onExit,onSound,soundEnabled=true,onSoundToggle}:{state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void;onSound?:(kind:PokerSound)=>void;soundEnabled?:boolean;onSoundToggle?:(enabled:boolean)=>void}){
  const [animationNow,setAnimationNow]=useState<number|null>(null);
  useEffect(()=>{setAnimationNow(null);if(!source?.hand?.result||source.completedAt===null)return;
   const start=performance.now(),at=source.serverNow;
@@ -38,6 +40,8 @@ export function OnlineTableView({state:source,children,onExit}:{state:PlayerSnap
   const timer=setInterval(()=>{const now=at+performance.now()-start;setAnimationNow(now);if(resultPresentation(source,now).remainingMs<=0)clearInterval(timer);},80);return()=>clearInterval(timer);
  },[source?.hand?.handId,source?.completedAt,Boolean(source?.hand?.result)]);
  const frame=source?resultPresentation(source,Math.max(source.serverNow,animationNow??0)):null,state=frame?.state??null;
+ const soundMarker=useRef<SoundMarker|null>(null);
+ useEffect(()=>{const next=onlineSoundEvents(soundMarker.current,state);soundMarker.current=next.marker;for(const kind of next.sounds)onSound?.(kind);},[state?.hand?.handId,state?.hand?.revision,state?.hand?.board.length,state?.hand?.toAct,Boolean(state?.hand?.result),state?.youSeat,onSound]);
  const [menu,setMenu]=useState(false),hand=state?.hand,seats=state?onlineTableSeats(state):[],seconds=state?onlineTurnSeconds(state):null;
  const seatClasses={p2:shared.topSeats,p3:shared.edgeSeatThree,p4:shared.edgeSeatFour,p5:shared.edgeSeatFive,p6:shared.edgeSeatSix,you:shared.self};
  const cardClasses={p2:shared.showdownTwo,p3:shared.showdownThree,p4:shared.showdownFour,p5:shared.showdownFive,p6:shared.showdownSix,you:''};
@@ -47,8 +51,8 @@ export function OnlineTableView({state:source,children,onExit}:{state:PlayerSnap
  return <section className={shared.shell} aria-label="オンラインポーカーテーブル">
   <div className={shared.heading}><button type="button" className={shared.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menu} aria-controls="online-game-menu" onClick={()=>setMenu(v=>!v)}>☰</button><span>POKER SUMMIT · TEXAS HOLD'EM</span>{exit}</div>
   {menu&&<div className={shared.menuBackdrop} aria-hidden="true" onClick={()=>setMenu(false)}/>}
-  <div id="online-game-menu" className={shared.menuPanel} hidden={!menu}><div className={shared.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={()=>setMenu(false)}>×</button></div><Structure state={state}/></div>
-  <aside className={shared.desktopStructure} aria-label="大会ストラクチャー"><Structure state={state}/></aside>
+  <div id="online-game-menu" className={shared.menuPanel} hidden={!menu}><div className={shared.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={()=>setMenu(false)}>×</button></div><label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={event=>onSoundToggle?.(event.target.checked)}/></label><Structure state={state} onExit={onExit}/></div>
+  <aside className={shared.desktopStructure} aria-label="大会ストラクチャー"><Structure state={state} onExit={onExit}/></aside>
   <div className={shared.gameClock}><aside className={styles.clock}><div><strong>{!state?'オンライン対戦':state.phase==='finished'?'大会終了':state.clock.phase==='scheduled'?'開始待ち':state.clock.phase==='break'?'休憩中':state.phase==='waiting'&&state.seats.filter(s=>s.occupied).length<2?'着席者不足':'トーナメント'}</strong><div><span>LEVEL {state?.clock.level??'—'}</span><b>{clockText}</b></div><p>現在のハンド：{hand?`SB ${chips(hand.terms.sb)} / BB ${chips(hand.terms.bb)} · Ante ${chips(hand.terms.ante)}`:'開始待ち'}</p><small>{next?next.kind==='break'?`次：休憩 ${next.minutes}分`:`次ブラインド：${chips(next.sb)} / ${chips(next.bb)} · Ante ${chips(next.ante)}`:state?.phase==='finished'?'ブラインドタイマー停止':state?'次のレベルはありません':'接続を待っています'}</small></div></aside></div>
   <div className={`${shared.statusDock} ${styles.statusDock}`}><details className={shared.tournamentStatus}><summary>大会情報{state?.tournament?` · 残り ${state.tournament.liveIds.length}人`:''}</summary><p>ハンド {state?.handNumber??0}</p>{state?.tournament?.eliminated.map(e=><p key={e.id}>{e.place===e.tiedThrough?`${e.place}位`:`${e.place}〜${e.tiedThrough}位` }：{names(e.id)}</p>)}<p>再接続してもチップと進行状況は維持されます。</p></details></div>
   <div className={shared.table} data-street={street} data-showdown={Boolean(hand?.result?.showdown)} aria-label="サーバーのテーブル状態">

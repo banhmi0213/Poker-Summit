@@ -7,9 +7,9 @@ function finish(f,from=0){while(f.r.publicSnapshot().hand.board.length<from){con
  for(let i=0;i<8&&!f.r.publicSnapshot().hand.result;i++){const s=f.r.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),l=f.r.snapshot('m'+n,f.tokens[n]).hand.legal;f.r.act('m'+n,f.tokens[n],{handId:s.hand.handId,revision:s.hand.revision,actionId:crypto.randomUUID(),action:l.raise?{type:l.check?'bet':'raise',amount:l.maxRaiseTo}:{type:'call'}});}return f.r.publicSnapshot();}
 test('all-in runout presents streets in order, then awards, without changing authoritative chips',()=>{
  for(const from of [0,3,4]){const f=fixture(),s=finish(f,from),raw=JSON.stringify(s),counts=[from,...[3,4,5].filter(n=>n>from)];assert.equal(s.runout.fromBoardCount,from);
-  for(let i=0;i<counts.length;i++){const frame=resultPresentation(s,T+i*1200);assert.equal(frame.revealing,true);assert.equal(frame.state.hand.board.length,counts[i]);assert.equal(frame.state.hand.result,null);assert.equal(frame.state.hand.players.reduce((n,p)=>n+p.stack,0)+frame.state.hand.pot,2000);}
-  const award=resultPresentation(s,T+counts.length*1200);assert.equal(award.collecting,true);assert.deepEqual(award.state,s);assert.equal(JSON.stringify(s),raw);assert.equal(resultPresentation(s,T+9000).collecting,false);
-  const restored=ScheduledTournamentRoom.restore(f.r.checkpoint(),{now:()=>T+1300});assert.deepEqual(restored.publicSnapshot().runout,s.runout);assert.equal(resultPresentation(restored.publicSnapshot()).state.hand.board.length,counts[1]);
+  for(let i=0;i<counts.length;i++){const frame=resultPresentation(s,T+i*2200);assert.equal(frame.revealing,true);assert.equal(frame.state.hand.board.length,counts[i]);assert.equal(frame.state.hand.result,null);assert.equal(frame.state.hand.players.reduce((n,p)=>n+p.stack,0)+frame.state.hand.pot,2000);}
+  const award=resultPresentation(s,T+counts.length*2200);assert.equal(award.collecting,true);assert.deepEqual(award.state,s);assert.equal(JSON.stringify(s),raw);assert.equal(resultPresentation(s,T+12000).collecting,false);
+  const restored=ScheduledTournamentRoom.restore(f.r.checkpoint(),{now:()=>T+2300});assert.deepEqual(restored.publicSnapshot().runout,s.runout);assert.equal(resultPresentation(restored.publicSnapshot()).state.hand.board.length,counts[1]);
  }
 });
 test('champion clock freezes; exact ten-minute deadline blocks reconnect while preserving final results',()=>{
