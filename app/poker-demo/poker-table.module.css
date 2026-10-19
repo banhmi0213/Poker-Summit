@@ -478,3 +478,6 @@
 
 /* Measured POT/avatar centers override fixed viewport distances. */
 .awardFlight[data-pot-winner]{left:var(--pot-start-x,50%);top:var(--pot-start-y,35%)}
+
+/* Coordinates and animation are assigned together after layout measurement. */
+.awardCoin[data-pot-coin]{animation:none;opacity:0}
