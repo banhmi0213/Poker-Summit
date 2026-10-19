@@ -1,6 +1,6 @@
 # PC community panel and shared Summit chip balance
 
-The PC poker demo and authenticated online table provide a `サミットを同期` toggle. At 1200px and wider, the panel occupies a separate right rail; 900–1199px uses a closable floating panel. Smaller screens omit the panel. Opening it mounts `/poker-community` on the same origin. Closing it stops polling without remounting the game.
+The PC poker demo and authenticated online table provide a `サミットを同期` toggle. At 1980px and wider, the panel occupies the right margin outside the unchanged 1380px game area. Narrower PC screens use a closable floating panel on the left, keeping action controls accessible. The wrapper uses display:contents so opening/closing never changes the table width, height or flex sizing. Smaller screens omit the panel. Opening it mounts `/poker-community` on the same origin. Closing it stops polling without remounting the game.
 
 The panel lists the latest 30 visible board threads and up to 50 latest visible replies to the selected thread. It polls every 15 seconds, supports explicit refresh, and renders text safely. Submitting is an explicit user action. `/api/poker/community` verifies the session and suspension status, enforces same-origin JSON writes and size limits, derives author identity from the session, and applies existing board RLS. Stable message IDs allow an explicit retry after a lost acknowledgement without inserting a duplicate. Inputs stay locked until an uncertain submission is resolved.
 
@@ -19,3 +19,5 @@ Apply `supabase/migrations/20261019081323_poker_ring_balance.sql` after the stat
 - New staging schema: 2 wallets, both zero; anonymous balance execution and direct authenticated wallet updates denied.
 
 User verification: reload staging, compare ring lobby and My Page balances; open the PC game panel and manually post/reply; check a second signed-in browser receives the update within 15 seconds. Staging posts are separate from the production board. Production rollout requires the normal release step.
+
+The lobby/account header and all face-down player cards share the official `/images/summit-finger-clean.webp` mark. Cosmetic card-back background/border tokens allow future approved themes; paid entitlement, theme selection and persistence are not implemented by this cosmetic change.

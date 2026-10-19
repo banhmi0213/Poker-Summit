@@ -1,4 +1,5 @@
 'use client';
+import {SummitMark} from '@/app/poker-ui/brand-mark';
 import {useEffect,useState,type ReactNode} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import {onlineTableSeats,onlineTurnSeconds} from '@/lib/poker/table-presentation';
@@ -10,7 +11,7 @@ const streetLabels:Record<string,string>={preflop:'プリフロップ',flop:'フ
 const names=(id:string)=>`プレイヤー ${id.replace('seat-','')}`;
 const chips=(n:number|null)=>n===null?'開始待ち':n.toLocaleString();
 function Hole({cards,small=false}:{cards:readonly Card[]|null;small?:boolean}){
- return <div className={small?shared.miniCards:shared.hole}>{cards?cards.map((c,i)=><span key={i} className={isRedCard(c)?shared.redCard:shared.blackCard}>{cardLabel(c)}</span>):[0,1].map(i=><span key={i} className={shared.cardBack} aria-label="裏向きカード">♠</span>)}</div>;
+ return <div className={small?shared.miniCards:shared.hole}>{cards?cards.map((c,i)=><span key={i} className={isRedCard(c)?shared.redCard:shared.blackCard}>{cardLabel(c)}</span>):[0,1].map(i=><span key={i} className={shared.cardBack} aria-label="裏向きカード"><SummitMark className={shared.thumbLogo}/></span>)}</div>;
 }
 function Structure({state}:{state:PlayerSnapshot|null}){
  let level=0;

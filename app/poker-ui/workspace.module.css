@@ -9,3 +9,5 @@
 .shell button{font-family:inherit}
 /* Scope portal tokens so global table/card rules retain the dark palette. */
 .shell{color-scheme:dark;--surface:#142b3e;--surface-2:#1b3448;--surface-3:#213a4d;--text:#e9eff5;--text-2:#afc3d1;--muted:#9ab0c0;--border:#2a4355;--grid:#294458}
+
+.brandMark{width:38px;height:44px;object-fit:contain;flex-shrink:0;filter:saturate(.72) brightness(.96)}
