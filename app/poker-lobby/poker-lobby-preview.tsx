@@ -1,4 +1,5 @@
 "use client";
+import {SummitChipBalance} from "@/app/poker-ui/chip-balance";
 import PrizeView from "../poker-tournaments/prize-view";
 
 import { useState } from "react";
@@ -25,6 +26,7 @@ export default function PokerLobbyPreview({ isGuestPreview, configuredTournament
     {!compact&&<div className={styles.header}><span>♠ POKER SUMMIT</span><strong>LOBBY PREVIEW</strong></div>}
     {!compact&&<h1>オンラインポーカー ロビー</h1>}
     {compact?<p className={styles.note}>デモ専用の卓です。実際の参加登録は「大会の参加受付」から行えます。</p>:<p className={styles.note}>公開された大会設定とサンプル卓を表示しています。参加人数・参加操作はデモで、実際の対戦・大会への参加登録は行いません。{isGuestPreview ? "開発Previewではログイン不要です。" : ""}</p>}
+    {!isGuestPreview&&type==="ring"&&<SummitChipBalance/>}
     <div className={styles.tabs} style={compact?{margin:'12px 0'}:undefined} role="tablist" aria-label="ゲーム形式">
       <button type="button" role="tab" aria-selected={type === "ring"} className={type === "ring" ? styles.active : ""} onClick={() => {setPage(0);setType("ring");}}>リングゲーム</button>
       <button type="button" role="tab" aria-selected={type === "tournament"} className={type === "tournament" ? styles.active : ""} onClick={() => {setPage(0);setType("tournament");}}>トーナメント</button>

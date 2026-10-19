@@ -38,5 +38,18 @@ const {PGlite}=require(process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite'),
  await assert.rejects(stats(true));await assert.rejects(db.query('select * from poker_private.tournament_finishes'));
  await db.exec("select set_config('test.admin','true',false)");s=await stats(true);assert.equal(s.players.length,3);assert.deepEqual(s.ring.map(r=>r.position),[1,1,3]);assert.equal(s.players.find(p=>p.member_id===ids[2]).thirds,1);
  await db.exec('reset role;set role anon');await assert.rejects(stats(false));
+ await db.exec('reset role');
+ const ringFile=fs.readdirSync(path.resolve(__dirname,'../../supabase/migrations')).find(f=>f.endsWith('_poker_ring_balance.sql'));await db.exec(fs.readFileSync(path.resolve(__dirname,'../../supabase/migrations',ringFile),'utf8'));
+ await db.exec('set role authenticated');let balance=(await db.query('select public.poker_ring_balance() v')).rows[0].v;assert.equal(balance.total,100);assert.equal(balance.rank,1);
+ await assert.rejects(db.query('update poker_private.ring_accounts set available=999999'));
+ await db.exec('reset role');const fresh='00000000-0000-4000-8000-000000000004';await db.query('insert into auth.users values($1,$2)',[fresh,'{}']);await db.query("select set_config('test.uid',$1,false)",[fresh]);await db.exec('set role authenticated');balance=(await db.query('select public.poker_ring_balance() v')).rows[0].v;assert.equal(balance.total,0);assert.equal(balance.rank,4);
+ await db.exec('reset role;set role anon');await assert.rejects(db.query('select public.poker_ring_balance()'));
+ await db.exec('reset role');await db.exec(fs.readFileSync(path.resolve(__dirname,'../staging/poker_board_foundation.sql'),'utf8'));await db.exec('set role authenticated');
+ const thread='50000000-0000-4000-8000-000000000001';
+ await db.query("insert into public.board_posts(id,author_user_id,title,body) values($1,$2,'Isolated test','Isolated body')",[thread,fresh]);
+ await assert.rejects(db.query("insert into public.board_posts(author_user_id,title,body) values($1,'Forged','Body')",[ids[0]]));
+ await db.query("insert into public.board_replies(post_id,author_user_id,body) values($1,$2,'Isolated reply')",[thread,fresh]);
+ assert.equal((await db.query('select count(*)::int n from public.board_replies')).rows[0].n,1);
+ await db.exec('reset role');await db.query("update public.board_posts set status='hidden' where id=$1",[thread]);await db.exec('set role authenticated');assert.equal((await db.query('select count(*)::int n from public.board_posts')).rows[0].n,0);assert.equal((await db.query('select count(*)::int n from public.board_replies')).rows[0].n,0);await db.exec('reset role;set role anon');await assert.rejects(db.query('select * from public.board_posts'));
  console.log('Poker statistics SQL checks passed: archive deduplication, own history, podium counts, tied chip ranks, admin and anonymous boundaries');
  }finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

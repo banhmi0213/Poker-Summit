@@ -1,8 +1,8 @@
 // Real React effects/buttons + real player transport; Auth and HTTP are isolated fixtures.
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{Module}=require('node:module'),ts=require('typescript'),React=require('react');
 const root=path.resolve(__dirname,'..'),load=Module._load,resolve=Module._resolveFilename;
-let authCallback,unsubscribed=false;
-Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='next/link')return ({href,children,...props})=>React.createElement('a',{href,...props},children);if(name==='@/lib/supabase/client')return {createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'test-token'}}}),onAuthStateChange:fn=>{authCallback=fn;return {data:{subscription:{unsubscribe:()=>unsubscribed=true}}};}}})};return load.call(this,name,parent,...args);};
+let authCallback,unsubscribed=false,rpcHandler=async()=>({data:null,error:true});
+Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='next/link')return ({href,children,...props})=>React.createElement('a',{href,...props},children);if(name==='@/lib/supabase/client')return {createClient:()=>({rpc:(...args)=>rpcHandler(...args),auth:{getSession:async()=>({data:{session:{access_token:'test-token'}}}),onAuthStateChange:fn=>{authCallback=fn;return {data:{subscription:{unsubscribe:()=>unsubscribed=true}}};}}})};return load.call(this,name,parent,...args);};
 Module._resolveFilename=function(name,parent,...args){if(name.startsWith('@/'))name=root+'/'+name.slice(2);try{return resolve.call(this,name,parent,...args);}catch(e){for(const ext of ['.ts','.tsx'])try{return resolve.call(this,name+ext,parent,...args);}catch{}throw e;}};
 for(const ext of ['.ts','.tsx'])require.extensions[ext]=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,f);
 require.extensions['.css']=m=>m.exports={__esModule:true,default:new Proxy({},{get:(_,key)=>key})};
@@ -96,3 +96,11 @@ test('account history uses page navigation instead of stacking every result',asy
  assert.equal(renderer.root.findAllByType('tbody')[0].findAllByType('tr').length,5);assert.ok(!text(renderer.toJSON()).includes('大会6'));
  await act(async()=>renderer.root.findAllByType('button').find(b=>text(b)==='次へ').props.onClick());assert.match(text(renderer.toJSON()),/大会6/);assert.equal(renderer.root.findAllByType('tbody')[0].findAllByType('tr').length,2);
 });
+
+ test('Summit chip balance uses shared server balance and refreshes without retaining signed-out data',async t=>{
+ const Balance=require('../app/poker-ui/chip-balance.tsx').SummitChipBalance;const oldSet=global.setInterval,oldClear=global.clearInterval;let tick,renderer,latest={available:0,inPlay:0,total:0,rank:1,asOf:'2026-10-19T00:00:00Z'};rpcHandler=async name=>{assert.equal(name,'poker_ring_balance');return {data:latest,error:null};};global.setInterval=fn=>{tick=fn;return 1;};global.clearInterval=()=>{};
+ t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());global.setInterval=oldSet;global.clearInterval=oldClear;rpcHandler=async()=>({data:null,error:true});});
+ await act(async()=>renderer=create(React.createElement(Balance,{detailed:true})));assert.match(text(renderer.toJSON()),/0 SC/);
+ latest={...latest,available:50,total:50};await act(async()=>{tick();});assert.match(text(renderer.toJSON()),/50 SC/);
+ await act(async()=>authCallback('SIGNED_OUT',null));assert.ok(!text(renderer.toJSON()).includes('50 SC'));
+ });
