@@ -117,3 +117,10 @@
 .panel{scroll-margin-top:12px}
 @media(max-width:760px){.jumpToForm{display:flex;width:100%;font-size:15px;min-height:48px}.tournamentFacts dd{font-size:16px}.tournamentXLink{font-size:13px!important;text-align:center}}
 @media(max-width:760px){.tournamentFacts{flex-direction:column;gap:6px}.tournamentFacts div{flex:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 12px}.tournamentFacts dt{font-size:12px}.tournamentFacts dd{margin:0;white-space:nowrap}}
+
+/* 先行登録: 正式オープン日と使える機能(2026/10/19) */
+.launchBadge{display:inline-block;margin:0 0 10px;padding:4px 14px;border:1px solid #c9a35c;border-radius:999px;background:#fffaf0;color:#6a4614;font-family:"Noto Serif JP",serif;font-weight:700;font-size:14px;letter-spacing:.04em}
+.featureList{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0}
+.featureList li{padding:4px 11px;border:1px solid #d7b66c;border-radius:6px;background:#fffdf7;color:#493019;font-size:12.5px;font-weight:700}
+@media(min-width:761px){.launchBadge,.featureList{margin-left:30px;margin-right:24px}.launchBadge{font-size:13px}}
+@media(max-width:760px){.launchBadge{margin:4px auto 8px;font-size:14px}.featureList{justify-content:center;margin:10px auto 0;max-width:380px}.featureList li{font-size:13px;background:#fffdf7f0}}

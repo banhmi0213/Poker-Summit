@@ -9,7 +9,7 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
-import { PRELAUNCH_TOURNAMENT } from "@/lib/prelaunch";
+import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
 
 export function RegistrationPage({ searchParams, early = false }: { searchParams: { error?: string; done?: string }; early?: boolean }) {
@@ -26,7 +26,20 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
         <section className={styles.intro + (early ? " " + styles.earlyIntro : "")}>
           <span className={styles.eyebrow}>{early ? "PRE-REGISTRATION" : "MEMBER REGISTRATION"}</span>
           <h1><span>ポーカーの楽しさが</span><br /><span>ここに集まる。</span></h1>
-          <p className={styles.lead}>{early ? "全国の店舗・大会・求人情報を、もっと身近に。正式公開に先がけて、無料の会員登録を受け付けています。" : <>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</>}</p>
+          {early ? (
+            // 正式オープン日と、会員になると使えること(2026/10/19)。以前の説明文と入れ替え
+            <>
+              <p className={styles.launchBadge}>{PRELAUNCH_LAUNCH_LABEL}</p>
+              <p className={styles.lead}>先行登録しておくと、オープン当日からすぐに使えます。</p>
+              <ul className={styles.featureList}>
+                {PRELAUNCH_FEATURES.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className={styles.lead}>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</p>
+          )}
           {early && <aside className={styles.tournamentPromo} aria-labelledby="early-tournament-title">
             <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
             <p>先行登録いただいた方を、m HOLD’EMアプリで開催する限定トーナメントにご招待します。</p>
@@ -100,6 +113,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             )}
             <label className={styles.field}>
               <span>メールアドレス <b className={styles.required}>必須</b></span>
+              {early && <small>※確認メールと、限定トーナメントの参加方法・オープンのお知らせにのみ使います。公開されることはありません。</small>}
               <input type="email" name="email" required autoComplete="email" placeholder="例）example@example.com" />
             </label>
             <label className={styles.field}>
