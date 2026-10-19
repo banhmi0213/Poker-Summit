@@ -15,8 +15,8 @@ test('polls and reconnect do not replay sounds; new hand, street, own turn and r
  let state=snapshot(),r=onlineSoundEvents(null,state);assert.deepEqual(r.sounds,[]);
  assert.deepEqual(onlineSoundEvents(r.marker,state).sounds,[]);
  let next=onlineSoundEvents(r.marker,snapshot({revision:1,toAct:'seat-6'}));assert.deepEqual(next.sounds,['action']);
- r=onlineSoundEvents(next.marker,snapshot({revision:2,toAct:'seat-1',board:[1,2,3]}));assert.deepEqual(r.sounds,['deal','turn']);
- next=onlineSoundEvents(r.marker,snapshot({revision:3,toAct:null,board:[1,2,3,4,5],result:{}}));assert.deepEqual(next.sounds,['deal','win']);assert.deepEqual(onlineSoundEvents(next.marker,snapshot({revision:3,toAct:null,board:[1,2,3,4,5],result:{}})).sounds,[]);
+ r=onlineSoundEvents(next.marker,snapshot({revision:2,toAct:'seat-1',board:[1,2,3]}));assert.deepEqual(r.sounds,['deal','action','turn']);
+ next=onlineSoundEvents(r.marker,snapshot({revision:3,toAct:null,board:[1,2,3,4,5],result:{}}));assert.deepEqual(next.sounds,['deal','action','win']);assert.deepEqual(onlineSoundEvents(next.marker,snapshot({revision:3,toAct:null,board:[1,2,3,4,5],result:{}})).sounds,[]);
  assert.deepEqual(onlineSoundEvents(null,snapshot({result:{}})).sounds,[]);
  r=onlineSoundEvents(next.marker,snapshot({handId:'h2'}));assert.deepEqual(r.sounds,['deal','turn']);
  const waiting=onlineSoundEvents(null,{youSeat:1,hand:null});assert.deepEqual(onlineSoundEvents(waiting.marker,snapshot()).sounds,['deal','turn']);assert.equal(onlineSoundEvents(r.marker,null).marker,null);

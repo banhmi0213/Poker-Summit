@@ -141,3 +141,12 @@ test('online entry/action/exit sounds obey mute; exit waits for its cue and clea
  await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームを退出'}).props.onClick());await f.click('退出する');assert.deepEqual(tones.slice(-2),[659.25,440]);assert.equal(navigated,null);assert.ok(exitTimer);exitTimer();assert.equal(navigated,'/poker-lobby');
  await act(async()=>f.renderer.unmount());assert.equal(closed,1);assert.equal(listeners.size,0);
 });
+test('payout flight measures POT and top/bottom avatars and recalculates on resize',async()=>{
+ const {usePotFlight}=require('../app/poker-ui/use-pot-flight.ts');const oldWindow=global.window;let resize,renderer;
+ global.window={addEventListener:(name,fn)=>{if(name==='resize')resize=fn;},removeEventListener:()=>{resize=null;}};
+ let height=800;const flights=['p2','you'].map(id=>({dataset:{potWinner:id},values:{},style:{setProperty(key,value){flights.find(f=>f.style===this).values[key]=value;}}}));
+ const targets=['p2','you'].map(id=>({dataset:{potTarget:id},getBoundingClientRect:()=>({left:280,top:id==='p2'?0:height-40,width:40,height:40})}));
+ const table={getBoundingClientRect:()=>({left:0,top:0,width:600,height}),querySelector:()=>({getBoundingClientRect:()=>({left:250,top:300,width:100,height:40})}),querySelectorAll:s=>s==='[data-pot-winner]'?flights:targets};
+ function Fixture(){return React.createElement('div',{ref:usePotFlight(true)});}
+ try{await act(async()=>{renderer=create(React.createElement(Fixture),{createNodeMock:()=>table});});assert.equal(flights[0].values['--award-y'],'-300px');assert.equal(flights[1].values['--award-y'],'460px');assert.equal(flights[0].values['--pot-end-y'],'2.5%');assert.equal(flights[1].values['--pot-end-y'],'97.5%');height=1000;resize();assert.equal(flights[1].values['--award-y'],'660px');await act(async()=>renderer.unmount());assert.equal(resize,null);}finally{global.window=oldWindow;}
+});
