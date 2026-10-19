@@ -3,6 +3,7 @@
  */
 import { SeatedHandRoom, type TurnDeadline, type RoomCheckpoint } from "./seated-hand-room";
 import { tournamentClock,validateStructure,type TournamentStructure } from "./tournament";
+import {runoutDuration,PAYOUT_ANIMATION_MS} from './presentation-timing';
 import { tournamentHandTerms } from "./tournament-hand";
 
 type RoomSnapshot=ReturnType<SeatedHandRoom["publicSnapshot"]>;
@@ -86,7 +87,8 @@ export class ScheduledTournamentRoom {
     if(state.phase==="waiting"&&(!control.published||!readiness.ready))return result("waiting");
     if(state.clock.phase==="break")return result("break",false,boundary());
     if(state.phase==="waiting"){this.#transition(()=>this.#room.startRegisteredHand(control.members,this.#terms(now)));return result("started",true,this.#room.publicSnapshot().turn?.expiresAt??null);}
-    const due=(state.completedAt??now)+this.#handPauseMs;
+    const presentationPause=this.#runout?.handId===state.hand?.handId?runoutDuration(this.#runout!.fromBoardCount)+PAYOUT_ANIMATION_MS+1000:0;
+    const due=(state.completedAt??now)+Math.max(this.#handPauseMs,presentationPause);
     if(!Number.isSafeInteger(due))throw new Error("Invalid next hand deadline");
     if(now<due)return result("pause",false,due);
     this.#transition(()=>this.#room.nextHand(state.hand!.handId,this.#terms(now)));return result("next-hand",true,this.#room.publicSnapshot().turn?.expiresAt??null);

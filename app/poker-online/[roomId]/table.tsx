@@ -1,16 +1,28 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {createClient} from '@/lib/supabase/client';
 import {PokerPlayerClient,PlayerClientError,type PlayerSnapshot} from '@/lib/poker/player-client';
+import {PokerSounds,type PokerSound} from '@/lib/poker/online-sounds';
 import {OnlineControls} from './online-controls';
 import {OnlineTableView} from './online-table-view';
 export {OnlineTableView} from './online-table-view';
 import shared from '../../poker-demo/poker-table.module.css';
 export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string;enabled:boolean;eventsOrigin?:string}){
+ const audio=useRef<PokerSounds|null>(null),navigationTimer=useRef<ReturnType<typeof setTimeout>|null>(null),navigating=useRef(false);
+ const [soundEnabled,setSoundEnabled]=useState(true);
+ const playSound=useCallback((kind:PokerSound)=>{audio.current?.play(kind);},[]);
+ const navigateToLobby=useCallback(()=>{if(navigating.current)return;navigating.current=true;const duration=audio.current?.play('exit')??0;
+  if(duration)navigationTimer.current=setTimeout(()=>window.location.assign('/poker-lobby'),duration);else window.location.assign('/poker-lobby');
+ },[]);
+ useEffect(()=>{if(typeof document==='undefined')return;const sound=new PokerSounds();audio.current=sound;navigating.current=false;
+  const unlock=()=>{void sound.unlock();};document.addEventListener('pointerdown',unlock,{passive:true});document.addEventListener('keydown',unlock);
+  return()=>{document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);sound.close();if(audio.current===sound)audio.current=null;if(navigationTimer.current)clearTimeout(navigationTimer.current);};
+ },[roomId]);
+ useEffect(()=>{audio.current?.setEnabled(soundEnabled);},[soundEnabled,roomId]);
  const client=useRef<PokerPlayerClient|null>(null),busyRef=useRef(false),refreshing=useRef(false),readEpoch=useRef(0),retryAt=useRef(0),readFailures=useRef(0),pollMode=useRef<'spectator'|'player'|null>(null);
  const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('参加ボタンから接続してください。'),[connectionEpoch,setConnectionEpoch]=useState(0),[exitOpen,setExitOpen]=useState(false),[exitDeadline,setExitDeadline]=useState<number|null>(null);
  async function run(operation:(c:PokerPlayerClient)=>Promise<unknown>){
-  const c=client.current;if(!c||busyRef.current)return;busyRef.current=true;readEpoch.current++;setBusy(true);
+  void audio.current?.unlock();const c=client.current;if(!c||busyRef.current)return;busyRef.current=true;readEpoch.current++;setBusy(true);
   try{await operation(c);if(client.current===c){setState(c.state);setMessage(c.pending?'前の操作の結果確認が必要です。':'接続中');}}
   catch(error){if(client.current===c){setState(null);pollMode.current=null;setMessage(error instanceof PlayerClientError&&error.status===401?'ログインを確認してください。':error instanceof PlayerClientError&&error.status===409?'接続が切り替わったか、ゲームが進みました。再接続してください。':'接続を確認できません。しばらくしてから再接続してください。');}}
   finally{if(client.current===c){busyRef.current=false;setBusy(false);setPending(c.pending);}}
@@ -47,23 +59,23 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
  useEffect(()=>{if(state?.autoExitAt!=null)setExitDeadline(current=>current??Date.now()+Math.max(0,state.autoExitAt!-state.serverNow));},[state?.autoExitAt]);
  useEffect(()=>{
   if(exitDeadline===null)return;
-  const timer=setTimeout(()=>{pollMode.current=null;client.current?.close();window.location.assign('/poker-lobby');},Math.max(0,exitDeadline-Date.now()));
+  const timer=setTimeout(()=>{pollMode.current=null;client.current?.close();navigateToLobby();},Math.max(0,exitDeadline-Date.now()));
   return()=>clearTimeout(timer);
- },[exitDeadline]);
+ },[exitDeadline,navigateToLobby]);
  useEffect(()=>{
   const c=client.current;if(!c||!eventsOrigin||connectionEpoch===0)return;
   let cancelled=false,stop:(()=>void)|undefined;
   void c.watch(eventsOrigin,()=>{if(!cancelled&&pollMode.current==='player'&&!busyRef.current&&!c.pending)void refresh();},()=>{if(cancelled)return;readEpoch.current++;pollMode.current=null;setState(null);setMessage('リアルタイム接続が切れました。再接続してください。');}).then(cleanup=>{if(cancelled)cleanup();else stop=cleanup;}).catch(()=>{if(!cancelled){readEpoch.current++;pollMode.current=null;setState(null);setMessage('リアルタイム接続を開始できません。再接続してください。');}});
   return()=>{cancelled=true;stop?.();};
  },[eventsOrigin,connectionEpoch]);
- return <><OnlineTableView state={state} onExit={()=>setExitOpen(true)}>
+ return <><OnlineTableView state={state} onExit={()=>setExitOpen(true)} onSound={playSound} soundEnabled={soundEnabled} onSoundToggle={value=>{setSoundEnabled(value);audio.current?.setEnabled(value);if(value)void audio.current?.unlock().then(()=>playSound('turn'));}}>
   <OnlineControls state={state} busy={busy} pending={pending} enabled={enabled} message={message}
-   onJoin={()=>void run(async c=>{await c.join();retryAt.current=0;readFailures.current=0;pollMode.current='player';setConnectionEpoch(v=>v+1);})}
-   onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();pollMode.current='spectator';setConnectionEpoch(0);})}
+   onJoin={()=>void run(async c=>{await c.join();if(client.current===c)playSound('enter');retryAt.current=0;readFailures.current=0;pollMode.current='player';setConnectionEpoch(v=>v+1);})}
+   onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();if(client.current===c)playSound('enter');pollMode.current='spectator';setConnectionEpoch(0);})}
    onRetry={()=>void run(async c=>{await c.retry();pollMode.current='player';})}
    onTimeBank={()=>void run(c=>c.timeBank())}
    onAct={action=>void run(c=>c.act(action))}/>
   </OnlineTableView>
-  {exitOpen&&<div className={shared.seatOverlay}><div className={shared.seatDialog} role="dialog" aria-modal="true" aria-labelledby="online-exit-title"><h2 id="online-exit-title">ゲームを退出しますか？</h2><p>退出しても大会のチップや進行は維持されます。</p>{pending&&<p>先に前の操作の結果を確認してください。</p>}<div className={shared.seatDialogActions}><button type="button" onClick={()=>setExitOpen(false)}>キャンセル</button><button type="button" disabled={busy||pending} onClick={()=>{if(!client.current||!state||state.youSeat===null){window.location.assign('/poker-lobby');return;}void run(async c=>{await c.disconnect();pollMode.current=null;window.location.assign('/poker-lobby');});}}>退出する</button></div></div></div>}
+  {exitOpen&&<div className={shared.seatOverlay}><div className={shared.seatDialog} role="dialog" aria-modal="true" aria-labelledby="online-exit-title"><h2 id="online-exit-title">ゲームを退出しますか？</h2><p>退出しても大会のチップや進行は維持されます。</p>{pending&&<p>先に前の操作の結果を確認してください。</p>}<div className={shared.seatDialogActions}><button type="button" onClick={()=>setExitOpen(false)}>キャンセル</button><button type="button" disabled={busy||pending} onClick={()=>{if(!client.current||!state||state.youSeat===null){navigateToLobby();return;}void run(async c=>{await c.disconnect();pollMode.current=null;if(client.current===c)navigateToLobby();});}}>退出する</button></div></div></div>}
  </>;
 }

@@ -123,3 +123,21 @@ test('finished auto-exit retains its absolute deadline through polls and connect
  await act(async()=>timer.fn());assert.equal(navigated,'/poker-lobby');
  await act(async()=>f.renderer.unmount());assert.equal(timers.size,0);
 });
+
+test('online entry/action/exit sounds obey mute; exit waits for its cue and cleanup releases audio',async t=>{
+ const oldDocument=global.document,oldAudio=global.AudioContext,oldWindow=global.window,oldSet=global.setTimeout,oldClear=global.clearTimeout;
+ const tones=[],listeners=new Map();let closed=0,exitTimer=null,navigated=null;
+ global.document={addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
+ const param={setValueAtTime(){},exponentialRampToValueAtTime(){}};
+ global.AudioContext=class{state='suspended';currentTime=0;sampleRate=8000;destination={};resume(){this.state='running';return Promise.resolve();}close(){closed++;return Promise.resolve();}createOscillator(){return {type:'sine',frequency:{setValueAtTime:f=>tones.push(f)},connect(){},disconnect(){},start(){},stop(){}};}createGain(){return {gain:param,connect(){},disconnect(){}};}};
+ global.window={location:{assign:path=>navigated=path}};
+ global.setTimeout=(fn,ms,...args)=>{if(ms===350){exitTimer=fn;return 'audio-exit';}return oldSet(fn,ms,...args);};global.clearTimeout=id=>{if(id!=='audio-exit')oldClear(id);};
+ t.after(()=>{global.document=oldDocument;global.AudioContext=oldAudio;global.window=oldWindow;global.setTimeout=oldSet;global.clearTimeout=oldClear;});
+ const f=await harness(t);assert.ok(listeners.has('pointerdown'));assert.equal(tones.length,0);await f.click('接続・再接続');assert.deepEqual(tones.slice(0,2),[523.25,783.99]);
+ const count=tones.length;await f.poll();assert.equal(tones.length,count);await f.click('コール');assert.ok(tones.includes(310));
+ await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームメニューを開く'}).props.onClick());const toggle=f.renderer.root.findAllByType('input').find(n=>n.props.type==='checkbox');
+ await act(async()=>toggle.props.onChange({target:{checked:false}}));const muted=tones.length;await f.click('接続・再接続');assert.equal(tones.length,muted);
+ await act(async()=>toggle.props.onChange({target:{checked:true}}));assert.ok(tones.includes(880));
+ await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームを退出'}).props.onClick());await f.click('退出する');assert.deepEqual(tones.slice(-2),[659.25,440]);assert.equal(navigated,null);assert.ok(exitTimer);exitTimer();assert.equal(navigated,'/poker-lobby');
+ await act(async()=>f.renderer.unmount());assert.equal(closed,1);assert.equal(listeners.size,0);
+});
