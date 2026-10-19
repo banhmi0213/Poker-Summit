@@ -16,7 +16,7 @@ export default function AssignedRooms({enabled}:{enabled:boolean}){
  useEffect(()=>{mounted.current=true;if(!enabled)return()=>{mounted.current=false;};
   const supabase=createClient();let member:string|undefined;
   const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{const next=session?.user.id??'';if(event==='SIGNED_OUT'||member!==undefined&&member!==next){epoch.current++;loading.current=false;setBusy(false);setRooms([]);setMessage('ログイン状態が変わりました。参加卓を再読み込みしてください。');}member=next;});
-  void refresh();return()=>{mounted.current=false;epoch.current++;loading.current=false;subscription.unsubscribe();};
+  void refresh();const timer=setInterval(()=>void refresh(),15000);return()=>{clearInterval(timer);mounted.current=false;epoch.current++;loading.current=false;subscription.unsubscribe();};
  },[enabled]);
  const pages=Math.max(1,Math.ceil(rooms.length/2)),current=Math.min(page,pages-1);
  return <section aria-label="割り当て済みの参加卓" style={{padding:16,border:'1px solid #a4c6b7',borderRadius:12,marginBottom:20}}><h2>あなたの参加卓</h2>

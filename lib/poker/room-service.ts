@@ -23,6 +23,8 @@ export function createPokerRoomService(options:Options){
  runtime=new RoomRuntime(registry,{maxRooms:options.registry.maxRooms});
  const rawPlayer=registry.playerHandler({origins,auth:options.auth}),rawLobby=registry.lobbyHandler({origins,auth:options.auth}),rawManager=registry.managerHandler({origins,auth:options.auth});
  let closing=false,started=false,startTask:Promise<AddressInfo>|null=null,closeTask:Promise<void>|null=null;
+ let entryTimer:ReturnType<typeof setInterval>|null=null,entryTask:Promise<unknown>|null=null;
+ const prepare=()=>{if(closing||entryTask)return;entryTask=registry.prepareEntries().catch(()=>{}).finally(()=>{entryTask=null;});};
  const listenAbort=new AbortController();let listenerTask:Promise<AddressInfo>|null=null;
  const accepted=new Set<Promise<Response>>();
  const unavailable=()=>Response.json({ok:false,error:'temporarily_unavailable'},{status:503,headers:{'Cache-Control':'no-store, private'}});
@@ -33,6 +35,7 @@ export function createPokerRoomService(options:Options){
  const close=()=>{
   if(closeTask)return closeTask;closing=true;started=false;
   closeTask=(async()=>{
+   if(entryTimer)clearInterval(entryTimer);await entryTask;
    listenAbort.abort();await Promise.allSettled([listenerTask]);
    // Stop timers immediately. Transport handlers already accepted may finish their
    // durable commit, but cannot admit further traffic or restart the runtime.
@@ -57,7 +60,7 @@ export function createPokerRoomService(options:Options){
      const cleanup=()=>{server.off('error',error);server.off('listening',listening);listenAbort.signal.removeEventListener('abort',aborted);};
      const error=()=>{cleanup();reject(new Error('Listener unavailable'));};
      const aborted=()=>{cleanup();reject(new Error('Service closed'));};
-     const listening=()=>{cleanup();if(closing){server.close();reject(new Error('Service closed'));return;}const address=server.address();if(!address||typeof address==='string'){reject(new Error('Listener unavailable'));return;}started=true;resolve(address);};
+     const listening=()=>{cleanup();if(closing){server.close();reject(new Error('Service closed'));return;}const address=server.address();if(!address||typeof address==='string'){reject(new Error('Listener unavailable'));return;}started=true;prepare();entryTimer=setInterval(prepare,5000);resolve(address);};
      server.once('error',error);server.once('listening',listening);listenAbort.signal.addEventListener('abort',aborted,{once:true});server.listen({port,host,signal:listenAbort.signal});
     });return await listenerTask;
    }catch{await close();throw new Error('Room service startup failed');}

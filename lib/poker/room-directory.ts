@@ -21,6 +21,7 @@ export function roomAssignments(data:unknown):RoomAssignment[]{
 export type RegistrationPlan=RoomBinding&{members:string[]};
 export function registrationPlan(value:unknown,tournamentId:string):RegistrationPlan{const raw=value as RegistrationPlan,binding=roomBinding({...raw,enabled:true});if(binding.tournamentId!==roomUUID(tournamentId)||binding.allowSpectators||!Array.isArray(raw.members)||raw.members.length<2||raw.members.length>6||binding.capacity!==(raw.members.length===2?2:6))throw Error('Invalid registration plan');const members=raw.members.map(roomUUID);if(new Set(members).size!==members.length)throw Error('Duplicate frozen member');return {...binding,members};}
 export interface RoomDirectory {
+ pendingEntries?():Promise<{tournamentId:string;count:number}[]>;
  startupRooms(limit:number):Promise<string[]>;
  managementStatus(tournament:string):Promise<RegistrationManagementStatus>;
  configureRegistration(tournament:string,capacity:number,enabled:boolean):Promise<RegistrationManagementStatus>;
@@ -51,6 +52,7 @@ type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:u
 export class SupabaseRoomDirectory implements RoomDirectory {
  constructor(private client:RpcClient){}
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
+ async pendingEntries(){const data=await this.#rpc('poker_entry_due',{});if(!Array.isArray(data)||data.length>128)throw Error('Invalid entry discovery');const seen=new Set();return data.map(row=>{const tournamentId=roomUUID(row?.tournamentId);if(seen.has(tournamentId)||!Number.isSafeInteger(row.count)||row.count<2||row.count>6)throw Error('Invalid entry target count');seen.add(tournamentId);return {tournamentId,count:row.count};});}
  async startupRooms(limit:number){
   if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw Error('Invalid startup limit');
   const data=await this.#rpc('poker_room_startup_ids',{p_limit:limit});
@@ -69,7 +71,7 @@ export class SupabaseRoomDirectory implements RoomDirectory {
   id=roomUUID(id);const data=await this.#rpc('poker_room_control',{p_room:id});if(data===null)return null;const c=data as RoomControl;
   if(roomUUID(c.roomId)!==id||typeof c.enabled!=='boolean'||typeof c.published!=='boolean'||!Number.isSafeInteger(c.expectedCount)||c.expectedCount<2||c.expectedCount>6||!Array.isArray(c.members)||c.members.length>c.expectedCount)throw new Error('Invalid room control');
   const members=c.members.map(roomUUID);if(new Set(members).size!==members.length)throw new Error('Invalid room roster');
-  return {roomId:id,enabled:c.enabled,published:c.published,expectedCount:c.expectedCount,members};
+  return {roomId:id,enabled:c.enabled,published:c.published,expectedCount:c.expectedCount,members,...(c.seatedStart===true?{seatedStart:true}:{})};
  }
  async authorize(access:RoomAccess){
   const roomId=roomUUID(access.roomId),memberId=roomUUID(access.memberId);

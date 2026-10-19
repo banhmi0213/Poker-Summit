@@ -74,3 +74,12 @@ test('time bank is rejected at exact deadline without changing chips or turn dea
  const f=setup();f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));f.setNow(s.turn.expiresAt-T);
  assert.throws(()=>f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision));assert.equal(f.room.publicSnapshot().turn.expiresAt,s.turn.expiresAt);assert.equal(chips(f.room.publicSnapshot()),20000);
 });
+
+test('targeted tournament opens exactly ten minutes before and starts only seated members at start',()=>{
+ let now=T-600001;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B','C'],expectedCount:3,seatedStart:true};assert.equal(room.advance(control).event,'scheduled');assert.throws(()=>room.join('A',true),/Seating not open/);
+ now=T-600000;room.join('A',true);room.join('B',true);assert.equal(room.advance(control).event,'scheduled');assert.equal(room.publicSnapshot().hand,null);
+ now=T;assert.equal(room.advance(control).event,'started');assert.equal(room.publicSnapshot().hand.players.length,2);assert.equal(room.publicSnapshot().seats.filter(s=>s.occupied).length,2);assert.throws(()=>room.join('C',true),/New seating unavailable/);assert.ok(room.join('A',true).connectionId);
+ const restored=ScheduledTournamentRoom.restore(room.checkpoint(),{now:()=>now});assert.equal(restored.checkpoint().seatedStart,true);assert.throws(()=>restored.join('C',true));
+});
+test('fewer than two seated members never auto-win and late initial seating is rejected',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B'],expectedCount:2,seatedStart:true};room.advance(control);room.join('A',true);now=T;assert.equal(room.advance(control).event,'insufficient-seated');assert.equal(room.publicSnapshot().hand,null);assert.throws(()=>room.join('B',true));});
+test('checked-in disconnected player remains; cancelled member is excluded',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B','C'],expectedCount:3,seatedStart:true};room.advance(control);const a=room.join('A',true);room.join('B',true);room.join('C',true);room.disconnect('A',a.connectionId);now=T;assert.equal(room.advance({...control,members:['A','B']}).event,'started');assert.equal(room.publicSnapshot().hand.players.length,2);assert.equal(room.publicSnapshot().seats.filter(s=>s.occupied).length,2);});

@@ -6,11 +6,11 @@ import { tournamentClock,validateStructure,type TournamentStructure } from "./to
 import { tournamentHandTerms } from "./tournament-hand";
 
 type RoomSnapshot=ReturnType<SeatedHandRoom["publicSnapshot"]>;
-export type TournamentControl={enabled:boolean;published:boolean;members:readonly string[];expectedCount:number};
-export type ScheduledCheckpoint={version:1;structure:TournamentStructure;startsAt:string;lastNow:number;room:RoomCheckpoint;handPauseMs?:number};
+export type TournamentControl={enabled:boolean;published:boolean;members:readonly string[];expectedCount:number;seatedStart?:boolean};
+export type ScheduledCheckpoint={version:1;structure:TournamentStructure;startsAt:string;lastNow:number;room:RoomCheckpoint;handPauseMs?:number;seatedStart?:boolean};
 export class ScheduledTournamentRoom {
   #room:SeatedHandRoom; #structure:TournamentStructure; #startsAt:string;
-  #clock:()=>number; #lastNow=0; #sample:number|null=null; #turnMs:number; #handPauseMs:number;
+  #clock:()=>number; #lastNow=0; #sample:number|null=null; #turnMs:number; #handPauseMs:number; #seatedStart=false;
   constructor(config:{structure:unknown;starts_at:string},options:{now?:()=>number;turnMs?:number;handPauseMs?:number}={}) {
     const normalized=validateStructure(config.structure),start=Date.parse(config.starts_at);
     if(typeof config.starts_at!=="string"||!Number.isSafeInteger(start)||start<0)throw new Error("Invalid tournament start");
@@ -26,12 +26,12 @@ export class ScheduledTournamentRoom {
       {tournament:true,turnMs:this.#turnMs,now:()=>this.#sample??this.#readNow()});
   }
   /** Sensitive server-only checkpoint. No live connection tokens. */
-  checkpoint():ScheduledCheckpoint {return structuredClone({version:1,structure:this.#structure,startsAt:this.#startsAt,lastNow:this.#lastNow,room:this.#room.checkpoint(),handPauseMs:this.#handPauseMs});}
+  checkpoint():ScheduledCheckpoint {return structuredClone({version:1,structure:this.#structure,startsAt:this.#startsAt,lastNow:this.#lastNow,room:this.#room.checkpoint(),handPauseMs:this.#handPauseMs,...(this.#seatedStart?{seatedStart:true}:{})});}
   static restore(input:ScheduledCheckpoint,options:{now?:()=>number}={}) {
     const s=structuredClone(input);
     if(s?.version!==1||!Number.isSafeInteger(s.lastNow)||s.lastNow<0||!s.room?.tournament||s.room.startingStack!==s.structure?.startingStack)throw new Error("Invalid scheduled checkpoint");
     const room=new ScheduledTournamentRoom({structure:s.structure,starts_at:s.startsAt},{now:options.now,turnMs:s.room.turnMs,handPauseMs:s.handPauseMs===4000?8000:s.handPauseMs});
-    room.#lastNow=s.lastNow;room.#room=SeatedHandRoom.restore(s.room,()=>room.#sample??room.#readNow());return room;
+    if(s.seatedStart!==undefined&&typeof s.seatedStart!=="boolean")throw Error("Invalid seated start policy");room.#seatedStart=s.seatedStart??false;room.#lastNow=s.lastNow;room.#room=SeatedHandRoom.restore(s.room,()=>room.#sample??room.#readNow());return room;
   }
   #readNow() {
     const now=this.#clock();
@@ -56,11 +56,13 @@ export class ScheduledTournamentRoom {
   /** One trusted decision per invocation, sharing the same server clock sample. */
   advance(control:TournamentControl) {return this.#run(now=>{
     if(typeof control?.enabled!=="boolean"||typeof control.published!=="boolean"||!Number.isSafeInteger(control.expectedCount)||control.expectedCount<2||control.expectedCount>6||!Array.isArray(control.members)||control.members.length>control.expectedCount)throw new Error("Invalid scheduler control");
+    if(control.seatedStart!==undefined&&typeof control.seatedStart!=="boolean")throw Error("Invalid seated start policy");
+    const policyChanged=Boolean(control.seatedStart)&&!this.#seatedStart;if(control.seatedStart)this.#seatedStart=true;
     const readiness={...this.#room.registrationReadiness(control.members),expected:control.expectedCount};
     readiness.ready=readiness.ready&&control.members.length===control.expectedCount;
     const state=this.#project(this.#room.publicSnapshot(),now);
     const boundary=()=>{let end=Date.parse(this.#startsAt);if(now<end)return end;for(const p of this.#structure.periods){end+=p.minutes*60000;if(now<end)return end;}return null;};
-    const result=(event:string,changed=false,nextWakeAt:number|null=null)=>({event,changed,nextWakeAt,readiness,state:this.#project(this.#room.publicSnapshot(),now)});
+    const result=(event:string,changed=false,nextWakeAt:number|null=null)=>({event,changed:changed||policyChanged,nextWakeAt,readiness,state:this.#project(this.#room.publicSnapshot(),now)});
     if(!control.enabled)return result("disabled");
     if(state.phase==="finished")return result("finished");
     if(state.phase==="playing"){
@@ -68,6 +70,11 @@ export class ScheduledTournamentRoom {
       return result("playing",false,state.turn?.expiresAt??null);
     }
     if(state.clock.phase==="scheduled")return result("scheduled",false,Date.parse(this.#startsAt));
+    if(state.phase==="waiting"&&this.#seatedStart){
+      if(!control.published)return result("waiting");if(state.clock.phase==="break")return result("break",false,boundary());
+      if(!this.#room.seatedRegistrationReady(control.members))return result("insufficient-seated");
+      this.#room.startSeatedRegisteredHand(control.members,this.#terms(now));return result("started",true,this.#room.publicSnapshot().turn?.expiresAt??null);
+    }
     if(state.phase==="waiting"&&(!control.published||!readiness.ready))return result("waiting");
     if(state.clock.phase==="break")return result("break",false,boundary());
     if(state.phase==="waiting"){this.#room.startRegisteredHand(control.members,this.#terms(now));return result("started",true,this.#room.publicSnapshot().turn?.expiresAt??null);}
@@ -76,7 +83,7 @@ export class ScheduledTournamentRoom {
     if(now<due)return result("pause",false,due);
     this.#room.nextHand(state.hand!.handId,this.#terms(now));return result("next-hand",true,this.#room.publicSnapshot().turn?.expiresAt??null);
   });}
-  join(member:string,allowNewSeat:boolean){return this.#run(now=>{const result=this.#room.join(member,allowNewSeat);return {...result,state:this.#project(result.state,now)};});}
+  join(member:string,allowNewSeat:boolean){return this.#run(now=>{if(this.#seatedStart&&now<Date.parse(this.#startsAt)-600000)throw Error("Seating not open");const result=this.#room.join(member,allowNewSeat&&(!this.#seatedStart||now<Date.parse(this.#startsAt)));return {...result,state:this.#project(result.state,now)};});}
   disconnectConnection(connection:string){return this.#run(()=>this.#room.disconnectConnection(connection));}
   publicSnapshot(){return this.#run(now=>this.#project(this.#room.publicSnapshot(),now));}
   snapshot(member:string,connection:string){return this.#run(now=>this.#project(this.#room.snapshot(member,connection),now));}

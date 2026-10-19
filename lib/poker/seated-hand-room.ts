@@ -124,6 +124,15 @@ export class SeatedHandRoom {
     const expected=new Set(members),seats=[...this.#seats.values()],matched=seats.filter(s=>expected.has(s.memberId));
     return {seated:matched.length,connected:matched.filter(s=>s.connectionId).length,ready:members.length>=2&&matched.length===members.length&&seats.length===members.length&&matched.every(s=>s.connectionId!==null)};
   }
+  /** Initial roster includes only admitted members who actually took a seat.
+   * Previously seated disconnected players remain and time out normally. */
+  seatedRegistrationReady(members:readonly string[]){return [...this.#seats.values()].filter(s=>members.includes(s.memberId)).length>=2;}
+  startSeatedRegisteredHand(members:readonly string[],terms:HandTerms){
+    if(this.#hand||!this.seatedRegistrationReady(members))throw Error("Require two seated participants");
+    for(const [number,seat] of this.#seats)if(!members.includes(seat.memberId)){this.#seats.delete(number);this.#revision++;}
+    const seats=[...this.#seats.keys()].sort((a,b)=>a-b);
+    return this.startHandWithTerms(seats[randomInt(seats.length)],terms,true);
+  }
   startRegisteredHand(members:readonly string[],terms:HandTerms) {
     if(!this.registrationReadiness(members).ready)throw new Error("Starting roster not ready");
     const seats=[...this.#seats.keys()].sort((a,b)=>a-b);
@@ -131,10 +140,10 @@ export class SeatedHandRoom {
   }
   startHand(buttonSeat:number) {return this.startHandWithTerms(buttonSeat,this.#terms);}
   /** Trusted schedule wrapper may select the current level at INITIAL deal time. */
-  startHandWithTerms(buttonSeat:number,terms:HandTerms) {
+  startHandWithTerms(buttonSeat:number,terms:HandTerms,allowDisconnected=false) {
     if(this.#hand)throw new Error("Hand already started");
     const entries=[...this.#seats].sort((a,b)=>a[0]-b[0]);
-    if(entries.length<2||!this.#seats.has(buttonSeat)||entries.some(([,s])=>!s.connectionId))throw new Error("Players are not ready");
+    if(entries.length<2||!this.#seats.has(buttonSeat)||(!allowDisconnected&&entries.some(([,s])=>!s.connectionId)))throw new Error("Players are not ready");
     const now=this.#readNow();
     const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
     const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;

@@ -59,6 +59,8 @@ export class TournamentRoomRegistry {
    await this.#options.onRoomBound?.(roomId);return status;
   });this.#finalizing.set(tid,{count:expectedCount,task});void task.finally(()=>{if(this.#finalizing.get(tid)?.task===task)this.#finalizing.delete(tid);}).catch(()=>{});return task;
  }
+ /** Trusted scheduled discovery. Frozen target pools are reused on retry. */
+ async prepareEntries(){const pending=await this.#options.directory.pendingEntries?.()??[];const results=[];for(const entry of pending){try{await this.finalizeRegistration(entry.tournamentId,entry.count);results.push(true);}catch{results.push(false);}}return results;}
  /** Shutdown barrier; transport and timers must stop accepting work first. */
  async drain(){await Promise.allSettled([...this.#finalizing.values()].map(p=>p.task));const owners=await Promise.allSettled([...this.#owners.values()]);await Promise.all(owners.map(p=>p.status==='fulfilled'?p.value?.drain():undefined));}
  /** Fresh backend control for every timer decision; missing/disabled rooms do not auto-start. */
