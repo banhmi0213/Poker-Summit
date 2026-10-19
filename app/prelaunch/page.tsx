@@ -4,6 +4,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_DESCRIPTION } from "@/lib/seo";
 import { signOut } from "@/app/login/actions";
+import { registerPrelaunchMHoldemId } from "./actions";
+import { M_HOLDEM_ID_MAX_LENGTH } from "@/lib/m-holdem";
 import { headers } from "next/headers";
 import { classifyDevice, isBotUserAgent } from "@/lib/device";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
   description: `まもなくオープン。${SITE_DESCRIPTION}`,
 };
 
-export default async function PrelaunchPage({searchParams}: {searchParams: {error?: string; done?: string}}) {
+export default async function PrelaunchPage({searchParams}: {searchParams: {error?: string; done?: string; mhError?: string; mhDone?: string}}) {
   const supabase = await createClient();
   const [{ data: settings }, { data: auth }] = await Promise.all([
     supabase.from("site_settings").select("prelaunch_message, prelaunch_x_url, contact_email").eq("id", true).maybeSingle(),
@@ -42,6 +44,10 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
     return RegistrationPage({searchParams, early: true});
   }
 
+  // 先行会員の m HOLD’EM ID(先行登録の間はマイページを開けないので、ここで登録・確認できるようにする。2026/10/19)
+  const { data: mhRow } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", auth.user!.id).maybeSingle();
+  const mHoldemId = (mhRow?.m_holdem_id as string | undefined) ?? null;
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(180deg,#fffaf0 0%,#f6ead2 100%)", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 16px" }}>
       <div style={{ width: "100%", maxWidth: 560, textAlign: "center" }}>
@@ -59,6 +65,27 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
             <br />
             オープン日や先行会員限定トーナメントの詳細はメールと公式Xでお知らせします。
           </p>
+          <div id="m-holdem-id" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee3cc", fontSize: 13.5 }}>
+            <strong style={{ display: "block", marginBottom: 4 }}>m HOLD’EM ID</strong>
+            {mHoldemId ? (
+              <>
+                <span style={{ fontSize: 16, fontWeight: 700, userSelect: "all" }}>{mHoldemId}</span>
+                {searchParams?.mhDone && <span style={{ marginLeft: 8, color: "#2e7d32", fontSize: 12.5 }}>✓ 登録しました</span>}
+                <span style={{ display: "block", fontSize: 12, color: "#7a6a52", marginTop: 4 }}>先行会員限定トーナメントへの参加に使います。登録後は変更できません（変更が必要な場合はお問い合わせください）。</span>
+              </>
+            ) : (
+              <form action={registerPrelaunchMHoldemId}>
+                <span style={{ display: "block", fontSize: 12.5, color: "#7a6a52", marginBottom: 8 }}>
+                  先行会員限定トーナメントへの参加には登録が必要です。一度登録すると変更できませんので、お間違えのないようご入力ください。
+                </span>
+                {searchParams?.mhError && <p style={{ color: "#c0392b", fontSize: 12.5, margin: "0 0 8px" }} role="alert">{searchParams.mhError}</p>}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <input name="mHoldemId" required autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} maxLength={M_HOLDEM_ID_MAX_LENGTH} placeholder="IDを入力" style={{ flex: "1 1 180px", minHeight: 44, fontSize: 16 }} />
+                  <button type="submit" className="btn primary" style={{ minHeight: 44, padding: "0 20px", fontWeight: 700, color: "#382714", background: "linear-gradient(135deg,#f3dda3,#c3983c)", border: "1px solid #b68a35", borderRadius: 8 }}>登録する</button>
+                </div>
+              </form>
+            )}
+          </div>
           <p style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee3cc", fontSize: 13.5 }}>
             ポーカーディーラーの方はオープン前からディーラー登録ができます。
             <br />
