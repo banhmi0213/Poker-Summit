@@ -124,3 +124,4 @@
 .featureList li{padding:4px 11px;border:1px solid #d7b66c;border-radius:6px;background:#fffdf7;color:#493019;font-size:12.5px;font-weight:700}
 @media(min-width:761px){.launchBadge,.featureList{margin-left:30px;margin-right:24px}.launchBadge{font-size:13px}}
 @media(max-width:760px){.launchBadge{margin:4px auto 8px;font-size:14px}.featureList{justify-content:center;margin:10px auto 0;max-width:380px}.featureList li{font-size:13px;background:#fffdf7f0}}
+@media(min-width:761px){.launchBadge{align-self:flex-start}}
