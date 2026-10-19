@@ -30,3 +30,5 @@
 .payoutFlight i{position:absolute;left:var(--pot-start-x,50%);top:var(--pot-start-y,42%);display:grid;place-items:center;width:22px;height:22px;border:2px dashed #fff2b3;border-radius:50%;background:#b88418;color:#fff3bc;box-shadow:0 0 12px #f5c357;font-style:normal;animation:collectPot .8s ease-in forwards}
 @keyframes collectPot{0%{transform:translate(-50%,-50%) scale(.85);opacity:1}70%,90%{opacity:1;left:var(--pot-end-x,var(--coin-left));top:var(--pot-end-y,var(--coin-top));transform:translate(-50%,-50%) scale(.5)}100%{left:var(--pot-end-x,var(--coin-left));top:var(--pot-end-y,var(--coin-top));transform:translate(-50%,-50%) scale(.5);opacity:0}}
 @media(prefers-reduced-motion:reduce){.payoutFlight i{animation:none;opacity:0}}
+
+.payoutFlight i[data-pot-coin]{animation:none;opacity:0;transform:translate(-50%,-50%)}
