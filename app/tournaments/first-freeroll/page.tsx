@@ -42,7 +42,7 @@ export default function FirstFreerollPage() {
         <li><span className={styles.number}>1</span><h3>登録メールアドレスに<br />運営からご案内</h3><p>大会終了後、PokerSummitに登録されたメールアドレスに運営からご案内します。</p></li>
         <li><span className={styles.number}>2</span><h3>案内メールに返信して<br />プレイヤー名とIDのスクショを提出</h3><p>m HOLD’EMのマイページで、プレイヤー名とIDが1画面にセットで写っているスクリーンショットを添付してご返信ください。</p></li>
         <li><span className={styles.number}>3</span><h3>登録IDとの照合後<br />賞品をお渡し</h3><p>提出されたIDとPokerSummitに登録されたm HOLD’EM IDを照合後、賞品をお渡しします。</p></li>
-      </ol><div className={styles.deadline}><strong>提出期限：<time dateTime="2026-11-01T23:59:00+09:00">2026年11月1日（日）23:59</time>（日本時間）</strong><p>期限内に提出がない場合、賞品を受け取れません。</p></div></section>
+      </ol><p className={styles.note}>m HOLD’EMのマイページで、プレイヤー名とIDが1画面にセットで写っているスクリーンショットをお送りください。</p><div className={styles.deadline}><strong>提出期限：<time dateTime="2026-11-01T23:59:00+09:00">2026年11月1日（日）23:59</time>（日本時間）</strong><p>期限内に提出がない場合、賞品を受け取れません。</p></div></section>
       <section className={styles.section}><h2>注意事項<small>IMPORTANT NOTES</small></h2><ul className={styles.notes}><li>参加にはアプリ内アイテム（ダイヤ）が必要です。</li><li>登録したm HOLD’EM IDと参加IDを一致させてください。</li><li>通常の会員登録のみでは、本大会の参加対象となりません。</li><li>大会の最新情報・ルーム情報は開催前にご案内します。</li><li>本大会はPokerSummit主催です。サミー株式会社・m HOLD’EMの公認・協賛大会ではありません。</li></ul></section>
       <div className={styles.finalCta}><a className={styles.goldButton} href={APP_URL} target="_blank" rel="noopener noreferrer">大会に参加する</a><p>m HOLD’EM公式のアプリリンクへ移動します。未インストールの場合はダウンロードしてご参加ください。</p></div>
     </main><PortalFooter />
