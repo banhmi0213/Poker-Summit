@@ -3,6 +3,8 @@ import { createAnonClient } from "@/lib/supabase/anon";
 import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { prefPageHref } from "@/lib/city";
 import { getPrefStoreCounts } from "@/lib/pref-counts";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
+import { PriceLockNote } from "@/app/price-lock-note";
 
 // フッターの問い合わせ先メール(管理画面で保存したら即反映。lib/revalidate.ts)
 const getFooterSettings = unstable_cache(
@@ -15,6 +17,9 @@ const getFooterSettings = unstable_cache(
 );
 
 export async function PortalFooter({ hideManagementLinks = false }: { hideManagementLinks?: boolean } = {}) {
+  // 年内お申込み特典の受付中だけ、店舗向けリンクに一言添える(2026/10/20。OFF・締切後は自動で消える)
+  const priceLock = await getPriceLockCampaign().catch(() => null);
+  const lockNote = priceLock?.accepting && priceLock.deadlineIso ? priceLock.deadlineIso : null;
   // どちらも全ページ共通なのでキャッシュから取る(2026/10、表示速度対策)
   const [settings, prefCounts] = await Promise.all([
     getFooterSettings().catch(() => null),
@@ -84,13 +89,13 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/contact">お問い合わせ</a>
         <span className="footer-links__separator footer-links__apply-separator" aria-hidden="true"> ｜ </span>
-        <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ</a>
+        <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ{lockNote && <PriceLockNote deadlineIso={lockNote} text="（年内のご契約で料金据え置き）" />}</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         {!hideManagementLinks && <a className="footer-links__apply" href="/store/login">店舗管理画面</a>}
       </nav>
       <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.</div>
       <div className="footer-store-actions">
-        <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
+        <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ{lockNote && <PriceLockNote deadlineIso={lockNote} text="年内のご契約で料金据え置き" className="footer-apply-note" />}</a>
         {!hideManagementLinks && <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>}
       </div>
     </div>

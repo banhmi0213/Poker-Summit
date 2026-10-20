@@ -166,6 +166,8 @@ export async function updatePriceLockSettings(formData: FormData) {
   if (error) throw new Error(error.message);
   await logAdminAction(supabase, enabled ? "settings_price_lock_on" : "settings_price_lock_off", "site_settings");
   revalidateTag("price-lock-campaign");
+  // フッターの「年内のご契約で料金据え置き」が全ページに出るので、全部作り直す(2026/10/20)
+  revalidatePath("/", "layout");
   revalidatePath("/admin/settings");
   revalidatePath("/apply");
   revalidatePath("/terms");
