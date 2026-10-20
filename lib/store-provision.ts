@@ -109,6 +109,13 @@ const contractRow = {
     billing_anchor_day: isTransfer ? params.billing!.anchorDay ?? null : fresh.anchorDay,
     billing_method: isTransfer ? "bank_transfer" : "card",
     billing_cycle_months: isTransfer ? params.billing!.cycleMonths : cardCycleMonths,
+    // 前に無料期間・解約で終わった契約を上書きするときに、前の情報を残さない(2026/10/20)
+    trial_ends_at: null,
+    trial_notice_sent_at: null,
+    trial_end_notified_at: null,
+    canceled_at: null,
+    cancel_at_period_end: false,
+    cancel_requested_at: null,
 };
 // 店舗ごとに契約は1つ(store_id は一意)。やり直しのときは前回作った契約を同じ内容で上書きする
 const { error: contractError } = await supabase.from("store_contracts").upsert(contractRow, { onConflict: "store_id" });
