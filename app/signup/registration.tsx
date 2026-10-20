@@ -11,7 +11,7 @@ import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
 
-export function RegistrationPage({ searchParams, early = false }: { searchParams: { error?: string; done?: string }; early?: boolean }) {
+export function RegistrationPage({ searchParams, early = false, memberPreview = false }: { searchParams: { error?: string; done?: string }; early?: boolean; memberPreview?: boolean }) {
   const params = searchParams;
 
   return (
@@ -29,7 +29,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             // 正式オープン日と、会員になると使えること(2026/10/19)。以前の説明文と入れ替え
             <>
               <p className={styles.launchBadge}>{PRELAUNCH_LAUNCH_LABEL}</p>
-              <p className={styles.lead}>先行登録しておくと、オープン当日からすぐに使えます。</p>
+              <p className={styles.lead}>{memberPreview ? "登録するとオープン前のサイトを先行で見られます。" : "先行登録しておくと、オープン当日からすぐに使えます。"}</p>
               <ul className={styles.featureList}>
                 {PRELAUNCH_FEATURES.map((f) => (
                   <li key={f}>{f}</li>

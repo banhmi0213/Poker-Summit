@@ -106,7 +106,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/maintenance";
     response = NextResponse.rewrite(url);
-  } else if (flags.prelaunch && !isPrelaunchExempt(pathname) && !(await hasPreviewAccess(request.cookies.get(PREVIEW_COOKIE)?.value)) && !(hasMemberSessionCookie(request) && (await canBypassPrelaunch(supabase)))) {
+  } else if (flags.prelaunch && (!isPrelaunchExempt(pathname) || isDealerPath(pathname)) && (await prelaunchAccess(request, supabase, flags.memberPreview)) !== "full") {
+    // 先行登録モード中の見え方(2026/10/20):
+    //  - 運営・審査用アカウント・プレビューの端末 … サイト全体(full)
+    //  - 先行会員(サイト設定で「先行会員にサイトを公開」がON) … ディーラーマッチング以外(member)
+    //  - それ以外 … 先行会員登録の案内ページ(none)
+    const access = await prelaunchAccess(request, supabase, flags.memberPreview);
+    if (isDealerPath(pathname) && (access === "member" || isPrelaunchExempt(pathname))) {
+      // ディーラーマッチングは正式オープンまで閉じておく(「10/25から使えます」の案内)
+      const url = request.nextUrl.clone();
+      url.pathname = "/coming-soon";
+      url.search = "";
+      response = NextResponse.rewrite(url, { request });
+    } else if (access === "none" && !isPrelaunchExempt(pathname)) {
     // 先行登録モード(2026/10): 一般向けページは先行会員登録の案内ページに差し替える。
     // トップ(/)は検索結果に案内ページが出るよう通常の200で返し、それ以外のページは
     // 「一時的に閉じている」ことを検索エンジンに伝えるため 503 + Retry-After で返す
@@ -118,6 +130,7 @@ export async function updateSession(request: NextRequest) {
       pathname === "/"
         ? NextResponse.rewrite(url, { request })
         : NextResponse.rewrite(url, { request, status: 503, headers: { "Retry-After": "86400" } });
+    }
   }
 
   pendingCookies.forEach(({ name, value, options }) =>
@@ -129,8 +142,8 @@ export async function updateSession(request: NextRequest) {
 
 // メンテナンスモード・先行登録モードのON/OFFは、同じサーバーの中で30秒だけ覚えておく
 // (全ページの表示のたびにデータベースへ問い合わせないため。切り替えの反映は最大30秒遅れる)
-let flagsCache: { value: { maintenance: boolean; prelaunch: boolean }; at: number } | null = null;
-async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolean }> {
+let flagsCache: { value: { maintenance: boolean; prelaunch: boolean; memberPreview: boolean }; at: number } | null = null;
+async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolean; memberPreview: boolean }> {
   if (flagsCache && Date.now() - flagsCache.at < 30_000) return flagsCache.value;
   // ログイン状態に関係ない設定なので、Cookieなしのクライアントで読む
   // (期限切れのログイン情報で問い合わせて失敗するのを避ける)
@@ -139,11 +152,11 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
   });
   const { data: settings, error } = await anon
     .from("site_settings")
-    .select("maintenance_mode, prelaunch_mode")
+    .select("maintenance_mode, prelaunch_mode, member_preview")
     .eq("id", true)
     .maybeSingle();
-  if (error) return flagsCache?.value ?? { maintenance: false, prelaunch: false };
-  const value = { maintenance: !!settings?.maintenance_mode, prelaunch: !!settings?.prelaunch_mode };
+  if (error) return flagsCache?.value ?? { maintenance: false, prelaunch: false, memberPreview: false };
+  const value = { maintenance: !!settings?.maintenance_mode, prelaunch: !!settings?.prelaunch_mode, memberPreview: !!settings?.member_preview };
   flagsCache = { value, at: Date.now() };
   return value;
 }
@@ -168,15 +181,42 @@ function hasMemberSessionCookie(request: NextRequest) {
  */
 const PRELAUNCH_PREVIEW_EMAILS = ["support-jp@komoju.com"];
 
-/** 運営としてログインしているか、審査用アカウントか(先行登録モード中もサイト全体を確認できるようにする) */
-async function canBypassPrelaunch(supabase: ReturnType<typeof createServerClient>) {
-  try {
-    const { data } = await supabase.rpc("is_admin");
-    if (data === true) return true;
-    const { data: u } = await supabase.auth.getUser();
-    const email = u.user?.email?.toLowerCase();
-    return !!email && PRELAUNCH_PREVIEW_EMAILS.includes(email);
-  } catch {
-    return false;
+/**
+ * ディーラーマッチング(正式オープンまで先行会員にも閉じておく、2026/10/20)。
+ * ディーラー登録(/account/dealer)は先行登録ページで「オープン前から登録できます」と案内しているので開けたまま。
+ * ただしその中のマッチングのチャット・勤務管理は閉じる。
+ */
+function isDealerPath(pathname: string) {
+  return ["/spot-jobs", "/matching", "/matching-guide", "/account/dealer/chat", "/account/dealer/work"].some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+/**
+ * 先行登録モード中にどこまで見せるか。同じリクエストの中では1回だけ調べる。
+ *  full   … 運営としてログイン中・審査用アカウント・プレビューの端末(サイト全体)
+ *  member … 先行会員(メール確認済みの会員。サイト設定で「先行会員にサイトを公開」がONのときだけ)
+ *  none   … それ以外
+ */
+const accessCache = new WeakMap<NextRequest, Promise<"full" | "member" | "none">>();
+function prelaunchAccess(request: NextRequest, supabase: ReturnType<typeof createServerClient>, memberPreview: boolean) {
+  let p = accessCache.get(request);
+  if (!p) {
+    p = (async () => {
+      if (await hasPreviewAccess(request.cookies.get(PREVIEW_COOKIE)?.value)) return "full" as const;
+      if (!hasMemberSessionCookie(request)) return "none" as const;
+      try {
+        const { data: admin } = await supabase.rpc("is_admin");
+        if (admin === true) return "full" as const;
+        const { data: u } = await supabase.auth.getUser();
+        const user = u.user;
+        if (!user) return "none" as const;
+        if (user.email && PRELAUNCH_PREVIEW_EMAILS.includes(user.email.toLowerCase())) return "full" as const;
+        if (memberPreview && user.email_confirmed_at && !user.is_anonymous) return "member" as const;
+        return "none" as const;
+      } catch {
+        return "none" as const;
+      }
+    })();
+    accessCache.set(request, p);
   }
+  return p;
 }

@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { OfficialBadge } from "@/app/member-role-badge";
 import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 import Link from "next/link";
@@ -140,6 +141,10 @@ export async function MyPageContent({
     .limit(1)
     .maybeSingle();
 
+  // 「運営」バッジのアカウントか(マイページにもバッジを出す、2026/10/20)
+  const { data: officialRows } = await supabase.rpc("official_board_user_ids", { p_ids: [user.id] });
+  const isOfficial = ((officialRows ?? []) as unknown[]).length > 0;
+
   const tab = searchParams.tab || "favorites";
   const name = (user.user_metadata as any)?.display_name || "会員";
   const pref = (user.user_metadata as any)?.pref || "";
@@ -256,7 +261,7 @@ export async function MyPageContent({
         </div>) : (
           <div className={styles.summary}>
             <div className={styles.identity}>
-              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
+              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><OfficialBadge show={isOfficial} /><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
               {myProfile?.bio && <p className={styles.bio}>{myProfile.bio}</p>}
               <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:7}}>{myProfile?.role && <span className={styles.role} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><img src="/images/summit-finger-clean.webp" alt="" aria-hidden="true" width={22} height={28} style={{ width: 22, height: 28, objectFit: "contain", flexShrink: 0 }} />{myProfile.role}</span>}{graduationScore!==null&&<AcademyBadge score={graduationScore} compact/>}</div>
             </div>
@@ -264,7 +269,7 @@ export async function MyPageContent({
               <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
               <div><dt>▦ 登録日</dt><dd>{joinedAt || "未設定"}</dd></div>
               <div><dt>m HOLD’EM ID</dt><dd>{mHoldemId || "未登録"}<small>（非公開）</small></dd></div>
-              <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
+              <div><dt>♛ 会員ステータス</dt><dd>{isOfficial ? "運営" : "一般会員"}</dd></div>
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>

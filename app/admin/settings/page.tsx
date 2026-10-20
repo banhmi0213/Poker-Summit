@@ -288,6 +288,13 @@ export default async function AdminSettingsPage({
                   <span style={{ fontWeight: 700 }}>先行登録モードをONにする</span>
                   <input type="checkbox" name="prelaunchMode" value="1" defaultChecked={s.prelaunch_mode ?? false} style={{ width: 18, height: 18 }} />
                 </label>
+                <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, background: "rgba(200,160,60,0.12)", padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700 }}>先行会員にサイトを公開する</span>
+                  <input type="checkbox" name="memberPreview" value="1" defaultChecked={s.member_preview ?? false} style={{ width: 18, height: 18 }} />
+                </label>
+                <p className="muted" style={{ fontSize: 12, marginBottom: 14, lineHeight: 1.7 }}>
+                  ONにすると、ログインした会員(メール確認済み)はサイト全体を見られます。ディーラーマッチング(スポット求人・ディーラー登録・マッチング)は正式オープンまで閉じたままです。先行登録ページに「登録するとオープン前のサイトを先行で見られます」と出ます。
+                </p>
                 <div className="field">
                   <span className="muted">案内ページの説明文(空欄なら標準の文)</span>
                   <textarea name="prelaunchMessage" rows={4} defaultValue={s.prelaunch_message ?? ""} />

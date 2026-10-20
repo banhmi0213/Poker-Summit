@@ -127,6 +127,8 @@ export async function updateMaintenanceSettings(formData: FormData) {
 export async function updatePrelaunchSettings(formData: FormData) {
   const supabase = await createClient();
   const prelaunchMode = formData.get("prelaunchMode") === "1";
+  // 先行会員にサイトを公開(ディーラーマッチングは閉じたまま、2026/10/20)
+  const memberPreview = formData.get("memberPreview") === "1";
   const prelaunchMessage = String(formData.get("prelaunchMessage") ?? "").trim();
   const prelaunchXUrl = String(formData.get("prelaunchXUrl") ?? "").trim();
   if (prelaunchXUrl && !/^https:\/\/(x|twitter)\.com\//.test(prelaunchXUrl)) {
@@ -136,12 +138,13 @@ export async function updatePrelaunchSettings(formData: FormData) {
     .from("site_settings")
     .update({
       prelaunch_mode: prelaunchMode,
+      member_preview: memberPreview,
       prelaunch_message: prelaunchMessage || null,
       prelaunch_x_url: prelaunchXUrl || null,
     })
     .eq("id", true);
   if (error) throw new Error(error.message);
-  await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings");
+  await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings", undefined, { memberPreview });
   revalidatePath("/admin/settings");
   revalidatePath("/prelaunch");
 }
