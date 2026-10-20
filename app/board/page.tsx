@@ -284,7 +284,7 @@ export default async function BoardPage({
               marginBottom: 16,
             }}
           >
-            <p style={{ fontSize: 13, margin: 0 }}>投稿には無料会員登録が必要です</p>
+            <p style={{ fontSize: 13, margin: 0 }}>サミットの閲覧・投稿には会員登録が必要です</p>
             <Link href="/signup" className="btn primary" style={{ fontSize: 12.5, padding: "6px 14px" }}>
               ログイン / 会員登録
             </Link>
