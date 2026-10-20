@@ -1,4 +1,5 @@
 import searchControls from "@/app/search-controls.module.css";
+import { openingEmptyNote } from "@/lib/prelaunch";
 import { couponCategoryLabel, matchesCouponLocation } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
@@ -221,7 +222,7 @@ export default async function CouponsPage({
           </form>
         </div>
 
-        {list.length === 0 && <div className="empty">条件に合うクーポンが見つかりませんでした。</div>}
+        {list.length === 0 && <div className="empty">条件に合うクーポンが見つかりませんでした。{openingEmptyNote("クーポン") && <><br />{openingEmptyNote("クーポン")}</>}</div>}
 
         <div className="cp-grid"
           style={{

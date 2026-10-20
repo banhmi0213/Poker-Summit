@@ -1,4 +1,5 @@
 import searchControls from "@/app/search-controls.module.css";
+import { openingEmptyNote } from "@/lib/prelaunch";
 import { JobCategoryFilter } from "./category-filter";
 import { readJobSearch, matchesJobSearch } from "@/lib/job-categories";
 import { ReadableName } from "@/app/readable-name";
@@ -146,7 +147,7 @@ export default async function JobsPage({
           </button>
         </form>
 
-        {jobs.length === 0 && <div className="empty">条件に合う求人が見つかりませんでした。</div>}
+        {jobs.length === 0 && <div className="empty">条件に合う求人が見つかりませんでした。{openingEmptyNote("求人") && <><br />{openingEmptyNote("求人")}</>}</div>}
 
         <div
           style={{
