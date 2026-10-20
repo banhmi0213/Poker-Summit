@@ -45,6 +45,14 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
+        {/* 他のドメインがこのサイトを丸ごと映して(プロキシ・コピー)公開している場合に、本物の pokersummit.jp へ戻す(2026/10/20。
+            Googleがトップを別ドメインの重複と判断していたため)。ドメイン名は書き換えられないよう符号化して比べる。
+            プレビュー環境(*.vercel.app)・開発環境では何もしない */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var h=location.hostname,o=atob("cG9rZXJzdW1taXQuanA=");if(h&&h!==o&&h!=="localhost"&&h!=="127.0.0.1"&&!/\\.vercel\\.app$/.test(h)){location.replace("https://"+o+location.pathname+location.search+location.hash)}}catch(e){}})();`,
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

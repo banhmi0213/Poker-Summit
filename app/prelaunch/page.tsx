@@ -16,6 +16,9 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 export const metadata: Metadata = {
   title: "Poker Summit｜先行会員登録受付中",
   description: `まもなくオープン。${SITE_DESCRIPTION}`,
+  // 先行登録モード中はトップ(/)がこのページになるので、正規URLは / と明示する(2026/10/20。
+  // Googleがトップを別ドメインの重複と判断していたため)
+  alternates: { canonical: "/" },
 };
 
 export default async function PrelaunchPage({searchParams}: {searchParams: {error?: string; done?: string; mhError?: string; mhDone?: string}}) {
