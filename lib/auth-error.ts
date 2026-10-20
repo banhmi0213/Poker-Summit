@@ -4,7 +4,8 @@ const MESSAGES: [RegExp, string][] = [
   [/email not confirmed/i, "メールアドレスの確認が済んでいません。登録時に届いた確認メールのリンクを押してください。"],
   [/user already registered|already been registered/i, "このメールアドレスはすでに登録されています。ログインするか、パスワードを忘れた方はパスワードの再設定をご利用ください。"],
   [/password should be at least|password is too short/i, "パスワードが短すぎます。"],
-  [/password.*(weak|known|leaked|pwned)|weak password/i, "このパスワードは安全ではないため使えません。別のパスワードにしてください。"],
+  // 過去にほかのサイトから流出したパスワード(Supabaseの流出チェック)。何がだめか分かるように具体的に(2026/10/20)
+  [/password.*(weak|known|leaked|pwned)|weak password/i, "このパスワードは、過去にほかのサービスから流出したことがあるため、安全のため使えません。ほかのサイトで使っていない、英字と数字を組み合わせたパスワードを入れてください。（まだ登録は完了していません）"],
   [/new password should be different/i, "新しいパスワードは、今のパスワードと別のものにしてください。"],
   [/unable to validate email|invalid email|email address .* is invalid/i, "メールアドレスの形式が正しくありません。"],
   [/rate limit|too many requests|security purposes/i, "短時間に操作が続いたため、しばらく時間をおいてからもう一度お試しください。"],
