@@ -181,6 +181,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const tabs: { key: string; label: string }[] = [
     { key: "overview", label: "全体アクセス" },
     { key: "prelaunch", label: "先行登録" },
+    { key: "apply", label: "掲載申込" },
     { key: "category", label: "カテゴリー" },
     { key: "blog", label: "BLOG記事" },
     { key: "banner", label: "バナー効果" },
@@ -296,6 +297,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       {tab === "blog" && <BlogAnalyticsTab supabase={supabase} since={since} />}
       {tab === "banner" && <BannerTab supabase={supabase} since={since} />}
       {tab === "prelaunch" && <PrelaunchTab since={since} />}
+      {tab === "apply" && <ApplyTab since={since} />}
       {tab === "issues" && <IssuesTab issues={issues} />}
       {(tab === "overview" || !tab) && (
         <OverviewTab
@@ -1079,6 +1081,72 @@ async function PrelaunchTab({ since }: { since: Date }) {
             ))
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 掲載申し込みページ(/apply)の閲覧と申し込み(2026/10/21〜)。広告のリンクに ?utm_source=instagram&utm_campaign=store_test
+// のような目印を付けると「instagram/store_test」として分けて数える。
+async function ApplyTab({ since }: { since: Date }) {
+  const svc = createServiceRoleClient();
+  const [{ data: views }, { data: apps }] = await Promise.all([
+    fetchAllRows(() => svc.from("page_views").select("created_at, referrer, device, source").eq("path", "/apply").gte("created_at", since.toISOString())),
+    svc.from("listing_applications").select("created_at, source, store_name, company_name").gte("created_at", since.toISOString()).order("created_at", { ascending: false }),
+  ]);
+  const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null; source: string | null }[];
+  const appRows = (apps ?? []) as { created_at: string; source: string | null; store_name: string | null; company_name: string | null }[];
+  const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
+  const label = (src: string | null, referrer: string | null) => (src ? `広告・リンクの目印：${src}` : classifyReferrer(referrer));
+  const count = <T,>(rows: T[], keyOf: (r: T) => string) => {
+    const m = new Map<string, number>();
+    rows.forEach((r) => m.set(keyOf(r), (m.get(keyOf(r)) ?? 0) + 1));
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
+  };
+  const bySource = count(viewRows, (v) => label(v.source, v.referrer));
+  const appsBySource = count(appRows, (a) => (a.source ? `広告・リンクの目印：${a.source}` : "目印なし"));
+  const byDay = count(viewRows, (v) => jstDay(v.created_at)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const DEVICE: Record<string, string> = { mobile: "スマホ", tablet: "タブレット", pc: "パソコン" };
+  const byDevice = count(viewRows, (v) => DEVICE[v.device ?? ""] ?? "不明");
+
+  const stat = (t: string, v: string) => (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="muted" style={{ fontSize: 12.5, fontWeight: 700 }}>{t}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{v}</div>
+    </div>
+  );
+  const listCard = (title: string, rows: [string, number][]) => (
+    <div className="card">
+      <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>{title}</h3>
+      {rows.length === 0 ? (
+        <p className="muted small">まだ記録がありません。</p>
+      ) : (
+        rows.map(([k, n]) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+            <span style={{ overflowWrap: "anywhere" }}>{k}</span>
+            <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{n.toLocaleString()}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 12 }}>
+        閲覧 = 掲載申し込みページを開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月21日からです。
+        <br />
+        広告のリンクに目印（例：https://pokersummit.jp/apply?utm_source=instagram&amp;utm_campaign=store_test）を付けると、その広告から来た人と申し込みを分けて数えます。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("閲覧", viewRows.length.toLocaleString())}
+        {stat("申し込み", appRows.length.toLocaleString())}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+        {listCard("どこから来たか（閲覧）", bySource)}
+        {listCard("どこから来たか（申し込み）", appsBySource)}
+        {listCard("日別の閲覧", byDay)}
+        {listCard("端末", byDevice)}
       </div>
     </div>
   );

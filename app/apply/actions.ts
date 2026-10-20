@@ -1,4 +1,5 @@
 "use server";
+import { visitSource } from "@/lib/visit-source";
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -160,6 +161,7 @@ export async function submitApplication(formData: FormData) {
   const requestKey = readRequestKey(formData);
   const { error } = await supabase.from("listing_applications").insert({
           request_key: requestKey,
+          source: visitSource(String(formData.get("source") ?? "").split("/")[0], String(formData.get("source") ?? "").split("/")[1]),
           company_name: companyName,
           applicant_type: applicantType,
           store_name: storeName,
@@ -314,6 +316,7 @@ export async function startPaidApplication(formData: FormData) {
         .from("listing_applications")
         .insert({
                   request_key: requestKey,
+                  source: visitSource(String(formData.get("source") ?? "").split("/")[0], String(formData.get("source") ?? "").split("/")[1]),
                   company_name: companyName,
                   applicant_type: applicantType,
                   store_name: storeName,

@@ -40,21 +40,21 @@ export default async function Page({params}:{params:{id:string}}){
  const period=date(e.start_date)+(e.end_date&&e.end_date!==e.start_date?" 〜 "+date(e.end_date):"");
  const mapQuery=[e.venue,e.location].filter(Boolean).join(" ");
  return <div>{e.start_date&&<JsonLd data={tournamentJsonLd(e)}/>}<PortalHeader userEmail={user?.email}/><main className="mt-sample">
- <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
+ <Link href="/major-tournaments" className="mt-back">国内外大型大会に戻る</Link>
  <article><header className="mt-hero"><div className="mt-hero-photo" role="img" aria-label="ポーカー大会の会場"/>
  <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1><ReadableName name={e.title} /></h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>
  <div className="mt-facts"><div><small>開催期間</small><strong>{period}</strong></div><div><small>開催エリア</small><strong>{e.location||"未定"}</strong></div><div><small>会場</small><strong>{e.venue||"未定"}</strong></div><div><small>開催区分</small><strong>{e.scope}大会</strong></div></div>
  <nav className="mt-section-nav" aria-label="大会詳細のメニュー"><a href="#tournament-overview">大会概要</a><a href="#tournament-schedule">スケジュール</a><a href="#tournament-venue">会場・アクセス</a></nav>
  <div className="mt-columns"><div>
- <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p>{officialUrl&&<div className="mt-official-link"><strong>公式サイト</strong><a href={officialUrl} target="_blank" rel="noopener noreferrer">{officialUrl} ↗</a></div>}</section>
+ <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p>{officialUrl&&<div className="mt-official-link"><strong>公式サイト</strong><a href={officialUrl} target="_blank" rel="noopener noreferrer">{officialUrl}</a></div>}</section>
  <section id="tournament-schedule" className="mt-panel"><div className="mt-heading"><span>EVENT SCHEDULE</span><h2>大会スケジュール</h2></div><p className="mt-caption">時刻は開催地の現地時間です。</p><div className="mt-schedule-text">{e.schedule||"スケジュールは準備中です。"}</div></section>
  <section id="tournament-venue" className="mt-panel"><div className="mt-heading"><span>VENUE & ACCESS</span><h2>会場・アクセス</h2></div><div className="mt-venue"><div className="mt-venue-mark" aria-hidden="true">⌖</div><div><h3>{e.venue||"会場未定"}</h3>{e.location&&<p>{e.location}</p>}</div></div>
- {e.venue&&<a className="mt-map-link" href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery)} target="_blank" rel="noopener noreferrer">Googleマップで会場を探す ↗</a>}</section>
+ {e.venue&&<a className="mt-map-link" href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery)} target="_blank" rel="noopener noreferrer">Googleマップで会場を探す</a>}</section>
  </div><aside className="mt-side"><section className="mt-panel mt-summary"><span className="mt-eyebrow">TOURNAMENT INFORMATION</span><h2>大会情報</h2>
  <dl><div><dt>開催区分</dt><dd>{e.scope}</dd></div><div><dt>開催地</dt><dd>{e.location||"未定"}</dd></div><div><dt>開催期間</dt><dd>{period}</dd></div><div><dt>会場</dt><dd>{e.venue||"未定"}</dd></div></dl>
- <a href="#tournament-schedule" className="mt-button">スケジュールを見る ↓</a>{officialUrl&&<a href={officialUrl} className="mt-button mt-official" target="_blank" rel="noopener noreferrer">公式サイト・大会情報 ↗</a>}</section>
+ <a href="#tournament-schedule" className="mt-button">スケジュールを見る</a>{officialUrl&&<a href={officialUrl} className="mt-button mt-official" target="_blank" rel="noopener noreferrer">公式サイト・大会情報</a>}</section>
  <section className="mt-panel mt-travel"><span className="mt-eyebrow">PLAN YOUR VISIT</span><h3>参加前にチェック</h3><ul><li>エントリー方法・受付時間</li><li>参加費に含まれる内容</li><li>本人確認・参加条件</li><li>大会ルール・持ち物</li></ul><p>最新の開催情報は、主催者の公式案内をご確認ください。</p></section></aside></div>
- <div className="mt-bottom"><Link href="/major-tournaments">← 国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む →</Link></div></article>
+ <div className="mt-bottom"><Link href="/major-tournaments">国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む</Link></div></article>
  </main><PortalFooter/><BottomTabs/><style dangerouslySetInnerHTML={{ __html: `
 
 .mt-sample{max-width:1140px;width:calc(100% - 40px);margin:0 auto;padding:24px 0 48px;color:#382b1e}
