@@ -21,7 +21,8 @@ begin
  perform pg_temp.ring_reject(format('update public.poker_ring_tables set bb=200 where id=%L',tid),'reserved funds');
  perform pg_temp.ring_reject(format('select public.poker_ring_return_reserved_funds(%L,%L)',ra,gen_random_uuid()),'require cashout');
  perform pg_temp.ring_reject(format('select public.poker_ring_reserve_funds(%L,%L,1000,%L)',c,tid,rc),'Table full');
- ctx:=public.poker_ring_context(tid);roster:=ctx->'seats';
+ ctx:=public.poker_ring_context(tid);roster:=ctx->'seats';ctx:=jsonb_set(ctx,'{terms}',(ctx->'terms')||jsonb_build_object('buttonSeat',ctx->'buttonSeat'));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_begin(%L,%L,%L,%L,%L,null)',tid,gen_random_uuid(),roster,(ctx->'terms')||jsonb_build_object('buttonSeat',2),sealed),'Seating changed');
  perform public.poker_ring_hand_begin(tid,hid,roster,ctx->'terms',sealed,null);
  perform public.poker_ring_hand_begin(tid,hid,roster,ctx->'terms',sealed,null);
  perform pg_temp.ring_reject(format('select public.poker_ring_cashout(%L,%L,%L)',a,ra,cash_id),'Hand in progress');
