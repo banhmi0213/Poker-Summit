@@ -77,11 +77,12 @@ export async function confirmMemberEmail(userId: string): Promise<void> {
   }
   if (user.email && !user.user_metadata?.welcome_email_sent_at) {
     const { sendWelcomeEmail } = await import("@/lib/email");
-    const { data: flags } = await svc.from("site_settings").select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url").eq("id", true).maybeSingle();
+    const { data: flags } = await svc.from("site_settings").select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url, member_preview").eq("id", true).maybeSingle();
     await sendWelcomeEmail({
       to: user.email,
       name: (user.user_metadata?.display_name as string | undefined) ?? null,
       prelaunch: isPrelaunchActive(flags),
+          memberPreview: !!flags?.member_preview,
       xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
     });
     await svc.auth.admin.updateUserById(userId, {

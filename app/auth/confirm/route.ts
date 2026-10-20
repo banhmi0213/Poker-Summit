@@ -42,13 +42,14 @@ export async function GET(req: NextRequest) {
         // 先行登録モード中は、オープン前に開けるリンクだけの「先行会員版」を送る
         const { data: flags } = await createServiceRoleClient()
           .from("site_settings")
-          .select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url")
+          .select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url, member_preview")
           .eq("id", true)
           .maybeSingle();
         await sendWelcomeEmail({
           to: data.user.email,
           name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
           prelaunch: isPrelaunchActive(flags),
+          memberPreview: !!flags?.member_preview,
           xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
         });
       }

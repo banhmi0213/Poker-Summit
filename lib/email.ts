@@ -479,17 +479,32 @@ export async function sendWelcomeEmail(params: {
   name: string | null;
   /** 先行登録モード中の登録なら true(オープン前に開けるリンクだけの先行会員版を送る) */
   prelaunch?: boolean;
+  /** 先行会員にサイトを公開中なら true(登録したらすぐサイトを見られる文面にする、2026/10/20) */
+  memberPreview?: boolean;
   xUrl?: string | null;
 }): Promise<void> {
   const siteUrl = getSiteUrl();
   if (params.prelaunch) {
+    const status = params.memberPreview
+      ? `先行会員の皆さまには、10/25（日）の正式オープンに先がけてサイトを公開しています。
+ログインすると、全国のアミューズメントポーカー店・ポーカーバーの検索や、サミット（掲示板）などをすぐにご利用いただけます。
+▼サイトを見る
+${siteUrl}/
+※スポット求人・ディーラーマッチングは、10/25（日）の正式オープンからご利用いただけます。
+
+先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。`
+      : `Poker Summitは現在、オープンに向けて準備を進めています。
+サイトのオープン日や、先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。`;
+    const after = params.memberPreview
+      ? "10/25（日）の正式オープンからは、トーナメント・イベント情報、求人、クーポンなども順次掲載していきます。"
+      : "オープン後は、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご利用いただけます。";
+    const closing = params.memberPreview ? "Poker Summitをどうぞお楽しみください。" : "オープンまで、今しばらくお待ちください。";
     const text = `${params.name ? `${params.name} 様` : "Poker Summit先行会員の皆さま"}
 
 このたびはPoker Summitに先行会員としてご登録いただき、誠にありがとうございます。
 先行会員登録が完了しました。
 
-Poker Summitは現在、オープンに向けて準備を進めています。
-サイトのオープン日や、先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。
+${status}
 ${params.xUrl ? `
 ▼公式X
 ${params.xUrl}
@@ -506,12 +521,12 @@ m HOLD’EMアプリで開催する限定トーナメントにご招待します
 ▼ディーラー登録はこちら
 ${siteUrl}/account/dealer
 
-オープン後は、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご利用いただけます。
+${after}
 
 ご不明な点がございましたら、お問い合わせフォームよりお気軽にご連絡ください。
 ${siteUrl}/contact
 
-オープンまで、今しばらくお待ちください。
+${closing}
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
