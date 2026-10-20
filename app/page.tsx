@@ -207,11 +207,11 @@ export default async function HomePage({
       {/* ログインしていない人にだけ、会員登録とフリーロールの案内を細い帯で出す(2026/10/21、一般公開・宣伝に合わせて)。
           10/25 21:00 の大会開始で自動で消える(lib/prelaunch.ts freerollSignupOpen) */}
       {!user && freerollSignupOpen() && (
-        <aside aria-label="会員登録のご案内" style={{ maxWidth: 1180, margin: "12px auto 0", padding: "0 16px" }}>
+        <aside aria-label="会員登録のご案内" style={{ maxWidth: 1180, margin: "12px auto 12px", padding: "0 16px" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 14px", padding: "11px 16px", border: "1px solid #e4c98e", borderRadius: 12, background: "linear-gradient(110deg,#fff9e8,#fffdf8)" }}>
             <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "#3a2a12", flex: "1 1 240px" }}>
               <strong style={{ color: "#9b7129" }}>10/25（日）までの会員登録</strong>で、
-              <Link href="/tournaments/first-freeroll" style={{ color: "#3a2a12", fontWeight: 700 }}>会員限定フリーロール（{PRELAUNCH_TOURNAMENT.prizeLabel}）</Link>に参加できます
+              <Link href="/tournaments/first-freeroll" style={{ color: "#3a2a12", fontWeight: 700, display: "inline-block" }}>会員限定フリーロール（{PRELAUNCH_TOURNAMENT.prizeLabel}）</Link>に参加できます
             </p>
             <Link href="/signup" style={{ display: "inline-block", borderRadius: 9, padding: "9px 18px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap" }}>会員登録</Link>
           </div>
