@@ -2,7 +2,7 @@
 import {useEffect,useRef} from 'react';
 
 /** Keep the visual payout aligned with actual avatars at every table size. */
-export function usePotFlight(active:boolean){
+export function usePotFlight(active:boolean,identity?:string){
  const ref=useRef<HTMLDivElement>(null);
  useEffect(()=>{
   const table=ref.current;if(!active||!table)return;
@@ -37,6 +37,6 @@ export function usePotFlight(active:boolean){
   };
   measure();const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(measure);observer?.observe(table);
   window.addEventListener('resize',measure);return()=>{for(const animation of animations)animation.cancel();observer?.disconnect();window.removeEventListener('resize',measure);};
- },[active]);
+ },[active,identity]);
  return ref;
 }

@@ -18,6 +18,7 @@ on:
       - "app/poker-lobby/**"
       - "app/poker-ring/**"
       - "app/poker-ui/ring-admission*"
+      - "app/poker-ui/ring-live*"
       - "tests/poker-*.cjs"
       - "tests/sql/poker*.sql"
       - "app/mypage/chips/**"
@@ -46,6 +47,7 @@ on:
       - "app/poker-lobby/**"
       - "app/poker-ring/**"
       - "app/poker-ui/ring-admission*"
+      - "app/poker-ui/ring-live*"
       - "tests/poker-*.cjs"
       - "tests/sql/poker*.sql"
       - "app/mypage/chips/**"
@@ -111,6 +113,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_accounting_isolated.cjs
+      - name: Verify live ring readiness, recovery and durable turn deadlines
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_live_isolated.cjs
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer

@@ -1,0 +1,20 @@
+/** Allow-listed browser projection. Importing the type never bundles the engine. */
+import type {Rank} from './engine';
+import type {AuthoritativeHand} from './authoritative-hand';
+export type RingPlayView={viewerSeat:string;serverNow:number;deadline:number|null;hand:ReturnType<AuthoritativeHand['snapshot']>};
+const obj=(v:unknown):Record<string,unknown>=>{if(!v||typeof v!=='object'||Array.isArray(v))throw Error('Invalid play state');return v as Record<string,unknown>;};
+const num=(v:unknown)=>{if(!Number.isSafeInteger(v)||Number(v)<0||Number(v)>4503599627370495)throw Error('Invalid play amount');return Number(v);};
+const bool=(v:unknown)=>{if(typeof v!=='boolean')throw Error('Invalid play flag');return v;};
+const seat=(v:unknown)=>{if(typeof v!=='string'||!/^seat-[1-6]$/.test(v))throw Error('Invalid play seat');return v;};
+const card=(v:unknown)=>{const c=obj(v),rank=num(c.rank);if(rank<2||rank>14||!['c','d','h','s'].includes(String(c.suit)))throw Error('Invalid card');return {rank:rank as Rank,suit:c.suit as 'c'|'d'|'h'|'s'};};
+export function parseRingPlay(input:unknown):RingPlayView|null{if(input===null||input===undefined)return null;const v=obj(input),s=obj(v.hand),t=obj(s.terms),p=obj(s.positions);if(typeof s.handId!=='string'||!/^[a-f0-9-]{36}$/i.test(s.handId)||!['preflop','flop','turn','river','showdown'].includes(String(s.street))||!Array.isArray(s.board)||![0,3,4,5].includes(s.board.length)||!Array.isArray(s.players)||s.players.length<2||s.players.length>6)throw Error('Invalid play hand');
+ const players=s.players.map(value=>{const x=obj(value);if(x.hole!==null&&(!Array.isArray(x.hole)||x.hole.length!==2))throw Error('Invalid private cards');return {id:seat(x.id),stack:num(x.stack),committed:num(x.committed),totalCommitted:num(x.totalCommitted),folded:bool(x.folded),allIn:bool(x.allIn),hole:x.hole===null?null:(x.hole as unknown[]).map(card)};});
+ const ids=new Set(players.map(x=>x.id));if(ids.size!==players.length||!ids.has(seat(v.viewerSeat)))throw Error('Invalid play roster');
+ const positions={button:seat(p.button),sb:p.sb===null?null:seat(p.sb),bb:seat(p.bb),preflopFirst:seat(p.preflopFirst),postflopFirst:seat(p.postflopFirst)};
+ if(Object.values(positions).some(x=>x!==null&&!ids.has(x)))throw Error('Invalid blind positions');
+ let legal:RingPlayView['hand']['legal']=null;if(s.legal!==null){const l=obj(s.legal);legal={fold:bool(l.fold),check:bool(l.check),call:bool(l.call),callAmount:num(l.callAmount),raise:bool(l.raise),minRaiseTo:l.minRaiseTo===null?null:num(l.minRaiseTo),maxRaiseTo:l.maxRaiseTo===null?null:num(l.maxRaiseTo),shortAllInOnly:bool(l.shortAllInOnly)};if(legal.raise&&(legal.minRaiseTo===null||legal.maxRaiseTo===null||legal.minRaiseTo>legal.maxRaiseTo))throw Error('Invalid raise limits');}
+ let result:RingPlayView['hand']['result']=null;if(s.result!==null){const r=obj(s.result),raw=obj(r.payouts),payouts:Record<string,number>={};if(!Array.isArray(r.winners)||r.winners.length>6)throw Error('Invalid payout');for(const [id,value] of Object.entries(raw)){if(!ids.has(id))throw Error('Invalid payout seat');payouts[id]=num(value);}result={showdown:bool(r.showdown),payouts,winners:r.winners.map(seat)};if(result.winners.some(x=>!ids.has(x)))throw Error('Invalid winner');}
+ if(t.anteType!=='none'||t.ante!==0)throw Error('Invalid ring blinds');const terms={level:num(t.level),index:num(t.index),sb:num(t.sb),bb:num(t.bb),ante:0,anteType:'none' as const};if(terms.sb<1||terms.bb<=terms.sb)throw Error('Invalid ring blinds');
+ const toAct=s.toAct===null?null:seat(s.toAct);if(toAct!==null&&!ids.has(toAct)||legal&&toAct!==v.viewerSeat)throw Error('Invalid turn');
+ return {viewerSeat:seat(v.viewerSeat),serverNow:num(v.serverNow),deadline:v.deadline===null?null:num(v.deadline),hand:{handId:s.handId,revision:num(s.revision),street:String(s.street),board:s.board.map(card),players,positions,terms,pot:num(s.pot),toAct,legal,result}};
+}

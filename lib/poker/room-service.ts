@@ -13,6 +13,7 @@ type Options={
  origins:readonly string[];
  /** Trusted manifest from configuration/discovery; never client-supplied. */
  roomIds?:readonly string[];
+ ringRuntime?:{start():Promise<void>;close():Promise<void>};
  ringHandler?:(request:Request)=>Promise<Response>;
  onDiagnostic?:NonNullable<ConstructorParameters<typeof RoomRuntime>[1]>['onDiagnostic'];
  host?:string;port?:number;
@@ -37,7 +38,7 @@ export function createPokerRoomService(options:Options){
  const close=()=>{
   if(closeTask)return closeTask;closing=true;started=false;
   closeTask=(async()=>{
-   if(entryTimer)clearInterval(entryTimer);await entryTask;
+   if(entryTimer)clearInterval(entryTimer);await entryTask;await options.ringRuntime?.close();
    listenAbort.abort();await Promise.allSettled([listenerTask]);
    // Stop timers immediately. Transport handlers already accepted may finish their
    // durable commit, but cannot admit further traffic or restart the runtime.
@@ -54,7 +55,7 @@ export function createPokerRoomService(options:Options){
   startTask=(async()=>{
    try{
     const discovered=roomIds??await options.registry.directory.startupRooms(options.registry.maxRooms??128);
-    if(closing)throw Error('Service closed');await runtime.start(discovered);if(closing)throw Error('Service closed');
+    if(closing)throw Error('Service closed');await runtime.start(discovered);await options.ringRuntime?.start();if(closing)throw Error('Service closed');
     // Attach only after restoration. Failed rooms remain unavailable while
     // healthy rooms and manager/lobby routes can operate.
     sockets=attachPokerRoomWebSocket(server,{origins,handler:player,owner:id=>registry.owner(id)});

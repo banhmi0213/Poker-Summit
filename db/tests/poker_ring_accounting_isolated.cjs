@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{randomUUID,randomBytes}=require('crypto'),ts=require('typescript');
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
 (async()=>{const db=await require('../../tests/helpers/poker-ring-database.cjs')();try{
- for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql','poker-ring-admission.sql','poker-ring-exits.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
+ for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql','poker-ring-admission.sql','poker-ring-exits.sql','poker-ring-live.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
  const {SupabaseRingStore,RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
  const names={poker_ring_context:['p_table'],poker_ring_hand_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_hand_write:['p_hand','p_expected','p_write','p_sealed','p_result'],poker_ring_hand_load:['p_hand'],poker_ring_reserve_funds:['p_member','p_table','p_amount','p_request'],poker_ring_seat_funds:['p_member','p_reservation','p_seat'],poker_ring_cashout:['p_member','p_reservation','p_request'],poker_ring_release_expired:['p_table']};
  let loseNextAck=false,writeRequests=[];
