@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export default async function PrelaunchPage({searchParams}: {searchParams: {error?: string; done?: string; mhError?: string; mhDone?: string}}) {
   const supabase = await createClient();
   const [{ data: settings }, { data: auth }] = await Promise.all([
-    supabase.from("site_settings").select("prelaunch_message, prelaunch_x_url, contact_email").eq("id", true).maybeSingle(),
+    supabase.from("site_settings").select("prelaunch_message, prelaunch_x_url, contact_email, member_preview").eq("id", true).maybeSingle(),
     supabase.auth.getUser(),
   ]);
   const loggedIn = !!auth.user;
@@ -41,7 +41,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
         // 記録に失敗しても登録画面は出す
       }
     }
-    return RegistrationPage({searchParams, early: true});
+    return RegistrationPage({searchParams, early: true, memberPreview: !!settings?.member_preview});
   }
 
   // 先行会員の m HOLD’EM ID(先行登録の間はマイページを開けないので、ここで登録・確認できるようにする。2026/10/19)
@@ -60,11 +60,25 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
 
         <div className="card" style={{ textAlign: "left", lineHeight: 1.9, marginBottom: 20 }}>
           {/* ここに来るのはログイン済みの先行会員だけ(未ログインは上で登録画面を返す) */}
-          <p>
-            先行会員としてのご登録が完了しています。サイトのオープンまでもうしばらくお待ちください。
-            <br />
-            オープン日や先行会員限定トーナメントの詳細はメールと公式Xでお知らせします。
-          </p>
+          {settings?.member_preview ? (
+            // 先行会員にサイトを公開中(2026/10/20)
+            <>
+              <p>
+                先行会員としてのご登録が完了しています。先行会員の皆さまには、オープン前のサイトを先行で公開しています。
+                <br />
+                先行会員限定トーナメントの詳細はメールと公式Xでお知らせします。
+              </p>
+              <p style={{ marginTop: 12 }}>
+                <Link href="/" className="btn primary" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minHeight: 48, padding: "12px 28px", borderRadius: 8, fontWeight: 700, color: "#382714", background: "linear-gradient(135deg,#f3dda3,#c3983c)", border: "1px solid #b68a35", textDecoration: "none", boxShadow: "0 3px 10px rgba(135,98,30,0.14)" }}>サイトを見る</Link>
+              </p>
+            </>
+          ) : (
+            <p>
+              先行会員としてのご登録が完了しています。サイトのオープンまでもうしばらくお待ちください。
+              <br />
+              オープン日や先行会員限定トーナメントの詳細はメールと公式Xでお知らせします。
+            </p>
+          )}
           <div id="m-holdem-id" style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid #eee3cc", fontSize: 13.5 }}>
             <strong style={{ display: "block", marginBottom: 4 }}>m HOLD’EM ID</strong>
             {mHoldemId ? (

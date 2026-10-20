@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OfficialBadge } from "@/app/member-role-badge";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PortalHeader } from "@/app/portal-header";
@@ -61,6 +62,10 @@ export default async function MemberProfilePage({
   // 会員かどうかそもそも確認できないため404にする(auth.usersはサーバー側
   // からも直接は引けない。/account/profileを一度も保存していない会員は
   // profiles行が無いので、投稿か返信さえあれば存在確認として扱う)。
+  // 「運営」バッジのアカウントか(2026/10/20)
+  const { data: officialRows } = await supabase.rpc("official_board_user_ids", { p_ids: [params.id] });
+  const isOfficial = ((officialRows ?? []) as unknown[]).length > 0;
+
   if (!profile && (!posts || posts.length === 0) && (!replies || replies.length === 0)) {
     notFound();
   }
@@ -84,6 +89,7 @@ export default async function MemberProfilePage({
                 <div className={styles.identityTop}>
                   <Avatar name={displayName} url={profile?.avatar_url ?? null} size={84} />
                   <div>
+                    <OfficialBadge show={isOfficial} />
                     <strong className={styles.memberName}>{displayName}</strong>
                     <p className="muted small">📍 {profile?.pref_public === false ? "非公開" : profile?.pref || "未設定"}</p>
                   </div>
@@ -93,7 +99,7 @@ export default async function MemberProfilePage({
               </div>
               <dl className={styles.memberFacts}>
                 <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{profile?.email_public === true && profile.public_email ? <a href={`mailto:${profile.public_email}`}>{profile.public_email}</a> : "非公開"}</dd></div>
-                <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
+                <div><dt>♛ 会員ステータス</dt><dd>{isOfficial ? "運営" : "一般会員"}</dd></div>
                 <div><dt>♙ 都道府県の公開設定</dt><dd>{profile?.pref_public === false ? "非公開" : "公開（他の会員にも表示）"}</dd></div>
               </dl>
               {user?.id === params.id && <div className={styles.summaryActions}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/mypage" className="btn">マイページへ</Link></div>}
