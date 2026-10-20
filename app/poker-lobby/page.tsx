@@ -1,3 +1,4 @@
+import {RingChipSummary} from '@/app/poker-ui/ring-chip-summary';
 import {ringColumns,type RingTable} from '@/lib/poker/ring-tables';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -19,6 +20,7 @@ export default async function PokerLobbyPage() {
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
+      <RingChipSummary/>
       <PokerLobbyPreview configuredRings={(ringRows??[]) as RingTable[]} ringError={Boolean(ringError)} configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
     </main>
     <PortalFooter />
