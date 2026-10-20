@@ -1,18 +1,8 @@
 // Actual PostgreSQL functions + real engine/encrypted coordinator. No external DB/network.
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{randomUUID,randomBytes}=require('crypto'),ts=require('typescript');
-const runtime=process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite';
-const {PGlite}=require(runtime),{pgcrypto}=require(path.join(path.dirname(require.resolve(runtime+'/package.json')),'dist/contrib/pgcrypto.cjs'));
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
-(async()=>{const db=new PGlite({extensions:{pgcrypto}});try{
- await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema extensions;create extension pgcrypto with schema extensions;
- create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,is_anonymous boolean default false,raw_user_meta_data jsonb,deleted_at timestamptz,banned_until timestamptz,created_at timestamptz,updated_at timestamptz);
- create table public.member_status(user_id uuid primary key,suspended boolean default false);create table public.admin_users(user_id uuid primary key);
- create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
- create function public.is_suspended() returns boolean language sql as $$select coalesce((select suspended from public.member_status where user_id=auth.uid()),false)$$;
- grant usage on schema public,auth to anon,authenticated,service_role;
- create table public.poker_ring_tables(id uuid primary key default gen_random_uuid(),title text,capacity integer,sb bigint,bb bigint,min_buy_in bigint,max_buy_in bigint,note text default '',published boolean default false,deleted_at timestamptz,revision integer default 1,sort_order integer default 0,created_at timestamptz default now(),updated_at timestamptz default now());`);
- const folder=path.resolve(__dirname,'../../supabase/migrations');for(const suffix of ['_poker_welcome_chips_and_escrow.sql','_poker_welcome_member_admin_eligibility.sql','_poker_reservation_member_guard.sql','_poker_ring_seating_and_hand_accounting.sql','_poker_ring_button_context_guard.sql']){const file=fs.readdirSync(folder).find(f=>f.endsWith(suffix));await db.exec(fs.readFileSync(path.join(folder,file),'utf8'));}
- for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
+(async()=>{const db=await require('../../tests/helpers/poker-ring-database.cjs')();try{
+ for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql','poker-ring-admission.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
  const {SupabaseRingStore,RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
  const names={poker_ring_context:['p_table'],poker_ring_hand_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_hand_write:['p_hand','p_expected','p_write','p_sealed','p_result'],poker_ring_hand_load:['p_hand'],poker_ring_reserve_funds:['p_member','p_table','p_amount','p_request'],poker_ring_seat_funds:['p_member','p_reservation','p_seat'],poker_ring_cashout:['p_member','p_reservation','p_request'],poker_ring_release_expired:['p_table']};
  let loseNextAck=false,writeRequests=[];

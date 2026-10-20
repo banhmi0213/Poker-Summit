@@ -18,3 +18,5 @@ export function forwardPokerRoomRequest(request:Request,roomId:string,origin:str
 export function forwardPokerLobbyRequest(request:Request,origin:string|undefined,fetcher:typeof fetch=fetch){return forward(request,'/api/poker/lobby',origin,fetcher);}
 
 export function forwardRegistrationManagementRequest(request:Request,origin:string|undefined,fetcher:typeof fetch=fetch){return forward(request,'/api/poker/registration-management',origin,fetcher);}
+
+export function forwardRingLobbyRequest(request:Request,origin:string|undefined,fetcher:typeof fetch=fetch){return forward(request,'/api/poker/ring',origin,fetcher);}

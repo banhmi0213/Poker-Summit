@@ -111,6 +111,15 @@ jobs:
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
         run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs
+      - name: Verify ring seating and chip return in real browsers
+        timeout-minutes: 4
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-ring-browser-e2e
+        run: node tests/poker-ring-browser-e2e.cjs
       - name: Verify six-browser tournament end to end
         timeout-minutes: 4
         env:
