@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import styles from "./header-region.module.css";
+import { NewsDot } from "./news-dot";
 
 const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
   { href: "/stores", label: "店舗を探す" },
@@ -46,6 +47,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
           ))}
           <Link href="/news" className="plink">
             お知らせ
+            <NewsDot />
           </Link>
           <Link href="/blog" className="plink">BLOG</Link>
           <Link href="/learn" className="plink">♠ 学習コース</Link>
@@ -58,6 +60,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
         {regionSelector && <div className={styles.mobile}>{regionSelector}</div>}
         <label htmlFor="mobile-nav-toggle" className="nav-hamburger" aria-label="メニュー">
           ☰
+          <NewsDot className="on-hamburger" />
         </label>
       </div>
       <div className="mobile-nav-drawer">
@@ -69,6 +72,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
         ))}
         <Link href="/news" className="plink">
           お知らせ
+          <NewsDot />
         </Link>
           <Link href="/blog" className="plink">BLOG</Link>
           <Link href="/learn" className="plink">♠ 学習コース</Link>

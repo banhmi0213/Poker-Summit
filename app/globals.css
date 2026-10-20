@@ -3125,3 +3125,20 @@ input:is([type=date],[type=datetime-local])[data-empty]:not(:focus)::-webkit-dat
 /* 入力欄に打ち込んだ文字は中太(500)で読みやすく。入力前の案内文字(placeholder)は普通の太さで区別する(2026/10) */
 input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]), select, textarea { font-weight: 500; }
 input::placeholder, textarea::placeholder { font-weight: 400; }
+
+/* ヘッダーの「お知らせ」の、まだ見ていないお知らせの印(2026/10/20) */
+.news-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+  border-radius: 50%;
+  background: #d93025;
+  vertical-align: top;
+}
+.news-dot.on-hamburger {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+  margin: 0;
+}

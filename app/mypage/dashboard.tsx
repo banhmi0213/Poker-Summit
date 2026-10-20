@@ -130,6 +130,16 @@ export async function MyPageContent({
     .filter(Boolean)
     .sort((a: any, b: any) => (a.start_at ?? "").localeCompare(b.start_at ?? ""));
 
+  // 運営からのいちばん新しいお知らせ(30日以内。会員が気付けるようマイページの上に出す、2026/10/20)
+  const { data: latestNotice } = await supabase
+    .from("site_notices")
+    .select("title, created_at")
+    .eq("published", true)
+    .gte("created_at", new Date(Date.now() - 30 * 86400 * 1000).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const tab = searchParams.tab || "favorites";
   const name = (user.user_metadata as any)?.display_name || "会員";
   const pref = (user.user_metadata as any)?.pref || "";
@@ -160,6 +170,13 @@ export async function MyPageContent({
             </Link>
           )}
         </div>
+        {latestNotice && (
+          <Link href="/news" className="card" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+            <span className="badge">運営からのお知らせ</span>
+            <strong style={{ fontSize: 14.5 }}>{latestNotice.title}</strong>
+            <span className="muted small">{formatDate(latestNotice.created_at)}</span>
+          </Link>
+        )}
         <div className={styles.layout}>
         <section className={styles.overview}>
 

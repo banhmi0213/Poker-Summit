@@ -10,6 +10,7 @@ import { PrefGeoDetector } from "@/app/pref-geo-detector";
 import { PREF_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
 import { getCurrentPref } from "@/lib/current-pref";
 import { staticPageMetadata } from "@/lib/seo";
+import { MarkNewsSeen } from "@/app/news-dot";
 
 export const metadata = staticPageMetadata({ title: "お知らせ", description: "Poker Summitからのお知らせ・新着情報。", path: "/news" });
 
@@ -92,6 +93,7 @@ export default async function NewsPage() {
           📣 お知らせ{currentPref ? `（${currentPref}）` : "（全国）"}
         </h2>
 
+        <MarkNewsSeen latest={siteNotices?.[0]?.created_at ?? null} />
         {(siteNotices ?? []).length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 10 }}>
             {(siteNotices ?? []).map((n) => (
