@@ -63,7 +63,8 @@ export default async function BoardPage({
     .select("id", { count: "exact", head: true })
     .eq("status", "visible");
   if (category) countQuery = countQuery.eq("category", category);
-  if (q) countQuery = countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
+  // サミットの本文は会員だけが読める(2026/10/20)。未ログインの人の検索はタイトルだけで行う
+  if (q) countQuery = user ? countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`) : countQuery.ilike("title", `%${q}%`);
 
   // スレッド一覧の並び順。既定は新着順(created_at、2026/10「新着を先に
   // 持ってきて」との指示)。sort=updatedが指定された場合のみ更新日時
@@ -72,12 +73,13 @@ export default async function BoardPage({
   // あれば一番先頭に来るように」との旧指示を踏襲したオプションとして残す)。
   let query = supabase
     .from("board_posts")
-    .select("id, title, author_name, author_user_id, created_at, updated_at, category, image_url")
+    // 未ログインの人にはタイトル等だけ(本文・画像は会員だけ。2026/10/20)
+    .select(user ? "id, title, author_name, author_user_id, created_at, updated_at, category, image_url" : "id, title, author_name, author_user_id, created_at, updated_at, category")
     .eq("status", "visible")
     .order(sort === "updated" ? "updated_at" : "created_at", { ascending: false })
     .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
-  if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
+  if (q) query = user ? query.or(`title.ilike.%${q}%,body.ilike.%${q}%`) : query.ilike("title", `%${q}%`);
   query = query.range(from, to);
 
   const [{ count: totalCount }, { data: posts }] = await Promise.all([countQuery, query]);
