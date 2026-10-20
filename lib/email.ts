@@ -933,3 +933,29 @@ export async function sendMemberDigestEmail(params: {
   ];
   await sendEmail({ to: params.to, subject: `【Poker Summit】${params.dayLabel}の新規会員登録 ${params.members.length}人（合計${params.total}人）`, text: lines.join("\n") });
 }
+
+
+/** 無料期間がもうすぐ終わることの店舗向けお知らせ(2026/10/20。終わる7日前に1回) */
+export async function sendTrialEndingEmail(params: { to: string; storeName: string; planName: string; endOn: string; monthlyFee: number }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+
+${params.planName}の無料期間は、${params.endOn}までです。
+
+■ 引き続きご利用いただく場合
+店舗管理の「プラン・お支払い」から、お支払いに使うクレジットカードをご登録ください。
+無料期間が終わった日に、月額${params.monthlyFee.toLocaleString("ja-JP")}円（税込）の決済を行い、そのまま続けてご利用いただけます。
+銀行振込をご希望の場合は、運営までご連絡ください。
+${siteUrl}/store/profile/plan
+
+■ 続けない場合
+お手続きは不要です。運営からご連絡いたします。
+
+ご不明な点がございましたら、お問い合わせフォームよりご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】無料期間終了のお知らせ", text });
+}

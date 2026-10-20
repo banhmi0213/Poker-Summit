@@ -4,6 +4,8 @@ import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
+import { addMonths, jstDateToIso, todayJst } from "@/lib/bank-transfer";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 const CONTRACTS_PATH = "/admin/contracts";
 
@@ -204,6 +206,8 @@ export async function createContract(formData: FormData) {
   const contactEmail = String(formData.get("contactEmail") ?? "").trim();
   const contactTel = String(formData.get("contactTel") ?? "").trim();
   const addonIds = formData.getAll("addonIds").map(String).filter(Boolean);
+  // 無料期間(知り合いの店など、月額プランを◯か月無料にする。2026/10/20)
+  const trialMonths = Math.max(0, Math.min(3, parseInt(String(formData.get("trialMonths") ?? "0"), 10) || 0));
 
   if (!storeId) {
     throw new Error("店舗を選択してください。");
@@ -220,6 +224,12 @@ export async function createContract(formData: FormData) {
       contact_name: contactName || null,
       contact_email: contactEmail || null,
       contact_tel: contactTel || null,
+      ...(trialMonths > 0
+        ? (() => {
+            const endIso = jstDateToIso(addMonths(todayJst(), trialMonths));
+            return { trial_ends_at: endIso, current_period_end: endIso, billing_method: "card", billing_cycle_months: 1 };
+          })()
+        : {}),
     })
     .select("id")
     .single();
@@ -233,7 +243,7 @@ export async function createContract(formData: FormData) {
   }
 
   await replaceContractAddons(supabase, contract.id, addonIds);
-  await logAdminAction(supabase, "contract_create", "store_contract", contract.id, { storeId, planId });
+  await logAdminAction(supabase, "contract_create", "store_contract", contract.id, { storeId, planId, trialMonths });
 
   revalidatePath(CONTRACTS_PATH);
   revalidatePath(`${CONTRACTS_PATH}/${contract.id}`);
@@ -372,3 +382,39 @@ export async function recordManualBillingEvent(formData: FormData) {
 // 行った変更の監査ログ・予約状態の記録として、/admin/contracts の一覧
 // ページから閲覧専用で参照する(店舗が何を変更し、決済が完了したかを
 // 運営が把握できるように、との指示)。
+
+
+// --- 無料期間(2026/10/20) ----------------------------------------------------
+// 無料期間の終わりに、運営が続けるかどうかを決める。
+//  振込で続ける … 支払い方法を振込にする。毎朝の自動処理が次の期間の請求書を発行して送る。
+//  終了する     … 契約を終わらせる(店舗ページは無料掲載としてそのまま残す。ログインも残す)。
+// カードで続ける場合は、店舗が「プラン・お支払い」でカードを登録すれば自動で決済して続く。
+
+export async function continueTrialByBankTransfer(contractId: string) {
+  const supabase = await createClient();
+  const { data: c } = await supabase.from("store_contracts").select("id, status, trial_ends_at, contact_email").eq("id", contractId).maybeSingle();
+  if (!c || c.status !== "active" || !c.trial_ends_at) throw new Error("無料期間の契約が見つかりません。");
+  if (!c.contact_email) throw new Error("請求書の送り先(請求先メールアドレス)を先に入れてください。");
+  const { error } = await supabase.from("store_contracts").update({ billing_method: "bank_transfer", updated_at: new Date().toISOString() }).eq("id", contractId);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, "contract_trial_continue_bank", "store_contract", contractId);
+  revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
+  redirect(`${CONTRACTS_PATH}/${contractId}?ok=${encodeURIComponent("振込で続けるように切り替えました。毎朝9時の自動処理で次の期間の請求書を発行してメールで送ります。")}`);
+}
+
+export async function endTrialContract(contractId: string) {
+  const supabase = await createClient();
+  const { data: c } = await supabase.from("store_contracts").select("id, status, trial_ends_at, store_id").eq("id", contractId).maybeSingle();
+  if (!c || c.status !== "active" || !c.trial_ends_at) throw new Error("無料期間の契約が見つかりません。");
+  const nowIso = new Date().toISOString();
+  // 契約だけを終える。店舗ページ(無料掲載)とログインはそのまま
+  const { error } = await createServiceRoleClient()
+    .from("store_contracts")
+    .update({ status: "canceled", canceled_at: nowIso, cancel_at_period_end: false, updated_at: nowIso })
+    .eq("id", contractId);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, "contract_trial_ended", "store_contract", contractId, { storeId: c.store_id });
+  revalidatePath(CONTRACTS_PATH);
+  revalidatePath(`${CONTRACTS_PATH}/${contractId}`);
+  redirect(`${CONTRACTS_PATH}/${contractId}?ok=${encodeURIComponent("無料期間で契約を終了しました。店舗ページは無料掲載として残ります。")}`);
+}

@@ -18,7 +18,8 @@ export default async function NewContractPage() {
         .order("name", { ascending: true }),
       supabase.from("store_contracts").select("store_id"),
       supabase.from("plans").select("id, name, monthly_fee").eq("active", true).order("sort_order"),
-      supabase.from("addons").select("id, name, monthly_fee").eq("active", true).order("sort_order"),
+      // 契約に付けるのは毎月払いのアドオンだけ(買い切りは店舗が「プラン・お支払い」から都度買う。2026/10/20)
+      supabase.from("addons").select("id, name, monthly_fee").eq("active", true).eq("billing_type", "monthly").order("sort_order"),
     ]);
 
   const contractedStoreIds = new Set((existingContracts ?? []).map((c) => c.store_id));
@@ -67,6 +68,20 @@ export default async function NewContractPage() {
                 </option>
               ))}
             </select>
+          </label>
+
+          <label>
+            無料期間（月額プランのみ）
+            <select name="trialMonths" defaultValue="0" style={fieldStyle}>
+              <option value="0">なし</option>
+              <option value="1">1か月無料</option>
+              <option value="2">2か月無料</option>
+              <option value="3">3か月無料</option>
+            </select>
+            <span className="muted" style={{ display: "block", fontSize: 12, marginTop: 4, fontWeight: 400, lineHeight: 1.7 }}>
+              知り合いの店などに。無料期間の終わる7日前に店舗と運営へお知らせします。店舗がカードを登録していれば、終わった日に自動で決済して続きます。
+              登録がなければ、契約の画面で「振込で続ける」か「終了する」を選んでください（決まるまでは無料のまま使えます）。
+            </span>
           </label>
 
           {addons && addons.length > 0 && (

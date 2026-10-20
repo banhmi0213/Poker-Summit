@@ -45,7 +45,7 @@ export default async function AdminContractsPage({
   let query = supabase
     .from("store_contracts")
     .select(
-      "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, current_period_end, pending_plan_id, pending_plan_effective_at, created_at, stores!inner(id, name, pref, region, tel), plans!store_contracts_plan_id_fkey(name, monthly_fee), store_contract_addons(addon_id)"
+      "id, status, trial_ends_at, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, current_period_end, pending_plan_id, pending_plan_effective_at, created_at, stores!inner(id, name, pref, region, tel), plans!store_contracts_plan_id_fkey(name, monthly_fee), store_contract_addons(addon_id)"
     )
     .order("created_at", { ascending: false });
 
@@ -288,7 +288,15 @@ export default async function AdminContractsPage({
               const addonCount = c.store_contract_addons?.length ?? 0;
               return (
                 <tr key={c.id}>
-                  <td>{c.stores?.name}</td>
+                  <td>
+                    {c.stores?.name}
+                    {/* 無料期間(2026/10/20) */}
+                    {c.status === "active" && c.trial_ends_at && (
+                      <div style={{ fontSize: 11, color: Date.parse(c.trial_ends_at) <= Date.now() ? "#d1453b" : "#956d25", fontWeight: 700 }}>
+                        🎁 無料期間 {new Date(Date.parse(c.trial_ends_at) - 1).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}まで{Date.parse(c.trial_ends_at) <= Date.now() ? "（終了・要判断）" : ""}
+                      </div>
+                    )}
+                  </td>
                   <td>
                     {c.stores?.pref}
                     {c.stores?.region ? <div className="muted" style={{ fontSize: 11 }}>{c.stores.region}</div> : null}
