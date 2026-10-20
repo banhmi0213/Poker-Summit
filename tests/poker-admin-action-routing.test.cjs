@@ -1,0 +1,5 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),ts=require('typescript'),{Module}=require('module'),path=require('path');
+const save=async()=>{},remove=async()=>{},load=Module._load;
+Module._load=function(n,p,...args){if(n==='./actions'&&p?.filename.endsWith('/app/admin/poker-tournaments/page.tsx'))return {saveTournament:save,removeTournament:remove};if(n==='@/app/poker-tournaments/manager')return {__esModule:true,default:()=>null};return load.call(this,n,p,...args);};
+require.extensions['.tsx']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,f);
+test('tournament management routes save and removal to their separate actions',()=>{const Page=require('../app/admin/poker-tournaments/page.tsx').default,element=Page();assert.equal(element.props.action,save);assert.equal(element.props.removeAction,remove);assert.notEqual(element.props.action,element.props.removeAction);});

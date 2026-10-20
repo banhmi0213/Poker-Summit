@@ -98,7 +98,7 @@ test('account history uses page navigation instead of stacking every result',asy
 });
 
  test('Summit chip balance uses shared server balance and refreshes without retaining signed-out data',async t=>{
- const Balance=require('../app/poker-ui/chip-balance.tsx').SummitChipBalance;const oldSet=global.setInterval,oldClear=global.clearInterval;let tick,renderer,latest={available:0,inPlay:0,total:0,rank:1,asOf:'2026-10-19T00:00:00Z'};rpcHandler=async name=>{assert.equal(name,'poker_ring_balance');return {data:latest,error:null};};global.setInterval=fn=>{tick=fn;return 1;};global.clearInterval=()=>{};
+ const Balance=require('../app/poker-ui/chip-balance.tsx').SummitChipBalance;const oldSet=global.setInterval,oldClear=global.clearInterval;let tick,renderer,latest={available:0,inPlay:0,total:0,rank:1,welcomeGranted:false,history:[],asOf:'2026-10-19T00:00:00Z'};rpcHandler=async name=>{assert.equal(name,'poker_ring_balance');return {data:latest,error:null};};global.setInterval=fn=>{tick=fn;return 1;};global.clearInterval=()=>{};
  t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());global.setInterval=oldSet;global.clearInterval=oldClear;rpcHandler=async()=>({data:null,error:true});});
  await act(async()=>renderer=create(React.createElement(Balance,{detailed:true})));assert.match(text(renderer.toJSON()),/0 SC/);
  latest={...latest,available:50,total:50};await act(async()=>{tick();});assert.match(text(renderer.toJSON()),/50 SC/);
