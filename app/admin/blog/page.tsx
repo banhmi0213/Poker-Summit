@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { BlogEditor } from "./editor";
 import { deleteBlogEntry } from "./actions";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
+import { AiBlogGenerator } from "./ai-generator";
+
+export const maxDuration = 300;
 
 export default async function AdminBlogPage() {
   const supabase = await createClient();
@@ -16,6 +19,7 @@ export default async function AdminBlogPage() {
   return <div style={{ maxWidth:1000 }}>
     <div style={{ display:"flex", gap:16, justifyContent:"space-between", alignItems:"center", marginBottom:16 }}><h1 style={{ fontSize:22 }}>BLOG管理</h1><Link className="btn" href="/blog">ブログページを見る →</Link></div>
     <p style={{ marginBottom:16 }}>上段に画像を添付し、本文と関連店舗を登録できます。下書き保存・プレビューで確認してから公開してください。</p>
+    <AiBlogGenerator enabled={process.env.BLOG_AI_ENABLED === "true" && !!process.env.OPENAI_API_KEY} />
     <section className="card"><h2 style={{ fontSize:18, marginBottom:16 }}>新規記事追加</h2><BlogEditor stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /></section>
     <h2 style={{ fontSize:18, margin:"24px 0 12px" }}>登録記事（{data?.length || 0}件）</h2>
     {!data?.length && <p>まだ記事は登録されていません。</p>}
