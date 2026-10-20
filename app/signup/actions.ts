@@ -13,6 +13,8 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { classifyDevice, inAppBrowser } from "@/lib/device";
 import { handleNameError } from "@/lib/handle-name";
 import { guessPrefForSignup } from "@/lib/current-pref";
+import { safeNext, cleanSource } from "@/lib/visit-source";
+import { recordAdAttribution } from "@/lib/ad-attribution";
 
 export async function signUp(formData: FormData) { return register(formData, "/signup"); }
 export async function prelaunchSignUp(formData: FormData) { return register(formData, "/prelaunch"); }
@@ -36,7 +38,14 @@ async function fail(path: string, formData: FormData, reason: string, message: s
   } catch {
     // 記録に失敗してもエラー表示は出す
   }
-  redirect(`${path}?error=${encodeURIComponent(message)}`);
+  redirect(`${path}?error=${encodeURIComponent(message)}${keepParams(formData)}`);
+}
+
+// 広告から来た人の戻り先と目印を、エラー表示・完了表示のあとも引き継ぐ(2026/10/21)
+function keepParams(formData: FormData) {
+  const next = safeNext(String(formData.get("next") ?? ""));
+  const src = cleanSource(String(formData.get("src") ?? ""));
+  return `${next ? `&next=${encodeURIComponent(next)}` : ""}${src ? `&src=${encodeURIComponent(src)}` : ""}`;
 }
 
 async function register(formData: FormData, path: "/signup" | "/prelaunch") {
@@ -86,12 +95,15 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
     }
   }
 
+  const next = path === "/signup" ? safeNext(String(formData.get("next") ?? "")) : null;
+  const src = path === "/signup" ? cleanSource(String(formData.get("src") ?? "")) : null;
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { m_holdem_id: mHoldemId || null, display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic, legal_consent: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION },
+      data: { m_holdem_id: mHoldemId || null, display_name: name || undefined, pref: pref || undefined, pref_public: prefPublic, legal_consent: true, terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION, ...(next ? { after_confirm: next } : {}) },
     },
   });
 
@@ -113,6 +125,7 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
     } catch {
       // 記録の失敗で登録は止めない
     }
+    await recordAdAttribution(data.user.id, src, "signup");
   }
 
   // すでに登録済みのアドレスで登録しようとした場合、Supabaseは(なりすまし防止のため)成功に見せかけて何も作らない。
@@ -135,8 +148,8 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   }
 
   if (data.session) {
-    redirect("/mypage");
+    redirect(next ?? "/mypage");
   }
 
-  redirect(`${path}?done=1`);
+  redirect(`${path}?done=1${keepParams(formData)}`);
 }

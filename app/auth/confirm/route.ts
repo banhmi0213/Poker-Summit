@@ -4,6 +4,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendWelcomeEmail } from "@/lib/email";
+import { safeNext } from "@/lib/visit-source";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
   const type = url.searchParams.get("type") as EmailOtpType | null;
   const nextParam = url.searchParams.get("next") ?? "";
   const defaultNext = type === "recovery" ? "/account/password" : "/mypage";
-  const next = SAFE_NEXT.test(nextParam) ? nextParam : defaultNext;
+  let next = SAFE_NEXT.test(nextParam) ? nextParam : defaultNext;
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("リンクが正しくありません。")}`, url.origin));
@@ -35,6 +36,10 @@ export async function GET(req: NextRequest) {
       )
     );
   }
+
+  // 広告から来て会員登録した人は、確認のあとそのままディーラー登録へ(2026/10/21、signup/actions.ts の after_confirm)
+  const afterConfirm = data.user.user_metadata?.after_confirm as string | undefined;
+  if ((type === "signup" || type === "email") && afterConfirm && safeNext(afterConfirm)) next = afterConfirm;
 
   if ((type === "signup" || type === "email") && !data.user.user_metadata?.welcome_email_sent_at) {
     try {
