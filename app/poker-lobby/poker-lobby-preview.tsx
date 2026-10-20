@@ -28,7 +28,7 @@ export default function PokerLobbyPreview({ isGuestPreview, ringEnabled=false, c
   return <section className={styles.lobby} data-compact={compact} style={compact?{maxWidth:'none',padding:0,background:'transparent',boxShadow:'none'}:undefined}>
     {!compact&&<div className={styles.header}><span>♠ POKER SUMMIT</span><strong>LOBBY PREVIEW</strong></div>}
     {!compact&&<h1>オンラインポーカー ロビー</h1>}
-    {compact?<p className={styles.note}>デモ専用の卓です。実際の参加登録は「大会の参加受付」から行えます。</p>:<p className={styles.note}>公開された大会設定とサンプル卓を表示しています。参加人数・参加操作はデモで、実際の対戦・大会への参加登録は行いません。{isGuestPreview ? "開発Previewではログイン不要です。" : ""}</p>}
+    {compact?<p className={styles.note}>{ringEnabled&&!isGuestPreview?(type==="ring"?"上段は会員chipに連動する着席検証用の卓です。下段の練習用サンプル卓は会員残高と連動しません。":"大会への参加登録は「大会の参加受付」から行えます。以下は練習用のサンプルです。"):"デモ専用の卓です。実際の参加登録は「大会の参加受付」から行えます。"}</p>:<p className={styles.note}>公開された大会設定とサンプル卓を表示しています。参加人数・参加操作はデモで、実際の対戦・大会への参加登録は行いません。{isGuestPreview ? "開発Previewではログイン不要です。" : ""}</p>}
     {!isGuestPreview&&type==="ring"&&<SummitChipBalance/>}
     <div className={styles.tabs} style={compact?{margin:'12px 0'}:undefined} role="tablist" aria-label="ゲーム形式">
       <button type="button" role="tab" aria-selected={type === "ring"} className={type === "ring" ? styles.active : ""} onClick={() => {setPage(0);setType("ring");}}>リングゲーム</button>
