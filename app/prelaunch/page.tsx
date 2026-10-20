@@ -1,4 +1,6 @@
 import { RegistrationPage } from "../signup/registration";
+import { PriceLockNote } from "@/app/price-lock-note";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -44,8 +46,13 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
         // 記録に失敗しても登録画面は出す
       }
     }
-    return RegistrationPage({searchParams, early: true, memberPreview: !!settings?.member_preview});
+    const priceLock = await getPriceLockCampaign().catch(() => null);
+    return RegistrationPage({searchParams, early: true, memberPreview: !!settings?.member_preview, priceLock});
   }
+
+  const priceLockCampaign = await getPriceLockCampaign().catch(() => null);
+  const priceLockNote = priceLockCampaign?.accepting && priceLockCampaign.deadlineIso ? priceLockCampaign.deadlineIso : null;
+  const priceLockLabel = (priceLockCampaign?.deadlineLabel ?? "").replace(/^\d{4}年/, "");
 
   // 先行会員の m HOLD’EM ID(先行登録の間はマイページを開けないので、ここで登録・確認できるようにする。2026/10/19)
   const { data: mhRow } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", auth.user!.id).maybeSingle();
@@ -131,7 +138,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
 
         <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.9 }}>
           <p>
-            ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link>
+            ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>{priceLockNote && <PriceLockNote deadlineIso={priceLockNote} text={`（${priceLockLabel}までのご契約で、今後も料金据え置き）`} />}／<Link href="/store/login">店舗管理ログイン</Link>
           </p>
           <p>
             <Link href="/terms">利用規約</Link>・<Link href="/privacy">プライバシーポリシー</Link>・<Link href="/tokushoho">特定商取引法に基づく表記</Link>・<Link href="/company">運営会社</Link>

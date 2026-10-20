@@ -1,4 +1,5 @@
 import { PasswordInput } from "@/app/password-input";
+import { PriceLockNote } from "@/app/price-lock-note";
 import Link from "next/link";
 import { SignupSubmitButton } from "./submit-button";
 import { signUp, prelaunchSignUp } from "./actions";
@@ -11,7 +12,10 @@ import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
 
-export function RegistrationPage({ searchParams, early = false, memberPreview = false }: { searchParams: { error?: string; done?: string }; early?: boolean; memberPreview?: boolean }) {
+export function RegistrationPage({ searchParams, early = false, memberPreview = false, priceLock = null }: { searchParams: { error?: string; done?: string }; early?: boolean; memberPreview?: boolean; priceLock?: { accepting: boolean; deadlineIso: string | null; deadlineLabel: string } | null }) {
+  // 年内お申込み特典の受付中だけ、店舗向けリンクに一言(2026/10/20。OFF・締切後は自動で消える)
+  const priceLockNote = priceLock?.accepting && priceLock.deadlineIso ? priceLock.deadlineIso : null;
+  const priceLockLabel = (priceLock?.deadlineLabel ?? "").replace(/^\d{4}年/, "");
   const params = searchParams;
 
   return (
@@ -138,7 +142,7 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
       )}
         </section>
       </div>
-      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>{early && <p className={styles.storeLinks}>ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>／<Link href="/store/login">店舗管理ログイン</Link></p>}© Poker Summit</footer>
+      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>{early && <p className={styles.storeLinks}>ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>{priceLockNote && <PriceLockNote deadlineIso={priceLockNote} text={`（${priceLockLabel}までのご契約で、今後も料金据え置き）`} />}／<Link href="/store/login">店舗管理ログイン</Link></p>}© Poker Summit</footer>
     </main>
   );
 }
