@@ -51,7 +51,7 @@ export default function FirstFreerollPage() {
           <div><dt><Icon kind="users" />参加対象</dt><dd>18歳以上で、10/25（日）までにPokerSummitに会員登録した方</dd></div>
           <div><dt><Icon kind="trophy" />プライズ</dt><dd><span className={styles.prize}>総額30,000円保証</span><span className={styles.prizeExtra}>＋ 参加者から抽選で Amazonギフトカード5,000円分 × 2名</span></dd></div>
           <div><dt><Icon kind="diamond" />参加に<br />必要なもの</dt><dd>m HOLD’EM ID・ダイヤ20個<small>※またはクラブチケット2枚</small></dd></div>
-        </dl><p className={styles.note}>※ダイヤはm HOLD’EMアプリのログインボーナスなどで無料でも受け取れます。お早めにご準備ください。<br />※プライズ配分</p></section>
+        </dl><p className={styles.note}>※ダイヤはm HOLD’EMアプリのログインボーナスなどで無料でも受け取れます。お早めにご準備ください。<br />※プライズ配分は後日お知らせします。</p></section>
         <aside className={styles.signup}><div className={styles.laurel}><img src="/images/summit-finger-clean.webp" width="64" height="80" alt="" /></div><h2>会員登録受付中</h2><p>本大会は10/25（日）までに会員登録した方が対象です</p><Link className={styles.goldButton} href="/signup">会員登録</Link><a className={styles.darkButton} href={APP_URL} target="_blank" rel="noopener noreferrer">m HOLD’EMアプリを開く</a><Link className={styles.profile} href="/mypage">m HOLD’EM IDの登録・確認はこちら</Link></aside>
         <section id="how-to-join" className={`${styles.section} ${styles.full}`}><h2><span className={styles.headingIcon}><Icon kind="coins" /></span>参加までの流れ<small>HOW TO JOIN</small></h2><ol className={styles.steps}>{steps.map(([title, text], i) => <li key={title}><span className={styles.number}>{String(i + 1).padStart(2, "0")}</span><span className={styles.stepIcon}><Icon kind={(["document", "person", "diamond", "play"] as const)[i]} /></span><div><h3>{title}</h3><p>{text}</p></div></li>)}</ol><p className={styles.note}>※ルーム情報・入室方法は開催前にご案内します。</p></section>
       </div>
