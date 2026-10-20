@@ -1,5 +1,5 @@
 // アドオン(2026/10刷新)。DB: db/addons_v2.sql
-//  月額: 全国TOPページPICKUP / 地域PICKUP(東京・大阪とその他で料金が違う) / TOPページバナー
+//  月額: 全国TOPページPICKUP / 地域PICKUP(店の多い東京・大阪・福岡とその他で料金が違う。対象県はDBのmajor_area_prefs) / TOPページバナー
 //  都度: スポット求人1件掲載 / 店舗紹介記事or動画作成 / ライター来店+記事作成 / YouTube撮影+動画投稿
 
 export type AddonCode =
@@ -32,14 +32,19 @@ export type AddonRow = {
 export const ADDON_COLUMNS =
   "id, code, name, monthly_fee, major_area_fee, major_area_prefs, description, billing_type, capacity, capacity_scope, needs_fulfillment, active, sort_order";
 
-export const DEFAULT_MAJOR_PREFS = ["東京都", "大阪府"];
+export const DEFAULT_MAJOR_PREFS = ["東京都", "大阪府", "福岡県"];
+
+/** 別料金の県の短い名前(例: 東京・大阪・福岡) */
+export function majorAreaLabel(addon: Pick<AddonRow, "major_area_prefs">) {
+  return (addon.major_area_prefs?.length ? addon.major_area_prefs : DEFAULT_MAJOR_PREFS).map((p) => p.replace(/[都府県]$/, "")).join("・");
+}
 
 export function isMajorArea(addon: Pick<AddonRow, "major_area_prefs">, pref: string | null | undefined) {
   if (!pref) return false;
   return (addon.major_area_prefs?.length ? addon.major_area_prefs : DEFAULT_MAJOR_PREFS).includes(pref);
 }
 
-/** 店舗の都道府県での料金(地域PICKUPは東京・大阪が別料金)。 */
+/** 店舗の都道府県での料金(地域PICKUPは東京・大阪・福岡が別料金)。 */
 export function addonFeeFor(addon: Pick<AddonRow, "monthly_fee" | "major_area_fee" | "major_area_prefs">, pref: string | null | undefined) {
   if (addon.major_area_fee != null && isMajorArea(addon, pref)) return addon.major_area_fee;
   return addon.monthly_fee;
@@ -50,7 +55,7 @@ export function addonPriceLabel(addon: AddonRow) {
   const unit = addon.billing_type === "monthly" ? "/月" : addon.code === "dealer_scout" ? "/1人" : addon.code === "spot_job_credit" ? "/1件" : "";
   const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
   if (addon.major_area_fee != null) {
-    const prefs = (addon.major_area_prefs?.length ? addon.major_area_prefs : DEFAULT_MAJOR_PREFS).map((p) => p.replace(/[都府県]$/, "")).join("・");
+    const prefs = majorAreaLabel(addon);
     return `${prefs} ${yen(addon.major_area_fee)}${unit}／その他の地域 ${yen(addon.monthly_fee)}${unit}`;
   }
   return `${yen(addon.monthly_fee)}${unit}`;
