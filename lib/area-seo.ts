@@ -25,22 +25,29 @@ export function areaDescription(place: string, pref: string, stats: AreaStats, i
 /** ページの一番下に小さく出す紹介文 */
 export function areaIntro(place: string, pref: string, stats: AreaStats, isCity: boolean) {
   if (stats.total === 0) return null;
-  const parts: string[] = [];
-  parts.push(`${place}には、Poker Summitに掲載中のポーカースポットが${stats.total}店あります。`);
+  const label = (c: string) => CATEGORY_LABEL[c] ?? c;
+  const tail =
+    stats.total <= 3
+      ? "営業時間・アクセス・最寄り駅のほか、近くの地域のポーカースポットやトーナメント・イベント情報も確認できます。"
+      : "各店舗の営業時間・アクセス・最寄り駅のほか、トーナメント・イベントやクーポン情報も確認できます。";
+  // 1店だけの地域(地方の県など)は1文にまとめる
+  if (stats.total === 1) {
+    const where = !isCity && stats.topCities[0] ? `${stats.topCities[0].city}の` : "";
+    const kind = stats.categories[0] ? label(stats.categories[0].category) : "ポーカースポット";
+    return `${place}には、Poker Summitに掲載中のポーカースポットが1店（${where}${kind}）あります。${tail}`;
+  }
+  const parts: string[] = [`${place}には、Poker Summitに掲載中のポーカースポットが${stats.total}店あります。`];
   if (!isCity && stats.topCities.length > 1) {
-    parts.push(`店舗が多いエリアは${stats.topCities.map((c) => `${c.city}（${c.n}店）`).join("・")}。`);
+    const many = stats.topCities[0].n > 1;
+    parts.push(`${many ? "店舗が多いエリアは" : "店舗があるエリアは"}${stats.topCities.map((c) => (many ? `${c.city}（${c.n}店）` : c.city)).join("・")}${!many && stats.total > stats.topCities.length ? "など" : ""}です。`);
   } else if (!isCity && stats.topCities.length === 1) {
-    parts.push(`${stats.topCities[0].city}にあります。`);
+    parts.push(`すべて${stats.topCities[0].city}にあります。`);
   }
   if (stats.categories.length > 1) {
-    parts.push(`種類別では、${stats.categories.map((c) => `${CATEGORY_LABEL[c.category] ?? c.category}${c.n}店`).join("・")}です。`);
+    parts.push(`種類別では、${stats.categories.map((c) => `${label(c.category)}${c.n}店`).join("・")}です。`);
   } else if (stats.categories.length === 1) {
-    parts.push(`すべて${CATEGORY_LABEL[stats.categories[0].category] ?? stats.categories[0].category}です。`);
+    parts.push(`すべて${label(stats.categories[0].category)}です。`);
   }
-  parts.push(
-    stats.total <= 3
-      ? "各店舗の営業時間・アクセス・最寄り駅のほか、近くの地域のポーカースポットやトーナメント・イベント情報も確認できます。"
-      : "各店舗の営業時間・アクセス・最寄り駅のほか、トーナメント・イベントやクーポン情報も確認できます。"
-  );
+  parts.push(tail);
   return parts.join("");
 }
