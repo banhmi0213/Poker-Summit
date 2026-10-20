@@ -14,11 +14,16 @@ function cityList(stats: AreaStats, pref: string) {
   return stats.topCities.map((c) => c.city.replace(new RegExp(`^${pref}`), "")).filter(Boolean);
 }
 
+function hasMoreCities(stats: AreaStats) {
+  return stats.total > stats.topCities.reduce((a, c) => a + c.n, 0);
+}
+
 export function areaDescription(place: string, pref: string, stats: AreaStats, isCity: boolean) {
   if (stats.total === 0) {
     return `${place}のアミューズメントポーカー・ポーカーハウス・ポーカーバーをPoker Summitで探せます。近くの地域の店舗や、営業時間・アクセス・トーナメント情報もチェックできます。`;
   }
-  const cities = !isCity && stats.topCities.length > 1 ? `${cityList(stats, pref).join("・")}など、` : "";
+  // 載せた市で全店になるときは「など」を付けない(ほかに市があるように読めるため)
+  const cities = !isCity && stats.topCities.length > 1 ? `${cityList(stats, pref).join("・")}${hasMoreCities(stats) ? "など、" : "の店舗を、"}` : "";
   return `${place}のアミューズメントポーカー・ポーカーハウス・ポーカーバー${stats.total}店を掲載。${cities}エリアや営業時間から探せます。トーナメント・イベント・クーポン情報も。`;
 }
 
@@ -39,7 +44,7 @@ export function areaIntro(place: string, pref: string, stats: AreaStats, isCity:
   const parts: string[] = [`${place}には、Poker Summitに掲載中のポーカースポットが${stats.total}店あります。`];
   if (!isCity && stats.topCities.length > 1) {
     const many = stats.topCities[0].n > 1;
-    parts.push(`${many ? "店舗が多いエリアは" : "店舗があるエリアは"}${stats.topCities.map((c) => (many ? `${c.city}（${c.n}店）` : c.city)).join("・")}${!many && stats.total > stats.topCities.length ? "など" : ""}です。`);
+    parts.push(`${many ? "店舗が多いエリアは" : "店舗があるエリアは"}${stats.topCities.map((c) => (many ? `${c.city}（${c.n}店）` : c.city)).join("・")}${hasMoreCities(stats) ? "など" : ""}です。`);
   } else if (!isCity && stats.topCities.length === 1) {
     parts.push(`すべて${stats.topCities[0].city}にあります。`);
   }
