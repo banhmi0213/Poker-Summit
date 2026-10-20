@@ -50,16 +50,9 @@ export function addonFeeFor(addon: Pick<AddonRow, "monthly_fee" | "major_area_fe
   return addon.monthly_fee;
 }
 
-/** 料金の表示(例: 東京都・大阪府 22,000円 / その他 11,000円) */
-export function addonPriceLabel(addon: AddonRow) {
-  const unit = addon.billing_type === "monthly" ? "/月" : addon.code === "dealer_scout" ? "/1人" : addon.code === "spot_job_credit" ? "/1件" : "";
-  const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
-  if (addon.major_area_fee != null) {
-    const prefs = majorAreaLabel(addon);
-    return `${prefs} ${yen(addon.major_area_fee)}${unit}／その他の地域 ${yen(addon.monthly_fee)}${unit}`;
-  }
-  return `${yen(addon.monthly_fee)}${unit}`;
-}
+// 店舗向けの画面・メール・請求書には、その店の都道府県の料金(addonFeeFor)だけを出す。
+// 他の地域の料金(「東京・大阪・福岡は◯円/その他は◯円」など)は絶対に出さない(2026/10/21 オーナー指示)。
+// 両方の料金を並べるのは運営の管理画面だけ。
 
 export async function getActiveAddons(supabase: any): Promise<AddonRow[]> {
   const { data } = await supabase
