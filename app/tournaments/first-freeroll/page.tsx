@@ -29,7 +29,7 @@ function Icon({ kind }: { kind: "gift" | "coins" | "calendar" | "phone" | "users
 }
 const APP_URL = "https://app.adjust.com/egwr7v0";
 const steps = [
-  ["先行会員登録済みの会員", "先行会員登録を完了していることをご確認ください。本大会は先行会員登録済みの方が対象です。"],
+  ["10/25（日）までに会員登録", "PokerSummitの会員登録を完了していることをご確認ください。本大会は10/25（日）までに会員登録した方が対象です。"],
   ["m HOLD’EM IDをマイページに登録", "PokerSummitのマイページで、ご自身のm HOLD’EM IDを登録してください。登録済みのIDはご自身では変更できません。"],
   ["アプリと必要なダイヤを準備", "m HOLD’EMアプリと、参加に必要なダイヤ20個（またはm HOLD’EMクラブチケット2枚）をご準備ください。ダイヤはアプリのログインボーナスなどで無料でも受け取れます。"],
   ["大会ルームに入室", "開催前にご案内するルーム情報・入室方法をご確認のうえ、指定の時間にご入室ください。"],
@@ -52,14 +52,14 @@ export default function FirstFreerollPage() {
           <div><dt><Icon kind="trophy" />プライズ</dt><dd><span className={styles.prize}>総額30,000円保証</span><span className={styles.prizeExtra}>＋ 参加者から抽選で Amazonギフトカード5,000円分 × 2名</span></dd></div>
           <div><dt><Icon kind="diamond" />参加に必要なもの</dt><dd>m HOLD’EM ID・ダイヤ20個<small>※またはクラブチケット2枚</small></dd></div>
         </dl><p className={styles.note}>※ダイヤはm HOLD’EMアプリのログインボーナスなどで無料でも受け取れます。お早めにご準備ください。<br />※プライズ配分</p></section>
-        <aside className={styles.signup}><div className={styles.laurel}><img src="/images/summit-finger-clean.webp" width="64" height="80" alt="" /></div><h2>会員登録受付中</h2><p>本大会は先行会員登録済みの方が対象です</p><Link className={styles.goldButton} href="/signup">会員登録</Link><a className={styles.darkButton} href={APP_URL} target="_blank" rel="noopener noreferrer">m HOLD’EMアプリを開く</a><Link className={styles.profile} href="/mypage">m HOLD’EM IDの登録・確認はこちら</Link></aside>
+        <aside className={styles.signup}><div className={styles.laurel}><img src="/images/summit-finger-clean.webp" width="64" height="80" alt="" /></div><h2>会員登録受付中</h2><p>本大会は10/25（日）までに会員登録した方が対象です</p><Link className={styles.goldButton} href="/signup">会員登録</Link><a className={styles.darkButton} href={APP_URL} target="_blank" rel="noopener noreferrer">m HOLD’EMアプリを開く</a><Link className={styles.profile} href="/mypage">m HOLD’EM IDの登録・確認はこちら</Link></aside>
         <section id="how-to-join" className={`${styles.section} ${styles.full}`}><h2><span className={styles.headingIcon}><Icon kind="coins" /></span>参加までの流れ<small>HOW TO JOIN</small></h2><ol className={styles.steps}>{steps.map(([title, text], i) => <li key={title}><span className={styles.number}>{String(i + 1).padStart(2, "0")}</span><span className={styles.stepIcon}><Icon kind={(["document", "person", "diamond", "play"] as const)[i]} /></span><div><h3>{title}</h3><p>{text}</p></div></li>)}</ol><p className={styles.note}>※ルーム情報・入室方法は開催前にご案内します。</p></section>
       </div>
       <section id="prize-claim" className={styles.claim}><h2><span className={styles.headingIcon}><Icon kind="gift" /></span>入賞後の賞品受け取り<small>PRIZE CLAIM</small></h2><ol className={styles.claimSteps}>
         <li><span className={styles.number}>1</span><span className={styles.claimIcon}><Icon kind="mail" /></span><div><h3>登録メールアドレスから<br />サイト運営にメール</h3><p>入賞された会員は、PokerSummitに登録したメールアドレスからサイト運営へメールをお送りください。m HOLD’EMアプリのマイページで、プレイヤー名とIDが1画面にセットで写っているスクリーンショットを添付してください。</p></div></li>
         <li><span className={styles.number}>2</span><span className={styles.claimIcon}><Icon kind="gift" /></span><div><h3>登録IDと照合後<br />賞品をお渡し</h3><p>お送りいただいたスクリーンショットのIDと、PokerSummitに登録されたm HOLD’EM IDを照合後、賞品をお渡しします。</p></div></li>
       </ol><div className={styles.claimReminder}>m HOLD’EMアプリのマイページで、プレイヤー名とIDが1画面にセットで写っているスクリーンショットをお送りください。</div><div className={styles.deadline}><strong>提出期限：<time dateTime="2026-11-01T23:59:00+09:00">2026年11月1日（日）23:59</time>（日本時間）</strong><p>期限を過ぎた場合や、登録したアドレス以外から送られた場合は、賞品をお渡しできません。</p></div></section>
-      <section className={`${styles.section} ${styles.noticeSection}`}><h2><span className={styles.headingIcon} aria-hidden="true">!</span>注意事項<small>IMPORTANT NOTES</small></h2><ul className={styles.notes}><li>参加にはダイヤ20個（またはm HOLD’EMクラブチケット2枚）が必要です。ダイヤはアプリのログインボーナスなどで無料でも受け取れます。</li><li>登録したm HOLD’EM IDと参加IDを一致させてください。</li><li>通常の会員登録のみでは、本大会の参加対象となりません。</li><li>大会の最新情報・ルーム情報は開催前にご案内します。</li><li>本大会はPokerSummit主催です。サミー株式会社・m HOLD’EMの公認・協賛大会ではありません。</li><li>Amazonギフトカードの抽選は、本大会に参加した方が対象です。当選者には登録メールアドレスへご連絡します。Amazonは本大会のスポンサーではありません。Amazon、Amazon.co.jpおよびそれらのロゴはAmazon.com, Inc.またはその関連会社の商標です。</li></ul></section>
+      <section className={`${styles.section} ${styles.noticeSection}`}><h2><span className={styles.headingIcon} aria-hidden="true">!</span>注意事項<small>IMPORTANT NOTES</small></h2><ul className={styles.notes}><li>参加にはダイヤ20個（またはm HOLD’EMクラブチケット2枚）が必要です。ダイヤはアプリのログインボーナスなどで無料でも受け取れます。</li><li>登録したm HOLD’EM IDと参加IDを一致させてください。</li><li>10/25（日）より後に会員登録した方は、本大会の参加対象となりません。</li><li>大会の最新情報・ルーム情報は開催前にご案内します。</li><li>本大会はPokerSummit主催です。サミー株式会社・m HOLD’EMの公認・協賛大会ではありません。</li><li>Amazonギフトカードの抽選は、本大会に参加した方が対象です。当選者には登録メールアドレスへご連絡します。Amazonは本大会のスポンサーではありません。Amazon、Amazon.co.jpおよびそれらのロゴはAmazon.com, Inc.またはその関連会社の商標です。</li></ul></section>
       <div className={styles.finalCta}><a className={styles.goldButton} href={APP_URL} target="_blank" rel="noopener noreferrer">大会に参加する</a><p>m HOLD’EM公式のアプリリンクへ移動します。</p></div>
     </main><PortalFooter />
   </div>;

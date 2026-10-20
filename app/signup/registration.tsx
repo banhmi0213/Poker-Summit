@@ -9,7 +9,7 @@ import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { PASSWORD_INPUT_PATTERN, PASSWORD_MIN_LENGTH, PASSWORD_RULE_LABEL } from "@/lib/password-policy";
 import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
-import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES } from "@/lib/prelaunch";
+import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES, FREEROLL_ELIGIBILITY, freerollSignupOpen } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
 import { safeNext, cleanSource } from "@/lib/visit-source";
 
@@ -54,12 +54,13 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
           ) : (
             <>
               <p className={styles.lead}>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</p>
+              {freerollSignupOpen() && <p className={styles.lead}>{FREEROLL_ELIGIBILITY.replace("方", "方は")}、<Link href="/tournaments/first-freeroll">会員限定フリーロール（{PRELAUNCH_TOURNAMENT.prizeLabel}）</Link>に参加できます。</p>}
               {toDealer && <p className={styles.lead}>ディーラー登録は、会員登録のあとにそのまま進めます（どちらも無料）。</p>}
             </>
           )}
           {early && <aside className={styles.tournamentPromo} aria-labelledby="early-tournament-title">
             <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
-            <p>先行登録した方だけが参加できる、m HOLD’EMアプリの限定トーナメントです。</p>
+            <p>{FREEROLL_ELIGIBILITY}が参加できる、m HOLD’EMアプリの限定トーナメントです。</p>
             {/* ダイヤは注意書きではなく「参加費」として見せる・Amazonギフトの抽選も載せる(2026/10/20) */}
             <dl className={styles.tournamentFacts}>
               <div><dt>開催日時</dt><dd>{PRELAUNCH_TOURNAMENT.dateLabel}</dd></div>
