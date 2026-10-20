@@ -80,7 +80,7 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
             {early && <SignupFunnelTracker formId="registration-form" />}
             <label className={styles.field}>
               <span>ハンドルネーム <b className={styles.optional}>任意</b></span>
-              <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" />
+              <input type="text" name="name" autoComplete="nickname" placeholder="例）ポーカー太郎" />
             </label>
             {/* 都道府県は登録画面では聞かない(2026/10/20、入力を減らすため)。あとからマイページで入れられる。
                 集計用に、登録したときのだいたいの都道府県をサーバー側で記録する(signup/actions.ts) */}
