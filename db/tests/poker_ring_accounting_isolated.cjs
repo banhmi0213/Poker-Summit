@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{randomUUID,randomBytes}=require('crypto'),ts=require('typescript');
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
 (async()=>{const db=await require('../../tests/helpers/poker-ring-database.cjs')();try{
- for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql','poker-ring-admission.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
+ for(const file of ['poker-chip-ledger.sql','poker-ring-accounting.sql','poker-ring-admission.sql','poker-ring-exits.sql'])await db.exec(fs.readFileSync(path.resolve(__dirname,'../../tests/sql',file),'utf8'));
  const {SupabaseRingStore,RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
  const names={poker_ring_context:['p_table'],poker_ring_hand_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_hand_write:['p_hand','p_expected','p_write','p_sealed','p_result'],poker_ring_hand_load:['p_hand'],poker_ring_reserve_funds:['p_member','p_table','p_amount','p_request'],poker_ring_seat_funds:['p_member','p_reservation','p_seat'],poker_ring_cashout:['p_member','p_reservation','p_request'],poker_ring_release_expired:['p_table']};
  let loseNextAck=false,writeRequests=[];
@@ -16,7 +16,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
  let state=owner.snapshot(null),actor=members[Number(state.toAct.slice(5))-1],cmd={handId:state.handId,revision:state.revision,actionId:'lost-ack',action:{type:'call'}};
  const sameCards=owner.snapshot(actor).players.find(p=>p.hole)?.hole;loseNextAck=true;await assert.rejects(owner.act(actor,cmd));assert.ok(owner.uncertain);assert.throws(()=>owner.snapshot(actor));await assert.rejects(owner.act(actor,cmd));await owner.retryPending();assert.deepEqual(writeRequests[0],writeRequests[1]);assert.equal(owner.version,2);assert.deepEqual(owner.snapshot(actor).players.find(p=>p.hole)?.hole,sameCards);
  const beforeVersion=owner.version;await owner.act(actor,cmd);assert.equal(owner.version,beforeVersion);
- owner=await RingHandOwner.restore(store,prepared.handId,keys);let n=0;
+ owner=await RingHandOwner.restore(store,prepared.handId,keys);await db.query('select public.poker_ring_depart($1,$2,$3)',[members[0],reservations[0],randomUUID()]);let n=0;
  while(!owner.snapshot(null).result){state=owner.snapshot(null);const i=Number(state.toAct.slice(5))-1,viewer=owner.snapshot(members[i]),legal=viewer.legal;const action=legal.raise?{type:'raise',amount:legal.maxRaiseTo}:legal.call?{type:'call'}:{type:'check'};await owner.act(members[i],{handId:state.handId,revision:state.revision,actionId:'all-in-'+n++,action});assert.ok(n<20);}
  const final=owner.snapshot(null);assert.equal(final.players.reduce((sum,p)=>sum+p.stack,0),2000);assert.ok(final.result.showdown);owner=await RingHandOwner.restore(store,prepared.handId,keys);assert.deepEqual(owner.snapshot(null),final);
  for(let i=0;i<2;i++){const request=randomUUID();await store.cashout(members[i],reservations[i],request);await store.cashout(members[i],reservations[i],request);}
@@ -32,6 +32,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
  assert.equal(third.snapshot(null).players.reduce((s,p)=>s+p.stack,0),6000);
  for(let i=0;i<3;i++)await store.cashout(many[i],held[i],randomUUID());await db.exec('reset role');
  const totals=(await db.query('select sum(available)::bigint available,sum(in_play)::bigint in_play from poker_private.ring_accounts where member_id=any($1::uuid[])',[many])).rows[0];assert.equal(Number(totals.available),9000);assert.equal(Number(totals.in_play),0);
+ console.log('PASS deferred exits: final-stack/zero-stack payouts, invalid settlement rollback, repeated receipts, and old exit after reseating.');
  console.log('PASS three unequal-stack all-ins at seats 1/3/6 and 9,000-chip final wallet conservation.');
  console.log('PASS ring SQL: welcome/replay/eligibility, seat ownership/capacity, atomic conserved settlement, duplicate/stale writes, final-stack/zero-stack cashout, expiry and ACL.');console.log('PASS actual engine + encrypted checkpoints + SQL: hidden hands, lost-ACK exact retry, durable restart, all-in showdown and wallet conservation (6,000 chip).');
  }finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
