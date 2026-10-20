@@ -110,3 +110,34 @@ export const getStoreCountForArea = unstable_cache(
   ["store-count-for-area-v1"],
   { revalidate: 3600, tags: ["public-stores"] }
 );
+
+// ============================================================================
+// 地域ページ(都道府県・市区町村)の検索向けの数字(2026/10/20)。タイトル・説明・ページ下の紹介文に使う。
+// 掲載中(approved/listed)の店だけを数える。数字は自動で変わる。
+// ============================================================================
+export type AreaStats = { total: number; topCities: { city: string; n: number }[]; categories: { category: string; n: number }[] };
+
+export const getAreaStats = unstable_cache(
+  async (pref: string, city: string): Promise<AreaStats> => {
+    const supabase = createAnonClient();
+    let query = supabase.from("stores").select("city, category").eq("pref", pref).in("status", ["approved", "listed"]).limit(2000);
+    if (city) query = cityFilter(query, city);
+    const { data } = await query;
+    const rows = (data ?? []) as { city: string | null; category: string | null }[];
+    const cityCount = new Map<string, number>();
+    const catCount = new Map<string, number>();
+    for (const r of rows) {
+      if (r.city) cityCount.set(r.city, (cityCount.get(r.city) ?? 0) + 1);
+      const c = r.category && r.category !== "other" ? r.category : "";
+      if (c) catCount.set(c, (catCount.get(c) ?? 0) + 1);
+    }
+    const sortDesc = (m: Map<string, number>) => Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
+    return {
+      total: rows.length,
+      topCities: sortDesc(cityCount).slice(0, 3).map(([c, n]) => ({ city: c, n })),
+      categories: sortDesc(catCount).map(([category, n]) => ({ category, n })),
+    };
+  },
+  ["area-stats-v1"],
+  { revalidate: 3600, tags: ["public-stores"] }
+);
