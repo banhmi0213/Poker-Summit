@@ -90,7 +90,9 @@ export async function updateSession(request: NextRequest) {
   ]);
   const maintenanceMode = !maintenanceExempt && flags.maintenance;
 
-  if (!user && isProtectedPath) {
+  // ディーラー登録広告の受け口(/account/dealer)だけは、未ログインでもページ側で受ける
+  // (閲覧を数えてから会員登録へ案内し、登録後にディーラー登録へ戻すため。2026/10/21、app/account/dealer/page.tsx)
+  if (!user && isProtectedPath && pathname !== "/account/dealer") {
     const url = request.nextUrl.clone();
     url.pathname = isStorePath ? "/store/login" : isAdminPath ? "/admin-login" : "/login";
     url.searchParams.set("next", pathname);
