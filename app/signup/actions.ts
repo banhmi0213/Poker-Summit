@@ -10,40 +10,64 @@ import { passwordPolicyError } from "@/lib/password-policy";
 import { headers } from "next/headers";
 import { verifyTurnstile, clientIpFromHeaders } from "@/lib/turnstile";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { classifyDevice, inAppBrowser } from "@/lib/device";
 import { handleNameError } from "@/lib/handle-name";
 import { guessPrefForSignup } from "@/lib/current-pref";
 
 export async function signUp(formData: FormData) { return register(formData, "/signup"); }
 export async function prelaunchSignUp(formData: FormData) { return register(formData, "/prelaunch"); }
+// 登録で止まった理由を記録してから、エラー表示に戻す(2026/10/20、public.signup_errors。
+// 「送信したのに会員ができていない」人の原因を見るため。メールアドレスはドメインだけ、パスワードは残さない)
+async function fail(path: string, formData: FormData, reason: string, message: string, detail?: string): Promise<never> {
+  try {
+    const h = headers();
+    const ua = h.get("user-agent");
+    const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
+    await createServiceRoleClient().from("signup_errors").insert({
+      path,
+      reason,
+      message,
+      detail: detail ? detail.slice(0, 500) : null,
+      email_domain: email.includes("@") ? email.split("@").pop()!.toLowerCase().slice(0, 100) : null,
+      device: classifyDevice(ua),
+      in_app: inAppBrowser(ua),
+      user_agent: ua ? ua.slice(0, 300) : null,
+    });
+  } catch {
+    // 記録に失敗してもエラー表示は出す
+  }
+  redirect(`${path}?error=${encodeURIComponent(message)}`);
+}
+
 async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   if (formData.get("legalConsent") !== "agree") {
-    redirect(`${path}?error=${encodeURIComponent("利用規約とプライバシーポリシーへの同意が必要です。")}`);
+    await fail(path, formData, "legal_consent", "利用規約とプライバシーポリシーへの同意が必要です。");
   }
   if (formData.get("termsVersion") !== TERMS_VERSION || formData.get("privacyVersion") !== PRIVACY_VERSION) {
-    redirect(`${path}?error=${encodeURIComponent("規約が更新されました。ページを更新して内容をご確認ください。")}`);
+    await fail(path, formData, "terms_version", "規約が更新されました。ページを更新して内容をご確認ください。");
   }
   const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
   const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
   const idError = mHoldemIdError(mHoldemId);
-  if (idError) redirect(`${path}?error=${encodeURIComponent(idError)}`);
+  if (idError) await fail(path, formData, "m_holdem_id_format", idError);
   const pref = String(formData.get("pref") ?? "").trim();
   // 都道府県の公開設定(2026/10追加)。未指定時は従来通り公開扱い。
   const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
 
   if (name) {
     const nameError = handleNameError(name);
-    if (nameError) redirect(`${path}?error=${encodeURIComponent(nameError)}`);
+    if (nameError) await fail(path, formData, "handle_name", nameError, name);
   }
 
   if (!email || !password) {
-    redirect(`${path}?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
+    await fail(path, formData, "missing_fields", "メールアドレスとパスワードを入力してください。");
   }
 
   const passwordError = passwordPolicyError(password);
   if (passwordError) {
-    redirect(`${path}?error=${encodeURIComponent(passwordError)}`);
+    await fail(path, formData, "password_policy", passwordError!);
   }
 
   // ロボット対策(Cloudflare Turnstile)
@@ -51,14 +75,14 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   const ip = clientIpFromHeaders(h);
   const token = String(formData.get("cf-turnstile-response") ?? "") || null;
   if (!(await verifyTurnstile(token, ip))) {
-    redirect(`${path}?error=${encodeURIComponent("ロボットでないことの確認ができませんでした。もう一度お試しください。")}`);
+    await fail(path, formData, "turnstile", "ロボットでないことの確認ができませんでした。もう一度お試しください。", token ? "verify_failed" : "token_missing");
   }
 
   // 1つの m HOLD'EM ID は1アカウントだけ(2026/10/19)
   if (mHoldemId) {
     const { data: taken } = await createServiceRoleClient().rpc("m_holdem_id_taken", { p_id: mHoldemId });
     if (taken === true) {
-      redirect(`${path}?error=${encodeURIComponent("このm HOLD’EM IDはすでに別のアカウントで登録されています。ご自身のIDの場合は、IDを空欄にして登録したあとお問い合わせください。")}`);
+      await fail(path, formData, "m_holdem_id_taken", "このm HOLD’EM IDはすでに別のアカウントで登録されています。ご自身のIDの場合は、IDを空欄にして登録したあとお問い合わせください。");
     }
   }
 
@@ -72,7 +96,7 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   });
 
   if (error) {
-    redirect(`${path}?error=${encodeURIComponent(authErrorMessage(error.message))}`);
+    await fail(path, formData, "auth_signup", authErrorMessage(error.message), error.message);
   }
 
   // 登録時のIPアドレスを記録(重複登録の見回り用。新規登録のときだけ)
@@ -88,6 +112,25 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
         );
     } catch {
       // 記録の失敗で登録は止めない
+    }
+  }
+
+  // すでに登録済みのアドレスで登録しようとした場合、Supabaseは(なりすまし防止のため)成功に見せかけて何も作らない。
+  // 本人には「確認メールを送りました」と出るが会員は増えないので、記録だけ残す(2026/10/20)
+  if (data.user && (data.user.identities?.length ?? 0) === 0) {
+    try {
+      const ua = h.get("user-agent");
+      await createServiceRoleClient().from("signup_errors").insert({
+        path,
+        reason: "already_registered",
+        message: "登録済みのメールアドレス(確認メールの再送扱い)",
+        email_domain: email.includes("@") ? email.split("@").pop()!.toLowerCase().slice(0, 100) : null,
+        device: classifyDevice(ua),
+        in_app: inAppBrowser(ua),
+        user_agent: ua ? ua.slice(0, 300) : null,
+      });
+    } catch {
+      // 記録の失敗で止めない
     }
   }
 
