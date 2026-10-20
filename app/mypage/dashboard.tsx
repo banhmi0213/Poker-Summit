@@ -148,7 +148,13 @@ export async function MyPageContent({
   const tab = searchParams.tab || "favorites";
   const name = (user.user_metadata as any)?.display_name || "会員";
   const pref = (user.user_metadata as any)?.pref || "";
-  const joinedAt = user.created_at ? formatDate(user.created_at) : "";
+  // 表示用の登録日を運営が指定している場合はそちら(member_joined_overrides、2026/10/20)
+  const { data: joinedOverride } = await supabase.from("member_joined_overrides").select("joined_on").eq("user_id", user.id).maybeSingle();
+  const joinedAt = joinedOverride?.joined_on
+    ? (() => { const [y, m, d] = String(joinedOverride.joined_on).split("-").map(Number); return `${y}/${m}/${d}`; })()
+    : user.created_at
+      ? formatDate(user.created_at)
+      : "";
 
   const tabs: { key: string; label: string }[] = [
     { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
