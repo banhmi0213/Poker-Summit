@@ -84,6 +84,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
 
   // LINE連携済みの店舗にはLINEでも送る(サイトからのお知らせ)
   let lineSent = 0;
+  let lineStoreIds: string[] = [];
   if (lineScope === "contracted" || lineScope === "all") {
     const svc = createServiceRoleClient();
     let storeQuery = svc.from("stores").select("id, line_user_id").not("line_user_id", "is", null);
@@ -96,6 +97,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
     }
     const { data: lineStores } = await storeQuery;
     const userIds = Array.from(new Set((lineStores ?? []).map((s) => s.line_user_id as string).filter(Boolean)));
+    lineStoreIds = (lineStores ?? []).map((s) => s.id as string);
     const text = `【Poker Summit からのお知らせ】\n${subject}\n\n${body}`.slice(0, 4900);
     for (const userId of userIds) {
       await pushLineMessage(userId, text);
@@ -130,6 +132,11 @@ export async function sendBulkEmailToStores(formData: FormData) {
     toMembers,
     memberSent: memberResult.sent.length,
     memberFailed: memberResult.failed,
+    // 送った宛先の一覧も残す(2026/10/20 オーナー指示「送った記録には宛先の一覧を残す」)
+    storeEmailRecipients: result.sent,
+    memberRecipients: memberResult.sent,
+    lineStoreIds,
+    body: body.slice(0, 2000),
   });
 
   const jar = await cookies();

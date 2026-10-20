@@ -41,6 +41,13 @@ export default async function AdminBulkEmailPage() {
   }).length;
 
   const { data: memberRows } = await createServiceRoleClient().rpc("member_notice_recipients");
+  // 送信の記録(宛先の一覧つき、2026/10/20)
+  const { data: historyRows } = await supabase
+    .from("audit_log")
+    .select("id, created_at, detail")
+    .eq("action", "store_bulk_email_sent")
+    .order("created_at", { ascending: false })
+    .limit(20);
   const memberCount = (memberRows ?? []).length;
 
   const jar = await cookies();
@@ -126,6 +133,41 @@ export default async function AdminBulkEmailPage() {
           送信・掲載する
         </button>
       </form>
+
+      <h2 style={{ fontSize: 17, margin: "28px 0 10px" }}>送信の記録</h2>
+      {(historyRows ?? []).length === 0 ? (
+        <p className="muted">まだ記録はありません。</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 640 }}>
+          {(historyRows ?? []).map((h: any) => {
+            const d = (h.detail ?? {}) as Record<string, any>;
+            const members: string[] = Array.isArray(d.memberRecipients) ? d.memberRecipients : [];
+            const stores: string[] = Array.isArray(d.storeEmailRecipients) ? d.storeEmailRecipients : [];
+            const failed = [...(Array.isArray(d.failed) ? d.failed : []), ...(Array.isArray(d.memberFailed) ? d.memberFailed : [])] as { to: string; error: string }[];
+            const hasList = Array.isArray(d.memberRecipients) || Array.isArray(d.storeEmailRecipients);
+            return (
+              <details key={h.id} className="card" style={{ padding: "10px 14px" }}>
+                <summary style={{ cursor: "pointer", fontSize: 13.5 }}>
+                  <strong>{d.subject ?? "(件名なし)"}</strong>
+                  <span className="muted" style={{ marginLeft: 8, fontSize: 12 }}>
+                    {new Date(h.created_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}
+                    {d.toMembers ? `・会員メール ${d.memberSent ?? 0}件` : ""}
+                    {d.toEmail !== false ? `・店舗メール ${d.sentCount ?? 0}件` : ""}
+                    {d.lineSent ? `・LINE ${d.lineSent}件` : ""}
+                    {d.siteNotice ? "・サイト掲載" : ""}
+                  </span>
+                </summary>
+                <div style={{ fontSize: 12.5, marginTop: 8, lineHeight: 1.8 }}>
+                  {!hasList && <p className="muted">この送信は宛先の一覧を残す前のものです（件数のみ）。</p>}
+                  {members.length > 0 && (<p><strong>会員：</strong>{members.join("、")}</p>)}
+                  {stores.length > 0 && (<p><strong>店舗：</strong>{stores.join("、")}</p>)}
+                  {failed.length > 0 && (<p style={{ color: "#d1453b" }}><strong>失敗：</strong>{failed.map((f) => `${f.to}（${f.error}）`).join("、")}</p>)}
+                </div>
+              </details>
+            );
+          })}
+        </div>
+      )}
 
       <h2 style={{ fontSize: 17, margin: "28px 0 10px" }}>サイトのお知らせ</h2>
       {(siteNotices ?? []).length === 0 ? (
