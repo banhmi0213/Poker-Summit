@@ -46,7 +46,7 @@ export function BlogImport({ stores, articles }: { stores: BlogStore[]; articles
   function apply() {
     if (!review || saved || busy) return;
     setDraft(review.draft); setRevision(old => old + 1); setReview(null);
-    setNotice(`「${review.draft.title}」を編集欄に反映しました。画像を登録して下書き保存してください。まだ保存されていません。`);
+    setNotice(`「${review.draft.title}」を編集欄に反映しました。画像なしでも下書き保存できます。まだ保存されていません。`);
   }
   return <>
     <section className={styles.importPanel} aria-labelledby="blog-import-heading">

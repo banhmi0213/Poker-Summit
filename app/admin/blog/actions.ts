@@ -71,7 +71,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  let committed = false;
  try {
   const file=formData.get("image");if(file instanceof File&&file.size>0){const image=await upload(file);imageUrl=image.url;imagePath=image.path;}
-  if(!imageUrl)throw Error("メイン画像を添付してください。");
+  if(active&&!imageUrl)throw Error("公開するにはメイン画像を添付してください。");
   const previousPhotos=new Map((Array.isArray(previous?.body)?previous.body:[]).filter(b=>b.type==="image"&&b.path).map(b=>[b.path,b]));
   for(let i=0;i<input.length;i++){
    const b=input[i];
@@ -82,6 +82,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    else if(typeof b.path==="string")stored=previousPhotos.get(b.path);
    if(stored)body.push({type:"image",url:stored.url,path:stored.path,caption:b.caption || "",alt:b.alt?.trim() || "",uploadKey:b.uploadKey});
    else if(active&&mode==="internal")throw Error("本文の写真を添付するか、空の写真ブロックを削除してください。");
+   else if(!active)body.push({type:"image",caption:b.caption || "",alt:b.alt?.trim() || "",uploadKey:b.uploadKey});
   }
   if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()||(b.items?.some(x=>x.trim()))||(b.rows?.some(r=>r.some(x=>x.trim())))))throw Error("公開する記事の本文を入力してください。");
   const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||previous?.published_at||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};

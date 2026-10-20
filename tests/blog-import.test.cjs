@@ -79,7 +79,7 @@ test('renders imported editor fields without any save or generation API call', (
     assert.ok(html.includes('受付で確認したい3つのこと')); assert.ok(html.includes('分からないことは着席前に聞く'));
     assert.match(html, /name="bodyImage_saved_5"/);
     assert.match(html, /option value="draft" selected=""/);
-    assert.match(html, /name="image"[^>]*required=""/);
+    assert.ok(!/name="image"[^>]*required=""/.test(html));
     assert.ok(!html.includes('https://api.openai.com'));
   } finally { global.fetch = oldFetch; }
 });
