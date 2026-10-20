@@ -91,7 +91,7 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
             </label>
             <label className={styles.field}>
               <span>パスワード <b className={styles.required}>必須</b></span>
-              <small>{PASSWORD_RULE_LABEL}</small>
+              <small>{PASSWORD_RULE_LABEL}（ほかのサイトで使っていないもの）</small>
               <PasswordInput
                 name="password"
                 required
