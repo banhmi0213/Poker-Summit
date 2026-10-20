@@ -16,6 +16,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/billing", label: "入金管理" },
   { href: "/admin/addon-orders", label: "アドオン注文" },
   { href: "/admin/stores/bulk-email", label: "お知らせ配信" },
+  { href: "/admin/message-log", label: "送信履歴" },
   { href: "/admin/listing-applications", label: "掲載申込" },
   { href: "/admin/jobs", label: "求人管理" },
   { href: "/admin/events", label: "イベント管理" },
