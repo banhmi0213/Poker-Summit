@@ -34,8 +34,9 @@ async function getActiveStoreRecipients(supabase: Awaited<ReturnType<typeof crea
 }
 
 export async function sendBulkEmailToStores(formData: FormData) {
-  const subject = String(formData.get("subject") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
+  // 文案を貼り付けたときに付いてくる「件名：」「本文：」の見出しは外す(2026/10/20)
+  const subject = String(formData.get("subject") ?? "").trim().replace(/^[*＊\s]*件名[*＊\s]*[:：][*＊\s]*/, "").trim();
+  const body = String(formData.get("body") ?? "").trim().replace(/^[*＊\s]*本文[*＊\s]*[:：][*＊\s]*/, "").trim();
 
   if (!subject || !body) {
     throw new Error("件名と本文を入力してください。");
