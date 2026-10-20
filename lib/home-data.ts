@@ -46,7 +46,8 @@ async function loadHomePublicData(currentPref: string | null) {
     Promise.all([
       supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open"),
-      supabase.from("board_posts").select("*", { count: "exact", head: true }).eq("status", "visible"),
+      // 未ログインはサミットの本文を読めない(列ごとの権限)ので、件数は id だけで数える(2026/10/20)
+      supabase.from("board_posts").select("id", { count: "exact", head: true }).eq("status", "visible"),
       supabase.from("major_tournaments").select("*", { count: "exact", head: true }).eq("active", true),
     ]),
     supabase.rpc("public_member_count"),
