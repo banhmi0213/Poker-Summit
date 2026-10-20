@@ -114,6 +114,9 @@ export default async function StorePlanPage({
     slotsLeft[a.id] = await addonSlotsLeft(svc, a, storePref, store.id);
   }
   const spotCredits = (creditRow?.balance as number | undefined) ?? 0;
+  const { data: scoutRow, error: scoutError } = await supabase.from("store_scout_credits").select("balance").eq("store_id", store.id).maybeSingle();
+  if (scoutError) throw new Error("スカウト枠を読み込めませんでした。");
+  const scoutCredits = scoutRow?.balance ?? 0;
   const addonOrders = (orderRows ?? []) as any[];
 
   const currentAddonIds = ((contract as any)?.store_contract_addons ?? []).map(
@@ -403,6 +406,7 @@ export default async function StorePlanPage({
         contractPeriodEnd={(contract as any)?.current_period_end ?? null}
         slotsLeft={slotsLeft}
         spotCredits={spotCredits}
+        scoutCredits={scoutCredits}
         orders={addonOrders}
         canUseCard={billing.cardPaymentEnabled && hasCard}
         hasContract={(contract as any)?.status === "active"}

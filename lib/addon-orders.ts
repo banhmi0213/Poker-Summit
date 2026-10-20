@@ -175,6 +175,12 @@ export async function fulfillPaidAddonOrder(orderId: string) {
     return;
   }
 
+  if (o.addon_code === "dealer_scout") {
+    const { error } = await svc.rpc("fulfill_dealer_scout_order", { p_order_id: o.id });
+    if (error) throw new Error(error.message);
+    return;
+  }
+
   if (o.addon_code === "spot_job_credit") {
     const { data: credit } = await svc.from("store_spot_credits").select("balance").eq("store_id", o.store_id).maybeSingle();
     if (credit) {
@@ -308,7 +314,7 @@ export async function purchaseAddons(params: {
     const quantity =
       addon.billing_type === "monthly"
         ? 1
-        : Math.max(1, Math.min(addon.code === "spot_job_credit" ? 50 : 5, Math.floor(item.quantity || 1)));
+        : Math.max(1, Math.min(["spot_job_credit", "dealer_scout"].includes(addon.code ?? "") ? 50 : 5, Math.floor(item.quantity || 1)));
     lines.push({ addon, quantity, unitPrice: addonFeeFor(addon, store.pref) });
   }
 

@@ -7,6 +7,7 @@ export type AddonCode =
   | "pickup_national"
   | "pickup_region"
   | "top_banner"
+  | "dealer_scout"
   | "spot_job_credit"
   | "article_or_video"
   | "writer_visit"
@@ -46,7 +47,7 @@ export function addonFeeFor(addon: Pick<AddonRow, "monthly_fee" | "major_area_fe
 
 /** 料金の表示(例: 東京都・大阪府 22,000円 / その他 11,000円) */
 export function addonPriceLabel(addon: AddonRow) {
-  const unit = addon.billing_type === "monthly" ? "/月" : addon.code === "spot_job_credit" ? "/1件" : "";
+  const unit = addon.billing_type === "monthly" ? "/月" : addon.code === "dealer_scout" ? "/1人" : addon.code === "spot_job_credit" ? "/1件" : "";
   const yen = (n: number) => `${n.toLocaleString("ja-JP")}円`;
   if (addon.major_area_fee != null) {
     const prefs = (addon.major_area_prefs?.length ? addon.major_area_prefs : DEFAULT_MAJOR_PREFS).map((p) => p.replace(/[都府県]$/, "")).join("・");
