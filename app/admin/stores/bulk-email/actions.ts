@@ -42,11 +42,27 @@ export async function sendBulkEmailToStores(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const recipients = await getActiveStoreRecipients(supabase);
+  // 送り先: 店舗へのメール(+店舗管理画面の受信箱) / LINE / サイトのお知らせ(2026/10/20 サイトを追加)
+  const toEmail = formData.get("toEmail") === "on";
+  const toSite = formData.get("toSite") === "on";
+  const recipients = toEmail ? await getActiveStoreRecipients(supabase) : [];
 
   const lineScope = String(formData.get("lineScope") ?? "none"); // none / contracted / all
-  if (recipients.length === 0 && lineScope === "none") {
+  if (!toEmail && !toSite && lineScope === "none") {
+    throw new Error("送り先(メール・LINE・サイト)を1つ以上選んでください。");
+  }
+  if (toEmail && recipients.length === 0 && lineScope === "none" && !toSite) {
     throw new Error("送信先の店舗メールアドレスが見つかりませんでした。");
+  }
+
+  // サイトのお知らせ(公開サイトの /news に全国・全員向けで出す)
+  let siteNotice = false;
+  if (toSite) {
+    const { data: auth } = await supabase.auth.getUser();
+    const { error: siteError } = await supabase.from("site_notices").insert({ title: subject, body, created_by: auth.user?.id ?? null });
+    if (siteError) throw new Error(`サイトのお知らせを保存できませんでした: ${siteError.message}`);
+    siteNotice = true;
+    revalidatePath("/news");
   }
 
   const result = recipients.length
@@ -76,7 +92,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
 
   // 店舗管理画面の「運営からのお知らせ」にも残す(契約中の全店舗。メールが届かなくても画面で読める、2026/10)
   let inboxCount = 0;
-  {
+  if (toEmail) {
     const svc = createServiceRoleClient();
     const { data: activeContracts } = await svc.from("store_contracts").select("store_id").eq("status", "active");
     const storeIds = Array.from(new Set((activeContracts ?? []).map((c) => c.store_id as string).filter(Boolean)));
@@ -96,6 +112,8 @@ export async function sendBulkEmailToStores(formData: FormData) {
     lineScope,
     lineSent,
     inboxCount,
+    toEmail,
+    siteNotice,
   });
 
   const jar = await cookies();
@@ -106,10 +124,25 @@ export async function sendBulkEmailToStores(formData: FormData) {
       failedCount: result.failed.length,
       failed: result.failed,
       lineSent,
+      toEmail,
+      siteNotice,
     }),
     { httpOnly: true, maxAge: 60, path: "/admin/stores/bulk-email" }
   );
 
+  revalidatePath("/admin/stores/bulk-email");
+  redirect("/admin/stores/bulk-email");
+}
+
+/** サイトのお知らせを公開/非公開にする(消さずに隠せるように) */
+export async function setSiteNoticePublished(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_notices").update({ published, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, published ? "site_notice_published" : "site_notice_unpublished", "site_notice", id);
+  revalidatePath("/news");
   revalidatePath("/admin/stores/bulk-email");
   redirect("/admin/stores/bulk-email");
 }

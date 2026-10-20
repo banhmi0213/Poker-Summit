@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { openingEmptyNote } from "@/lib/prelaunch";
 import { isEventEnded } from "@/lib/event-end";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
@@ -88,7 +89,7 @@ export default async function EventsPage({ searchParams }: {
       </form>
       <nav className="ep-kind-tabs" aria-label="イベントの種類">{kinds.map(label => <Link key={label} href={tabHref(label)} className={kind === label ? "active" : ""} aria-current={kind === label ? "page" : undefined}>{label}</Link>)}</nav>
       <div className="ep-list-heading"><h2>開催予定のトーナメント・イベント</h2><span>{events.length}件</span></div>
-      {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
+      {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。{openingEmptyNote("イベント") && <><br />{openingEmptyNote("イベント")}</>}</div>}
       <div className="ep-grid">{events.map((e: any) => {
         const isPast = isEventEnded(e, now);
         const isLive = !!e.start_at && e.start_at <= now && !isPast;
