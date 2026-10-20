@@ -48,7 +48,7 @@ export default async function StorePlanPage({
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, price_lock_plan_id, price_lock_fee, price_lock_ended_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
+          "id, status, plan_id, current_period_end, trial_ends_at, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, price_lock_plan_id, price_lock_fee, price_lock_ended_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),
@@ -138,6 +138,19 @@ export default async function StorePlanPage({
       {searchParams?.error && (
         <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)", color: "#d1453b", fontSize: 13.5 }}>
           ⚠️ {searchParams.error}
+        </div>
+      )}
+
+      {/* 無料期間(2026/10/20) */}
+      {contract?.status === "active" && (contract as any)?.trial_ends_at && (
+        <div className="card" style={{ marginBottom: 16, background: "#fff8e6", fontSize: 13.5, lineHeight: 1.8 }}>
+          <strong>🎁 月額プランの無料期間：{new Date(Date.parse((contract as any).trial_ends_at) - 1).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}まで</strong>
+          <br />
+          {hasCard
+            ? "カードをご登録済みです。無料期間が終わった日に決済して、そのまま続けてご利用いただけます。"
+            : isTransfer
+              ? "無料期間のあとは銀行振込でのお支払いです。請求書をメールでお送りします。"
+              : "引き続きご利用いただく場合は、下の「お支払いカード」からカードをご登録ください。無料期間が終わった日に決済して、そのまま続けてご利用いただけます（銀行振込をご希望の場合は運営までご連絡ください）。"}
         </div>
       )}
 

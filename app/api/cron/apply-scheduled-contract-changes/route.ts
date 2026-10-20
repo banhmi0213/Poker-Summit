@@ -7,7 +7,8 @@ import { chargeOnce, periodGroupKey, reconcileStaleAttempts } from "@/lib/paymen
 import { addMonthsAnchored, jstDateOf, jstMidnightIso, renewedPeriodEnd } from "@/lib/billing-dates";
 import { finalizeDueCancellations } from "@/lib/contract-cancel";
 import { startCronRun, finishCronRun, checkCronAlive, type CronFailure } from "@/lib/cron-run";
-import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail, sendPrepayRenewalNoticeEmail } from "@/lib/email";
+import { sendCardPaymentFailedEmail, sendPaymentReceiptEmail, sendPrepayRenewalNoticeEmail, sendTrialEndingEmail } from "@/lib/email";
+import { alertAdmin } from "@/lib/admin-alert";
 import { getBillingSettings, quote, discountFor } from "@/lib/bank-transfer";
 import { effectivePlanFee } from "@/lib/price-lock";
 import { notifyStoreLine, PLAN_PAGE_URL, yen } from "@/lib/store-line";
@@ -226,6 +227,13 @@ export async function GET(req: NextRequest) {
     return [] as Array<{ id: string; ok: boolean; detail?: string }>;
   });
   for (const r of notices) if (!r.ok) failures.push({ step: "まとめ払いの更新のお知らせ", id: r.id, detail: r.detail ?? "" });
+
+  // 無料期間(知り合いの店など)の終わる7日前のお知らせと、終わったのに続け方が決まっていない契約の運営への連絡(2026/10/20)
+  const trialResults = await handleTrials(supabase).catch((e) => {
+    failures.push({ step: "無料期間のお知らせ", detail: e instanceof Error ? e.message : String(e) });
+    return [] as Array<{ id: string; ok: boolean; detail?: string }>;
+  });
+  for (const r of trialResults) if (!r.ok) failures.push({ step: "無料期間のお知らせ", id: r.id, detail: r.detail ?? "" });
 
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
 
@@ -451,6 +459,64 @@ async function sendPrepayRenewalNotices(supabase: Supa) {
       });
       await supabase.from("store_contracts").update({ renewal_notice_for: c.current_period_end }).eq("id", c.id);
       out.push({ id: c.id, ok: true });
+    } catch (e) {
+      out.push({ id: c.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
+    }
+  }
+  return out;
+}
+
+
+/**
+ * 無料期間の契約(trial_ends_at あり)の自動のお知らせ(2026/10/20)。
+ *  - 終わる7日前: 店舗へ「続けるならカード登録を」のメール・LINE、運営へもメール(1回だけ)
+ *  - 終わった日以降: カード未登録・振込でもない(続け方が決まっていない)契約を運営へメール(1回だけ)。
+ *    決まるまでは無料のまま使える。カード登録済みの契約は、通常の自動更新で決済される。
+ */
+async function handleTrials(supabase: Supa) {
+  const out: Array<{ id: string; ok: boolean; detail?: string }> = [];
+  const now = Date.now();
+  const { data: rows } = await supabase
+    .from("store_contracts")
+    .select("id, store_id, trial_ends_at, trial_notice_sent_at, trial_end_notified_at, billing_method, fincode_customer_id, contact_email, stores(name), plans!store_contracts_plan_id_fkey(name, monthly_fee)")
+    .eq("status", "active")
+    .not("trial_ends_at", "is", null);
+  const label = (iso: string) => {
+    const d = new Date(Date.parse(iso) - 1 + 9 * 3600 * 1000);
+    return `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+  };
+  for (const c of (rows ?? []) as any[]) {
+    try {
+      const store = Array.isArray(c.stores) ? c.stores[0] : c.stores;
+      const plan = Array.isArray(c.plans) ? c.plans[0] : c.plans;
+      const hasCard = !!c.fincode_customer_id && !String(c.fincode_customer_id).startsWith("session:");
+      const decided = hasCard || c.billing_method === "bank_transfer";
+      const endsAt = Date.parse(c.trial_ends_at);
+      const link = `/admin/contracts/${c.id}`;
+      if (!c.trial_notice_sent_at && endsAt > now && endsAt - now <= 7 * 86400_000) {
+        if (!decided && c.contact_email) {
+          await sendTrialEndingEmail({ to: c.contact_email, storeName: store?.name ?? "店舗", planName: plan?.name ?? "ご契約プラン", endOn: label(c.trial_ends_at), monthlyFee: plan?.monthly_fee ?? 0 });
+        }
+        if (!decided) {
+          await notifyStoreLine({ storeId: c.store_id }, `${plan?.name ?? "ご契約プラン"}の無料期間は${label(c.trial_ends_at)}までです。引き続きご利用いただく場合は、プラン・お支払いからカードをご登録ください（振込をご希望の場合は運営までご連絡ください）。\n${PLAN_PAGE_URL}`);
+        }
+        await alertAdmin(`無料期間がもうすぐ終わります（${store?.name ?? "店舗"}）`, [
+          `${store?.name ?? "店舗"}（${plan?.name ?? "プラン"}）の無料期間は${label(c.trial_ends_at)}までです。`,
+          decided ? (hasCard ? "店舗はカード登録済みです。終わった日に自動で決済して続きます。" : "振込で続けます。請求書は自動で発行します。") : "まだ続け方が決まっていません。契約の画面で「振込で続ける」か「終了する」を選べます（店舗がカードを登録すれば自動で続きます）。",
+          !c.contact_email ? "※請求先メールアドレスが未登録のため、店舗へのメールは送れていません。" : "",
+        ].filter(Boolean), link);
+        await supabase.from("store_contracts").update({ trial_notice_sent_at: new Date().toISOString() }).eq("id", c.id);
+        out.push({ id: c.id, ok: true });
+      }
+      if (!decided && !c.trial_end_notified_at && endsAt <= now) {
+        await alertAdmin(`無料期間が終わりました。続けるか決めてください（${store?.name ?? "店舗"}）`, [
+          `${store?.name ?? "店舗"}（${plan?.name ?? "プラン"}）の無料期間が${label(c.trial_ends_at)}で終わりました。`,
+          "カードの登録も振込への切り替えもまだです。契約の画面で「振込で続ける」か「終了する（無料掲載に戻す）」を選んでください。",
+          "決まるまでは無料のまま使えます。店舗がカードを登録すれば、その場で決済して続きます。",
+        ], link);
+        await supabase.from("store_contracts").update({ trial_end_notified_at: new Date().toISOString() }).eq("id", c.id);
+        out.push({ id: c.id, ok: true });
+      }
     } catch (e) {
       out.push({ id: c.id, ok: false, detail: e instanceof Error ? e.message : String(e) });
     }
