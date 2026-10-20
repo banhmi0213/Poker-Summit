@@ -10,6 +10,8 @@ import { passwordPolicyError } from "@/lib/password-policy";
 import { headers } from "next/headers";
 import { verifyTurnstile, clientIpFromHeaders } from "@/lib/turnstile";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { handleNameError } from "@/lib/handle-name";
+import { guessPrefForSignup } from "@/lib/current-pref";
 
 export async function signUp(formData: FormData) { return register(formData, "/signup"); }
 export async function prelaunchSignUp(formData: FormData) { return register(formData, "/prelaunch"); }
@@ -29,6 +31,11 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   const pref = String(formData.get("pref") ?? "").trim();
   // 都道府県の公開設定(2026/10追加)。未指定時は従来通り公開扱い。
   const prefPublic = String(formData.get("prefPublic") ?? "public").trim() !== "private";
+
+  if (name) {
+    const nameError = handleNameError(name);
+    if (nameError) redirect(`${path}?error=${encodeURIComponent(nameError)}`);
+  }
 
   if (!email || !password) {
     redirect(`${path}?error=${encodeURIComponent("メールアドレスとパスワードを入力してください。")}`);
@@ -71,10 +78,12 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   // 登録時のIPアドレスを記録(重複登録の見回り用。新規登録のときだけ)
   if (data.user && (data.user.identities?.length ?? 0) > 0) {
     try {
+      // 登録画面で都道府県を聞かないかわりに、だいたいの都道府県を記録(集計用、2026/10/20)
+      const guessed = await guessPrefForSignup().catch(() => ({ pref: null, source: null }));
       await createServiceRoleClient()
         .from("member_signup_logs")
         .upsert(
-          { user_id: data.user.id, ip, user_agent: (h.get("user-agent") ?? "").slice(0, 300) || null },
+          { user_id: data.user.id, ip, user_agent: (h.get("user-agent") ?? "").slice(0, 300) || null, guessed_pref: guessed.pref, guessed_pref_source: guessed.source },
           { onConflict: "user_id", ignoreDuplicates: true }
         );
     } catch {

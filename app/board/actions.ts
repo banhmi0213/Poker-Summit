@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { handleNameError } from "@/lib/handle-name";
 
 const BOARD_IMAGES_BUCKET = "board-images";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
@@ -35,6 +36,21 @@ async function requireUser(nextPath: string) {
   return { supabase, user };
 }
 
+// 投稿者名はハンドルネームに固定する(2026/10/20、匿名は荒れる元なので廃止)。
+// ハンドルネームがまだない会員は、投稿フォームで入れた名前をハンドルネームとして保存してから投稿する。
+type BoardClient = Awaited<ReturnType<typeof createClient>>;
+async function resolveAuthorName(supabase: BoardClient, user: { id: string; user_metadata: Record<string, unknown> }, formData: FormData) {
+  const current = String(user.user_metadata?.display_name ?? "").trim();
+  if (current) return current;
+  const name = String(formData.get("authorName") ?? "").trim();
+  const err = handleNameError(name);
+  if (err) throw new Error(err);
+  const { error } = await supabase.auth.updateUser({ data: { display_name: name } });
+  if (error) throw new Error("ハンドルネームを保存できませんでした。もう一度お試しください。");
+  await supabase.from("profiles").upsert({ user_id: user.id, display_name: name, updated_at: new Date().toISOString() });
+  return name;
+}
+
 function extFromFile(file: File): string {
   const fromName = file.name?.split(".").pop();
   if (fromName && /^[a-zA-Z0-9]{1,8}$/.test(fromName)) {
@@ -49,12 +65,12 @@ export async function createPost(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
-  const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
   const category = String(formData.get("category") ?? "").trim();
 
   if (!title || !body) {
     throw new Error("タイトルと本文を入力してください。");
   }
+  const authorName = await resolveAuthorName(supabase, user, formData);
 
   const image = formData.get("image");
   if (image instanceof File && image.size > 0) {
@@ -107,11 +123,10 @@ export async function createReply(formData: FormData) {
   const { supabase, user } = await requireUser(`/board/${postId}`);
 
   const body = String(formData.get("body") ?? "").trim();
-  const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
-
   if (!body) {
     throw new Error("返信内容を入力してください。");
   }
+  const authorName = await resolveAuthorName(supabase, user, formData);
 
   // 「サミット返信にも画像添付できるようにして」との指示により追加
   // (2026/09/30)。createPost と同じ流れ: 添付があればバリデートし、

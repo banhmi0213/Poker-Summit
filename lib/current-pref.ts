@@ -39,7 +39,7 @@ function isValidPref(value: string | undefined | null): value is string {
 // PREF_OPTIONS/prefFromJisCode already use. This header is absent entirely
 // in local dev and behind some proxies, which is fine — it just means this
 // source contributes nothing and the chain falls through to 全国.
-async function ipGuessPref(): Promise<string | null> {
+export async function ipGuessPref(): Promise<string | null> {
   const hdrs = await headers();
   const country = hdrs.get("x-vercel-ip-country");
   if (country !== "JP") return null;
@@ -72,4 +72,14 @@ export async function getCurrentPref(): Promise<{
   }
 
   return { pref: null, source: "none" };
+}
+
+/** 登録したときの「だいたいの都道府県」(集計用、2026/10/20)。端末の位置情報で決まった地域があればそれ、なければ回線からの推定 */
+export async function guessPrefForSignup(): Promise<{ pref: string | null; source: "geo" | "ip" | null }> {
+  const jar = await cookies();
+  const geo = jar.get(CURRENT_PREF_GEO_COOKIE)?.value;
+  if (isValidPref(geo)) return { pref: geo, source: "geo" };
+  const ip = await ipGuessPref();
+  if (isValidPref(ip)) return { pref: ip, source: "ip" };
+  return { pref: null, source: null };
 }

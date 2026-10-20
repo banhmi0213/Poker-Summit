@@ -8,6 +8,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
+import { HANDLE_NAME_MAX } from "@/lib/handle-name";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
@@ -277,10 +278,18 @@ export default async function BoardPostPage({
           <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
           <form action={createReply} encType="multipart/form-data">
             <input type="hidden" name="postId" value={post.id} />
-            <div className="field">
-              <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
-              <input type="text" name="authorName" defaultValue={authorDisplayName} placeholder="匿名" />
-            </div>
+            {/* 投稿者名はハンドルネームに固定(匿名なし。2026/10/20)。未設定の会員だけここで決めてもらう */}
+            {authorDisplayName ? (
+              <div className="field">
+                <span className="muted">お名前</span>
+                <div style={{ fontWeight: 700 }}>{authorDisplayName} <Link href="/account/profile" className="muted small" style={{ fontWeight: 400, textDecoration: "underline" }}>変更</Link></div>
+              </div>
+            ) : (
+              <div className="field">
+                <span className="muted">ハンドルネーム *（掲示板とマイページに表示されます。{HANDLE_NAME_MAX}文字まで）</span>
+                <input type="text" name="authorName" required maxLength={HANDLE_NAME_MAX} autoComplete="nickname" placeholder="例）ポーカー太郎" />
+              </div>
+            )}
             <div className="field">
               <span className="muted">返信内容 *</span>
               <textarea name="body" rows={3} required />

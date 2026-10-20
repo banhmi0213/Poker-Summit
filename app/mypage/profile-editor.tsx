@@ -13,7 +13,7 @@ export function ProfileEditor({ name, pref, mHoldemId = "", prefPublic, emailPub
     {done && <p className={styles.success} role="status">プロフィールを変更しました。</p>}
     <form action={updateProfile}>
       <label className={styles.field}><span>ハンドルネーム</span><input name="name" type="text" defaultValue={name} autoComplete="nickname" /></label>
-      <label className={styles.field}><span>都道府県</span><select name="pref" defaultValue={pref} required><option value="" disabled>選択してください</option>{PREF_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}</select></label>
+      <label className={styles.field}><span>都道府県</span><select name="pref" defaultValue={pref}><option value="">未設定</option>{PREF_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}</select></label>
       <label className={styles.field}><span>都道府県の公開設定</span><select name="prefPublic" defaultValue={prefPublic ? "public" : "private"}><option value="public">公開（他の会員にも表示）</option><option value="private">非公開（自分だけに表示）</option></select></label>
       <label className={styles.field}><span>メールアドレスの公開設定</span><select name="emailPublic" defaultValue={emailPublic ? "public" : "private"}><option value="private">非公開（自分だけに表示）</option><option value="public">公開（プロフィールに表示）</option></select></label>
       <label className={styles.field}><span>{dealerRegistration ? "ディーラー種別" : "活動スタイル"}</span><select name="role" defaultValue={role}>{!dealerRegistration && <option value="">未設定</option>}{(dealerRegistration ? MEMBER_ROLE_OPTIONS.filter(r => r === "ディーラー" || r === "フリーディーラー") : MEMBER_ROLE_OPTIONS).map(r => <option key={r} value={r}>{r}</option>)}</select></label>
