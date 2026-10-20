@@ -130,7 +130,7 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
             )}
             <SignupSubmitButton className={styles.submit} label={early ? "先行会員登録する" : "無料会員登録する"} />
           </form>
-          <p className={styles.confirmation}>登録後、確認メールをお送りします。{early && "都道府県の公開・非公開はマイページで変更できます。"}</p>
+          <p className={styles.confirmation}>登録後、確認メールをお送りします。</p>
           <p className={styles.help}>
             すでにアカウントをお持ちの方は<Link href="/login">こちらからログイン</Link>
           </p>
