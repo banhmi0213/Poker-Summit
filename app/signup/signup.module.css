@@ -127,7 +127,7 @@
 @media(min-width:761px){.launchBadge{align-self:flex-start}}
 
 /* 先行会員にサイト公開中の「今すぐ見られる」(2026/10/20) */
-.leadStrong{font-weight:700;font-size:1.12em;color:#4a2f12}
+.leadStrong{font-weight:700;font-size:1.12em}
 /* 開催情報の補足(Amazonギフトの抽選・ダイヤは無料でもらえる、2026/10/20) */
 .factSub{display:block;margin-top:2px;font-size:11.5px;font-weight:700;font-family:inherit;color:#7a5523;line-height:1.5;white-space:normal}
 @media(max-width:760px){.tournamentFacts dd{text-align:right}.factSub{font-size:11.5px}}
