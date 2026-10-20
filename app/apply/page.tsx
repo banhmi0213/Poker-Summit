@@ -10,6 +10,10 @@ import { ApplyEmailFields } from "./email-fields";
 import { ApplyBillingFields } from "./billing-fields";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { headers } from "next/headers";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
+import { visitSource } from "@/lib/visit-source";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -21,7 +25,7 @@ export const metadata = staticPageMetadata({ title: "店舗掲載のお申し込
 export default async function ApplyPage({
   searchParams,
 }: {
-  searchParams: { error?: string; done?: string };
+  searchParams: { error?: string; done?: string; utm_source?: string; utm_campaign?: string };
 }) {
   const params = searchParams;
 
@@ -35,6 +39,19 @@ export default async function ApplyPage({
   const billingBase = await getBillingSettings();
   // カード払いを一般に止めている間も、運営(総合管理にログイン中)だけはカードを選べる(決済画面の確認用、2026/10)
   const { data: isAdmin } = await supabase.rpc("is_admin");
+
+  // 何人がこのページを開いたか、どこから来たか(広告の目印)を記録する(2026/10/21)。運営・クローラーは数えない
+  const source = visitSource(params.utm_source, params.utm_campaign);
+  if (!params.done && !params.error && isAdmin !== true) {
+    const hdrs = await headers();
+    const ua = hdrs.get("user-agent");
+    if (!isBotUserAgent(ua)) {
+      await createServiceRoleClient()
+        .from("page_views")
+        .insert({ path: "/apply", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua), source })
+        .then(() => {}, () => {});
+    }
+  }
   const adminCardPreview = !billingBase.cardPaymentEnabled && isAdmin === true;
   const billing = adminCardPreview ? { ...billingBase, cardPaymentEnabled: true } : billingBase;
   const priceLock = await getPriceLockCampaign();
@@ -164,6 +181,7 @@ export default async function ApplyPage({
           {params.error && <p className="err">{params.error}</p>}
           <form action={submitApplication}>
             <RequestKeyInput />
+            {source && <input type="hidden" name="source" value={source} />}
             <ApplyStoreFields prefOptions={PREF_OPTIONS} />
             <div className="field">
               <span className="muted">ご担当者名 *</span>
