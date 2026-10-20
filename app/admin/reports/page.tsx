@@ -212,7 +212,7 @@ export default async function AdminReportsPage({
               {info.href && (
                 <div style={{ marginTop: 6 }}>
                   <a href={info.href} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
-                    サイトで開いて確かめる ↗
+                    サイトで開いて確かめる
                   </a>
                 </div>
               )}

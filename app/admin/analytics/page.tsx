@@ -845,7 +845,7 @@ async function BannerTab({ supabase, since }: any) {
         </table></div>
         <div style={{ marginTop: 14 }}>
           <Link href="/admin/banners" className="btn" style={{ fontSize: 12.5 }}>
-            バナー管理を開く →
+            バナー管理を開く
           </Link>
         </div>
       </div>

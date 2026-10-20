@@ -38,7 +38,7 @@ export function PrefMap({
               </span>
             </div>
             <Link href={buildStoreListHref(q, category, pref)} className="btn primary" style={{ fontSize: 12 }}>
-              店舗を見る →
+              店舗を見る
             </Link>
           </>
         ) : (

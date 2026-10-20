@@ -267,7 +267,7 @@ export default async function StoresPage({
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
           <Link href={city ? prefPageHref(pref) : pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
-            {city ? `← ${pref}の店舗一覧` : pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
+            {city ? `${pref}の店舗一覧` : pref || region || area ? "店舗を探す" : "TOPに戻る"}
           </Link>
         </nav>
         <div className="store-mobile-banner">
@@ -466,7 +466,7 @@ export default async function StoresPage({
 
         {(pref || isKnownRegion) && (
           <section className="home-section" style={{ marginTop: 36 }}>
-            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る →</Link></div>
+            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る</Link></div>
             {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
             <div className="home-grid home-grid-four">{rankedStores.map((s: any, index: number) => (
               <HomeStoreCard key={s.id} store={s} contentCounts={storeContentCounts.get(s.id)} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} flags={displayFlags.get(s.id)} favoriteAction={async () => {

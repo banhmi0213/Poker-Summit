@@ -40,7 +40,7 @@ export default async function AdminJobEditPage({
           </div>
         </div>
         <Link href="/admin/jobs" className="btn">
-          ← 求人一覧へ戻る
+          求人一覧へ戻る
         </Link>
       </div>
 

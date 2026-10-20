@@ -192,7 +192,7 @@ export default function LiffDashboardPage() {
           <p style={{ fontSize: 13.5, fontWeight: 700, marginBottom: 4 }}>
             🔍 {[!me.store.hours ? "営業時間" : null, !(me.store.description ?? "").trim() ? "紹介文" : null].filter(Boolean).join("と")}を入れると、Google検索で上に表示されやすくなります
           </p>
-          <p className="muted" style={{ fontSize: 12.5 }}>タップして入力する →</p>
+          <p className="muted" style={{ fontSize: 12.5 }}>タップして入力する</p>
         </Link>
       )}
       {me.pendingRequests.length > 0 && (

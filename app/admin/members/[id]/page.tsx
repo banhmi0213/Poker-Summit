@@ -69,7 +69,7 @@ export default async function AdminMemberDetailPage({
   return (
     <div>
       <Link href="/admin/members" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 会員一覧へ戻る
+        会員一覧へ戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>会員詳細: {member.email}</h1>
       <p className="muted" style={{ marginBottom: 20 }}>

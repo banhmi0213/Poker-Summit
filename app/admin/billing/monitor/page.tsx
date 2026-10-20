@@ -46,7 +46,7 @@ export default async function BillingMonitorPage({ searchParams }: { searchParam
   return (
     <div>
       <Link href="/admin/billing" className="btn" style={{ marginBottom: 12, display: "inline-flex" }}>
-        ← 入金管理に戻る
+        入金管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 6 }}>決済の監視</h1>
       <p className="muted" style={{ fontSize: 13, marginBottom: 16, lineHeight: 1.7 }}>

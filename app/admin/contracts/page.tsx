@@ -123,7 +123,7 @@ export default async function AdminContractsPage({
                 href={`/admin/contracts/${c.id}`}
                 style={{ fontSize: 13, color: "#d1453b", fontWeight: 700 }}
               >
-                {c.stores?.name} →
+                {c.stores?.name}
               </Link>
             ))}
           </div>

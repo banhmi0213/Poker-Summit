@@ -81,7 +81,7 @@ export default async function MemberProfilePage({
     <div>
       <PortalHeader userEmail={user?.email} />
       <div className={`container ${styles.page}`}>
-        <Link href="/board" className="breadcrumb">← サミットに戻る</Link>
+        <Link href="/board" className="breadcrumb">サミットに戻る</Link>
         <div className={styles.layout}>
           <section className={styles.overview}>
             <div className={styles.summary}>

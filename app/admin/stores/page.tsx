@@ -705,7 +705,7 @@ export default async function AdminStoresPage({
             className="btn"
             style={{ fontSize: 13, pointerEvents: page <= 1 ? "none" : undefined, opacity: page <= 1 ? 0.5 : 1 }}
           >
-            ← 前へ
+            前へ
           </Link>
           <span className="muted" style={{ fontSize: 13 }}>
             {page} / {totalPages}
@@ -720,7 +720,7 @@ export default async function AdminStoresPage({
               opacity: page >= totalPages ? 0.5 : 1,
             }}
           >
-            次へ →
+            次へ
           </Link>
         </div>
       )}

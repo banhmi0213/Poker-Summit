@@ -268,7 +268,7 @@ export default async function AdminSettingsPage({
                 </div>
                 <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                   <button type="submit" className="btn primary">保存する</button>
-                  <a href="/apply" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>申込み画面を確認する →</a>
+                  <a href="/apply" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>申込み画面を確認する</a>
                 </div>
               </form>
             </div>
@@ -314,7 +314,7 @@ export default async function AdminSettingsPage({
                 </div>
                 <div style={{ marginTop: 12, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
                   <button type="submit" className="btn primary">保存する</button>
-                  <a href="/prelaunch" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>案内ページを確認する →</a>
+                  <a href="/prelaunch" target="_blank" rel="noopener noreferrer" className="muted" style={{ fontSize: 13 }}>案内ページを確認する</a>
                 </div>
               </form>
             </div>

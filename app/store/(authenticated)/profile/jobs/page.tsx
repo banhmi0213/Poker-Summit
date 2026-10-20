@@ -185,7 +185,7 @@ export default async function StoreJobsPage() {
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 12 }}>求人管理</h1>
       <StoreContentRuleNotice />
@@ -231,7 +231,7 @@ export default async function StoreJobsPage() {
             </>
           )}
           <Link href="/store/profile/plan" className="btn" style={{ marginTop: 10, display: "inline-flex" }}>
-            プランを確認・変更する →
+            プランを確認・変更する
           </Link>
         </div>
       )}

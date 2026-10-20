@@ -34,7 +34,7 @@ export default function AdvertisingPage() {
         <div className={styles.heroCopy}><span className={styles.eyebrow}>ADVERTISING</span>
           <h1>ポーカーファンに<br />あなたの魅力を</h1>
           <p>Poker Summit 広告掲載のご案内</p>
-          <a className={styles.button} href="#inquiry">広告掲載を相談する <span aria-hidden="true">→</span></a>
+          <a className={styles.button} href="#inquiry">広告掲載を相談する</a>
         </div>
         <div className={styles.heroShowcase} aria-hidden="true">
           <Placement /><Placement mobile />
@@ -64,7 +64,7 @@ export default function AdvertisingPage() {
       </section>
       <section id="inquiry" className={styles.inquiry}>
         <Finger /><h2>広告掲載をご検討の方へ</h2><p>まずはお気軽にご相談ください</p>
-        <Link className={styles.button} href="/contact?category=advertising">広告掲載を相談する <span aria-hidden="true">→</span></Link>
+        <Link className={styles.button} href="/contact?category=advertising">広告掲載を相談する</Link>
         <p className={styles.note}>広告掲載専用のお問い合わせフォームへ進みます</p>
       </section>
     </main><PortalFooter /><BottomTabs /></>;

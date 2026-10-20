@@ -32,7 +32,7 @@ export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";sear
  const {data,error,count}=await query.order("work_start",{ascending:false}).order("id").range((page-1)*6,page*6-1);
  if(error)throw new Error("勤務履歴を読み込めませんでした。");
  const url=(p:number)=>path+"?"+new URLSearchParams({page:String(p),...(searchParams.job?{job:searchParams.job}:{})});
- const content=<main className={actor==="store"?styles.manage:styles.public}><Link href={actor==="store"?"/store/profile/spot-jobs":"/account/dealer"}>← {actor==="store"?"スポット求人管理":"ディーラープロフィール"}に戻る</Link><h1>勤務管理・履歴</h1><p className={styles.muted}>店舗とディーラーの両方が勤務完了を確認すると、勤務回数に反映されます。ディーラーから店舗へのレビューは求人履歴に、店舗からディーラーへのレビューはディーラーの勤務実績に残ります。</p>{searchParams.saved&&<p className={styles.success} role="status">保存しました。</p>}
+ const content=<main className={actor==="store"?styles.manage:styles.public}><Link href={actor==="store"?"/store/profile/spot-jobs":"/account/dealer"}>{actor==="store"?"スポット求人管理":"ディーラープロフィール"}に戻る</Link><h1>勤務管理・履歴</h1><p className={styles.muted}>店舗とディーラーの両方が勤務完了を確認すると、勤務回数に反映されます。ディーラーから店舗へのレビューは求人履歴に、店舗からディーラーへのレビューはディーラーの勤務実績に残ります。</p>{searchParams.saved&&<p className={styles.success} role="status">保存しました。</p>}
  {(searchParams.job||searchParams.record)&&<p><Link href={path}>すべての勤務を表示</Link></p>}
  {(data as RecordRow[]||[]).map(r=>{
  const j=r.job_snapshot||{},ended=Date.parse(r.work_end)<=Date.now(),selfConfirmed=actor==="store"?r.store_confirmed_at:r.dealer_confirmed_at,selfCompleted=actor==="store"?r.store_completed_at:r.dealer_completed_at,selfReviewSaved=actor==="store"?r.store_review_saved_at:r.review_saved_at,selfReview=actor==="store"?r.store_review:r.dealer_review;
