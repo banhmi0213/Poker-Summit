@@ -7,7 +7,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
-import { MemberRoleBadge } from "@/app/member-role-badge";
+import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
@@ -99,6 +99,11 @@ export default async function BoardPostPage({
   const { data: badgeRows } = authorUserIds.length
     ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; best_score: number }[] };
+  // 「運営」バッジを付ける運営アカウント(2026/10/20)
+  const { data: officialRows } = authorUserIds.length
+    ? await supabase.rpc("official_board_user_ids", { p_ids: authorUserIds })
+    : { data: [] as string[] };
+  const officialIds = new Set<string>(((officialRows ?? []) as unknown[]).map((r) => String(r)));
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   const avatarByUserId: Record<string, string | null> = {};
@@ -151,7 +156,7 @@ export default async function BoardPostPage({
               <Avatar name={post.author_name} url={null} />
             )}
             <div style={{ minWidth: 0 }}>
-              <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} /><AcademyBadge score={post.author_user_id ? graduationByUserId[post.author_user_id] : null} compact/></span>
+              <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!post.author_user_id && officialIds.has(post.author_user_id)} /><MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} /><AcademyBadge score={post.author_user_id ? graduationByUserId[post.author_user_id] : null} compact/></span>
               <div className="muted">
                 {post.author_name} ・ {formatDate(post.created_at)}
               </div>
@@ -202,7 +207,7 @@ export default async function BoardPostPage({
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} /><AcademyBadge score={r.author_user_id ? graduationByUserId[r.author_user_id] : null} compact/></span>
+                  <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!r.author_user_id && officialIds.has(r.author_user_id)} /><MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} /><AcademyBadge score={r.author_user_id ? graduationByUserId[r.author_user_id] : null} compact/></span>
                   <div style={{ fontWeight: 700, fontSize: 13.5 }}>
                     {r.author_name}{" "}
                     <span className="muted small" style={{ fontWeight: 400 }}>
