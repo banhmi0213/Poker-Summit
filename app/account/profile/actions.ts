@@ -6,6 +6,7 @@ import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
+import { handleNameError } from "@/lib/handle-name";
 
 // ハンドルネーム・都道府県の変更(2026/10、「ハンドルネームの修正欄がない」
 // との指摘を受けて追加)。signup/actions.tsのsignUp()と同じく、
@@ -39,8 +40,13 @@ export async function updateProfile(formData: FormData) {
   const role = String(formData.get("role") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
 
-  if (!pref) {
-    redirect(`/account/profile?error=${encodeURIComponent("都道府県を選んでください。")}`);
+  // 都道府県は任意(2026/10/20、登録画面から外したため)
+  if (name) {
+    // 「運営」バッジの運営アカウントだけは「運営」等を含む名前にできる
+    const { data: official } = await supabase.rpc("official_board_user_ids", { p_ids: [user.id] });
+    const isOfficial = ((official ?? []) as unknown[]).length > 0;
+    const nameError = handleNameError(name);
+    if (nameError && !(isOfficial && name.length <= 20)) redirect(`/account/profile?error=${encodeURIComponent(nameError)}`);
   }
 
   const { error } = await supabase.auth.updateUser({

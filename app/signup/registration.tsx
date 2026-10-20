@@ -2,7 +2,6 @@ import { PasswordInput } from "@/app/password-input";
 import Link from "next/link";
 import { SignupSubmitButton } from "./submit-button";
 import { signUp, prelaunchSignUp } from "./actions";
-import { PREF_OPTIONS } from "@/lib/constants";
 import styles from "./signup.module.css";
 import { M_HOLDEM_ID_MAX_LENGTH, M_HOLDEM_PARTICIPATION_NOTICE } from "@/lib/m-holdem";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
@@ -83,34 +82,8 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
               <span>ハンドルネーム <b className={styles.optional}>任意</b></span>
               <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" />
             </label>
-            <label className={styles.field}>
-              <span>都道府県 <b className={styles.required}>必須</b></span>
-              <select name="pref" defaultValue="" required>
-                <option value="" disabled>
-                  選択してください
-                </option>
-                {PREF_OPTIONS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {/* 都道府県の公開設定(2026/10、「会員登録時都道府県を非公開に
-                できるようにして」との指示)。他の会員から見える会員プロフィール
-                ページ(/members/[id])に出すかどうかを選べる。 */}
-            {early ? (
-              // 先行登録では入力を減らす(2026/10/19)。公開設定はあとからマイページで変えられる
-              <input type="hidden" name="prefPublic" value="public" />
-            ) : (
-            <label className={styles.field}>
-              <span>都道府県の公開設定</span>
-              <select name="prefPublic" defaultValue="public">
-                <option value="public">公開（他の会員にも表示）</option>
-                <option value="private">非公開（自分だけに表示）</option>
-              </select>
-            </label>
-            )}
+            {/* 都道府県は登録画面では聞かない(2026/10/20、入力を減らすため)。あとからマイページで入れられる。
+                集計用に、登録したときのだいたいの都道府県をサーバー側で記録する(signup/actions.ts) */}
             <label className={styles.field}>
               <span>メールアドレス <b className={styles.required}>必須</b></span>
               {early && <small>※確認メールと、限定トーナメントの参加方法・オープンのお知らせにのみ使います。公開されることはありません。</small>}

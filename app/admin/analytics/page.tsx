@@ -888,6 +888,16 @@ function IssuesTab({ issues }: { issues: AnalyticsIssue[] }) {
 // 新規会員 = 会員登録の数(店舗管理ログイン・運営は除く)。auth.users は service_role の関数で集計する。
 async function PrelaunchTab({ since }: { since: Date }) {
   const svc = createServiceRoleClient();
+  // 会員の都道府県の内訳(全期間。本人が入れた都道府県、なければ登録したときの推定。2026/10/20)
+  const { data: prefRows } = await (await createClient()).rpc("member_pref_breakdown");
+  const prefMap = new Map<string, { total: number; guessed: number }>();
+  ((prefRows ?? []) as { pref: string; source: string; members: number }[]).forEach((r) => {
+    const cur = prefMap.get(r.pref) ?? { total: 0, guessed: 0 };
+    cur.total += Number(r.members);
+    if (r.source === "ip" || r.source === "geo") cur.guessed += Number(r.members);
+    prefMap.set(r.pref, cur);
+  });
+  const byPref = Array.from(prefMap.entries()).sort((a, b) => b[1].total - a[1].total);
   const [{ data: views }, { data: signups }, { data: funnel }] = await Promise.all([
     fetchAllRows(() =>
       svc.from("page_views").select("created_at, referrer, device").eq("path", "/prelaunch").gte("created_at", since.toISOString())
@@ -1031,6 +1041,22 @@ async function PrelaunchTab({ since }: { since: Date }) {
         {listCard("どこから来たか", bySource)}
         {listCard("参照元のサイト（上位10）", byHost)}
         {listCard("端末", byDevice)}
+        <div className="card">
+          <h3 style={{ fontSize: 14.5, margin: "0 0 4px" }}>会員の都道府県（全期間）</h3>
+          <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>本人がマイページで入れた都道府県。なければ登録したときの推定（回線や位置情報から。だいたいの目安）。</p>
+          {byPref.length === 0 ? (
+            <p className="muted small">まだ記録がありません。</p>
+          ) : (
+            byPref.map(([k, v]) => (
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                <span>{k}</span>
+                <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                  {v.total.toLocaleString()}人{v.guessed > 0 && <span className="muted" style={{ fontWeight: 400 }}>（うち推定 {v.guessed}）</span>}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
