@@ -9,6 +9,7 @@
 // sendStoreCredentialsEmail()のコメント参照)。
 // ============================================================================
 
+import { freerollSignupOpen, FREEROLL_ELIGIBILITY } from "@/lib/prelaunch";
 import { logMessage } from "@/lib/message-log";
 
 const FROM_ADDRESS = "Poker Summit <info@pokersummit.jp>";
@@ -558,7 +559,14 @@ Poker Summit運営事務局
 
 Poker Summitでは、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご覧いただけます。
 
-■ 会員になるとできること
+${freerollSignupOpen() ? `■ 会員限定フリーロール（10/25（日）21:00）
+${FREEROLL_ELIGIBILITY}が参加できる、m HOLD’EMアプリの限定トーナメントです。参加方法・参加IDは、後ほどこのメールアドレスにお送りします。
+▼大会の詳細
+${siteUrl}/tournaments/first-freeroll
+※参加にはアプリ内アイテム（ダイヤ）が必要です。
+※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。
+
+` : ""}■ 会員になるとできること
 ・お気に入り店舗の登録
 ・求人への応募
 ・クーポンの利用

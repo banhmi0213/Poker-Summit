@@ -4,6 +4,14 @@ export const PRELAUNCH_TOURNAMENT = {
   prizeLabel: "総額3万円保証",
 };
 
+// 限定フリーロールには、10/25（日）までに会員登録した人が参加できる(2026/10/21、一般公開に合わせてオーナー指示)。
+// 案内は大会の開始(10/25 21:00)まで出す。
+const FREEROLL_SIGNUP_UNTIL = Date.parse("2026-10-25T21:00:00+09:00");
+export const FREEROLL_ELIGIBILITY = "10/25（日）までに会員登録した方";
+export function freerollSignupOpen(): boolean {
+  return Date.now() < FREEROLL_SIGNUP_UNTIL;
+}
+
 // 正式オープン日と、会員になると使える機能(2026/10/19、ユーザー指示)
 export const PRELAUNCH_LAUNCH_LABEL = "10/25（日）正式オープン";
 // 2026/10/20: 先行会員に今すぐ見られるものだけにする(求人はまだ0件のため外す)
