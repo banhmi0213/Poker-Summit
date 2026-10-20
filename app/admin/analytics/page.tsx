@@ -181,7 +181,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
   const tabs: { key: string; label: string }[] = [
     { key: "overview", label: "全体アクセス" },
     { key: "prelaunch", label: "先行登録" },
-    { key: "apply", label: "掲載申込" },
+    { key: "apply", label: "広告・申込" },
     { key: "category", label: "カテゴリー" },
     { key: "blog", label: "BLOG記事" },
     { key: "banner", label: "バナー効果" },
@@ -1095,7 +1095,29 @@ async function ApplyTab({ since }: { since: Date }) {
     svc.from("listing_applications").select("created_at, source, store_name, company_name").gte("created_at", since.toISOString()).order("created_at", { ascending: false }),
   ]);
   const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null; source: string | null }[];
+  // ディーラー登録広告(2026/10/21): 受け口(/account/dealer)の閲覧、広告から来た会員(public.ad_attributions)、そのうちディーラー登録した人
+  const [{ data: dealerViews }, { data: attrs }] = await Promise.all([
+    fetchAllRows(() => svc.from("page_views").select("source").eq("path", "/account/dealer").gte("created_at", since.toISOString())),
+    svc.from("ad_attributions").select("user_id, source, via").gte("created_at", since.toISOString()),
+  ]);
+  const attrRows = (attrs ?? []) as { user_id: string; source: string; via: string }[];
+  const { data: dealers } = attrRows.length
+    ? await svc.from("dealer_profiles").select("user_id").in("user_id", attrRows.map((a) => a.user_id))
+    : { data: [] as { user_id: string }[] };
+  const dealerSet = new Set(((dealers ?? []) as { user_id: string }[]).map((d) => d.user_id));
+  const adRows = new Map<string, { applyViews: number; applies: number; dealerViews: number; signups: number; dealerRegs: number }>();
+  const ad = (k: string) => {
+    if (!adRows.has(k)) adRows.set(k, { applyViews: 0, applies: 0, dealerViews: 0, signups: 0, dealerRegs: 0 });
+    return adRows.get(k)!;
+  };
+  viewRows.forEach((v) => v.source && ad(v.source).applyViews++);
+  ((dealerViews ?? []) as { source: string | null }[]).forEach((v) => v.source && ad(v.source).dealerViews++);
+  attrRows.forEach((a) => {
+    if (a.via === "signup") ad(a.source).signups++;
+    if (dealerSet.has(a.user_id)) ad(a.source).dealerRegs++;
+  });
   const appRows = (apps ?? []) as { created_at: string; source: string | null; store_name: string | null; company_name: string | null }[];
+  appRows.forEach((a) => a.source && ad(a.source).applies++);
   const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
   const label = (src: string | null, referrer: string | null) => (src ? `広告・リンクの目印：${src}` : classifyReferrer(referrer));
   const count = <T,>(rows: T[], keyOf: (r: T) => string) => {
@@ -1137,7 +1159,40 @@ async function ApplyTab({ since }: { since: Date }) {
         閲覧 = 掲載申し込みページを開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月21日からです。
         <br />
         広告のリンクに目印（例：https://pokersummit.jp/apply?utm_source=instagram&amp;utm_campaign=store_test）を付けると、その広告から来た人と申し込みを分けて数えます。
+        <br />
+        ディーラー登録広告は https://pokersummit.jp/account/dealer?utm_source=instagram&amp;utm_campaign=dealer_test のように付けます。会員登録 = その広告から来て新しく会員登録した人（メール確認前を含む）、ディーラー登録 = 広告から来た会員のうちディーラー登録した人。
       </p>
+      <div className="card" style={{ marginBottom: 14, overflowX: "auto" }}>
+        <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>広告ごとの結果</h3>
+        {adRows.size === 0 ? (
+          <p className="muted small">まだ記録がありません。</p>
+        ) : (
+          <table style={{ width: "100%", fontSize: 13.5, borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ textAlign: "left" }}>
+                <th style={{ padding: "5px 6px" }}>広告の目印</th>
+                <th style={{ padding: "5px 6px" }}>申込ページ閲覧</th>
+                <th style={{ padding: "5px 6px" }}>掲載申込</th>
+                <th style={{ padding: "5px 6px" }}>ディーラー受け口閲覧</th>
+                <th style={{ padding: "5px 6px" }}>会員登録</th>
+                <th style={{ padding: "5px 6px" }}>ディーラー登録</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from(adRows.entries()).map(([k, r]) => (
+                <tr key={k} style={{ borderTop: "1px solid var(--border)" }}>
+                  <td style={{ padding: "5px 6px", overflowWrap: "anywhere" }}>{k}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.applyViews}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.applies}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.dealerViews}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.signups}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.dealerRegs}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
         {stat("閲覧", viewRows.length.toLocaleString())}
         {stat("申し込み", appRows.length.toLocaleString())}

@@ -11,12 +11,18 @@ import Script from "next/script";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
+import { safeNext, cleanSource } from "@/lib/visit-source";
 
-export function RegistrationPage({ searchParams, early = false, memberPreview = false, priceLock = null }: { searchParams: { error?: string; done?: string }; early?: boolean; memberPreview?: boolean; priceLock?: { accepting: boolean; deadlineIso: string | null; deadlineLabel: string } | null }) {
+export function RegistrationPage({ searchParams, early = false, memberPreview = false, priceLock = null }: { searchParams: { error?: string; done?: string; next?: string; src?: string }; early?: boolean; memberPreview?: boolean; priceLock?: { accepting: boolean; deadlineIso: string | null; deadlineLabel: string } | null }) {
   // 年内お申込み特典の受付中だけ、店舗向けリンクに一言(2026/10/20。OFF・締切後は自動で消える)
   const priceLockNote = priceLock?.accepting && priceLock.deadlineIso ? priceLock.deadlineIso : null;
   const priceLockLabel = (priceLock?.deadlineLabel ?? "").replace(/^\d{4}年/, "");
   const params = searchParams;
+  // ディーラー登録広告から来た人は、登録が終わったらそのままディーラー登録へ(2026/10/21)
+  const next = early ? null : safeNext(params.next);
+  const src = early ? null : cleanSource(params.src);
+  const toDealer = !!next?.startsWith("/account/dealer");
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   return (
     <main className={styles.page}>
@@ -46,7 +52,10 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
               </ul>
             </>
           ) : (
-            <p className={styles.lead}>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</p>
+            <>
+              <p className={styles.lead}>お気に入り店舗の保存・求人応募・クーポン利用など、<br className={styles.desktopBreak} />会員限定の便利な機能が使えます。</p>
+              {toDealer && <p className={styles.lead}>ディーラー登録は、会員登録のあとにそのまま進めます（どちらも無料）。</p>}
+            </>
           )}
           {early && <aside className={styles.tournamentPromo} aria-labelledby="early-tournament-title">
             <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
@@ -71,14 +80,14 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
             確認メールをお送りしました
           </h2>
           <p className="muted">
-            ご入力いただいたメールアドレスに確認メールを送りました。メール内のリンクを押すと登録が完了し、そのままログインした状態になります。
+            ご入力いただいたメールアドレスに確認メールを送りました。メール内のリンクを押すと登録が完了し、そのままログインした状態になります。{toDealer && "続けてディーラー登録の画面が開きます。"}
           </p>
           <ul className="muted" style={{ margin: "12px 0 0", paddingLeft: 18, fontSize: 13, lineHeight: 1.8 }}>
             <li>リンクの有効期限は24時間です。</li>
             <li>届かない場合は、迷惑メールフォルダもご確認ください（送信元：noreply@pokersummit.jp）。</li>
             <li>期限が切れた場合や見つからない場合は、登録したメールアドレスとパスワードでログインすると確認メールが届き直します。</li>
           </ul>
-          <Link href="/login" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
+          <Link href={loginHref} className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
             ログインへ
           </Link>
         </div>
@@ -120,6 +129,8 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
               <strong>{M_HOLDEM_PARTICIPATION_NOTICE}</strong>
               <p>未入力でも会員登録できます（あとからマイページで登録できます）。IDは一般公開されません。<strong>一度登録すると変更できませんので、お間違えのないようご入力ください。</strong></p>
             </div>
+            {next && <input type="hidden" name="next" value={next} />}
+            {src && <input type="hidden" name="src" value={src} />}
             <input type="hidden" name="termsVersion" value={TERMS_VERSION} />
             <input type="hidden" name="privacyVersion" value={PRIVACY_VERSION} />
             <label className={styles.consent}>
@@ -136,7 +147,7 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
           </form>
           <p className={styles.confirmation}>登録後、確認メールをお送りします。</p>
           <p className={styles.help}>
-            すでにアカウントをお持ちの方は<Link href="/login">こちらからログイン</Link>
+            すでにアカウントをお持ちの方は<Link href={loginHref}>こちらからログイン</Link>
           </p>
         </div>
       )}
