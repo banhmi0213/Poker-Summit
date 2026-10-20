@@ -15,7 +15,7 @@ export default async function AdminBlogPage() {
   const {data: stores, error: storeError} = await supabase.from("stores").select("id,name,pref,city,banner_url").in("status",["approved","listed"]).order("name");
   if (storeError) return <p className="err">関連店舗を読み込めませんでした。再読み込みしてください。</p>;
   return <div style={{ maxWidth:1000 }}>
-    <div style={{ display:"flex", gap:16, justifyContent:"space-between", alignItems:"center", marginBottom:16 }}><h1 style={{ fontSize:22 }}>BLOG管理</h1><Link className="btn" href="/blog">ブログページを見る →</Link></div>
+    <div style={{ display:"flex", gap:16, justifyContent:"space-between", alignItems:"center", marginBottom:16 }}><h1 style={{ fontSize:22 }}>BLOG管理</h1><Link className="btn" href="/blog">ブログページを見る</Link></div>
     <p style={{ marginBottom:16 }}>上段に画像を添付し、本文と関連店舗を登録できます。下書き保存・プレビューで確認してから公開してください。</p>
     <section className="card"><h2 style={{ fontSize:18, marginBottom:16 }}>新規記事追加</h2><BlogImport stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /></section>
     <h2 style={{ fontSize:18, margin:"24px 0 12px" }}>登録記事（{data?.length || 0}件）</h2>

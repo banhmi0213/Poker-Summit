@@ -23,7 +23,7 @@ const days = [
 export default function TournamentSample() {
  return <div><PortalHeader/>
  <main className="mt-sample">
-  <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
+  <Link href="/major-tournaments" className="mt-back">国内外大型大会に戻る</Link>
   <div className="mt-note"><strong>詳細ページのデザインサンプル</strong><span>大会名・日程・参加費・会場はすべて架空の表示例です。</span></div>
   <article>
    <header className="mt-hero">
@@ -72,13 +72,13 @@ export default function TournamentSample() {
      <section className="mt-panel mt-summary">
       <span className="mt-eyebrow">TOURNAMENT INFORMATION</span><h2>大会情報</h2>
       <dl><div><dt>開催区分</dt><dd>国内</dd></div><div><dt>開催地</dt><dd>日本・東京</dd></div><div><dt>開催期間</dt><dd>2026/11/20〜11/22</dd></div><div><dt>会場</dt><dd>サンプルホール 東京</dd></div><div><dt>主催</dt><dd>サンプル大会事務局</dd></div></dl>
-      <a href="#sample-schedule" className="mt-button">スケジュールを見る ↓</a>
-      <button disabled className="mt-button mt-outline">公式サイト・エントリー ↗</button><small className="mt-caption">サンプルのため公式リンクはありません。</small>
+      <a href="#sample-schedule" className="mt-button">スケジュールを見る</a>
+      <button disabled className="mt-button mt-outline">公式サイト・エントリー</button><small className="mt-caption">サンプルのため公式リンクはありません。</small>
      </section>
      <section className="mt-panel mt-travel"><span className="mt-eyebrow">PLAN YOUR VISIT</span><h3>参加前にチェック</h3><ul><li>エントリー方法・受付時間</li><li>参加費に含まれる内容</li><li>本人確認・参加条件</li><li>大会ルール・持ち物</li></ul><p>公式サイトの案内を確認して、当日は余裕をもって会場へ。</p></section>
     </aside>
    </div>
-   <div className="mt-bottom"><Link href="/major-tournaments">← 国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む →</Link></div>
+   <div className="mt-bottom"><Link href="/major-tournaments">国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む</Link></div>
   </article>
  </main><PortalFooter/><BottomTabs/>
  <style dangerouslySetInnerHTML={{ __html: `

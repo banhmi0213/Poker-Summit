@@ -135,7 +135,7 @@ export default async function CouponDetailPage({
             <li><span>3</span><div><h3>店頭で提示</h3><p>お店で画面を提示し、スタッフの案内に従ってご利用ください。</p></div></li>
           </ol>
         </section>
-        <Link href="/coupons" className={styles.back}>← クーポン一覧に戻る</Link>
+        <Link href="/coupons" className={styles.back}>クーポン一覧に戻る</Link>
       </main>
       <PortalFooter />
       <BottomTabs />

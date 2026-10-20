@@ -126,7 +126,7 @@ export default async function StorePlanPage({
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・お支払い</h1>
 

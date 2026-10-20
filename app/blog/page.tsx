@@ -18,7 +18,7 @@ function href(params: Params, change: Partial<Params>) {
 function Article({ entry, featured = false }: { entry: BlogEntry; featured?: boolean }) {
   return <a href={blogArticleHref(entry)} className={featured ? styles.featured : styles.article}>
     <div className={styles.photo}><img src={entry.image_url} alt={entry.image_alt || entry.title} loading="lazy" /></div>
-    <div className={styles.copy}><span className={styles.badge}>{entry.category}</span><h3><ReadableName name={entry.title} /></h3>{entry.summary && <p>{entry.summary}</p>}<div className={styles.meta}><time>{new Date(entry.created_at).toLocaleDateString("ja-JP", { timeZone:"Asia/Tokyo" })}</time><strong>記事を読む →</strong></div></div>
+    <div className={styles.copy}><span className={styles.badge}>{entry.category}</span><h3><ReadableName name={entry.title} /></h3>{entry.summary && <p>{entry.summary}</p>}<div className={styles.meta}><time>{new Date(entry.created_at).toLocaleDateString("ja-JP", { timeZone:"Asia/Tokyo" })}</time><strong>記事を読む</strong></div></div>
   </a>;
 }
 export default async function BlogPage({ searchParams }: { searchParams: Params }) {
@@ -44,7 +44,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Params 
   const { data: featured } = q ? { data:null } : await pickup.order("updated_at",{ ascending:false }).limit(1).maybeSingle();
   return <div className="portal"><PortalHeader userEmail={user?.email} />
     <main className={styles.page}>
-      <div className={styles.back}><Link href="/">← TOPに戻る</Link></div>
+      <div className={styles.back}><Link href="/">TOPに戻る</Link></div>
       <section className={styles.hero}><div className={styles.heroCopy}><span>POKER SUMMIT BLOG</span><h1>ポーカーの楽しみ方が、<br />もっと広がる。</h1><p>店舗紹介・大会レポート・初心者ガイド</p></div><div className={styles.heroPhoto}><picture><source media="(max-width:599px)" srcSet="/images/blog-magazine-mobile.webp" /><img loading="lazy" decoding="async" src="/images/blog-magazine-photo.webp" alt="ポーカー店舗を紹介する開いた雑誌とチップ、トランプ" width="2172" height="724" /></picture></div></section>
       <div className={styles.toolbar}>
         <nav aria-label="記事カテゴリ"><Link href={href(params,{ category:"",page:"" })} aria-current={!category ? "page" : undefined}>すべて</Link>{BLOG_CATEGORIES.map(c => <Link key={c} href={href(params,{ category:c,page:"" })} aria-current={category === c ? "page" : undefined}>{c}</Link>)}</nav>
@@ -54,9 +54,9 @@ export default async function BlogPage({ searchParams }: { searchParams: Params 
       <section className={styles.section}>
         <div className={styles.sectionHead}><h2>{q ? "検索結果" : "新着記事"}</h2><div><Link href={href(params,{sort:sort === "newest" ? "oldest" : "newest",page:""})}>{sort === "newest" ? "新着順" : "古い順"} ↕</Link></div></div>
         {error || countError ? <p role="alert">記事を読み込めませんでした。再読み込みしてください。</p> : !entries?.length ? <div className={styles.empty}>{category || q ? "条件に合う記事はありません。" : "記事はただいま準備中です。"}</div> : <div className={styles.grid}>{(entries as BlogEntry[]).map(e => <Article key={e.id} entry={e} />)}</div>}
-        {pages > 1 && <nav className={styles.pagination} aria-label="ページ切り替え">{page > 1 && <Link href={href(params,{page:String(page-1)})}>← 前へ</Link>}<span>{page} / {pages}</span>{page < pages && <Link href={href(params,{page:String(page+1)})}>次へ →</Link>}</nav>}
+        {pages > 1 && <nav className={styles.pagination} aria-label="ページ切り替え">{page > 1 && <Link href={href(params,{page:String(page-1)})}>前へ</Link>}<span>{page} / {pages}</span>{page < pages && <Link href={href(params,{page:String(page+1)})}>次へ</Link>}</nav>}
       </section>
-      <div className={styles.bottom}><Link href="/blog?category=初心者ガイド"><strong>初めての方はこちら</strong><span>初心者ガイドを見る →</span></Link><Link href="/stores">店舗を探す →</Link><Link href="/events">イベントを探す →</Link></div>
+      <div className={styles.bottom}><Link href="/blog?category=初心者ガイド"><strong>初めての方はこちら</strong><span>初心者ガイドを見る</span></Link><Link href="/stores">店舗を探す</Link><Link href="/events">イベントを探す</Link></div>
     </main><PortalFooter /><BottomTabs />
   </div>;
 }

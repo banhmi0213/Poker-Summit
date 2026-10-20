@@ -353,7 +353,7 @@ export function PokerRegionHero({
             >
               <span className="ps-region-mobile-card__title">
                 {region}
-                <span aria-hidden="true">→</span>
+
               </span>
               <span className="ps-region-mobile-card__prefs">{prefs.join("　")}</span>
             </Link>

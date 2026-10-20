@@ -28,7 +28,7 @@ export default function StoreLoginPage({
       <PortalHeader />
       <div className="container" style={{ maxWidth: 380 }}>
         <Link href="/" className="breadcrumb">
-          ← トップに戻る
+          トップに戻る
         </Link>
         <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
           <div className="brand wordmark">

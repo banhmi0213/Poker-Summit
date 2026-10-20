@@ -41,7 +41,7 @@ export default async function AdminCouponEditPage({
           </div>
         </div>
         <Link href="/admin/coupons" className="btn">
-          ← クーポン一覧へ戻る
+          クーポン一覧へ戻る
         </Link>
       </div>
 

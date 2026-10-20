@@ -27,7 +27,7 @@ export default async function StorePasswordPage({
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>パスワード変更</h1>
       <div className="card" style={{ maxWidth: 400 }}>

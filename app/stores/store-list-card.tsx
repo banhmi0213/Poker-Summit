@@ -24,7 +24,7 @@ export function StoreListCard({ store, coverPhoto, isFavorite, distanceKm, favor
           {store.category && <span className="badge">{CATEGORY_LABEL[store.category] ?? store.category}</span>}
           <VerifiedStoreBadge flags={flags} />
           {distanceKm != null && <span className="sl-card-distance">{distanceKm.toFixed(1)} km</span>}
-          <span className="sl-card-cta">店舗詳細を見る　→</span>
+          <span className="sl-card-cta">店舗詳細を見る</span>
         </div>
       </Link>
     </article>

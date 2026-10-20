@@ -33,7 +33,7 @@ export default async function AdminListingApplicationDetailPage({
   return (
     <div>
       <Link href="/admin/listing-applications" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 掲載申込一覧へ戻る
+        掲載申込一覧へ戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>掲載申込 詳細</h1>
       <p className="muted" style={{ marginBottom: 16 }}>
@@ -57,7 +57,7 @@ export default async function AdminListingApplicationDetailPage({
             </tr>
             <tr>
               <th>掲載中の店舗</th>
-              <td>{a.matched_store_id ? <a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">結び付けあり（店舗ページを開く ↗）</a> : "なし（新しい店舗として掲載）"}</td>
+              <td>{a.matched_store_id ? <a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">結び付けあり（店舗ページを開く）</a> : "なし（新しい店舗として掲載）"}</td>
             </tr>
             <tr>
               <th>ご担当者名</th>

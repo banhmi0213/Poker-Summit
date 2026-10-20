@@ -140,7 +140,7 @@ export default async function JobDetailPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/jobs" className="breadcrumb">
-          ← 求人一覧に戻る
+          求人一覧に戻る
         </Link>
 
         {j.banner_image_url && (

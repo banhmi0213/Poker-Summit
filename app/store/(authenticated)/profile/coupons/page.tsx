@@ -88,7 +88,7 @@ export default async function StoreCouponsPage() {
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 12 }}>クーポン管理</h1>
       <StoreContentRuleNotice />

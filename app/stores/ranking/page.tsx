@@ -52,7 +52,7 @@ export default async function StoreRankingPage({ searchParams }: {
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container">
-      <Link href={query ? "/stores?" + query : "/"} className="btn">{query ? "← 店舗を探す" : "← TOPに戻る"}</Link>
+      <Link href={query ? "/stores?" + query : "/"} className="btn">{query ? "店舗を探す" : "TOPに戻る"}</Link>
       <section className="home-section">
         <div className="home-section-head"><h1>店舗ランキング{pref || region ? "（" + (pref || region) + "）" : "（全国）"}</h1></div>
         {!stores.length && <p className="muted">まだ店舗がありません。</p>}

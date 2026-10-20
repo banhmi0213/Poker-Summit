@@ -42,6 +42,6 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
   {articleSlug === "poker-pot-odds-beginners" && <PotOddsTrainer />}
   {articleSlug === "poker-bluff-beginners" && <BluffSimulator />}
   {!!references?.length&&<section className={styles.references}><h2>参考資料</h2><ul>{references.map((r,i)=><li key={i}>{r.url?<a href={r.url} target="_blank" rel="noopener noreferrer">{r.label||r.url}</a>:r.label}</li>)}</ul></section>}
-  {!!stores.length&&<section className={styles.related}><h2>この記事で紹介した店舗</h2><div>{stores.map(store=><Link key={store.id} href={`/stores/${store.id}`} className={styles.store}>{store.banner_url?<img loading="lazy" decoding="async" src={store.banner_url} alt={store.name}/>:<StoreNamePlaceholder name={store.name}/>}<h3><ReadableName name={store.name} /></h3><p>{[store.pref,store.city].filter(Boolean).join(" ")}</p><strong>店舗詳細を見る →</strong></Link>)}</div></section>}
+  {!!stores.length&&<section className={styles.related}><h2>この記事で紹介した店舗</h2><div>{stores.map(store=><Link key={store.id} href={`/stores/${store.id}`} className={styles.store}>{store.banner_url?<img loading="lazy" decoding="async" src={store.banner_url} alt={store.name}/>:<StoreNamePlaceholder name={store.name}/>}<h3><ReadableName name={store.name} /></h3><p>{[store.pref,store.city].filter(Boolean).join(" ")}</p><strong>店舗詳細を見る</strong></Link>)}</div></section>}
  </article>;
 }

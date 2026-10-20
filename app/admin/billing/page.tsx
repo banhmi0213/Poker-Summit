@@ -98,7 +98,7 @@ export default async function AdminBillingPage({
         className="card"
         style={{ display: "block", marginBottom: 16, borderColor: (attentionCount ?? 0) + cronProblems > 0 ? "#d1453b" : undefined, textDecoration: "none" }}
       >
-        <strong>決済の監視 →</strong>
+        <strong>決済の監視</strong>
         <span className="muted small" style={{ marginLeft: 8 }}>
           {(attentionCount ?? 0) + cronProblems > 0
             ? `確認が必要: 結果不明の決済 ${attentionCount ?? 0}件・自動処理の要確認 ${cronProblems}件`

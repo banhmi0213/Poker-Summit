@@ -72,7 +72,7 @@ export function Academy() {
       <li>ログイン後、「会員バッジに合格を記録する」を押して保存する</li>
      </ol>
      <p className={styles.achievementNote}>※テストは登録不要で受験できます。バッジの保存には会員ログインが必要です。学習済みチェックは合格条件ではありません。</p>
-     <button type="button" className={styles.achievementAction} onClick={() => {setSelected("graduation");document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"});}}>卒業テストに挑戦する ↗</button>
+     <button type="button" className={styles.achievementAction} onClick={() => {setSelected("graduation");document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"});}}>卒業テストに挑戦する</button>
     </div>
     <div className={styles.achievementCard}>
      <span className={styles.achievementIcon} aria-hidden="true">♠</span>
@@ -80,7 +80,7 @@ export function Academy() {
      <div className={styles.achievementExample}><small>マイページ（名前の上）</small><div><span className={styles.levelTag}>Lv.2 ポーカー卒業生</span><span className={styles.graduateTag}>🏅 初心者コース卒業</span></div></div>
      <div className={styles.achievementExample}><small>サミット（活動スタイルタグの隣）</small><div><span className={styles.roleTag}>♠ フリーディーラー</span><span className={styles.graduateTag}>🏅 初心者卒業</span></div></div>
      <p className={styles.achievementNote}>活動スタイルタグはそのまま残り、学習バッジが追加されます。合格バッジを保存していない会員には卒業タグは表示されません。</p>
-     <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る ↗</Link><Link href="/board">サミットを見る ↗</Link></div>
+     <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る</Link><Link href="/board">サミットを見る</Link></div>
     </div>
    </div>
    <div className={styles.levelRoadmap}>
@@ -104,10 +104,10 @@ export function Academy() {
     <p className={styles.storageNote}>学習済みのチェックは、このブラウザ内に保存されます。卒業テストの採点とは連動しません。</p>
    </nav>
    <section className={styles.lessonMain} aria-labelledby="current-lesson-title">
-    <div className={styles.lessonIntro}><span className={styles.eyebrow}>LESSON {active.number}</span><h2 id="current-lesson-title">{active.title}</h2><p>{active.subtitle}</p>{active.article && <Link href={active.article}>詳しい解説記事を読む ↗</Link>}</div>
+    <div className={styles.lessonIntro}><span className={styles.eyebrow}>LESSON {active.number}</span><h2 id="current-lesson-title">{active.title}</h2><p>{active.subtitle}</p>{active.article && <Link href={active.article}>詳しい解説記事を読む</Link>}</div>
     <active.Component />
     <div className={styles.lessonFooter}>{active.id !== "graduation" && <button type="button" className={styles.completeButton} aria-pressed={completed.includes(active.id as LessonId)} onClick={() => markComplete(active.id as LessonId)}>{completed.includes(active.id as LessonId) ? "✓ 学習済みを解除" : "✓ このレッスンを学習済みにする"}</button>}
-      {index < lessons.length - 1 && <button type="button" className={styles.nextButton} onClick={() => { setSelected(lessons[index + 1].id); document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"}); }}>次のレッスンへ →</button>}</div>
+      {index < lessons.length - 1 && <button type="button" className={styles.nextButton} onClick={() => { setSelected(lessons[index + 1].id); document.getElementById("current-lesson-title")?.scrollIntoView({behavior:"smooth",block:"start"}); }}>次のレッスンへ</button>}</div>
    </section>
   </div>
   {loaded && completed.length === courseLessons.length && <section className={styles.congrats} role="status"><span>✦ COURSE COMPLETE ✦</span><h2>初心者コース、学習完了！</h2><p>5つのレッスンをすべて学習済みにしました。卒業テストに挑戦して、合格バッジを獲得しましょう。</p><small>※現在は自己申告による学習完了表示です。公式の認定・修了証ではありません。</small></section>}

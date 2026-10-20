@@ -141,7 +141,7 @@ export default async function BoardPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>TOPに戻る</Link></div>
       <div className="container community-page">
         <CompactPortalBanner image="/images/compact-community.webp" eyebrow="POKER SUMMIT COMMUNITY" title="サミット｜情報交換" subtitle="ポーカーの話題で、つながろう。" detail="雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略" />
         <div className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
@@ -362,11 +362,11 @@ export default async function BoardPage({
           >
             {page > 1 ? (
               <Link href={buildHref({ page: page - 1 })} className="btn" style={{ padding: "6px 14px" }}>
-                ← 前へ
+                前へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                ← 前へ
+                前へ
               </span>
             )}
             <span className="muted" style={{ fontSize: 13 }}>
@@ -374,11 +374,11 @@ export default async function BoardPage({
             </span>
             {page < totalPages ? (
               <Link href={buildHref({ page: page + 1 })} className="btn" style={{ padding: "6px 14px" }}>
-                次へ →
+                次へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                次へ →
+                次へ
               </span>
             )}
           </div>

@@ -47,7 +47,7 @@ export default async function AdminStoreEditPage({
           </div>
         </div>
         <Link href="/admin/stores" className="btn">
-          ← 店舗一覧へ戻る
+          店舗一覧へ戻る
         </Link>
       </div>
 

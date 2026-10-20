@@ -125,7 +125,7 @@ export default async function BoardPostPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/board" className="breadcrumb">
-          ← スレッド一覧に戻る
+          スレッド一覧に戻る
         </Link>
         <div className="card">
           <div
@@ -252,11 +252,11 @@ export default async function BoardPostPage({
           >
             {page > 1 ? (
               <Link href={pageHref(page - 1)} className="btn" style={{ padding: "6px 14px" }}>
-                ← 前へ
+                前へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                ← 前へ
+                前へ
               </span>
             )}
             <span className="muted" style={{ fontSize: 13 }}>
@@ -264,11 +264,11 @@ export default async function BoardPostPage({
             </span>
             {page < totalPages ? (
               <Link href={pageHref(page + 1)} className="btn" style={{ padding: "6px 14px" }}>
-                次へ →
+                次へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                次へ →
+                次へ
               </span>
             )}
           </div>

@@ -41,7 +41,7 @@ export default async function AdminEventEditPage({
           </div>
         </div>
         <Link href="/admin/events" className="btn">
-          ← イベント一覧へ戻る
+          イベント一覧へ戻る
         </Link>
       </div>
 

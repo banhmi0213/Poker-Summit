@@ -24,7 +24,7 @@ export function AttentionSummary() {
               <span>{i.label}</span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
                 <span style={{ background: "#aa3b28", color: "#fff", borderRadius: 20, padding: "2px 10px", fontSize: 12.5 }}>{counts[i.key]}件</span>
-                <span aria-hidden="true">→</span>
+
               </span>
             </Link>
           </li>

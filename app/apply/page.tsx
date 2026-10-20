@@ -68,7 +68,7 @@ export default async function ApplyPage({
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
             <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
@@ -97,7 +97,7 @@ export default async function ApplyPage({
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
             <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
@@ -138,7 +138,7 @@ export default async function ApplyPage({
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
           <div className="brand wordmark" style={{ marginBottom: 20 }}>
             <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
@@ -166,7 +166,7 @@ export default async function ApplyPage({
       <PortalHeader />
       <div className="container" style={{ maxWidth: 480 }}>
         <Link href="/" className="breadcrumb">
-          ← トップに戻る
+          トップに戻る
         </Link>
         <div className="brand wordmark" style={{ marginBottom: 20 }}>
           <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />

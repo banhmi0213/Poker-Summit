@@ -75,8 +75,8 @@ export function BlogEditor({entry,initialDraft,stores,articles=[],onSaved,onBusy
  <label className="field">公開状態<select name="visibility" defaultValue={initial?.visibility || (initial?.active ? "published" : "draft")}><option value="draft">下書き（管理画面のみ）</option><option value="published">公開</option><option value="private">非公開（管理画面のみ）</option></select></label>
  <label className={styles.featured}><input type="checkbox" name="includeInSitemap" defaultChecked={initial?.include_in_sitemap !== false}/> サイトマップに掲載</label>
  <label className={styles.featured}><input type="checkbox" name="featured" defaultChecked={initial?.featured || false}/> ピックアップに表示</label>
- <div className={styles.buttons}><button type="button" className="btn" onClick={()=>setPreview(!preview)}>{preview ? "プレビューを閉じる" : "保存前にプレビュー"}</button>{(state.id || entry?.id) && <Link className="btn" href={`/blog/${state.id || entry?.id}?preview=1`} target="_blank">保存済みの記事を見る ↗</Link>}</div>
+ <div className={styles.buttons}><button type="button" className="btn" onClick={()=>setPreview(!preview)}>{preview ? "プレビューを閉じる" : "保存前にプレビュー"}</button>{(state.id || entry?.id) && <Link className="btn" href={`/blog/${state.id || entry?.id}?preview=1`} target="_blank">保存済みの記事を見る</Link>}</div>
  {preview && <div className={styles.preview}><h3>保存前プレビュー</h3><ArticleContent title={title} category={category} summary={summary} image={image} imageAlt={imageAlt} body={mode === "internal" ? blocks : []} stores={related} references={references}/>{mode === "external" && <p>記事を読むと、入力した外部URLへ移動します。</p>}</div>}
- <p className={styles.help}>下書き・非公開の記事は一般公開されません。公開する場合だけ「公開して保存」を使用してください。</p><Submit onBusyChange={onBusyChange}/>{state.error && <p role="alert" className="err">{state.error}</p>}{state.success && <p role="status">{state.success} {!entry && <a href="/admin/blog">続けて新しい記事を作成 →</a>}</p>}
+ <p className={styles.help}>下書き・非公開の記事は一般公開されません。公開する場合だけ「公開して保存」を使用してください。</p><Submit onBusyChange={onBusyChange}/>{state.error && <p role="alert" className="err">{state.error}</p>}{state.success && <p role="status">{state.success} {!entry && <a href="/admin/blog">続けて新しい記事を作成</a>}</p>}
  </form>;
 }
