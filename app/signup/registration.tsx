@@ -29,7 +29,12 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
             // 正式オープン日と、会員になると使えること(2026/10/19)。以前の説明文と入れ替え
             <>
               <p className={styles.launchBadge}>{PRELAUNCH_LAUNCH_LABEL}</p>
-              <p className={styles.lead}>{memberPreview ? "登録するとオープン前のサイトを先行で見られます。" : "先行登録しておくと、オープン当日からすぐに使えます。"}</p>
+              {memberPreview ? (
+                // 先行会員にサイトを公開中は「今すぐ見られる」を一番伝えたいので太字・少し大きく(2026/10/20)
+                <p className={`${styles.lead} ${styles.leadStrong}`}>登録してすぐ、オープン前のサイトが見られます</p>
+              ) : (
+                <p className={styles.lead}>先行登録しておくと、オープン当日からすぐに使えます。</p>
+              )}
               <ul className={styles.featureList}>
                 {PRELAUNCH_FEATURES.map((f) => (
                   <li key={f}>{f}</li>
@@ -41,12 +46,14 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
           )}
           {early && <aside className={styles.tournamentPromo} aria-labelledby="early-tournament-title">
             <h2 id="early-tournament-title"><img src="/images/summit-finger-clean.webp" alt="" width={34} height={40} /><span className={styles.tournamentTitle}>先行会員限定<wbr />トーナメント<wbr />開催決定！</span></h2>
-            <p>先行登録いただいた方を、m HOLD’EMアプリで開催する限定トーナメントにご招待します。</p>
-            <p className={styles.tournamentNote}>※参加にはダイヤ20個が必要です（アプリのログインボーナスなどで無料でも受け取れます）。<br />※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。</p>
+            <p>先行登録した方だけが参加できる、m HOLD’EMアプリの限定トーナメントです。</p>
+            {/* ダイヤは注意書きではなく「参加費」として見せる・Amazonギフトの抽選も載せる(2026/10/20) */}
             <dl className={styles.tournamentFacts}>
               <div><dt>開催日時</dt><dd>{PRELAUNCH_TOURNAMENT.dateLabel}</dd></div>
-              <div><dt>プライズ</dt><dd>{PRELAUNCH_TOURNAMENT.prizeLabel}</dd></div>
+              <div><dt>プライズ</dt><dd>{PRELAUNCH_TOURNAMENT.prizeLabel}<span className={styles.factSub}>＋参加者から抽選でAmazonギフトカード5,000円分×2名</span></dd></div>
+              <div><dt>参加費</dt><dd>ダイヤ20個<span className={styles.factSub}>アプリのログインボーナスで無料でもらえます</span></dd></div>
             </dl>
+            <p className={styles.tournamentNote}>※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。Amazonはこのキャンペーンのスポンサーではありません。</p>
             {/* スマホでは最初の画面にフォームが入らないので、主役のボタンは登録フォームへ(2026/10/19)。公式Xは控えめなリンクに */}
             <a className={styles.xFollowButton + " " + styles.jumpToForm} href="#signup-form">無料で先行登録する</a>
             <p className={styles.tournamentXLink}>参加方法・最新情報は<a href="https://x.com/poker_summit" target="_blank" rel="noopener noreferrer">公式X</a>でお知らせします</p>
