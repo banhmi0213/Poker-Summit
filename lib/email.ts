@@ -9,6 +9,8 @@
 // sendStoreCredentialsEmail()のコメント参照)。
 // ============================================================================
 
+import { logMessage } from "@/lib/message-log";
+
 const FROM_ADDRESS = "Poker Summit <info@pokersummit.jp>";
 // 送信専用(返信を受けない)アドレス(2026/10)。会員向け・本人確認やセキュリティのお知らせに使う。
 // 店舗向けの請求・契約まわりは、返信で問い合わせてもらえるよう info@ のまま。
@@ -26,15 +28,22 @@ async function sendEmail(params: {
   bcc?: string | null;
   /** true なら送信専用アドレス(noreply@)から送る */
   noreply?: boolean;
+  /** true なら送信の記録(message_log)に本文を残さない(パスワード・確認コード・ログイン情報、2026/10/20) */
+  sensitive?: boolean;
 }): Promise<void> {
   const apiKey = getResendApiKey();
+  const log = (status: "sent" | "failed" | "skipped", extra: { error?: string; providerId?: string | null } = {}) =>
+    logMessage({ channel: "email", to: params.to, subject: params.subject, body: params.text, sensitive: params.sensitive, hasAttachment: !!params.attachments?.length, status, ...extra });
   if (!apiKey) {
+    await log("skipped", { error: "RESEND_API_KEY 未設定" });
     throw new Error(
       "RESEND_API_KEY が設定されていません。Vercelの環境変数を確認してください。"
       );
   }
 
-const res = await fetch("https://api.resend.com/emails", {
+let res: Response;
+try {
+res = await fetch("https://api.resend.com/emails", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${apiKey}`,
@@ -56,11 +65,19 @@ const res = await fetch("https://api.resend.com/emails", {
       : {}),
   }),
 });
+} catch (e) {
+  await log("failed", { error: e instanceof Error ? e.message : String(e) });
+  throw e;
+}
 
 if (!res.ok) {
   const body = await res.json().catch(() => null);
-  throw new Error(`Resend API error (${res.status}): ${JSON.stringify(body)}`);
+  const message = `Resend API error (${res.status}): ${JSON.stringify(body)}`;
+  await log("failed", { error: message });
+  throw new Error(message);
 }
+const okBody = (await res.json().catch(() => null)) as { id?: string } | null;
+await log("sent", { providerId: okBody?.id ?? null });
 }
 
 function getSiteUrl(): string {
@@ -112,6 +129,7 @@ await sendEmail({
   to: params.to,
   subject: "【Poker Summit】店舗管理アカウント発行のお知らせ",
   text,
+  sensitive: true, // ログイン情報を含むので、送信の記録に本文を残さない
 });
 }
 
@@ -616,7 +634,7 @@ export async function sendEmailVerificationCode(params: { to: string; code: stri
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
+  await sendEmail({ noreply: true, sensitive: true, to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
 }
 
 /** 連絡先メールアドレスが変更されたことを、変更前のアドレスへ知らせる */
@@ -799,7 +817,7 @@ ${params.link}
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
+  await sendEmail({ noreply: true, sensitive: true, to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
 }
 
 /** 振込の請求書がお支払期限を過ぎた翌日のお知らせ(猶予7日のうちに入金をお願いする、2026/10) */

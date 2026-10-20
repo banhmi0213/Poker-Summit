@@ -1,6 +1,7 @@
 import 'server-only';
 import {createServiceRoleClient} from '@/lib/supabase/service-role';
 import {storeNotifyTargets} from '@/lib/store-notify';
+import {logMessage} from '@/lib/message-log';
 type Delivery={notification_id:string;channel:'line'|'email';lock_token:string;recipient_actor:'store'|'dealer';kind:'application'|'offer'|'message';record_id:string;recipient_email:string|null;line_user_id:string|null};
 export type NotificationContext={storeName:string|null;dealerName?:string|null;workStart:string|null;notifyChannel?:string|null;storeLineLinked?:boolean;storeEmail?:string|null};
 function formatWorkDate(iso:string|null){if(!iso)return null;return new Date(iso).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'});}
@@ -33,6 +34,8 @@ export async function deliverMatchingNotifications(record:string|null=null){
     const response=await fetch(item.channel==='line'?'https://api.line.me/v2/bot/message/push':'https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json',...(item.channel==='line'?{'X-Line-Retry-Key':item.notification_id}:{'Idempotency-Key':item.notification_id})},body:JSON.stringify(item.channel==='line'?{to:recipient,messages:[{type:'text',text:content.text}]}:{from:'Poker Summit <noreply@pokersummit.jp>',to:[recipient],subject:content.subject,text:content.text}),signal:AbortSignal.timeout(6000),cache:'no-store'});
     // LINE 409 means this same retry key was accepted previously.
     if(response.ok||(item.channel==='line'&&response.status===409))state='sent';else detail=`provider_http_${response.status}`;
+    // 送ったメール・LINEの記録(public.message_log、2026/10/20)
+    await logMessage({channel:item.channel,to:recipient,subject:item.channel==='email'?content.subject:null,body:content.text,status:state==='sent'?'sent':'failed',error:state==='sent'?null:detail});
    }
   }catch{detail='delivery_connection_failed';}
   const saved=await db.rpc('finish_matching_notification',{p_notification:item.notification_id,p_channel:item.channel,p_lock:item.lock_token,p_state:state,p_error:detail});
