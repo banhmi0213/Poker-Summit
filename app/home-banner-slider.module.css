@@ -1,6 +1,6 @@
 /* 画像は 3:1(推奨 1200×400px)の枠に収める。枠の比率を先に確保するので
    画像の読み込み前後でレイアウトがずれない。 */
-.slider {
+.slider { composes:bannerHover from "./home-banner-hover.module.css";
   position: relative;
   border-radius: 14px;
   overflow: hidden;
@@ -87,12 +87,5 @@
 }
 
 /* The large advertising slider lifts as a whole, without affecting swipe controls. */
-.slider { transition: transform .26s ease, box-shadow .26s ease; }
-@media (hover: hover) and (pointer: fine) {
-  .slider:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(82,55,19,.14); }
-}
-.slider:focus-within { box-shadow: 0 0 0 2px rgba(185,138,50,.35); }
-@media (prefers-reduced-motion: reduce) { .slider { transition: none !important; } .slider:hover { transform: none !important; } }
 
-/* Feedback belongs to the tapped link, not the slider container (swipe-safe). */
 @media (hover:none) and (pointer:coarse){.slide a:active{filter:brightness(1.045)}.dot:active{filter:brightness(1.15)}}

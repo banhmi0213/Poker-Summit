@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {loadManagedRings} from '@/lib/poker/ring-admin';
+import RingForm from './ring-form';
+import RemovalForm from '@/app/poker-tournaments/removal-form';
+import {removeRing} from './actions';
+import styles from './manager.module.css';
+export default async function Page(){const {rows,error}=await loadManagedRings();return <main className={styles.page}><header className={styles.intro}><div><h1>リングゲーム卓設定</h1><p>卓名・人数・ブラインド・持込チップを管理します。</p></div><nav className={styles.links}><Link className="btn" href="/admin/poker-tournaments">トーナメント設定</Link><Link className="btn" href="/poker-lobby">ロビーを確認</Link></nav></header><p className={styles.note}>ここで保存するのは卓の開催設定です。会員チップを使ったリング対戦・着席は準備中です。公開するとロビーに「対戦準備中」と表示されます。</p>{error?<p role="alert">{error}</p>:<><details className={styles.card}><summary>＋ リング卓を新規登録</summary><RingForm/></details><h2>登録済みの卓 <small>（{rows.length}件）</small></h2>{!rows.length&&<p className={styles.empty}>登録された卓はありません。上の「リング卓を新規登録」から追加できます。</p>}{rows.map(row=><details className={styles.card} key={`${row.id}-${row.revision}`}><summary>{row.title} · {row.published?'公開中':'下書き'}<small>{row.capacity}人卓 ／ SB {row.sb.toLocaleString()}・BB {row.bb.toLocaleString()} ／ 持込 {row.min_buy_in.toLocaleString()}〜{row.max_buy_in.toLocaleString()} ／ 表示順 {row.sort_order}</small></summary><RingForm record={row}/><RemovalForm id={row.id} title={row.title} revision={row.revision} kind="ring" action={removeRing}/></details>)}</>}</main>;}

@@ -1,0 +1,6 @@
+/* All homepage banner formats share the same interaction. */
+.bannerHover{transition:transform .24s ease,box-shadow .24s ease;-webkit-tap-highlight-color:transparent}
+@media(hover:hover) and (pointer:fine){.bannerHover:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(134,93,25,.23)}}
+.bannerHover:focus-visible,.bannerHover:focus-within{outline:2px solid #b98a32;outline-offset:3px}
+@media(hover:none) and (pointer:coarse){.bannerHover:active{transform:scale(.992);box-shadow:0 5px 16px rgba(134,93,25,.18)}}
+@media(prefers-reduced-motion:reduce){.bannerHover{transition:none}.bannerHover:hover,.bannerHover:active{transform:none}}

@@ -1,3 +1,4 @@
+import {ringColumns,type RingTable} from '@/lib/poker/ring-tables';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -14,10 +15,11 @@ export default async function PokerLobbyPage() {
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
   if (!user && !isPreview) redirect("/signup");
   const {data: tournaments} = await supabase.from("poker_tournaments").select("id,title,starts_at,structure,image_url,organizer_name,prizes").eq("published",true).order("starts_at");
+  const {data:ringRows,error:ringError}=await supabase.from('poker_ring_tables').select(ringColumns).eq('published',true).is('deleted_at',null).order('sort_order').order('created_at');
   return <div className="portal">
     <PortalHeader userEmail={user?.email} />
     <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      <PokerLobbyPreview configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
+      <PokerLobbyPreview configuredRings={(ringRows??[]) as RingTable[]} ringError={Boolean(ringError)} configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
     </main>
     <PortalFooter />
     <BottomTabs />
