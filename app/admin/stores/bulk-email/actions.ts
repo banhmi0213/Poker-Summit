@@ -45,13 +45,15 @@ export async function sendBulkEmailToStores(formData: FormData) {
   // 送り先: 店舗へのメール(+店舗管理画面の受信箱) / LINE / サイトのお知らせ(2026/10/20 サイトを追加)
   const toEmail = formData.get("toEmail") === "on";
   const toSite = formData.get("toSite") === "on";
+  // 会員へのメール(大事なお知らせのときだけ使う。2026/10/20)
+  const toMembers = formData.get("toMembers") === "on";
   const recipients = toEmail ? await getActiveStoreRecipients(supabase) : [];
 
   const lineScope = String(formData.get("lineScope") ?? "none"); // none / contracted / all
-  if (!toEmail && !toSite && lineScope === "none") {
+  if (!toEmail && !toSite && !toMembers && lineScope === "none") {
     throw new Error("送り先(メール・LINE・サイト)を1つ以上選んでください。");
   }
-  if (toEmail && recipients.length === 0 && lineScope === "none" && !toSite) {
+  if (toEmail && recipients.length === 0 && lineScope === "none" && !toSite && !toMembers) {
     throw new Error("送信先の店舗メールアドレスが見つかりませんでした。");
   }
 
@@ -63,6 +65,16 @@ export async function sendBulkEmailToStores(formData: FormData) {
     if (siteError) throw new Error(`サイトのお知らせを保存できませんでした: ${siteError.message}`);
     siteNotice = true;
     revalidatePath("/news");
+  }
+
+  let memberResult = { sent: [] as string[], failed: [] as { to: string; error: string }[] };
+  if (toMembers) {
+    const svc = createServiceRoleClient();
+    const { data: rows, error: rpcError } = await svc.rpc("member_notice_recipients");
+    if (rpcError) throw new Error(`会員の宛先を取得できませんでした: ${rpcError.message}`);
+    const memberEmails = Array.from(new Set(((rows ?? []) as Array<{ email: string }>).map((r) => r.email).filter(Boolean)));
+    const memberText = `${body}\n\n――――――――――\nPoker Summit運営事務局\nhttps://pokersummit.jp/news\n※このメールは、Poker Summitに会員登録いただいた方へ大切なお知らせとしてお送りしています。`;
+    if (memberEmails.length) memberResult = await sendBulkEmail({ recipients: memberEmails, subject: `【Poker Summit】${subject}`, text: memberText });
   }
 
   const result = recipients.length
@@ -114,6 +126,9 @@ export async function sendBulkEmailToStores(formData: FormData) {
     inboxCount,
     toEmail,
     siteNotice,
+    toMembers,
+    memberSent: memberResult.sent.length,
+    memberFailed: memberResult.failed,
   });
 
   const jar = await cookies();
@@ -126,6 +141,8 @@ export async function sendBulkEmailToStores(formData: FormData) {
       lineSent,
       toEmail,
       siteNotice,
+      memberSent: toMembers ? memberResult.sent.length : undefined,
+      memberFailedCount: toMembers ? memberResult.failed.length : undefined,
     }),
     { httpOnly: true, maxAge: 60, path: "/admin/stores/bulk-email" }
   );

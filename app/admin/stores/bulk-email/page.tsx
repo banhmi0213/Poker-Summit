@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendBulkEmailToStores, setSiteNoticePublished } from "./actions";
 
 type BulkEmailResult = {
@@ -9,6 +10,8 @@ type BulkEmailResult = {
   lineSent?: number;
   toEmail?: boolean;
   siteNotice?: boolean;
+  memberSent?: number;
+  memberFailedCount?: number;
 };
 
 export default async function AdminBulkEmailPage() {
@@ -35,6 +38,9 @@ export default async function AdminBulkEmailPage() {
     const st = Array.isArray(c.stores) ? c.stores[0] : c.stores;
     return !!st?.line_user_id;
   }).length;
+
+  const { data: memberRows } = await createServiceRoleClient().rpc("member_notice_recipients");
+  const memberCount = (memberRows ?? []).length;
 
   const jar = await cookies();
   const resultRaw = jar.get("bulk_email_result")?.value;
@@ -63,6 +69,7 @@ export default async function AdminBulkEmailPage() {
             {result.toEmail !== false && <> メール 成功 {result.sentCount}件 / 失敗 {result.failedCount}件</>}
             {typeof result.lineSent === "number" && result.lineSent > 0 && <> ／ LINE {result.lineSent}件</>}
             {result.siteNotice && <> ／ サイトのお知らせに掲載しました</>}
+            {typeof result.memberSent === "number" && <> ／ 会員へのメール 成功 {result.memberSent}件{result.memberFailedCount ? ` / 失敗 ${result.memberFailedCount}件` : ""}</>}
           </p>
           {result.failed.length > 0 && (
             <ul style={{ marginTop: 8, paddingLeft: 20 }}>
@@ -96,6 +103,9 @@ export default async function AdminBulkEmailPage() {
           </label>
           <label style={{ display: "block", fontSize: 13.5 }}>
             <input type="checkbox" name="toSite" /> サイトのお知らせに載せる(公開サイトの「お知らせ」に全国・全員向けで表示)
+          </label>
+          <label style={{ display: "block", fontSize: 13.5 }}>
+            <input type="checkbox" name="toMembers" /> 会員にメールで送る({memberCount}人・メール確認済みの会員。大事なお知らせのときだけ)
           </label>
         </fieldset>
         <fieldset style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "10px 12px" }}>
