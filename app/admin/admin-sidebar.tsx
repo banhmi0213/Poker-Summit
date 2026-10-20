@@ -12,6 +12,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/stores/import", label: "店舗取込(Google)" },
   { href: "/admin/stores/google-match", label: "Googleマップ照合" },
   { href: "/admin/contracts", label: "契約店舗" },
+  { href: "/admin/contracts/plans", label: "プラン・アドオン管理" },
   { href: "/admin/billing", label: "入金管理" },
   { href: "/admin/addon-orders", label: "アドオン注文" },
   { href: "/admin/stores/bulk-email", label: "お知らせ配信" },
