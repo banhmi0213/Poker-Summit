@@ -23,7 +23,7 @@ export default async function ComingSoonPage() {
           <div style={{ fontSize: 40, marginBottom: 8 }}>🃏</div>
           <h1 style={{ fontSize: 20, marginBottom: 10 }}>ディーラーマッチングは<br />10/25（日）の正式オープンから使えます</h1>
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.8, marginBottom: 18 }}>
-            スポット求人・ディーラー登録・店舗とのマッチングは、正式オープンと同時に公開します。
+            スポット求人・店舗とのマッチングは、正式オープンと同時に公開します（ディーラー登録は今からできます）。
             それまでは店舗検索や国内外の大型大会情報などをお楽しみください。
           </p>
           <Link href="/" className="btn primary">トップへ戻る</Link>
