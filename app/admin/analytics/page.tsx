@@ -898,6 +898,13 @@ async function PrelaunchTab({ since }: { since: Date }) {
     prefMap.set(r.pref, cur);
   });
   const byPref = Array.from(prefMap.entries()).sort((a, b) => b[1].total - a[1].total);
+  // 登録で止まった理由(2026/10/20〜、public.signup_errors)
+  const { data: signupErrors } = await svc
+    .from("signup_errors")
+    .select("created_at, reason, message, detail, email_domain, device, in_app")
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(50);
   const [{ data: views }, { data: signups }, { data: funnel }] = await Promise.all([
     fetchAllRows(() =>
       svc.from("page_views").select("created_at, referrer, device").eq("path", "/prelaunch").gte("created_at", since.toISOString())
@@ -1041,6 +1048,21 @@ async function PrelaunchTab({ since }: { since: Date }) {
         {listCard("どこから来たか", bySource)}
         {listCard("参照元のサイト（上位10）", byHost)}
         {listCard("端末", byDevice)}
+        <div className="card">
+          <h3 style={{ fontSize: 14.5, margin: "0 0 4px" }}>登録で止まった記録</h3>
+          <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>登録ボタンを押したのに会員にならなかった理由（2026年10月20日の夜から）。アプリ内＝InstagramなどSNSアプリの中のブラウザ。</p>
+          {(signupErrors ?? []).length === 0 ? (
+            <p className="muted small">まだ記録がありません。</p>
+          ) : (
+            (signupErrors ?? []).map((e: any, i: number) => (
+              <div key={i} style={{ fontSize: 12.5, padding: "5px 0", borderBottom: "1px solid var(--border)", lineHeight: 1.6 }}>
+                <span className="muted">{new Date(e.created_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>{" "}
+                {e.message}
+                <span className="muted">（{[e.device === "mobile" ? "スマホ" : e.device === "tablet" ? "タブレット" : "PC", e.in_app ? `アプリ内:${e.in_app}` : null, e.email_domain, e.detail].filter(Boolean).join("・")}）</span>
+              </div>
+            ))
+          )}
+        </div>
         <div className="card">
           <h3 style={{ fontSize: 14.5, margin: "0 0 4px" }}>会員の都道府県（全期間）</h3>
           <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>本人がマイページで入れた都道府県。なければ登録したときの推定（回線や位置情報から。だいたいの目安）。</p>

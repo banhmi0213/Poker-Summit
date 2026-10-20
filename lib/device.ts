@@ -18,3 +18,17 @@ export function isBotUserAgent(userAgent: string | null): boolean {
   if (!userAgent) return true;
   return /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora link preview|whatsapp|headless|lighthouse|pagespeed|vercel|curl|wget|python-requests|axios|node-fetch|go-http-client/i.test(userAgent);
 }
+
+/**
+ * SNSアプリの中のブラウザ(アプリ内ブラウザ)か。どのアプリかを返す(2026/10/20)。
+ * Instagram・Facebook・LINE・X(Twitter)・TikTok のアプリ内ブラウザでは、ロボット確認などがうまく動かないことがある。
+ */
+export function inAppBrowser(userAgent: string | null): string | null {
+  if (!userAgent) return null;
+  if (/Instagram/i.test(userAgent)) return "instagram";
+  if (/FBAN|FBAV|FB_IAB|FBIOS/i.test(userAgent)) return "facebook";
+  if (/\bLine\//i.test(userAgent)) return "line";
+  if (/Twitter|TwitterAndroid/i.test(userAgent)) return "x";
+  if (/BytedanceWebview|musical_ly|TikTok/i.test(userAgent)) return "tiktok";
+  return null;
+}
