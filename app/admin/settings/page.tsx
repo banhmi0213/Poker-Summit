@@ -296,6 +296,15 @@ export default async function AdminSettingsPage({
                   ONにすると、ログインした会員(メール確認済み)はサイト全体を見られます。ディーラーマッチング(スポット求人・ディーラー登録・マッチング)は正式オープンまで閉じたままです。先行登録ページに「登録するとオープン前のサイトを先行で見られます」と出ます。
                 </p>
                 <div className="field">
+                  <span className="muted">先行登録モードを自動でOFFにする日時(日本時間・空欄なら自動では終えない)</span>
+                  <input
+                    type="datetime-local"
+                    name="prelaunchEndsAt"
+                    defaultValue={s.prelaunch_ends_at ? new Date(Date.parse(s.prelaunch_ends_at) + 9 * 3600 * 1000).toISOString().slice(0, 16) : ""}
+                  />
+                  <span className="muted" style={{ fontSize: 12 }}>この日時を過ぎると、全員にサイト全体(ディーラーマッチングも)が開きます。</span>
+                </div>
+                <div className="field">
                   <span className="muted">案内ページの説明文(空欄なら標準の文)</span>
                   <textarea name="prelaunchMessage" rows={4} defaultValue={s.prelaunch_message ?? ""} />
                 </div>

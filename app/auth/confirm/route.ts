@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPrelaunchActive } from "@/lib/prelaunch";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
@@ -41,13 +42,13 @@ export async function GET(req: NextRequest) {
         // 先行登録モード中は、オープン前に開けるリンクだけの「先行会員版」を送る
         const { data: flags } = await createServiceRoleClient()
           .from("site_settings")
-          .select("prelaunch_mode, prelaunch_x_url")
+          .select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url")
           .eq("id", true)
           .maybeSingle();
         await sendWelcomeEmail({
           to: data.user.email,
           name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
-          prelaunch: !!flags?.prelaunch_mode,
+          prelaunch: isPrelaunchActive(flags),
           xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
         });
       }

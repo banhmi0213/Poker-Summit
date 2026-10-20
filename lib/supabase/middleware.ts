@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { STORE_AUTH_COOKIE_NAME } from "@/lib/constants";
 import { PREVIEW_COOKIE, hasPreviewAccess } from "@/lib/preview-access";
+import { isPrelaunchActive } from "@/lib/prelaunch";
 
 // 会員・総合管理画面(デフォルトCookie)と店舗管理画面(STORE_AUTH_COOKIE_NAME、
 // lib/supabase/store-server.ts参照)は別々のCookieにセッションを持つため、
@@ -152,11 +153,11 @@ async function getSiteFlags(): Promise<{ maintenance: boolean; prelaunch: boolea
   });
   const { data: settings, error } = await anon
     .from("site_settings")
-    .select("maintenance_mode, prelaunch_mode, member_preview")
+    .select("maintenance_mode, prelaunch_mode, prelaunch_ends_at, member_preview")
     .eq("id", true)
     .maybeSingle();
   if (error) return flagsCache?.value ?? { maintenance: false, prelaunch: false, memberPreview: false };
-  const value = { maintenance: !!settings?.maintenance_mode, prelaunch: !!settings?.prelaunch_mode, memberPreview: !!settings?.member_preview };
+  const value = { maintenance: !!settings?.maintenance_mode, prelaunch: isPrelaunchActive(settings), memberPreview: !!settings?.member_preview };
   flagsCache = { value, at: Date.now() };
   return value;
 }

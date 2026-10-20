@@ -15,3 +15,10 @@ export function openingEmptyNote(what: string): string | null {
   if (Date.now() >= OPENING_NOTE_UNTIL) return null;
   return `10/25（日）の正式オープンから、全国の店舗の${what}を順次掲載していきます。`;
 }
+
+/** 先行登録モードが今効いているか(prelaunch_ends_at を過ぎたら自動で終わり、2026/10/20) */
+export function isPrelaunchActive(row: { prelaunch_mode?: boolean | null; prelaunch_ends_at?: string | null } | null | undefined): boolean {
+  if (!row?.prelaunch_mode) return false;
+  if (row.prelaunch_ends_at && Date.now() >= Date.parse(row.prelaunch_ends_at)) return false;
+  return true;
+}

@@ -129,6 +129,9 @@ export async function updatePrelaunchSettings(formData: FormData) {
   const prelaunchMode = formData.get("prelaunchMode") === "1";
   // 先行会員にサイトを公開(ディーラーマッチングは閉じたまま、2026/10/20)
   const memberPreview = formData.get("memberPreview") === "1";
+  // 先行登録モードを自動で終える日時(日本時間で入力。空欄なら自動では終えない、2026/10/20)
+  const endsAtRaw = String(formData.get("prelaunchEndsAt") ?? "").trim();
+  const prelaunchEndsAt = endsAtRaw ? new Date(`${endsAtRaw}:00+09:00`).toISOString() : null;
   const prelaunchMessage = String(formData.get("prelaunchMessage") ?? "").trim();
   const prelaunchXUrl = String(formData.get("prelaunchXUrl") ?? "").trim();
   if (prelaunchXUrl && !/^https:\/\/(x|twitter)\.com\//.test(prelaunchXUrl)) {
@@ -139,6 +142,7 @@ export async function updatePrelaunchSettings(formData: FormData) {
     .update({
       prelaunch_mode: prelaunchMode,
       member_preview: memberPreview,
+      prelaunch_ends_at: prelaunchEndsAt,
       prelaunch_message: prelaunchMessage || null,
       prelaunch_x_url: prelaunchXUrl || null,
     })

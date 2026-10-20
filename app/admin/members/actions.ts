@@ -1,4 +1,5 @@
 "use server";
+import { isPrelaunchActive } from "@/lib/prelaunch";
 
 import { revalidatePath, revalidatePublicData } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
@@ -76,11 +77,11 @@ export async function confirmMemberEmail(userId: string): Promise<void> {
   }
   if (user.email && !user.user_metadata?.welcome_email_sent_at) {
     const { sendWelcomeEmail } = await import("@/lib/email");
-    const { data: flags } = await svc.from("site_settings").select("prelaunch_mode, prelaunch_x_url").eq("id", true).maybeSingle();
+    const { data: flags } = await svc.from("site_settings").select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url").eq("id", true).maybeSingle();
     await sendWelcomeEmail({
       to: user.email,
       name: (user.user_metadata?.display_name as string | undefined) ?? null,
-      prelaunch: !!flags?.prelaunch_mode,
+      prelaunch: isPrelaunchActive(flags),
       xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
     });
     await svc.auth.admin.updateUserById(userId, {
