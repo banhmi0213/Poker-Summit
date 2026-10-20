@@ -9,7 +9,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
-import { MemberRoleBadge } from "@/app/member-role-badge";
+import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { staticPageMetadata } from "@/lib/seo";
 
@@ -119,6 +119,11 @@ export default async function BoardPage({
   const { data: badgeRows } = authorUserIds.length
     ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; best_score: number }[] };
+  // 「運営」バッジを付ける運営アカウント(2026/10/20)
+  const { data: officialRows } = authorUserIds.length
+    ? await supabase.rpc("official_board_user_ids", { p_ids: authorUserIds })
+    : { data: [] as string[] };
+  const officialIds = new Set<string>(((officialRows ?? []) as unknown[]).map((r) => String(r)));
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   const avatarByUserId: Record<string, string | null> = {};
@@ -306,7 +311,7 @@ export default async function BoardPage({
                       コントラスト比が低いため、サイト全体の.mutedは変えず
                       このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
                   <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25, minWidth: 0, maxWidth: "100%" }}>
-                    <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
+                    <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!p.author_user_id && officialIds.has(p.author_user_id)} /><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
                     <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
                   </span>
                   <span className="muted" style={{ color: "var(--text-2)", whiteSpace: "nowrap" }}>{formatDate(p.created_at)}</span>

@@ -19,3 +19,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* 運営アカウントのバッジ(2026/10/20)。役職バッジと同じ形で、色だけ濃くして区別する */
+.official {
+  background: #76521b;
+  color: #fff;
+}
