@@ -43,7 +43,8 @@ const HOME_JSON_LD = [
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     name: SITE_NAME,
-    alternateName: `${SITE_NAME}｜${SITE_TAGLINE}`,
+    // カタカナで検索されても同じサイトだと分かるように(2026/10/21)
+    alternateName: ["ポーカーサミット", "PokerSummit", `${SITE_NAME}｜${SITE_TAGLINE}`],
     url: `${SITE_URL}/`,
     description: SITE_DESCRIPTION,
     inLanguage: "ja",
@@ -60,7 +61,10 @@ const HOME_JSON_LD = [
     "@id": `${SITE_URL}/#organization`,
     name: "株式会社Give Rise",
     url: `${SITE_URL}/`,
-    brand: { "@type": "Brand", name: SITE_NAME },
+    logo: `${SITE_URL}/images/logo.webp`,
+    brand: { "@type": "Brand", name: SITE_NAME, alternateName: "ポーカーサミット" },
+    // 公式SNS。本物のサイトがどこかをGoogleに伝える(コピーサイト対策、2026/10/21)
+    sameAs: ["https://x.com/poker_summit", "https://www.instagram.com/pokersummit_official/"],
   },
 ];
 
