@@ -1,6 +1,6 @@
 # Ring chip wallet and welcome allocation
 
-This change prepares a staged member wallet. It does not enable playable ring games or settle winning stacks.
+This change prepares a staged member wallet. The follow-up ring accounting core can settle server-authoritative hands, but it is not mounted in the public room service or lobby yet.
 
 ## Allocation
 
@@ -15,12 +15,12 @@ This change prepares a staged member wallet. It does not enable playable ring ga
 
 A reservation checks account eligibility, published table settings, buy-in limits, available balance, one open hold per member and table capacity. Account/table row locks and unique receipts enforce serialized accounting. Retries reuse request IDs; inconsistent payloads are rejected. Refund returns only the original reservation amount, exactly once. Held funds block table deletion or changes to stakes/capacity/buy-in.
 
-Reservation expiry timestamps are recorded, but no cleanup worker or authoritative game settlement exists yet. Do not expose a client buy-in button until seating acceptance/rejection, expiry recovery, active-stack settlement and restart recovery are integrated. Reservations are not occupied seats.
+Reservation expiry timestamps are recorded. The follow-up provides server-only seating, expiry release, final-stack cashout and atomic authoritative hand settlement. Public admission, continuous expiry scheduling and online room recovery still need to be wired before exposing a buy-in button. A funding reservation alone is not an occupied seat.
 
 ## Deployment and validation
 
-Apply the three 20261020 migrations in timestamp order. They have been applied only to the separate staging project. The production database has not been migrated by this feature.
+Apply the 20261020 migrations in timestamp order. They have been applied only to the separate staging project. The production database has not been migrated by this feature.
 
 `npm run test:poker` covers the wallet response parser alongside the existing suite. `tests/sql/poker-chip-ledger.sql` runs a rollback-only database integration check covering allocation, confirmation, replay, same-email reuse, eligibility, reserve/refund conservation and privileges. Run it only against a disposable/staging database with appropriate SQL access. It creates fixture auth rows inside a rolled-back transaction and does not send emails.
 
-Still required before playable public ring games: concurrent multi-session and restart tests, authoritative seat/stack ownership, winner/loser settlement, reconnection and expiry recovery, operating limits/monitoring and production rollout approval.
+Still required before playable public ring games: public service admission and owner fencing, multi-session database contention tests, turn timers/disconnect handling, recurring expiry work, lobby/game controls, operating limits/monitoring and production rollout approval. See ring-accounting-core.md.
