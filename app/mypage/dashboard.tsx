@@ -506,7 +506,7 @@ export async function MyPageContent({
               <div><dt>都道府県</dt><dd>{pref || "未設定"}</dd></div>
               <div><dt>都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
               <div><dt>メールの公開設定</dt><dd>{myProfile?.email_public === true ? "公開" : "非公開"}</dd></div>
-              <div><dt>役職</dt><dd>{myProfile?.role || "未設定"}</dd></div>
+              <div><dt>活動スタイル</dt><dd>{myProfile?.role || "未設定"}</dd></div>
               <div><dt>フリーメッセージ</dt><dd className={styles.message}>{myProfile?.bio || "未設定"}</dd></div>
             </dl>
           </section>

@@ -128,7 +128,7 @@ export default async function MemberProfilePage({
                 <div><dt>都道府県</dt><dd>{profile?.pref_public === false ? "非公開" : profile?.pref || "未設定"}</dd></div>
                 <div><dt>都道府県の公開設定</dt><dd>{profile?.pref_public === false ? "非公開" : "公開（他の会員にも表示）"}</dd></div>
                 <div><dt>メールの公開設定</dt><dd>{profile?.email_public === true ? "公開" : "非公開"}</dd></div>
-                <div><dt>役職</dt><dd>{profile?.role || "未設定"}</dd></div>
+                <div><dt>活動スタイル</dt><dd>{profile?.role || "未設定"}</dd></div>
                 <div><dt>フリーメッセージ</dt><dd className={styles.message}>{profile?.bio || "未設定"}</dd></div>
               </dl>
             </section>

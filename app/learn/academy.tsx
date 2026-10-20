@@ -78,8 +78,8 @@ export function Academy() {
      <span className={styles.achievementIcon} aria-hidden="true">♠</span>
      <h3>獲得したバッジの公開先</h3>
      <div className={styles.achievementExample}><small>マイページ（名前の上）</small><div><span className={styles.levelTag}>Lv.2 ポーカー卒業生</span><span className={styles.graduateTag}>🏅 初心者コース卒業</span></div></div>
-     <div className={styles.achievementExample}><small>サミット（役職タグの隣）</small><div><span className={styles.roleTag}>♠ フリーディーラー</span><span className={styles.graduateTag}>🏅 初心者卒業</span></div></div>
-     <p className={styles.achievementNote}>役職タグはそのまま残り、学習バッジが追加されます。合格バッジを保存していない会員には卒業タグは表示されません。</p>
+     <div className={styles.achievementExample}><small>サミット（活動スタイルタグの隣）</small><div><span className={styles.roleTag}>♠ フリーディーラー</span><span className={styles.graduateTag}>🏅 初心者卒業</span></div></div>
+     <p className={styles.achievementNote}>活動スタイルタグはそのまま残り、学習バッジが追加されます。合格バッジを保存していない会員には卒業タグは表示されません。</p>
      <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る ↗</Link><Link href="/board">サミットを見る ↗</Link></div>
     </div>
    </div>
