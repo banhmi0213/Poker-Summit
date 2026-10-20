@@ -163,3 +163,16 @@ export async function setSiteNoticePublished(formData: FormData) {
   revalidatePath("/admin/stores/bulk-email");
   redirect("/admin/stores/bulk-email");
 }
+
+/** サイトのお知らせを削除する(2026/10/20。元に戻せない) */
+export async function deleteSiteNotice(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const supabase = await createClient();
+  const { data: row } = await supabase.from("site_notices").select("title").eq("id", id).maybeSingle();
+  const { error } = await supabase.from("site_notices").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, "site_notice_deleted", "site_notice", id, { title: row?.title ?? null });
+  revalidatePath("/news");
+  revalidatePath("/admin/stores/bulk-email");
+  redirect("/admin/stores/bulk-email");
+}
