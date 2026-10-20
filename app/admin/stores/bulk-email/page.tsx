@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { sendBulkEmailToStores, setSiteNoticePublished } from "./actions";
+import { sendBulkEmailToStores, setSiteNoticePublished, deleteSiteNotice } from "./actions";
+import { ConfirmButton } from "@/app/store/(authenticated)/profile/confirm-button";
 
 type BulkEmailResult = {
   sentCount: number;
@@ -141,11 +142,17 @@ export default async function AdminBulkEmailPage() {
                     {new Date(n.created_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}
                   </div>
                 </div>
-                <form action={setSiteNoticePublished}>
-                  <input type="hidden" name="id" value={n.id} />
-                  <input type="hidden" name="published" value={n.published ? "false" : "true"} />
-                  <button type="submit" className="btn">{n.published ? "非公開にする" : "公開する"}</button>
-                </form>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <form action={setSiteNoticePublished}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <input type="hidden" name="published" value={n.published ? "false" : "true"} />
+                    <button type="submit" className="btn">{n.published ? "非公開にする" : "公開する"}</button>
+                  </form>
+                  <form action={deleteSiteNotice}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <ConfirmButton className="btn" message={`「${n.title}」を削除します。元に戻せません。よろしいですか？`}>削除</ConfirmButton>
+                  </form>
+                </div>
               </div>
               <p className="muted" style={{ fontSize: 13, marginTop: 6, whiteSpace: "pre-wrap" }}>{n.body}</p>
             </div>
