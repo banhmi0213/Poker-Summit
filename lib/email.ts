@@ -740,14 +740,20 @@ Poker Summit運営事務局`;
 // ---------------------------------------------------------------------------
 export async function sendStoreMaintenanceDigest(params: {
   to: string;
-  newCandidates: string[];
+  approved: string[];
+  held: { name: string; reason: string }[];
   closed: { name: string; status: string }[];
 }): Promise<void> {
   const siteUrl = getSiteUrl();
-  const lines: string[] = ["Poker Summit 店舗データの自動見直しで、確認が必要なものが見つかりました。", ""];
-  if (params.newCandidates.length) {
-    lines.push(`■ 新しく見つかった店(承認待ちに入れました): ${params.newCandidates.length}件`);
-    for (const n of params.newCandidates.slice(0, 50)) lines.push(`・${n}`);
+  const lines: string[] = ["Poker Summit 店舗データの自動見直しの結果です。", ""];
+  if (params.approved.length) {
+    lines.push(`■ 新しく見つかり、Googleマップと照合して自動で掲載した店: ${params.approved.length}件`);
+    for (const n of params.approved.slice(0, 50)) lines.push(`・${n}`);
+    lines.push(`→ ${siteUrl}/admin/stores`, "");
+  }
+  if (params.held.length) {
+    lines.push(`■ 新しく見つかったが、確認が必要なので承認待ちにした店: ${params.held.length}件`);
+    for (const h of params.held.slice(0, 50)) lines.push(`・${h.name}(${h.reason})`);
     lines.push(`→ ${siteUrl}/admin/stores?status=pending`, "");
   }
   if (params.closed.length) {
@@ -758,7 +764,7 @@ export async function sendStoreMaintenanceDigest(params: {
   lines.push("Poker Summit");
   await sendEmail({
     to: params.to,
-    subject: `【Poker Summit】店舗の自動見直し: 新規${params.newCandidates.length}件・閉業/休業${params.closed.length}件`,
+    subject: `【Poker Summit】店舗の自動見直し: 自動掲載${params.approved.length}件・確認待ち${params.held.length}件・閉業/休業${params.closed.length}件`,
     text: lines.join("\n"),
   });
 }

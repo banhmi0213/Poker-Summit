@@ -20,7 +20,7 @@ export async function sweepArea(
   db: AnyClient,
   pref: string,
   area: string,
-  opts: { keywords: string[]; onlyPokerNames?: boolean }
+  opts: { keywords: string[]; onlyPokerNames?: boolean; autoReview?: boolean }
 ): Promise<{ found: number; inserted: string[] }> {
   const excludeWords = DEFAULT_EXCLUDE_KEYWORDS.split(/[,、\s]+/).map((w) => w.trim().toLowerCase()).filter(Boolean);
   const found = await Promise.all(
@@ -57,7 +57,9 @@ export async function sweepArea(
       tel: details.tel,
       google_place_id: c.placeId,
       google_business_status: c.businessStatus,
-      google_match_status: "imported",
+      // 毎日の自動見直しで見つけた店は「auto_found」にして、lib/store-auto-review.ts で調べて自動で掲載する。
+      // 運営が取り込み画面から入れた店は今までどおり「imported」(承認は運営が押す)。
+      google_match_status: opts.autoReview ? "auto_found" : "imported",
     });
     if (!error) inserted.push(c.name);
   }

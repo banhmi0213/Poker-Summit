@@ -8,12 +8,14 @@ import { regeocodeNextStores } from "@/lib/regeocode";
 import { matchNextStores, rematchUnlinkedStores } from "@/lib/google-match";
 import { fetchNextGoogleHours } from "@/lib/google-hours";
 import { sendStoreMaintenanceDigest } from "@/lib/email";
+import { autoReviewNewStores } from "@/lib/store-auto-review";
 
 // ============================================================================
 // 店舗データの自動見直し(毎日 Vercel Cron から呼ばれる、2026/10)。
 // 1日に少しずつ進めて、約1か月で全国を1周する。
 //  1. 新店さがし: 全国の地域リストを順番に AREAS_PER_RUN 地域ずつGoogleで「ポーカー」検索し、
-//     店名がポーカー店らしい未登録の店を「承認待ち」に入れる(公開は運営が承認してから)。
+//     店名がポーカー店らしい未登録の店を見つけ、Googleマップと照合して問題なければ自動で掲載する
+//     (lib/store-auto-review.ts。引っかかった店は承認待ちのまま理由を残し、運営が判断する。2026/10/20)。
 //  2. 閉業チェック: 掲載中でGoogleと結びついた店を、確認日の古い順に CHECKS_PER_RUN 件ずつ
 //     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
 //  3. 新しく入った店の座標を国土地理院で取る。
@@ -48,7 +50,7 @@ export async function GET(req: NextRequest) {
   for (let i = 0; i < AREAS_PER_RUN; i++) {
     const t = tasks[cursor];
     try {
-      const r = await sweepArea(svc, t.pref, t.area, { keywords: ["ポーカー"], onlyPokerNames: true });
+      const r = await sweepArea(svc, t.pref, t.area, { keywords: ["ポーカー"], onlyPokerNames: true, autoReview: true });
       newCandidates.push(...r.inserted.map((n) => `${n}(${t.pref})`));
     } catch {
       // 1地域の失敗で全体を止めない
@@ -59,6 +61,9 @@ export async function GET(req: NextRequest) {
       cycle++;
     }
   }
+
+  // 1-2. 見つけた店をGoogleマップと照合して、問題なければ自動で掲載(引っかかった店は承認待ちのまま理由を残す)
+  const review = await autoReviewNewStores(30).catch(() => ({ approved: [] as string[], held: [] as { name: string; reason: string }[], capReached: false }));
 
   // 2. 閉業チェック
   const { data: stores } = await svc
@@ -90,14 +95,14 @@ export async function GET(req: NextRequest) {
   // 全店ほぼ同じ日に取ったので、取り直し(25日目)から期限(30日)までの5日で回り切るよう1日150件まで
   const hours = await fetchNextGoogleHours(150).catch(() => null);
 
-  const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
+  const result = { cursor, cycle, newCandidates: newCandidates.length, autoApproved: review.approved.length, autoHeld: review.held.length, closed: closed.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
-  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed, rematchLinked: rematch.linked, hours } });
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, autoApprovedNames: review.approved, autoHeld: review.held, closedNames: closed, rematchLinked: rematch.linked, hours } });
 
-  if (newCandidates.length || closed.length) {
+  if (review.approved.length || review.held.length || closed.length) {
     const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
     if (settings?.notify_email) {
-      await sendStoreMaintenanceDigest({ to: settings.notify_email, newCandidates, closed }).catch(() => null);
+      await sendStoreMaintenanceDigest({ to: settings.notify_email, approved: review.approved, held: review.held, closed }).catch(() => null);
     }
   }
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映

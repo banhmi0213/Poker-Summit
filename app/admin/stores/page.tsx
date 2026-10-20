@@ -55,7 +55,7 @@ export default async function AdminStoresPage({
     let q0 = supabase
       .from("stores")
       .select(
-        "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
+        "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at, google_match_status, google_match_note",
         { count: opts.head ? "exact" : undefined, head: opts.head ?? false }
       )
       // Secondary sort by id: created_at alone ties for rows inserted in the
@@ -489,7 +489,13 @@ export default async function AdminStoresPage({
           )}
           {stores?.map((s) => (
             <tr key={s.id}>
-              <td className="management-name"><ReadableName name={s.name} /></td>
+              <td className="management-name">
+                <ReadableName name={s.name} />
+                {/* 自動審査で保留にした理由(承認待ちの店だけ。2026/10/20) */}
+                {s.status === "pending" && s.google_match_status === "auto_held" && s.google_match_note && (
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{s.google_match_note}</div>
+                )}
+              </td>
               <td>
                 <span className="badge outline">
                   {CATEGORY_LABEL[s.category ?? ""] ?? s.category ?? ""}
