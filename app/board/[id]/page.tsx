@@ -111,6 +111,8 @@ export default async function BoardPostPage({
   }
   if (countError || repliesError) throw new Error("コメントを読み込めませんでした。");
   const community = await getThreadCommunity(supabase, post.id, user.id, (replies ?? []).map(r=>r.id));
+  const {data:followCounts}=community ? await supabase.rpc("board_follow_counts",{p_post_ids:[post.id]}) : {data:null};
+  const followerCount=Number(followCounts?.[0]?.total ?? 0);
   const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
 
   // 投稿者・返信者のアイコン画像(2026/10、board/page.tsxと同じ理由で
@@ -191,7 +193,7 @@ export default async function BoardPostPage({
               </div>
             </div>
           </div>
-          {community ? <ThreadControls postId={post.id} preference={community.preference} resolved={community.resolved} owner={post.author_user_id === user.id} /> : <p role="status" className="muted">掲示板の追加機能は準備中です。現在は本文・コメントの閲覧のみご利用いただけます。</p>}
+          {community ? <ThreadControls postId={post.id} preference={community.preference} followerCount={followerCount} resolved={community.resolved} owner={post.author_user_id === user.id} /> : <p role="status" className="muted">掲示板の追加機能は準備中です。現在は本文・コメントの閲覧のみご利用いただけます。</p>}
           <BoardBody body={post.body} />
           {community && <ReactionButtons postId={post.id} rows={community.reactions} userId={user.id} />}
           {post.image_url && (
