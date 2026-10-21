@@ -26,6 +26,7 @@ const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile/spot-jobs", label: "スポット求人" },
   { href: "/store/profile/notices", label: "店舗のお知らせ" },
   { href: "/store/profile/plan", label: "プラン・お支払い" },
+  { href: "/store/profile/guide", label: "店舗管理ガイド" },
 ];
 
 export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?: boolean }) {
