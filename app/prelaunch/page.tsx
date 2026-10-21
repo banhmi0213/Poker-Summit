@@ -145,7 +145,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
             <Link href="/terms">利用規約</Link>・<Link href="/privacy">プライバシーポリシー</Link>・<Link href="/tokushoho">特定商取引法に基づく表記</Link>・<Link href="/company">運営会社</Link>
           </p>
           {settings?.contact_email && <p>お問い合わせ：{settings.contact_email}</p>}
-          <p style={{ marginTop: 8 }}>© 株式会社Give Rise</p>
+          <p style={{ marginTop: 8 }}>著作権 © 2026 株式会社Give Rise　無断使用・転載・スクレイピングを禁じます</p>
           {/* 共用の端末向けに、登録後の画面からログアウトできるようにする(2026/10) */}
           <form action={signOut} style={{ marginTop: 14 }}>
             <button type="submit" style={{ background: "none", border: "1px solid #d9c9a3", borderRadius: 6, padding: "6px 14px", fontSize: 12, color: "#8a6d3b", cursor: "pointer" }}>
