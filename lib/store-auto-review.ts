@@ -18,6 +18,11 @@ import { MONTHLY_CAP } from "@/lib/google-hours";
 //    団体・オンラインのサークル等はここで止まる)
 //  - 店名がポーカー店らしく、団体・オンライン等の名前ではないこと
 //  - すでに登録のある店(同じ都道府県)と店名や住所が重なっていないこと(重複登録の防止)
+//  - Googleマップに載っているだけでは掲載しない。今もポーカーをやっている裏付けを取る(2026/10/21 オーナー指示。
+//    Googleで営業中でも、実際はポーカーをやっていない店が自動で載ってしまったため):
+//      ・公式サイトかSNSがGoogleマップに載っている
+//      ・口コミが5件以上ある
+//      ・直近180日の口コミに、ポーカーをやっていると分かる言葉(ポーカー・トーナメント・ホールデムなど)がある
 // 全部通れば住所・電話番号・営業時間を入れて掲載する。どれかに引っかかれば承認待ちのまま残し、
 // 理由を google_match_note に書く(google_match_status = "auto_held")。運営が見て承認/却下する。
 // 営業時間はGoogleの規約(保存は30日まで)に合わせて google_hours_* に入れる
@@ -26,6 +31,9 @@ import { MONTHLY_CAP } from "@/lib/google-hours";
 
 const HOLD_NAME_RE = /(協会|連盟|協議会|機構|財団|association|federation|league|リーグ|オンライン|online|サークル|circle|大学|university)/i;
 const LIVE_STATUSES = ["approved", "listed", "pending", "payment_suspended"];
+const POKER_REVIEW_RE = /(ポーカー|poker|ホールデム|hold.?em|トーナメント|トナメ|リングゲーム|ディーラー|チップ|オマハ|omaha)/i;
+const REVIEW_WINDOW_SEC = 180 * 24 * 3600;
+const MIN_REVIEWS = 5;
 
 function jstMonth() {
   return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 7);
@@ -70,6 +78,14 @@ export async function autoReviewNewStores(limit = 30) {
     if (!d.hoursText) reasons.push("Googleマップに営業時間がない");
     if (!POKER_NAME_RE.test(name)) reasons.push("店名がポーカー店らしくない");
     if (HOLD_NAME_RE.test(name)) reasons.push("団体・オンライン等の名前で、店舗ではない可能性");
+    // 今もポーカーをやっている裏付け(2026/10/21)
+    if (!d.notFound) {
+      if (!d.website) reasons.push("裏付け不足: Googleマップに公式サイト・SNSがない");
+      if (d.ratingsTotal < MIN_REVIEWS) reasons.push(`裏付け不足: 口コミが${d.ratingsTotal}件しかない`);
+      const since = Date.now() / 1000 - REVIEW_WINDOW_SEC;
+      const recentPoker = d.reviews.some((v) => v.time >= since && POKER_REVIEW_RE.test(v.text));
+      if (!recentPoker) reasons.push("裏付け不足: 直近180日の口コミにポーカーをやっていると分かる内容がない");
+    }
 
     if (!d.notFound) {
       // 重複登録の確認(同じ都道府県で、店名がよく似ている・住所が同じ店がすでにある)
@@ -110,7 +126,7 @@ export async function autoReviewNewStores(limit = 30) {
           // カテゴリを推測できなかった店は、いちばん多いアミューズメントポーカーにする(違えば運営が直す)
           ...(s.category === "other" || !s.category ? { category: "amusement" } : {}),
           google_match_status: "matched",
-          google_match_note: `自動審査で掲載(${jst}): Googleマップで営業中・住所・電話番号・営業時間を確認、重複なし`,
+          google_match_note: `自動審査で掲載(${jst}): Googleマップで営業中・住所・電話番号・営業時間を確認、重複なし。公式サイト/SNSあり・口コミ${d.ratingsTotal}件・直近180日の口コミでポーカーの営業を確認`,
         })
         .eq("id", s.id)
         .eq("status", "pending");

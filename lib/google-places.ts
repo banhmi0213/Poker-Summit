@@ -162,6 +162,12 @@ export type PlaceReviewDetails = {
   types: string[];
   hoursText: string[] | null;
   hoursPeriods: unknown[] | null;
+  /** 公式サイト・SNS(Googleマップに載っているもの) */
+  website: string | null;
+  /** 口コミの件数 */
+  ratingsTotal: number;
+  /** 新しい順の口コミ(最大5件)。time はUNIX秒 */
+  reviews: { time: number; text: string }[];
   notFound: boolean;
 };
 
@@ -179,12 +185,14 @@ export async function getPlaceReviewDetails(placeId: string): Promise<PlaceRevie
     url.searchParams.set("language", "ja");
     url.searchParams.set(
       "fields",
-      "name,formatted_address,address_component,formatted_phone_number,business_status,type,opening_hours"
+      "name,formatted_address,address_component,formatted_phone_number,business_status,type,opening_hours,website,user_ratings_total,reviews"
     );
+    // 口コミは新しい順で取る(最近ポーカーをやっている裏付けに使う、2026/10/21)
+    url.searchParams.set("reviews_sort", "newest");
     const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
     const data = await res.json();
     if (data.status === "NOT_FOUND") {
-      return { name: null, address: null, tel: null, city: null, businessStatus: "NOT_FOUND", types: [], hoursText: null, hoursPeriods: null, notFound: true };
+      return { name: null, address: null, tel: null, city: null, businessStatus: "NOT_FOUND", types: [], hoursText: null, hoursPeriods: null, website: null, ratingsTotal: 0, reviews: [], notFound: true };
     }
     if (data.status !== "OK") return null;
     const r = data.result ?? {};
@@ -200,6 +208,9 @@ export async function getPlaceReviewDetails(placeId: string): Promise<PlaceRevie
       types: r.types ?? [],
       hoursText: Array.isArray(oh?.weekday_text) && oh.weekday_text.length ? oh.weekday_text : null,
       hoursPeriods: Array.isArray(oh?.periods) && oh.periods.length ? oh.periods : null,
+      website: r.website ?? null,
+      ratingsTotal: Number(r.user_ratings_total ?? 0) || 0,
+      reviews: Array.isArray(r.reviews) ? r.reviews.map((v: { time?: number; text?: string }) => ({ time: Number(v.time ?? 0), text: String(v.text ?? "") })) : [],
       notFound: false,
     };
   } catch {
