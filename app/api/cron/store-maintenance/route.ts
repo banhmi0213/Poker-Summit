@@ -17,7 +17,7 @@ import { autoReviewNewStores } from "@/lib/store-auto-review";
 //     店名がポーカー店らしい未登録の店を見つけ、Googleマップと照合して問題なければ自動で掲載する
 //     (lib/store-auto-review.ts。引っかかった店は承認待ちのまま理由を残し、運営が判断する。2026/10/20)。
 //  2. 閉業チェック: 掲載中でGoogleと結びついた店を、確認日の古い順に CHECKS_PER_RUN 件ずつ
-//     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
+//     Googleの営業状況で確認し、閉業・休業・見つからない店は掲載から自動で外す(有料契約中の店は要確認にするだけ。2026/10/21)。
 //  3. 新しく入った店の座標を国土地理院で取る。
 //  4. Googleマップに無かった店を、30日に1回ずつGoogleで探し直す。
 //  5. 営業時間が空の店舗の営業時間をGoogleから取る(店舗が入れた店は取らない)。
@@ -66,22 +66,44 @@ export async function GET(req: NextRequest) {
   const review = await autoReviewNewStores(30).catch(() => ({ approved: [] as string[], held: [] as { name: string; reason: string }[], capReached: false }));
 
   // 2. 閉業チェック
+  // Googleマップで閉業・一時休業・消えている(NOT_FOUND)店は、掲載から自動で外す(2026/10/21 オーナー指示)。
+  // ただし有料契約中の店は勝手に外さず「要確認」にして運営に知らせる。
+  // 一時休業で外した店(google_match_status = auto_closed)も見続けて、営業中に戻ったら掲載に戻す。
   const { data: stores } = await svc
     .from("stores")
-    .select("id, name, google_place_id, google_business_status")
-    .eq("status", "approved")
+    .select("id, name, status, google_place_id, google_business_status, google_match_status")
+    .or("status.eq.approved,and(status.eq.closed,google_match_status.eq.auto_closed)")
     .not("google_place_id", "is", null)
     .order("google_checked_at", { ascending: true, nullsFirst: true })
     .limit(CHECKS_PER_RUN);
+  const { data: contracted } = await svc
+    .from("store_contracts")
+    .select("store_id")
+    .in("status", ["active", "trialing", "past_due"])
+    .in("store_id", (stores ?? []).map((s) => s.id).concat(["00000000-0000-0000-0000-000000000000"]));
+  const paidIds = new Set(((contracted ?? []) as { store_id: string }[]).map((c) => c.store_id));
   const closed: { name: string; status: string }[] = [];
+  const reopened: string[] = [];
+  const jstNow = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace("T", " ");
   for (const s of stores ?? []) {
     const status = await getPlaceBusinessStatus(s.google_place_id as string);
     const update: Record<string, unknown> = { google_checked_at: new Date().toISOString() };
     if (status) update.google_business_status = status;
-    if (status && status !== "OPERATIONAL" && status !== s.google_business_status) {
+    if (status && status !== "OPERATIONAL" && s.status === "approved") {
       closed.push({ name: s.name, status });
-      // 一時休業も運営の方針で掲載から外すので、閉業と同じく「要確認」に入れる
-      update.google_match_status = "needs_review";
+      if (paidIds.has(s.id)) {
+        update.google_match_status = "needs_review";
+      } else {
+        update.status = "closed";
+        update.google_match_status = "auto_closed";
+        update.google_match_note = `自動で掲載停止(${jstNow}): Googleマップで${status === "CLOSED_PERMANENTLY" ? "閉業" : status === "CLOSED_TEMPORARILY" ? "一時休業" : "見つからない"}`;
+      }
+    } else if (status === "OPERATIONAL" && s.status === "closed" && s.google_match_status === "auto_closed" && s.google_business_status === "CLOSED_TEMPORARILY") {
+      // 一時休業から営業中に戻った店は掲載に戻す
+      update.status = "approved";
+      update.google_match_status = "matched";
+      update.google_match_note = `自動で掲載再開(${jstNow}): Googleマップで営業中に戻った`;
+      reopened.push(s.name);
     }
     await svc.from("stores").update(update).eq("id", s.id);
   }
@@ -95,14 +117,14 @@ export async function GET(req: NextRequest) {
   // 全店ほぼ同じ日に取ったので、取り直し(25日目)から期限(30日)までの5日で回り切るよう1日150件まで
   const hours = await fetchNextGoogleHours(150).catch(() => null);
 
-  const result = { cursor, cycle, newCandidates: newCandidates.length, autoApproved: review.approved.length, autoHeld: review.held.length, closed: closed.length, at: new Date().toISOString() };
+  const result = { cursor, cycle, newCandidates: newCandidates.length, autoApproved: review.approved.length, autoHeld: review.held.length, closed: closed.length, reopened: reopened.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
-  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, autoApprovedNames: review.approved, autoHeld: review.held, closedNames: closed, rematchLinked: rematch.linked, hours } });
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, autoApprovedNames: review.approved, autoHeld: review.held, closedNames: closed, reopenedNames: reopened, rematchLinked: rematch.linked, hours } });
 
-  if (review.approved.length || review.held.length || closed.length) {
+  if (review.approved.length || review.held.length || closed.length || reopened.length) {
     const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
     if (settings?.notify_email) {
-      await sendStoreMaintenanceDigest({ to: settings.notify_email, approved: review.approved, held: review.held, closed }).catch(() => null);
+      await sendStoreMaintenanceDigest({ to: settings.notify_email, approved: review.approved, held: review.held, closed, reopened }).catch(() => null);
     }
   }
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
