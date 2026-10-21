@@ -12,7 +12,7 @@ const EXCLUDE = /^\/(admin|admin-login|store\/|store$|api\/|auth\/|liff)/;
 export async function POST(req: NextRequest) {
   try {
     const ua = req.headers.get("user-agent");
-    if (isBotUserAgent(ua)) return new NextResponse(null, { status: 204 });
+    if (isBotUserAgent(ua) || req.cookies.get("ps_staff")?.value === "1") return new NextResponse(null, { status: 204 });
     const body = (await req.json().catch(() => ({}))) as { path?: string; ref?: string };
     const path = String(body.path ?? "").slice(0, 300);
     if (!path.startsWith("/") || EXCLUDE.test(path)) return new NextResponse(null, { status: 204 });

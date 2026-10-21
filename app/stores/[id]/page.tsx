@@ -1,4 +1,4 @@
-import { getVisitorId } from "@/lib/visitor";
+import { getVisitorId, isStaffDevice } from "@/lib/visitor";
 import { ReadableName } from "@/app/readable-name";
 import { couponExpiryLabel, notExpiredFilter } from "@/lib/coupon-expiry";
 import type { Metadata } from "next";
@@ -319,7 +319,7 @@ export default async function StoreDetailPage({
 
   // 閲覧数には人のアクセスだけを数える(クローラー・運営の確認は除く)
   const viewerIsAdmin = user ? (await supabase.rpc("is_admin")).data === true : false;
-  if (!isBotUserAgent(hdrs.get("user-agent")) && !viewerIsAdmin) {
+  if (!isBotUserAgent(hdrs.get("user-agent")) && !viewerIsAdmin && !isStaffDevice()) {
     supabase
       .from("page_views")
       .insert({ path, store_id: store.id, referrer, device, visitor_id: getVisitorId() })

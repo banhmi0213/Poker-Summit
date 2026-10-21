@@ -97,6 +97,16 @@ export async function updateSession(request: NextRequest) {
   ]);
   const maintenanceMode = !maintenanceExempt && flags.maintenance;
 
+  // 運営の端末の印(2026/10/21)。総合管理を開いた運営の端末に ps_staff を付けて、
+  // その端末からの閲覧はGoogleアナリティクスにもサイトのPV・UUにも数えない(app/layout.tsx・/api/pv)。
+  // ログアウト中やシークレットでない限り、一度総合管理を開けばその端末はずっと除外される(1年)。
+  if (isAdminPath && user && request.cookies.get("ps_staff")?.value !== "1") {
+    const { data: isAdmin } = await supabase.rpc("is_admin");
+    if (isAdmin === true) {
+      pendingCookies.push({ name: "ps_staff", value: "1", options: { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: true } });
+    }
+  }
+
   // ディーラー登録広告の受け口(/account/dealer)だけは、未ログインでもページ側で受ける
   // (閲覧を数えてから会員登録へ案内し、登録後にディーラー登録へ戻すため。2026/10/21、app/account/dealer/page.tsx)
   if (!user && isProtectedPath && pathname !== "/account/dealer") {

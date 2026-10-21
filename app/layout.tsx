@@ -72,7 +72,7 @@ export default function RootLayout({
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
             <Script id="ga4-init" strategy="beforeInteractive">
-              {`if(/^\\/(admin|admin-login|store\\/|store$|api\\/|auth\\/|liff)/.test(location.pathname))window['ga-disable-${GA_MEASUREMENT_ID}']=true;window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:false});`}
+              {`if(/^\\/(admin|admin-login|store\\/|store$|api\\/|auth\\/|liff)/.test(location.pathname)||/(^|; )ps_staff=1/.test(document.cookie))window['ga-disable-${GA_MEASUREMENT_ID}']=true;window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}',{send_page_view:false});`}
             </Script>
             {/* ページ表示はここから送る(管理画面は数えない) */}
             <Suspense fallback={null}>

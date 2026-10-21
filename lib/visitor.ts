@@ -12,3 +12,12 @@ export function getVisitorId(): string | null {
     return null;
   }
 }
+
+/** 運営の端末か(総合管理を開いたことがある端末。閲覧数に数えない、2026/10/21) */
+export function isStaffDevice(): boolean {
+  try {
+    return cookies().get("ps_staff")?.value === "1";
+  } catch {
+    return false;
+  }
+}
