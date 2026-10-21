@@ -35,7 +35,7 @@ export function BoardHelp() {
     <dt>回答済み</dt><dd>スレ主だけが「回答済みにする」を操作できます。役立ったコメントを回答として選ぶこともできます。解除・変更も可能で、回答済みになっても会話は続けられます。</dd>
   </dl><p>相手への配慮を忘れず、困った投稿は通報からお知らせください。非表示になった投稿・返信は通知やフォロー一覧でも表示されません。</p></details>;
 }
-export function ThreadControls({ postId, preference, resolved, owner, compact = false }: { postId: string; preference: ThreadPreference; resolved: boolean; owner: boolean; compact?: boolean }) {
+export function ThreadControls({ postId, preference, resolved, owner, compact = false, followerCount }: { followerCount?: number; postId: string; preference: ThreadPreference; resolved: boolean; owner: boolean; compact?: boolean }) {
   const [current,setCurrent] = useState(preference);
   const [answered,setAnswered] = useState(resolved);
   useEffect(()=>setCurrent(preference),[preference.following,preference.notifications_enabled]);
@@ -50,6 +50,7 @@ export function ThreadControls({ postId, preference, resolved, owner, compact = 
     run(async()=>{try{await setThreadPreference(postId,key,next);}catch(e){setCurrent(previous);throw e;}});
   }
   return <><div className={s.toolbar} data-board-ready={ready}>
+    {followerCount !== undefined && <span className={s.hint}>フォロワー {Math.max(0,followerCount + Number(current.following) - Number(preference.following))}人</span>}
     {answered && <span className={s.resolved}>✓ 回答済み</span>}
     <button disabled={pending || !ready} aria-pressed={current.following} onClick={() => changePreference("following")}>{current.following ? "✓ フォロー中・解除" : "＋ フォローする"}</button>
     <button disabled={pending || !ready} aria-pressed={current.notifications_enabled} onClick={() => changePreference("notifications_enabled")}>🔔 通知{current.notifications_enabled ? "ON" : "OFF"}</button>
