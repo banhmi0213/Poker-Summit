@@ -1,3 +1,4 @@
+import { BoardPanel } from "./board-panel";
 import { ReadableName } from "@/app/readable-name";
 import { OfficialBadge } from "@/app/member-role-badge";
 import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
@@ -38,7 +39,7 @@ export async function MyPageContent({
   profileEdit = false,
   dealerRegistration = false,
 }: {
-  searchParams: { tab?: string; error?: string; done?: string };
+  searchParams: { tab?: string; boardPage?: string; error?: string; done?: string };
   profileEdit?: boolean;
   dealerRegistration?: boolean;
 }) {
@@ -156,11 +157,17 @@ export async function MyPageContent({
       ? formatDate(user.created_at)
       : "";
 
+  const [{ count: boardFollowCount }, { count: boardUnreadCount }] = await Promise.all([
+    supabase.from("board_thread_preferences").select("post_id,board_posts!inner(status)", { count:"exact",head:true }).eq("user_id",user.id).eq("following",true).eq("board_posts.status","visible"),
+    supabase.from("board_notifications").select("id", { count:"exact",head:true }).eq("user_id",user.id).is("read_at",null),
+  ]);
   const tabs: { key: string; label: string }[] = [
     { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
     { key: "favJobs", label: `☆ お気に入り求人(${favJobs.length})` },
     { key: "coupons", label: `🎟️ クーポン` },
     { key: "events", label: `🏆 参加予定イベント(${rsvpEvents.length})` },
+    { key: "boardFollows", label: `☆ フォロー中(${boardFollowCount ?? 0})` },
+    { key: "boardNotifications", label: `🔔 サミット通知${boardUnreadCount ? `(${boardUnreadCount})` : ""}` },
     { key: "posts", label: `💬 投稿(${myPosts?.length ?? 0})` },
   ];
 
@@ -486,6 +493,7 @@ export async function MyPageContent({
               ))
             ))}
 
+          {(tab === "boardFollows" || tab === "boardNotifications") && <BoardPanel userId={user.id} notifications={tab === "boardNotifications"} page={Number(searchParams.boardPage || 1)} />}
           {tab === "posts" && (
             <>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
