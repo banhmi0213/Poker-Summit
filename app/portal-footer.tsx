@@ -93,7 +93,7 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         {!hideManagementLinks && <a className="footer-links__apply" href="/store/login">店舗管理画面</a>}
       </nav>
-      <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.　無断使用・転載・スクレイピング禁止</div>
+      <div className="footer-copyright">著作権 © 2026 株式会社Give Rise　無断使用・転載・スクレイピングを禁じます</div>
       <div className="footer-store-actions">
         <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ{lockNote && <PriceLockNote deadlineIso={lockNote} text="年内のご契約で料金据え置き" className="footer-apply-note" />}</a>
         {!hideManagementLinks && <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>}

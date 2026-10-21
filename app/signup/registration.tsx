@@ -154,7 +154,7 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
       )}
         </section>
       </div>
-      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>{early && <p className={styles.storeLinks}>ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>{priceLockNote && <PriceLockNote deadlineIso={priceLockNote} text={`（${priceLockLabel}までのご契約で、今後も料金据え置き）`} />}／<Link href="/store/login">店舗管理ログイン</Link></p>}© Poker Summit</footer>
+      <footer className={styles.footer}><nav><Link href="/terms">利用規約</Link><Link href="/privacy">プライバシーポリシー</Link><Link href="/contact">お問い合わせ</Link></nav>{early && <p className={styles.storeLinks}>ポーカー店のオーナー様・運営者様へ：<Link href="/apply">掲載のお申込み</Link>{priceLockNote && <PriceLockNote deadlineIso={priceLockNote} text={`（${priceLockLabel}までのご契約で、今後も料金据え置き）`} />}／<Link href="/store/login">店舗管理ログイン</Link></p>}著作権 © 2026 株式会社Give Rise　無断使用・転載・スクレイピングを禁じます</footer>
     </main>
   );
 }
