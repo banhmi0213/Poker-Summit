@@ -2,6 +2,7 @@ import { AttentionSummary } from "./attention-summary";
 import { isCouponExpired } from "@/lib/coupon-expiry";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/lib/constants";
 import {
   analyticsPeriodDays,
@@ -336,7 +337,7 @@ async function OverviewTab({
       fetchAllRows(() =>
         supabase
           .from("page_views")
-          .select("created_at, referrer, device")
+          .select("created_at, referrer, device, visitor_id")
           .eq("store_id", storeId)
           .gte("created_at", since.toISOString())
       ),
@@ -346,6 +347,8 @@ async function OverviewTab({
 
     const { counts, labels } = bucketTrend((views ?? []).map((v: any) => v.created_at), filters);
     const totalViews = (views ?? []).length;
+    // UU = 期間内にこの店舗ページを見た人数(閲覧者番号の数。番号の記録は2026/10/21から)
+    const totalUU = new Set((views ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
 
     const refCounts = new Map<string, number>();
     (views ?? []).forEach((v: any) => {
@@ -386,6 +389,7 @@ async function OverviewTab({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
           <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+          <StatTile label="期間内UU" value={totalUU.toLocaleString()} delta="10/21から集計" />
           <StatTile label="累計お気に入り" value={(favCount ?? 0).toLocaleString()} delta={store.pref} />
         </div>
         {compare && (
@@ -434,7 +438,7 @@ async function OverviewTab({
     fetchAllRows(() =>
       supabase
         .from("page_views")
-        .select("created_at, referrer, device, store_id")
+        .select("created_at, referrer, device, store_id, visitor_id")
         .not("store_id", "is", null)
         .gte("created_at", since.toISOString())
     ),
@@ -453,6 +457,16 @@ async function OverviewTab({
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
   const totalViews = (allViews ?? []).length;
+  // UU(何人が見たか)。閲覧者番号の記録は2026/10/21から。サイト全体はTOP・一覧・サミットなど全部の公開ページ(public.site_page_views)
+  const storeUU = new Set((allViews ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
+  const uuByStore = new Map<string, Set<string>>();
+  (allViews ?? []).forEach((v: any) => {
+    if (!v.visitor_id) return;
+    if (!uuByStore.has(v.store_id)) uuByStore.set(v.store_id, new Set());
+    uuByStore.get(v.store_id)!.add(v.visitor_id);
+  });
+  const { data: sitePvUu } = await createServiceRoleClient().rpc("admin_site_pv_uu", { p_since: since.toISOString() });
+  const siteRow = (Array.isArray(sitePvUu) ? sitePvUu[0] : sitePvUu) as { site_pv?: number; site_uu?: number } | null;
 
   const viewsByStore = new Map<string, number>();
   (allViews ?? []).forEach((v: any) => {
@@ -467,7 +481,7 @@ async function OverviewTab({
     .sort((a, b) => b.periodViews - a.periodViews)
     .slice(0, 5);
 
-  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, favs: favByStore.get(s.id) ?? 0 }));
+  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, uu: uuByStore.get(s.id)?.size ?? 0, favs: favByStore.get(s.id) ?? 0 }));
   if (q) storeRows = storeRows.filter((r: any) => r.s.name.includes(q));
   if (category && category !== "other") storeRows = storeRows.filter((r: any) => r.s.category === category);
   storeRows.sort((a: any, b: any) => {
@@ -501,7 +515,10 @@ async function OverviewTab({
         <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
-        <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
       </div>
@@ -586,16 +603,17 @@ async function OverviewTab({
               <th>都道府県</th>
               <th>ステータス</th>
               <th>期間内PV</th>
+              <th>期間内UU</th>
               <th>お気に入り</th>
             </tr>
           </thead>
           <tbody>
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted">該当する店舗がありません。</td>
+                <td colSpan={6} className="muted">該当する店舗がありません。</td>
               </tr>
             )}
-            {storeRows.map(({ s, views, favs }: any) => (
+            {storeRows.map(({ s, views, uu, favs }: any) => (
               <tr key={s.id}>
                 <td>
                   <span className="badge outline" style={{ marginRight: 6 }}>
@@ -608,6 +626,7 @@ async function OverviewTab({
                   <span className="badge">{s.status === "approved" || s.status === "listed" ? "公開中" : s.status}</span>
                 </td>
                 <td className="tabular">{views.toLocaleString()}</td>
+                <td className="tabular">{uu.toLocaleString()}</td>
                 <td className="tabular">{favs.toLocaleString()}</td>
               </tr>
             ))}

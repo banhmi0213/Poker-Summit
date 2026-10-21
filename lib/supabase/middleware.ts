@@ -40,6 +40,13 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
+  // UU(何人が見たか)を数えるための閲覧者番号。なければ作って、このリクエストのページからも読めるようにする(2026/10/21)
+  if (!request.cookies.get("ps_vid")) {
+    const vid = crypto.randomUUID();
+    request.cookies.set("ps_vid", vid);
+    pendingCookies.push({ name: "ps_vid", value: vid, options: { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax", secure: true, httpOnly: true } });
+  }
+
   // 店舗管理(/store/*)配下は、未ログイン時の行き先を会員ログイン(/login,
   // メールアドレス)ではなく専用の店舗ログイン画面(/store/login,
   // ログインID)にする(2026/09/30、会員と店舗の入口を分離)。

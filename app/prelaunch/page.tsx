@@ -1,3 +1,4 @@
+import { getVisitorId } from "@/lib/visitor";
 import { RegistrationPage } from "../signup/registration";
 import { PriceLockNote } from "@/app/price-lock-note";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
@@ -41,7 +42,7 @@ export default async function PrelaunchPage({searchParams}: {searchParams: {erro
       try {
         await createServiceRoleClient()
           .from("page_views")
-          .insert({ path: "/prelaunch", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua) });
+          .insert({ path: "/prelaunch", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua), visitor_id: getVisitorId() });
       } catch {
         // 記録に失敗しても登録画面は出す
       }
