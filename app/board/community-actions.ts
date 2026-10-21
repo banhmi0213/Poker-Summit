@@ -86,10 +86,16 @@ export async function loadBoardChildren(postId: string, parentId: string, page: 
   const {data:official}=await db.rpc("official_board_user_ids",{p_ids:(profiles ?? []).map(p=>p.user_id)});
   return { replies: data ?? [], total: count ?? 0, reactions:reactions ?? [], authors:Object.fromEntries((profiles ?? []).map(p=>[p.user_id,{avatar:p.avatar_url,role:p.role,official:(official ?? []).includes(p.user_id)}])) };
 }
-export async function markBoardNotificationsRead(notificationId?: string) {
+export async function markBoardNotificationsRead(notificationId?: string, ownPostsOnly = false) {
   const { db, user } = await member();
   let query = db.from("board_notifications").update({ read_at: new Date().toISOString() }).eq("user_id", user.id).is("read_at", null);
   if (notificationId) query = query.eq("id", id(notificationId));
+  if (ownPostsOnly) {
+    const {data:posts,error:postError}=await db.from("board_posts").select("id").eq("author_user_id",user.id);
+    if (postError) throw new Error("投稿を確認できませんでした。");
+    if (!posts?.length) return;
+    query=query.in("post_id",posts.map(p=>p.id));
+  }
   const { error } = await query;
   if (error) throw new Error("既読にできませんでした。");
   revalidatePath("/mypage");
