@@ -6,7 +6,7 @@ import { sendCardPaymentLinkEmail } from "@/lib/email";
 
 // ============================================================================
 // 有料掲載の申し込み店舗の確認(本人確認・反社会的勢力のチェック、2026/10/21 KOMOJU審査対応)。
-//  1. 申し込み時: 事業者の区分・代表者名・許可番号(任意)と、
+//  1. 申し込み時: 事業者の区分・代表者名と、
 //     「反社会的勢力に該当しないこと」の表明・確約をもらう(readKyc)。請求書・決済はまだ送らない。
 //  2. 運営の確認: 総合管理の申込詳細で、法人番号の照合(国税庁 法人番号公表サイト)・
 //     代表者の本人確認(個人事業主)・公開情報(報道等)の確認をして「確認OK」を押す。
@@ -26,7 +26,7 @@ export function readKyc(formData: FormData): { ok: true; value: KycInput } | { o
   const representativeName = String(formData.get("representativeName") ?? "").trim().slice(0, 100);
   if (!representativeName) return { ok: false, error: "代表者名を入力してください。" };
   // 法人番号は申込者には聞かない(2026/10/21 オーナー判断、入力の手間を減らすため)。運営が国税庁の法人番号公表サイトで、法人名・所在地から探して照合する
-  const licenseNumber = String(formData.get("licenseNumber") ?? "").trim().slice(0, 100) || null;
+  const licenseNumber = null; // 許可番号は聞かない(2026/10/21 オーナー判断)
   if (formData.get("antisocialPledge") !== "on") return { ok: false, error: "反社会的勢力に該当しないことの表明・確約が必要です。" };
   return { ok: true, value: { entityType, representativeName, corporateNumber: null, licenseNumber } };
 }
