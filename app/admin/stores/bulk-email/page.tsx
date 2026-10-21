@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendBulkEmailToStores, setSiteNoticePublished, deleteSiteNotice } from "./actions";
+import { getSalesRecipients, sendSalesEmail, optOutSalesEmail } from "./sales-actions";
 import { ConfirmButton } from "@/app/store/(authenticated)/profile/confirm-button";
 
 type BulkEmailResult = {
@@ -14,6 +15,9 @@ type BulkEmailResult = {
   memberSent?: number;
   memberFailedCount?: number;
 };
+
+// 営業メールは1通ずつ間隔をあけて送るので時間がかかる
+export const maxDuration = 300;
 
 export default async function AdminBulkEmailPage() {
   const supabase = await createClient();
@@ -49,6 +53,12 @@ export default async function AdminBulkEmailPage() {
     .order("created_at", { ascending: false })
     .limit(20);
   const memberCount = (memberRows ?? []).length;
+  const salesRecipients = await getSalesRecipients();
+  const { data: salesExcluded } = await createServiceRoleClient()
+    .from("sales_contact_import")
+    .select("name, email, excluded_reason")
+    .eq("excluded", true)
+    .order("id");
 
   const jar = await cookies();
   const resultRaw = jar.get("bulk_email_result")?.value;
@@ -134,6 +144,42 @@ export default async function AdminBulkEmailPage() {
         </button>
       </form>
 
+      <h2 style={{ fontSize: 17, margin: "28px 0 10px" }}>営業メール（掲載店・未契約）</h2>
+      <p className="muted" style={{ fontSize: 13, marginBottom: 10, maxWidth: 640 }}>
+        運営が集めた店舗の公開アドレスに送ります。同じアドレスのチェーン店は1通にまとめ、除外した店・配信停止の店・契約中の店・送信済みのアドレスには送りません。
+        本文には送信者名・住所・配信停止の方法を必ず入れてください。
+      </p>
+      <form action={sendSalesEmail} className="card" style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 640 }}>
+        <label>
+          件名
+          <input type="text" name="subject" required style={{ width: "100%", marginTop: 4 }} />
+        </label>
+        <label>
+          本文
+          <textarea name="body" required rows={16} style={{ width: "100%", marginTop: 4 }} />
+        </label>
+        <details style={{ fontSize: 12.5 }}>
+          <summary style={{ cursor: "pointer" }}>送信先 {salesRecipients.length}件を見る</summary>
+          <p style={{ marginTop: 6, lineHeight: 1.8 }}>{salesRecipients.join("、") || "なし"}</p>
+        </details>
+        <details style={{ fontSize: 12.5 }}>
+          <summary style={{ cursor: "pointer" }}>除外している店 {(salesExcluded ?? []).length}件を見る</summary>
+          <ul style={{ marginTop: 6, paddingLeft: 18, lineHeight: 1.8 }}>
+            {(salesExcluded ?? []).map((r: any, i: number) => (
+              <li key={i}>{r.name}（{r.email}）：{r.excluded_reason ?? "除外"}</li>
+            ))}
+          </ul>
+        </details>
+        <ConfirmButton className="btn" message={`営業メールを${salesRecipients.length}件に送信します。送信後は取り消せません。よろしいですか？`}>
+          営業メールを送信する（{salesRecipients.length}件）
+        </ConfirmButton>
+      </form>
+      <form action={optOutSalesEmail} className="card" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", maxWidth: 640, marginTop: 10 }}>
+        <span style={{ fontSize: 13 }}>配信停止の連絡があったアドレス</span>
+        <input type="email" name="email" required placeholder="info@example.com" style={{ flex: 1, minWidth: 200 }} />
+        <button type="submit" className="btn">配信停止にする</button>
+      </form>
+
       <h2 style={{ fontSize: 17, margin: "28px 0 10px" }}>送信の記録</h2>
       {(historyRows ?? []).length === 0 ? (
         <p className="muted">まだ記録はありません。</p>
@@ -152,6 +198,7 @@ export default async function AdminBulkEmailPage() {
                   <span className="muted" style={{ marginLeft: 8, fontSize: 12 }}>
                     {new Date(h.created_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })}
                     {d.toMembers ? `・会員メール ${d.memberSent ?? 0}件` : ""}
+                    {d.kind === "sales" ? "・営業メール" : ""}
                     {d.toEmail !== false ? `・店舗メール ${d.sentCount ?? 0}件` : ""}
                     {d.lineSent ? `・LINE ${d.lineSent}件` : ""}
                     {d.siteNotice ? "・サイト掲載" : ""}
