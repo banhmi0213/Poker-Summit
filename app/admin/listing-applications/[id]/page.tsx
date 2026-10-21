@@ -98,7 +98,7 @@ export default async function AdminListingApplicationDetailPage({
               <tr><th style={{ width: 160 }}>事業者の区分</th><td>{a.entity_type === "corporation" ? "法人" : a.entity_type === "individual" ? "個人事業主" : "（未入力・2026/10/21以前の申込み）"}</td></tr>
               <tr><th>代表者名</th><td>{a.representative_name || "（未入力）"}</td></tr>
               <tr><th>法人番号の照合</th><td>{a.entity_type === "corporation" ? <><a href="https://www.houjin-bangou.nta.go.jp/" target="_blank" rel="noopener noreferrer">国税庁の法人番号公表サイト</a>で、法人名「{a.company_name}」と所在地から探して照合する{a.corporate_number ? `（申込時の法人番号：${a.corporate_number}）` : ""}</> : "（個人事業主のため不要。代表者の本人確認書類を確認）"}</td></tr>
-              <tr><th>許可番号など</th><td>{a.license_number || "（なし）"}</td></tr>
+              {a.license_number && <tr><th>許可番号など</th><td>{a.license_number}</td></tr>}
               <tr><th>反社でないことの表明・確約</th><td>{a.antisocial_pledged_at ? `あり（${String(a.antisocial_pledged_at).slice(0, 16).replace("T", " ")}）` : "なし"}</td></tr>
               <tr><th>確認の状態</th><td>{a.kyc_status === "ok" ? "確認OK" : a.kyc_status === "ng" ? "確認NG（却下）" : "確認待ち"}{a.kyc_checked_at ? `（${a.kyc_checked_email ?? ""}・${String(a.kyc_checked_at).slice(0, 16).replace("T", " ")}）` : ""}</td></tr>
               <tr><th>お支払い</th><td>{a.payment_status === "awaiting_review" ? "確認待ち（請求書・お支払いの案内はまだ送っていません）" : a.payment_status}</td></tr>

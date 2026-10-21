@@ -258,10 +258,6 @@ export default async function ApplyPage({
                     <span className="muted">代表者名</span>
                     <input type="text" name="representativeName" maxLength={100} />
                   </div>
-                  <div className="field">
-                    <span className="muted">風営法の許可番号など（お持ちの場合・任意）</span>
-                    <input type="text" name="licenseNumber" maxLength={100} />
-                  </div>
                   <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
                     <input type="checkbox" name="antisocialPledge" style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }} />
                     <span>申込者（法人の場合はその役員を含む）が、<a href="/terms#antisocial" target="_blank" rel="noopener" style={LINK_STYLE}>利用規約第21条</a>に定める反社会的勢力に該当せず、今後も関係を持たないことを表明・確約します。</span>
