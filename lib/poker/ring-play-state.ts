@@ -1,7 +1,7 @@
 /** Allow-listed browser projection. Importing the type never bundles the engine. */
 import type {Rank} from './engine';
 import type {AuthoritativeHand} from './authoritative-hand';
-export type RingPlayView={viewerSeat:string;serverNow:number;deadline:number|null;hand:ReturnType<AuthoritativeHand['snapshot']>};
+export type RingPlayView={viewerSeat:string;serverNow:number;deadline:number|null;hand:ReturnType<AuthoritativeHand['snapshot']>;runout?:{from:0|3|4|5;final:ReturnType<AuthoritativeHand['snapshot']>}};
 const obj=(v:unknown):Record<string,unknown>=>{if(!v||typeof v!=='object'||Array.isArray(v))throw Error('Invalid play state');return v as Record<string,unknown>;};
 const num=(v:unknown)=>{if(!Number.isSafeInteger(v)||Number(v)<0||Number(v)>4503599627370495)throw Error('Invalid play amount');return Number(v);};
 const bool=(v:unknown)=>{if(typeof v!=='boolean')throw Error('Invalid play flag');return v;};
@@ -16,5 +16,7 @@ export function parseRingPlay(input:unknown):RingPlayView|null{if(input===null||
  let result:RingPlayView['hand']['result']=null;if(s.result!==null){const r=obj(s.result),raw=obj(r.payouts),payouts:Record<string,number>={};if(!Array.isArray(r.winners)||r.winners.length>6)throw Error('Invalid payout');for(const [id,value] of Object.entries(raw)){if(!ids.has(id))throw Error('Invalid payout seat');payouts[id]=num(value);}result={showdown:bool(r.showdown),payouts,winners:r.winners.map(seat)};if(result.winners.some(x=>!ids.has(x)))throw Error('Invalid winner');}
  if(t.anteType!=='none'||t.ante!==0)throw Error('Invalid ring blinds');const terms={level:num(t.level),index:num(t.index),sb:num(t.sb),bb:num(t.bb),ante:0,anteType:'none' as const};if(terms.sb<1||terms.bb<=terms.sb)throw Error('Invalid ring blinds');
  const toAct=s.toAct===null?null:seat(s.toAct);if(toAct!==null&&!ids.has(toAct)||legal&&toAct!==v.viewerSeat)throw Error('Invalid turn');
- return {viewerSeat:seat(v.viewerSeat),serverNow:num(v.serverNow),deadline:v.deadline===null?null:num(v.deadline),hand:{handId:s.handId,revision:num(s.revision),street:String(s.street),board:s.board.map(card),players,positions,terms,pot:num(s.pot),toAct,legal,result}};
+ let runout:RingPlayView['runout'];if(v.runout!==undefined){const r=obj(v.runout);if(![0,3,4,5].includes(Number(r.from))||typeof r.from!=='number'||v.deadline!==null)throw Error('Invalid runout');const final=parseRingPlay({viewerSeat:v.viewerSeat,serverNow:v.serverNow,deadline:null,hand:r.final})!.hand;
+ if(!final.result?.showdown||final.handId!==s.handId||final.revision!==s.revision||final.board.length!==5||final.toAct!==null||final.legal!==null||final.players.length!==players.length||final.players.some((p,i)=>p.id!==players[i].id)||s.board.some((c,i)=>JSON.stringify(card(c))!==JSON.stringify(final.board[i])))throw Error('Invalid runout result');runout={from:r.from as 0|3|4|5,final};}
+ return {...(runout?{runout}:{}),viewerSeat:seat(v.viewerSeat),serverNow:num(v.serverNow),deadline:v.deadline===null?null:num(v.deadline),hand:{handId:s.handId,revision:num(s.revision),street:String(s.street),board:s.board.map(card),players,positions,terms,pot:num(s.pot),toAct,legal,result}};
 }

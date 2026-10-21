@@ -4,11 +4,13 @@ import type {RingPlayView} from '@/lib/poker/ring-play-state';
 import type {BettingAction} from '@/lib/poker/betting';
 import {PokerSounds} from '@/lib/poker/online-sounds';
 import {SummitMark} from './brand-mark';
+import {useRingRunout} from './use-ring-runout';
 import {usePotFlight} from './use-pot-flight';
 import styles from './ring-live-table.module.css';
 type Card=RingPlayView['hand']['board'][number];
 function Cards({cards}:{cards:Card[]|null}){return <span className={styles.cards}>{(cards??[null,null]).map((c,i)=><span key={i} className={c?styles.card:styles.back} data-red={Boolean(c&&(c.suit==='h'||c.suit==='d'))}>{c?<>{({11:'J',12:'Q',13:'K',14:'A'} as Record<number,string>)[c.rank]??c.rank}{({c:'♣',d:'♦',h:'♥',s:'♠'})[c.suit]}</>:<SummitMark/>}</span>)}</span>;}
-export default function RingLiveTable({play,blocked,onAction}:{play:RingPlayView;blocked:boolean;onAction:(action:BettingAction)=>void}){
+export default function RingLiveTable({play:incoming,blocked,onAction}:{play:RingPlayView;blocked:boolean;onAction:(action:BettingAction)=>void}){
+ const play=useRingRunout(incoming);
  const s=play.hand,legal=s.legal,[amount,setAmount]=useState(''),[now,setNow]=useState(play.serverNow),[muted,setMuted]=useState(false),audio=useRef<PokerSounds|null>(null),last=useRef<{hand:string;revision:number;board:number;turn:string|null;won:boolean}|null>(null);
  const flight=usePotFlight(Boolean(s.result),s.handId);
  useEffect(()=>{const local=Date.now(),server=play.serverNow;setNow(server);const timer=setInterval(()=>setNow(server+Date.now()-local),100);return()=>clearInterval(timer);},[play.serverNow]);
@@ -16,11 +18,11 @@ export default function RingLiveTable({play,blocked,onAction}:{play:RingPlayView
  useEffect(()=>{audio.current?.setEnabled(!muted);},[muted]);
  useEffect(()=>{const prior=last.current;if(!prior||prior.hand!==s.handId)audio.current?.play('deal');else if(!prior.won&&s.result)audio.current?.play('win');else if(prior.board!==s.board.length)audio.current?.play('deal');else if(prior.revision!==s.revision)audio.current?.play('action');if(s.toAct===play.viewerSeat&&(!prior||prior.turn!==s.toAct||prior.revision!==s.revision))audio.current?.play('turn');last.current={hand:s.handId,revision:s.revision,board:s.board.length,turn:s.toAct,won:Boolean(s.result)};},[s.handId,s.revision,s.board.length,s.result,s.toAct,play.viewerSeat]);
  useEffect(()=>{setAmount(legal?.minRaiseTo===null||legal?.minRaiseTo===undefined?'':String(legal.minRaiseTo));},[s.handId,s.revision,legal?.minRaiseTo]);
- const seconds=play.deadline===null?0:Math.max(0,Math.ceil((play.deadline-now)/1000)),elapsed=play.deadline===null?100:Math.min(100,Math.max(0,100-(play.deadline-now)/300)),disabled=blocked||play.deadline===null||now>=play.deadline;
+ const seconds=play.deadline===null?0:Math.max(0,Math.ceil((play.deadline-now)/1000)),elapsed=play.deadline===null?100:Math.min(100,Math.max(0,100-(play.deadline-now)/300)),disabled=blocked||play.hand.handId!==incoming.hand.handId||play.hand.revision!==incoming.hand.revision||play.deadline===null||now>=play.deadline;
  const wager=Number(amount),valid=legal?.raise&&Number.isSafeInteger(wager)&&wager>=legal.minRaiseTo!&&wager<=legal.maxRaiseTo!;
  const act=(action:BettingAction)=>{void audio.current?.unlock().then(()=>audio.current?.play('action'));onAction(action);};
  return <div className={styles.game}><div className={styles.bar}><span>SB {s.terms.sb} / BB {s.terms.bb}</span><span role="status">{s.result?'勝敗確定':s.toAct?`${s.toAct===play.viewerSeat?'あなた':`プレイヤー ${s.toAct.slice(5)}`}の番 · ${seconds}秒`:'カード公開中'}</span><button type="button" onClick={()=>{void audio.current?.unlock();setMuted(v=>!v);}}>SE {muted?'OFF':'ON'}</button></div>
- <div ref={flight} className={styles.felt}>
+ <div ref={flight} className={styles.felt} data-board-count={s.board.length} data-result={Boolean(s.result)}>
  <div className={styles.board}><small>{s.street.toUpperCase()}</small><div>{s.board.length?<Cards cards={s.board}/>:<span className={styles.waiting}>COMMUNITY CARDS</span>}</div><strong data-pot-source>POT {s.pot.toLocaleString()} chip</strong></div>
  <div className={styles.seats} data-count={s.players.length}>{s.players.map(p=><section key={p.id} className={styles.player} data-folded={p.folded} data-own={p.id===play.viewerSeat} data-turn={p.id===s.toAct}>
  <div className={styles.avatar} data-pot-target={p.id}><SummitMark/>{p.id===s.toAct&&<svg viewBox="0 0 64 64" aria-label={`残り${seconds}秒`}><circle cx="32" cy="32" r="29" pathLength="100" strokeDasharray="100" strokeDashoffset={-elapsed}/></svg>}</div>
