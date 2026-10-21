@@ -244,7 +244,7 @@ export default async function ApplyPage({
                 <div style={{ border: "1px solid var(--border-strong, #d8c3a0)", borderRadius: 8, padding: "12px 14px", margin: "4px 0 14px" }}>
                   <strong style={{ display: "block", fontSize: 13, marginBottom: 4 }}>事業者の確認（プランを選んでお申込みの場合は必須）</strong>
                   <p className="muted" style={{ fontSize: 12, lineHeight: 1.7, margin: "0 0 10px" }}>
-                    お支払いの前に、事業者の実在確認と、反社会的勢力に該当しないことの確認を行っています。確認が完了してから、請求書またはお支払いのご案内をお送りします（通常1〜2営業日）。
+                    事業者の実在確認と、反社会的勢力に該当しないことの確認を行っています。銀行振込の場合は、確認が完了してから請求書をお送りします（通常1〜2営業日）。{billing.cardPaymentEnabled ? "クレジットカードの場合は、お支払い後すぐにご利用いただけます（確認はお支払いの後に行います）。" : ""}
                   </p>
                   <div className="field">
                     <span className="muted">事業者の区分</span>
@@ -314,7 +314,7 @@ export default async function ApplyPage({
             )}
             {plans && plans.length > 0 && (
               <p className="muted" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.7 }}>
-                お申込み後、事業者の確認が完了してから、銀行振込の場合は請求書（PDF）を、{billing.cardPaymentEnabled ? "クレジットカードの場合はお支払いページのご案内を、" : ""}メールでお送りします。ご入金（お支払い）の確認後に店舗管理アカウントを発行します。
+                銀行振込の場合は、事業者の確認が完了してから請求書（PDF）をメールでお送りし、ご入金の確認後に店舗管理アカウントを発行します。{billing.cardPaymentEnabled ? "クレジットカードの場合はお支払い画面へ進み、お支払い後すぐに店舗管理アカウントを発行します。" : ""}
                 {billing.cardPaymentEnabled ? CARD_BRANDS_NOTE : ""}
               </p>
             )}

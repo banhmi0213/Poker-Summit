@@ -98,7 +98,7 @@ export async function reviewApplicationKyc(id: string, formData: FormData) {
   if (isAdmin !== true) throw new Error("権限がありません。");
   const { data: { user } } = await supabase.auth.getUser();
   const decision = String(formData.get("decision") ?? "");
-  const { data: a } = await supabase.from("listing_applications").select("id, entity_type, kyc_status, payment_status").eq("id", id).maybeSingle();
+  const { data: a } = await supabase.from("listing_applications").select("id, entity_type, kyc_status, payment_status, billing_method, store_id").eq("id", id).maybeSingle();
   if (!a) throw new Error("申込が見つかりません。");
   const corp = formData.get("corpChecked") === "on";
   const identity = formData.get("identityChecked") === "on";
@@ -133,6 +133,11 @@ export async function reviewApplicationKyc(id: string, formData: FormData) {
   await logAdminAction(supabase, decision === "ok" ? "application_kyc_ok" : "application_kyc_ng", "listing_application", id, { corp, identity, news, note });
 
   let message = decision === "ok" ? "確認OKにしました。" : "確認NGにして、お申し込みを却下しました（申込者への連絡は個別にお願いします）。";
+  // カード払いですでに使い始めている店(支払い後に確認する流れ)がNGなら、店舗をすぐ非公開にする。返金・契約の解除は手で行う
+  if (decision !== "ok" && a.store_id) {
+    await svc.from("stores").update({ status: "closed", google_match_note: "事業者の確認NGのため掲載停止(2026/10/21〜の確認フロー)" }).eq("id", a.store_id);
+    message = "確認NGにして、店舗を非公開にしました。返金と契約の解除（KOMOJU・契約管理）、申込者への連絡は手でお願いします。";
+  }
   if (decision === "ok" && a.payment_status === "awaiting_review") {
     const { releasePaymentAfterReview } = await import("@/lib/listing-kyc");
     const err = await releasePaymentAfterReview(id);

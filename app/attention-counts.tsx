@@ -71,6 +71,7 @@ export function CountBadge({ count, label }: { count: number | undefined; label?
 export const ADMIN_ATTENTION_ITEMS: { key: string; href: string; label: string }[] = [
   { key: "billing", href: "/admin/billing", label: "入金待ちの請求書" },
   { key: "listing_applications", href: "/admin/listing-applications", label: "新しい掲載申込" },
+  { key: "kyc_pending", href: "/admin/listing-applications", label: "事業者の確認待ちの申込（本人確認・反社チェック。カード払いはその日のうちに）" },
   { key: "stores_pending", href: "/admin/stores", label: "確認待ちの店舗（掲載待ち・情報の変更申請）" },
   { key: "contracts", href: "/admin/contracts", label: "新しい契約" },
   { key: "addon_orders", href: "/admin/addon-orders", label: "未対応のアドオン注文" },
