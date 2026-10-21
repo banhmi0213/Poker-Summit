@@ -56,7 +56,7 @@ export function ThreadControls({ postId, preference, resolved, owner, compact = 
     <button disabled={pending || !ready} aria-pressed={current.notifications_enabled} onClick={() => changePreference("notifications_enabled")}>🔔 通知{current.notifications_enabled ? "ON" : "OFF"}</button>
     {owner && <button disabled={pending || !ready} onClick={() => {setAnswered(!answered);run(async()=>{try{await setThreadResolution(postId,null,!answered);}catch(e){setAnswered(answered);throw e;}});}}>{answered ? "回答済みを解除" : "✓ 回答済みにする"}</button>}
     {!compact && <><Link href="/mypage?tab=boardFollows">フォロー中一覧</Link><Link href="/mypage?tab=boardNotifications">サミット通知</Link></>}
-  </div>{!compact && <p className={s.hint}>通知ON：メンション・自分宛ての返信を通知。フォローすると新しいコメントも通知されます。</p>}{error && <p role="alert" className={s.error}>{error}</p>}</>;
+  </div>{!compact && <p className={s.hint}>マイページ内通知ON：メンション・自分宛ての返信を通知。フォローすると新しいコメントも通知されます。</p>}{error && <p role="alert" className={s.error}>{error}</p>}</>;
 }
 export function ReactionButtons({ postId, replyId = null, rows, userId }: { postId: string; replyId?: string | null; rows: BoardReaction[]; userId: string }) {
   const [choices, setChoices] = useState<Record<string,boolean>>({});
