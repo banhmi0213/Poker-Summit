@@ -1,3 +1,5 @@
+import { BoardActivityNav } from "./activity-nav";
+import { BoardHelp, MentionInput } from "./community";
 import compose from "./compose.module.css";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
@@ -74,7 +76,7 @@ export default async function BoardPage({
   let query = supabase
     .from("board_posts")
     // 未ログインの人にはタイトル等だけ(本文・画像は会員だけ。2026/10/20)
-    .select(user ? "id, title, author_name, author_user_id, created_at, updated_at, category, image_url" : "id, title, author_name, author_user_id, created_at, updated_at, category")
+    .select("id, title, author_name, author_user_id, created_at, updated_at, category" + (user ? ", image_url" : ""))
     .eq("status", "visible")
     .order(sort === "updated" ? "updated_at" : "created_at", { ascending: false })
     .order("id", { ascending: false });
@@ -82,7 +84,8 @@ export default async function BoardPage({
   if (q) query = user ? query.or(`title.ilike.%${q}%,body.ilike.%${q}%`) : query.ilike("title", `%${q}%`);
   query = query.range(from, to);
 
-  const [{ count: totalCount }, { data: posts }] = await Promise.all([countQuery, query]);
+  const [{ count: totalCount }, { data: rawPosts }] = await Promise.all([countQuery, query]);
+  const posts = rawPosts as unknown as {id:string;title:string;author_name:string;author_user_id:string|null;created_at:string;updated_at:string;category:string|null;image_url?:string|null}[] | null;
   const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
   function buildHref(
@@ -102,6 +105,8 @@ export default async function BoardPage({
   }
 
   const postIds = (posts ?? []).map((p) => p.id);
+  const { data: resolutionRows } = user && postIds.length ? await supabase.from("board_resolutions").select("post_id").in("post_id",postIds) : {data:[]};
+  const resolvedIds = new Set((resolutionRows ?? []).map(r=>r.post_id));
   const { data: replyRows } = postIds.length
     ? await supabase.from("board_replies").select("post_id").in("post_id", postIds)
     : { data: [] as { post_id: string }[] };
@@ -175,6 +180,8 @@ export default async function BoardPage({
           ))}
         </div>
 
+        <BoardHelp />
+        {user && <BoardActivityNav userId={user.id} />}
         {/* キーワード検索・並び替え(2026/10、「投稿が増えたときに備えて検索と
             並び替えがあると便利」との指示)。カテゴリ絞り込み(チップ)は維持した
             まま検索・並び替えできるよう、現在のcategoryを隠しフィールドで
@@ -248,8 +255,7 @@ export default async function BoardPage({
                 <input type="text" name="title" required />
               </div>
               <div className="field">
-                <span className="muted">本文 *</span>
-                <textarea name="body" rows={4} required />
+                <MentionInput label="本文" rows={4} />
               </div>
               <div className="field">
                 <span className="muted">画像（任意）</span>
@@ -314,7 +320,7 @@ export default async function BoardPage({
                 <Avatar name={p.author_name} url={null} />
               )}
               <Link href={`/board/${p.id}`} style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}{resolvedIds.has(p.id) && <span className="badge good" style={{marginLeft:8}}>✓ 回答済み</span>}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2, alignItems: "center" }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
                   {/* 投稿者名・日時のコントラスト向上(2026/10、「薄い文字を

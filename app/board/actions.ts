@@ -28,7 +28,8 @@ async function requireUser(nextPath: string) {
     redirect(`/login?next=${nextPath}`);
   }
 
-  const { data: suspended } = await supabase.rpc("is_suspended");
+  const { data: suspended, error: suspensionError } = await supabase.rpc("is_suspended");
+  if (suspensionError) throw new Error("会員状態を確認できませんでした。");
   if (suspended) {
     redirect("/account/suspended");
   }
@@ -123,10 +124,11 @@ export async function createReply(formData: FormData) {
   const { supabase, user } = await requireUser(`/board/${postId}`);
 
   const body = String(formData.get("body") ?? "").trim();
-  if (!body) {
-    throw new Error("返信内容を入力してください。");
-  }
+  if (!body) throw new Error("返信内容を入力してください。");
+  if (body.length > 12000) throw new Error("返信内容が長すぎます。短くして再度送信してください。");
   const authorName = await resolveAuthorName(supabase, user, formData);
+  const parentReplyId = String(formData.get("parentReplyId") ?? "").trim() || null;
+  if (parentReplyId && !/^[0-9a-f-]{36}$/i.test(parentReplyId)) throw new Error("返信先が不正です。");
 
   // 「サミット返信にも画像添付できるようにして」との指示により追加
   // (2026/09/30)。createPost と同じ流れ: 添付があればバリデートし、
@@ -146,6 +148,7 @@ export async function createReply(formData: FormData) {
     .from("board_replies")
     .insert({
       post_id: postId,
+      parent_reply_id: parentReplyId,
       body,
       author_name: authorName,
       author_user_id: user.id,
@@ -188,6 +191,7 @@ export async function createReply(formData: FormData) {
   revalidatePath(`/board/${postId}`);
   revalidatePath("/board");
   revalidatePath("/");
+  revalidatePath("/mypage");
 }
 
 export async function reportPost(postId: string, formData?: FormData) {

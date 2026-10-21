@@ -1,21 +1,23 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createReply, reportPost, reportReply } from "../actions";
+import { reportPost } from "../actions";
 import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
-import { HANDLE_NAME_MAX } from "@/lib/handle-name";
 import { AcademyBadge } from "@/app/learn/academy-badge";
+import { BoardBody, BoardHelp, ThreadControls, ReactionButtons, ReplyComposer, ReplyConversation } from "../community";
+import { getThreadCommunity, isMissingBoardSchema } from "../community-data";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
 
 function formatDate(value: string) {
   const d = new Date(value);
   return d.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -31,7 +33,7 @@ export default async function BoardPostPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { page?: string };
+  searchParams: { page?: string; focus?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -63,26 +65,54 @@ export default async function BoardPostPage({
   // コメントのページ送り(2026/10、「スレッドの中身も100件でページ送りに
   // して」との指示。/boardのスレッド一覧と同じ1ページ100件固定方式)。
   // 投稿順(古い順)のまま、100件ごとに区切る。
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  let page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  let focusedRoot: string | undefined;
+  if (searchParams.focus && /^[0-9a-f-]{36}$/i.test(searchParams.focus)) {
+    const { data: focused } = await supabase.from("board_replies").select("id,parent_reply_id").eq("id", searchParams.focus).eq("post_id", params.id).eq("status", "visible").maybeSingle();
+    if (focused) {
+      const { data: root } = await supabase.from("board_replies").select("id,created_at").eq("id", focused.parent_reply_id || focused.id).eq("post_id", params.id).eq("status", "visible").maybeSingle();
+      if (root) {
+        focusedRoot = root.id;
+        const { count } = await supabase.from("board_replies").select("id", {count:"exact",head:true}).eq("post_id", params.id).eq("status","visible").is("parent_reply_id",null).or(`created_at.lt.${root.created_at},and(created_at.eq.${root.created_at},id.lt.${root.id})`);
+        page = Math.floor((count ?? 0) / PAGE_SIZE) + 1;
+      }
+    }
+  }
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const [{ count: totalReplyCount }, { data: replies }] = await Promise.all([
+  let [{ count: totalReplyCount, error: countError }, { data: replies, error: repliesError }] = await Promise.all([
     supabase
       .from("board_replies")
       .select("id", { count: "exact", head: true })
       .eq("post_id", params.id)
-      .eq("status", "visible"),
+      .eq("status", "visible").is("parent_reply_id", null),
     supabase
       .from("board_replies")
-      .select("id, body, author_name, author_user_id, created_at, image_url")
+      .select("id, post_id, body, author_name, author_user_id, created_at, image_url, parent_reply_id")
       .eq("post_id", params.id)
       .eq("status", "visible")
+      .is("parent_reply_id", null)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
       .range(from, to),
   ]);
 
+  // A preview may be deployed before its database migration. Preserve the
+  // existing read-only thread instead of crashing or pretending new tools work.
+  if (isMissingBoardSchema(countError) || isMissingBoardSchema(repliesError)) {
+    const [legacyCount, legacyReplies] = await Promise.all([
+      supabase.from("board_replies").select("id", {count:"exact",head:true}).eq("post_id",params.id).eq("status","visible"),
+      supabase.from("board_replies").select("id,post_id,body,author_name,author_user_id,created_at,image_url").eq("post_id",params.id).eq("status","visible").order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,to),
+    ]);
+    totalReplyCount = legacyCount.count;
+    replies = (legacyReplies.data ?? []).map(r=>({...r,parent_reply_id:null}));
+    countError = legacyCount.error; repliesError = legacyReplies.error;
+  }
+  if (countError || repliesError) throw new Error("コメントを読み込めませんでした。");
+  const community = await getThreadCommunity(supabase, post.id, user.id, (replies ?? []).map(r=>r.id));
+  const {data:followCounts}=community ? await supabase.rpc("board_follow_counts",{p_post_ids:[post.id]}) : {data:null};
+  const followerCount=Number(followCounts?.[0]?.total ?? 0);
   const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
 
   // 投稿者・返信者のアイコン画像(2026/10、board/page.tsxと同じ理由で
@@ -163,7 +193,9 @@ export default async function BoardPostPage({
               </div>
             </div>
           </div>
-          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{post.body}</p>
+          {community ? <ThreadControls postId={post.id} preference={community.preference} followerCount={followerCount} resolved={community.resolved} owner={post.author_user_id === user.id} /> : <p role="status" className="muted">掲示板の追加機能は準備中です。現在は本文・コメントの閲覧のみご利用いただけます。</p>}
+          <BoardBody body={post.body} />
+          {community && <ReactionButtons postId={post.id} rows={community.reactions} userId={user.id} />}
           {post.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img loading="lazy" decoding="async"
@@ -182,61 +214,14 @@ export default async function BoardPostPage({
         </div>
 
         <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
-          コメント ({totalReplyCount ?? 0})
+          コメント・返信 ({community?.totalReplies ?? totalReplyCount ?? 0})
         </h2>
 
         {(!replies || replies.length === 0) && (
           <p className="muted small">まだコメントはありません。</p>
         )}
 
-        {replies?.map((r) => (
-          <div className="card" key={r.id} style={{ display: "flex", gap: 10 }}>
-            {r.author_user_id ? (
-              <Link href={`/members/${r.author_user_id}`} style={{ flexShrink: 0 }}>
-                <Avatar name={r.author_name} url={avatarByUserId[r.author_user_id]} />
-              </Link>
-            ) : (
-              <Avatar name={r.author_name} url={null} />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 10,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!r.author_user_id && officialIds.has(r.author_user_id)} /><MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} /><AcademyBadge score={r.author_user_id ? graduationByUserId[r.author_user_id] : null} compact/></span>
-                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>
-                    {r.author_name}{" "}
-                    <span className="muted small" style={{ fontWeight: 400 }}>
-                      {formatDate(r.created_at)}
-                    </span>
-                  </div>
-                </div>
-                <ReportForm kind="reply" label="🚩" action={reportReply.bind(null, r.id, post.id)} buttonStyle={{ fontSize: 11 }} />
-              </div>
-              <div style={{ fontSize: 13.5, marginTop: 2, whiteSpace: "pre-wrap" }}>{r.body}</div>
-              {r.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img loading="lazy" decoding="async"
-                  src={r.image_url}
-                  alt=""
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: 280,
-                    objectFit: "contain",
-                    borderRadius: 8,
-                    marginTop: 8,
-                    background: "var(--surface-2)",
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
+        {community ? replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />) : replies?.map(r => <article className="card" key={r.id} style={{marginBottom:12}}><p className="muted small">{r.author_name} ・ {formatDate(r.created_at)}</p><BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="" loading="lazy" style={{maxWidth:"100%",maxHeight:420,objectFit:"contain"}} />}</article>)}
 
         {totalPages > 1 && (
           <div
@@ -274,38 +259,11 @@ export default async function BoardPostPage({
           </div>
         )}
 
-        <div className="card" style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
-          <form action={createReply} encType="multipart/form-data">
-            <input type="hidden" name="postId" value={post.id} />
-            {/* 投稿者名はハンドルネームに固定(匿名なし。2026/10/20)。未設定の会員だけここで決めてもらう */}
-            {authorDisplayName ? (
-              <div className="field">
-                <span className="muted">お名前</span>
-                <div style={{ fontWeight: 700 }}>{authorDisplayName} <Link href="/account/profile" className="muted small" style={{ fontWeight: 400, textDecoration: "underline" }}>変更</Link></div>
-              </div>
-            ) : (
-              <div className="field">
-                <span className="muted">ハンドルネーム *（掲示板とマイページに表示されます。{HANDLE_NAME_MAX}文字まで）</span>
-                <input type="text" name="authorName" required maxLength={HANDLE_NAME_MAX} autoComplete="nickname" placeholder="例）ポーカー太郎" />
-              </div>
-            )}
-            <div className="field">
-              <span className="muted">返信内容 *</span>
-              <textarea name="body" rows={3} required />
-            </div>
-            <div className="field">
-              <span className="muted">画像を添付（任意）</span>
-              <input type="file" name="image" accept="image/*" />
-            </div>
-            <button type="submit" className="btn primary">
-              送信
-            </button>
-            <p className="muted small" style={{ marginTop: 8 }}>
-              ⚠️ 不適切なコメントは運営者によって削除される場合があります。
-            </p>
-          </form>
-        </div>
+        {community && <div className="card" style={{ marginTop: 16 }}>
+          <h2 style={{fontSize:16}}>スレッドにコメントする</h2>
+          <ReplyComposer postId={post.id} authorName={authorDisplayName} />
+        </div>}
+        <BoardHelp />
       </div>
       <PortalFooter />
       <BottomTabs active="board" />

@@ -1,3 +1,5 @@
+import { BoardNotificationLink } from "@/app/board/notification-controls";
+import { BoardPanel } from "./board-panel";
 import { ReadableName } from "@/app/readable-name";
 import { OfficialBadge } from "@/app/member-role-badge";
 import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
@@ -38,7 +40,7 @@ export async function MyPageContent({
   profileEdit = false,
   dealerRegistration = false,
 }: {
-  searchParams: { tab?: string; error?: string; done?: string };
+  searchParams: { tab?: string; boardPage?: string; error?: string; done?: string };
   profileEdit?: boolean;
   dealerRegistration?: boolean;
 }) {
@@ -156,12 +158,20 @@ export async function MyPageContent({
       ? formatDate(user.created_at)
       : "";
 
-  const tabs: { key: string; label: string }[] = [
-    { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
-    { key: "favJobs", label: `☆ お気に入り求人(${favJobs.length})` },
-    { key: "coupons", label: `🎟️ クーポン` },
-    { key: "events", label: `🏆 参加予定イベント(${rsvpEvents.length})` },
-    { key: "posts", label: `💬 投稿(${myPosts?.length ?? 0})` },
+  const [{ count: boardFollowCount }, { count: boardUnreadCount }] = await Promise.all([
+    supabase.from("board_thread_preferences").select("post_id,board_posts!inner(status)", { count:"exact",head:true }).eq("user_id",user.id).eq("following",true).eq("board_posts.status","visible"),
+    supabase.from("board_notifications").select("id", { count:"exact",head:true }).eq("user_id",user.id).is("read_at",null),
+  ]);
+  const {count:boardNotificationCount}=await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id);
+  const {count:ownPostUnread}=myPosts?.length ? await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null).in("post_id",myPosts.map(p=>p.id)) : {count:0};
+  const tabs = [
+    { key:"favorites",label:"お気に入り店舗",icon:"♥",detail:`${favStores.length} 件`,unread:0 },
+    { key:"favJobs",label:"お気に入り求人",icon:"★",detail:`${favJobs.length} 件`,unread:0 },
+    { key:"coupons",label:"クーポン",icon:"▤",detail:`${favCoupons.length} 件`,unread:0 },
+    { key:"events",label:"参加予定イベント",icon:"♛",detail:`${rsvpEvents.length} 件`,unread:0 },
+    { key:"boardFollows",label:"フォロー中",icon:"☆",detail:`${boardFollowCount ?? 0} 件`,unread:0 },
+    { key:"boardNotifications",label:"サミット通知",icon:"🔔",detail:`${boardNotificationCount ?? 0} 件・未読 ${boardUnreadCount ?? 0} 件`,unread:boardUnreadCount ?? 0 },
+    { key:"posts",label:"投稿",icon:"💬",detail:`未読通知数 ${ownPostUnread ?? 0} 件`,unread:ownPostUnread ?? 0 },
   ];
 
   return (
@@ -302,13 +312,9 @@ export async function MyPageContent({
 
         <div className={styles.tiles}>
           {tabs.map((t) => (
-            <Link
-              key={t.key}
-              href={`/mypage?tab=${t.key}`}
-              className={styles.tile}
-            >
-              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
-            </Link>
+            <BoardNotificationLink key={t.key} href={`/mypage?tab=${t.key}`} className={styles.tile} unread={t.unread>0} ownPostsOnly={t.key==="posts"}>
+              <span className={styles.menuIcon} aria-hidden="true">{t.key === "boardNotifications" ? <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4M12 2V1"/></svg> : t.key === "posts" ? <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 3H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4l4 3v-3h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="M7 8h10M7 12h7"/></svg> : t.icon}</span><span className={styles.menuText}><strong>{t.label}{t.unread>0 && <span className={styles.unreadDot} aria-label="新しい通知あり" />}</strong><small>{t.detail}</small></span><b aria-hidden="true">›</b>
+            </BoardNotificationLink>
           ))}
         </div>
 
@@ -486,6 +492,7 @@ export async function MyPageContent({
               ))
             ))}
 
+          {(tab === "boardFollows" || tab === "boardNotifications") && <BoardPanel userId={user.id} notifications={tab === "boardNotifications"} page={Number(searchParams.boardPage || 1)} />}
           {tab === "posts" && (
             <>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
