@@ -259,10 +259,6 @@ export default async function ApplyPage({
                     <input type="text" name="representativeName" maxLength={100} />
                   </div>
                   <div className="field">
-                    <span className="muted">法人番号（13桁・法人の場合）</span>
-                    <input type="text" name="corporateNumber" inputMode="numeric" maxLength={20} placeholder="例）1234567890123" />
-                  </div>
-                  <div className="field">
                     <span className="muted">風営法の許可番号など（お持ちの場合・任意）</span>
                     <input type="text" name="licenseNumber" maxLength={100} />
                   </div>
