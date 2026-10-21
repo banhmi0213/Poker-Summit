@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ThreadControls } from "@/app/board/community";
-import { BoardReadButton } from "@/app/board/notification-controls";
+import { BoardReadButton, BoardNotificationLink } from "@/app/board/notification-controls";
 import s from "@/app/board/community.module.css";
 export async function BoardPanel({ userId, notifications, page = 1 }: { userId: string; notifications: boolean; page?: number }) {
   const db = await createClient();
@@ -17,7 +17,7 @@ export async function BoardPanel({ userId, notifications, page = 1 }: { userId: 
       {!data?.length && <p className="muted small">通知はまだありません。</p>}
       {data?.map(n => { const post = n.board_posts as unknown as {title:string}; const href = `/board/${n.post_id}${n.reply_id ? `?focus=${n.reply_id}` : ""}`; return <div key={n.id} className={`${s.inboxItem} ${!n.read_at?s.unread:""}`}>
         <span className={s.hint}>{n.read_at ? "既読" : "● 未読"} · {new Date(n.created_at).toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"})}</span>
-        <Link href={href}>{post.title}</Link><p>{names[n.actor_id] || "会員"}さん{n.kind==="mention"?"からメンションされました。":n.kind==="reply"?"から返信が届きました。":"が新しいコメントを投稿しました。"}</p>
+        <BoardNotificationLink href={href} id={n.id} unread={!n.read_at}>{post.title}</BoardNotificationLink><p>{names[n.actor_id] || "会員"}さん{n.kind==="mention"?"からメンションされました。":n.kind==="reply"?"から返信が届きました。":"が新しいコメントを投稿しました。"}</p>
         {!n.read_at && <BoardReadButton id={n.id} href={href} />}
       </div>; })}<Pagination total={count ?? 0} page={current} tab="boardNotifications" size={size} /></section>;
   }
