@@ -1,4 +1,4 @@
-import { getVisitorId } from "@/lib/visitor";
+import { getVisitorId, isStaffDevice } from "@/lib/visitor";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -41,7 +41,7 @@ export default async function BlogArticlePage({ params, searchParams }: { params
  const entry = data as BlogEntry;
  // Public views only: admin previews should not inflate BLOG analytics.
  const viewHdrs = await headers();
- if (!preview && !isBotUserAgent(viewHdrs.get("user-agent"))) {
+ if (!preview && !isBotUserAgent(viewHdrs.get("user-agent")) && !isStaffDevice()) {
   const hdrs = viewHdrs;
   const referrer = hdrs.get("referer") ?? null;
   const device = classifyDevice(hdrs.get("user-agent"));
