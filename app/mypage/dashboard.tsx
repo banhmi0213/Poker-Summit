@@ -1,3 +1,4 @@
+import { BoardNotificationLink } from "@/app/board/notification-controls";
 import { BoardPanel } from "./board-panel";
 import { ReadableName } from "@/app/readable-name";
 import { OfficialBadge } from "@/app/member-role-badge";
@@ -162,14 +163,15 @@ export async function MyPageContent({
     supabase.from("board_notifications").select("id", { count:"exact",head:true }).eq("user_id",user.id).is("read_at",null),
   ]);
   const {count:boardNotificationCount}=await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id);
-  const tabs: { key: string; label: string }[] = [
-    { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
-    { key: "favJobs", label: `☆ お気に入り求人(${favJobs.length})` },
-    { key: "coupons", label: `🎟️ クーポン` },
-    { key: "events", label: `🏆 参加予定イベント(${rsvpEvents.length})` },
-    { key: "boardFollows", label: `☆ フォロー中(${boardFollowCount ?? 0})` },
-    { key: "boardNotifications", label: `🔔 サミット通知(${boardNotificationCount ?? 0}件・未読${boardUnreadCount ?? 0}件)` },
-    { key: "posts", label: `💬 投稿(${myPosts?.length ?? 0})` },
+  const {count:ownPostUnread}=myPosts?.length ? await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null).in("post_id",myPosts.map(p=>p.id)) : {count:0};
+  const tabs = [
+    { key:"favorites",label:"お気に入り店舗",icon:"♥",detail:`${favStores.length} 件`,unread:0 },
+    { key:"favJobs",label:"お気に入り求人",icon:"★",detail:`${favJobs.length} 件`,unread:0 },
+    { key:"coupons",label:"クーポン",icon:"▤",detail:`${favCoupons.length} 件`,unread:0 },
+    { key:"events",label:"参加予定イベント",icon:"♛",detail:`${rsvpEvents.length} 件`,unread:0 },
+    { key:"boardFollows",label:"フォロー中",icon:"☆",detail:`${boardFollowCount ?? 0} 件`,unread:0 },
+    { key:"boardNotifications",label:"サミット通知",icon:"🔔",detail:`${boardNotificationCount ?? 0} 件・未読 ${boardUnreadCount ?? 0} 件`,unread:boardUnreadCount ?? 0 },
+    { key:"posts",label:"投稿",icon:"💬",detail:`未読通知数 ${ownPostUnread ?? 0} 件`,unread:ownPostUnread ?? 0 },
   ];
 
   return (
@@ -310,13 +312,9 @@ export async function MyPageContent({
 
         <div className={styles.tiles}>
           {tabs.map((t) => (
-            <Link
-              key={t.key}
-              href={`/mypage?tab=${t.key}`}
-              className={styles.tile}
-            >
-              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
-            </Link>
+            <BoardNotificationLink key={t.key} href={`/mypage?tab=${t.key}`} className={styles.tile} unread={t.unread>0} ownPostsOnly={t.key==="posts"}>
+              <span className={styles.menuIcon} aria-hidden="true">{t.icon}</span><span className={styles.menuText}><strong>{t.label}{t.unread>0 && <span className={styles.unreadDot} aria-label="新しい通知あり" />}</strong><small>{t.detail}</small></span><b aria-hidden="true">›</b>
+            </BoardNotificationLink>
           ))}
         </div>
 
