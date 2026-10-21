@@ -1,3 +1,4 @@
+import {RingChipSummary} from '@/app/poker-ui/ring-chip-summary';
 import { ReadableName } from "@/app/readable-name";
 import { OfficialBadge } from "@/app/member-role-badge";
 import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
@@ -181,6 +182,7 @@ export async function MyPageContent({
             </Link>
           )}
         </div>
+        <RingChipSummary/>
         {latestNotice && (
           <Link href="/news" className="card" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
             <span className="badge">運営からのお知らせ</span>
