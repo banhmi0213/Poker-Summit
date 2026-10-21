@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { sendListingApplicationNotificationEmail, sendListingApplicationReceivedEmail } from "@/lib/email";
 import { readKyc } from "@/lib/listing-kyc";
+import { createApplyCardSession } from "@/lib/apply-card";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
 import { getBillingSettings, isBillingCycle, type BillingCycle } from "@/lib/bank-transfer";
 import { searchStoreCandidates } from "@/lib/store-match";
@@ -323,8 +324,9 @@ export async function startPaidApplication(formData: FormData) {
                   category: category || null,
                   message: message || null,
                   plan_id: planId,
-                  // 確認(本人確認・反社チェック)が済むまで、請求書・決済の案内は送らない(2026/10/21)
-                  payment_status: "awaiting_review",
+                  // 振込: 確認(本人確認・反社チェック)が済んでから請求書を送る。
+                  // カード: その場で支払い・すぐ使い始められる。確認は支払いの後に運営が行い、NGなら掲載停止・返金(2026/10/21 オーナー判断)
+                  payment_status: billingMethod === "bank_transfer" ? "awaiting_review" : "awaiting_card",
                   billing_method: billingMethod,
                   billing_cycle_months: billingCycle,
                   entity_type: kycValue.entityType,
@@ -338,7 +340,7 @@ export async function startPaidApplication(formData: FormData) {
         .single();
 
   // 二重送信: 最初の1件で受付済み(振込は請求書も1通だけ。カードは最初の送信の決済ページで続ける)
-  if (isDuplicateRequest(insertError)) redirect("/apply?done=review");
+  if (isDuplicateRequest(insertError)) redirect(billingMethod === "bank_transfer" ? "/apply?done=review" : `/apply?error=${encodeURIComponent("お申込みを受け付けています。開いている決済ページでお手続きを続けてください。")}`);
   if (insertError || !application) {
           redirect(`/apply?error=${encodeURIComponent(insertError?.message ?? "申込みに失敗しました。")}`);
           return;
@@ -356,7 +358,18 @@ export async function startPaidApplication(formData: FormData) {
     message,
   });
 
-  // 確認(本人確認・反社チェック)が済んでから、運営が請求書・お支払いの案内を送る(総合管理の申込詳細、lib/listing-kyc.ts)。
+  // カード: その場でKOMOJUのお支払い画面へ。お支払い後すぐに店舗管理を使い始められる。
+  // 事業者の確認は支払いの後に運営が行う(総合管理の申込詳細。NGなら掲載停止・返金)。
+  if (billingMethod === "card") {
+    const r = await createApplyCardSession({ id: application.id, company_name: companyName, email, plan_id: planId, billing_cycle_months: billingCycle });
+    if ("error" in r) {
+      await createServiceRoleClient().from("listing_applications").update({ payment_status: "failed" }).eq("id", application.id);
+      redirect(`/apply?error=${encodeURIComponent(r.error)}`);
+    }
+    redirect((r as { url: string }).url);
+  }
+
+  // 振込: 確認(本人確認・反社チェック)が済んでから、運営が請求書を送る(総合管理の申込詳細、lib/listing-kyc.ts)。
   // ここでは受付のお知らせだけを送る。
   try {
     await sendListingApplicationReceivedEmail({ to: email, companyName, contactName, billingMethod });
