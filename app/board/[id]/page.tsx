@@ -10,7 +10,7 @@ import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { BoardBody, BoardHelp, ThreadControls, ReactionButtons, ReplyComposer, ReplyConversation } from "../community";
-import { getThreadCommunity } from "../community-data";
+import { getThreadCommunity, isMissingBoardSchema } from "../community-data";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
 
@@ -81,7 +81,7 @@ export default async function BoardPostPage({
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const [{ count: totalReplyCount }, { data: replies }] = await Promise.all([
+  let [{ count: totalReplyCount, error: countError }, { data: replies, error: repliesError }] = await Promise.all([
     supabase
       .from("board_replies")
       .select("id", { count: "exact", head: true })
@@ -98,6 +98,18 @@ export default async function BoardPostPage({
       .range(from, to),
   ]);
 
+  // A preview may be deployed before its database migration. Preserve the
+  // existing read-only thread instead of crashing or pretending new tools work.
+  if (isMissingBoardSchema(countError) || isMissingBoardSchema(repliesError)) {
+    const [legacyCount, legacyReplies] = await Promise.all([
+      supabase.from("board_replies").select("id", {count:"exact",head:true}).eq("post_id",params.id).eq("status","visible"),
+      supabase.from("board_replies").select("id,post_id,body,author_name,author_user_id,created_at,image_url").eq("post_id",params.id).eq("status","visible").order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,to),
+    ]);
+    totalReplyCount = legacyCount.count;
+    replies = (legacyReplies.data ?? []).map(r=>({...r,parent_reply_id:null}));
+    countError = legacyCount.error; repliesError = legacyReplies.error;
+  }
+  if (countError || repliesError) throw new Error("コメントを読み込めませんでした。");
   const community = await getThreadCommunity(supabase, post.id, user.id, (replies ?? []).map(r=>r.id));
   const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
 
@@ -179,9 +191,9 @@ export default async function BoardPostPage({
               </div>
             </div>
           </div>
-          <ThreadControls postId={post.id} preference={community.preference} resolved={community.resolved} owner={post.author_user_id === user.id} />
+          {community ? <ThreadControls postId={post.id} preference={community.preference} resolved={community.resolved} owner={post.author_user_id === user.id} /> : <p role="status" className="muted">掲示板の追加機能は準備中です。現在は本文・コメントの閲覧のみご利用いただけます。</p>}
           <BoardBody body={post.body} />
-          <ReactionButtons postId={post.id} rows={community.reactions} userId={user.id} />
+          {community && <ReactionButtons postId={post.id} rows={community.reactions} userId={user.id} />}
           {post.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img loading="lazy" decoding="async"
@@ -200,14 +212,14 @@ export default async function BoardPostPage({
         </div>
 
         <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
-          コメント・返信 ({community.totalReplies})
+          コメント・返信 ({community?.totalReplies ?? totalReplyCount ?? 0})
         </h2>
 
         {(!replies || replies.length === 0) && (
           <p className="muted small">まだコメントはありません。</p>
         )}
 
-        {replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />)}
+        {community ? replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />) : replies?.map(r => <article className="card" key={r.id} style={{marginBottom:12}}><p className="muted small">{r.author_name} ・ {formatDate(r.created_at)}</p><BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="" loading="lazy" style={{maxWidth:"100%",maxHeight:420,objectFit:"contain"}} />}</article>)}
 
         {totalPages > 1 && (
           <div
@@ -245,10 +257,10 @@ export default async function BoardPostPage({
           </div>
         )}
 
-        <div className="card" style={{ marginTop: 16 }}>
+        {community && <div className="card" style={{ marginTop: 16 }}>
           <h2 style={{fontSize:16}}>スレッドにコメントする</h2>
           <ReplyComposer postId={post.id} authorName={authorDisplayName} />
-        </div>
+        </div>}
         <BoardHelp />
       </div>
       <PortalFooter />
