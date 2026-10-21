@@ -23,6 +23,15 @@ export function GaPageView({ measurementId }: { measurementId: string }) {
     if (!pathname || EXCLUDE.test(pathname)) return;
     // ページのタイトルが入れ替わるのを少し待ってから送る
     const t = window.setTimeout(() => {
+      // サイト全体のPV・UUを総合管理でも見られるよう、自分のサイトにも送る(2026/10/21、/api/pv)
+      try {
+        const payload = JSON.stringify({ path: pathname, ref: document.referrer || "" });
+        if (!navigator.sendBeacon?.("/api/pv", new Blob([payload], { type: "application/json" }))) {
+          void fetch("/api/pv", { method: "POST", body: payload, headers: { "Content-Type": "application/json" }, keepalive: true });
+        }
+      } catch {
+        // 送れなくても何もしない
+      }
       window.gtag?.("event", "page_view", {
         send_to: measurementId,
         page_location: window.location.href,
