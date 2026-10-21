@@ -75,7 +75,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const latest=(rows:{lastModified?:string|Date}[])=>rows.reduce<Date|undefined>((m,r)=>{const d=r.lastModified?new Date(r.lastModified):undefined;return d&&(!m||d>m)?d:m;},undefined);
  const listLatest:Record<string,Date|undefined>={"/stores":latest(stores),"/events":latest(eventPages),"/jobs":latest(jobPages),"/coupons":latest(couponPages),"/major-tournaments":latest(tournamentPages),"/blog":latest(blog)};
  listLatest[""]=latest(Object.values(listLatest).filter((d):d is Date=>!!d).map(d=>({lastModified:d})));
- const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company","/signup","/login"].map(path=>{const d=listLatest[path];return d?{url:`${base}${path}`,lastModified:d}:{url:`${base}${path}`};});
+ const fixed=["","/stores","/events","/jobs","/coupons","/board","/major-tournaments","/blog","/apply","/company","/signup","/login"].map(path=>{const url=`${base}${path||"/"}`;const d=listLatest[path];return d?{url,lastModified:d}:{url};});
+ // TOPは末尾の「/」付き(https://pokersummit.jp/)で載せる。canonical・Search Consoleの検査と同じ形にそろえるため(2026/10/21)
 
  return [...fixed,...prefPages,...cityPages,...stores,...eventPages,...jobPages,...couponPages,...tournamentPages,...blog];
 }
