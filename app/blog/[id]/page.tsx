@@ -1,3 +1,4 @@
+import { getVisitorId } from "@/lib/visitor";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -49,6 +50,7 @@ export default async function BlogArticlePage({ params, searchParams }: { params
    blog_entry_id: entry.id,
    referrer,
    device,
+   visitor_id: getVisitorId(),
   }).then(() => {});
  }
  let stores: BlogStore[] = [];

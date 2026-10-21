@@ -1,3 +1,4 @@
+import { getVisitorId } from "@/lib/visitor";
 import {DealerReviews} from "./reviews";
 import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 import { dealerReliability } from "@/lib/dealer-reliability";
@@ -26,7 +27,7 @@ export default async function MyDealerPage({searchParams}:{searchParams:{done?:s
   const hdrs=await headers();
   const ua=hdrs.get("user-agent");
   if(!isAdmin&&!isBotUserAgent(ua)){
-   await createServiceRoleClient().from("page_views").insert({path:"/account/dealer",referrer:hdrs.get("referer")??null,device:classifyDevice(ua),source}).then(()=>{},()=>{});
+   await createServiceRoleClient().from("page_views").insert({path:"/account/dealer",referrer:hdrs.get("referer")??null,device:classifyDevice(ua),source,visitor_id:getVisitorId()}).then(()=>{},()=>{});
   }
   if(user&&!isAdmin)await recordAdAttribution(user.id,source,"visit");
  }

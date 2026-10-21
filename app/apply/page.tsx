@@ -1,3 +1,4 @@
+import { getVisitorId } from "@/lib/visitor";
 import { TurnstileWidget } from "@/app/turnstile-widget";
 import { CARD_BRANDS_NOTE } from "@/lib/constants";
 import { RequestKeyInput } from "@/app/request-key-input";
@@ -48,7 +49,7 @@ export default async function ApplyPage({
     if (!isBotUserAgent(ua)) {
       await createServiceRoleClient()
         .from("page_views")
-        .insert({ path: "/apply", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua), source })
+        .insert({ path: "/apply", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua), source, visitor_id: getVisitorId() })
         .then(() => {}, () => {});
     }
   }

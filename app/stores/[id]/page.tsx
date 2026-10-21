@@ -1,3 +1,4 @@
+import { getVisitorId } from "@/lib/visitor";
 import { ReadableName } from "@/app/readable-name";
 import { couponExpiryLabel, notExpiredFilter } from "@/lib/coupon-expiry";
 import type { Metadata } from "next";
@@ -321,7 +322,7 @@ export default async function StoreDetailPage({
   if (!isBotUserAgent(hdrs.get("user-agent")) && !viewerIsAdmin) {
     supabase
       .from("page_views")
-      .insert({ path, store_id: store.id, referrer, device })
+      .insert({ path, store_id: store.id, referrer, device, visitor_id: getVisitorId() })
       .then(() => {});
   }
 
