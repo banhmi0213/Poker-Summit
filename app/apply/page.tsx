@@ -92,6 +92,38 @@ export default async function ApplyPage({
     );
   }
 
+  if (params.done === "review") {
+    return (
+      <div>
+        <PortalHeader />
+        <div className="container" style={{ maxWidth: 480 }}>
+          <Link href="/" className="breadcrumb">
+            トップに戻る
+          </Link>
+          <div className="brand wordmark" style={{ marginBottom: 20 }}>
+            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
+          </div>
+          <div className="card">
+            <h1 style={{ fontSize: 18, marginBottom: 8 }}>お申込みありがとうございます</h1>
+            <p style={{ fontSize: 14, lineHeight: 1.8 }}>
+              お申し込みを受け付けました。事業者の確認（実在確認・反社会的勢力に該当しないことの確認）が完了しましたら、ご登録のメールアドレスに請求書またはお支払いのご案内をお送りします（通常1〜2営業日）。
+            </p>
+            <ul className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
+              <li>受付のお知らせメールをお送りしています。届かない場合は迷惑メールフォルダをご確認ください。</li>
+              <li>確認の結果によっては、お申し込みをお受けできない場合がございます。</li>
+              <li>ご不明な点は info@pokersummit.jp までご連絡ください。</li>
+            </ul>
+            <a href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
+              トップへ戻る
+            </a>
+          </div>
+        </div>
+        <PortalFooter />
+        <BottomTabs />
+      </div>
+    );
+  }
+
   if (params.done === "transfer") {
     return (
       <div>
@@ -223,6 +255,37 @@ export default async function ApplyPage({
                     ※運営のみ表示：クレジットカード払いは現在一般のお客様には表示していません（確認用）
                   </p>
                 )}
+                {/* 事業者の確認(本人確認・反社会的勢力のチェック)のための項目(2026/10/21)。プランを選んで申し込む場合だけ必須 */}
+                <div style={{ border: "1px solid var(--border-strong, #d8c3a0)", borderRadius: 8, padding: "12px 14px", margin: "4px 0 14px" }}>
+                  <strong style={{ display: "block", fontSize: 13, marginBottom: 4 }}>事業者の確認（プランを選んでお申込みの場合は必須）</strong>
+                  <p className="muted" style={{ fontSize: 12, lineHeight: 1.7, margin: "0 0 10px" }}>
+                    お支払いの前に、事業者の実在確認と、反社会的勢力に該当しないことの確認を行っています。確認が完了してから、請求書またはお支払いのご案内をお送りします（通常1〜2営業日）。
+                  </p>
+                  <div className="field">
+                    <span className="muted">事業者の区分</span>
+                    <select name="entityType" defaultValue="">
+                      <option value="">選択してください</option>
+                      <option value="corporation">法人</option>
+                      <option value="individual">個人事業主</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <span className="muted">代表者名</span>
+                    <input type="text" name="representativeName" maxLength={100} />
+                  </div>
+                  <div className="field">
+                    <span className="muted">法人番号（13桁・法人の場合）</span>
+                    <input type="text" name="corporateNumber" inputMode="numeric" maxLength={20} placeholder="例）1234567890123" />
+                  </div>
+                  <div className="field">
+                    <span className="muted">風営法の許可番号など（お持ちの場合・任意）</span>
+                    <input type="text" name="licenseNumber" maxLength={100} />
+                  </div>
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
+                    <input type="checkbox" name="antisocialPledge" style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }} />
+                    <span>申込者（法人の場合はその役員を含む）が、<a href="/terms#antisocial" target="_blank" rel="noopener" style={LINK_STYLE}>利用規約第21条</a>に定める反社会的勢力に該当せず、今後も関係を持たないことを表明・確約します。</span>
+                  </label>
+                </div>
                 <ApplyBillingFields
                   cardEnabled={billing.cardPaymentEnabled}
                   cycles={BILLING_CYCLES.map((m) => {
@@ -274,8 +337,8 @@ export default async function ApplyPage({
             )}
             {plans && plans.length > 0 && (
               <p className="muted" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.7 }}>
-                銀行振込の場合は、お申込み後に請求書（PDF）をメールでお送りします。ご入金の確認後に店舗管理アカウントを発行します。
-                {billing.cardPaymentEnabled ? `クレジットカードの場合はカード登録画面へ進みます。${CARD_BRANDS_NOTE}` : ""}
+                お申込み後、事業者の確認が完了してから、銀行振込の場合は請求書（PDF）を、{billing.cardPaymentEnabled ? "クレジットカードの場合はお支払いページのご案内を、" : ""}メールでお送りします。ご入金（お支払い）の確認後に店舗管理アカウントを発行します。
+                {billing.cardPaymentEnabled ? CARD_BRANDS_NOTE : ""}
               </p>
             )}
           </form>

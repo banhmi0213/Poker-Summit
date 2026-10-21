@@ -991,3 +991,42 @@ ${siteUrl}/contact
 Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】無料期間終了のお知らせ", text });
 }
+
+/** 有料掲載のお申し込みを受け付けた(確認後に請求書・お支払いの案内を送る)ことのお知らせ(2026/10/21) */
+export async function sendListingApplicationReceivedEmail(params: { to: string; companyName: string; contactName: string; billingMethod: "card" | "bank_transfer" }): Promise<void> {
+  const text = `${params.companyName}
+${params.contactName} 様
+
+このたびはPoker Summitへの掲載をお申し込みいただき、誠にありがとうございます。
+お申し込みを受け付けました。
+
+当サービスでは、有料掲載をお申し込みいただいた事業者様について、お支払いの前に確認（事業者の実在確認・反社会的勢力に該当しないことの確認など）を行っております。
+確認が完了しましたら、${params.billingMethod === "bank_transfer" ? "請求書（PDF）" : "お支払い（クレジットカード）のご案内"}をこのメールアドレスにお送りします。通常1〜2営業日ほどお時間をいただきます。
+
+確認の結果によっては、お申し込みをお受けできない場合がございます。あらかじめご了承ください。
+
+ご不明な点がございましたら、お問い合わせフォームよりご連絡ください。
+${getSiteUrl()}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】掲載のお申し込みを受け付けました", text });
+}
+
+/** 確認が済んだカード払いのお申し込みに、お支払いページのリンクを送る(2026/10/21) */
+export async function sendCardPaymentLinkEmail(params: { to: string; companyName: string; contactName: string; link: string }): Promise<void> {
+  const text = `${params.companyName}
+${params.contactName} 様
+
+Poker Summitへの掲載のお申し込みについて、確認が完了しました。
+次のリンクから、クレジットカードでのお支払い手続きにお進みください。
+
+${params.link}
+
+お支払いの完了後、店舗管理画面のログイン情報をお送りします。
+お心当たりのない場合は、このメールを破棄してください。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】お支払い手続きのご案内", text, sensitive: true });
+}

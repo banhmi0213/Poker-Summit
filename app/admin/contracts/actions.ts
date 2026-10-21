@@ -212,6 +212,10 @@ export async function createContract(formData: FormData) {
   if (!storeId) {
     throw new Error("店舗を選択してください。");
   }
+  if (formData.get("kycConfirmed") !== "on") {
+    throw new Error("事業者の確認（本人確認・反社会的勢力のチェック）を済ませてから登録してください。");
+  }
+  const kycNote = String(formData.get("kycNote") ?? "").trim().slice(0, 1000) || null;
   if (!planId) {
     throw new Error("プランを選択してください。");
   }
@@ -243,7 +247,7 @@ export async function createContract(formData: FormData) {
   }
 
   await replaceContractAddons(supabase, contract.id, addonIds);
-  await logAdminAction(supabase, "contract_create", "store_contract", contract.id, { storeId, planId, trialMonths });
+  await logAdminAction(supabase, "contract_create", "store_contract", contract.id, { storeId, planId, trialMonths, kycConfirmed: true, kycNote });
 
   revalidatePath(CONTRACTS_PATH);
   revalidatePath(`${CONTRACTS_PATH}/${contract.id}`);

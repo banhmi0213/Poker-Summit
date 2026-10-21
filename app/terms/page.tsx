@@ -238,7 +238,7 @@ export default async function TermsPage() {
             </ol>
           </section>
           <section id="antisocial-forces" style={{ scrollMarginTop: 100, marginTop: 32 }}>
-            <h2 style={ARTICLE_STYLE}>第21条（反社会的勢力の排除）</h2>
+            <h2 id="antisocial" style={ARTICLE_STYLE}>第21条（反社会的勢力の排除）</h2>
             <ol style={LIST_STYLE}>
               <li>ユーザーは、現在および将来にわたり、暴力団、暴力団員、暴力団員でなくなった時から5年を経過しない者、暴力団準構成員、暴力団関係企業、総会屋等、社会運動等標ぼうゴロ、特殊知能暴力集団その他これらに準ずる者（以下「反社会的勢力」といいます。）に該当しないこと、および反社会的勢力と社会的に非難されるべき関係を有しないことを表明し、保証します。</li>
               <li>ユーザーは、自らまたは第三者を利用して、暴力的な要求行為、法的な責任を超えた不当な要求行為、脅迫的な言動、風説の流布・偽計・威力を用いた信用毀損または業務妨害その他これらに準ずる行為を行ってはなりません。</li>
