@@ -111,6 +111,16 @@ export default async function NewContractPage() {
             <input type="tel" name="contactTel" style={fieldStyle} />
           </label>
 
+          {/* 事業者の確認(本人確認・反社会的勢力のチェック、2026/10/21)。手で作る契約も確認してから */}
+          <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
+            <input type="checkbox" name="kycConfirmed" required style={{ marginTop: 3, flexShrink: 0 }} />
+            <span>この事業者の確認（法人番号の照合または代表者の本人確認、公開情報での反社会的勢力との関係の確認）を済ませ、反社会的勢力に該当しないことの表明・確約を受けた</span>
+          </label>
+          <label>
+            確認メモ（照合した法人番号・確認した書類など）
+            <textarea name="kycNote" rows={2} style={fieldStyle} />
+          </label>
+
           <button type="submit" className="btn primary" style={{ marginTop: 4 }}>
             登録する
           </button>
