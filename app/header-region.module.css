@@ -60,3 +60,24 @@
 @media(min-width:1101px){.header :global(.portal-nav-inner){flex-wrap:nowrap;justify-content:space-between}.header :global(.portal-logo){flex-shrink:0}.header :global(.portal-auth-actions){margin-left:auto}}
 @media(max-width:1100px){.header .megaNav{display:none}}
 @media(prefers-reduced-motion:reduce){.megaPanel,.title,.caret{transition:none}}
+
+/* Image-led, full-width mega-menu content. */
+.menuGrid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.megaPanel{padding:22px 24px 26px}
+.menuLink{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;background:#faf6ec}
+.menuArtwork{display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:148px;background:#f1e6cf;overflow:hidden;border-bottom:1px solid #e8dcc7}
+.menuArtwork img{display:block;width:100%;height:100%;object-fit:contain}
+.menuCopy{display:flex;flex-direction:column;gap:8px;padding:17px 28px 18px 16px}
+.menuCopy strong{position:relative;font-size:14px;color:#523b1b;line-height:1.5}
+.menuCopy small{font-size:12px;font-weight:400;color:#85704d;line-height:1.65}
+.menuLink>.menuArrow{position:absolute;right:12px;bottom:20px;color:#a57f36;font-size:22px}
+.disabled{display:flex;align-items:center;justify-content:center;min-height:148px}
+.learningArtwork{display:flex;flex-direction:column;justify-content:center;gap:12px;padding:16px;background:linear-gradient(110deg,#fff9e8,#ecdbb1);box-sizing:border-box;width:100%;height:100%;color:#705020}
+.learningArtwork>span{font-size:8px;letter-spacing:.1em}
+.learningArtwork strong{font-size:20px;line-height:1.6}
+.jobArtwork{display:block;width:100%;height:100%;background-image:url('/images/job-categories-photo-v1.webp');background-repeat:no-repeat;background-size:207% 360%}
+.mobileLinks .menuLink{flex-direction:row;align-items:center;padding:12px 14px}
+.mobileLinks .menuCopy{padding:0}
+.mobileLinks .menuLink>.menuArrow{position:static}
+.mobileLinks .disabled{min-height:48px;justify-content:flex-start}
+@media(max-width:1100px){.header :global(.portal-auth-actions){display:none!important}}
