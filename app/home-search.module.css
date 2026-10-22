@@ -121,3 +121,20 @@
 /* Keep each tinted section and its following banners within one continuous colour band. */
 .readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:24px}
 .readable :global(.home-section[data-tone-banner])::before{top:-26px}
+
+
+/* Pattern C: preserve section bands and their connected banners. */
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{color:#48351c;border-color:#d7bd84}
+.readable.readable h3{color:#48351c}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#6c593c}
+.readable :global(.home-section[data-tone="soft"]){--section-tone:#fbf6ec}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#f3e8cf;color:#48351c}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#806024}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#806024}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-card),.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#fff;border-color:#dfcca4}
+.readable.readable :global([data-tone="navy"]) h3,.readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,.readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#48351c}
+.readable.readable :global([data-tone="navy"]) p,.readable.readable :global([data-tone="navy"]) small,.readable.readable :global([data-tone="navy"]) :global(.home-location),.readable.readable :global([data-tone="navy"]) :global(.muted),.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#6c593c}
+.readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#806024}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#dfcca4}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#f3e8cf;border-color:#cdb47e;color:#806024}
+.statsBar :global(.ps-region-stat){color:#48351c}
