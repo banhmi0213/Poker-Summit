@@ -338,7 +338,7 @@ export default async function HomePage({
             <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
           </div>
         )}
-        <section className="home-section">
+        <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
@@ -353,7 +353,7 @@ export default async function HomePage({
           })}</div>
         </section>
         {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
-        <section className="home-section">
+        <section className="home-section" data-tone="soft">
           <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
           {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
@@ -365,7 +365,7 @@ export default async function HomePage({
 
         <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
         {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
-        <section className="home-section home-summit">
+        <section className="home-section home-summit" data-tone="soft">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
@@ -377,7 +377,7 @@ export default async function HomePage({
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
-        <section className="home-section">
+        <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
           {/* 新着求人(職種画像と求人バナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
