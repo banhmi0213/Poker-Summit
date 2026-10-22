@@ -83,7 +83,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
                 onKeyDown={event => {
                   if (event.key === "ArrowDown") {
                     event.preventDefault(); setOpen(index);
-                    window.requestAnimationFrame(() => document.querySelector<HTMLAnchorElement>(`#mega-panel-${index} a`)?.focus());
+                    window.setTimeout(() => { const panel = document.getElementById(`mega-panel-${index}`); if (panel?.getAttribute("aria-hidden") === "false") panel.querySelector<HTMLAnchorElement>("a")?.focus(); }, 250);
                   }
                 }}>
                 {group.label}<span className={styles.caret} aria-hidden="true">⌄</span>
