@@ -3175,3 +3175,8 @@ body{background:var(--preview-ivory);color:var(--text)}
 .mobile-nav-drawer{background:#102039;color:#f8f6ef}
 .nav-hamburger{color:#ecd5a5}
 .bottom-tabs{background:#102039;color:#f8f6ef;border-color:#43516a}
+
+
+/* Reference-inspired colour placement, adapted to the Summit gold identity. */
+.portal-nav{background:radial-gradient(ellipse at 82% -180px,#66512b 0%,#102039 72%)}
+.portal-footer{background:radial-gradient(ellipse at 65% 120%,#53462e,#101c30 72%)}
