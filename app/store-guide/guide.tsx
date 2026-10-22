@@ -59,6 +59,21 @@ export function StoreGuide() {
         </p>
       </section>
 
+      <section style={card}>
+        <h2 style={{ fontSize: 17, margin: "0 0 6px" }}>ご契約後の店舗ページのイメージ（サンプル）</h2>
+        <p style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 10px" }}>
+          店舗管理画面から写真・料金メニュー・クーポン・お知らせ・求人を登録すると、店舗ページはこのように表示されます。
+        </p>
+        <img
+          src="/store-guide/store-page-sample.png"
+          alt="写真・料金メニュー・クーポン・お知らせを登録した店舗ページの表示例"
+          width={865}
+          height={863}
+          style={{ width: "100%", height: "auto", borderRadius: 8, border: "1px solid #e4d3ad", display: "block" }}
+        />
+        <p style={{ fontSize: 12, color: "#7a6a52", margin: "8px 0 0" }}>※サンプルです。店名・住所・電話番号・写真は架空のものです。</p>
+      </section>
+
       <Section no="01" title="ログインしてメニューを開く" where="https://pokersummit.jp/store/login" tip="店舗用のIDは会員用アカウントとは別です。IDやパスワードが分からない場合は、運営へお問い合わせください（パスワードは運営が発行します）。">
         <ol style={ol}>
           <li>店舗管理ログイン（https://pokersummit.jp/store/login）を開きます。</li>
