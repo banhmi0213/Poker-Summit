@@ -73,3 +73,19 @@
  .statsBar :global(.ps-region-stat__label){font-size:11px;white-space:normal}
  .statsBar :global(.ps-region-stat strong){font-size:24px}
 }
+
+
+/* Preview: light reading surfaces complement the navy header and feature panel. */
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#fffefa!important;color:#17263e;border-color:#bdc4cd}
+.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#17263e}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#4e5d70}
+.readable.readable :global(.home-card-cta),.readable.readable :global(.home-section-head)>a{color:#806024}
+.readable.readable :global(.home-tag){background:#f2e7cd;color:#73561e}
+.readable.readable :global(.home-job-salary){color:#17263e}
+.readable :global(.home-post){background:#fffefa;border-color:#e0e3e5}
+.readable :global(.home-post:hover){background:#eeeadd}
+.statsBar.statsBar{background:#102039;border-color:#d2ad60}
+.statsBar :global(.ps-region-stat){color:#f8f6ef}
+.statsBar :global(.ps-region-stat__icon){color:#d2ad60}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#667085}
+.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#3b4c65}
