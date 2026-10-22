@@ -64,6 +64,9 @@ export function StoreGuide() {
         <p style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 10px" }}>
           店舗管理画面から写真・料金メニュー・クーポン・お知らせ・求人を登録すると、店舗ページはこのように表示されます。
         </p>
+        <p style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 10px", padding: "8px 12px", background: "#fff6df", borderRadius: 8 }}>
+          10月21日のプレオープン開始から1日足らずで、サイトは延べ<strong>1,000回以上</strong>・<strong>250人以上</strong>の方に閲覧されています（2026年10月22日時点）。
+        </p>
         <img
           src="/store-guide/store-page-sample.png"
           alt="写真・料金メニュー・クーポン・お知らせを登録した店舗ページの表示例"
