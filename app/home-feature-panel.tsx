@@ -39,7 +39,7 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
         </div>
       </article>
       <div className={styles.list} aria-label="表示する注目情報を選ぶ">
-        {items.map(item => <button key={item.id} type="button" className={`${styles.item} ${item.id === selected.id ? styles.selected : ""}`} aria-pressed={item.id === selected.id} onClick={() => setSelectedId(item.id)}>
+        {items.map(item => <button key={item.id} type="button" className={`${styles.item} ${item.id === selected.id ? styles.selected : ""}`} aria-pressed={item.id === selected.id} onPointerEnter={event => { if (event.pointerType !== "touch") setSelectedId(item.id); }} onFocus={() => setSelectedId(item.id)} onClick={() => setSelectedId(item.id)}>
           <span className={styles.badge}>{item.category}</span>
           <strong>{item.title}</strong>
           <span className={styles.chevron} aria-hidden="true">›</span>
