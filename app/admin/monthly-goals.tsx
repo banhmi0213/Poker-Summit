@@ -33,6 +33,8 @@ export async function MonthlyGoals() {
   const monthEnd = Date.UTC(jstNow.getUTCFullYear(), jstNow.getUTCMonth() + 1, 1) - 9 * 3600000;
   const from = Math.max(monthStart, LAUNCH);
   const elapsed = Math.min(1, Math.max(0.0001, (now - from) / (monthEnd - from)));
+  // 公開した月は、月の目標を公開日からの日数分に割って比べる(例: 10月は10/21〜31の11日分)
+  const share = (monthEnd - from) / (monthEnd - monthStart);
   const daysLeft = Math.max(0, Math.ceil((monthEnd - now) / 86400000));
   const monthLabel = `${jstNow.getUTCMonth() + 1}月`;
 
@@ -41,13 +43,13 @@ export async function MonthlyGoals() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
         <h2 style={{ fontSize: 17, margin: 0 }}>{monthLabel}の目標と進み具合</h2>
         <span className="muted" style={{ fontSize: 12 }}>
-          残り{daysLeft}日{from > monthStart ? "（10/21の公開日から月末までで計算）" : ""}
+          残り{daysLeft}日{from > monthStart ? "（今月は10/21の公開日から月末までの日数分に目標を割って計算）" : ""}
         </span>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))", gap: 12 }}>
         {ITEMS.map((it) => {
           const actual = Number(p[it.key] ?? 0);
-          const goal = goals[it.key] || 0;
+          const goal = Math.round((goals[it.key] || 0) * (it.pace ? share : 1));
           const rate = goal > 0 ? actual / goal : 0;
           const expected = it.pace ? goal * elapsed : goal;
           const paceRate = expected > 0 ? actual / expected : 0;
