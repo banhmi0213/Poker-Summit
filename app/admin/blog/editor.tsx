@@ -3,6 +3,9 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import { BLOG_CATEGORIES, type BlogEntry, type BlogBlock, type BlogStore } from "@/lib/blog";
+import { TournamentPost } from "@/app/blog/tournament-post";
+import postStyles from "@/app/blog/tournament-post.module.css";
+import { normalizeXPostUrl } from "@/lib/x-post";
 import { ArticleContent } from "@/app/blog/article-content";
 import { saveBlogEntry } from "./actions";
 import styles from "./editor.module.css";
@@ -18,6 +21,9 @@ export function BlogEditor({entry,initialDraft,stores,articles=[],onSaved,onBusy
  const [category,setCategory] = useState(initial?.category || BLOG_CATEGORIES[0]);
  const [summary,setSummary] = useState(initial?.summary || "");
  const [mode,setMode] = useState(initial?.content_mode || "internal");
+ const [xPostUrl,setXPostUrl] = useState(initial?.x_post_url || "");
+ let previewPostUrl="";
+ try { previewPostUrl=normalizeXPostUrl(xPostUrl); } catch { /* Validated on save. */ }
  const [imageAlt,setImageAlt] = useState(initial?.image_alt || "");
  const [image,setImage] = useState(initial?.image_url || "");
  const [blocks,setBlocks] = useState<BlogBlock[]>((initial?.body?.length ? initial.body : [{type:"paragraph" as const,text:""}]).map((b,i)=>({...b,uploadKey:b.uploadKey || `saved_${i}`})));
@@ -67,6 +73,7 @@ export function BlogEditor({entry,initialDraft,stores,articles=[],onSaved,onBusy
  <label className={styles.featured}><input type="checkbox" name="showBreadcrumbs" defaultChecked={initial?.show_breadcrumbs !== false}/> パンくずを表示</label>
  <fieldset className={styles.related}><legend>関連記事（最大12件）</legend>{articles.filter(a=>a.id!==initial?.id).length===0&&<p className={styles.help}>選択できる別の記事はまだありません。2件目以降の記事を登録すると選択できます。</p>}{articles.filter(a=>a.id!==initial?.id).map(a=><label key={a.id} className={styles.checkRow}><input type="checkbox" checked={relatedArticles.includes(a.id)} disabled={!relatedArticles.includes(a.id)&&relatedArticles.length>=12} onChange={e=>setRelatedArticles(old=>e.target.checked?[...old,a.id]:old.filter(id=>id!==a.id))}/>{a.title}</label>)}</fieldset>
  <h3 className={styles.sectionTitle}>5. 関連情報</h3>
+ <label className="field">X投稿URL（任意・1件）<input name="xPostUrl" type="url" maxLength={2048} value={xPostUrl} onChange={e=>setXPostUrl(e.target.value)} placeholder="https://x.com/Poker_Summit/status/2111780849586991534"/><small>公開された投稿のURLを入力してください。PCでは記事右側、スマートフォンでは記事下に表示します。空欄で保存すると非表示になります。埋め込みコードの貼り付けは不要です。</small></label>
  <fieldset className={styles.related}><legend>関連店舗（複数選択可）</legend><input type="search" placeholder="店舗名・都道府県で絞り込み" aria-label="関連店舗を検索" value={search} onChange={e=>setSearch(e.target.value)}/><p className={styles.help}>選択した店舗への「店舗詳細を見る」リンクが記事に表示されます（最大20店舗）。</p><div className={styles.storeList}>{stores.filter(s=>`${s.name} ${s.pref || ""}`.toLowerCase().includes(search.toLowerCase())).map(store=><label key={store.id}><input type="checkbox" value={store.id} checked={selected.includes(store.id)} disabled={!selected.includes(store.id)&&selected.length>=20} onChange={e=>setSelected(old=>e.target.checked ? [...old,store.id] : old.filter(id=>id!==store.id))}/>{store.name} <small>{store.pref}</small></label>)}</div>{selected.map(id=><input key={id} type="hidden" name="storeIds" value={id}/>)}</fieldset>
  <h3 className={styles.sectionTitle}>6. 出典・権利管理</h3>
  <label className="field">画像の権利情報<textarea name="imageRights" rows={3} maxLength={1000} defaultValue={initial?.image_rights || ""} placeholder="自社制作／AI生成／提供元／引用条件など"/></label>
@@ -76,7 +83,7 @@ export function BlogEditor({entry,initialDraft,stores,articles=[],onSaved,onBusy
  <label className={styles.featured}><input type="checkbox" name="includeInSitemap" defaultChecked={initial?.include_in_sitemap !== false}/> サイトマップに掲載</label>
  <label className={styles.featured}><input type="checkbox" name="featured" defaultChecked={initial?.featured || false}/> ピックアップに表示</label>
  <div className={styles.buttons}><button type="button" className="btn" onClick={()=>setPreview(!preview)}>{preview ? "プレビューを閉じる" : "保存前にプレビュー"}</button>{(state.id || entry?.id) && <Link className="btn" href={`/blog/${state.id || entry?.id}?preview=1`} target="_blank">保存済みの記事を見る</Link>}</div>
- {preview && <div className={styles.preview}><h3>保存前プレビュー</h3><ArticleContent title={title} category={category} summary={summary} image={image} imageAlt={imageAlt} body={mode === "internal" ? blocks : []} stores={related} references={references}/>{mode === "external" && <p>記事を読むと、入力した外部URLへ移動します。</p>}</div>}
+ {preview && <div className={styles.preview}><h3>保存前プレビュー</h3><div className={previewPostUrl ? postStyles.layout : undefined}><ArticleContent title={title} category={category} summary={summary} image={image} imageAlt={imageAlt} body={mode === "internal" ? blocks : []} stores={related} references={references}/>{previewPostUrl && <TournamentPost key={previewPostUrl} url={previewPostUrl}/>}</div>{mode === "external" && <p>記事を読むと、入力した外部URLへ移動します。</p>}</div>}
  <p className={styles.help}>下書き・非公開の記事は一般公開されません。公開する場合だけ「公開して保存」を使用してください。</p><Submit onBusyChange={onBusyChange}/>{state.error && <p role="alert" className="err">{state.error}</p>}{state.success && <p role="status">{state.success} {!entry && <a href="/admin/blog">続けて新しい記事を作成</a>}</p>}
  </form>;
 }

@@ -1,3 +1,4 @@
+import { normalizeXPostUrl } from "./x-post";
 import { BLOG_CATEGORIES, type BlogBlock, type BlogEntry } from "./blog";
 
 export type BlogImportResult = { draft: Partial<BlogEntry>; warnings: string[] };
@@ -86,6 +87,7 @@ export function parseBlogImport(raw: string, articles: Pick<BlogEntry, "id" | "s
     seo_title: text(data.seoTitle, "SEOタイトル", 160), meta_description: text(data.metaDescription, "メタディスクリプション", 300),
     author_name: text(data.authorName, "著者", 120), author_profile: text(data.authorProfile, "著者プロフィール", 1000),
     image_alt: text(data.imageAlt, "メイン画像ALT", 300), image_rights: text(data.imageRights, "画像の権利情報", 1000),
+    x_post_url: normalizeXPostUrl(text(data.xPostUrl, "X投稿URL", 2048)),
     body, reference_sources, related_article_ids, related_store_ids: [],
     show_toc: bool(data.showToc, "目次"), show_breadcrumbs: bool(data.showBreadcrumbs, "パンくず"),
     search_index: bool(data.searchIndex, "検索登録"), include_in_sitemap: bool(data.includeInSitemap, "サイトマップ"),
