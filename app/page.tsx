@@ -352,7 +352,7 @@ export default async function HomePage({
             </Link>;
           })}</div>
         </section>
-        {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
+        {couponBanners.length > 0 && <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
         <section className="home-section" data-tone="soft">
           <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
@@ -363,14 +363,14 @@ export default async function HomePage({
           </Link>)}</div>}
         </section>
 
-        <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
-        {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
+        <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
+        {communityBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
         <section className="home-section home-summit" data-tone="soft">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
-        {rankingBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
+        {rankingBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
@@ -387,7 +387,7 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>}
         </section>
-        <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
+        <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
         <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
           <div><span style={{ color: "#9b7129", fontSize: 11, letterSpacing: "0.13em", fontWeight: 800 }}>POKER SUMMIT ACADEMY</span><h2 style={{ fontSize: "clamp(17px,2.4vw,24px)", margin: "7px 0" }}>遊びながら、ポーカーを学ぼう。</h2><p style={{ margin: 0, fontSize: 12, color: "#765f42" }}>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
           <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ</Link>
