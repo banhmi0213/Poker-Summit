@@ -97,6 +97,34 @@ export function StoreGuide() {
         <p style={{ fontSize: 12, color: "#7a6a52", margin: "8px 0 0" }}>※採用・勤務の成立を保証するものではありません。</p>
       </section>
 
+      <section style={card}>
+        <h2 style={{ fontSize: 17, margin: "0 0 6px" }}>ディーラー募集の3つの方法と使い分け</h2>
+        <p style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 10px" }}>
+          目的に合わせて選ぶと、むだなく募集できます。毎日のように募集するなら、通常求人がいちばん割安です。
+        </p>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+            <thead>
+              <tr>
+                <th style={th}></th>
+                <th style={th}>スポット求人</th>
+                <th style={th}>通常求人</th>
+                <th style={th}>ディーラースカウト</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style={{ ...td, fontWeight: 700 }}>向いているとき</td><td style={td}>その日だけ人がほしい</td><td style={td}>ずっと募集しておきたい</td><td style={td}>この人に来てほしい</td></tr>
+              <tr><td style={{ ...td, fontWeight: 700 }}>ディーラーへの表示</td><td style={td}>勤務日の当日、0時から勤務開始まで（先の日の分も設定しておけます）</td><td style={td}>掲載中はずっと表示</td><td style={td}>一覧には出ず、相手に直接届きます</td></tr>
+              <tr><td style={{ ...td, fontWeight: 700 }}>数え方</td><td style={td}>勤務日1日で1回</td><td style={td}>1件ごとの月額</td><td style={td}>ディーラー1人・勤務日1日で1回</td></tr>
+              <tr><td style={{ ...td, fontWeight: 700 }}>料金（税込）</td><td style={td}>プランの回数、またはアドオン1日分2,200円</td><td style={td}>アドオン1件 月額8,800円（プレミアムは無制限）</td><td style={td}>プランの回数、またはアドオン1回2,200円</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: 12.5, color: "#7a6a52", lineHeight: 1.8, margin: "10px 0 0" }}>
+          プランの回数は、スタンダードプランがスポット求人とスカウトを合わせて月10回まで、プレミアムプランは無制限です。アドオンのスポット求人1日分は、4日分で通常求人1件の月額（8,800円）と同じになります。それ以上の日数を募集するなら、通常求人のほうが割安です。
+        </p>
+      </section>
+
       <Section no="01" title="ログインしてメニューを開く" where="https://pokersummit.jp/store/login" tip="店舗用のIDは会員用アカウントとは別です。IDやパスワードが分からない場合は、運営へお問い合わせください（パスワードは運営が発行します）。">
         <ol style={ol}>
           <li>店舗管理ログイン（https://pokersummit.jp/store/login）を開きます。</li>
