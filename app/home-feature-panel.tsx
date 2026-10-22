@@ -46,7 +46,7 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
   if (!selected) return null;
   const move = (offset: number) => setSelectedId(items[(index + offset + items.length) % items.length].id);
   return (
-    <section className={styles.panel} aria-label="注目の大会・クーポン・お知らせ"
+    <section className={styles.panel} aria-label="Poker Summitのおすすめコンテンツ"
       onPointerEnter={event => { if (event.pointerType !== "touch") setHovered(true); }}
       onPointerLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
