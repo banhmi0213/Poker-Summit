@@ -37,3 +37,14 @@
 .arrows button{background:#102039ed;border-color:#d2ad60;color:#f3deb4}
 .playback{background:#102039;color:#e4c993;border-color:#7c6a45}
 .panel button:focus-visible,.panel a:focus-visible{outline-color:#ecd5a4}
+
+
+/* Selected item follows the reference: dark tinted fill, fine accent outline, light type. */
+.panel{background:#101c30;border-color:#101c30}
+.feature{background:#1a293f;border-color:#c6a45b}
+.caption,.item{background:#1a293f}
+.visual{background:#16243a}
+.item{border-color:#485162}
+.selected{background:#3c3529;border-color:#d2ad60;color:#fffaf0}
+.selected .badge{color:#ead3a2;border-color:#9a855f}
+.selected .chevron{color:#ead3a2}
