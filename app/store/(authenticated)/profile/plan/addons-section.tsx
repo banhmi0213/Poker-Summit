@@ -129,10 +129,10 @@ export function AddonsSection({
         </div>
       )}
 
-      <p style={{ fontSize: 13, margin: "0 0 8px" }}>ディーラースカウトの残り枠：<strong>{scoutCredits}人分</strong></p>
+      <p style={{ fontSize: 13, margin: "0 0 8px" }}>ディーラースカウトの残り：<strong>{scoutCredits}回分</strong></p>
       {spotCredits > 0 && (
         <p style={{ fontSize: 13, margin: "0 0 8px" }}>
-          スポット求人の追加掲載枠：<strong>{spotCredits}件</strong>
+          スポット求人の追加分：<strong>{spotCredits}日分</strong>
         </p>
       )}
 
