@@ -1,3 +1,4 @@
+import { ComparePeriods } from "./compare-periods";
 import { MonthlyGoals } from "./monthly-goals";
 import { AttentionSummary } from "./attention-summary";
 import { isCouponExpired } from "@/lib/coupon-expiry";
@@ -193,6 +194,7 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     <div>
       <AttentionSummary />
       {(searchParams.tab ?? "overview") === "overview" && <MonthlyGoals />}
+      {(searchParams.tab ?? "overview") === "overview" && <ComparePeriods />}
       <div className="app-topbar" style={{ marginBottom: 10 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>アクセス統計</h1>
         <span className="muted" style={{ fontSize: 12.5 }}>
