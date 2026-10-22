@@ -75,32 +75,33 @@
 }
 
 
+/* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
 /* Preview: light reading surfaces complement the navy header and feature panel. */
-.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#fffefa!important;color:#17263e;border-color:#bdc4cd}
-.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#17263e}
-.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#4e5d70}
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#ffffff!important;color:#3b2028;border-color:#cdbcc2}
+.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#3b2028}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#6d535c}
 .readable.readable :global(.home-card-cta),.readable.readable :global(.home-section-head)>a{color:#806024}
 .readable.readable :global(.home-tag){background:#f2e7cd;color:#73561e}
-.readable.readable :global(.home-job-salary){color:#17263e}
-.readable :global(.home-post){background:#fffefa;border-color:#e0e3e5}
-.readable :global(.home-post:hover){background:#eeeadd}
-.statsBar.statsBar{background:#102039;border-color:#d2ad60}
-.statsBar :global(.ps-region-stat){color:#f8f6ef}
+.readable.readable :global(.home-job-salary){color:#3b2028}
+.readable :global(.home-post){background:#ffffff;border-color:#eadfe3}
+.readable :global(.home-post:hover){background:#f3e5ea}
+.statsBar.statsBar{background:#3c101e;border-color:#d2ad60}
+.statsBar :global(.ps-region-stat){color:#ffffff}
 .statsBar :global(.ps-region-stat__icon){color:#d2ad60}
-.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#667085}
-.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#3b4c65}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#9d7a88}
+.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#744251}
 
 
 /* Match the reference's deliberate alternation of light, tinted and dark editorial sections. */
 .readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-top:24px;padding-bottom:24px}
 .readable :global(.home-section[data-tone])::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;box-shadow:0 0 0 100vmax var(--section-tone);background:var(--section-tone);clip-path:inset(0 -100vmax)}
-.readable :global(.home-section[data-tone="soft"]){--section-tone:#f0ede5}
-.readable :global(.home-section[data-tone="navy"]){--section-tone:#101c30;color:#f8f6ef}
+.readable :global(.home-section[data-tone="soft"]){--section-tone:#f7eff1}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#310c18;color:#ffffff}
 .readable.readable :global(.home-section-head) h2{color:#98712c}
-.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#f8f6ef}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#ffffff}
 .readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#e0c48c}
 .readable.readable :global([data-tone="navy"]) :global(.home-event-card),
-.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#1a293f;border-color:#3a485d}
+.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#4c1c2b;border-color:#744251}
 .readable.readable :global([data-tone="navy"]) h3,
 .readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,
 .readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
@@ -108,10 +109,10 @@
 .readable.readable :global([data-tone="navy"]) small,
 .readable.readable :global([data-tone="navy"]) :global(.home-location),
 .readable.readable :global([data-tone="navy"]) :global(.muted),
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#cad2df}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#e3cfd7}
 .readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#e0c48c}
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#47536a}
-.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#2a3649;border:1px solid #6b6553;color:#e4c993}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#835365}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#592637;border:1px solid #9b7c71;color:#e4c993}
 .statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
-.statsBar :global(.ps-region-stat){color:#17263e}
+.statsBar :global(.ps-region-stat){color:#3b2028}
 .statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
