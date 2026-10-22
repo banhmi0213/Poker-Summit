@@ -49,3 +49,18 @@
 .selected{background:#865067;border-color:#d2ad60;color:#fffaf0}
 .selected .badge{color:#ead3a2;border-color:#9a855f}
 .selected .chevron{color:#ead3a2}
+
+
+/* Pattern C */
+.panel{background:#ead7ad;border-color:#cdb47e;color:#48351c}
+.feature{background:#fffaf0;border-color:#b68b39}
+.visual{background:#f3e8cf}.caption,.item{background:#fffaf0}
+.caption h2{color:#48351c}.caption p{color:#6c593c}
+.badge{color:#806024;border-color:#cdb47e;background:transparent}
+.detail,.chevron{color:#806024}
+.item{border-color:#dfcca4;color:#48351c}
+.selected{background:#dec38a;border-color:#b68b39;color:#48351c}
+.selected .badge{color:#76541e;border-color:#b68b39}.selected .chevron{color:#76541e}
+.arrows button{background:#fffaf0ed;border-color:#b68b39;color:#806024}
+.playback{background:#fffaf0;color:#806024;border-color:#cdb47e}
+.panel button:focus-visible,.panel a:focus-visible{outline-color:#a77c2e}
