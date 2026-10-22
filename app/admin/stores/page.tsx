@@ -423,6 +423,7 @@ export default async function AdminStoresPage({
           <option value="approved">承認済み</option>
           <option value="pending">承認待ち</option>
           <option value="rejected">却下</option>
+          <option value="test">テスト用（非公開）</option>
           <option value="payment_suspended">未入金で非公開</option>
         </select>
         <button type="submit" className="btn">
