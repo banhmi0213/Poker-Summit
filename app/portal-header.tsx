@@ -44,7 +44,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
     link.href
       ? <Link key={link.label} href={link.href} onClick={mobile ? closeMobile : () => setOpen(null)} className={styles.menuLink}>
           {!mobile && <span className={styles.menuArtwork}>
-            {index === 2 ? <span className={styles.jobArtwork} style={{ backgroundPosition: GROUPS[2].links.indexOf(link) % 2 ? "100% " + (GROUPS[2].links.indexOf(link) < 2 ? "0%" : "100%") : "0% " + (GROUPS[2].links.indexOf(link) < 2 ? "0%" : "100%") }} />
+            {index === 2 ? <span className={styles.jobArtwork}><img src="/images/job-categories-photo-v1.webp" alt="" style={{ left: `${-(JOB_ENTRANCES.find(entry => entry.label === link.label)?.x ?? 0) / 742 * 100}%`, top: `${-(JOB_ENTRANCES.find(entry => entry.label === link.label)?.y ?? 0) / 284 * 100}%` }} /></span>
               : link.image ? <img src={link.image} alt="" />
               : <span className={styles.learningArtwork}><span>POKER SUMMIT ACADEMY</span><strong>遊びながら、<br />ポーカーを学ぼう。</strong></span>}
           </span>}
