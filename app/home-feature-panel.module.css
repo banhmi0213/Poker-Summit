@@ -22,30 +22,30 @@
 
 /* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
 /* Preview: the reference's dark feature area becomes deep navy, with gold selection. */
-.panel{background:#3c101e;border-color:#3c101e;color:#ffffff}
-.feature{background:#4c1c2b;border-color:#d2ad60}
-.visual{background:#3b1322}
-.caption{background:#4c1c2b}
+.panel{background:#603044;border-color:#603044;color:#ffffff}
+.feature{background:#704052;border-color:#d2ad60}
+.visual{background:#643548}
+.caption{background:#704052}
 .caption h2{color:#ffffff}
 .caption p{color:#e6d4da}
 .badge{background:transparent;color:#e4c993;border-color:#9f7f89}
 .detail{color:#e4c993}
-.item{background:#4c1c2b;border-color:#794956;color:#ffffff}
+.item{background:#704052;border-color:#9d7280;color:#ffffff}
 .chevron{color:#dfc58e}
-.selected{background:#d2ad60;border-color:#e6c989;color:#3c101e}
-.selected .badge{color:#3c101e;border-color:#7c622e;background:transparent}
-.selected .chevron{color:#3c101e}
-.arrows button{background:#3c101eed;border-color:#d2ad60;color:#f3deb4}
-.playback{background:#3c101e;color:#e4c993;border-color:#7c6a45}
+.selected{background:#d2ad60;border-color:#e6c989;color:#603044}
+.selected .badge{color:#603044;border-color:#7c622e;background:transparent}
+.selected .chevron{color:#603044}
+.arrows button{background:#603044ed;border-color:#d2ad60;color:#f3deb4}
+.playback{background:#603044;color:#e4c993;border-color:#7c6a45}
 .panel button:focus-visible,.panel a:focus-visible{outline-color:#ecd5a4}
 
 
 /* Selected item follows the reference: dark tinted fill, fine accent outline, light type. */
-.panel{background:#310c18;border-color:#310c18}
-.feature{background:#4c1c2b;border-color:#c6a45b}
-.caption,.item{background:#4c1c2b}
-.visual{background:#3b1322}
-.item{border-color:#795360}
-.selected{background:#642338;border-color:#d2ad60;color:#fffaf0}
+.panel{background:#512637;border-color:#512637}
+.feature{background:#704052;border-color:#c6a45b}
+.caption,.item{background:#704052}
+.visual{background:#643548}
+.item{border-color:#9b7481}
+.selected{background:#865067;border-color:#d2ad60;color:#fffaf0}
 .selected .badge{color:#ead3a2;border-color:#9a855f}
 .selected .chevron{color:#ead3a2}
