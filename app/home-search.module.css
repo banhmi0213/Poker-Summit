@@ -85,23 +85,23 @@
 .readable.readable :global(.home-job-salary){color:#3b2028}
 .readable :global(.home-post){background:#ffffff;border-color:#eadfe3}
 .readable :global(.home-post:hover){background:#f3e5ea}
-.statsBar.statsBar{background:#3c101e;border-color:#d2ad60}
+.statsBar.statsBar{background:#603044;border-color:#d2ad60}
 .statsBar :global(.ps-region-stat){color:#ffffff}
 .statsBar :global(.ps-region-stat__icon){color:#d2ad60}
 .statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#9d7a88}
-.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#744251}
+.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#966878}
 
 
 /* Match the reference's deliberate alternation of light, tinted and dark editorial sections. */
 .readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-top:24px;padding-bottom:24px}
 .readable :global(.home-section[data-tone])::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;box-shadow:0 0 0 100vmax var(--section-tone);background:var(--section-tone);clip-path:inset(0 -100vmax)}
 .readable :global(.home-section[data-tone="soft"]){--section-tone:#f7eff1}
-.readable :global(.home-section[data-tone="navy"]){--section-tone:#310c18;color:#ffffff}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#512637;color:#ffffff}
 .readable.readable :global(.home-section-head) h2{color:#98712c}
 .readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#ffffff}
 .readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#e0c48c}
 .readable.readable :global([data-tone="navy"]) :global(.home-event-card),
-.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#4c1c2b;border-color:#744251}
+.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#704052;border-color:#966878}
 .readable.readable :global([data-tone="navy"]) h3,
 .readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,
 .readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
@@ -111,8 +111,8 @@
 .readable.readable :global([data-tone="navy"]) :global(.muted),
 .readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#e3cfd7}
 .readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#e0c48c}
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#835365}
-.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#592637;border:1px solid #9b7c71;color:#e4c993}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#a47b8c}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#7c4a60;border:1px solid #9b7c71;color:#e4c993}
 .statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
 .statsBar :global(.ps-region-stat){color:#3b2028}
 .statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
