@@ -18,6 +18,7 @@ import { HomeStoreCard } from "./home-store-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
 import { HomeFeaturePanel, type HomeFeatureItem } from "./home-feature-panel";
+import { PokerSummitStats } from "./poker-region-hero";
 import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
@@ -318,6 +319,14 @@ export default async function HomePage({
       <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
 
       <main className={`home-feed ${styles.readable}`}>
+        <PokerSummitStats className={styles.statsBar} stats={{
+          storeCount: totalStoreCount ?? 0,
+          prefCount: Object.values(prefCounts).filter(n => n > 0).length,
+          majorTournamentCount: home.majorTournamentCount,
+          jobCount: openJobCount ?? 0,
+          memberCount: memberCountRaw ?? 0,
+          summitPostCount: threadCount ?? 0,
+        }} />
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
