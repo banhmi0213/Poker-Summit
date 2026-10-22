@@ -1,4 +1,3 @@
-import { ComparePeriods } from "./compare-periods";
 import { MonthlyGoals } from "./monthly-goals";
 import { AttentionSummary } from "./attention-summary";
 import { isCouponExpired } from "@/lib/coupon-expiry";
@@ -78,7 +77,37 @@ function Sparkline({ counts, labels }: { counts: number[]; labels: string[] }) {
   );
 }
 
-function StatTile({ label, value, delta }: { label: string; value: string; delta?: string }) {
+type PeriodCell = { cur: number; prev: number; ok: boolean };
+// 前日・先週・先月・前年と比べた上げ下げ(2026/10/22)。今の期間の始まり〜今 と 前の期間の同じ経過時間まで を比べる
+const CHANGE_PERIODS: [string, string][] = [["day", "前日"], ["week", "先週"], ["month", "先月"], ["year", "前年"]];
+// total を渡すと「合計がどれだけ増えたか」(会員数など)、渡さないと「今の期間と前の期間の比較」(PV・UU)
+function TileChanges({ cells, total }: { cells?: Record<string, PeriodCell | undefined>; total?: number }) {
+  if (!cells) return null;
+  return (
+    <div style={{ marginTop: 6, display: "grid", gap: 1 }}>
+      {CHANGE_PERIODS.map(([k, label]) => {
+        const c = cells[k];
+        if (!c) return null;
+        const cur = Number(c.cur) || 0, prev = Number(c.prev) || 0, diff = cur - prev;
+        if (!c.ok) return <div key={k} className="muted" style={{ fontSize: 11 }}>{label}比 記録なし</div>;
+        if (total !== undefined) {
+          const before = total - cur;
+          const gp = before > 0 ? `+${Math.round((cur / before) * 1000) / 10}%` : cur > 0 ? "前は0" : "±0";
+          return <div key={k} className="tabular" style={{ fontSize: 11, color: cur > 0 ? "#1f7a3d" : "var(--muted)" }}>{label}比 {cur > 0 ? "▲+" : "±"}{cur.toLocaleString()}（{gp}）</div>;
+        }
+        const pct = prev > 0 ? `${diff >= 0 ? "+" : ""}${Math.round((diff / prev) * 1000) / 10}%` : cur > 0 ? "前は0" : "±0";
+        const color = diff > 0 ? "#1f7a3d" : diff < 0 ? "#b3261e" : "var(--muted)";
+        return (
+          <div key={k} className="tabular" style={{ fontSize: 11, color }}>
+            {label}比 {diff > 0 ? "▲" : diff < 0 ? "▼" : "±"}{diff > 0 ? "+" : ""}{diff.toLocaleString()}（{pct}）
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatTile({ label, value, delta, changes, total }: { label: string; value: string; delta?: string; changes?: Record<string, PeriodCell | undefined>; total?: number }) {
   return (
     <div className="card">
       <div className="muted" style={{ fontSize: 12.5 }}>{label}</div>
@@ -86,6 +115,7 @@ function StatTile({ label, value, delta }: { label: string; value: string; delta
         {value}
       </div>
       {delta && <div className="muted" style={{ fontSize: 12 }}>{delta}</div>}
+      <TileChanges cells={changes} total={total} />
     </div>
   );
 }
@@ -194,7 +224,6 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
     <div>
       <AttentionSummary />
       {(searchParams.tab ?? "overview") === "overview" && <MonthlyGoals />}
-      {(searchParams.tab ?? "overview") === "overview" && <ComparePeriods />}
       <div className="app-topbar" style={{ marginBottom: 10 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>アクセス統計</h1>
         <span className="muted" style={{ fontSize: 12.5 }}>
@@ -458,6 +487,9 @@ async function OverviewTab({
     // 会員数(店舗管理用アカウントを除く)・掲載中求人数・公開中フリーディーラー数
     supabase.rpc("admin_dashboard_counts"),
   ]);
+  const { data: periodData } = await supabase.rpc("admin_compare_periods");
+  const pd = (periodData ?? {}) as Record<string, Record<string, PeriodCell>>;
+  const ch = (key: string) => Object.fromEntries(CHANGE_PERIODS.map(([k]) => [k, pd[k]?.[key]]));
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
   const totalViews = (allViews ?? []).length;
@@ -516,13 +548,13 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
-        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
+        <StatTile changes={ch("members")} total={Number((dashCounts as any)?.members ?? 0)} label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
-        <StatTile label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
-        <StatTile label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
-        <StatTile label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
-        <StatTile label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
+        <StatTile changes={ch("site_pv")} label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile changes={ch("site_uu")} label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile changes={ch("store_pv")} label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile changes={ch("store_uu")} label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
       </div>
