@@ -116,3 +116,8 @@
 .statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
 .statsBar :global(.ps-region-stat){color:#3b2028}
 .statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
+
+
+/* Keep each tinted section and its following banners within one continuous colour band. */
+.readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:24px}
+.readable :global(.home-section[data-tone-banner])::before{top:-26px}
