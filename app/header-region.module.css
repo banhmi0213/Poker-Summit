@@ -84,3 +84,29 @@
 
 .jobArtwork{position:relative;display:block;width:100%;height:auto;aspect-ratio:742/284;overflow:hidden;background:none}
 .menuArtwork .jobArtwork img{position:absolute;max-width:none;width:calc(1536 / 742 * 100%);height:calc(1024 / 284 * 100%);object-fit:fill}
+
+
+/* Preview navy header; gold is reserved for current/hovered navigation. */
+.header :global(.ps-pref-selector){background:#1b2d48;border-color:#687386}
+.header :global(.ps-pref-selector__label){color:#dfc48c}
+.header :global(.ps-pref-selector__select){color:#fff5df;color-scheme:dark}
+.header :global(.portal-cta){color:#102039;background:linear-gradient(145deg,#ead39a,#d2ad60)}
+.title{background:#1b2d48;border-color:#3b4c65;color:#f8f6ef}
+.caret{color:#d9bd81}
+.title:hover,.activeTitle{background:#d2ad60;border-color:#e6c989;color:#102039}
+.activeTitle .caret{color:#102039}
+.megaPanel{background:#102039;border-color:#53617a;border-top-color:#d2ad60;box-shadow:0 16px 28px #10203940}
+.panelHeading{color:#ddc28a}
+.menuLink{background:#1b2d48;border-color:#3b4c65;color:#f8f6ef}
+.menuArtwork{background:#14253e;border-bottom-color:#3b4c65}
+.menuCopy strong{color:#f8f6ef}
+.menuCopy small{color:#c3ccda}
+.menuLink>.menuArrow{color:#d9bd81}
+.menuLink:hover{background:#283c59;border-color:#d2ad60}
+.disabled{background:#1e2b40;border-color:#3a475d;color:#8090a5}
+.learningArtwork{background:linear-gradient(125deg,#223b60,#102039);color:#e9d3a7}
+.mobileGroup{border-color:#3b4c65}
+.mobileGroup summary,.mobileDirect{color:#f8f6ef}
+.mobileGroup[open] summary{background:#1b2d48;color:#e5c88f}
+.header.header :global(.mobile-nav-drawer) :global(.plink){color:#f8f6ef}
+.header :global(.nav-hamburger){color:#e8d0a0}
