@@ -17,7 +17,7 @@ import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
-import { PokerRegionHero } from "./poker-region-hero";
+import { HomeFeaturePanel, type HomeFeatureItem } from "./home-feature-panel";
 import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
@@ -189,6 +189,29 @@ export default async function HomePage({
   const rankingBanners = sectionBanners(rankingBannerRows);
   const jobsBanners = sectionBanners(jobsBannerRows);
 
+  // 確認用ブランチ: 既存の公開データだけで注目枠を組む。件数合わせの架空データは入れない。
+  const homeFeatureItems: HomeFeatureItem[] = [];
+  if (freerollSignupOpen()) {
+    const freeroll = topBanners.find(b => /フリーロール/.test(b.title) && b.image_url);
+    if (freeroll) homeFeatureItems.push({ id: `banner-${freeroll.id}`, category: "注目企画", title: freeroll.title,
+      description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
+      image: freeroll.image_url, href: freeroll.link_url || "/signup", external: freeroll.external });
+  }
+  for (const ev of displayEvents.slice(0, 4)) {
+    homeFeatureItems.push({ id: `event-${ev.id}`, category: isEventsLive ? "開催中" : "開催予定", title: ev.title,
+      description: [ev.start_at ? formatDateTime(ev.start_at) : "", ev.location].filter(Boolean).join(" · "),
+      image: ev.banner_image_url || "/images/tournament-banner-light-v4.webp", href: ("href" in ev && typeof ev.href === "string" ? ev.href : `/events/${ev.id}`) });
+  }
+  for (const coupon of popularCoupons) {
+    if (homeFeatureItems.length >= 6) break;
+    homeFeatureItems.push({ id: `coupon-${coupon.id}`, category: "クーポン", title: coupon.title,
+      description: coupon.discount || "店舗の特典をチェック", image: coupon.banner_image_url || "/images/coupon-banner-gold-v4.png", href: `/coupons/${coupon.id}` });
+  }
+  if (homeFeatureItems.length < 6) homeFeatureItems.push({ id: "stores", category: "店舗検索", title: `全国${totalStoreCount}店舗から、次に遊ぶお店を探そう`,
+    description: "都道府県・エリア・店舗タイプで、お近くのポーカー店を探せます。", image: "/images/store-banner-light-v2.webp", href: "/stores" });
+  if (homeFeatureItems.length < 6) homeFeatureItems.push({ id: "academy", category: "学習コース", title: "遊びながら、ポーカーを学ぼう。",
+    description: "ポジション・レンジ表・役の強さクイズを無料で体験。", image: "/images/blog-promo-square.webp", href: "/learn" });
+
   // --- Favorites (人によって変わるのでキャッシュしない) ---
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -281,16 +304,7 @@ export default async function HomePage({
           </ExpandableSearchForm>
       </div>
 
-      <PokerRegionHero
-        stats={{
-          storeCount: totalStoreCount ?? 0,
-          prefCount: Object.values(prefCounts).filter((n) => n > 0).length,
-          majorTournamentCount: home.majorTournamentCount,
-          jobCount: openJobCount ?? 0,
-          memberCount: memberCountRaw ?? 0,
-          summitPostCount: threadCount ?? 0,
-        }}
-      />
+      <HomeFeaturePanel items={homeFeatureItems} />
 
       {/* Invisible: silently asks the browser for the visitor's location and
           upgrades currentPref from IP-guess to a real geo result. Skipped
