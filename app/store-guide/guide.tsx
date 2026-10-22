@@ -37,6 +37,7 @@ const PLAN_ROWS: { label: string; light: string; standard: string; premium: stri
   { label: "地域の店舗一覧での表示", light: "通常", standard: "上位表示", premium: "最上位表示・金枠" },
   { label: "スポット求人", light: "アドオンで1件ずつ", standard: "月10件の成立まで", premium: "無制限" },
   { label: "通常求人", light: "アドオンで掲載", standard: "アドオンで掲載", premium: "無制限" },
+  { label: "ディーラースカウト", light: "アドオン（1人2,200円）", standard: "アドオン（1人2,200円）", premium: "アドオン（1人2,200円）" },
 ];
 
 export function StoreGuide() {
@@ -75,6 +76,26 @@ export function StoreGuide() {
           style={{ width: "100%", height: "auto", borderRadius: 8, border: "1px solid #e4d3ad", display: "block" }}
         />
         <p style={{ fontSize: 12, color: "#7a6a52", margin: "8px 0 0" }}>※サンプルです。店名・住所・電話番号・写真は架空のものです。</p>
+      </section>
+
+      <section style={{ ...card, border: "2px solid #d9b45a", background: "linear-gradient(110deg,#fff6df,#fffdf8)" }}>
+        <p style={{ margin: 0, fontSize: 11, letterSpacing: "0.14em", color: GOLD, fontWeight: 800 }}>DEALER SCOUT</p>
+        <h2 style={{ fontSize: 18, margin: "4px 0 8px" }}>ディーラーが足りない日は、お店からスカウトできます</h2>
+        <p style={{ fontSize: 14, lineHeight: 1.8, margin: "0 0 10px" }}>
+          スポット求人を出して応募を待つだけでなく、ポーカーサミットに登録しているフリーディーラーをお店から探して、勤務をオファーできます。
+        </p>
+        <ul style={{ ...ol, marginBottom: 10 }}>
+          <li>都道府県・勤務日・ゲーム種目で、条件に合うディーラーを探せます。</li>
+          <li>プロフィール・他店からのレビュー・勤務実績を見てから声をかけられます。</li>
+          <li>勤務日・時間・報酬はチャットで確認してから確定。成立すると、お互いの連絡先が表示されます。</li>
+          <li>LINE連携していれば、返信やチャットのお知らせがLINEに届きます。</li>
+        </ul>
+        <p style={{ fontSize: 13.5, lineHeight: 1.8, margin: 0, padding: "8px 12px", background: "#fff", borderRadius: 8, border: "1px solid #e4d3ad" }}>
+          <strong>料金：アドオン「ディーラースカウト」1人2,200円（税込）</strong>
+          <br />
+          どのプランでもご利用いただけます。オファーには、勤務日を登録したスポット求人が必要です（<a href="#s09">使い方</a>）。
+        </p>
+        <p style={{ fontSize: 12, color: "#7a6a52", margin: "8px 0 0" }}>※採用・勤務の成立を保証するものではありません。</p>
       </section>
 
       <Section no="01" title="ログインしてメニューを開く" where="https://pokersummit.jp/store/login" tip="店舗用のIDは会員用アカウントとは別です。IDやパスワードが分からない場合は、運営へお問い合わせください（パスワードは運営が発行します）。">
