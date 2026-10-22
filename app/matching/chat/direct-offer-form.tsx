@@ -10,7 +10,7 @@ export type OfferTemplate={games:string[];duties:string;requirements:string;tran
 
 function Submit(){const {pending}=useFormStatus();return <button className={styles.primary} disabled={pending} type="submit">{pending?"送信中…":"この条件でオファーを送る"}</button>;}
 
-export function DirectOfferForm({dealer,dates,template}:{dealer:string;dates:{value:string;label:string}[];template:OfferTemplate|null}){
+export function DirectOfferForm({dealer,dates,template}:{dealer:string;dates:{min:string;max:string};template:OfferTemplate|null}){
  const [state,action]=useFormState(offerDirectAction,{error:"",success:0});
  const [transport,setTransport]=useState(template?.transport_type||"none");
  const t=template;
@@ -18,7 +18,7 @@ export function DirectOfferForm({dealer,dates,template}:{dealer:string;dates:{va
  return <form action={action} className={styles.form}>
   <input type="hidden" name="dealer" value={dealer}/>
   {t&&<p style={{fontSize:13,margin:0}}>前回の内容が入っています。変わるところだけ直してください。</p>}
-  <label>勤務日<select name="work_date" required defaultValue={dates[0]?.value}>{dates.map(d=><option key={d.value} value={d.value}>{d.label}</option>)}</select></label>
+  <label>勤務日<input type="date" name="work_date" required min={dates.min} max={dates.max} defaultValue={dates.min}/></label>
   <div style={row}>
    <label>開始時間<input type="time" name="start_time" required defaultValue={t?.start_time||""}/></label>
    <label>終了時間<input type="time" name="end_time" required defaultValue={t?.end_time||""}/></label>

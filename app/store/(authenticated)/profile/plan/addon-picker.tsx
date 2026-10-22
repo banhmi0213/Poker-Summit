@@ -83,7 +83,7 @@ export function AddonPicker({
                   <strong style={{ fontSize: 14 }}>{a.name}</strong>
                   <strong>
                     {yen(a.fee)}
-                    {a.billingType === "monthly" ? "/月" : a.code === "dealer_scout" ? "/1人" : a.maxQuantity > 1 ? "/1件" : ""}
+                    {a.billingType === "monthly" ? "/月" : a.code === "dealer_scout" ? "/1回" : a.code === "spot_job_credit" ? "/1日分" : a.maxQuantity > 1 ? "/1件" : ""}
                   </strong>
                 </span>
                 {a.description && (
@@ -98,7 +98,7 @@ export function AddonPicker({
                 )}
                 {a.maxQuantity > 1 && selected[a.id] && (
                   <span style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, fontSize: 13 }}>
-                    {a.code === "dealer_scout" ? "人数" : "件数"}
+                    {a.code === "dealer_scout" ? "回数" : a.code === "spot_job_credit" ? "日数" : "件数"}
                     <input
                       type="number"
                       inputMode="numeric"
