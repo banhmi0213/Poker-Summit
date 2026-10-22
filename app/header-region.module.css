@@ -86,33 +86,34 @@
 .menuArtwork .jobArtwork img{position:absolute;max-width:none;width:calc(1536 / 742 * 100%);height:calc(1024 / 284 * 100%);object-fit:fill}
 
 
+/* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
 /* Preview navy header; gold is reserved for current/hovered navigation. */
-.header :global(.ps-pref-selector){background:#1b2d48;border-color:#687386}
+.header :global(.ps-pref-selector){background:#4c1c2b;border-color:#687386}
 .header :global(.ps-pref-selector__label){color:#dfc48c}
 .header :global(.ps-pref-selector__select){color:#fff5df;color-scheme:dark}
-.header :global(.portal-cta){color:#102039;background:linear-gradient(145deg,#ead39a,#d2ad60)}
-.title{background:#1b2d48;border-color:#3b4c65;color:#f8f6ef}
+.header :global(.portal-cta){color:#3c101e;background:linear-gradient(145deg,#ead39a,#d2ad60)}
+.title{background:#4c1c2b;border-color:#744251;color:#ffffff}
 .caret{color:#d9bd81}
-.title:hover,.activeTitle{background:#d2ad60;border-color:#e6c989;color:#102039}
-.activeTitle .caret{color:#102039}
-.megaPanel{background:#102039;border-color:#53617a;border-top-color:#d2ad60;box-shadow:0 16px 28px #10203940}
+.title:hover,.activeTitle{background:#d2ad60;border-color:#e6c989;color:#3c101e}
+.activeTitle .caret{color:#3c101e}
+.megaPanel{background:#3c101e;border-color:#835365;border-top-color:#d2ad60;box-shadow:0 16px 28px #3c101e40}
 .panelHeading{color:#ddc28a}
-.menuLink{background:#1b2d48;border-color:#3b4c65;color:#f8f6ef}
-.menuArtwork{background:#14253e;border-bottom-color:#3b4c65}
-.menuCopy strong{color:#f8f6ef}
-.menuCopy small{color:#c3ccda}
+.menuLink{background:#4c1c2b;border-color:#744251;color:#ffffff}
+.menuArtwork{background:#3b1322;border-bottom-color:#744251}
+.menuCopy strong{color:#ffffff}
+.menuCopy small{color:#e1cbd3}
 .menuLink>.menuArrow{color:#d9bd81}
-.menuLink:hover{background:#283c59;border-color:#d2ad60}
-.disabled{background:#1e2b40;border-color:#3a475d;color:#8090a5}
-.learningArtwork{background:linear-gradient(125deg,#223b60,#102039);color:#e9d3a7}
-.mobileGroup{border-color:#3b4c65}
-.mobileGroup summary,.mobileDirect{color:#f8f6ef}
-.mobileGroup[open] summary{background:#1b2d48;color:#e5c88f}
-.header.header :global(.mobile-nav-drawer) :global(.plink){color:#f8f6ef}
+.menuLink:hover{background:#652d40;border-color:#d2ad60}
+.disabled{background:#412b34;border-color:#634653;color:#a78d98}
+.learningArtwork{background:linear-gradient(125deg,#6e2a40,#3c101e);color:#e9d3a7}
+.mobileGroup{border-color:#744251}
+.mobileGroup summary,.mobileDirect{color:#ffffff}
+.mobileGroup[open] summary{background:#4c1c2b;color:#e5c88f}
+.header.header :global(.mobile-nav-drawer) :global(.plink){color:#ffffff}
 .header :global(.nav-hamburger){color:#e8d0a0}
 
 
-.title{background:#1a293f;border-color:#27384f}
-.title:hover,.activeTitle{background:#c6a45b;border-color:#d9bd83;color:#102039}
-.megaPanel{background:#101c30}
-.menuLink{background:#1a293f}
+.title{background:#4c1c2b;border-color:#60313f}
+.title:hover,.activeTitle{background:#c6a45b;border-color:#d9bd83;color:#3c101e}
+.megaPanel{background:#310c18}
+.menuLink{background:#4c1c2b}
