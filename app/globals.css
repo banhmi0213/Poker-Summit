@@ -3153,31 +3153,31 @@ input::placeholder, textarea::placeholder { font-weight: 400; }
  --bg:#ffffff;--surface:#ffffff;--surface-2:#f7f0f2;--surface-3:#eee0e5;
  --text:#3b2028;--text-2:#6d535c;--muted:#917a83;--grid:#eadfe3;
  --border:rgba(60,16,30,.14);--border-strong:rgba(60,16,30,.3);
- --accent:#d2ad60;--accent-ink:#3c101e;--accent-text:#806024;--accent-mid:#bc9348;
+ --accent:#d2ad60;--accent-ink:#603044;--accent-text:#806024;--accent-mid:#bc9348;
  --accent-soft:#f3e8ce;--accent-line:rgba(188,147,72,.55);
  --accent-gradient:linear-gradient(145deg,#ead39a,#d2ad60 60%,#bd954a);
  --accent-shadow:0 2px 8px rgba(60,16,30,.15);
  --shadow:0 2px 6px rgba(60,16,30,.06),0 12px 28px rgba(60,16,30,.1);
- --preview-navy:#3c101e;--preview-navy-card:#4c1c2b;--preview-ivory:#ffffff;--preview-gold:#d2ad60;
+ --preview-navy:#603044;--preview-navy-card:#704052;--preview-ivory:#ffffff;--preview-gold:#d2ad60;
 }
 body{background:var(--preview-ivory);color:var(--text)}
-.portal-nav{background:linear-gradient(115deg,#3c101e 30%,#532033 72%,#5e2937);border-bottom-color:#b99855}
-.portal-footer{background:linear-gradient(120deg,#3c101e,#4c1c2b);color:#eee9dd;border-color:#794956}
+.portal-nav{background:linear-gradient(115deg,#603044 30%,#754457 72%,#805062);border-bottom-color:#b99855}
+.portal-footer{background:linear-gradient(120deg,#603044,#704052);color:#eee9dd;border-color:#9d7280}
 .portal-footer a{color:#e6d1a4}
 .portal-footer h2,.portal-footer h3,.portal-footer strong{color:#f5ecd9}
 .portal-footer .muted,.portal-footer p{color:#dbc7ce}
 .portal-footer .footer-areas a{color:#eadde2}
-.cta-banner{background:#3c101e;border-color:#693b49;color:#ffffff}
+.cta-banner{background:#603044;border-color:#693b49;color:#ffffff}
 .cta-banner h2{color:#ffffff}
 .cta-banner p{color:#e1cdd5}
 .cta-banner .eyebrow{color:#dcc18b}
 .cta-banner .btn-outline-gold{color:#e6ce9f;border-color:#bc9c5c}
 .home-store-card,.home-event-card,.home-coupon-card,.home-job-card{background:#ffffff;border-color:#eadfe3}
-.mobile-nav-drawer{background:#3c101e;color:#ffffff}
+.mobile-nav-drawer{background:#603044;color:#ffffff}
 .nav-hamburger{color:#ecd5a5}
-.bottom-tabs{background:#3c101e;color:#ffffff;border-color:#794956}
+.bottom-tabs{background:#603044;color:#ffffff;border-color:#9d7280}
 
 
 /* Reference-inspired colour placement, adapted to the Summit gold identity. */
-.portal-nav{background:radial-gradient(ellipse at 82% -180px,#702439 0%,#3c101e 72%)}
-.portal-footer{background:radial-gradient(ellipse at 65% 120%,#6b293e,#310c18 72%)}
+.portal-nav{background:radial-gradient(ellipse at 82% -180px,#8b5268 0%,#603044 72%)}
+.portal-footer{background:radial-gradient(ellipse at 65% 120%,#825064,#512637 72%)}
