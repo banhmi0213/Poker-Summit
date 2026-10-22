@@ -9,6 +9,7 @@ import { notFound,redirect } from "next/navigation";
 import { createStoreClient } from "@/lib/supabase/store-server";
 import { DealerDetail } from "@/app/account/dealer/detail";
 import styles from "@/app/account/dealer/dealer.module.css";
+import { getStorePlan, spotMonthlyLimitOf, planQuotaUsedThisMonth } from "@/lib/plan-entitlements";
 export const dynamic="force-dynamic";
 export default async function DealerPage({params,searchParams}:{params:{id:string};searchParams:{reviews?:string}}){
  const supabase=await createStoreClient();
@@ -36,8 +37,12 @@ export default async function DealerPage({params,searchParams}:{params:{id:strin
  const {data:scoutCredit,error:scoutCreditError}=await supabase.from("store_scout_credits").select("balance").eq("store_id",owned.id).maybeSingle();
  if(scoutCreditError)throw new Error("スカウト枠を読み込めませんでした。");
  const scoutBalance=scoutCredit?.balance ?? 0;
+ // プランの回数(スポット求人の公開・スカウト共通、2026/10/22〜)。先にプランの回数を使い、なくなったらスカウト枠を使う
+ const plan=await getStorePlan(supabase,owned.id);
+ const planLimit=spotMonthlyLimitOf(plan);
+ const planLeft=planLimit===null?null:planLimit>0?Math.max(0,planLimit-await planQuotaUsedThisMonth(supabase,owned.id)):0;
  const photo=profile.data.photo_url ? "/store/profile/dealers/"+params.id+"/photo" : null;
- return <main className={styles.page}><Link href="/store/profile/dealers">ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerReliabilityView stats={stats[params.id]} /><DealerReviews db={supabase} id={params.id} page={parseInt(searchParams.reviews||"1",10)} path={"/store/profile/dealers/"+params.id}/><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/><section className={styles.card}><h2 style={{fontSize:18}}>勤務をオファーする</h2><p>スカウト残り枠：<strong>{scoutBalance}人分</strong>　<Link href="/store/profile/plan#addons">スカウト枠を購入する</Link></p><p className={styles.hint}>新規の勤務オファー1人・1回につき1枠を使用します。既存の応募・オファーのチャットを開く場合は消費しません。採用・勤務の成立は保証されません。</p>{options.length?<OfferForm dealer={params.id} options={options}/>:<p>オファーできる勤務日がありません。<Link href="/store/profile/spot-jobs">スポット求人を登録する</Link></p>}<p className={styles.hint}>既に応募・オファーがある勤務日は、同じチャットを開きます。</p></section><section className={styles.card}><h2 style={{fontSize:18}}>契約成立後の連絡先</h2>{contact ? <dl className={styles.facts}><div><dt>電話番号</dt><dd>{contact.phone}</dd></div><div><dt>{contact.contact_type==="line" ? "LINE" : "メールアドレス"}</dt><dd>{contact.contact_value}</dd></div></dl> : <p className={styles.hint}>双方が勤務条件を確定し、ディーラーが開示に同意した場合に、この店舗だけに表示されます。</p>}</section></main>;
+ return <main className={styles.page}><Link href="/store/profile/dealers">ディーラー一覧に戻る</Link><h1 className={styles.heading}>ディーラー詳細</h1><DealerReliabilityView stats={stats[params.id]} /><DealerReviews db={supabase} id={params.id} page={parseInt(searchParams.reviews||"1",10)} path={"/store/profile/dealers/"+params.id}/><DealerDetail profile={profile.data} address={address.data?.address ?? ""} photo={photo}/><section className={styles.card}><h2 style={{fontSize:18}}>勤務をオファーする</h2><p>{planLeft===null?<>ご契約プランでスカウトは<strong>無制限</strong>です。</>:<>{planLimit!==0&&<>今月のプランの残り：<strong>{planLeft}回</strong>　／　</>}スカウト残り枠：<strong>{scoutBalance}人分</strong>　<Link href="/store/profile/plan#addons">スカウト枠を購入する</Link></>}</p><p className={styles.hint}>新規の勤務オファーは、ディーラー1人・勤務日1日につき1回使います（同じディーラーに3日頼む場合は3回）。{planLimit!==0&&planLeft!==null?"先にプランの回数（スポット求人の公開と共通）を使い、なくなったらスカウト枠を使います。":""}既存の応募・オファーのチャットを開く場合は使いません。採用・勤務の成立は保証されません。</p>{options.length?<OfferForm dealer={params.id} options={options}/>:<p>オファーできる勤務日がありません。<Link href="/store/profile/spot-jobs">スポット求人を登録する</Link></p>}<p className={styles.hint}>既に応募・オファーがある勤務日は、同じチャットを開きます。</p></section><section className={styles.card}><h2 style={{fontSize:18}}>契約成立後の連絡先</h2>{contact ? <dl className={styles.facts}><div><dt>電話番号</dt><dd>{contact.phone}</dd></div><div><dt>{contact.contact_type==="line" ? "LINE" : "メールアドレス"}</dt><dd>{contact.contact_value}</dd></div></dl> : <p className={styles.hint}>双方が勤務条件を確定し、ディーラーが開示に同意した場合に、この店舗だけに表示されます。</p>}</section></main>;
 }
 
 
