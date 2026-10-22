@@ -95,3 +95,24 @@ export async function offerDirectAction(previous:ChatState,form:FormData):Promis
  await kickMatchingNotifications(String(data),db);
  redirect("/store/profile/dealer-chat/"+data);
 }
+
+// チャットから同じディーラーに別の日も頼む(2026/10/22)。勤務日1日ごとに1回。
+export type MoreDaysState={error:string;sent:number};
+export async function offerMoreDaysAction(previous:MoreDaysState,form:FormData):Promise<MoreDaysState>{
+ const record=String(form.get("record")||"");
+ const dates=Array.from(new Set(form.getAll("dates").map(String).filter(Boolean)));
+ const start=String(form.get("start_time")||""),end=String(form.get("end_time")||"");
+ if(!UUID.test(record))return {error:"チャットを確認してください。",sent:previous.sent};
+ if(!dates.length||dates.length>14||dates.some(d=>!validDate(d)))return {error:"頼む日を1〜14日選んでください。",sent:previous.sent};
+ if(!/^\d{2}:\d{2}$/.test(start)||!/^\d{2}:\d{2}$/.test(end))return {error:"開始時間と終了時間を入力してください。",sent:previous.sent};
+ const db=await createStoreClient();const {data:{user}}=await db.auth.getUser();
+ if(!user)redirect("/store/login");
+ await requireMatchingConsent(db,user.id,"store","/store/profile/dealer-chat/"+record);
+ const {data,error}=await db.rpc("offer_more_days",{p_record:record,p_dates:dates,p_start:start,p_end:end});
+ if(error)return {error:error.code==="P0001"?error.message:"オファーを送れませんでした。",sent:previous.sent};
+ const ids=(data as string[]|null)??[];
+ for(const id of ids)await kickMatchingNotifications(id,db);
+ await kickMatchingNotifications(record,db);
+ revalidatePath("/store/profile/dealer-chat","layout");
+ return {error:"",sent:ids.length};
+}
