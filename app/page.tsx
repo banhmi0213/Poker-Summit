@@ -199,7 +199,7 @@ export default async function HomePage({
   }
   for (const ev of displayEvents.slice(0, 4)) {
     homeFeatureItems.push({ id: `event-${ev.id}`, category: isEventsLive ? "開催中" : "開催予定", title: ev.title,
-      description: [ev.start_at ? formatDateTime(ev.start_at) : "", ev.location].filter(Boolean).join(" · "),
+      description: [ev.start_at ? new Date(ev.start_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "", ev.location].filter(Boolean).join(" · "),
       image: ev.banner_image_url || "/images/tournament-banner-light-v4.webp", href: ("href" in ev && typeof ev.href === "string" ? ev.href : `/events/${ev.id}`) });
   }
   for (const coupon of popularCoupons) {
