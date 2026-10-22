@@ -3145,3 +3145,33 @@ input::placeholder, textarea::placeholder { font-weight: 400; }
 
 /* 店舗向けリンクの「年内のご契約で料金据え置き」(スマホのボタンでは2行目に小さく、2026/10/20) */
 .footer-apply-note { display: block; font-size: 10.5px; font-weight: 700; margin-top: 2px; opacity: 0.85; }
+
+
+/* Preview palette study only: ivory / navy / gold. */
+:root{
+ --bg:#f8f6ef;--surface:#fffefa;--surface-2:#f0eee5;--surface-3:#e8e5d9;
+ --text:#17263e;--text-2:#4e5d70;--muted:#68758a;--grid:#e2e3e3;
+ --border:rgba(24,40,65,.14);--border-strong:rgba(24,40,65,.3);
+ --accent:#d2ad60;--accent-ink:#102039;--accent-text:#806024;--accent-mid:#bc9348;
+ --accent-soft:#f3e8ce;--accent-line:rgba(188,147,72,.55);
+ --accent-gradient:linear-gradient(145deg,#ead39a,#d2ad60 60%,#bd954a);
+ --accent-shadow:0 2px 8px rgba(16,32,57,.15);
+ --shadow:0 2px 6px rgba(16,32,57,.06),0 12px 28px rgba(16,32,57,.1);
+ --preview-navy:#102039;--preview-navy-card:#1b2d48;--preview-ivory:#f8f6ef;--preview-gold:#d2ad60;
+}
+body{background:var(--preview-ivory);color:var(--text)}
+.portal-nav{background:linear-gradient(115deg,#102039 30%,#172b47 72%,#39382f);border-bottom-color:#b99855}
+.portal-footer{background:linear-gradient(120deg,#102039,#1b2d48);color:#eee9dd;border-color:#43516a}
+.portal-footer a{color:#e6d1a4}
+.portal-footer h2,.portal-footer h3,.portal-footer strong{color:#f5ecd9}
+.portal-footer .muted,.portal-footer p{color:#c2cad4}
+.portal-footer .footer-areas a{color:#d9dfe7}
+.cta-banner{background:#102039;border-color:#35465e;color:#f8f6ef}
+.cta-banner h2{color:#f8f6ef}
+.cta-banner p{color:#cbd3df}
+.cta-banner .eyebrow{color:#dcc18b}
+.cta-banner .btn-outline-gold{color:#e6ce9f;border-color:#bc9c5c}
+.home-store-card,.home-event-card,.home-coupon-card,.home-job-card{background:#fffefa;border-color:#dfe2e5}
+.mobile-nav-drawer{background:#102039;color:#f8f6ef}
+.nav-hamburger{color:#ecd5a5}
+.bottom-tabs{background:#102039;color:#f8f6ef;border-color:#43516a}
