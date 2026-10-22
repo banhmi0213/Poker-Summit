@@ -88,32 +88,32 @@
 
 /* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
 /* Preview navy header; gold is reserved for current/hovered navigation. */
-.header :global(.ps-pref-selector){background:#4c1c2b;border-color:#687386}
+.header :global(.ps-pref-selector){background:#704052;border-color:#687386}
 .header :global(.ps-pref-selector__label){color:#dfc48c}
 .header :global(.ps-pref-selector__select){color:#fff5df;color-scheme:dark}
-.header :global(.portal-cta){color:#3c101e;background:linear-gradient(145deg,#ead39a,#d2ad60)}
-.title{background:#4c1c2b;border-color:#744251;color:#ffffff}
+.header :global(.portal-cta){color:#603044;background:linear-gradient(145deg,#ead39a,#d2ad60)}
+.title{background:#704052;border-color:#966878;color:#ffffff}
 .caret{color:#d9bd81}
-.title:hover,.activeTitle{background:#d2ad60;border-color:#e6c989;color:#3c101e}
-.activeTitle .caret{color:#3c101e}
-.megaPanel{background:#3c101e;border-color:#835365;border-top-color:#d2ad60;box-shadow:0 16px 28px #3c101e40}
+.title:hover,.activeTitle{background:#d2ad60;border-color:#e6c989;color:#603044}
+.activeTitle .caret{color:#603044}
+.megaPanel{background:#603044;border-color:#a47b8c;border-top-color:#d2ad60;box-shadow:0 16px 28px #60304440}
 .panelHeading{color:#ddc28a}
-.menuLink{background:#4c1c2b;border-color:#744251;color:#ffffff}
-.menuArtwork{background:#3b1322;border-bottom-color:#744251}
+.menuLink{background:#704052;border-color:#966878;color:#ffffff}
+.menuArtwork{background:#643548;border-bottom-color:#966878}
 .menuCopy strong{color:#ffffff}
 .menuCopy small{color:#e1cbd3}
 .menuLink>.menuArrow{color:#d9bd81}
-.menuLink:hover{background:#652d40;border-color:#d2ad60}
-.disabled{background:#412b34;border-color:#634653;color:#a78d98}
-.learningArtwork{background:linear-gradient(125deg,#6e2a40,#3c101e);color:#e9d3a7}
-.mobileGroup{border-color:#744251}
+.menuLink:hover{background:#88586b;border-color:#d2ad60}
+.disabled{background:#624650;border-color:#866775;color:#a78d98}
+.learningArtwork{background:linear-gradient(125deg,#925d73,#603044);color:#e9d3a7}
+.mobileGroup{border-color:#966878}
 .mobileGroup summary,.mobileDirect{color:#ffffff}
-.mobileGroup[open] summary{background:#4c1c2b;color:#e5c88f}
+.mobileGroup[open] summary{background:#704052;color:#e5c88f}
 .header.header :global(.mobile-nav-drawer) :global(.plink){color:#ffffff}
 .header :global(.nav-hamburger){color:#e8d0a0}
 
 
-.title{background:#4c1c2b;border-color:#60313f}
-.title:hover,.activeTitle{background:#c6a45b;border-color:#d9bd83;color:#3c101e}
-.megaPanel{background:#310c18}
-.menuLink{background:#4c1c2b}
+.title{background:#704052;border-color:#865767}
+.title:hover,.activeTitle{background:#c6a45b;border-color:#d9bd83;color:#603044}
+.megaPanel{background:#512637}
+.menuLink{background:#704052}
