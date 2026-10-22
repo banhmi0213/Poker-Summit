@@ -89,3 +89,29 @@
 .statsBar :global(.ps-region-stat__icon){color:#d2ad60}
 .statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#667085}
 .statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#3b4c65}
+
+
+/* Match the reference's deliberate alternation of light, tinted and dark editorial sections. */
+.readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-top:24px;padding-bottom:24px}
+.readable :global(.home-section[data-tone])::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;box-shadow:0 0 0 100vmax var(--section-tone);background:var(--section-tone);clip-path:inset(0 -100vmax)}
+.readable :global(.home-section[data-tone="soft"]){--section-tone:#f0ede5}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#101c30;color:#f8f6ef}
+.readable.readable :global(.home-section-head) h2{color:#98712c}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#f8f6ef}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#e0c48c}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-card),
+.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#1a293f;border-color:#3a485d}
+.readable.readable :global([data-tone="navy"]) h3,
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,
+.readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
+.readable.readable :global([data-tone="navy"]) p,
+.readable.readable :global([data-tone="navy"]) small,
+.readable.readable :global([data-tone="navy"]) :global(.home-location),
+.readable.readable :global([data-tone="navy"]) :global(.muted),
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#cad2df}
+.readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#e0c48c}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#47536a}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#2a3649;border:1px solid #6b6553;color:#e4c993}
+.statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
+.statsBar :global(.ps-region-stat){color:#17263e}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
