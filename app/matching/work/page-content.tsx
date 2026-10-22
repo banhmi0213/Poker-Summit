@@ -7,10 +7,12 @@ import {requireMatchingConsent} from "@/lib/matching-consent-server";
 import {PortalHeader} from "@/app/portal-header";
 import {PortalFooter} from "@/app/portal-footer";
 import {WorkForm} from "./form";
+import {CancelForm,CancelReplyForm} from "./cancel-form";
+import {cancelReasonLabel} from "@/lib/cancel-reasons";
 import {UUID} from "@/lib/spot-jobs";
 import styles from "@/app/spot-jobs/spot.module.css";
 type Params={page?:string;job?:string;saved?:string;record?:string};
-type RecordRow={id:string;spot_job_id:string|null;work_start:string;work_end:string;status:string;store_confirmed_at:string|null;dealer_confirmed_at:string|null;store_completed_at:string|null;dealer_completed_at:string|null;dealer_review:string|null;review_saved_at:string|null;store_review:string|null;store_review_saved_at:string|null;dealer_rating:number|null;store_rating:number|null;job_snapshot:{store_name?:string;dealer_name?:string;hourly_wage?:number;games?:string[];duties?:string;requirements?:string;dress?:string;transport_type?:string;transport_limit?:number}};
+type RecordRow={id:string;spot_job_id:string|null;work_start:string;work_end:string;status:string;store_confirmed_at:string|null;dealer_confirmed_at:string|null;store_completed_at:string|null;dealer_completed_at:string|null;dealer_review:string|null;review_saved_at:string|null;store_review:string|null;store_review_saved_at:string|null;dealer_rating:number|null;store_rating:number|null;cancellation_notice_at:string|null;cancel_reason_code:string|null;cancel_reason:string|null;cancel_late:boolean|null;cancel_reply:string|null;cancel_reply_rating:number|null;cancel_reply_at:string|null;job_snapshot:{store_name?:string;dealer_name?:string;hourly_wage?:number;games?:string[];duties?:string;requirements?:string;dress?:string;transport_type?:string;transport_limit?:number}};
 const date=(s:string)=>new Intl.DateTimeFormat("ja-JP",{timeZone:"Asia/Tokyo",dateStyle:"medium",timeStyle:"short"}).format(new Date(s));
 export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";searchParams:Params}){
  const path=actor==="dealer"?"/account/dealer/work":"/store/profile/spot-jobs/work";
@@ -36,7 +38,10 @@ export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";sear
  {(searchParams.job||searchParams.record)&&<p><Link href={path}>すべての勤務を表示</Link></p>}
  {(data as RecordRow[]||[]).map(r=>{
  const j=r.job_snapshot||{},ended=Date.parse(r.work_end)<=Date.now(),selfConfirmed=actor==="store"?r.store_confirmed_at:r.dealer_confirmed_at,selfCompleted=actor==="store"?r.store_completed_at:r.dealer_completed_at,selfReviewSaved=actor==="store"?r.store_review_saved_at:r.review_saved_at,selfReview=actor==="store"?r.store_review:r.dealer_review;
- const status=r.status==="pending"?"条件確認中":r.status==="completed"?"勤務完了":r.status==="confirmed"?(selfCompleted?"相手の完了確認待ち":"勤務確定"):"キャンセル・確認対応中";
+ const status=r.status==="pending"?"条件確認中":r.status==="completed"?"勤務完了":r.status==="confirmed"?(selfCompleted?"相手の完了確認待ち":"勤務確定"):r.status==="store_cancelled"?"キャンセル（店舗）":r.status==="dealer_cancelled"?"キャンセル（ディーラー）":"確認対応中";
+ const started=Date.parse(r.work_start)<=Date.now();
+ const cancelledBy=r.status==="store_cancelled"?"store":r.status==="dealer_cancelled"?"dealer":null;
+ const canReply=!!cancelledBy&&cancelledBy!==actor&&!r.cancel_reply_at&&!!r.cancellation_notice_at&&Date.parse(r.cancellation_notice_at)>Date.now()-30*86400000;
  return <section className={styles.box} key={r.id}><span className={styles.tag}>{status}</span><h2>{actor==="store"?j.dealer_name||"ディーラー":j.store_name||"店舗"}</h2><p><strong>{date(r.work_start)} 〜 {date(r.work_end)}</strong>（日本時間）</p><p>時給：{j.hourly_wage!==undefined?"¥"+Number(j.hourly_wage).toLocaleString():"記録なし"} ／ 交通費：{j.transport_type==="full"?"全額支給":j.transport_type==="limited"?"上限 ¥"+Number(j.transport_limit||0).toLocaleString():j.transport_type==="none"?"支給なし":"記録なし"}</p>
  <details><summary>当時のスポット求人条件</summary><p>{j.games?.join("・")}</p><p className={styles.pre}>{j.duties||"条件の記録なし"}</p><p className={styles.pre}>応募条件：{j.requirements||"記載なし"}</p><p className={styles.pre}>服装・持ち物：{j.dress||"記載なし"}</p></details>
  {r.spot_job_id&&<p><Link href={path+"?job="+r.spot_job_id}>この求人の勤務履歴・レビュー</Link></p>}
@@ -51,6 +56,10 @@ export async function WorkPage({actor,searchParams}:{actor:"store"|"dealer";sear
  {r.status==="confirmed"&&!ended&&<p className={styles.muted}>勤務終了時刻を過ぎると完了確認できます。</p>}
  {r.status==="confirmed"&&ended&&!selfReviewSaved&&<p className={styles.muted}>星評価とレビューを保存すると「勤務完了」ボタンが表示されます。</p>}
  {r.status==="confirmed"&&selfCompleted&&<p>あなたの完了確認は保存済みです。相手の完了確認がそろうと勤務完了になります。</p>}
+ {r.status==="confirmed"&&!started&&<CancelForm actor={actor} id={r.id} workStart={r.work_start}/>}
+ {cancelledBy&&<div style={{background:"#fdf3f1",padding:16,borderRadius:8,margin:"16px 0"}}><strong>{cancelledBy==="store"?"店舗":"ディーラー"}がキャンセルしました{r.cancel_late?"（直前キャンセル）":""}</strong>{r.cancellation_notice_at&&<small style={{marginLeft:8}}>{date(r.cancellation_notice_at)}</small>}<p className={styles.pre}>理由：{cancelReasonLabel(r.cancel_reason_code)}　{r.cancel_reason||""}</p>
+  {r.cancel_reply?<div style={{background:"#fff",padding:12,borderRadius:8}}><strong>{cancelledBy==="store"?"ディーラー":"店舗"}の言い分</strong><p><Stars rating={r.cancel_reply_rating}/></p><p className={styles.pre}>{r.cancel_reply}</p></div>:canReply?<CancelReplyForm actor={actor} id={r.id}/>:<p className={styles.muted}>{cancelledBy===actor?"相手の言い分はまだありません。":"言い分を書ける期間（30日）を過ぎています。"}</p>}
+  <p className={styles.muted}>キャンセルは星の平均には入らず、「確定後のキャンセル」として回数と言い分が表示されます。内容に問題がある場合は運営が確認します。</p></div>}
  </section>;
  })}
  {!data?.length&&<section className={styles.box}>勤務の記録はまだありません。求人への応募後、ここで条件確定と勤務完了を確認できます。</section>}
