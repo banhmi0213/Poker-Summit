@@ -28,6 +28,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/major-tournaments", label: "国内外大型大会" },
   { href: "/admin/reports", label: "通報管理" },
   { href: "/admin/dealer-chat-reports", label: "マッチング通報" },
+  { href: "/admin/matching-cancellations", label: "勤務キャンセル" },
   { href: "/admin/banners", label: "バナー管理" },
   { href: "/admin/members", label: "会員管理" },
   { href: "/admin/inquiries", label: "お問い合わせ" },
