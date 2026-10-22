@@ -1,4 +1,5 @@
 "use server";
+import { normalizeXPostUrl } from "@/lib/x-post";
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +15,8 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  if(authError || admin !== true) return {error:"運営権限がありません。"};
  const id = String(formData.get("id") || "");
  if(id && !uuid.test(id)) return {error:"記事が見つかりません。"};
+ let xPostUrl="";
+ try { xPostUrl=normalizeXPostUrl(String(formData.get("xPostUrl")||"")); } catch(e) { return {error:e instanceof Error ? e.message : "X投稿URLを確認してください。"}; }
  const title=String(formData.get("title") || "").trim();
  const imageAlt=String(formData.get("imageAlt") || "").trim();
  if(imageAlt.length>300) return {error:"メイン画像のALTは300文字以内で入力してください。"};
@@ -85,7 +88,7 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
    else if(!active)body.push({type:"image",caption:b.caption || "",alt:b.alt?.trim() || "",uploadKey:b.uploadKey});
   }
   if(active&&mode==="internal"&&!body.some(b=>b.type==="image"||b.text?.trim()||(b.items?.some(x=>x.trim()))||(b.rows?.some(r=>r.some(x=>x.trim())))))throw Error("公開する記事の本文を入力してください。");
-  const values={title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||previous?.published_at||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
+  const values={x_post_url:xPostUrl,title,summary,slug:slug||undefined,seo_title:seoTitle,meta_description:metaDescription,canonical_url:canonicalUrl,search_index:formData.get("searchIndex")==="on",author_name:authorName,author_profile:authorProfile,published_at:publishedAt||previous?.published_at||(active?new Date().toISOString():null),category,article_url:articleUrl,content_mode:mode,body,related_store_ids:storeIds,related_article_ids:relatedArticleIds,show_toc:formData.get("showToc")==="on",show_breadcrumbs:formData.get("showBreadcrumbs")==="on",include_in_sitemap:formData.get("includeInSitemap")==="on",reference_sources:references,image_url:imageUrl,image_path:imagePath,image_alt:imageAlt,image_rights:imageRights,visibility,active,featured:formData.get("featured")==="on",updated_at:new Date().toISOString()};
   const query=id?supabase.from("blog_entries").update(values).eq("id",id):supabase.from("blog_entries").insert(values);
   const {data:saved,error}=await query.select("id").single();
   if(error||!saved)throw Error("記事を保存できませんでした。もう一度お試しください。");

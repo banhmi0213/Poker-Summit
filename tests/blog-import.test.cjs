@@ -70,6 +70,7 @@ test('renders imported editor fields without any save or generation API call', (
       'react-dom': { useFormState: () => [{}, ""], useFormStatus: () => ({ pending: false }) },
       'next/link': { __esModule: true, default: ({ children, ...props }) => React.createElement('a', props, children) },
       '@/app/blog/article-content': { ArticleContent: () => null },
+      '@/app/blog/tournament-post': { TournamentPost: () => null },
       './actions': { saveBlogEntry: () => { throw new Error('Must only save on explicit submit'); } },
     });
     const { draft } = parse(example());
@@ -82,4 +83,13 @@ test('renders imported editor fields without any save or generation API call', (
     assert.ok(!/name="image"[^>]*required=""/.test(html));
     assert.ok(!html.includes('https://api.openai.com'));
   } finally { global.fetch = oldFetch; }
+});
+
+test('imports only validated X post URLs and strips tracking parameters', () => {
+ const d = example(); d.xPostUrl = 'https://twitter.com/Poker_Summit/status/2111780849586991534?s=20';
+ assert.equal(parse(d).draft.x_post_url, 'https://x.com/Poker_Summit/status/2111780849586991534');
+ assert.equal(parse(example()).draft.x_post_url, '');
+ for(const bad of ['https://evil.test/a/status/123','https://x.com/a','javascript:alert(1)','https://x.com.evil.test/a/status/123','https://u:p@x.com/a/status/123','<iframe src="https://x.com">']) {
+  assert.throws(() => parse({...d,xPostUrl:bad}));
+ }
 });

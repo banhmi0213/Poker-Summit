@@ -62,3 +62,10 @@ test('existing cover is retained when saving without selecting another image', a
   const h = harness({ image_url: 'https://example.com/saved.webp', image_path: 'saved.webp', body: [], published_at: null });
   assert.equal((await h.run()).id, id); assert.equal(h.saved().image_path, 'saved.webp');
 });
+test('X post can be saved, cleared, and invalid URLs never reach persistence', async () => {
+ const h = harness(); h.form.set('xPostUrl','https://twitter.com/Poker_Summit/status/2111780849586991534?s=20');
+ assert.equal((await h.run()).id,id); assert.equal(h.saved().x_post_url,'https://x.com/Poker_Summit/status/2111780849586991534');
+ h.form.set('xPostUrl',''); await h.run(); assert.equal(h.saved().x_post_url,'');
+ const bad = harness();bad.form.set('xPostUrl','https://example.com/post/123');
+ assert.match((await bad.run()).error,/形式/);assert.equal(bad.saved(),undefined);
+});
