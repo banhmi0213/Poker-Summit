@@ -189,28 +189,34 @@ export default async function HomePage({
   const rankingBanners = sectionBanners(rankingBannerRows);
   const jobsBanners = sectionBanners(jobsBannerRows);
 
-  // 確認用ブランチ: 既存の公開データだけで注目枠を組む。件数合わせの架空データは入れない。
-  const homeFeatureItems: HomeFeatureItem[] = [];
-  if (freerollSignupOpen()) {
-    const freeroll = topBanners.find(b => /フリーロール/.test(b.title) && b.image_url);
-    if (freeroll) homeFeatureItems.push({ id: `banner-${freeroll.id}`, category: "注目企画", title: freeroll.title,
-      description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
-      image: freeroll.image_url, href: freeroll.link_url || "/signup", external: freeroll.external });
-  }
-  for (const ev of displayEvents.slice(0, 4)) {
-    homeFeatureItems.push({ id: `event-${ev.id}`, category: isEventsLive ? "開催中" : "開催予定", title: ev.title,
-      description: [ev.start_at ? new Date(ev.start_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }) : "", ev.location].filter(Boolean).join(" · "),
-      image: ev.banner_image_url || "/images/tournament-banner-light-v4.webp", href: ("href" in ev && typeof ev.href === "string" ? ev.href : `/events/${ev.id}`) });
-  }
-  for (const coupon of popularCoupons) {
-    if (homeFeatureItems.length >= 6) break;
-    homeFeatureItems.push({ id: `coupon-${coupon.id}`, category: "クーポン", title: coupon.title,
-      description: coupon.discount || "店舗の特典をチェック", image: coupon.banner_image_url || "/images/coupon-banner-gold-v4.png", href: `/coupons/${coupon.id}` });
-  }
-  if (homeFeatureItems.length < 6) homeFeatureItems.push({ id: "stores", category: "店舗検索", title: `全国${totalStoreCount}店舗から、次に遊ぶお店を探そう`,
-    description: "都道府県・エリア・店舗タイプで、お近くのポーカー店を探せます。", image: "/images/store-banner-light-v2.webp", href: "/stores" });
-  if (homeFeatureItems.length < 6) homeFeatureItems.push({ id: "academy", category: "学習コース", title: "遊びながら、ポーカーを学ぼう。",
-    description: "ポジション・レンジ表・役の強さクイズを無料で体験。", image: "/images/blog-promo-square.webp", href: "/learn" });
+  // 確認用ブランチ: 6つの入口を固定順で表示。既存の画像・リンクを使用する。
+  const freerollFeature = freerollSignupOpen()
+    ? topBanners.find(b => /フリーロール/.test(b.title) && b.image_url)
+    : undefined;
+  const homeFeatureItems: HomeFeatureItem[] = [
+    { id: "stores", category: "店舗検索", title: `全国${totalStoreCount}店舗から、次に遊ぶお店を探そう`,
+      description: "都道府県・エリア・店舗タイプで、お近くのポーカー店を探せます。",
+      image: "/images/store-banner-light-v2.webp", href: "/stores" },
+    freerollFeature
+      ? { id: "featured", category: "注目企画", title: freerollFeature.title,
+          description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
+          image: freerollFeature.image_url, href: freerollFeature.link_url || "/tournaments/first-freeroll", external: freerollFeature.external }
+      : { id: "featured", category: "注目企画", title: "Poker Summitの注目企画をチェック",
+          description: "キャンペーンやサイトからのお知らせをご紹介。",
+          image: "/images/poker-news-banner.webp", href: "/news" },
+    { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
+      description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
+      image: "/images/summit-banner-light-v2.webp", href: "/board" },
+    { id: "jobs", category: "求人", title: "ポーカーが好き。その気持ちが、仕事のきっかけに。",
+      description: "ポーカー店舗の求人・スポット求人から、自分に合う働き方を探そう。",
+      image: "/images/jobs-banner-light-v6.webp", href: "/jobs" },
+    { id: "events", category: "トーナメント・イベント", title: "次に参加したいトーナメント・イベントを探そう",
+      description: "開催中・開催予定のトーナメントやイベントをチェック。",
+      image: "/images/tournament-banner-light-v4.webp", href: "/events" },
+    { id: "blog", category: "BLOG", title: "ポーカーの楽しみ方がもっと広がる。",
+      description: "Poker Summit BLOGで、ポーカーにまつわる記事を読もう。",
+      image: "/images/blog-promo-square.webp", href: "/blog" },
+  ];
 
   // --- Favorites (人によって変わるのでキャッシュしない) ---
   let favoriteStoreIds = new Set<string>();
