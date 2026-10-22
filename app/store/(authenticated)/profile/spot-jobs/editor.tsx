@@ -22,8 +22,6 @@ export default function SpotEditor({job,template,today,image}:{job:SpotJob|null;
   const [month,setMonth]=useState(today.slice(0,7));
   const [from,setFrom]=useState(today),[to,setTo]=useState(today);
   const [dateError,setDateError]=useState('');
-  // スポット求人の勤務日は今日〜2日後まで(2026/10/22 オーナー指示。DBでも確かめる)
-  const maxDay=new Date(Date.parse(today+'T00:00:00Z')+2*86400000).toISOString().slice(0,10);
   const [transport,setTransport]=useState(base?.transport_type||'none');
   function addDates(dates:string[]) {
     const all=new Set([...shifts.map(s=>s.work_date),...dates]);
@@ -33,7 +31,7 @@ export default function SpotEditor({job,template,today,image}:{job:SpotJob|null;
   }
   function range() {
     if (!validDate(from)||!validDate(to)||from>to) {setDateError('開始日・終了日を確認してください。');return;}
-    if (from<today||to>maxDay) {setDateError('勤務日は今日から2日後までの日を選んでください。');return;}
+    if (from<today) {setDateError('今日以降の日を選んでください。');return;}
     const count=(Date.parse(to)-Date.parse(from))/86400000+1;
     if (count>90) {setDateError('一度に選択できる期間は90日までです。');return;}
     addDates(Array.from({length:count},(_,i)=>new Date(Date.parse(from)+i*86400000).toISOString().slice(0,10)));
@@ -46,10 +44,10 @@ export default function SpotEditor({job,template,today,image}:{job:SpotJob|null;
   return <form action={action} className={styles.box}>
     <input type="hidden" name="id" value={job?.id||''}/><input type="hidden" name="shifts" value={JSON.stringify(shifts)}/>
     <h2>{job?'スポット求人を編集':'新しいスポット求人を登録'}</h2>
-    <div className={styles.section}><h3>1. 勤務日 *</h3><p className={styles.muted}>スポット求人の勤務日は、今日から2日後まで（{today}〜{maxDay}）の日を選べます。選択後に日ごとの時間・時給・人数を変更できます。</p>
-      <div className={styles.fields}><label className={styles.field}>開始日<input type="date" min={today} max={maxDay} value={from} onChange={e=>setFrom(e.target.value)}/></label><label className={styles.field}>終了日<input type="date" min={today} max={maxDay} value={to} onChange={e=>setTo(e.target.value)}/></label></div>
+    <div className={styles.section}><h3>1. 勤務日 *</h3><p className={styles.muted}>期間でまとめて選び、カレンダーで追加・解除できます（最大90日）。公開すると、選んだ勤務日1日につき1回使います。ディーラーには選んだ日だけが表示され、過ぎた日は表示されません。</p>
+      <div className={styles.fields}><label className={styles.field}>開始日<input type="date" min={today} value={from} onChange={e=>setFrom(e.target.value)}/></label><label className={styles.field}>終了日<input type="date" min={today} value={to} onChange={e=>setTo(e.target.value)}/></label></div>
       <button type="button" onClick={range} className={styles.button} style={{marginTop:10}}>期間内を選択</button>
-      <div className={styles.calendar}><div className={styles.calendarHead}><button type="button" className={styles.button} onClick={()=>move(-1)} aria-label="前の月">‹</button><strong>{month.replace('-','年 ')}月</strong><button type="button" className={styles.button} onClick={()=>move(1)} aria-label="次の月">›</button></div><div className={styles.days}>{['日','月','火','水','木','金','土'].map(d=><span key={d}>{d}</span>)}{Array.from({length:first.getUTCDay()},(_,i)=><span key={'empty'+i}/>)}{Array.from({length:dayCount},(_,i)=>{const d=month+'-'+String(i+1).padStart(2,'0');return <button type="button" key={d} aria-label={d} aria-pressed={shifts.some(s=>s.work_date===d)} disabled={(d<today||d>maxDay)&&!shifts.some(s=>s.work_date===d)} onClick={()=>toggle(d)}>{i+1}</button>;})}</div></div>
+      <div className={styles.calendar}><div className={styles.calendarHead}><button type="button" className={styles.button} onClick={()=>move(-1)} aria-label="前の月">‹</button><strong>{month.replace('-','年 ')}月</strong><button type="button" className={styles.button} onClick={()=>move(1)} aria-label="次の月">›</button></div><div className={styles.days}>{['日','月','火','水','木','金','土'].map(d=><span key={d}>{d}</span>)}{Array.from({length:first.getUTCDay()},(_,i)=><span key={'empty'+i}/>)}{Array.from({length:dayCount},(_,i)=>{const d=month+'-'+String(i+1).padStart(2,'0');return <button type="button" key={d} aria-label={d} aria-pressed={shifts.some(s=>s.work_date===d)} disabled={d<today&&!shifts.some(s=>s.work_date===d)} onClick={()=>toggle(d)}>{i+1}</button>;})}</div></div>
       {dateError&&<p role="alert" className={styles.error}>{dateError}</p>}
     </div>
     <div className={styles.section}><h3>2〜4. 共通の勤務時間・時給・募集人数</h3><p className={styles.muted}>新しく選ぶ日に適用されます。「選択した日に反映」で全日をまとめて変更できます。終了時間が開始時間より早い場合は翌日扱いです。</p><div className={styles.rowFields}>{[['開始時間','start_time','time'],['終了時間','end_time','time'],['時給（円）','hourly_wage','number'],['募集人数','headcount','number']].map(([label,key,type])=><label key={key}>{label}<input type={type} min={1} value={key==='hourly_wage'&&defaults.hourly_wage===0?'':defaults[key as keyof Defaults]} onChange={e=>setDefaults({...defaults,[key]:type==='number'?Number(e.target.value):e.target.value})}/></label>)}</div><button type="button" className={styles.button} style={{marginTop:10}} onClick={()=>setShifts(shifts.map(s=>({...defaults,work_date:s.work_date})))}>選択した日に反映</button>
