@@ -249,6 +249,7 @@ export const STORE_STATUS_LABEL: Record<string, string> = {
   payment_suspended: "未入金で非公開",
   closed: "解約・削除済み",
   test: "テスト用（非公開）",
+  duplicate: "重複掲載のため非公開",
 };
 
 // 店舗ログインID(例: "store-xxxxxxxx")をSupabase Auth上の実メールアドレスに
