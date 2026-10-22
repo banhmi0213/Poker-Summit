@@ -27,6 +27,7 @@ type SP = {
   q?: string;
   category?: string;
   sort?: string;
+  cmp?: string;
 };
 
 function hrefWith(sp: SP, overrides: Partial<SP>) {
@@ -81,11 +82,11 @@ type PeriodCell = { cur: number; prev: number; ok: boolean };
 // 前日・先週・先月・前年と比べた上げ下げ(2026/10/22)。今の期間の始まり〜今 と 前の期間の同じ経過時間まで を比べる
 const CHANGE_PERIODS: [string, string][] = [["day", "前日"], ["week", "先週"], ["month", "先月"], ["year", "前年"]];
 // total を渡すと「合計がどれだけ増えたか」(会員数など)、渡さないと「今の期間と前の期間の比較」(PV・UU)
-function TileChanges({ cells, total }: { cells?: Record<string, PeriodCell | undefined>; total?: number }) {
+function TileChanges({ cells, total, only }: { cells?: Record<string, PeriodCell | undefined>; total?: number; only?: string }) {
   if (!cells) return null;
   return (
     <div style={{ marginTop: 6, display: "grid", gap: 1 }}>
-      {CHANGE_PERIODS.map(([k, label]) => {
+      {CHANGE_PERIODS.filter(([k]) => !only || k === only).map(([k, label]) => {
         const c = cells[k];
         if (!c) return null;
         const cur = Number(c.cur) || 0, prev = Number(c.prev) || 0, diff = cur - prev;
@@ -107,7 +108,7 @@ function TileChanges({ cells, total }: { cells?: Record<string, PeriodCell | und
   );
 }
 
-function StatTile({ label, value, delta, changes, total }: { label: string; value: string; delta?: string; changes?: Record<string, PeriodCell | undefined>; total?: number }) {
+function StatTile({ label, value, delta, changes, total, only }: { label: string; value: string; delta?: string; changes?: Record<string, PeriodCell | undefined>; total?: number; only?: string }) {
   return (
     <div className="card">
       <div className="muted" style={{ fontSize: 12.5 }}>{label}</div>
@@ -115,7 +116,7 @@ function StatTile({ label, value, delta, changes, total }: { label: string; valu
         {value}
       </div>
       {delta && <div className="muted" style={{ fontSize: 12 }}>{delta}</div>}
-      <TileChanges cells={changes} total={total} />
+      <TileChanges cells={changes} total={total} only={only} />
     </div>
   );
 }
@@ -282,6 +283,18 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             {label}
           </Link>
         ))}
+        <details style={{ position: "relative" }}>
+          <summary className="btn primary" style={{ fontSize: 12.5, listStyle: "none", cursor: "pointer" }}>
+            {(CHANGE_PERIODS.find(([k]) => k === (searchParams.cmp ?? "day")) ?? CHANGE_PERIODS[0])[1]}比
+          </summary>
+          <div className="card" style={{ position: "absolute", zIndex: 5, top: "110%", left: 0, padding: 6, display: "grid", gap: 4, minWidth: 110 }}>
+            {CHANGE_PERIODS.map(([k, label]) => (
+              <Link key={k} href={hrefWith(searchParams, { cmp: k })} className={`btn ${(searchParams.cmp ?? "day") === k ? "primary" : ""}`} style={{ fontSize: 12.5 }}>
+                {label}比
+              </Link>
+            ))}
+          </div>
+        </details>
         {period === "custom" && (
           <form method="get" style={{ display: "flex", gap: 6 }}>
             <input type="hidden" name="tab" value={tab} />
@@ -489,6 +502,7 @@ async function OverviewTab({
   ]);
   const { data: periodData } = await supabase.rpc("admin_compare_periods");
   const pd = (periodData ?? {}) as Record<string, Record<string, PeriodCell>>;
+  const cmp = CHANGE_PERIODS.some(([k]) => k === searchParams.cmp) ? String(searchParams.cmp) : "day";
   const ch = (key: string) => Object.fromEntries(CHANGE_PERIODS.map(([k]) => [k, pd[k]?.[key]]));
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
@@ -548,13 +562,13 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
-        <StatTile changes={ch("members")} total={Number((dashCounts as any)?.members ?? 0)} label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
+        <StatTile only={cmp} changes={ch("members")} total={Number((dashCounts as any)?.members ?? 0)} label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
-        <StatTile changes={ch("site_pv")} label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
-        <StatTile changes={ch("site_uu")} label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
-        <StatTile changes={ch("store_pv")} label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
-        <StatTile changes={ch("store_uu")} label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
+        <StatTile only={cmp} changes={ch("site_pv")} label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile only={cmp} changes={ch("site_uu")} label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile only={cmp} changes={ch("store_pv")} label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile only={cmp} changes={ch("store_uu")} label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
       </div>
