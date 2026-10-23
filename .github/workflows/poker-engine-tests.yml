@@ -6,6 +6,7 @@ on:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
       - "app/poker-ui/table-action-motion*"
+      - "app/poker-ui/use-pot-flight*"
       - "supabase/migrations/*poker*.sql"
       - "db/tests/poker*"
       - "app/poker-demo/**"
@@ -24,6 +25,7 @@ on:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
       - "app/poker-ui/table-action-motion*"
+      - "app/poker-ui/use-pot-flight*"
       - "supabase/migrations/*poker*.sql"
       - "db/tests/poker*"
       - "app/poker-demo/**"
@@ -62,7 +64,7 @@ jobs:
       - name: Run poker regression tests
         run: npm run test:poker
       - name: Install isolated test runtimes
-        run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10 react-test-renderer@18.3.1
+        run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10 react-test-renderer@18.3.1 esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
       - name: Verify tournament ownership and permission policies
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
@@ -71,3 +73,10 @@ jobs:
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
         run: node --test tests/poker-lifecycle.cjs
+
+      - name: Verify every payout coin reaches every avatar
+        env:
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+        run: node tests/poker-payout-browser.cjs

@@ -471,3 +471,8 @@
  .gameClock aside>div>div{grid-template-columns:80px minmax(6ch,max-content)}
  .gameClock aside b{font-size:clamp(13px,1.4vw,20px);text-align:right}
 }
+
+/* Measure payout paths after layout; every coin reaches the actual avatar. */
+.awardAnimationLayer{overflow:visible}
+.awardFlight[data-pot-winner]{left:var(--pot-start-x,50%);top:var(--pot-start-y,35%)}
+.awardCoin[data-pot-coin]{animation:none;opacity:0}

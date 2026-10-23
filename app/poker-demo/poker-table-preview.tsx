@@ -1,4 +1,5 @@
 "use client";
+import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
 
 import { useEffect, useRef, useState } from "react";
@@ -43,7 +44,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const canStartHand=!tournament||Boolean(tournamentHandTerms(tournament,now));
   const [deal, setDeal] = useState(initialDeal);
   const [motionHand,setMotionHand]=useState(0);
-  const tableRef=useRef<HTMLDivElement>(null);
+
   const [dealing, setDealing] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
   const [buttonIndex, setButtonIndex] = useState(clockwiseSeats.indexOf(initialHand.positions.button));
@@ -51,6 +52,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [tournamentOutcome,setTournamentOutcome] = useState<TournamentOutcome|null>(null);
   const [payouts, setPayouts] = useState<Record<string,number> | null>(null);
   const [awardAnimationDone, setAwardAnimationDone] = useState(false);
+  const tableRef=usePotFlight(Boolean(payouts&&!awardAnimationDone),`demo-${motionHand}`);
   const [lastHandResult,setLastHandResult]=useState<{winners:string[];rows:{id:string;name:string;delta:number}[]}|null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const soundEnabledRef = useRef(true);
@@ -416,8 +418,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     </div></details></div>}
     <div ref={tableRef} className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} data-showdown={showdown ? "true" : "false"} data-street={streetStep}><TableMotionLayer/>
       {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
-        {awardWinners.map(id => <div key={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
-          <span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span><span className={styles.awardCoin}>♠</span>
+        {awardWinners.map(id => <div key={id} data-pot-winner={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
+          <span data-pot-coin className={styles.awardCoin}>♠</span><span data-pot-coin className={styles.awardCoin}>♠</span><span data-pot-coin className={styles.awardCoin}>♠</span>
           <b className={styles.awardAmount}>+{payouts[id].toLocaleString()}</b>
         </div>)}
       </div>}
@@ -443,7 +445,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} stack={displayStack("p5")} index={5} winnerGlow={Boolean(payouts?.p5)} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} seatStatus={seatStatus("p5")} positionLabel={positionFor("p5")} lastAction={lastActions["p5"]} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} stack={displayStack("p6")} index={6} winnerGlow={Boolean(payouts?.p6)} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} seatStatus={seatStatus("p6")} positionLabel={positionFor("p6")} lastAction={lastActions["p6"]} /></div>
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
-      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""} ${payouts?.you ? styles.winnerGlow : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar} data-motion-stack="you">{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div className={styles.selfInfo}>{positionFor("you") && <span className={styles.positionBadge}>{positionFor("you")}</span>}{lastActions.you && <span className={styles.actionBadge}>{lastActions.you}</span>}{seatStatus("you") && <span className={styles.eliminatedTag}>{seatStatus("you")}</span>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small></div>{handActive && inHand("you") && deal.holes.you && action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>{handLabel(deal.holes.you, deal.board)}</strong>}<div className={styles.hole} data-motion-hole="you">{deal.holes.you.map((card, i) => <span key={i} className={isRedCard(card) ? styles.redCard : styles.blackCard}>{cardLabel(card)}</span>)}</div></div>}</div>}
+      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""} ${payouts?.you ? styles.winnerGlow : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} style={{ background: `conic-gradient(from 0deg, ${remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div className={styles.avatar} data-motion-stack="you" data-pot-target="you">{member.avatarUrl ? <img src={member.avatarUrl} alt="" className={styles.memberAvatarImage} referrerPolicy="no-referrer" /> : <span aria-hidden="true">{member.displayName.slice(0, 1)}</span>}</div></div><div className={styles.selfInfo}>{positionFor("you") && <span className={styles.positionBadge}>{positionFor("you")}</span>}{lastActions.you && <span className={styles.actionBadge}>{lastActions.you}</span>}{seatStatus("you") && <span className={styles.eliminatedTag}>{seatStatus("you")}</span>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small></div>{handActive && inHand("you") && deal.holes.you && action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>{handLabel(deal.holes.you, deal.board)}</strong>}<div className={styles.hole} data-motion-hole="you">{deal.holes.you.map((card, i) => <span key={i} className={isRedCard(card) ? styles.redCard : styles.blackCard}>{cardLabel(card)}</span>)}</div></div>}</div>}
     </div>
     <div className={styles.actionColumn}>
       {<div className={`${styles.resultOverlay} ${showCurrentResult?"":styles.previousResult}`} role="status" aria-live="polite">
@@ -482,7 +484,7 @@ function Seat({ name, stack, index, active, seconds, positionLabel, lastAction, 
   const progress = Math.max(0, Math.min(100, (1 - seconds / 20) * 100));
   return <div className={`${styles.seat} ${seatStatus ? styles.inactiveSeat : ""} ${active ? styles.seatActive : ""} ${winnerGlow ? styles.winnerSeat : ""}`}>
     <div className={styles.seatAvatarRow}>
-      <div className={styles.seatTimerRing} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div className={styles.avatar} data-motion-stack={`p${index}`}>{index}</div></div>
+      <div className={styles.seatTimerRing} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div className={styles.avatar} data-motion-stack={`p${index}`} data-pot-target={`p${index}`}>{index}</div></div>
 
       {positionLabel && <span className={styles.seatPositionBadge}>{positionLabel}</span>}
     </div>
