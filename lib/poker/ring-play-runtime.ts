@@ -81,7 +81,7 @@ export class RingPlayRuntime {
   item.pending=this.options.store().ping(member,table).then(()=>{item.at=Date.now();}).catch(error=>{this.#pings.delete(id);throw error;}).finally(()=>{item.pending=null;});this.#pings.set(id,item);await item.pending;
  }
  private present(meta:RingPlayMeta,owner:RingHandOwner|null,member:string):RingPlayView|null{
-  const seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!owner)return null;const extra=meta.bankRevision===owner.version?20000:0;
+  const seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!owner||!owner.ownsReservation(member,seat.reservationId))return null;const extra=meta.bankRevision===owner.version?20000:0;
   let hand;try{hand=owner.snapshot(member);}catch{return null;}
   return {turnDurationMs:30000+extra,timeBank:{seconds:20,remaining:meta.bankUsed?.[seat.reservationId]?0:1},viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000+extra,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
  }

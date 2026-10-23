@@ -64,6 +64,10 @@ class HistoricalStore extends SupabaseRingPlayStore{async begin(r){await db.exec
 const prepared=await RingHandOwner.prepare(new HistoricalStore(client),tables[1],keys);await prepared.commit();const stale=await factory().meta(tables[1]);assert.ok(Date.parse(stale.now)-Date.parse(stale.changedAt)>30000);
 await assert.rejects(runner.act(members[2],tables[1],{handId:prepared.handId,revision:0,actionId:'too-late',action:{type:'call'}}));
 await runner.tick(tables[1]);const timed=await RingHandOwner.restore(factory(),prepared.handId,keys);assert.equal(timed.snapshot(null).revision,1);assert.ok(timed.snapshot(null).result);assert.equal(timed.snapshot(null).result.showdown,false);await runner.tick(tables[1]);assert.equal((await factory().load(prepared.handId)).version,2);
+// Re-seating the SAME account must not project its previous reservation's deal.
+await service.change(members[2],{type:'leave',reservationId:reservations[2],requestId:randomUUID()});
+const fresh=await service.change(members[2],{type:'join',tableId:tables[1],amount:1000,requestId:randomUUID(),seat:1});
+assert.equal(fresh.membership.stack,1000);assert.equal((await service.state(members[2],tables[1])).play,null);
 await db.exec('reset role');assert.equal(Number((await db.query('select sum(available+in_play)::bigint total from poker_private.ring_accounts where member_id=any($1::uuid[])',[members])).rows[0].total),12000);
 await db.exec('set role authenticated');for(const name of ['poker_ring_play_ready(uuid,uuid)','poker_ring_play_meta(uuid)','poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer)'])assert.equal((await db.query('select has_function_privilege(current_user,$1,$2) ok',['public.'+name,'execute'])).rows[0].ok,false);
 console.log('PASS live ring: explicit readiness/ownership, encrypted restart without redeal or timer reset, lost-ACK replay, early/late clock fencing, invalid wager rollback, durable auto-fold and 12,000-chip conservation.');
