@@ -3,3 +3,5 @@
 .table[data-capacity="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
 
 .fullTable{height:100%;min-height:0;position:relative;color:#eef3f7}.fullTable button{cursor:pointer;font:inherit}.fullTable button:disabled{opacity:.45;cursor:default}.fullTable a{color:#ead095}.tableAlert{position:fixed;z-index:100;bottom:35px;left:15px;max-width:420px;padding:12px;background:#3b3526;border:1px solid #bda15d;border-radius:10px}.standby{max-width:1000px;margin:auto;max-height:100%;overflow:auto;padding:16px}.fullTable button{border:1px solid #a58a52;border-radius:8px;background:#234156;color:#fff0ca;padding:10px 12px}.fullTable p{line-height:1.6}
+
+.inlineAlert{padding:8px 10px;border:1px solid #bda15d;border-radius:8px;background:#3b3526;font-size:12px;line-height:1.5}.inlineAlert p{margin:0 0 6px}.inlineAlert button{width:100%}

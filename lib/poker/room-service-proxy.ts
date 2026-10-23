@@ -7,9 +7,10 @@ async function forward(request:Request,path:string,serviceOrigin:string|undefine
  const reader=request.body?.getReader();if(!reader)return fail(400);const chunks:Uint8Array[]=[];let size=0;
  try{for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>4096){void reader.cancel().catch(()=>{});return fail(413);}chunks.push(value);}}catch{return fail(400);}finally{reader.releaseLock();}
  const body=new Uint8Array(size);let offset=0;for(const chunk of chunks){body.set(chunk,offset);offset+=chunk.length;}
+ let timeout=10000;if(path==='/api/poker/ring'){try{if(JSON.parse(new TextDecoder().decode(body))?.type==='act')timeout=20000;}catch{}}
  const headers=new Headers();for(const name of ['origin','authorization','x-poker-connection','content-type']){const value=request.headers.get(name);if(value!==null)headers.set(name,value);}
  try{
-  const response=await fetcher(`${upstream.origin}${path}`,{method:'POST',headers,body,cache:'no-store',redirect:'error',signal:AbortSignal.any([request.signal,AbortSignal.timeout(10000)])});
+  const response=await fetcher(`${upstream.origin}${path}`,{method:'POST',headers,body,cache:'no-store',redirect:'error',signal:AbortSignal.any([request.signal,AbortSignal.timeout(timeout)])});
   return new Response(response.body,{status:response.status,headers:{'Content-Type':'application/json','Cache-Control':'no-store, private','Pragma':'no-cache','X-Content-Type-Options':'nosniff','Vary':'Origin, Authorization, X-Poker-Connection'}});
  }catch{return fail(503);}
 }
