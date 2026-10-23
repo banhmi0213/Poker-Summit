@@ -1,3 +1,4 @@
+import {measureRing,type RingMetricSink} from './ring-metrics';
 /** Server-only factory; no process/env/network side effects on import. */
 import {createSupabaseRingLobbyHandler,SupabaseRingAdmissionStore} from './ring-lobby-handler';
 import {RingPlayRuntime,SupabaseRingPlayStore,PlayingRingAdmissionStore} from './ring-play-runtime';
@@ -11,8 +12,10 @@ export function createConfiguredPokerRoomService(env:Readonly<Record<string,stri
  // Bound backend and Auth calls. Preserve caller cancellation; never log requests.
  const boundedFetch:typeof fetch=(input,init)=>network(input,{...init,signal:AbortSignal.any([AbortSignal.timeout(10000),...(init?.signal?[init.signal]:[]),...(input instanceof Request?[input.signal]:[])])});
  const backend=createClient(config.url,config.secretKey,{global:{fetch:boundedFetch},auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
- const ringRuntime=new RingPlayRuntime({store:()=>new SupabaseRingPlayStore(backend),keys:config.keys,maxTables:Math.min(config.maxRooms,128),diagnostic:event=>console.log(JSON.stringify(event))});
- return createPokerRoomService({ringRuntime,ringHandler:createSupabaseRingLobbyHandler({store:new PlayingRingAdmissionStore(new SupabaseRingAdmissionStore(backend),ringRuntime),auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins}),onDiagnostic:event=>console.log(JSON.stringify({type:'poker_room_diagnostic',...event})),registry:{directory:new SupabaseRoomDirectory(backend),store:new SupabaseRoomStore(backend,event=>console.log(JSON.stringify({type:'poker_storage_failure',...event}))),keys:config.keys,maxRooms:config.maxRooms},auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins,host:config.host,port:config.port});
+ const metric:RingMetricSink=event=>console.log(JSON.stringify(event));
+ const ringBackend={rpc:(name:string,args:Record<string,unknown>)=>measureRing(metric,'rpc',name,()=>backend.rpc(name,args),result=>!result.error)};
+ const ringRuntime=new RingPlayRuntime({store:()=>new SupabaseRingPlayStore(ringBackend),keys:config.keys,maxTables:Math.min(config.maxRooms,128),diagnostic:event=>console.log(JSON.stringify(event)),metric});
+ return createPokerRoomService({ringRuntime,ringHandler:createSupabaseRingLobbyHandler({store:new PlayingRingAdmissionStore(new SupabaseRingAdmissionStore(ringBackend),ringRuntime),metric,auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins}),onDiagnostic:event=>console.log(JSON.stringify({type:'poker_room_diagnostic',...event})),registry:{directory:new SupabaseRoomDirectory(backend),store:new SupabaseRoomStore(backend,event=>console.log(JSON.stringify({type:'poker_storage_failure',...event}))),keys:config.keys,maxRooms:config.maxRooms},auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins,host:config.host,port:config.port});
 }
 /** Explicit host integration only; caller owns exit status and hard-stop policy. */
 export function registerPokerRoomShutdown(service:{close:()=>Promise<void>},host:{on:(event:string,callback:()=>void)=>unknown;off:(event:string,callback:()=>void)=>unknown},onClosed:(failed:boolean)=>void){

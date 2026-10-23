@@ -8,6 +8,7 @@ import {RingAdmissionConflict} from './ring-lobby-handler';
 import type {RingLobbyCommand,RingLobbyState} from './ring-admission';
 import type {RingPlayView} from './ring-play-state';
 import {parseHandCommand} from './authoritative-hand';
+import {measureRing,type RingMetricSink} from './ring-metrics';
 type Client={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
 export type RingPlayMeta={context:RingContext;now:string;changedAt:string|null;lastHandId:string|null;completedAt:string|null;runoutFrom:0|3|4|5|null;ready:string[]};
 export interface RingPlayStore extends RingStore {meta(table:string):Promise<RingPlayMeta>;tables(limit:number):Promise<string[]>;ready(member:string,reservation:string):Promise<void>;ping(member:string,table:string):Promise<void>;cashout(member:string,reservation:string,request:string):Promise<unknown>;timeout:boolean;from:number}
@@ -39,11 +40,12 @@ export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta
 export class RingPlayRuntime {
  #queues=new Map<string,Promise<unknown>>();#tables=new Set<string>();#prepared=new Map<string,Awaited<ReturnType<typeof RingHandOwner.prepare>>>();
  #preparedContext=new Map<string,string>();
+ #reads=new Map<string,Promise<{meta:RingPlayMeta;owner:RingHandOwner|null}>>();
  #pings=new Map<string,{at:number;pending:Promise<void>|null}>();
  #timer:ReturnType<typeof setInterval>|null=null;#scan:Promise<void>|null=null;#closed=false;#started=false;
- constructor(private options:{store:()=>RingPlayStore;keys:KeyRing;maxTables?:number;diagnostic?:(event:{type:string})=>void}){}
+ constructor(private options:{store:()=>RingPlayStore;keys:KeyRing;maxTables?:number;diagnostic?:(event:{type:string})=>void;metric?:RingMetricSink}){}
  private get limit(){return this.options.maxTables??128;}
- private async serial<T>(table:string,work:()=>Promise<T>):Promise<T>{if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}const prior=this.#queues.get(table)??Promise.resolve();const task=prior.catch(()=>{}).then(work);this.#queues.set(table,task);try{return await task;}finally{if(this.#queues.get(table)===task)this.#queues.delete(table);}}
+ private async serial<T>(table:string,work:()=>Promise<T>,operation='read'):Promise<T>{if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}const prior=this.#queues.get(table)??Promise.resolve();const queued=performance.now();const task=prior.catch(()=>{}).then(()=>{try{this.options.metric?.({type:'ring_timing',stage:'queue',operation,durationMs:Math.round(performance.now()-queued),ok:true});}catch{}return measureRing(this.options.metric,'runtime',operation,work);});this.#queues.set(table,task);try{return await task;}finally{if(this.#queues.get(table)===task)this.#queues.delete(table);}}
  private async advance(table:string,store:RingPlayStore){let meta=await store.meta(table);const c=meta.context;
   if(c.activeHandId){if(time(meta.now)<time(meta.changedAt)+30000)return meta;const owner=await RingHandOwner.restore(store,c.activeHandId,this.options.keys),s=owner.snapshot(null);if(!s.toAct||s.result)throw Error('Invalid active ring hand');
    if(time(meta.now)>=time(meta.changedAt)+30000){const member=c.seats.find(p=>'seat-'+p.seat===s.toAct);if(!member)throw Error('Missing actor');const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:legal.check?'check':'fold'}});meta=await store.meta(table);}
@@ -66,7 +68,7 @@ export class RingPlayRuntime {
   }
   return meta;
  }
- async tick(table:string){return this.serial(table,()=>this.advance(table,this.options.store()));}
+ async tick(table:string){this.#reads.delete(table);return this.serial(table,()=>this.advance(table,this.options.store()),'tick');}
  private async ping(table:string,member:string){
   if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}
   const id=table+':'+member,now=Date.now(),prior=this.#pings.get(id);
@@ -77,31 +79,41 @@ export class RingPlayRuntime {
   const item={at:0,pending:null as Promise<void>|null};
   item.pending=this.options.store().ping(member,table).then(()=>{item.at=Date.now();}).catch(error=>{this.#pings.delete(id);throw error;}).finally(()=>{item.pending=null;});this.#pings.set(id,item);await item.pending;
  }
- async view(table:string,member:string):Promise<RingPlayView|null>{await this.ping(table,member);return this.serial(table,async()=>{const store=this.options.store();const meta=await this.advance(table,store),seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!meta.lastHandId)return null;
-   const owner=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);let hand;try{hand=owner.snapshot(member);}catch{return null;}
-   return {viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
-  });}
- async ready(member:string,reservation:string,table:string){return this.serial(table,async()=>{const store=this.options.store();await store.ready(member,reservation);await this.advance(table,store);});}
- async act(member:string,table:string,input:unknown){const command=parseHandCommand(input);return this.serial(table,async()=>{const store=this.options.store();const meta=await store.meta(table),saved=await store.load(command.handId);if(!saved||saved.tableId!==table)throw new RingAdmissionConflict();
+ private present(meta:RingPlayMeta,owner:RingHandOwner|null,member:string):RingPlayView|null{
+  const seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!owner)return null;
+  let hand;try{hand=owner.snapshot(member);}catch{return null;}
+  return {viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
+ }
+ async view(table:string,member:string):Promise<RingPlayView|null>{await this.ping(table,member);
+  // Share only an in-flight committed read. Each viewer gets a separate private
+  // snapshot; mutations invalidate the batch before joining the table queue.
+  let read=this.#reads.get(table);if(!read){read=this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store);return {meta,owner:meta.lastHandId?await RingHandOwner.restore(store,meta.lastHandId,this.options.keys):null};});this.#reads.set(table,read);}
+  try{const {meta,owner}=await read;return this.present(meta,owner,member);}finally{if(this.#reads.get(table)===read)this.#reads.delete(table);}
+ }
+ async ready(member:string,reservation:string,table:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store();await store.ready(member,reservation);await this.advance(table,store);},'ready');}
+ async act(member:string,table:string,input:unknown){const command=parseHandCommand(input);this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store();const [meta,saved]=await Promise.all([store.meta(table),store.load(command.handId)]);if(!saved||saved.tableId!==table)throw new RingAdmissionConflict();
    const own=meta.context.seats.find(p=>p.memberId===member);if(!own||!saved.seats.some(p=>p.memberId===member&&p.reservationId===own.reservationId))throw new RingAdmissionConflict();
    const owner=await RingHandOwner.restore(store,command.handId,this.options.keys);store.from=owner.snapshot(member).board.length;
    // Existing receipts remain replayable after their original deadline. A new
    // late command is rejected by the SQL clock fence, then the runner times out.
    try{await owner.act(member,command);}catch(error){if(error instanceof RingCommandError)throw new RingAdmissionConflict();throw error;}
-  });}
+   // Reuse the owner reloaded and validated after the durable write; do not
+   // rejoin the queue behind other viewers merely to read the same hand again.
+   const [after]=await Promise.all([store.meta(table),this.ping(table,member)]);return this.present(after,after.lastHandId===command.handId?owner:null,member);
+  },'act');}
  private scan(){if(this.#closed||this.#scan)return this.#scan;this.#scan=(async()=>{const tables=await this.options.store().tables(this.limit);if(!Array.isArray(tables)||tables.length>this.limit||tables.some(t=>typeof t!=='string'||!/^[-a-f0-9]{36}$/i.test(t))||new Set(tables).size!==tables.length)throw Error('Invalid ring discovery');for(const table of this.#tables){if(!tables.includes(table)&&!this.#queues.has(table)){this.#tables.delete(table);this.#prepared.delete(table);this.#preparedContext.delete(table);}}for(const table of tables){if(this.#tables.size<this.limit||this.#tables.has(table))this.#tables.add(table);}await Promise.allSettled([...this.#tables].map(table=>this.tick(table).catch(()=>{this.options.diagnostic?.({type:'ring_tick_retry'});})));})().finally(()=>{this.#scan=null;});return this.#scan;}
  async start(){if(this.#closed)throw Error('Ring runtime closed');if(this.#started)return;await this.scan();if(this.#closed)return;this.#started=true;this.#timer=setInterval(()=>{void this.scan()?.catch(()=>this.options.diagnostic?.({type:'ring_scan_retry'}));},1000);}
- async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();await Promise.allSettled([...this.#pings.values()].flatMap(v=>v.pending?[v.pending]:[]));this.#pings.clear();}
+ async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();this.#reads.clear();await Promise.allSettled([...this.#pings.values()].flatMap(v=>v.pending?[v.pending]:[]));this.#pings.clear();}
 }
 /** Auth has already resolved the member; all money changes still use SQL. */
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime){}
- private async projected(member:string,table:string){const play=await this.runtime.view(table,member),state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:null};}
+ private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:null};}
  async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
   if(command.type==='ready'||command.type==='act'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();
-   if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();await this.runtime.act(member,own.tableId,command.command);}
+   if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.act(member,own.tableId,command.command);return this.projected(member,own.tableId,play);}
    return this.projected(member,own.tableId);
   }
   return this.base.change(member,command);

@@ -22,11 +22,26 @@ const command={type:'act',reservationId:reservations[0],requestId:randomUUID(),c
 const count=name=>rpcCounts[name]??0;
 let loads=count('poker_ring_hand_load'),pings=count('poker_ring_play_ping');
 await service.state(members[1],tables[0]);assert.equal(count('poker_ring_hand_load')-loads,1);assert.equal(count('poker_ring_play_ping')-pings,0);
+// Concurrent viewers share a committed read but never another viewer's holes.
+loads=count('poker_ring_hand_load');const metas=count('poker_ring_play_meta');
+const views=await Promise.all([runner.view(tables[0],members[0]),runner.view(tables[0],members[1])]);
+assert.equal(count('poker_ring_hand_load')-loads,1);assert.equal(count('poker_ring_play_meta')-metas,1);
+for(let i=0;i<2;i++){assert.equal(views[i].hand.players[i].hole.length,2);assert.equal(views[i].hand.players[1-i].hole,null);}
 loads=count('poker_ring_hand_load');await runner.tick(tables[0]);assert.equal(count('poker_ring_hand_load')-loads,0);
 const scoped=factory();loads=count('poker_ring_hand_load');await scoped.load(id);await scoped.load(id);assert.equal(count('poker_ring_hand_load')-loads,1);
 // Timer cannot run early, and an invalid action cannot change the deadline.
 const early=factory(),owner=await RingHandOwner.restore(early,id,keys);early.timeout=true;early.from=owner.snapshot(null).board.length;await assert.rejects(owner.act(members[1],{handId:id,revision:1,actionId:'early-timeout',action:{type:'check'}}));assert.equal((await factory().load(id)).version,2);
 await assert.rejects(service.change(members[1],{type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'invalid-wager',action:{type:'raise',amount:1}}}));assert.equal((await factory().load(id)).version,2);
+// A confirmed check reuses its post-write owner, with no third hand load.
+const beforeCheck={...rpcCounts};
+const check={type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'counted-check',action:{type:'check'}}};
+const checked=await service.change(members[1],check);
+assert.equal(count('poker_ring_hand_load')-(beforeCheck.poker_ring_hand_load??0),2);
+assert.equal(count('poker_ring_play_meta')-(beforeCheck.poker_ring_play_meta??0),2);
+assert.equal(count('poker_ring_lobby_state')-(beforeCheck.poker_ring_lobby_state??0),2);
+assert.equal(count('poker_ring_play_write')-(beforeCheck.poker_ring_play_write??0),1);
+assert.equal(checked.play.hand.revision,2);
+assert.equal((await service.change(members[1],check)).play.hand.revision,2);
 // Create a legitimate encrypted initial deal with a historical commit timestamp.
 // Only the isolated fixture inserts this row; production always uses the fenced RPC.
 class HistoricalStore extends SupabaseRingPlayStore{async begin(r){await db.exec('reset role');await db.query(`insert into poker_private.ring_hands(id,table_id,version,button_seat,participants,terms,sealed,status) values($1,$2,1,$3,$4,$5,$6,'active')`,[r.handId,r.tableId,r.terms.buttonSeat,JSON.stringify(r.roster),JSON.stringify({sb:r.terms.sb,bb:r.terms.bb}),JSON.stringify(r.sealed)]);await db.query("insert into poker_private.ring_hand_commits(hand_id,request_id,version,fingerprint,created_at) values($1,$1,1,decode(repeat('00',32),'hex'),clock_timestamp()-interval '31 seconds')",[r.handId]);await db.exec('set role service_role');return 1;}}
