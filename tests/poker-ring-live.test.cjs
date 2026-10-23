@@ -30,3 +30,19 @@ for(const street of ['preflop','flop','turn','river'])test(`ring wager buttons u
 test('a BB option is a raise even when checking is available',()=>{
  const h=new AuthoritativeHand([{id:'seat-1',stack:1000},{id:'seat-2',stack:1000}],0,terms);let s=h.snapshot(null);h.act(s.toAct,{handId:s.handId,revision:s.revision,actionId:'limp',action:{type:'call'}});s=h.snapshot(null);assert.equal(h.snapshot(s.toAct).legal.check,true);assert.equal(ringWagerAction(s,1000).type,'raise');
 });
+
+test('normal staggered poll arrivals share every reveal and payout deadline',()=>{
+ const {active,packet}=revealFixture();
+ const queues=[0,350,950].map(lag=>{const q=new RingRunoutSequence(active,0),p=packet(lag);p.runout.startedAt=0;q.push(parseRingPlay(p),lag);return q;});
+ for(const q of queues)assert.equal(q.delay(1000),2400);
+ for(const [at,count,result] of [[3400,3,false],[5600,4,false],[7800,5,false],[10000,5,true]])for(const q of queues){q.tick(at);assert.equal(q.view.hand.board.length,count);assert.equal(Boolean(q.view.hand.result),result);}
+});
+test('river-only reveal and payout share the server clock across three viewers',()=>{
+ const {active,packet}=revealFixture();for(const lag of [0,450,1000]){const p=packet(lag);p.runout={...p.runout,from:5,startedAt:0};const q=new RingRunoutSequence({...active,hand:{...active.hand,board:p.runout.final.board}},0);q.push(p,lag);q.tick(3399);assert.equal(q.view.hand.result,null);q.tick(3400);assert.ok(q.view.hand.result);}
+});
+test('shared reveal clock still preserves all streets after late delivery and timer suspension',()=>{
+ const {active,packet}=revealFixture(),q=new RingRunoutSequence(active,0),p=packet(6500);p.runout.startedAt=0;q.push(p,6500);assert.equal(q.view.hand.board.length,0);q.tick(8700);assert.equal(q.view.hand.board.length,3);q.tick(100000);assert.equal(q.view.hand.board.length,4);q.tick(100000);assert.equal(q.view.hand.board.length,4);q.tick(102200);assert.equal(q.view.hand.board.length,5);q.tick(104400);assert.ok(q.view.hand.result);
+});
+test('runout timestamps are optional for old servers and reject invalid future clocks',()=>{
+ const {packet}=revealFixture(),p=packet(500);assert.equal(parseRingPlay(p).runout.startedAt,undefined);assert.equal(parseRingPlay({...p,runout:{...p.runout,startedAt:0}}).runout.startedAt,0);for(const value of [-1,NaN,501,'0'])assert.throws(()=>parseRingPlay({...p,runout:{...p.runout,startedAt:value}}));
+});

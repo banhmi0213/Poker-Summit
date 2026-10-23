@@ -65,7 +65,7 @@ export class RingPlayRuntime {
  async tick(table:string){return this.serial(table,()=>this.advance(table,this.options.store()));}
  async view(table:string,member:string):Promise<RingPlayView|null>{return this.serial(table,async()=>{const store=this.options.store();await store.ping(member,table);const meta=await this.advance(table,store),seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!meta.lastHandId)return null;
    const owner=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);let hand;try{hand=owner.snapshot(member);}catch{return null;}
-   return {viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,final:hand}}:{})};
+   return {viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
   });}
  async ready(member:string,reservation:string,table:string){return this.serial(table,async()=>{const store=this.options.store();await store.ready(member,reservation);await this.advance(table,store);});}
  async act(member:string,table:string,input:unknown){const command=parseHandCommand(input);return this.serial(table,async()=>{const store=this.options.store();const meta=await store.meta(table),saved=await store.load(command.handId);if(!saved||saved.tableId!==table)throw new RingAdmissionConflict();
