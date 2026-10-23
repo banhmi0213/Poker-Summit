@@ -23,7 +23,8 @@ import { MONTHLY_CAP } from "@/lib/google-hours";
 //      ・公式サイトかSNSがGoogleマップに載っている
 //      ・口コミが5件以上ある
 //      ・直近180日の口コミに、ポーカーをやっていると分かる言葉(ポーカー・トーナメント・ホールデムなど)がある
-// 全部通れば住所・電話番号・営業時間を入れて掲載する。どれかに引っかかれば承認待ちのまま残し、
+// 全部通れば住所・電話番号・営業時間を入れて掲載する。Googleマップで閉業・休業・消えている店は削除する(2026/10/23)。
+// それ以外のどれかに引っかかれば承認待ちのまま残し、
 // 理由を google_match_note に書く(google_match_status = "auto_held")。運営が見て承認/却下する。
 // 営業時間はGoogleの規約(保存は30日まで)に合わせて google_hours_* に入れる
 // (lib/google-hours.ts が25日ごとに取り直し、30日を超えたら消す)。
@@ -45,13 +46,14 @@ export async function autoReviewNewStores(limit = 30) {
   const svc = createServiceRoleClient();
   const approved: string[] = [];
   const held: { name: string; reason: string }[] = [];
+  const deleted: { name: string; reason: string }[] = [];
 
   // 電話番号・営業時間は営業時間の取得と同じ「Contact Data」の枠(月1,000回まで無料)を使うので、一緒に数える
   const month = jstMonth();
   const { data: state } = await svc.from("store_maintenance_state").select("hours_month, hours_count").eq("id", 1).maybeSingle();
   let used = state?.hours_month === month ? state?.hours_count ?? 0 : 0;
   const allowed = Math.max(0, Math.min(limit, MONTHLY_CAP - used));
-  if (allowed === 0) return { approved, held, capReached: true };
+  if (allowed === 0) return { approved, held, deleted, capReached: true };
 
   const { data: rows } = await svc
     .from("stores")
@@ -101,6 +103,21 @@ export async function autoReviewNewStores(limit = 30) {
 
     const now = new Date().toISOString();
     const jst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace("T", " ");
+
+    // 営業していない(Googleマップで閉業・休業・消えている)店は、承認待ちに残さず削除する(2026/10/23 オーナー指示
+    // 「承認待ちのやつもやってないとこは自動で削除」)。消した店は deleted_store_places に残り、新店さがしで拾い直さない。
+    if (d.notFound || d.businessStatus !== "OPERATIONAL") {
+      const reason = d.notFound ? "Googleマップから消えている" : `Googleマップで営業中になっていない(${d.businessStatus ?? "不明"})`;
+      await svc.from("stores").update({ google_business_status: d.notFound ? "NOT_FOUND" : d.businessStatus, google_checked_at: now, google_match_note: `自動審査で削除(${jst}): ${reason}` }).eq("id", s.id).eq("status", "pending");
+      const { error: delError } = await svc.from("stores").delete().eq("id", s.id).eq("status", "pending");
+      if (delError) {
+        await svc.from("stores").update({ google_match_status: "auto_held", google_match_note: `自動審査で保留(${jst}): ${reason}(削除できなかった: ${delError.message})` }).eq("id", s.id).eq("status", "pending");
+        held.push({ name: s.name, reason });
+      } else {
+        deleted.push({ name: `${s.name}(${pref})`, reason });
+      }
+      continue;
+    }
     const base = {
       google_business_status: d.businessStatus,
       google_checked_at: now,
@@ -135,5 +152,5 @@ export async function autoReviewNewStores(limit = 30) {
   }
 
   await svc.from("store_maintenance_state").update({ hours_month: month, hours_count: used }).eq("id", 1);
-  return { approved, held, capReached: used >= MONTHLY_CAP };
+  return { approved, held, deleted, capReached: used >= MONTHLY_CAP };
 }
