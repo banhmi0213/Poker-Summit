@@ -2,6 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import type {RingPlayView} from '@/lib/poker/ring-play-state';
 import type {BettingAction} from '@/lib/poker/betting';
+import {ringWagerAction} from '@/lib/poker/ring-wager-action';
 import {PokerSounds} from '@/lib/poker/online-sounds';
 import {SummitMark} from './brand-mark';
 import {useRingRunout} from './use-ring-runout';
@@ -32,6 +33,6 @@ export default function RingLiveTable({play:incoming,blocked,onAction}:{play:Rin
  <Cards cards={p.hole} motionHole={p.id}/><b>{p.stack.toLocaleString()} chip</b><small data-motion-bet={p.id}>{s.result?.payouts[p.id]?`獲得 +${s.result.payouts[p.id].toLocaleString()}`:p.folded?'フォールド':p.allIn?'オールイン':`ベット ${p.committed.toLocaleString()}`}</small></section>)}</div>
  {s.result?.winners.map(winner=><span className={styles.flight} key={s.handId+winner} data-pot-winner={winner} data-pot-duration="1200" aria-hidden="true">{Array.from({length:6},(_,i)=><i key={i} data-pot-coin>●</i>)}</span>)}
  </div>
- <div className={styles.controls} aria-label="リングゲームのアクション">{legal?<><button type="button" disabled={disabled} onClick={()=>act({type:'fold'})}>フォールド</button>{legal.check?<button type="button" disabled={disabled} onClick={()=>act({type:'check'})}>チェック</button>:<button type="button" disabled={disabled||!legal.call} onClick={()=>act({type:'call'})}>コール {legal.callAmount.toLocaleString()}</button>}{legal.raise&&<><label>ベット合計<input type="number" inputMode="numeric" value={amount} min={legal.minRaiseTo!} max={legal.maxRaiseTo!} step="1" onChange={e=>setAmount(e.target.value)}/></label><button type="button" disabled={disabled||!valid} onClick={()=>act({type:'raise',amount:wager})}>{legal.shortAllInOnly?'オールイン':'ベット／レイズ'}</button><button type="button" disabled={disabled} onClick={()=>act({type:'raise',amount:legal.maxRaiseTo!})}>オールイン {legal.maxRaiseTo?.toLocaleString()}</button></>}</>:<p>{s.result?'精算完了 · 次のハンドを準備しています。':'他のプレイヤーの操作を待っています。'}</p>}</div>
+ <div className={styles.controls} aria-label="リングゲームのアクション">{legal?<><button type="button" disabled={disabled} onClick={()=>act({type:'fold'})}>フォールド</button>{legal.check?<button type="button" disabled={disabled} onClick={()=>act({type:'check'})}>チェック</button>:<button type="button" disabled={disabled||!legal.call} onClick={()=>act({type:'call'})}>コール {legal.callAmount.toLocaleString()}</button>}{legal.raise&&<><label>ベット合計<input type="number" inputMode="numeric" value={amount} min={legal.minRaiseTo!} max={legal.maxRaiseTo!} step="1" onChange={e=>setAmount(e.target.value)}/></label><button type="button" disabled={disabled||!valid} onClick={()=>act(ringWagerAction(s,wager))}>{legal.shortAllInOnly?'オールイン':'ベット／レイズ'}</button><button type="button" disabled={disabled} onClick={()=>act(ringWagerAction(s,legal.maxRaiseTo!))}>オールイン {legal.maxRaiseTo?.toLocaleString()}</button></>}</>:<p>{s.result?'精算完了 · 次のハンドを準備しています。':'他のプレイヤーの操作を待っています。'}</p>}</div>
  </div>;
 }

@@ -15,3 +15,18 @@ test('repeated packets do not rewind a completed runout; initial completed histo
 test('terminal runout payload validates privacy projection and exact hand identity',()=>{const {packet}=revealFixture(),p=packet(2200);assert.equal(parseRingPlay(p).runout.final.board.length,5);assert.throws(()=>parseRingPlay({...p,runout:{...p.runout,from:2}}));assert.throws(()=>parseRingPlay({...p,runout:{...p.runout,final:{...p.runout.final,handId:randomUUID()}}}));assert.throws(()=>parseRingPlay({...p,deadline:30000}));});
 
 test('joining a reveal late and missed earlier streets still present missing board counts',()=>{const {active,packet}=revealFixture(),late=new RingRunoutSequence(packet(6600),0);assert.equal(late.view.hand.board.length,0);late.tick(2200);assert.equal(late.view.hand.board.length,3);late.tick(4400);assert.equal(late.view.hand.board.length,4);const q=new RingRunoutSequence({...active,hand:{...active.hand,board:packet(2200).hand.board}},0);const end=packet(9000);q.push({...end,runout:{...end.runout,from:5}},1);assert.equal(q.view.hand.board.length,3);q.tick(2201);assert.equal(q.view.hand.board.length,4);});
+
+const {ringWagerAction}=require('../lib/poker/ring-wager-action.ts');
+for(const street of ['preflop','flop','turn','river'])test(`ring wager buttons use valid ${street} all-in grammar and conserve three unequal stacks`,()=>{
+ const h=new AuthoritativeHand([{id:'seat-1',stack:800},{id:'seat-2',stack:900},{id:'seat-3',stack:1300}],0,terms);
+ let n=0;
+ const act=action=>{const s=h.snapshot(null);h.act(s.toAct,{handId:s.handId,revision:s.revision,actionId:'wager-'+n++,action});};
+ while(h.snapshot(null).street!==street){const s=h.snapshot(null),l=h.snapshot(s.toAct).legal;act(l.call?{type:'call'}:{type:'check'});assert.ok(n<20);}
+ let s=h.snapshot(null),action=ringWagerAction(s,h.snapshot(s.toAct).legal.maxRaiseTo);
+ assert.equal(action.type,street==='preflop'?'raise':'bet');act(action);
+ while(!h.snapshot(null).result){s=h.snapshot(null);const l=h.snapshot(s.toAct).legal;act(l.raise?ringWagerAction(s,l.maxRaiseTo):l.call?{type:'call'}:{type:'check'});assert.ok(n<40);}
+ s=h.snapshot(null);assert.equal(s.players.reduce((sum,p)=>sum+p.stack,0),3000);assert.equal(s.board.length,5);assert.ok(Object.values(s.result.payouts).reduce((a,b)=>a+b,0)>=2400);
+});
+test('a BB option is a raise even when checking is available',()=>{
+ const h=new AuthoritativeHand([{id:'seat-1',stack:1000},{id:'seat-2',stack:1000}],0,terms);let s=h.snapshot(null);h.act(s.toAct,{handId:s.handId,revision:s.revision,actionId:'limp',action:{type:'call'}});s=h.snapshot(null);assert.equal(h.snapshot(s.toAct).legal.check,true);assert.equal(ringWagerAction(s,1000).type,'raise');
+});
