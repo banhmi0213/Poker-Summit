@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import { passwordPolicyError } from "@/lib/password-policy";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifyTurnstile, clientIpFromHeaders } from "@/lib/turnstile";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { classifyDevice, inAppBrowser } from "@/lib/device";
@@ -96,7 +96,8 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   }
 
   const next = path === "/signup" ? safeNext(String(formData.get("next") ?? "")) : null;
-  const src = path === "/signup" ? cleanSource(String(formData.get("src") ?? "")) : null;
+  // 宣伝リンクから来た人は、登録画面に目印が無くても、最初に来たときの目印(Cookie ps_src)で記録する(2026/10/23)
+  const src = (path === "/signup" ? cleanSource(String(formData.get("src") ?? "")) : null) ?? cleanSource((() => { try { return decodeURIComponent(cookies().get("ps_src")?.value ?? ""); } catch { return ""; } })());
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
