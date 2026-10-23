@@ -4,6 +4,10 @@ import { BlogEditor } from "./editor";
 import { deleteBlogEntry } from "./actions";
 import type { BlogEntry, BlogStore } from "@/lib/blog";
 import { BlogImport } from "./importer";
+import { NewsDraftPanel } from "./news-draft-panel";
+
+// 「ニュースの下書きを今すぐ作る」はAIの検索と執筆に1〜3分かかる(2026/10/23)
+export const maxDuration = 300;
 
 export default async function AdminBlogPage() {
   const supabase = await createClient();
@@ -13,15 +17,19 @@ export default async function AdminBlogPage() {
   const { data, error } = await supabase.from("blog_entries").select("*").order("created_at", { ascending:false });
   if (error) return <p className="err">記事を読み込めませんでした。再読み込みしてください。</p>;
   const {data: stores, error: storeError} = await supabase.from("stores").select("id,name,pref,city,banner_url").in("status",["approved","listed"]).order("name");
+  const { data: newsItems } = await supabase.from("news_auto_items").select("blog_entry_id");
+  const newsIds = new Set((newsItems || []).map((n: { blog_entry_id: string | null }) => n.blog_entry_id).filter(Boolean));
+  const newsDraftCount = (data || []).filter((e: { id: string; active: boolean }) => newsIds.has(e.id) && !e.active).length;
   if (storeError) return <p className="err">関連店舗を読み込めませんでした。再読み込みしてください。</p>;
   return <div style={{ maxWidth:1000 }}>
     <div style={{ display:"flex", gap:16, justifyContent:"space-between", alignItems:"center", marginBottom:16 }}><h1 style={{ fontSize:22 }}>BLOG管理</h1><Link className="btn" href="/blog">ブログページを見る</Link></div>
     <p style={{ marginBottom:16 }}>上段に画像を添付し、本文と関連店舗を登録できます。下書き保存・プレビューで確認してから公開してください。</p>
+    <NewsDraftPanel keySet={!!process.env.ANTHROPIC_API_KEY} draftCount={newsDraftCount} />
     <section className="card"><h2 style={{ fontSize:18, marginBottom:16 }}>新規記事追加</h2><BlogImport stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /></section>
     <h2 style={{ fontSize:18, margin:"24px 0 12px" }}>登録記事（{data?.length || 0}件）</h2>
     {!data?.length && <p>まだ記事は登録されていません。</p>}
     {(data as BlogEntry[] || []).map(entry => <details key={entry.id} className="card" style={{ marginBottom:12 }}>
-      <summary style={{ cursor:"pointer", fontWeight:700 }}>{entry.active ? "公開中" : "下書き"}｜{entry.title} {entry.featured ? "［ピックアップ］" : ""}</summary>
+      <summary style={{ cursor:"pointer", fontWeight:700 }}>{entry.active ? "公開中" : "下書き"}{newsIds.has(entry.id) ? "（ニュース自動）" : ""}｜{entry.title} {entry.featured ? "［ピックアップ］" : ""}</summary>
       <div style={{ marginTop:16 }}>{entry.image_url && <img src={entry.image_url} alt={entry.image_alt || entry.title} style={{ display:"block", width:280, maxWidth:"100%", height:"auto", marginBottom:16 }} />}<BlogEditor entry={entry} stores={(stores || []) as BlogStore[]} articles={(data || []) as BlogEntry[]} /><details style={{ marginTop:24, borderTop:"1px solid #ddd", paddingTop:16 }}><summary style={{ cursor:"pointer", fontWeight:700, color:"#b42318" }}>この記事を削除</summary><p style={{ margin:"12px 0" }}>削除すると記事本文とBLOG用に保存された画像も削除され、元に戻せません。確認のため記事タイトルを入力してください。</p><form action={deleteBlogEntry}><input type="hidden" name="id" value={entry.id}/><label className="field">記事タイトル<input name="confirmTitle" required autoComplete="off" placeholder={entry.title}/></label><button className="btn" style={{ borderColor:"#b42318", color:"#b42318" }}>完全に削除する</button></form></details></div>
     </details>)}
   </div>;

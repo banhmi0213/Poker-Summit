@@ -1042,3 +1042,18 @@ Poker Summit運営事務局
 ※このメールは送信専用です。`;
   await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】お支払い手続きのご案内", text, sensitive: true });
 }
+
+/** 自動で作ったポーカーニュースの下書きを運営に知らせる(2026/10/23、app/api/cron/news-drafts) */
+export async function sendNewsDraftDigest(params: { to: string; created: { title: string; id: string }[] }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const lines = [
+    "ポーカーニュースの下書きを自動で作りました。内容と画像を確認してから公開してください。",
+    "",
+    ...params.created.map((c) => `・${c.title}\n  プレビュー: ${siteUrl}/blog/${c.id}?preview=1`),
+    "",
+    `BLOG管理: ${siteUrl}/admin/blog`,
+    "",
+    "Poker Summit",
+  ];
+  await sendEmail({ to: params.to, subject: `【Poker Summit】ニュースの下書き ${params.created.length}件`, text: lines.join("\n") });
+}
