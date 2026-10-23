@@ -8,8 +8,8 @@ for(const m of members)await db.query('insert into auth.users(id,email,email_con
 for(const t of tables)await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,2,50,100,1000,3000,true)',[t,'Runtime SQL fixture']);
 await db.exec('set role service_role');
 const names={poker_ring_lobby_state:['p_member','p_table'],poker_ring_admit:['p_member','p_table','p_amount','p_request'],poker_ring_depart:['p_member','p_reservation','p_request'],poker_ring_context:['p_table'],poker_ring_hand_load:['p_hand'],poker_ring_play_ready:['p_member','p_reservation'],poker_ring_play_ping:['p_member','p_table'],poker_ring_play_meta:['p_table'],poker_ring_play_tables:['p_limit'],poker_ring_play_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_play_write:['p_hand','p_expected','p_write','p_sealed','p_result','p_timeout','p_from'],poker_ring_cashout:['p_member','p_reservation','p_request']};
-let lose=false;
-const client={rpc:async(name,args)=>{try{assert.ok(names[name],name);const values=names[name].map(k=>args[k]!==null&&typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);const r=await db.query(`select public.${name}(${names[name].map((k,i)=>k+' => $'+(i+1)).join(',')}) value`,values);if(lose&&name==='poker_ring_play_write'){lose=false;return {data:null,error:{code:'fixture_lost_ack'}};}return {data:r.rows[0].value,error:null};}catch(error){return {data:null,error};}}};
+let lose=false;const rpcCounts={};
+const client={rpc:async(name,args)=>{rpcCounts[name]=(rpcCounts[name]??0)+1;try{assert.ok(names[name],name);const values=names[name].map(k=>args[k]!==null&&typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);const r=await db.query(`select public.${name}(${names[name].map((k,i)=>k+' => $'+(i+1)).join(',')}) value`,values);if(lose&&name==='poker_ring_play_write'){lose=false;return {data:null,error:{code:'fixture_lost_ack'}};}return {data:r.rows[0].value,error:null};}catch(error){return {data:null,error};}}};
 const base=new SupabaseRingAdmissionStore(client),factory=()=>new SupabaseRingPlayStore(client);runner=new RingPlayRuntime({store:factory,keys});let service=new PlayingRingAdmissionStore(base,runner);
 for(let i=0;i<4;i++)await base.change(members[i],{type:'join',tableId:tables[Math.floor(i/2)],amount:1000,requestId:reservations[i]});
 await service.change(members[0],{type:'ready',reservationId:reservations[0],requestId:randomUUID()});assert.equal((await factory().meta(tables[0])).context.activeHandId,null);
@@ -17,6 +17,13 @@ await assert.rejects(service.change(members[1],{type:'ready',reservationId:reser
 await service.change(members[1],{type:'ready',reservationId:reservations[1],requestId:randomUUID()});let v=await service.state(members[0],tables[0]);const id=v.play.hand.handId,deadline=v.play.deadline,cards=v.play.hand.players[0].hole;
 await runner.close();runner=new RingPlayRuntime({store:factory,keys});service=new PlayingRingAdmissionStore(base,runner);v=await service.state(members[0],tables[0]);assert.equal(v.play.hand.handId,id);assert.equal(v.play.deadline,deadline);assert.deepEqual(v.play.hand.players[0].hole,cards);
 const command={type:'act',reservationId:reservations[0],requestId:randomUUID(),command:{handId:id,revision:v.play.hand.revision,actionId:'lost-live-ack',action:{type:'call'}}};lose=true;await assert.rejects(service.change(members[0],command));await service.change(members[0],command);v=await service.state(members[1],tables[0]);assert.equal(v.play.hand.revision,1);assert.equal((await factory().load(id)).version,2);
+// Warm state reads load one checkpoint; heartbeats and scheduler ticks do not
+// reread/decrypt it redundantly. A mutation still reloads after its durable write.
+const count=name=>rpcCounts[name]??0;
+let loads=count('poker_ring_hand_load'),pings=count('poker_ring_play_ping');
+await service.state(members[1],tables[0]);assert.equal(count('poker_ring_hand_load')-loads,1);assert.equal(count('poker_ring_play_ping')-pings,0);
+loads=count('poker_ring_hand_load');await runner.tick(tables[0]);assert.equal(count('poker_ring_hand_load')-loads,0);
+const scoped=factory();loads=count('poker_ring_hand_load');await scoped.load(id);await scoped.load(id);assert.equal(count('poker_ring_hand_load')-loads,1);
 // Timer cannot run early, and an invalid action cannot change the deadline.
 const early=factory(),owner=await RingHandOwner.restore(early,id,keys);early.timeout=true;early.from=owner.snapshot(null).board.length;await assert.rejects(owner.act(members[1],{handId:id,revision:1,actionId:'early-timeout',action:{type:'check'}}));assert.equal((await factory().load(id)).version,2);
 await assert.rejects(service.change(members[1],{type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'invalid-wager',action:{type:'raise',amount:1}}}));assert.equal((await factory().load(id)).version,2);

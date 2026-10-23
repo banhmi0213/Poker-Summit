@@ -14,6 +14,9 @@ export interface RingPlayStore extends RingStore {meta(table:string):Promise<Rin
 const time=(s:string|null)=>{const v=s===null?NaN:Date.parse(s);if(!Number.isFinite(v))throw Error('Ring clock unavailable');return v;};
 export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlayStore{
  timeout=false;from=0;
+ // A store is scoped to one serialized operation; never reuse a loaded version after a write.
+ #loads=new Map<string,ReturnType<RingStore['load']>>();
+ override load(hand:string){let value=this.#loads.get(hand);if(!value){value=super.load(hand);this.#loads.set(hand,value);}return value;}
  constructor(private playClient:Client){super(playClient);}
  private async playRPC(name:string,args:Record<string,unknown>){const {data,error}=await this.playClient.rpc(name,args);if(error)throw Error('Ring play persistence unavailable');return data;}
  async meta(table:string){return await this.playRPC('poker_ring_play_meta',{p_table:table}) as RingPlayMeta;}
@@ -21,7 +24,7 @@ export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlay
  async ready(member:string,reservation:string){await this.playRPC('poker_ring_play_ready',{p_member:member,p_reservation:reservation});}
  async ping(member:string,table:string){await this.playRPC('poker_ring_play_ping',{p_member:member,p_table:table});}
  override async begin(r:Parameters<RingStore['begin']>[0]){return Number(await this.playRPC('poker_ring_play_begin',{p_table:r.tableId,p_hand:r.handId,p_roster:r.roster,p_terms:r.terms,p_sealed:r.sealed,p_result:r.result}));}
- override async write(r:Parameters<RingStore['write']>[0]){return Number(await this.playRPC('poker_ring_play_write',{p_hand:r.handId,p_expected:r.expected,p_write:r.writeId,p_sealed:r.sealed,p_result:r.result,p_timeout:this.timeout,p_from:this.from}));}
+ override async write(r:Parameters<RingStore['write']>[0]){this.#loads.clear();return Number(await this.playRPC('poker_ring_play_write',{p_hand:r.handId,p_expected:r.expected,p_write:r.writeId,p_sealed:r.sealed,p_result:r.result,p_timeout:this.timeout,p_from:this.from}));}
 }
 export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta:RingPlayMeta):RingPlayView['hand']{
  const state=structuredClone(hand);if(!state.result)return state;
@@ -36,12 +39,13 @@ export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta
 export class RingPlayRuntime {
  #queues=new Map<string,Promise<unknown>>();#tables=new Set<string>();#prepared=new Map<string,Awaited<ReturnType<typeof RingHandOwner.prepare>>>();
  #preparedContext=new Map<string,string>();
+ #pings=new Map<string,{at:number;pending:Promise<void>|null}>();
  #timer:ReturnType<typeof setInterval>|null=null;#scan:Promise<void>|null=null;#closed=false;#started=false;
  constructor(private options:{store:()=>RingPlayStore;keys:KeyRing;maxTables?:number;diagnostic?:(event:{type:string})=>void}){}
  private get limit(){return this.options.maxTables??128;}
  private async serial<T>(table:string,work:()=>Promise<T>):Promise<T>{if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}const prior=this.#queues.get(table)??Promise.resolve();const task=prior.catch(()=>{}).then(work);this.#queues.set(table,task);try{return await task;}finally{if(this.#queues.get(table)===task)this.#queues.delete(table);}}
  private async advance(table:string,store:RingPlayStore){let meta=await store.meta(table);const c=meta.context;
-  if(c.activeHandId){const owner=await RingHandOwner.restore(store,c.activeHandId,this.options.keys),s=owner.snapshot(null);if(!s.toAct||s.result)throw Error('Invalid active ring hand');
+  if(c.activeHandId){if(time(meta.now)<time(meta.changedAt)+30000)return meta;const owner=await RingHandOwner.restore(store,c.activeHandId,this.options.keys),s=owner.snapshot(null);if(!s.toAct||s.result)throw Error('Invalid active ring hand');
    if(time(meta.now)>=time(meta.changedAt)+30000){const member=c.seats.find(p=>'seat-'+p.seat===s.toAct);if(!member)throw Error('Missing actor');const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:legal.check?'check':'fold'}});meta=await store.meta(table);}
    return meta;
   }
@@ -63,7 +67,17 @@ export class RingPlayRuntime {
   return meta;
  }
  async tick(table:string){return this.serial(table,()=>this.advance(table,this.options.store()));}
- async view(table:string,member:string):Promise<RingPlayView|null>{return this.serial(table,async()=>{const store=this.options.store();await store.ping(member,table);const meta=await this.advance(table,store),seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!meta.lastHandId)return null;
+ private async ping(table:string,member:string){
+  if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}
+  const id=table+':'+member,now=Date.now(),prior=this.#pings.get(id);
+  if(prior?.pending)return prior.pending;
+  if(prior&&now-prior.at<5000)return;
+  for(const [key,value] of this.#pings)if(!value.pending&&now-value.at>20000)this.#pings.delete(key);
+  if(!prior&&this.#pings.size>=this.limit*6)throw Error('Ring presence capacity reached');
+  const item={at:0,pending:null as Promise<void>|null};
+  item.pending=this.options.store().ping(member,table).then(()=>{item.at=Date.now();}).catch(error=>{this.#pings.delete(id);throw error;}).finally(()=>{item.pending=null;});this.#pings.set(id,item);await item.pending;
+ }
+ async view(table:string,member:string):Promise<RingPlayView|null>{await this.ping(table,member);return this.serial(table,async()=>{const store=this.options.store();const meta=await this.advance(table,store),seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!meta.lastHandId)return null;
    const owner=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);let hand;try{hand=owner.snapshot(member);}catch{return null;}
    return {viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+30000,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
   });}
@@ -77,17 +91,18 @@ export class RingPlayRuntime {
   });}
  private scan(){if(this.#closed||this.#scan)return this.#scan;this.#scan=(async()=>{const tables=await this.options.store().tables(this.limit);if(!Array.isArray(tables)||tables.length>this.limit||tables.some(t=>typeof t!=='string'||!/^[-a-f0-9]{36}$/i.test(t))||new Set(tables).size!==tables.length)throw Error('Invalid ring discovery');for(const table of this.#tables){if(!tables.includes(table)&&!this.#queues.has(table)){this.#tables.delete(table);this.#prepared.delete(table);this.#preparedContext.delete(table);}}for(const table of tables){if(this.#tables.size<this.limit||this.#tables.has(table))this.#tables.add(table);}await Promise.allSettled([...this.#tables].map(table=>this.tick(table).catch(()=>{this.options.diagnostic?.({type:'ring_tick_retry'});})));})().finally(()=>{this.#scan=null;});return this.#scan;}
  async start(){if(this.#closed)throw Error('Ring runtime closed');if(this.#started)return;await this.scan();if(this.#closed)return;this.#started=true;this.#timer=setInterval(()=>{void this.scan()?.catch(()=>this.options.diagnostic?.({type:'ring_scan_retry'}));},1000);}
- async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();}
+ async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();await Promise.allSettled([...this.#pings.values()].flatMap(v=>v.pending?[v.pending]:[]));this.#pings.clear();}
 }
 /** Auth has already resolved the member; all money changes still use SQL. */
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime){}
- async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){const play=await this.runtime.view(table,member);state=await this.base.state(member,table);return {...state,play:state.membership?play:null};}return state;}
+ private async projected(member:string,table:string){const play=await this.runtime.view(table,member),state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:null};}
+ async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
   if(command.type==='ready'||command.type==='act'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();
    if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();await this.runtime.act(member,own.tableId,command.command);}
-   return this.state(member,own.tableId);
+   return this.projected(member,own.tableId);
   }
   return this.base.change(member,command);
  }
