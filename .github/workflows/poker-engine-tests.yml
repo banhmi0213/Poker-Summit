@@ -20,6 +20,7 @@ on:
       - "app/poker-ui/ring-admission*"
       - "app/poker-ui/ring-live*"
       - "app/poker-ui/use-ring-runout*"
+      - "app/poker-ui/table-action-motion*"
       - "tests/poker-*.cjs"
       - "tests/sql/poker*.sql"
       - "app/mypage/chips/**"
@@ -50,6 +51,7 @@ on:
       - "app/poker-ui/ring-admission*"
       - "app/poker-ui/ring-live*"
       - "app/poker-ui/use-ring-runout*"
+      - "app/poker-ui/table-action-motion*"
       - "tests/poker-*.cjs"
       - "tests/sql/poker*.sql"
       - "app/mypage/chips/**"
@@ -141,3 +143,10 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-browser-e2e
         run: node tests/poker-browser-e2e.cjs
+
+      - name: Verify table card and chip animations in real browsers
+        env:
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+        run: node tests/poker-motion-browser.cjs

@@ -83,11 +83,11 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     const r = createBettingRound(ids.map(id => ({ id, stack: 1000 })), 100, 'you');
     const html = render(r).html;
     const { cardLabel } = req(root + '/lib/poker/card-display.ts');
-    const hand = html.match(/<div class="hole">([\s\S]*?)<\/div>/)[1];
+    const hand = html.match(/<div class="hole"[^>]*>([\s\S]*?)<\/div>/)[1];
     for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
     assert.equal((html.match(/src="\/images\/summit-finger-clean.webp"/g)||[]).length,10);
-    assert.match(html, /aria-label="共通カード"><\/div>/);
+    assert.match(html, /aria-label="共通カード"[^>]*><\/div>/);
 });
 
 require('node:test').test('tournament sample renders top clock, structure menu and scope notice',()=>{
