@@ -146,6 +146,13 @@ async function runImport(formData: FormData) {
     .select("google_place_id")
     .in("google_place_id", placeIds.length > 0 ? placeIds : ["-"]);
   const existingIds = new Set((existingRows ?? []).map((e) => e.google_place_id));
+  // 閉店・営業していないため削除した店は取り込み直さない(public.deleted_store_places、2026/10/23)。
+  // 「取り込み済み」と同じ数に入れる。
+  const { data: deletedRows } = await supabase
+    .from("deleted_store_places")
+    .select("google_place_id")
+    .in("google_place_id", placeIds.length > 0 ? placeIds : ["-"]);
+  for (const d of deletedRows ?? []) existingIds.add(d.google_place_id);
 
   const afterDedup = results.filter((r) => !existingIds.has(r.placeId));
   const afterPrefMatch = afterDedup.filter((r) => matchesPref(r.address));

@@ -784,6 +784,8 @@ export async function sendStoreMaintenanceDigest(params: {
   approved: string[];
   held: { name: string; reason: string }[];
   closed: { name: string; status: string }[];
+  removed?: { name: string; status: string }[];
+  deleted?: { name: string; reason: string }[];
   reopened?: string[];
 }): Promise<void> {
   const siteUrl = getSiteUrl();
@@ -799,9 +801,19 @@ export async function sendStoreMaintenanceDigest(params: {
     lines.push(`→ ${siteUrl}/admin/stores?status=pending`, "");
   }
   if (params.closed.length) {
-    lines.push(`■ Googleで閉業・休業・見つからなくなったため、掲載から外した店: ${params.closed.length}件（有料契約中の店は外さず要確認）`);
+    lines.push(`■ Googleで休業中などのため、掲載から外した店: ${params.closed.length}件（有料契約中の店は外さず要確認）`);
     for (const c of params.closed.slice(0, 50)) lines.push(`・${c.name}(${c.status === "CLOSED_PERMANENTLY" ? "閉業" : c.status === "CLOSED_TEMPORARILY" ? "休業" : "Googleから消えた"})`);
     lines.push(`→ ${siteUrl}/admin/stores/google-match`, "");
+  }
+  if (params.removed?.length) {
+    lines.push(`■ Googleで閉業・見つからなくなったため、削除した店: ${params.removed.length}件`);
+    for (const c of params.removed.slice(0, 50)) lines.push(`・${c.name}(${c.status === "CLOSED_PERMANENTLY" ? "閉業" : "Googleから消えた"})`);
+    lines.push("");
+  }
+  if (params.deleted?.length) {
+    lines.push(`■ 新しく見つかったが、営業していないため削除した店: ${params.deleted.length}件`);
+    for (const d of params.deleted.slice(0, 50)) lines.push(`・${d.name}(${d.reason})`);
+    lines.push("");
   }
   if (params.reopened?.length) {
     lines.push(`■ 一時休業から営業中に戻ったため、掲載に戻した店: ${params.reopened.length}件`);
