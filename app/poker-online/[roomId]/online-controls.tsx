@@ -1,4 +1,5 @@
 'use client';
+import {useAutoAction} from '@/app/poker-ui/use-auto-action';
 import {useEffect,useState} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import type {BettingAction} from '@/lib/poker/betting';
@@ -9,7 +10,8 @@ export function OnlineControls({state,busy,pending,enabled,message,onJoin,onSpec
  const [amount,setAmount]=useState('');useEffect(()=>setAmount(''),[state?.hand?.handId,state?.hand?.revision]);
  const legal=state?.hand?.legal,locked=busy||pending||!enabled||Boolean(state?.turn&&state.turn.expiresAt<=state.serverNow),wager=Number(amount||legal?.minRaiseTo);
  const valid=Number.isSafeInteger(wager)&&legal?.minRaiseTo!=null&&legal.maxRaiseTo!=null&&wager>=legal.minRaiseTo&&wager<=legal.maxRaiseTo;
- return <div className={shared.controls}>
+ const auto=useAutoAction(state?.hand?.handId??null,state?.hand?.revision??0,legal??null,locked,onAct);
+ return <div className={shared.controls}><div><button type="button" aria-pressed={auto.mode==='check'} disabled={locked||!state?.hand||Boolean(state.hand.result)} onClick={()=>auto.toggle('check')}>オートチェック {auto.mode==='check'?'ON':'OFF'}</button><button type="button" aria-pressed={auto.mode==='fold'} disabled={locked||!state?.hand||Boolean(state.hand.result)} onClick={()=>auto.toggle('fold')}>オートフォールド {auto.mode==='fold'?'ON':'OFF'}</button></div>
   <div className={shared.turn}>{legal?'あなたの番':state?.phase==='finished'?'大会終了':state?.phase==='complete'?'次のハンドを待っています':state?.hand?.toAct?`プレイヤー ${state.hand.toAct.replace('seat-','')}の番`:'開始待ち'}</div>
   <button type="button" className={styles.bankButton} disabled={locked||!legal||!state?.timeBank?.remaining||!onTimeBank} onClick={onTimeBank}>◷ タイムバンク +{state?.timeBank?.seconds??20}秒（残り{state?.timeBank?.remaining??0}回）</button>
   {!enabled&&<p role="status">オンライン対戦サーバーはまだ公開していません。現在のデモはロビーから利用できます。</p>}

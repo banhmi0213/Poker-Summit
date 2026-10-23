@@ -8,6 +8,7 @@ const NAV_LINKS: { href: string; label: string; sub?: string }[] = [
   { href: "/coupons", label: "クーポン" },
   { href: "/board", label: "サミット", sub: "(情報交換)" },
   { href: "/jobs", label: "求人を探す" },
+  { href: "/poker-lobby", label: "Summit Poker" },
 ];
 
 export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string | null; regionSelector?: ReactNode }) {

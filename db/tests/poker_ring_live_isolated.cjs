@@ -5,9 +5,9 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {RingPlayRuntime,SupabaseRingPlayStore,PlayingRingAdmissionStore}=require('../../lib/poker/ring-play-runtime.ts'),{SupabaseRingAdmissionStore}=require('../../lib/poker/ring-lobby-handler.ts'),{RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
 const keys={active:'fixture',keys:{fixture:randomBytes(32)}},members=[randomUUID(),randomUUID(),randomUUID(),randomUUID()],tables=[randomUUID(),randomUUID()],reservations=members.map(()=>randomUUID());
 for(const m of members)await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[m,'live-'+m+'@example.invalid']);
-for(const t of tables)await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,2,50,100,1000,3000,true)',[t,'Runtime SQL fixture']);
+for(const t of tables)await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,6,50,100,1000,3000,true)',[t,'Runtime SQL fixture']);
 await db.exec('set role service_role');
-const names={poker_ring_lobby_state:['p_member','p_table'],poker_ring_admit:['p_member','p_table','p_amount','p_request'],poker_ring_depart:['p_member','p_reservation','p_request'],poker_ring_context:['p_table'],poker_ring_hand_load:['p_hand'],poker_ring_play_ready:['p_member','p_reservation'],poker_ring_play_ping:['p_member','p_table'],poker_ring_play_meta:['p_table'],poker_ring_play_tables:['p_limit'],poker_ring_play_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_play_write:['p_hand','p_expected','p_write','p_sealed','p_result','p_timeout','p_from'],poker_ring_cashout:['p_member','p_reservation','p_request']};
+const names={poker_ring_choose_seat:['p_member','p_table','p_amount','p_request','p_seat'],poker_ring_timebank:['p_member','p_reservation','p_hand','p_revision','p_request'],poker_ring_lobby_state:['p_member','p_table'],poker_ring_admit:['p_member','p_table','p_amount','p_request'],poker_ring_depart:['p_member','p_reservation','p_request'],poker_ring_context:['p_table'],poker_ring_hand_load:['p_hand'],poker_ring_play_ready:['p_member','p_reservation'],poker_ring_play_ping:['p_member','p_table'],poker_ring_play_meta:['p_table'],poker_ring_play_tables:['p_limit'],poker_ring_play_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_play_write:['p_hand','p_expected','p_write','p_sealed','p_result','p_timeout','p_from'],poker_ring_cashout:['p_member','p_reservation','p_request']};
 let lose=false;const rpcCounts={};
 const client={rpc:async(name,args)=>{rpcCounts[name]=(rpcCounts[name]??0)+1;try{assert.ok(names[name],name);const values=names[name].map(k=>args[k]!==null&&typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);const r=await db.query(`select public.${name}(${names[name].map((k,i)=>k+' => $'+(i+1)).join(',')}) value`,values);if(lose&&name==='poker_ring_play_write'){lose=false;return {data:null,error:{code:'fixture_lost_ack'}};}return {data:r.rows[0].value,error:null};}catch(error){return {data:null,error};}}};
 const base=new SupabaseRingAdmissionStore(client),factory=()=>new SupabaseRingPlayStore(client);runner=new RingPlayRuntime({store:factory,keys});let service=new PlayingRingAdmissionStore(base,runner);
@@ -42,6 +42,22 @@ assert.equal(count('poker_ring_lobby_state')-(beforeCheck.poker_ring_lobby_state
 assert.equal(count('poker_ring_play_write')-(beforeCheck.poker_ring_play_write??0),1);
 assert.equal(checked.play.hand.revision,2);
 assert.equal((await service.change(members[1],check)).play.hand.revision,2);
+// Timebank is durable, one use per hand, only on the caller's current turn.
+const bank={type:'bank',reservationId:reservations[1],requestId:randomUUID(),handId:id,revision:2};
+const extended=await service.change(members[1],bank);assert.equal(extended.play.deadline,checked.play.deadline+20000);assert.equal(extended.play.timeBank.remaining,0);
+assert.equal((await service.change(members[1],bank)).play.deadline,extended.play.deadline);
+await assert.rejects(service.change(members[1],{...bank,requestId:randomUUID()}));
+await assert.rejects(service.change(members[0],{...bank,reservationId:reservations[0],requestId:randomUUID()}));
+assert.equal((await service.state(members[1],tables[0])).play.timeBank.remaining,0);
+// A new participant can choose a free seat during a hand, but gets no cards in it.
+await db.exec('reset role');
+const newcomer=randomUUID(),newReservation=randomUUID();await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[newcomer,'new@example.invalid']);await db.exec('set role service_role');
+const joinSeat={type:'join',tableId:tables[0],amount:1000,requestId:newReservation,seat:5};
+const joined=await service.change(newcomer,joinSeat);assert.equal(joined.membership.seat,5);assert.equal(joined.membership.playEnabled,true);
+await service.change(newcomer,joinSeat);await assert.rejects(service.change(newcomer,{...joinSeat,seat:4}));
+assert.equal((await service.state(newcomer,tables[0])).play,null);
+assert.equal((await service.state(members[1],tables[0])).play.hand.players.length,2);
+await db.exec('reset role');assert.equal(Number((await db.query('select sum(available+in_play)::bigint total from poker_private.ring_accounts')).rows[0].total),15000);await db.exec('set role service_role');
 // Create a legitimate encrypted initial deal with a historical commit timestamp.
 // Only the isolated fixture inserts this row; production always uses the fenced RPC.
 class HistoricalStore extends SupabaseRingPlayStore{async begin(r){await db.exec('reset role');await db.query(`insert into poker_private.ring_hands(id,table_id,version,button_seat,participants,terms,sealed,status) values($1,$2,1,$3,$4,$5,$6,'active')`,[r.handId,r.tableId,r.terms.buttonSeat,JSON.stringify(r.roster),JSON.stringify({sb:r.terms.sb,bb:r.terms.bb}),JSON.stringify(r.sealed)]);await db.query("insert into poker_private.ring_hand_commits(hand_id,request_id,version,fingerprint,created_at) values($1,$1,1,decode(repeat('00',32),'hex'),clock_timestamp()-interval '31 seconds')",[r.handId]);await db.exec('set role service_role');return 1;}}
