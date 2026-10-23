@@ -46,3 +46,9 @@ test('shared reveal clock still preserves all streets after late delivery and ti
 test('runout timestamps are optional for old servers and reject invalid future clocks',()=>{
  const {packet}=revealFixture(),p=packet(500);assert.equal(parseRingPlay(p).runout.startedAt,undefined);assert.equal(parseRingPlay({...p,runout:{...p.runout,startedAt:0}}).runout.startedAt,0);for(const value of [-1,NaN,501,'0'])assert.throws(()=>parseRingPlay({...p,runout:{...p.runout,startedAt:value}}));
 });
+
+const {ringTableDisplay}=require('../lib/poker/ring-table-display.ts');
+test('full ring table display preserves server cards, chips, actor and deadline without inventing a new hand',()=>{
+ const h=new AuthoritativeHand([{id:'seat-1',stack:1000},{id:'seat-2',stack:2000},{id:'seat-3',stack:1500}],0,terms);
+ for(const seat of ['seat-1','seat-2','seat-3']){const play={viewerSeat:seat,serverNow:1000,deadline:31000,hand:h.snapshot(seat)},before=JSON.stringify(play),display=ringTableDisplay(play,2000);assert.equal(display.hand,play.hand);assert.equal(display.youSeat,Number(seat.slice(5)));assert.equal(display.hand.players.filter(p=>p.hole!==null).length,1);assert.equal(display.turn.actor,play.hand.toAct);assert.equal(display.turn.expiresAt,31000);assert.equal(display.serverNow,2000);assert.equal(display.seats.filter(p=>p.occupied).length,3);assert.equal(display.completedAt,null);assert.equal(display.runout,null);assert.equal(JSON.stringify(play),before);}
+});

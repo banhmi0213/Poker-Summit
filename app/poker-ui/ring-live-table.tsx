@@ -9,9 +9,11 @@ import {useRingRunout} from './use-ring-runout';
 import {usePotFlight} from './use-pot-flight';
 import {TableMotionLayer,useTableActionMotion} from './table-action-motion';
 import styles from './ring-live-table.module.css';
+import {OnlineTableView} from '@/app/poker-online/[roomId]/online-table-view';
+import {ringTableDisplay} from '@/lib/poker/ring-table-display';
 type Card=RingPlayView['hand']['board'][number];
 function Cards({cards,motionHole,board=false}:{cards:Card[]|null;motionHole?:string;board?:boolean}){return <span className={styles.cards} data-motion-hole={motionHole} data-motion-board={board?true:undefined}>{(cards??[null,null]).map((c,i)=><span key={i} className={c?styles.card:styles.back} data-red={Boolean(c&&(c.suit==='h'||c.suit==='d'))}>{c?<>{({11:'J',12:'Q',13:'K',14:'A'} as Record<number,string>)[c.rank]??c.rank}{({c:'♣',d:'♦',h:'♥',s:'♠'})[c.suit]}</>:<SummitMark/>}</span>)}</span>;}
-export default function RingLiveTable({play:incoming,blocked,onAction}:{play:RingPlayView;blocked:boolean;onAction:(action:BettingAction)=>void}){
+export default function RingLiveTable({play:incoming,blocked,onAction,layout='simple',onExit,summary,footer}:{footer?:import('react').ReactNode;layout?:'simple'|'table';onExit?:()=>void;summary?:import('react').ReactNode;play:RingPlayView;blocked:boolean;onAction:(action:BettingAction)=>void}){
  const play=useRingRunout(incoming);
  const s=play.hand,legal=s.legal,[amount,setAmount]=useState(''),[now,setNow]=useState(play.serverNow),[muted,setMuted]=useState(false),audio=useRef<PokerSounds|null>(null),last=useRef<{hand:string;revision:number;board:number;turn:string|null;won:boolean}|null>(null);
  const flight=usePotFlight(Boolean(s.result),s.handId);
@@ -24,6 +26,8 @@ export default function RingLiveTable({play:incoming,blocked,onAction}:{play:Rin
  const seconds=play.deadline===null?0:Math.max(0,Math.ceil((play.deadline-now)/1000)),elapsed=play.deadline===null?100:Math.min(100,Math.max(0,100-(play.deadline-now)/300)),disabled=blocked||play.hand.handId!==incoming.hand.handId||play.hand.revision!==incoming.hand.revision||play.deadline===null||now>=play.deadline;
  const wager=Number(amount),valid=legal?.raise&&Number.isSafeInteger(wager)&&wager>=legal.minRaiseTo!&&wager<=legal.maxRaiseTo!;
  const act=(action:BettingAction)=>{void audio.current?.unlock().then(()=>audio.current?.play('action'));onAction(action);};
+ const controls=<div className={styles.controls} aria-label="リングゲームのアクション">{legal?<><button type="button" disabled={disabled} onClick={()=>act({type:'fold'})}>フォールド</button>{legal.check?<button type="button" disabled={disabled} onClick={()=>act({type:'check'})}>チェック</button>:<button type="button" disabled={disabled||!legal.call} onClick={()=>act({type:'call'})}>コール {legal.callAmount.toLocaleString()}</button>}{legal.raise&&<><label>ベット合計<input type="number" inputMode="numeric" value={amount} min={legal.minRaiseTo!} max={legal.maxRaiseTo!} step="1" onChange={e=>setAmount(e.target.value)}/></label><button type="button" disabled={disabled||!valid} onClick={()=>act(ringWagerAction(s,wager))}>{legal.shortAllInOnly?'オールイン':'ベット／レイズ'}</button><button type="button" disabled={disabled} onClick={()=>act(ringWagerAction(s,legal.maxRaiseTo!))}>オールイン {legal.maxRaiseTo?.toLocaleString()}</button></>}</>:<p>{s.result?'精算完了 · 次のハンドを準備しています。':'他のプレイヤーの操作を待っています。'}</p>}</div>;
+ if(layout==='table')return <OnlineTableView state={ringTableDisplay(play,now)} ring ringSummary={summary} onExit={onExit} soundEnabled={!muted} onSoundToggle={enabled=>setMuted(!enabled)}>{controls}{footer}</OnlineTableView>;
  return <div className={styles.game}><div className={styles.bar}><span>SB {s.terms.sb} / BB {s.terms.bb}</span><span role="status">{s.result?'勝敗確定':s.toAct?`${s.toAct===play.viewerSeat?'あなた':`プレイヤー ${s.toAct.slice(5)}`}の番 · ${seconds}秒`:'カード公開中'}</span><button type="button" onClick={()=>{void audio.current?.unlock();setMuted(v=>!v);}}>SE {muted?'OFF':'ON'}</button></div>
  <div ref={flight} className={styles.felt} data-board-count={s.board.length} data-result={Boolean(s.result)}><TableMotionLayer/>
  <div className={styles.board}><small>{s.street.toUpperCase()}</small><div>{s.board.length?<Cards cards={s.board} board/>:<span className={styles.waiting}>COMMUNITY CARDS</span>}</div><strong data-pot-source>POT {s.pot.toLocaleString()} chip</strong></div>
@@ -33,6 +37,6 @@ export default function RingLiveTable({play:incoming,blocked,onAction}:{play:Rin
  <Cards cards={p.hole} motionHole={p.id}/><b>{p.stack.toLocaleString()} chip</b><small data-motion-bet={p.id}>{s.result?.payouts[p.id]?`獲得 +${s.result.payouts[p.id].toLocaleString()}`:p.folded?'フォールド':p.allIn?'オールイン':`ベット ${p.committed.toLocaleString()}`}</small></section>)}</div>
  {s.result?.winners.map(winner=><span className={styles.flight} key={s.handId+winner} data-pot-winner={winner} data-pot-duration="1200" aria-hidden="true">{Array.from({length:6},(_,i)=><i key={i} data-pot-coin>●</i>)}</span>)}
  </div>
- <div className={styles.controls} aria-label="リングゲームのアクション">{legal?<><button type="button" disabled={disabled} onClick={()=>act({type:'fold'})}>フォールド</button>{legal.check?<button type="button" disabled={disabled} onClick={()=>act({type:'check'})}>チェック</button>:<button type="button" disabled={disabled||!legal.call} onClick={()=>act({type:'call'})}>コール {legal.callAmount.toLocaleString()}</button>}{legal.raise&&<><label>ベット合計<input type="number" inputMode="numeric" value={amount} min={legal.minRaiseTo!} max={legal.maxRaiseTo!} step="1" onChange={e=>setAmount(e.target.value)}/></label><button type="button" disabled={disabled||!valid} onClick={()=>act(ringWagerAction(s,wager))}>{legal.shortAllInOnly?'オールイン':'ベット／レイズ'}</button><button type="button" disabled={disabled} onClick={()=>act(ringWagerAction(s,legal.maxRaiseTo!))}>オールイン {legal.maxRaiseTo?.toLocaleString()}</button></>}</>:<p>{s.result?'精算完了 · 次のハンドを準備しています。':'他のプレイヤーの操作を待っています。'}</p>}</div>
+ {controls}
  </div>;
 }
