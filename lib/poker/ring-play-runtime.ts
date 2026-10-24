@@ -118,7 +118,7 @@ export class RingPlayRuntime {
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime){}
  private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:null};}
- async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&!state.membership)return {...state,play:await this.runtime.watch(table)};return state;}
+ async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table)};return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
   if(command.type==='ready'||command.type==='act'||command.type==='bank'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();

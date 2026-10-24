@@ -13,7 +13,7 @@ export function ringTableDisplay(play:RingPlayView,now:number):PlayerSnapshot {
   clock:{phase:'final',index:0,level:0,period,next:null,following:null,remaining:0,registrationOpen:false},canStartHand:false};
 }
 
-export function ringStandbyDisplay(table:NonNullable<RingLobbyState['table']>):PlayerSnapshot{
+export function ringStandbyDisplay(table:NonNullable<RingLobbyState['table']>,viewerSeat:number|null=null):PlayerSnapshot{
  const period={kind:'level' as const,minutes:1,sb:table.sb,bb:table.bb,ante:0,note:''};
- return {revision:0,mode:'single-hand',phase:'waiting',handNumber:0,completedAt:null,tournament:null,youSeat:null,timeBank:{seconds:20,remaining:0},turnDurationMs:20000,turn:null,seats:Array.from({length:table.capacity},(_,i)=>({seat:i+1,id:'seat-'+(i+1),occupied:table.seats.some(s=>s.seat===i+1),connected:false})),hand:null,autoExitAt:null,runout:null,serverNow:Date.now(),startsAt:'',structure:{startingStack:0,anteType:'none',lateRegLevel:1,reentry:false,periods:[period]},clock:{phase:'final',index:0,level:0,period,next:null,following:null,remaining:0,registrationOpen:false},canStartHand:false};
+ return {revision:0,mode:'single-hand',phase:'waiting',handNumber:0,completedAt:null,tournament:null,youSeat:viewerSeat,timeBank:{seconds:20,remaining:0},turnDurationMs:20000,turn:null,seats:Array.from({length:table.capacity},(_,i)=>({seat:i+1,id:'seat-'+(i+1),occupied:table.seats.some(s=>s.seat===i+1),connected:false})),hand:null,autoExitAt:null,runout:null,serverNow:Date.now(),startsAt:'',structure:{startingStack:0,anteType:'none',lateRegLevel:1,reentry:false,periods:[period]},clock:{phase:'final',index:0,level:0,period,next:null,following:null,remaining:0,registrationOpen:false},canStartHand:false};
 }

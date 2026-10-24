@@ -51,7 +51,7 @@ export function OnlineTableView({state:source,children,onExit,onSound,soundEnabl
  const tableRef=usePotFlight(collecting,handKey(source));
  const soundMarker=useRef<SoundMarker|null>(null);
  useEffect(()=>{const next=onlineSoundEvents(soundMarker.current,state);soundMarker.current=next.marker;for(const kind of next.sounds)onSound?.(kind);},[state?.hand?.handId,state?.hand?.revision,state?.hand?.board.length,state?.hand?.toAct,Boolean(state?.hand?.result),state?.youSeat,onSound]);
- const [menu,setMenu]=useState(false),hand=state?.hand,seats=state?onlineTableSeats(state,Boolean(onEmptySeat),ring):[],seconds=state?onlineTurnSeconds(state):null;
+ const [menu,setMenu]=useState(false),hand=state?.hand,seats=state?onlineTableSeats(state,Boolean(onEmptySeat),ring&&state.youSeat===null):[],seconds=state?onlineTurnSeconds(state):null;
  useTableActionMotion(tableRef,hand?{handId:hand.handId,revision:hand.revision,boardCount:hand.board.length,settled:Boolean(hand.result),players:hand.players.map(p=>({id:p.id,committed:p.committed,totalCommitted:p.totalCommitted,folded:p.folded}))}:null);
  const seatClasses={p2:shared.topSeats,p3:shared.edgeSeatThree,p4:shared.edgeSeatFour,p5:shared.edgeSeatFive,p6:shared.edgeSeatSix,you:shared.self};
  const cardClasses={p2:shared.showdownTwo,p3:shared.showdownThree,p4:shared.showdownFour,p5:shared.showdownFive,p6:shared.showdownSix,you:''};

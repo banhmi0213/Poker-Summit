@@ -33,7 +33,7 @@ const scoped=factory();loads=count('poker_ring_hand_load');await scoped.load(id)
 const early=factory(),owner=await RingHandOwner.restore(early,id,keys);early.timeout=true;early.from=owner.snapshot(null).board.length;await assert.rejects(owner.act(members[1],{handId:id,revision:1,actionId:'early-timeout',action:{type:'check'}}));assert.equal((await factory().load(id)).version,2);
 await assert.rejects(service.change(members[1],{type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'invalid-wager',action:{type:'raise',amount:1}}}));assert.equal((await factory().load(id)).version,2);
 // Spectators get only a public projection and cannot receive betting controls.
-const publicView=await runner.watch(tables[0]);assert.equal(publicView.spectating,true);assert.equal(publicView.hand.legal,null);assert.ok(publicView.hand.players.every(p=>p.hole===null));
+const publicView=await runner.watch(tables[0]);assert.equal((await service.state(members[2],tables[0])).play.spectating,true);assert.equal(publicView.spectating,true);assert.equal(publicView.hand.legal,null);assert.ok(publicView.hand.players.every(p=>p.hole===null));
 assert.equal(require('../../lib/poker/ring-play-state.ts').parseRingPlay(publicView).spectating,true);
 assert.equal(require('../../lib/poker/ring-table-display.ts').ringTableDisplay(publicView,publicView.serverNow).youSeat,null);
 // A confirmed check reuses its post-write owner, with no third hand load.
