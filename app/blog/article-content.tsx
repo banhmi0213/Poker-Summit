@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+import { TournamentPost } from "./tournament-post";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { blogHeadingId, type BlogBlock, type BlogEntry, type BlogStore } from "@/lib/blog";
@@ -29,8 +31,14 @@ export function ArticleContent({ title, category, summary, image, imageAlt, body
   {showToc&&headings.length>0&&<nav className={styles.toc} aria-label="目次"><strong>目次</strong><ol>{headings.map(({b,i})=><li key={i} className={b.type==="heading3"?styles.tocSub:undefined}><a href={`#${blogHeadingId(b.text||"",i)}`}>{b.text}</a></li>)}</ol></nav>}
   <div className={styles.body}>{body.map((block,i)=>{
    const id=blogHeadingId(block.text||"",i);
-   if(block.type==="heading")return <h2 id={id} key={i}>{block.text}</h2>;
-   if(block.type==="heading3")return <h3 id={id} key={i}>{block.text}</h3>;
+   if(block.type==="heading" || block.type==="heading3") {
+    let sourceUrl="";
+    try { const u=new URL(block.sourceUrl || ""); if(["http:","https:"].includes(u.protocol)&&!u.username&&!u.password) sourceUrl=u.href; } catch { /* Hide invalid legacy links. */ }
+    return <Fragment key={i}>{block.type==="heading"?<h2 id={id}>{block.text}</h2>:<h3 id={id}>{block.text}</h3>}
+     {sourceUrl && <p><a href={sourceUrl} target="_blank" rel="noopener noreferrer">{block.sourceLabel || "関連情報を見る"}</a></p>}
+     {block.xPostUrl && <TournamentPost key={block.xPostUrl} url={block.xPostUrl} inline/>}
+    </Fragment>;
+   }
    if(block.type==="image")return block.url?<figure key={i}><img loading="lazy" decoding="async" src={block.url} alt={block.alt||block.caption||"記事写真"}/>{block.caption&&<figcaption>{block.caption}</figcaption>}</figure>:null;
    if(block.type==="list")return block.ordered?<ol key={i}>{(block.items||[]).map((x,n)=><li key={n}>{x}</li>)}</ol>:<ul key={i}>{(block.items||[]).map((x,n)=><li key={n}>{x}</li>)}</ul>;
    if(block.type==="table")return <div className={styles.tableWrap} key={i}><table><tbody>{(block.rows||[]).map((row,r)=><tr key={r}>{row.map((cell,n)=>r===0?<th key={n}>{cell}</th>:<td key={n}>{cell}</td>)}</tr>)}</tbody></table></div>;
