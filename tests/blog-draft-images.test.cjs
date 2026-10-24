@@ -69,3 +69,8 @@ test('X post can be saved, cleared, and invalid URLs never reach persistence', a
  const bad = harness();bad.form.set('xPostUrl','https://example.com/post/123');
  assert.match((await bad.run()).error,/形式/);assert.equal(bad.saved(),undefined);
 });
+test('heading URLs persist on save and unsafe heading links are rejected', async () => {
+ const h=harness();h.form.set('body',JSON.stringify([{type:'heading',text:'見出し',sourceUrl:'https://example.com/news',sourceLabel:'発表',xPostUrl:'https://twitter.com/news/status/123?s=20'}]));
+ assert.equal((await h.run()).id,id);assert.equal(h.saved().body[0].xPostUrl,'https://x.com/news/status/123');assert.equal(h.saved().body[0].sourceLabel,'発表');
+ const bad=harness();bad.form.set('body',JSON.stringify([{type:'heading',text:'見出し',sourceUrl:'javascript:alert(1)'}]));assert.ok((await bad.run()).error);assert.equal(bad.saved(),undefined);
+});

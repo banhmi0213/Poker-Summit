@@ -14,6 +14,7 @@ export const BLOG_CATEGORIES = [
 ] as const;
 export type BlogBlock = {
  type: "paragraph" | "heading" | "heading3" | "image" | "list" | "table";
+ sourceUrl?: string; sourceLabel?: string; xPostUrl?: string;
  text?: string; url?: string; path?: string; caption?: string; alt?: string; uploadKey?: string;
  items?: string[]; ordered?: boolean; rows?: string[][];
 };

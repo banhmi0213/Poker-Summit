@@ -47,7 +47,13 @@ export function parseBlogImport(raw: string, articles: Pick<BlogEntry, "id" | "s
   const body: BlogBlock[] = data.body.map((value, i) => {
     const block = record(value, `本文${i + 1}`);
     if (block.type === "paragraph" || block.type === "heading" || block.type === "heading3") {
-      return { type: block.type, text: text(block.text, `本文${i + 1}`, block.type === "paragraph" ? 20000 : 200, true) };
+      return { type: block.type, text: text(block.text, `本文${i + 1}`, block.type === "paragraph" ? 20000 : 200, true),
+        ...(block.type !== "paragraph" ? {
+          sourceUrl: block.sourceUrl ? url(block.sourceUrl, "見出しの関連URL") : "",
+          sourceLabel: text(block.sourceLabel, "リンク表示名", 200),
+          xPostUrl: normalizeXPostUrl(text(block.xPostUrl, "見出しのX投稿URL", 2048)),
+        } : {}),
+      };
     }
     if (block.type === "image") return { type: "image", alt: text(block.alt, "本文画像ALT", 300), caption: text(block.caption, "本文画像の説明", 300) };
     if (block.type === "list") {

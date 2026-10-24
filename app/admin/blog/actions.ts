@@ -75,10 +75,22 @@ export async function saveBlogEntry(_state:State,formData:FormData):Promise<Stat
  try {
   const file=formData.get("image");if(file instanceof File&&file.size>0){const image=await upload(file);imageUrl=image.url;imagePath=image.path;}
   if(active&&!imageUrl)throw Error("公開するにはメイン画像を添付してください。");
+  for (const b of input) {
+   if (b.type === "heading" || b.type === "heading3") {
+    b.xPostUrl=normalizeXPostUrl(typeof b.xPostUrl === "string" ? b.xPostUrl : "");
+    if (b.sourceLabel !== undefined && (typeof b.sourceLabel !== "string" || b.sourceLabel.length>200)) throw Error("リンク表示名は200文字以内で入力してください。");
+    if (b.sourceUrl) {
+     if (typeof b.sourceUrl !== "string" || b.sourceUrl.length>2048) throw Error("見出しの関連URLを確認してください。");
+     const u=new URL(b.sourceUrl);
+     if (!["http:","https:"].includes(u.protocol) || u.username || u.password) throw Error("見出しの関連URLにはhttpまたはhttpsのURLを入力してください。");
+     b.sourceUrl=u.href;
+    }
+   }
+  }
   const previousPhotos=new Map((Array.isArray(previous?.body)?previous.body:[]).filter(b=>b.type==="image"&&b.path).map(b=>[b.path,b]));
   for(let i=0;i<input.length;i++){
    const b=input[i];
-   if(b.type!=="image"){body.push({type:b.type,text:b.text || "",items:b.items,ordered:b.ordered,rows:b.rows,uploadKey:b.uploadKey});continue;}
+   if(b.type!=="image"){body.push({type:b.type,text:b.text || "",items:b.items,ordered:b.ordered,rows:b.rows,...((b.type==="heading"||b.type==="heading3")?{sourceUrl:b.sourceUrl||"",sourceLabel:b.sourceLabel||"",xPostUrl:b.xPostUrl||""}:{}),uploadKey:b.uploadKey});continue;}
    const newFile=formData.get(`bodyImage_${b.uploadKey || i}`);
    let stored:BlogBlock|undefined;
    if(newFile instanceof File&&newFile.size>0){const image=await upload(newFile);stored={type:"image",url:image.url,path:image.path};}

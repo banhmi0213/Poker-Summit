@@ -93,3 +93,21 @@ test('imports only validated X post URLs and strips tracking parameters', () => 
   assert.throws(() => parse({...d,xPostUrl:bad}));
  }
 });
+test('heading links and X embeds survive import and reject unsafe URLs', () => {
+ const data=example();data.body=[{type:'heading',text:'ニュース',sourceUrl:'https://example.com/news',sourceLabel:'公式発表',xPostUrl:'https://twitter.com/news/status/123?s=20'}];
+ const result=parse(data).draft.body[0];
+ assert.equal(result.sourceUrl,'https://example.com/news');assert.equal(result.sourceLabel,'公式発表');assert.equal(result.xPostUrl,'https://x.com/news/status/123');
+ for(const fields of [{sourceUrl:'javascript:alert(1)'},{sourceUrl:'https://u:p@example.com/'},{xPostUrl:'https://evil.test/news/status/123'},{sourceLabel:'a'.repeat(201)}])assert.throws(()=>parse({...data,body:[{...data.body[0],...fields}]}));
+ const legacy=parse({...data,body:[{type:'heading',text:'既存の見出し'}]}).draft.body[0];assert.equal(legacy.sourceUrl,'');assert.equal(legacy.xPostUrl,'');
+});
+test('renders per-heading source links and independent inline X posts', () => {
+ const {ArticleContent}=load('app/blog/article-content.tsx', {
+  '@/app/readable-name':{ReadableName:({name})=>name},
+  '@/app/store-name-placeholder':{StoreNamePlaceholder:()=>null},
+  './tournament-post':{TournamentPost:({url,inline})=>React.createElement('div',{'data-post':url,'data-inline':String(inline)})},
+  './position-trainer':{PositionTrainer:()=>null},'./preflop-range-trainer':{PreflopRangeTrainer:()=>null},'./hand-strength-quiz':{HandStrengthQuiz:()=>null},'@/app/learn/pot-odds-trainer':{PotOddsTrainer:()=>null},'./bluff-simulator':{BluffSimulator:()=>null},
+ });
+ const body=[{type:'heading',text:'一つ目',sourceUrl:'https://example.com/a',sourceLabel:'公式発表',xPostUrl:'https://x.com/a/status/123'},{type:'heading3',text:'二つ目',sourceUrl:'javascript:alert(1)',xPostUrl:'https://x.com/b/status/456'}];
+ const html=renderToStaticMarkup(React.createElement(ArticleContent,{title:'ニュース',category:'ポーカーニュース',summary:'',image:'',body,stores:[]}));
+ assert.ok(html.includes('href="https://example.com/a"'));assert.ok(html.includes('公式発表'));assert.ok(!html.includes('javascript:'));assert.equal((html.match(/data-inline="true"/g)||[]).length,2);
+});
