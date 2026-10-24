@@ -492,6 +492,43 @@ Poker Summit`;
   });
 }
 
+// 先行会員限定トーナメント(10/25 21:00)の部屋IDのお知らせ。
+// 10/23に会員全員へ一斉送信したあとに登録した人にも、10/25 20:00(締切)までに登録が完了した人には自動で送る(2026/10/24 オーナー指示)。
+export const FREEROLL_NOTICE_DEADLINE = new Date("2026-10-25T20:00:00+09:00");
+export function freerollNoticeOpen(now: Date = new Date()): boolean {
+  return now.getTime() < FREEROLL_NOTICE_DEADLINE.getTime();
+}
+export async function sendFreerollRoomEmail(params: { to: string; name: string | null }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.name ? `${params.name} 様` : "先行会員の皆さま"}
+
+Poker Summitにご登録いただき、ありがとうございます。
+10月25日（日）21:00から開催する、先行会員限定トーナメント（フリーロール）の部屋IDをお知らせします。
+
+■ 開催日時：2026年10月25日（日）21:00
+■ アプリ：m HOLD'EM
+■ 部屋ID：8624813
+
+【m HOLD'EMのIDをまだ登録していない方へ】
+Poker Summitのマイページに、m HOLD'EMのIDを10月25日（日）20:00までに登録してください。
+登録がない場合、トーナメントに参加されても賞金を受け取る資格がありません。
+マイページの「プロフィールを編集」から登録できます。
+${siteUrl}/mypage
+※IDは一度登録すると、ご自身では変更できません。お間違いのないようご確認ください。
+
+皆さまのご参加をお待ちしています。
+
+――――――――――
+Poker Summit運営事務局
+${siteUrl}/news
+※このメールは、Poker Summitに会員登録いただいた方へ大切なお知らせとしてお送りしています。`;
+  await sendEmail({
+    to: params.to,
+    subject: "【Poker Summit】10/25（日）21:00 先行会員限定トーナメントの部屋IDのお知らせ",
+    text,
+  });
+}
+
 // 会員登録の完了メール(2026/10)。メールアドレスの確認が済んだとき(app/auth/confirm)に1回だけ送る。
 export async function sendWelcomeEmail(params: {
   to: string;

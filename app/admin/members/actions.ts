@@ -76,7 +76,7 @@ export async function confirmMemberEmail(userId: string): Promise<void> {
     if (upd.user) user = upd.user;
   }
   if (user.email && !user.user_metadata?.welcome_email_sent_at) {
-    const { sendWelcomeEmail } = await import("@/lib/email");
+    const { sendWelcomeEmail, freerollNoticeOpen, sendFreerollRoomEmail } = await import("@/lib/email");
     const { data: flags } = await svc.from("site_settings").select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url, member_preview").eq("id", true).maybeSingle();
     await sendWelcomeEmail({
       to: user.email,
@@ -85,8 +85,22 @@ export async function confirmMemberEmail(userId: string): Promise<void> {
           memberPreview: !!flags?.member_preview,
       xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
     });
+    // 10/25 20:00までに登録が完了した人には、先行会員限定トーナメントの部屋IDも送る(2026/10/24)
+    let freerollSentAt: string | undefined;
+    if (!user.email.endsWith("@login.poker-summit.jp") && freerollNoticeOpen() && !user.user_metadata?.freeroll_email_sent_at) {
+      try {
+        await sendFreerollRoomEmail({ to: user.email, name: (user.user_metadata?.display_name as string | undefined) ?? null });
+        freerollSentAt = new Date().toISOString();
+      } catch {
+        // 送れなくても確認済みにする操作は続ける
+      }
+    }
     await svc.auth.admin.updateUserById(userId, {
-      user_metadata: { ...user.user_metadata, welcome_email_sent_at: new Date().toISOString() },
+      user_metadata: {
+        ...user.user_metadata,
+        welcome_email_sent_at: new Date().toISOString(),
+        ...(freerollSentAt ? { freeroll_email_sent_at: freerollSentAt } : {}),
+      },
     });
   }
   await logAdminAction(supabase, "member_email_confirm", "member", userId);
