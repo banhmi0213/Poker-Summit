@@ -3,7 +3,7 @@ import { isPrelaunchActive } from "@/lib/prelaunch";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { sendWelcomeEmail } from "@/lib/email";
+import { freerollNoticeOpen, sendFreerollRoomEmail, sendWelcomeEmail } from "@/lib/email";
 import { safeNext } from "@/lib/visit-source";
 
 export const dynamic = "force-dynamic";
@@ -58,8 +58,25 @@ export async function GET(req: NextRequest) {
           xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
         });
       }
+      // 10/25 20:00までに登録が完了した人には、先行会員限定トーナメントの部屋IDも送る(2026/10/24)
+      let freerollSentAt: string | undefined;
+      if (data.user.email && !data.user.email.endsWith("@login.poker-summit.jp") && freerollNoticeOpen() && !data.user.user_metadata?.freeroll_email_sent_at) {
+        try {
+          await sendFreerollRoomEmail({
+            to: data.user.email,
+            name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
+          });
+          freerollSentAt = new Date().toISOString();
+        } catch {
+          // 部屋IDのメールが送れなくても登録は完了させる
+        }
+      }
       await createServiceRoleClient().auth.admin.updateUserById(data.user.id, {
-        user_metadata: { ...data.user.user_metadata, welcome_email_sent_at: new Date().toISOString() },
+        user_metadata: {
+          ...data.user.user_metadata,
+          welcome_email_sent_at: new Date().toISOString(),
+          ...(freerollSentAt ? { freeroll_email_sent_at: freerollSentAt } : {}),
+        },
       });
     } catch {
       // 送れなくても登録自体は完了させる
