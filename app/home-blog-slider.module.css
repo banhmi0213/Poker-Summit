@@ -1,0 +1,26 @@
+.section{margin:28px 0;color:#382719;min-width:0}
+.heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.heading span{font-size:10px;letter-spacing:.13em;color:#9b7129;font-weight:700}
+.heading h2{font-size:23px;margin:5px 0 0}
+.heading>a{font-size:13px;font-weight:700;color:#795519;text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.controls p{font-size:12px;color:#796b55;margin:0}
+.controls>div{display:flex;gap:8px;flex-shrink:0}
+.controls button{display:grid;place-items:center;width:36px;height:36px;border:1px solid #dfcca7;border-radius:50%;background:#fffaf0;color:#795519;cursor:pointer}
+.controls svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.controls button:disabled{opacity:.35;cursor:default}
+.rail{display:flex;gap:18px;margin:0;padding:3px 3px 15px;list-style:none;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:#c5a25e #f4eddf;cursor:grab;user-select:none;-webkit-user-select:none}
+.rail:focus-visible,.card:focus-visible,.controls button:focus-visible{outline:3px solid #ba8c2e;outline-offset:3px}
+.dragging{cursor:grabbing;scroll-snap-type:none}
+.item{flex:0 0 calc((100% - 54px)/3.4);min-width:240px;scroll-snap-align:start;display:flex}
+.card{display:flex;flex-direction:column;width:100%;border:1px solid #e5d6ba;border-radius:12px;overflow:hidden;background:#fff;color:inherit;text-decoration:none;transition:box-shadow .18s,border-color .18s}
+.card:hover{border-color:#c29a4c;box-shadow:0 5px 16px #684c1719}
+.photo{aspect-ratio:16/9;background:#153d32;display:grid;place-items:center;color:#e4c782}
+.photo img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.photo>span{font-size:12px;letter-spacing:.08em}
+.copy{padding:15px;display:flex;flex-direction:column;flex:1;align-items:flex-start}
+.category{font-size:10px;background:#f7edda;color:#805c21;padding:4px 7px;border-radius:4px}
+.copy h3{font-size:15px;line-height:1.75;margin:9px 0 14px;overflow-wrap:anywhere}
+.copy time{font-size:11px;color:#8a7557;margin-top:auto}
+@media(max-width:700px){.item{flex-basis:76%;min-width:0}.rail{gap:12px}.heading h2{font-size:20px}.controls p{font-size:11px}.copy h3{font-size:14px}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}}
