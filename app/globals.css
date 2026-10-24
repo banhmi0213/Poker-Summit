@@ -3181,18 +3181,3 @@ body{background:var(--preview-ivory);color:var(--text)}
 /* Reference-inspired colour placement, adapted to the Summit gold identity. */
 .portal-nav{background:radial-gradient(ellipse at 82% -180px,#8b5268 0%,#603044 72%)}
 .portal-footer{background:radial-gradient(ellipse at 65% 120%,#825064,#512637 72%)}
-
-
-/* Pattern C: white / pale gold / gold. A: 53be87b; B: 6b31a50. */
-:root{--bg:#fff;--surface:#fff;--surface-2:#fbf6eb;--surface-3:#f1e4c9;--text:#48351c;--text-2:#6c593c;--muted:#887455;--border:rgba(128,96,36,.17);--border-strong:#d7bd84;--accent-ink:#48351c;--preview-ivory:#fff}
-body{background:#fff;color:#48351c}
-.portal-nav{background:radial-gradient(ellipse at 82% -180px,#e2c58d,#f3e8cf 72%);border-bottom-color:#caa45c}
-.portal-footer{background:linear-gradient(120deg,#f3e8cf,#ead7ad);color:#48351c;border-color:#d7bd84}
-.portal-footer a,.portal-footer .footer-areas a{color:#76541e}
-.portal-footer h2,.portal-footer h3,.portal-footer strong{color:#48351c}
-.portal-footer .muted,.portal-footer p{color:#6c593c}
-.cta-banner{background:#f3e8cf;border-color:#d7bd84;color:#48351c}
-.cta-banner h2{color:#48351c}.cta-banner p{color:#6c593c}.cta-banner .eyebrow{color:#806024}
-.cta-banner .btn-outline-gold{color:#76541e;border-color:#b68b39}
-.mobile-nav-drawer,.bottom-tabs{background:#f3e8cf;color:#48351c;border-color:#d7bd84}
-.nav-hamburger{color:#806024}
