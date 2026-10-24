@@ -31,6 +31,9 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  await a.getByRole('link',{name:'着席中の卓へ',exact:true}).click();await a.getByText('席 1（あなた）',{exact:true}).waitFor();await a.reload();await a.getByText('席 1（あなた）',{exact:true}).waitFor();
  await b.getByRole('link',{name:'着席中の卓へ',exact:true}).click();await b.getByText('席 2（あなた）',{exact:true}).waitFor();assert.equal(await b.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await a.screenshot({path:path.join(output,'desktop.png'),fullPage:true});await b.screenshot({path:path.join(output,'mobile.png'),fullPage:true});
+ const refreshTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'更新',exact:true}).click();}else await p.getByRole('button',{name:'更新',exact:true}).click();};
+ const leaveTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'◉ 観戦',exact:true}).click();await p.getByRole('button',{name:'席から離れて観戦する',exact:true}).click();}else await p.getByRole('button',{name:'退出・chipを返却',exact:true}).click();};
+ const pendingExit=p=>process.env.POKER_TABLE_UI==='1'?p.getByRole('complementary',{name:'リング卓情報',exact:true}).getByText('退出予約済み · ハンドの精算後に返却します。',{exact:true}):p.getByRole('button',{name:'退出予約済み',exact:true});
  // Real browser actions -> runtime -> encrypted engine -> PostgreSQL settlement.
  await a.getByRole('button',{name:'対戦に参加（準備完了）',exact:true}).click();await a.getByText('準備完了 · 他の着席者を待っています。この画面を開いてお待ちください。',{exact:true}).waitFor();
  assert.equal((await db.query("select count(*)::int n from poker_private.ring_hands where status='active'")).rows[0].n,0);
@@ -42,8 +45,8 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  assert.equal(await b.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await a.waitForFunction(()=>Array.from(document.images).every(img=>img.complete&&img.naturalWidth>0));
  if(process.env.POKER_TABLE_UI==='1'){assert.equal(await a.evaluate(()=>document.documentElement.scrollHeight>innerHeight+1),false);assert.equal(await a.locator('[data-slot=you] [data-motion-hole] > span').count(),2);assert.equal(await a.getByLabel('裏向きカード',{exact:true}).count(),2);}
  await a.screenshot({path:path.join(output,'live-desktop.png'),fullPage:true});await b.screenshot({path:path.join(output,'live-mobile.png'),fullPage:true});
- if(process.env.POKER_TABLE_UI==='1'){await a.getByRole('button',{name:'ALL-IN額',exact:true}).click();await a.getByRole('button',{name:'レイズ',exact:true}).click();}else await a.getByRole('button',{name:/^オールイン /}).click();await a.getByRole('button',{name:'退出・chipを返却',exact:true}).click();await a.getByRole('button',{name:'退出して返却',exact:true}).click();await a.getByRole('button',{name:'退出予約済み',exact:true}).waitFor();assert.ok(await a.getByRole('button',{name:'退出予約済み',exact:true}).isDisabled());
- await a.reload();await a.getByRole('button',{name:'退出予約済み',exact:true}).waitFor();await a.screenshot({path:path.join(output,'pending-exit.png'),fullPage:true});
+ if(process.env.POKER_TABLE_UI==='1'){await a.getByRole('button',{name:'ALL-IN額',exact:true}).click();await a.getByRole('button',{name:'レイズ',exact:true}).click();}else await a.getByRole('button',{name:/^オールイン /}).click();await leaveTable(a);await a.getByRole('button',{name:'退出して返却',exact:true}).click();await pendingExit(a).waitFor();if(process.env.POKER_TABLE_UI!=='1')assert.ok(await pendingExit(a).isDisabled());
+ await a.reload();await pendingExit(a).waitFor();await a.screenshot({path:path.join(output,'pending-exit.png'),fullPage:true});
  await b.getByRole('button',{name:/^コール/}).waitFor();
  // Lose all intermediate state polls for 6.5 seconds on one browser. The call
  // ACK contains a committed terminal reveal; DOM stages must still render 3/4/5.
@@ -54,8 +57,8 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  assert.ok(boardCounts.includes(0)&&boardCounts.includes(3)&&boardCounts.includes(4)&&boardCounts.includes(5));
  await b.locator('[data-board-count="5"][data-result="true"]').waitFor();const frames=await b.evaluate(()=>window.ringRevealFrames),streets=frames.filter(f=>[3,4,5].includes(f.count)&&!f.result);assert.deepEqual(streets.map(f=>f.count),[3,4,5]);for(let i=1;i<streets.length;i++)assert.ok(streets[i].at-streets[i-1].at>=2100);const win=frames.find(f=>f.result);assert.ok(win.at-streets[2].at>=2100);await b.unroute('**/api/poker/ring');
  const end=await store.state(users[1],tid);assert.ok(end.play.hand.result);const expectedB=end.wallet.total;
- await a.getByRole('button',{name:'更新',exact:true}).click();await a.waitForFunction(()=>document.body.textContent.includes('卓へ持込中 0'));
- await b.getByRole('button',{name:'更新',exact:true}).click();await b.getByRole('button',{name:'退出・chipを返却',exact:true}).click();await b.getByRole('button',{name:'退出して返却',exact:true}).click();await b.waitForFunction(value=>document.body.textContent.includes(`使用可能 ${value.toLocaleString()} ／ 卓へ持込中 0`),expectedB);
+ await refreshTable(a);await a.waitForFunction(()=>document.body.textContent.includes('卓へ持込中 0'));
+ await refreshTable(b);await leaveTable(b);await b.getByRole('button',{name:'退出して返却',exact:true}).click();await b.waitForFunction(value=>document.body.textContent.includes(`使用可能 ${value.toLocaleString()} ／ 卓へ持込中 0`),expectedB);
  assert.equal(packets.filter(p=>p.type==='leave').length,2);
  const actions=packets.filter(p=>p.type==='act');assert.deepEqual(actions[0],actions[1]);
  const totals=(await db.query('select sum(available)::bigint chips,sum(in_play)::bigint held from poker_private.ring_accounts where member_id=any($1::uuid[])',[users])).rows[0];assert.equal(Number(totals.chips),9000);assert.equal(Number(totals.held),0);assert.equal((await db.query("select count(*)::int n from poker_private.ring_chip_ledger where kind='reserve'")).rows[0].n,2);
