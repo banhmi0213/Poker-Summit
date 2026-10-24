@@ -22,9 +22,11 @@
 .source{flex-shrink:0;font-size:12px;color:#805b1c;font-weight:700;text-underline-offset:4px;padding:10px 0}
 .footer{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:16px}
 .footer p{font-size:11px;color:#88775e;margin:0;line-height:1.8}
-.footer>a{flex-shrink:0;border:1px solid #d6b66c;border-radius:7px;padding:11px 16px;font-size:12px;color:#79581e;background:#fffaf0;text-decoration:none;font-weight:700}
+.footer>a,.footer>button{flex-shrink:0;border:1px solid #d6b66c;border-radius:7px;padding:11px 16px;font-size:12px;color:#79581e;background:#fffaf0;text-decoration:none;font-weight:700}
 .source:hover,.featureCopy a:hover{ text-decoration-thickness:2px }
-.footer>a:hover{background:#f7edda}
+.footer>a:hover,.footer>button:hover{background:#f7edda}
 .srOnly{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:700px){.header h2{font-size:20px}.featureCopy{width:72%;padding:22px 18px}.visual{left:35%}.visual:after{background:linear-gradient(90deg,#101f38,rgba(16,31,56,.76) 50%,rgba(16,31,56,.25))}.section .feature .featureCopy h3{font-size:23px}.row{align-items:flex-start;flex-direction:column;gap:3px;padding:12px 0}.source{padding:5px 0;min-height:32px}.footer{align-items:flex-start;flex-wrap:wrap}}
 @media(max-width:420px){.featureCopy{width:100%}.visual{left:25%}.visual:after{background:linear-gradient(90deg,#101f38,rgba(16,31,56,.85) 55%,rgba(16,31,56,.65))}.section .feature .featureCopy h3{font-size:21px}.row h3{font-size:14px}}
+
+.footer>button{font-family:inherit;cursor:pointer}.rowLinks{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}.rowLinks .source{padding:4px 0}.filters{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin:20px 0}.filters label{display:flex;flex-direction:column;gap:6px;font-size:13px}.filters input,.filters select{max-width:100%;padding:10px;border:1px solid #d8c9ae;border-radius:6px;background:#fff;color:#382719;font:inherit}.pagination{display:flex;justify-content:center;align-items:center;gap:18px;margin:24px 0}.pagination a{color:#79581e;padding:10px}.rowLinks{max-width:180px}@media(max-width:700px){.rowLinks{flex-direction:row;align-items:center;gap:20px;max-width:none;flex-wrap:wrap}.rowLinks .source{min-height:36px;padding:8px 0}.filters label{width:100%}}

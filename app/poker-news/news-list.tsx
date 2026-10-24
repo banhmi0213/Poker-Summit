@@ -1,0 +1,4 @@
+import Link from "next/link";
+import type { PokerNews } from "@/lib/poker-news";
+import styles from "../home-poker-news.module.css";
+export function PokerNewsList({entries}:{entries:PokerNews[]}){return <ul className={styles.list}>{entries.map(item=><li key={item.id} className={styles.row}><article><div className={styles.meta}><span>{item.category}</span><time dateTime={item.news_date}>{item.news_date.replaceAll("-",".")}</time></div><h3>{item.title}</h3><p>{item.summary}</p>{item.category==="未確認・参考"&&<p>未確認の参考情報です。確定したニュースや10/23発表の情報とは区別してご覧ください。</p>}</article><div className={styles.rowLinks}>{item.relatedHref&&<Link className={styles.source} href={item.relatedHref}>関連記事を見る</Link>}<a className={styles.source} href={item.source_url} target="_blank" rel="noopener noreferrer">{item.source_label}<span className={styles.srOnly}>（別タブで開きます）</span></a></div></li>)}</ul>;}
