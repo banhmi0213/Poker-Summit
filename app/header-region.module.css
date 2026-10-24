@@ -117,27 +117,3 @@
 .title:hover,.activeTitle{background:#c6a45b;border-color:#d9bd83;color:#603044}
 .megaPanel{background:#512637}
 .menuLink{background:#704052}
-
-
-/* Pattern C */
-.header :global(.ps-pref-selector){background:#fffaf0;border-color:#cdb47e}
-.header :global(.ps-pref-selector__label){color:#806024}
-.header :global(.ps-pref-selector__select){color:#48351c;color-scheme:light}
-.header :global(.portal-cta){color:#48351c}
-.title{background:#faf2df;border-color:#d8c392;color:#48351c}
-.caret{color:#9a742e}
-.title:hover,.activeTitle{background:#d9bb79;border-color:#b68b39;color:#48351c}
-.activeTitle .caret{color:#76541e}
-.megaPanel{background:#f3e8cf;border-color:#cdb47e;border-top-color:#b68b39;box-shadow:0 16px 28px #80602425}
-.panelHeading{color:#806024}
-.menuLink{background:#fffaf0;border-color:#dfcca4;color:#48351c}
-.menuArtwork{background:#f1e4c9;border-bottom-color:#dfcca4}
-.menuCopy strong{color:#48351c}.menuCopy small{color:#6c593c}
-.menuLink>.menuArrow{color:#9a742e}
-.menuLink:hover{background:#f0dfb9;border-color:#b68b39}
-.disabled{background:#eeebe4;border-color:#dcd6cb;color:#9a9387}
-.learningArtwork{background:linear-gradient(125deg,#ead7ad,#fffaf0);color:#76541e}
-.mobileGroup{border-color:#dfcca4}.mobileGroup summary,.mobileDirect{color:#48351c}
-.mobileGroup[open] summary{background:#ead7ad;color:#76541e}
-.header.header :global(.mobile-nav-drawer) :global(.plink){color:#48351c}
-.header :global(.nav-hamburger){color:#806024}
