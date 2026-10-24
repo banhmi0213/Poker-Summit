@@ -40,3 +40,5 @@
 }
 
 @media(max-width:899px){.viewport>button[aria-controls="game-site-footer"]{position:absolute;top:6px;bottom:auto;right:126px;font-size:10px;padding:7px 8px}.viewport main{padding-bottom:max(6px,env(safe-area-inset-bottom))}}
+
+@media(max-width:899px){.compactShell .onlineHeading button,.compactShell .onlineHeading a{height:28px;min-height:28px!important;padding:0;line-height:1;box-sizing:border-box;display:grid;place-items:center}.compactShell:has([class*="inlineAlert"]) .onlineHeading>span{visibility:hidden}}

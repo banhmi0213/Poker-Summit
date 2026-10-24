@@ -32,12 +32,12 @@ function Structure({state,onExit}:{state:PlayerSnapshot|null;onExit?:()=>void}){
 }
 function ResultSummary({state,ring=false}:{state:PlayerSnapshot|null;ring?:boolean}){
  const {settings}=useTablePreferences();const amount=(n:number)=>formatTableChips(n,state?.hand?.terms.bb??0,settings.bb);
- const current=state?.hand?.result?{number:state.handNumber,winners:[...state.hand.result.winners],deltas:onlineTableSeats(state).map(s=>({id:s.seat.id,delta:s.delta}))}:null;
+ const current=state?.hand?.result?{number:state.handNumber,winners:[...state.hand.result.winners],payouts:{...state.hand.result.payouts},deltas:onlineTableSeats(state).map(s=>({id:s.seat.id,delta:s.delta}))}:null;
  const [previous,setPrevious]=useState<typeof current>(null);
  useEffect(()=>{if(!state)setPrevious(null);else if(current)setPrevious(current);},[state]);
  // Store only already-public outcome totals; never retain hole cards or credentials.
  const result=state?(current??previous):null;
- return <div className={`${shared.resultOverlay} ${current?'':shared.previousResult}`} role="status"><strong>{result?`${ring?'ハンド結果':`ハンド ${result.number}`}${current?(ring?'':' 結果'):'（直前の結果）'}：${result.winners.map(names).join('・')} がPOT獲得`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{(result?.deltas??(state?onlineTableSeats(state).map(s=>({id:s.seat.id,delta:null})):[])).map(s=><span key={s.id} className={s.delta===null||s.delta===0?shared.resultEven:s.delta>0?shared.resultGain:shared.resultLoss}>{names(s.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${amount(s.delta)}`}</b></span>)}</div></div>;
+ return <div className={`${shared.resultOverlay} ${current?'':shared.previousResult}`} role="status"><strong>{result?`${ring?'ハンド結果':`ハンド ${result.number}`}${current?(ring?'':' 結果'):'（直前の結果）'}：${result.winners.map(id=>`${names(id)} がPOT獲得 ${amount(result.payouts[id]??0)}${settings.bb?'':' chip'}`).join('・')}`:'ハンド結果：確定待ち'}</strong><div className={`${shared.resultDeltas} ${styles.results}`}>{(result?.deltas??(state?onlineTableSeats(state).map(s=>({id:s.seat.id,delta:null})):[])).map(s=><span key={s.id} className={s.delta===null||s.delta===0?shared.resultEven:s.delta>0?shared.resultGain:shared.resultLoss}>{names(s.id)} <b>増減 {s.delta===null?'—':`${s.delta>0?'+':''}${amount(s.delta)}`}</b></span>)}</div></div>;
 }
 export function OnlineTableView({state:source,children,onExit,onSound,soundEnabled=true,onSoundToggle,ring=false,ringSummary,onEmptySeat,emptySeatsDisabled=false,ringSeatStacks,onSpectate,onRefresh}:{onRefresh?:()=>void;onSpectate?:()=>void;ringSeatStacks?:Record<number,number>;emptySeatsDisabled?:boolean;onEmptySeat?:(seat:number)=>void;ring?:boolean;ringSummary?:ReactNode;state:PlayerSnapshot|null;children?:ReactNode;onExit?:()=>void;onSound?:(kind:PokerSound)=>void;soundEnabled?:boolean;onSoundToggle?:(enabled:boolean)=>void}){
  const [animationNow,setAnimationNow]=useState<number|null>(null);

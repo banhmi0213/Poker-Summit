@@ -72,6 +72,12 @@ await runner.tick(tables[1]);const timed=await RingHandOwner.restore(factory(),p
 await service.change(members[2],{type:'leave',reservationId:reservations[2],requestId:randomUUID()});
 const fresh=await service.change(members[2],{type:'join',tableId:tables[1],amount:1000,requestId:randomUUID(),seat:1});
 assert.equal(fresh.membership.stack,1000);assert.equal((await service.state(members[2],tables[1])).play,null);
+// A fold result holds for six seconds, then both runtime and database permit the next deal.
+await service.change(members[3],{type:'ready',reservationId:reservations[3],requestId:randomUUID()});
+await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '5 seconds' where id=$1",[prepared.handId]);await db.exec('set role service_role');
+await runner.tick(tables[1]);assert.equal((await factory().meta(tables[1])).context.activeHandId,null);
+await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '6.2 seconds' where id=$1",[prepared.handId]);await db.exec('set role service_role');
+await runner.tick(tables[1]);const nextDeal=(await factory().meta(tables[1])).context.activeHandId;assert.ok(nextDeal);assert.notEqual(nextDeal,prepared.handId);
 await db.exec('reset role');assert.equal(Number((await db.query('select sum(available+in_play)::bigint total from poker_private.ring_accounts where member_id=any($1::uuid[])',[members])).rows[0].total),12000);
 await db.exec('set role authenticated');for(const name of ['poker_ring_play_ready(uuid,uuid)','poker_ring_play_meta(uuid)','poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer)'])assert.equal((await db.query('select has_function_privilege(current_user,$1,$2) ok',['public.'+name,'execute'])).rows[0].ok,false);
 console.log('PASS live ring: explicit readiness/ownership, encrypted restart without redeal or timer reset, lost-ACK replay, early/late clock fencing, invalid wager rollback, durable auto-fold and 12,000-chip conservation.');

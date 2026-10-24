@@ -39,6 +39,7 @@ export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta
  }
  state.legal=null;state.toAct=null;return state;
 }
+export function ringResultPause(showdown:boolean,from:number){return (showdown?runoutDuration(from):0)+6000;}
 export class RingPlayRuntime {
  #queues=new Map<string,Promise<unknown>>();#tables=new Set<string>();#prepared=new Map<string,Awaited<ReturnType<typeof RingHandOwner.prepare>>>();
  #preparedContext=new Map<string,string>();
@@ -53,7 +54,7 @@ export class RingPlayRuntime {
    if(time(meta.now)>=time(meta.changedAt)+30000+extra){const member=c.seats.find(p=>'seat-'+p.seat===s.toAct);if(!member)throw Error('Missing actor');const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:legal.check?'check':'fold'}});meta=await store.meta(table);}
    return meta;
   }
-  if(meta.completedAt&&time(meta.now)-time(meta.completedAt)<15000)return meta;
+  if(meta.completedAt&&meta.lastHandId&&time(meta.now)-time(meta.completedAt)<ringResultPause(true,0)){const prior=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);if(time(meta.now)-time(meta.completedAt)<ringResultPause(Boolean(prior.snapshot(null).result?.showdown),meta.runoutFrom??0))return meta;}
   // Zero-stack seats have no chips left to wager. Close their reservation once
   // presentation is over; a new buy-in always requires explicit confirmation.
   for(const p of c.seats.filter(p=>p.stack===0))await store.cashout(p.memberId,p.reservationId,crypto.randomUUID());

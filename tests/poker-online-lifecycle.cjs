@@ -63,7 +63,7 @@ test('completed result remains during next hand and is cleared on connection los
  const View=require('../app/poker-online/[roomId]/online-table-view.tsx').OnlineTableView;let renderer;
  t.after(async()=>{if(renderer)await act(async()=>renderer.unmount());});
  await act(async()=>renderer=create(React.createElement(View,{state})));
- assert.match(text(renderer.toJSON()),/ハンド 1 結果/);
+ assert.match(text(renderer.toJSON()),/ハンド 1 結果/);assert.match(text(renderer.toJSON()),/POT獲得 150 chip/);
  room.nextHand(state.hand.handId);await act(async()=>renderer.update(React.createElement(View,{state:room.snapshot('A',a.connectionId)})));
  assert.match(text(renderer.toJSON()),/ハンド 1（直前の結果）/);assert.match(text(renderer.toJSON()),/増減 \+50/);
  await act(async()=>renderer.update(React.createElement(View,{state:null})));
