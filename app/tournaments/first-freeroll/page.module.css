@@ -18,3 +18,4 @@
 
 /* プライズの追加(抽選のAmazonギフトカード、2026/10/19) */
 .prize{display:block}.prizeExtra{display:block;margin-top:6px;font-size:15px;font-weight:700;color:#6a4614;line-height:1.6}@media(max-width:760px){.prizeExtra{font-size:13px}}
+.prizeBreakdown{display:block;margin-top:6px;font-size:20px;font-weight:800;color:#a3202a;line-height:1.5}@media(max-width:760px){.prizeBreakdown{font-size:16px}}
