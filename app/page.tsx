@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { HomePokerNews } from "./home-poker-news";
 import { HomeBlogSection } from "./home-blog-section";
 import { freerollSignupOpen, PRELAUNCH_TOURNAMENT } from "@/lib/prelaunch";
 import { JobCategoryEntrances } from "./job-category-entrances";
@@ -366,6 +367,7 @@ export default async function HomePage({
           <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ</Link>
         </section>
         <Suspense fallback={null}><HomeBlogSection /></Suspense>
+        <HomePokerNews />
         {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
         <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
           {footerBanners.length > 0 ? footerBanners.map((b) => {
