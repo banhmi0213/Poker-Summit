@@ -85,7 +85,9 @@ export class RingPlayRuntime {
   item.pending=this.options.store().ping(member,table).then(()=>{item.at=Date.now();}).catch(error=>{this.#pings.delete(id);throw error;}).finally(()=>{item.pending=null;});this.#pings.set(id,item);await item.pending;
  }
  private present(meta:RingPlayMeta,owner:RingHandOwner|null,member:string):RingPlayView|null{
-  const seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!owner||!owner.ownsReservation(member,seat.reservationId))return null;const extra=meta.bankRevision===owner.version?20000:0;
+  const seat=meta.context.seats.find(p=>p.memberId===member);if(!seat||!owner)return null;
+  if(!owner.ownsReservation(member,seat.reservationId)){const hand=owner.snapshot(null);if(!meta.context.activeHandId&&(owner.wasSeated(member)||!meta.completedAt||time(meta.now)-time(meta.completedAt)>=ringResultPause(Boolean(hand.result?.showdown),meta.runoutFrom??0)))return null;return {spectating:true,waiting:{seat:seat.seat,stack:seat.stack},viewerSeat:hand.players[0].id,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+20000+(meta.bankRevision===owner.version?20000:0),hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};}
+  const extra=meta.bankRevision===owner.version?20000:0;
   let hand;try{hand=owner.snapshot(member);}catch{return null;}
   if(meta.penalties?.[seat.reservationId]?.since)hand.legal=null;
   if(!meta.context.activeHandId&&hand.result&&meta.completedAt&&time(meta.now)-time(meta.completedAt)>=ringResultPause(hand.result.showdown,meta.runoutFrom??0))return null;
@@ -126,6 +128,6 @@ export class PlayingRingAdmissionStore implements RingAdmissionStore{
    if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.act(member,own.tableId,command.command);return this.projected(member,own.tableId,play);}
    return this.projected(member,own.tableId);
   }
-  return this.base.change(member,command);
+  const changed=await this.base.change(member,command);if(command.type==='join'&&changed.membership?.tableId===command.tableId&&changed.membership.playEnabled)return this.projected(member,command.tableId);return changed;
  }
 }

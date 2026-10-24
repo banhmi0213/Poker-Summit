@@ -60,7 +60,7 @@ const newcomer=randomUUID(),newReservation=randomUUID();await db.query('insert i
 const joinSeat={type:'join',tableId:tables[0],amount:1000,requestId:newReservation,seat:5};
 const joined=await service.change(newcomer,joinSeat);assert.equal(joined.membership.seat,5);assert.equal(joined.membership.playEnabled,true);
 await service.change(newcomer,joinSeat);await assert.rejects(service.change(newcomer,{...joinSeat,seat:4}));
-assert.equal((await service.state(newcomer,tables[0])).play,null);
+const waitingNew=(await service.state(newcomer,tables[0])).play;assert.equal(waitingNew.spectating,true);assert.equal(waitingNew.waiting.seat,5);assert.equal(waitingNew.hand.legal,null);assert.ok(waitingNew.hand.players.every(p=>p.hole===null));
 assert.equal((await service.state(members[1],tables[0])).play.hand.players.length,2);
 await db.exec('reset role');assert.equal(Number((await db.query('select sum(available+in_play)::bigint total from poker_private.ring_accounts')).rows[0].total),15000);await db.exec('set role service_role');
 // Create a legitimate encrypted initial deal with a historical commit timestamp.
