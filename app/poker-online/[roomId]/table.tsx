@@ -68,7 +68,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   void c.watch(eventsOrigin,()=>{if(!cancelled&&pollMode.current==='player'&&!busyRef.current&&!c.pending)void refresh();},()=>{if(cancelled)return;readEpoch.current++;pollMode.current=null;setState(null);setMessage('リアルタイム接続が切れました。再接続してください。');}).then(cleanup=>{if(cancelled)cleanup();else stop=cleanup;}).catch(()=>{if(!cancelled){readEpoch.current++;pollMode.current=null;setState(null);setMessage('リアルタイム接続を開始できません。再接続してください。');}});
   return()=>{cancelled=true;stop?.();};
  },[eventsOrigin,connectionEpoch]);
- return <><OnlineTableView state={state} onExit={()=>setExitOpen(true)} onSound={playSound} soundEnabled={soundEnabled} onSoundToggle={value=>{setSoundEnabled(value);audio.current?.setEnabled(value);if(value)void audio.current?.unlock().then(()=>playSound('turn'));}}>
+ return <><OnlineTableView state={state} onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();pollMode.current='spectator';setConnectionEpoch(0);})} onExit={()=>setExitOpen(true)} onSound={playSound} soundEnabled={soundEnabled} onSoundToggle={value=>{setSoundEnabled(value);audio.current?.setEnabled(value);if(value)void audio.current?.unlock().then(()=>playSound('turn'));}}>
   <OnlineControls state={state} busy={busy} pending={pending} enabled={enabled} message={message}
    onJoin={()=>void run(async c=>{await c.join();if(client.current===c)playSound('enter');retryAt.current=0;readFailures.current=0;pollMode.current='player';setConnectionEpoch(v=>v+1);})}
    onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();if(client.current===c)playSound('enter');pollMode.current='spectator';setConnectionEpoch(0);})}

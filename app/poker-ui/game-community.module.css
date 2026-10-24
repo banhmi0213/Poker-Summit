@@ -1,13 +1,1 @@
-/* The wrapper must not change the game's flex sizing or add a fourth grid column. */
-.layout{display:contents}.dock{display:none}
-@media(min-width:900px){
- .dock{position:fixed;top:100px;bottom:12px;right:12px;width:280px;z-index:60;display:flex;flex-direction:column;gap:10px;min-height:0;pointer-events:none}
- .dock>*{pointer-events:auto}.dock>section{margin:0}.dock>p{font-size:11px;color:#9bb2c4;line-height:1.9;margin:0;padding:10px;background:#142b3e;border-radius:8px}
- .dock iframe{flex:1;width:100%;min-height:0;border:1px solid #3d596d;border-radius:10px;background:#102536;box-shadow:0 8px 30px #0005}
- .toggle{min-height:44px;flex-shrink:0;border:1px solid #b49b68;background:#203d51;color:#f0d69c;border-radius:9px;padding:10px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer}
- .toggle:focus-visible{outline:2px solid #ffe0a3;outline-offset:3px}
-}
-/* On large PCs the rail sits entirely outside the unchanged 1380px game area. */
-@media(min-width:1980px){.dock{right:max(12px,calc((100vw - 1380px)/2 - 292px));top:max(100px,calc((100dvh - 900px)/2 + 44px));bottom:auto;height:min(900px,calc(100dvh - 112px))}}
-/* Compact PCs open a floating panel; they retain the original table dimensions. */
-@media(min-width:900px) and (max-width:1979px){.dock{top:auto;left:12px;right:auto;width:clamp(220px,22vw,280px);height:min(660px,75dvh)}.layout[data-open=false] .dock{height:auto}.dock>section,.dock>p{display:none}}
+.layout{display:contents}.dock{display:flex;flex:1;flex-direction:column;gap:10px;min-height:0;width:100%;margin-top:12px}.dock>section{margin:0;flex-shrink:0}.dock>p{font-size:11px;color:#9bb2c4;line-height:1.7;margin:0;padding:10px;background:#142b3e;border-radius:8px}.dock iframe{flex:1;width:100%;min-height:180px;border:1px solid #3d596d;border-radius:10px;background:#102536}.toggle{min-height:42px;flex-shrink:0;border:1px solid #b49b68;background:#203d51;color:#f0d69c;border-radius:9px;padding:10px;font-weight:700;font-size:12px;font-family:inherit;cursor:pointer}.toggle:focus-visible{outline:2px solid #ffe0a3;outline-offset:3px}

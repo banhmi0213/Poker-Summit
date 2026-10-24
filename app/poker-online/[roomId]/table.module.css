@@ -32,3 +32,5 @@
 @media(prefers-reduced-motion:reduce){.payoutFlight i{animation:none;opacity:0}}
 
 .payoutFlight i[data-pot-coin]{animation:none;opacity:0;transform:translate(-50%,-50%)}
+
+@media(min-width:900px){.leftRail{display:flex!important;flex-direction:column;overflow:auto;gap:8px}}.communitySlot{display:flex;flex:1;min-height:0}.results{font-variant-numeric:tabular-nums}.results>span{background:#173146;border:1px solid #3d596c;border-radius:5px;padding:5px;font-size:10px;min-height:34px}
