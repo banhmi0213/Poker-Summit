@@ -156,6 +156,28 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-selected-seat-e2e
         run: node tests/poker-ring-browser-e2e.cjs
+      - name: Verify deferred spectator departure during a live hand
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "watch"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-watch-e2e
+        run: node tests/poker-ring-browser-e2e.cjs
+      - name: Verify deferred lobby exit during a live hand
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "lobby"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-lobby-e2e
+        run: node tests/poker-ring-browser-e2e.cjs
       - name: Verify six-browser tournament end to end
         timeout-minutes: 4
         env:

@@ -119,7 +119,7 @@ export class RingPlayRuntime {
 /** Auth has already resolved the member; all money changes still use SQL. */
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime){}
- private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:null};}
+ private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null};}
  async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table)};return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
   if(command.type==='ready'||command.type==='act'||command.type==='bank'){const state=await this.base.state(member,null),own=state.membership;
@@ -128,6 +128,6 @@ export class PlayingRingAdmissionStore implements RingAdmissionStore{
    if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.act(member,own.tableId,command.command);return this.projected(member,own.tableId,play);}
    return this.projected(member,own.tableId);
   }
-  const changed=await this.base.change(member,command);if(command.type==='join'&&changed.membership?.tableId===command.tableId&&changed.membership.playEnabled)return this.projected(member,command.tableId);return changed;
+  const changed=await this.base.change(member,command);if(command.type==='join'&&changed.membership?.tableId===command.tableId&&changed.membership.playEnabled)return this.projected(member,command.tableId);if(command.type==='leave'&&changed.table)return this.state(member,changed.table.id);return changed;
  }
 }
