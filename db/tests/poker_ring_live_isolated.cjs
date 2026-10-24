@@ -49,7 +49,7 @@ assert.equal(checked.play.hand.revision,2);assert.equal(checked.play.timeoutStre
 assert.equal((await service.change(members[1],check)).play.hand.revision,2);
 // Timebank is durable, one use per hand, only on the caller's current turn.
 const bank={type:'bank',reservationId:reservations[1],requestId:randomUUID(),handId:id,revision:2};
-const extended=await service.change(members[1],bank);assert.equal(extended.play.deadline,checked.play.deadline+20000);assert.equal(extended.play.timeBank.remaining,0);assert.equal(extended.play.turnDurationMs,40000);
+const extended=await service.change(members[1],bank);assert.equal(extended.play.deadline,checked.play.deadline+20000);assert.equal(extended.play.timeBank.remaining,0);assert.equal(extended.play.turnDurationMs,40000);assert.equal((await runner.watch(tables[0])).turnDurationMs,40000);
 assert.equal((await service.change(members[1],bank)).play.deadline,extended.play.deadline);
 await assert.rejects(service.change(members[1],{...bank,requestId:randomUUID()}));
 await assert.rejects(service.change(members[0],{...bank,reservationId:reservations[0],requestId:randomUUID()}));
