@@ -19,7 +19,8 @@ import { BottomTabs } from "./bottom-tabs";
 import { HomeStoreCard } from "./home-store-card";
 import { PrefAreaSelect, ExpandableSearchForm } from "./pref-area-select";
 import styles from "./home-search.module.css";
-import { PokerRegionHero } from "./poker-region-hero";
+import { HomeFeaturePanel, type HomeFeatureItem } from "./home-feature-panel";
+import { PokerSummitStats } from "./poker-region-hero";
 import { PrefSelector } from "./pref-selector";
 import { PrefGeoDetector } from "./pref-geo-detector";
 import { GeolocateSearchButton } from "./geolocate-search-button";
@@ -191,6 +192,35 @@ export default async function HomePage({
   const rankingBanners = sectionBanners(rankingBannerRows);
   const jobsBanners = sectionBanners(jobsBannerRows);
 
+  // 確認用ブランチ: 6つの入口を固定順で表示。既存の画像・リンクを使用する。
+  const freerollFeature = freerollSignupOpen()
+    ? topBanners.find(b => /フリーロール/.test(b.title) && b.image_url)
+    : undefined;
+  const homeFeatureItems: HomeFeatureItem[] = [
+    { id: "stores", category: "店舗検索", title: `全国${totalStoreCount}店舗から、次に遊ぶお店を探そう`,
+      description: "都道府県・エリア・店舗タイプで、お近くのポーカー店を探せます。",
+      image: "/images/store-banner-light-v2.webp", href: "/stores" },
+    freerollFeature
+      ? { id: "featured", category: "注目企画", title: freerollFeature.title,
+          description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
+          image: freerollFeature.image_url, href: freerollFeature.link_url || "/tournaments/first-freeroll", external: freerollFeature.external }
+      : { id: "featured", category: "注目企画", title: "Poker Summitの注目企画をチェック",
+          description: "キャンペーンやサイトからのお知らせをご紹介。",
+          image: "/images/poker-news-banner.webp", href: "/news" },
+    { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
+      description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
+      image: "/images/summit-banner-light-v2.webp", href: "/board" },
+    { id: "jobs", category: "求人", title: "ポーカーが好き。その気持ちが、仕事のきっかけに。",
+      description: "ポーカー店舗の求人・スポット求人から、自分に合う働き方を探そう。",
+      image: "/images/jobs-banner-light-v6.webp", href: "/jobs" },
+    { id: "events", category: "トーナメント・イベント", title: "次に参加したいトーナメント・イベントを探そう",
+      description: "開催中・開催予定のトーナメントやイベントをチェック。",
+      image: "/images/tournament-banner-light-v4.webp", href: "/events" },
+    { id: "blog", category: "BLOG", title: "ポーカーの楽しみ方がもっと広がる。",
+      description: "Poker Summit BLOGで、ポーカーにまつわる記事を読もう。",
+      image: "/images/blog-promo-square.webp", href: "/blog" },
+  ];
+
   // --- Favorites (人によって変わるのでキャッシュしない) ---
   let favoriteStoreIds = new Set<string>();
   if (user) {
@@ -283,16 +313,7 @@ export default async function HomePage({
           </ExpandableSearchForm>
       </div>
 
-      <PokerRegionHero
-        stats={{
-          storeCount: totalStoreCount ?? 0,
-          prefCount: Object.values(prefCounts).filter((n) => n > 0).length,
-          majorTournamentCount: home.majorTournamentCount,
-          jobCount: openJobCount ?? 0,
-          memberCount: memberCountRaw ?? 0,
-          summitPostCount: threadCount ?? 0,
-        }}
-      />
+      <HomeFeaturePanel items={homeFeatureItems} />
 
       {/* Invisible: silently asks the browser for the visitor's location and
           upgrades currentPref from IP-guess to a real geo result. Skipped
@@ -300,6 +321,14 @@ export default async function HomePage({
       <PrefGeoDetector skipDetect={currentPrefSource === "manual" || currentPrefSource === "geo"} />
 
       <main className={`home-feed ${styles.readable}`}>
+        <PokerSummitStats className={styles.statsBar} stats={{
+          storeCount: totalStoreCount ?? 0,
+          prefCount: Object.values(prefCounts).filter(n => n > 0).length,
+          majorTournamentCount: home.majorTournamentCount,
+          jobCount: openJobCount ?? 0,
+          memberCount: memberCountRaw ?? 0,
+          summitPostCount: threadCount ?? 0,
+        }} />
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
@@ -311,7 +340,7 @@ export default async function HomePage({
             <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
           </div>
         )}
-        <section className="home-section">
+        <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
@@ -325,8 +354,8 @@ export default async function HomePage({
             </Link>;
           })}</div>
         </section>
-        {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
-        <section className="home-section">
+        {couponBanners.length > 0 && <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
+        <section className="home-section" data-tone="soft">
           <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
           {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
@@ -336,21 +365,21 @@ export default async function HomePage({
           </Link>)}</div>}
         </section>
 
-        <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
-        {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
-        <section className="home-section home-summit">
+        <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
+        {communityBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
+        <section className="home-section home-summit" data-tone="soft">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
-        {rankingBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
+        {rankingBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
-        <section className="home-section">
+        <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
           {/* 新着求人(職種画像と求人バナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
@@ -360,7 +389,7 @@ export default async function HomePage({
             {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
           </Link>)}</div>}
         </section>
-        <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
+        <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
         <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
           <div><span style={{ color: "#9b7129", fontSize: 11, letterSpacing: "0.13em", fontWeight: 800 }}>POKER SUMMIT ACADEMY</span><h2 style={{ fontSize: "clamp(17px,2.4vw,24px)", margin: "7px 0" }}>遊びながら、ポーカーを学ぼう。</h2><p style={{ margin: 0, fontSize: 12, color: "#765f42" }}>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
           <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ</Link>

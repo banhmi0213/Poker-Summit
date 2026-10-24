@@ -59,3 +59,65 @@
    Match the adjacent square cards using its inner artwork; keep the original asset intact. */
 .promoBanner{position:relative;aspect-ratio:1}
 .majorPromo img{position:absolute;max-width:none;width:107.639485%;height:107.639485%;left:-2.145923%;top:-2.145923%}
+
+/* Statistics moved from the map to immediately above PICK UP. */
+.statsBar.statsBar{position:static;left:auto;bottom:auto;transform:none;z-index:auto;width:100%;min-height:0;box-sizing:border-box;margin:0 0 28px;padding:12px 0;background:#fffdf8;border-top:1px solid #e8dcc5;border-bottom:1px solid #e8dcc5;grid-template-columns:repeat(var(--stat-cols,3),minmax(0,1fr))}
+.statsBar :global(.ps-region-stat){color:#392d1e;padding:8px}
+.statsBar :global(.ps-region-stat__label){font-size:12px;line-height:1.5}
+.statsBar :global(.ps-region-stat__icon svg){width:22px;height:22px}
+.statsBar :global(.ps-region-stat strong){font-size:28px;margin-top:5px}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#d7c398}
+@media(max-width:767px){
+ .statsBar.statsBar{grid-template-columns:repeat(2,minmax(0,1fr));margin:0 0 22px;padding:6px 0}
+ .statsBar :global(.ps-region-stat){padding:12px 6px}
+ .statsBar :global(.ps-region-stat__label){font-size:11px;white-space:normal}
+ .statsBar :global(.ps-region-stat strong){font-size:24px}
+}
+
+
+/* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
+/* Preview: light reading surfaces complement the navy header and feature panel. */
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#ffffff!important;color:#3b2028;border-color:#cdbcc2}
+.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#3b2028}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#6d535c}
+.readable.readable :global(.home-card-cta),.readable.readable :global(.home-section-head)>a{color:#806024}
+.readable.readable :global(.home-tag){background:#f2e7cd;color:#73561e}
+.readable.readable :global(.home-job-salary){color:#3b2028}
+.readable :global(.home-post){background:#ffffff;border-color:#eadfe3}
+.readable :global(.home-post:hover){background:#f3e5ea}
+.statsBar.statsBar{background:#603044;border-color:#d2ad60}
+.statsBar :global(.ps-region-stat){color:#ffffff}
+.statsBar :global(.ps-region-stat__icon){color:#d2ad60}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#9d7a88}
+.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#966878}
+
+
+/* Match the reference's deliberate alternation of light, tinted and dark editorial sections. */
+.readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-top:24px;padding-bottom:24px}
+.readable :global(.home-section[data-tone])::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;box-shadow:0 0 0 100vmax var(--section-tone);background:var(--section-tone);clip-path:inset(0 -100vmax)}
+.readable :global(.home-section[data-tone="soft"]){--section-tone:#f7eff1}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#512637;color:#ffffff}
+.readable.readable :global(.home-section-head) h2{color:#98712c}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#ffffff}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#e0c48c}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-card),
+.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#704052;border-color:#966878}
+.readable.readable :global([data-tone="navy"]) h3,
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,
+.readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
+.readable.readable :global([data-tone="navy"]) p,
+.readable.readable :global([data-tone="navy"]) small,
+.readable.readable :global([data-tone="navy"]) :global(.home-location),
+.readable.readable :global([data-tone="navy"]) :global(.muted),
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#e3cfd7}
+.readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#e0c48c}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#a47b8c}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#7c4a60;border:1px solid #9b7c71;color:#e4c993}
+.statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
+.statsBar :global(.ps-region-stat){color:#3b2028}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
+
+
+/* Keep each tinted section and its following banners within one continuous colour band. */
+.readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:24px}
+.readable :global(.home-section[data-tone-banner])::before{top:-26px}
