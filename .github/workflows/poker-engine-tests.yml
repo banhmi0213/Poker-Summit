@@ -178,6 +178,18 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-lobby-e2e
         run: node tests/poker-ring-browser-e2e.cjs
+      - name: Verify all-in board and winner before deferred lobby exit
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "lobby"
+          POKER_DEFERRED_ALLIN: "1"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-allin-e2e
+        run: node tests/poker-ring-browser-e2e.cjs
       - name: Verify six-browser tournament end to end
         timeout-minutes: 4
         env:

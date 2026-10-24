@@ -1,6 +1,7 @@
 'use client';
+import {runoutDuration} from '@/lib/poker/presentation-timing';
 import {BuyInSelector} from './buy-in-selector';
-import {useEffect,useMemo,useState,useSyncExternalStore,type KeyboardEvent} from 'react';
+import {useEffect,useMemo,useRef,useState,useSyncExternalStore,type KeyboardEvent} from 'react';
 import Link from 'next/link';
 import {createClient} from '@/lib/supabase/client';
 import {RingAdmissionClient} from '@/lib/poker/ring-admission-client';
@@ -14,8 +15,9 @@ const unavailableStorage={getItem(){throw Error();},setItem(){throw Error();},re
 export default function RingAdmissionPanel({enabled,tableId=null,layout='simple',productionFlow=false,initialBuyIn=''}:{productionFlow?:boolean;initialBuyIn?:string;enabled:boolean;tableId?:string|null;layout?:'simple'|'table'}){
  const auth=useMemo(()=>createClient(),[]),transport=useMemo(()=>new RingAdmissionClient({session:async()=>{const {data:{session}}=await auth.auth.getSession();return session?{memberId:session.user.id,token:session.access_token}:null;},storage:typeof window==='undefined'?unavailableStorage:{getItem:key=>window.sessionStorage.getItem(key),setItem:(key,value)=>window.sessionStorage.setItem(key,value),removeItem:key=>window.sessionStorage.removeItem(key)}}),[auth]);
  const view=useSyncExternalStore(transport.subscribe,transport.getSnapshot,transport.getSnapshot),[member,setMember]=useState<string|null>(null),[selected,setSelected]=useState<RingListing|null>(null),[amount,setAmount]=useState(initialBuyIn),[confirmExit,setConfirmExit]=useState(false),[exitIntent,setExitIntent]=useState<'watch'|'lobby'>('watch'),[lobbyPending,setLobbyPending]=useState(false),[selectSeat,setSelectSeat]=useState(initialBuyIn!=='');
+ const lobbyNavigation=useRef(false);
  useEffect(()=>{if(view.state?.membership)setSelectSeat(false);},[view.state?.membership]);
- useEffect(()=>{if(lobbyPending&&!view.pending&&!view.working&&!view.state?.membership)window.location.assign('/poker-lobby');},[lobbyPending,view.pending,view.working,view.state?.membership]);
+ useEffect(()=>{if(!lobbyPending||view.pending||view.working||view.state?.membership)return;const play=view.state?.play,runout=play?.runout;if(runout?.startedAt!==undefined&&play!.serverNow<runout.startedAt+runoutDuration(runout.from)+6000)return;if(lobbyNavigation.current)return;lobbyNavigation.current=true;window.location.assign('/poker-lobby');},[lobbyPending,view.pending,view.working,view.state?.membership,view.state?.play]);
  useEffect(()=>{if(!enabled)return;let live=true,events=0,lastMember:string|null|undefined;const apply=(id:string|null)=>{if(!live)return;transport.setMember(id);setMember(id);if(id!==lastMember){setSelectSeat(initialBuyIn!=='');setSelected(null);setConfirmExit(false);lastMember=id;}if(id)queueMicrotask(()=>void transport.refresh(tableId));};const sub=auth.auth.onAuthStateChange((_event,session)=>{events++;apply(session?.user.id??null);});const initialEvents=events;void auth.auth.getSession().then(({data:{session}})=>{if(events===initialEvents)apply(session?.user.id??null);});const timer=setInterval(()=>void transport.refresh(tableId),tableId?1000:5000),focus=()=>void transport.refresh(tableId);window.addEventListener('focus',focus);return()=>{live=false;clearInterval(timer);window.removeEventListener('focus',focus);sub.data.subscription.unsubscribe();transport.close();};},[auth,enabled,tableId,transport,initialBuyIn]);
  if(!enabled)return <p>リング卓の接続は準備中です。</p>;
  if(!member)return <p>着席と残高の確認には<Link href="/login?next=%2Fpoker-lobby">ログイン</Link>してください。</p>;
