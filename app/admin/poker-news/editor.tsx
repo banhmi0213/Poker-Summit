@@ -1,5 +1,5 @@
 "use client";
-import { useRef,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 import { useFormState,useFormStatus } from "react-dom";
 import { savePokerNews,importPokerNews,previewPokerNewsImage } from "./actions";
 import styles from "./editor.module.css";
@@ -13,6 +13,7 @@ export function NewsEditor({entry,blogs,today}:{entry?:Record<string,any>;blogs:
  const [imageSource,setImageSource]=useState(entry?.thumbnail_source_url||"");
  const [message,setMessage]=useState(entry?.thumbnail_error||"");
  const [loading,setLoading]=useState(false);const [refresh,setRefresh]=useState(false);const requestToken=useRef(0);
+ useEffect(()=>{if(state.imageUrl!==undefined)setImage(state.imageUrl);if(state.imageSourceUrl!==undefined)setImageSource(state.imageSourceUrl);},[state.imageUrl,state.imageSourceUrl]);
  async function preview(){if(mode!=="auto"||!source)return;const token=++requestToken.current;setLoading(true);setMessage("紹介画像を取得しています…");try{const result=await previewPokerNewsImage(source);if(requestToken.current!==token)return;setImage(result.imageUrl);setImageSource(result.sourceUrl);setRefresh(true);setMessage(result.error||"紹介画像を取得しました。保存するとニュースに反映されます。");}catch{if(requestToken.current===token)setMessage("画像を取得できませんでした。保存後の再取得や手動登録も可能です。");}finally{if(requestToken.current===token)setLoading(false);}}
  return <form action={action} className={styles.form}>
   <h2>{entry?"ニュースを編集":"ニュースを新規登録"}</h2>

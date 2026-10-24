@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "@/lib/revalidate";
 import { logAdminAction } from "@/lib/audit";
 import { parseNewsInput,parseNewsBatch,type NewsInput } from "@/lib/poker-news-input";
-export type NewsState={error?:string;success?:string};
+export type NewsState={error?:string;success?:string;imageUrl?:string;imageSourceUrl?:string};
 async function adminClient(){const client=await createClient();const {data:{user}}=await client.auth.getUser();if(!user)throw Error("運営ログインが必要です。");const {data,error}=await client.rpc("is_admin");if(error||data!==true)throw Error("運営権限がありません。");return client;}
 function refresh(){revalidatePath("/");revalidatePath("/poker-news");revalidatePath("/admin/poker-news");}
 async function checkBlogs(client:Awaited<ReturnType<typeof adminClient>>,rows:NewsInput[]){const ids=[...new Set(rows.map(x=>x.related_blog_id).filter(Boolean))] as string[];if(!ids.length)return;const {data,error}=await client.from("blog_entries").select("id").in("id",ids);if(error||data?.length!==ids.length)throw Error("関連記事が見つかりません。選択を確認してください。");}
@@ -44,7 +44,7 @@ export async function savePokerNews(_state:NewsState,form:FormData):Promise<News
   const row={...input,...thumbnail,updated_at:new Date().toISOString()};const query=id?client.from("poker_news").update(row).eq("id",id):client.from("poker_news").insert(row);const {data,error}=await query.select("id").single();if(error||!data)throw Error(error?.code==="23505"?"同じニュースが登録されています。一覧から編集してください。":"保存できませんでした。");
   committed=true;await logAdminAction(client,"poker_news_save","poker_news",data.id);refresh();
   if(previous?.thumbnail_path?.startsWith("news/")&&previous.thumbnail_path!==thumbnail.thumbnail_path)await client.storage.from("blog-images").remove([previous.thumbnail_path]);
-  return {success:(input.active?"公開して保存しました。":"下書きを保存しました。")+(thumbnail.thumbnail_error?" 紹介画像は取得できませんでした。ニュースは画像なしで表示します。":"")};
+  return {imageUrl:thumbnail.thumbnail_url,imageSourceUrl:thumbnail.thumbnail_source_url,success:(input.active?"公開して保存しました。":"下書きを保存しました。")+(thumbnail.thumbnail_error?" 紹介画像は取得できませんでした。ニュースは画像なしで表示します。":"")};
  }catch(e){if(client&&uploadedPath&&!committed)await client.storage.from("blog-images").remove([uploadedPath]).catch(()=>{});return {error:e instanceof Error?e.message:"保存できませんでした。"};}
 }
 export async function importPokerNews(_state:NewsState,form:FormData):Promise<NewsState>{try{
