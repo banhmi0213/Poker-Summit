@@ -34,3 +34,5 @@
 .archiveHero{margin-top:24px}.archiveHero :global(.compact-portal-banner__photo){position:relative;align-self:stretch;min-height:160px;height:100%}.archiveHero :global(.compact-portal-banner__photo)>picture{position:absolute;inset:0;height:100%;width:100%}.archiveHero :global(.compact-portal-banner__photo) img{width:100%;height:100%;object-fit:cover;object-position:right center;aspect-ratio:auto}
 
 .rowMain{display:flex;align-items:flex-start;gap:15px;flex:1;min-width:0}.newsThumbnail{display:block;flex:0 0 128px;width:128px;aspect-ratio:16/10;overflow:hidden;border-radius:7px;background:#f4eddf}.newsThumbnail img{display:block;width:100%;height:100%;object-fit:cover}@media(max-width:700px){.rowMain{width:100%;gap:11px}.newsThumbnail{width:84px;flex-basis:84px}}
+
+.newsThumbnailEmpty{display:grid;place-items:center;color:#8b7d65;font-size:10px;letter-spacing:.08em;background:#f4f0e8}
