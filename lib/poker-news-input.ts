@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 export const NEWS_CATEGORIES=["国内大会","海外大会","大会結果","業界情報","配信・アプリ","未確認・参考"] as const;
-export type NewsInput={import_key:string;title:string;summary:string;category:string;source_url:string;source_label:string;related_blog_id:string|null;news_date:string;active:boolean};
+export type NewsInput={import_key:string;title:string;summary:string;category:string;source_url:string;source_label:string;related_blog_id:string|null;news_date:string;active:boolean;thumbnail_mode?:"auto"|"manual"|"none";thumbnail_url?:string;thumbnail_alt?:string;thumbnail_rights?:string;thumbnail_source_url?:string};
 export function validNewsDate(value:string){return /^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;}
 export function parseNewsInput(value:unknown):NewsInput {
  if(!value||typeof value!=="object"||Array.isArray(value))throw Error("ニュースの形式を確認してください。");
@@ -15,7 +15,10 @@ export function parseNewsInput(value:unknown):NewsInput {
  if(v.active!==undefined&&typeof v.active!=="boolean")throw Error("公開状態を確認してください。");
  const key=text("import_key",160,false)||createHash("sha256").update(url.href+"\n"+title).digest("hex");
  if(!/^[a-zA-Z0-9_-]+$/.test(key))throw Error("取込キーには半角英数字・ハイフン・アンダースコアを使用してください。");
- return {import_key:key,title,summary,category,source_url:url.href,source_label:text("source_label",60,false)||"情報元を見る",related_blog_id:related,news_date:date,active:v.active===true};
+ const thumbnail:Partial<NewsInput>={};
+ if(v.thumbnail_mode!==undefined){if(!["auto","manual","none"].includes(String(v.thumbnail_mode)))throw Error("画像の表示方法を選択してください。");thumbnail.thumbnail_mode=v.thumbnail_mode as "auto"|"manual"|"none";}
+ for(const field of ["thumbnail_alt","thumbnail_rights","thumbnail_url","thumbnail_source_url"] as const){if(v[field]!==undefined){const value=text(field,field==="thumbnail_rights"?1000:field==="thumbnail_alt"?300:2048,false);if(value&&(field==="thumbnail_url"||field==="thumbnail_source_url")){try{const u=new URL(value);if(u.protocol!=="https:"||u.username||u.password)throw Error();thumbnail[field]=u.href;}catch{throw Error("画像・出典URLは公開HTTPSのURLを指定してください。");}}else thumbnail[field]=value;}}
+ return {...thumbnail,import_key:key,title,summary,category,source_url:url.href,source_label:text("source_label",60,false)||"情報元を見る",related_blog_id:related,news_date:date,active:v.active===true};
 }
 export function parseNewsBatch(raw:string){if(raw.length>500000)throw Error("取込データが大きすぎます。");const data=JSON.parse(raw);if(!Array.isArray(data)||!data.length||data.length>100)throw Error("1〜100件の配列で入力してください。");const rows=data.map(parseNewsInput);if(new Set(rows.map(x=>x.import_key)).size!==rows.length)throw Error("同じ取込キーが重複しています。");return rows;}
 export function newsSearchText(q:string){return q.replace(/[^\p{L}\p{N}\s-]/gu," ").trim().slice(0,100);}

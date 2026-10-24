@@ -2,10 +2,10 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { createAnonClient } from "./supabase/anon";
 import { NEWS_CATEGORIES,newsSearchText,validNewsDate } from "./poker-news-input";
-export type PokerNews={id:string;title:string;summary:string;category:string;source_url:string;source_label:string;news_date:string;related_blog_id:string|null;relatedHref?:string};
+export type PokerNews={id:string;title:string;summary:string;category:string;source_url:string;source_label:string;news_date:string;related_blog_id:string|null;relatedHref?:string;thumbnail_url?:string;thumbnail_mode?:string;thumbnail_alt?:string;thumbnail_checked_at?:string|null};
 export async function getPokerNews(options:{page?:number;category?:string;date?:string;q?:string}={}){
  const supabase=createAnonClient();const page=Math.max(1,Math.min(10000,Math.floor(options.page||1)));
- let query=supabase.from("poker_news").select("id,title,summary,category,source_url,source_label,news_date,related_blog_id",{count:"exact"}).eq("active",true);
+ let query=supabase.from("poker_news").select("id,title,summary,category,source_url,source_label,news_date,related_blog_id,thumbnail_url,thumbnail_mode,thumbnail_alt,thumbnail_checked_at",{count:"exact"}).eq("active",true);
  if(options.category&&NEWS_CATEGORIES.some(x=>x===options.category))query=query.eq("category",options.category);
  if(options.date&&validNewsDate(options.date))query=query.eq("news_date",options.date);
  const q=newsSearchText(options.q||"");if(q)query=query.or(`title.ilike.%${q}%,summary.ilike.%${q}%`);
@@ -15,4 +15,4 @@ export async function getPokerNews(options:{page?:number;category?:string;date?:
  if(ids.length){const {data:blogs,error:blogError}=await supabase.from("blog_entries").select("id,slug").in("id",ids).eq("active",true);if(blogError)throw blogError;const links=new Map((blogs||[]).map(x=>[x.id,`/blog/${x.slug||x.id}`]));for(const entry of entries)entry.relatedHref=links.get(entry.related_blog_id||"");}
  return {entries,count:count||0,page};
 }
-export const getHomePokerNews=unstable_cache(()=>getPokerNews(),["home-poker-news-v1"],{revalidate:60,tags:["public-stores"]});
+export const getHomePokerNews=unstable_cache(()=>getPokerNews(),["home-poker-news-v2"],{revalidate:60,tags:["public-stores"]});

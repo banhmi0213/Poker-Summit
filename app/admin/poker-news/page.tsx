@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DeleteNewsButton } from "./delete-button";
 import { NewsEditor,NewsImporter } from "./editor";
 export const dynamic="force-dynamic";
+export const maxDuration=300;
 export default async function AdminPokerNews({searchParams}:{searchParams:{edit?:string;page?:string}}){
  const client=await createClient();const {data:{user}}=await client.auth.getUser();if(!user)redirect("/admin-login?next=/admin/poker-news");const {data:admin}=await client.rpc("is_admin");if(admin!==true)return <p>運営権限が必要です。</p>;
  const page=Math.max(1,Number.parseInt(searchParams.page||"1",10)||1);
