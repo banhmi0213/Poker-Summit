@@ -1,4 +1,5 @@
 "use server";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "@/lib/revalidate";
 import { logAdminAction } from "@/lib/audit";
@@ -19,6 +20,7 @@ export async function deletePokerNews(_state:NewsState,form:FormData):Promise<Ne
   if(error)throw Error("削除できませんでした。もう一度お試しください。");
   if(!data)throw Error("ニュースが見つかりません。再読み込みしてください。");
   await logAdminAction(client,"poker_news_delete","poker_news",id);
-  refresh();return {success:"ニュースを削除しました。"};
+  refresh();
  } catch(e){return {error:e instanceof Error?e.message:"削除できませんでした。"};}
+ redirect("/admin/poker-news");
 }
