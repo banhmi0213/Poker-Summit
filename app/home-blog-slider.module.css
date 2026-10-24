@@ -1,6 +1,6 @@
 .section{margin:28px 0;color:#382719;min-width:0}
 .heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
-.heading span{font-size:10px;letter-spacing:.13em;color:#9b7129;font-weight:700}
+.heading>div>span{font-size:10px;letter-spacing:.13em;color:#9b7129;font-weight:700}
 .heading h2{font-size:23px;margin:5px 0 0}
 .heading>a{font-size:13px;font-weight:700;color:#795519;text-decoration:underline;text-underline-offset:4px;white-space:nowrap}
 .controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}

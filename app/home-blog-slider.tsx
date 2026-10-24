@@ -22,7 +22,7 @@ export function HomeBlogSlider({entries}:{entries:HomeBlogEntry[]}) {
  function finish(){drag.current.active=false;setDragging(false);setTimeout(()=>{drag.current.moved=false;},0);}
  if(!entries.length)return null;
  return <section className={styles.section} aria-labelledby="home-blog-heading">
-  <div className={styles.heading}><div><span>POKER SUMMIT BLOG</span><h2 id="home-blog-heading">新着ブログ</h2></div><Link href="/blog?sort=newest">ブログ一覧を見る</Link></div>
+  <div className={styles.heading}><div><span>POKER SUMMIT BLOG</span><h2 id="home-blog-heading"><span aria-hidden="true">📝</span> 新着ブログ</h2></div><Link href="/blog?sort=newest">ブログ一覧を見る</Link></div>
   <div className={styles.controls}><p id="home-blog-help">横にドラッグ・スワイプして過去の記事もチェック</p><div><button type="button" aria-label="新しい記事の方向へ" aria-controls="home-blog-rail" disabled={edges.start} onClick={()=>scroll(-1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><button type="button" aria-label="過去の記事の方向へ" aria-controls="home-blog-rail" disabled={edges.end} onClick={()=>scroll(1)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button></div></div>
   <ul id="home-blog-rail" ref={rail} tabIndex={0} aria-label="ブログ記事、新着順" aria-describedby="home-blog-help" className={`${styles.rail} ${dragging?styles.dragging:""}`} onScroll={updateEdges}
    onDragStart={e=>e.preventDefault()}
