@@ -1,5 +1,6 @@
 "use client";
 
+import { AcademyHero } from "@/app/academy-hero";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PositionTrainer } from "@/app/blog/position-trainer";
@@ -46,12 +47,7 @@ export function Academy() {
  const index = lessons.findIndex(l => l.id === selected);
  const percent = Math.round(completed.length / courseLessons.length * 100);
  return <div className={styles.academy}>
-  <section className={styles.hero}>
-   <span className={styles.eyebrow}>POKER SUMMIT ACADEMY</span>
-   <h1>遊びながら、ポーカーが上達する。</h1>
-   <p>カードを選び、考えて、クイズに挑戦。はじめての方も自分のペースで学べる、無料の体験型コースです。</p>
-   <div className={styles.heroPills}><span>♠ 登録不要</span><span>✦ 5レッスン＋卒業テスト</span><span>♥ スマホ対応</span></div>
-  </section>
+  <AcademyHero variant="course" />
   <section className={styles.progressPanel} aria-label="学習進捗">
    <div><span className={styles.eyebrow}>YOUR LEARNING JOURNEY</span><h2>初心者コース</h2><p>{loaded ? `${completed.length} / 5 レッスンを学習済みに設定` : "学習状況を読み込み中"}</p></div>
    <div className={styles.progressRight}><strong>{loaded ? percent : 0}<small>%</small></strong><div className={styles.track}><span style={{width: (loaded ? percent : 0) + "%"}}/></div></div>
@@ -95,7 +91,7 @@ export function Academy() {
     <p className={styles.achievementNote}>※Lv.3以降の名称・条件・提供時期は未確定です。修了証、会員別学習履歴、ランキングも今後の開発予定です。</p>
    </div>
   </section>
-  <div className={styles.layout}>
+  <div id="academy-lessons" className={styles.layout}>
    <nav className={styles.lessonNav} aria-label="レッスンを選ぶ">
     <h2>LEARNING PATH <small>レッスン一覧</small></h2>
     {lessons.map(l => <button key={l.id} type="button" className={selected === l.id ? styles.lessonActive : styles.lesson} aria-current={selected === l.id ? "step" : undefined} onClick={() => setSelected(l.id)}>
