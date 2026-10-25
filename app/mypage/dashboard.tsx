@@ -153,7 +153,7 @@ export async function MyPageContent({
   const {data:alertPrefs}=await supabase.from("job_alert_preferences").select("enabled,pref,experience_level,subscribed_at").eq("user_id",user.id).maybeSingle();
   let matchingJobs: any[]=[];
   if(alertPrefs?.enabled) {
-    let alertQuery=supabase.from("jobs").select("id,title,experience_level,posted_at,application_deadline,stores!inner(name,pref,status)").eq("status","open").gte("posted_at",alertPrefs.subscribed_at).order("posted_at",{ascending:false}).limit(30);
+    let alertQuery=supabase.from("jobs").select("id,title,experience_level,posted_at,application_deadline,stores!inner(name,pref,status)").eq("status","open").gte("posted_at",alertPrefs.subscribed_at).or(`application_deadline.is.null,application_deadline.gte.${new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})}`).order("posted_at",{ascending:false}).limit(100);
     if(alertPrefs.pref) alertQuery=alertQuery.eq("stores.pref",alertPrefs.pref);
     const {data:alertRows}=await alertQuery;
     matchingJobs=(alertRows||[]).filter((j:any)=>["approved","listed"].includes(j.stores?.status)
@@ -363,7 +363,7 @@ export async function MyPageContent({
 
           {tab === "jobAlerts" && <div className="card" style={{padding:16}}>
             <h2 style={{fontSize:18,marginBottom:12}}>新着求人通知</h2>
-            <p className="muted small">希望条件に合う新着求人をマイページに表示します。メール・外部通知は送信しません。通知をONにした後に公開された求人が対象です。</p>
+            <p className="muted small">希望条件に合う新着求人をマイページに表示します。メール・外部通知は送信しません。通知をONにした後に公開された求人が対象です。募集終了・掲載期限切れ・削除された求人は通知一覧から自動的に消えます。</p>
             <form action={saveJobAlertPreferences}>
               <label style={{display:"flex",alignItems:"center",gap:8,margin:"12px 0"}}>
                 <input type="checkbox" name="enabled" defaultChecked={alertPrefs?.enabled===true}/> 新着求人通知をONにする
