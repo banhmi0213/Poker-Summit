@@ -275,7 +275,7 @@ export default async function StoreDetailPage({
       .order("start_at", { ascending: true }),
     supabase
       .from("jobs")
-      .select("id, title, job_type, salary, description, posted_at")
+      .select("id, title, job_type, experience_level, application_deadline, salary, description, posted_at")
       .eq("store_id", params.id)
       .eq("status", "open")
       .order("posted_at", { ascending: false }),
@@ -661,12 +661,14 @@ export default async function StoreDetailPage({
         {(!jobs || jobs.length === 0) && (
           <p className="muted">現在募集中の求人はありません。</p>
         )}
-        {jobs?.map((j) => (
+        {jobs?.filter((j: any) => !j.application_deadline || j.application_deadline >= new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})).map((j) => (
           <div className="card sd-job-card" key={j.id}>
             <Link href={`/jobs/${j.id}`}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                 <h3 style={{ flex: 1, minWidth: 0 }}><ReadableName name={j.title} /></h3>
                 {j.job_type && <span className="badge">{j.job_type}</span>}
+                {j.experience_level === "beginner" && <span className="badge">未経験歓迎</span>}
+                {j.experience_level === "experienced" && <span className="badge">経験者募集</span>}
               </div>
               {j.salary && <p className="muted">{j.salary}</p>}
             </Link>
