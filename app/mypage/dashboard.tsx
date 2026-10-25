@@ -23,6 +23,8 @@ import { ProfileEditor } from "./profile-editor";
 import styles from "./profile-layout.module.css";
 import { Avatar } from "@/app/avatar";
 import { AcademyBadge } from "@/app/learn/academy-badge";
+import { PREF_OPTIONS } from "@/lib/constants";
+import { saveJobAlertPreferences } from "./job-alert-actions";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -148,6 +150,16 @@ export async function MyPageContent({
   const isOfficial = ((officialRows ?? []) as unknown[]).length > 0;
 
   const tab = searchParams.tab || "favorites";
+  const {data:alertPrefs}=await supabase.from("job_alert_preferences").select("enabled,pref,experience_level,subscribed_at").eq("user_id",user.id).maybeSingle();
+  let matchingJobs: any[]=[];
+  if(alertPrefs?.enabled) {
+    let alertQuery=supabase.from("jobs").select("id,title,experience_level,posted_at,application_deadline,stores!inner(name,pref,status)").eq("status","open").gte("posted_at",alertPrefs.subscribed_at).or(`application_deadline.is.null,application_deadline.gte.${new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})}`).order("posted_at",{ascending:false}).limit(100);
+    if(alertPrefs.pref) alertQuery=alertQuery.eq("stores.pref",alertPrefs.pref);
+    const {data:alertRows}=await alertQuery;
+    matchingJobs=(alertRows||[]).filter((j:any)=>["approved","listed"].includes(j.stores?.status)
+      && (!j.application_deadline || j.application_deadline>=new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"}))
+      && (alertPrefs.experience_level==="any" || !j.experience_level || j.experience_level==="any" || j.experience_level===alertPrefs.experience_level));
+  }
   const name = (user.user_metadata as any)?.display_name || "会員";
   const pref = (user.user_metadata as any)?.pref || "";
   // 表示用の登録日を運営が指定している場合はそちら(member_joined_overrides、2026/10/20)
@@ -166,6 +178,7 @@ export async function MyPageContent({
   const {count:ownPostUnread}=myPosts?.length ? await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null).in("post_id",myPosts.map(p=>p.id)) : {count:0};
   const tabs = [
     { key:"favorites",label:"お気に入り店舗",icon:"♥",detail:`${favStores.length} 件`,unread:0 },
+    { key:"jobAlerts",label:"新着求人通知",icon:"🔔",detail:`${matchingJobs.length} 件`,unread:0 },
     { key:"favJobs",label:"お気に入り求人",icon:"★",detail:`${favJobs.length} 件`,unread:0 },
     { key:"coupons",label:"クーポン",icon:"▤",detail:`${favCoupons.length} 件`,unread:0 },
     { key:"events",label:"参加予定イベント",icon:"♛",detail:`${rsvpEvents.length} 件`,unread:0 },
@@ -348,6 +361,34 @@ export async function MyPageContent({
               ))
             ))}
 
+          {tab === "jobAlerts" && <div className="card" style={{padding:16}}>
+            <h2 style={{fontSize:18,marginBottom:12}}>新着求人通知</h2>
+            <p className="muted small">希望条件に合う新着求人をマイページに表示します。メール・外部通知は送信しません。通知をONにした後に公開された求人が対象です。募集終了・掲載期限切れ・削除された求人は通知一覧から自動的に消えます。</p>
+            <form action={saveJobAlertPreferences}>
+              <label style={{display:"flex",alignItems:"center",gap:8,margin:"12px 0"}}>
+                <input type="checkbox" name="enabled" defaultChecked={alertPrefs?.enabled===true}/> 新着求人通知をONにする
+              </label>
+              <div className="field"><span>希望勤務地</span>
+                <select name="pref" defaultValue={alertPrefs?.pref||""}>
+                  <option value="">全国</option>
+                  {PREF_OPTIONS.map(p=><option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="field"><span>経験条件</span>
+                <select name="experience" defaultValue={alertPrefs?.experience_level||"any"}>
+                  <option value="any">すべて</option>
+                  <option value="beginner">未経験歓迎</option>
+                  <option value="experienced">経験者募集</option>
+                </select>
+              </div>
+              <button type="submit" className="btn primary">通知設定を保存する</button>
+            </form>
+            <h3 style={{fontSize:16,margin:"22px 0 10px"}}>条件に合う新着求人（{matchingJobs.length}件）</h3>
+            {matchingJobs.length===0 && <p className="muted small">現在、条件に合う新着求人はありません。</p>}
+            {matchingJobs.map((j:any)=><p key={j.id} style={{margin:"10px 0"}}>
+              <Link href={`/jobs/${j.id}`}>{j.title}</Link> <span className="muted small">・{j.stores?.name}（{j.stores?.pref}）</span>
+            </p>)}
+          </div>}
           {tab === "favJobs" &&
             (favJobs.length === 0 ? (
               <p className="muted small">

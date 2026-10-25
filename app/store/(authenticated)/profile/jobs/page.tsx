@@ -166,6 +166,26 @@ export default async function StoreJobsPage() {
         <input type="text" name="salary" defaultValue={j?.salary ?? ""} placeholder="例: 時給1300円〜" />
       </div>
       <div className="field">
+        <span>応募対象・経験</span>
+        <select name="experienceLevel" defaultValue={j?.experience_level ?? "any"}>
+          <option value="any">経験不問</option>
+          <option value="beginner">未経験歓迎</option>
+          <option value="experienced">経験者募集</option>
+        </select>
+      </div>
+      <div className="field">
+        <span>研修制度・研修中の条件</span>
+        <textarea name="trainingDetails" rows={2} defaultValue={j?.training_details ?? ""} placeholder="例：未経験者向け研修あり（研修中の時給・期間も記載）" />
+      </div>
+      <div className="field">
+        <span>交通費・支給条件</span>
+        <input name="transportationDetails" defaultValue={j?.transportation_details ?? ""} placeholder="例：交通費支給（1日上限1,000円）" />
+      </div>
+      <div className="field">
+        <span>募集期限（任意）</span>
+        <input type="date" name="applicationDeadline" defaultValue={j?.application_deadline ?? ""} />
+      </div>
+      <div className="field">
         <span>仕事内容</span>
         <textarea name="description" rows={4} defaultValue={j?.description ?? ""} />
       </div>

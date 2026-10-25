@@ -21,10 +21,11 @@ export const metadata = staticPageMetadata({ title: "ポーカー店の求人情
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; pref?: string; jobType?: string; role?: string; category?: string | string[] };
+  searchParams: { q?: string; pref?: string; jobType?: string; role?: string; experience?: string; category?: string | string[] };
 }) {
   const q = searchParams.q?.trim() ?? "";
   const pref = searchParams.pref ?? "";
+  const experience = ["beginner","experienced"].includes(searchParams.experience ?? "") ? searchParams.experience : "";
   const { role, jobType: requestedJobType } = readJobSearch(searchParams);
   const jobType = JOB_TYPE_OPTIONS.includes(requestedJobType) ? requestedJobType : "";
 
@@ -36,7 +37,7 @@ export default async function JobsPage({
   let query = supabase
     .from("jobs")
     .select(
-      "id, title, job_type, job_role, salary, description, posted_at, banner_image_url, store_id, stores(name, category, pref, status)"
+      "id, title, job_type, job_role, experience_level, application_deadline, salary, description, posted_at, banner_image_url, store_id, stores(name, category, pref, status)"
     )
     .eq("status", "open")
     .order("posted_at", { ascending: false });
@@ -46,6 +47,8 @@ export default async function JobsPage({
 
   const { data: rawJobs } = await query;
   let jobs = (rawJobs ?? []).filter((j: any) => j.stores?.status === "approved" || j.stores?.status === "listed");
+  jobs = jobs.filter((j: any) => !j.application_deadline || j.application_deadline >= new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"}));
+  if (experience) jobs = jobs.filter((j: any) => j.experience_level === experience || j.experience_level === "any" || !j.experience_level);
   if (pref) jobs = jobs.filter((j: any) => j.stores?.pref === pref);
 
   jobs = jobs.filter((j: any) => matchesJobSearch(j, role, jobType));
@@ -88,6 +91,11 @@ export default async function JobsPage({
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
           <JobCategoryFilter selected={role} />
+          <select name="experience" defaultValue={experience} aria-label="ディーラー経験">
+            <option value="">経験条件：すべて</option>
+            <option value="beginner">未経験歓迎</option>
+            <option value="experienced">経験者募集</option>
+          </select>
           <input
             type="text"
             name="q"
@@ -192,6 +200,8 @@ export default async function JobsPage({
                       <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
                     )}
                     {j.job_type && <span className="badge outline">{j.job_type}</span>}
+                    {j.experience_level === "beginner" && <span className="badge outline">未経験歓迎</span>}
+                    {j.experience_level === "experienced" && <span className="badge outline">経験者募集</span>}
                   </div>
                   <h3><ReadableName name={j.title} /></h3>
                   <div className="muted">
