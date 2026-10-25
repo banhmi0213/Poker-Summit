@@ -19,3 +19,5 @@ drop policy if exists job_alert_own_insert on public.job_alert_preferences;
 create policy job_alert_own_insert on public.job_alert_preferences for insert to authenticated with check (user_id=(select auth.uid()));
 drop policy if exists job_alert_own_update on public.job_alert_preferences;
 create policy job_alert_own_update on public.job_alert_preferences for update to authenticated using (user_id=(select auth.uid())) with check (user_id=(select auth.uid()));
+
+grant select,insert,update on public.job_alert_preferences to authenticated;
