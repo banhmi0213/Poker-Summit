@@ -19,10 +19,11 @@ export default function JobFeaturesPreview(){
  const [alertLevel,setAlertLevel]=useState<Level>("any");
  const [saved,setSaved]=useState(false);
  const [demoNew,setDemoNew]=useState(false);
+ const [closedIds,setClosedIds]=useState<string[]>([]);
  const selected=demo.find(j=>j.id===jobId)||demo[0];
  const matches=(l:Level,filter:Level|"")=>!filter||filter==="any"||l==="any"||l===filter;
  const filtered=demo.filter(j=>(!pref||j.pref===pref)&&matches(j.level,experience));
- const alerts=demoNew&&enabled?demo.filter(j=>(!alertPref||j.pref===alertPref)&&matches(j.level,alertLevel)):[];
+ const alerts=demoNew&&enabled?demo.filter(j=>!closedIds.includes(j.id)&&(!alertPref||j.pref===alertPref)&&matches(j.level,alertLevel)):[];
  return <main className="container" style={{maxWidth:900,padding:"24px 12px 64px"}}>
   <span className="badge outline">開発プレビュー・サンプルデータのみ</span>
   <h1 style={{fontSize:23,margin:"12px 0"}}>求人機能の確認ページ</h1>
@@ -85,10 +86,10 @@ export default function JobFeaturesPreview(){
    </div>
    <div className="card" style={{padding:18}}>
     <h3 style={{fontSize:17}}>条件に合う新着求人（{alerts.length}件）</h3>
-    <p className="muted small">テスト通知を発生させると、デモ求人を「新着」として表示します。</p>
-    <button className="btn" type="button" onClick={()=>setDemoNew(v=>!v)}>{demoNew?"テスト通知を解除":"テスト新着求人を発生させる"}</button>
+    <p className="muted small">テスト通知を発生させるとデモ求人を「新着」として表示します。募集終了にした求人は通知一覧から自動的に消えます。</p>
+    <button className="btn" type="button" onClick={()=>{setDemoNew(v=>!v);setClosedIds([])}}>{demoNew?"テスト通知を解除":"テスト新着求人を発生させる"}</button>
     {alerts.length===0&&<p className="muted small" style={{marginTop:12}}>条件に合う新着求人はありません。</p>}
-    {alerts.map(j=><p key={j.id} style={{margin:"12px 0"}}><button type="button" className="btn" onClick={()=>{setJobId(j.id);setView("detail")}}>{j.title} ›</button> <span className="muted small">{j.pref}</span></p>)}
+    {alerts.map(j=><p key={j.id} style={{margin:"12px 0",display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}><button type="button" className="btn" onClick={()=>{setJobId(j.id);setView("detail")}}>{j.title} ›</button> <span className="muted small">{j.pref}</span><button type="button" className="btn" onClick={()=>setClosedIds(ids=>[...ids,j.id])}>募集終了を試す</button></p>)}
    </div>
   </section>}
   <p className="muted small" style={{marginTop:24}}>※ このページはデザイン・画面遷移・絞り込みの動作確認用です。本番機能の実データ連携テストを代替するものではありません。</p>
