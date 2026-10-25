@@ -178,7 +178,7 @@ export async function MyPageContent({
   const {count:ownPostUnread}=myPosts?.length ? await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null).in("post_id",myPosts.map(p=>p.id)) : {count:0};
   const tabs = [
     { key:"favorites",label:"お気に入り店舗",icon:"♥",detail:`${favStores.length} 件`,unread:0 },
-    { key:"jobAlerts",label:"新着求人通知",icon:"🔔",detail:`${matchingJobs.length} 件`,unread:matchingJobs.length },
+    { key:"jobAlerts",label:"新着求人通知",icon:"🔔",detail:`${matchingJobs.length} 件`,unread:0 },
     { key:"favJobs",label:"お気に入り求人",icon:"★",detail:`${favJobs.length} 件`,unread:0 },
     { key:"coupons",label:"クーポン",icon:"▤",detail:`${favCoupons.length} 件`,unread:0 },
     { key:"events",label:"参加予定イベント",icon:"♛",detail:`${rsvpEvents.length} 件`,unread:0 },
