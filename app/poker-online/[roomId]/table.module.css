@@ -42,3 +42,6 @@
 @media(max-width:899px){.viewport>button[aria-controls="game-site-footer"]{position:absolute;top:6px;bottom:auto;right:126px;font-size:10px;padding:7px 8px}.viewport main{padding-bottom:max(6px,env(safe-area-inset-bottom))}}
 
 @media(max-width:899px){.compactShell .onlineHeading button,.compactShell .onlineHeading a{height:28px;min-height:28px!important;padding:0;line-height:1;box-sizing:border-box;display:grid;place-items:center}.compactShell:has([class*="inlineAlert"]) .onlineHeading>span{visibility:hidden}}
+
+/* 未接続時の参加ボタン・結果確認ボタン。卓の表示が下段にはみ出しても押せるよう卓より前面に出す(2026/10/26) */
+.joinBar{position:relative;z-index:9;flex-shrink:0}
