@@ -70,7 +70,7 @@ export async function createJob(formData: FormData) {
   const trainingDetails = String(formData.get("trainingDetails") ?? "").trim();
   const transportationDetails = String(formData.get("transportationDetails") ?? "").trim();
   const applicationDeadline = String(formData.get("applicationDeadline") ?? "").trim();
-  if (applicationDeadline && !/^\\d{4}-\\d{2}-\\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
+  if (applicationDeadline && !/^\d{4}-\d{2}-\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
   assertAllowedStoreText(title, salary, description, trainingDetails, transportationDetails);
   const bannerFile = formData.get("bannerImage");
 
@@ -150,7 +150,7 @@ export async function updateJob(formData: FormData) {
   const trainingDetails = String(formData.get("trainingDetails") ?? "").trim();
   const transportationDetails = String(formData.get("transportationDetails") ?? "").trim();
   const applicationDeadline = String(formData.get("applicationDeadline") ?? "").trim();
-  if (applicationDeadline && !/^\\d{4}-\\d{2}-\\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
+  if (applicationDeadline && !/^\d{4}-\d{2}-\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
   assertAllowedStoreText(title, salary, description, trainingDetails, transportationDetails);
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
