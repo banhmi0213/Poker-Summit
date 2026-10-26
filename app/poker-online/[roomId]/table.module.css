@@ -55,3 +55,12 @@
  .onlineActions{grid-column:1;grid-row:4}
  .onlineFelt>div[class*="felt"]{--board-card-width:clamp(42px,4vw,64px);--board-card-height:clamp(58px,5.6vw,86px)}
 }
+
+/* Match the larger shared demo cards in connected tables. */
+@media(min-width:900px){
+ .onlineFelt>div[class*="felt"]{--board-card-width:clamp(56px,5vw,76px);--board-card-height:clamp(78px,7vw,104px);--board-gap:6px}
+}
+@media(max-width:899px){
+ .onlineFelt>div[class*="felt"]{--board-card-width:clamp(38px,10vw,46px);--board-card-height:clamp(54px,14vw,64px);--board-gap:4px}
+ .onlineFelt [data-motion-board]>span{width:var(--board-card-width);height:var(--board-card-height);font-size:21px}
+}
