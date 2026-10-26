@@ -1,4 +1,4 @@
-/** Table sound effects chosen by the owner (2026/10/26): deal F, fold E, check D, call/bet/raise E, pot win = shove + fanfare.
+/** Table sound effects chosen by the owner (2026/10/26): deal F, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
 export type EffectKind='deal'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win';
 
@@ -40,6 +40,20 @@ function stacks(c:BaseAudioContext,t:number,count:number){
  for(let s=0;s<count;s++){const st=t+s*.13;for(const x of pile(count>2?6:4,.05,1))chip(c,st+x,{vol:.2,pan:rnd(-.2,.2)});chip(c,st+.06,{vol:.26,body:1050,len:1.6});}
 }
 
+/** Tonal voice for the all-in orchestra hit. */
+function voice(c:BaseAudioContext,t:number,{f,type='sawtooth',vol=.05,att=.01,dur=.5,detune=0,lp=0,pan=0}:{f:number;type?:OscillatorType;vol?:number;att?:number;dur?:number;detune?:number;lp?:number;pan?:number}){
+ const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;o.detune.value=detune;let last:AudioNode=o;
+ if(lp){const l=c.createBiquadFilter();l.type='lowpass';l.frequency.setValueAtTime(lp,t);l.frequency.exponentialRampToValueAtTime(Math.max(300,lp*.3),t+dur);o.connect(l);last=l;}
+ envelope(g,t,vol,att,dur);last.connect(g);const p=out(c,pan);g.connect(p);o.start(t);o.stop(t+att+dur+.05);o.onended=()=>{o.disconnect();last.disconnect();g.disconnect();p.disconnect();};
+}
+/** Orchestra hit: brass/strings chord, timpani-like drum and a cymbal wash. */
+function orchestraHit(c:BaseAudioContext,t:number){
+ [130.8,196,261.6,329.6,392].forEach((f,i)=>{for(const d of [-6,6])voice(c,t,{f,vol:.05,att:.02,dur:.6,detune:d,lp:3200,pan:(i-2)*.2});});
+ [523.3,659.3,784].forEach(f=>voice(c,t,{f,vol:.025,dur:.5,lp:3000}));
+ thump(c,t,{f:110,f1:60,dur:.45,vol:.5});thump(c,t,{f:220,f1:120,dur:.15,vol:.14});hiss(c,t,{dur:.08,f0:300,q:.7,vol:.2,att:.002,lp:900});
+ hiss(c,t,{dur:1,f0:7000,f1:5000,q:.4,vol:.1,att:.003});hiss(c,t,{dur:.5,f0:3500,q:.6,vol:.05,att:.003});
+}
+
 /** Plays one effect and returns roughly how long it lasts in milliseconds. */
 export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
  const t=c.currentTime+.01;
@@ -53,8 +67,10 @@ export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
   case 'bet':stacks(c,t,3);return 450;
   case 'raise':stacks(c,t,4);return 600;
   case 'allin':
-   hiss(c,t,{dur:.45,f0:3000,q:.6,vol:.08,att:.04});for(const x of pile(34,.45,1.1))chip(c,t+x,{vol:.2,pan:rnd(-.4,.4),len:.8});
-   thump(c,t+.47,{f:120,f1:65,dur:.18,vol:.4});chip(c,t+.47,{vol:.28,body:950,len:1.8});return 750;
+   // Owner pick (2026/10/26): a big two-handed shove of chips, then an orchestra hit.
+   hiss(c,t,{dur:.7,f0:2600,q:.5,vol:.1,att:.06});for(const x of pile(70,.7,1))chip(c,t+x,{hi:4600,body:1000,vol:.2,pan:rnd(-.6,.6),len:rnd(.8,1.3)});
+   for(let i=0;i<5;i++)chip(c,t+.72+i*.03,{vol:.24,body:950,len:1.8});
+   orchestraHit(c,t+.74);return 1700;
   case 'win':
    // Pot win = the shove with a short rising fanfare (owner pick, 2026/10/26).
    hiss(c,t,{dur:.35,f0:3200,q:.6,vol:.07,att:.03});for(const x of pile(26,.35,1.2))chip(c,t+x,{vol:.2,pan:rnd(-.4,.4),len:.8});

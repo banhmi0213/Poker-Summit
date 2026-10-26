@@ -4,7 +4,7 @@ const {PokerSounds}=require('../lib/poker/online-sounds.ts'),{onlineSoundEvents}
 const snapshot=(change={})=>({youSeat:1,hand:{handId:'h1',revision:0,board:[],toAct:'seat-1',result:null,...change}});
 test('audio requires gesture unlock, obeys mute, supports every cue and closes without touching game state',async()=>{
  let made=0,started=0,closed=0,resumed=0;const param={setValueAtTime(){},exponentialRampToValueAtTime(){}};
- const node=()=>({connect(){},disconnect(){},start(){started++;},stop(){},frequency:{...param,value:0},Q:{value:0},gain:param});
+ const node=()=>({connect(){},disconnect(){},start(){started++;},stop(){},frequency:{...param,value:0},detune:{value:0},Q:{value:0},gain:param});
  const context={state:'suspended',currentTime:0,sampleRate:8000,destination:{},resume:async()=>{resumed++;context.state='running';},close:async()=>{closed++;},createOscillator:node,createGain:node,createBiquadFilter:node,createBufferSource:node,createDynamicsCompressor:()=>({...node(),threshold:{value:0},ratio:{value:0}}),createBuffer:()=>({getChannelData:()=>new Float32Array(1200)})};
  const sound=new PokerSounds(()=>{made++;return context;});assert.equal(sound.play('enter'),0);assert.equal(made,0);await sound.unlock();assert.equal(made,1);assert.equal(resumed,1);
  for(const kind of ['turn','action','deal','win','enter','exit','fold','check','call','bet','raise','allin']){const before=started;assert.ok(sound.play(kind)>0,kind);assert.ok(started>before,kind);}
