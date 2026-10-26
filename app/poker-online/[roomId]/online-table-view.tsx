@@ -11,6 +11,7 @@ import {onlineSoundEvents,type SoundMarker} from '@/lib/poker/sound-events';
 import type {PokerSound} from '@/lib/poker/online-sounds';
 import {resultPresentation} from '@/lib/poker/result-presentation';
 import {SummitMark} from '@/app/poker-ui/brand-mark';
+import {TableBgmPlayer} from '@/app/poker-ui/table-bgm';
 import {Children,isValidElement,useEffect,useRef,useState,type ReactNode} from 'react';
 import type {PlayerSnapshot} from '@/lib/poker/player-client';
 import {onlineTableSeats,onlineTurnSeconds} from '@/lib/poker/table-presentation';
@@ -67,7 +68,7 @@ export function OnlineTableView({state:source,children,onExit,onSound,soundEnabl
  const street=hand?.street==='preflop'?0:hand?.street==='flop'?1:hand?.street==='turn'?2:3;
  const next=state?.phase==='finished'?null:state?.clock.following,clockText=!state?'未接続':state.phase==='finished'?'大会終了':state.clock.phase==='final'?'最終レベル継続':`${Math.floor(state.clock.remaining/60).toString().padStart(2,'0')}:${(state.clock.remaining%60).toString().padStart(2,'0')}`;
  const exit=onExit?<button type="button" className={shared.topExit} aria-label="ゲームを退出" onClick={onExit}>↪</button>:<a className={shared.topExit} aria-label="ゲームを退出" href="/poker-lobby">↪</a>;
- return <section className={`${shared.shell} ${styles.compactShell}`} aria-label="オンラインポーカーテーブル">
+ return <section className={`${shared.shell} ${styles.compactShell}`} aria-label="オンラインポーカーテーブル"><TableBgmPlayer/>
   <div className={`${shared.heading} ${styles.onlineHeading}`}><button type="button" className={shared.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menu} aria-controls="online-game-menu" onClick={()=>setMenu(v=>!v)}>☰</button><span>POKER SUMMIT · TEXAS HOLD'EM</span>{exit}</div>
   {menu&&<div className={shared.menuBackdrop} aria-hidden="true" onClick={()=>setMenu(false)}/>}
   <div id="online-game-menu" className={shared.menuPanel} hidden={!menu}><TableGameMenu deferredSpectate={ring} onRefresh={onRefresh} onClose={()=>setMenu(false)} onExit={onExit} onSpectate={onSpectate} soundEnabled={soundEnabled} onSoundToggle={onSoundToggle} information={ring?<><p>会員チップで対戦中 · チップは退出時に返却</p><p>3回連続の時間切れでシットアウト。ブラインドを支払いながら自動フォールドし、3分または5ハンドで精算後に自動退出します。復帰ボタンで解除できます。</p>{ringSummary}</>:<Structure state={state} onExit={onExit}/>}/></div>

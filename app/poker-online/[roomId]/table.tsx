@@ -1,5 +1,6 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
+import {useSoundSettings} from '@/lib/poker/sound-settings';
 import {createClient} from '@/lib/supabase/client';
 import {PokerPlayerClient,PlayerClientError,type PlayerSnapshot} from '@/lib/poker/player-client';
 import {PokerSounds,type PokerSound} from '@/lib/poker/online-sounds';
@@ -9,7 +10,7 @@ export {OnlineTableView} from './online-table-view';
 import shared from '../../poker-demo/poker-table.module.css';
 export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string;enabled:boolean;eventsOrigin?:string}){
  const audio=useRef<PokerSounds|null>(null),navigationTimer=useRef<ReturnType<typeof setTimeout>|null>(null),navigating=useRef(false);
- const [soundEnabled,setSoundEnabled]=useState(true);
+ const [sound,setSound]=useSoundSettings(),soundEnabled=sound.se,setSoundEnabled=(se:boolean)=>setSound({se});
  const playSound=useCallback((kind:PokerSound)=>{audio.current?.play(kind);},[]);
  const navigateToLobby=useCallback(()=>{if(navigating.current)return;navigating.current=true;const duration=audio.current?.play('exit')??0;
   if(duration)navigationTimer.current=setTimeout(()=>window.location.assign('/poker-lobby'),duration);else window.location.assign('/poker-lobby');
