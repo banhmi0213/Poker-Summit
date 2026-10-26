@@ -26,3 +26,13 @@ test('postflop: bets the nuts, folds air to a big river bet, and every size is l
  const air={hole:[c(7,'h'),c(4,'d')],board,pot:1000,toCall:1000,currentBet:1000,legal:legal({minRaiseTo:2000}),opponents:1};
  assert.equal(decideCpuAction(base(air),CPU_STYLES.loose,seeded(9)).type,'fold');
 });
+test('short stacks play shove-or-fold from the push/fold chart',()=>{
+ const short=(o={})=>base({stack:900,committed:0,maxOpponentStack:5000,playersBehind:2,legal:legal({minRaiseTo:200,maxRaiseTo:900}),...o});
+ const shove=decideCpuAction(short(),CPU_STYLES.standard,seeded(10));assert.deepEqual(shove,{type:'raise',amount:900});
+ assert.equal(decideCpuAction(short({hole:[c(7,'s'),c(2,'h')]}),CPU_STYLES.standard,seeded(11)).type,'fold');
+ const facing={currentBet:900,toCall:800,pot:1050,opponents:1,playersBehind:0,isBigBlind:true,committed:100,stack:800,legal:legal({raise:false,minRaiseTo:null,maxRaiseTo:null})};
+ assert.equal(decideCpuAction(short({...facing,hole:[c(9,'s'),c(9,'h')]}),CPU_STYLES.standard,seeded(12)).type,'call');
+ assert.equal(decideCpuAction(short({...facing,hole:[c(7,'s'),c(2,'h')]}),CPU_STYLES.standard,seeded(13)).type,'fold');
+ // Deep stacks are unaffected by the short-stack rule.
+ assert.equal(decideCpuAction(base({maxOpponentStack:10000}),CPU_STYLES.standard,seeded(14)).amount,250);
+});
