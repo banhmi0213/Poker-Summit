@@ -1,4 +1,5 @@
 "use client";
+import {playActionEffect,publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
@@ -66,6 +67,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const soundEnabledRef = useRef(true);
   const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialHand.stacks);
   const [handFinished, setHandFinished] = useState(false);
+  const [announcement,setAnnouncement]=useState<{kind:ActionKind;text:string;key:number}|null>(null);
+  useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
   const [betting, setBetting] = useState<BettingRound>(() => initialHand.round);
   const [bettingMessage, setBettingMessage] = useState(initialHand.terms ? `SB ${initialHand.terms.sb} / BB ${initialHand.terms.bb}・Ante ${initialHand.terms.ante}を徴収しました（デモ）。` : "開始前・休憩中は強制ベットを徴収しません。開始可能になったら大会デモを開始してください。");
@@ -129,7 +132,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
-  type SoundKind = "turn" | "action" | "deal" | "win";
+  type SoundKind = "turn" | "action" | "deal" | "win" | ActionKind;
   const playSound = (kind: SoundKind) => {
     if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
@@ -147,7 +150,9 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         osc.connect(gain); gain.connect(context.destination);
         osc.start(start); osc.stop(start + duration + 0.015);
       };
-      if (kind === "turn") {
+      if (["fold","check","call","bet","raise","allin"].includes(kind)) {
+        playActionEffect(context,kind as ActionKind);
+      } else if (kind === "turn") {
         tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
       } else if (kind === "action") {
         tone(310, 0, 0.085, 0.085, "triangle");
@@ -246,7 +251,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     else betAction = { type: betting.currentBet > 0 ? "raise" : "bet", amount: raiseTo };
     try {
       const updated = applyBettingAction(betting, "you", betAction);
-      playSound("action");
+      const cue=publicAction(betting.players,updated.players,"you");
+      if(cue){playSound(cue.kind);setAnnouncement({kind:cue.kind,text:`${member.displayName} · ${cue.label}${cue.amount?` ${showChips(cue.amount)}`:""}`,key:Date.now()});}
       setBetting(updated);
       setLastActions(prev => ({ ...prev, you: automatic ? `AUTO ${next}` : next === "RAISE" ? `${betAction.type.toUpperCase()} ${raiseTo}` : next }));
       setAction(next);
@@ -304,7 +310,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         const next = applyBettingAction(betting, actorId, decision);
         setBetting(next);
         setLastActions(prev => ({ ...prev, [actorId]: label }));
-        playSound("action");
+        const cue=publicAction(betting.players,next.players,actorId);
+        if(cue){playSound(cue.kind);setAnnouncement({kind:cue.kind,text:`PLAYER ${actorId.slice(1)} · ${cue.label}${cue.amount?` ${showChips(cue.amount)}`:""}`,key:Date.now()});}
         setBettingMessage(`PLAYER ${actorId.slice(1)}：${word}（CPU）`);
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
@@ -480,6 +487,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.streetBets} aria-label="各席のベット額">
         {clockwiseSeats.filter(id => id !== "p2").map(streetBet)}
       </div>
+      {announcement&&<div key={announcement.key} className={styles.actionToast} data-kind={announcement.kind} role="status" aria-live="polite">{announcement.text}</div>}
       <div className={styles.felt}>
         <div data-pot-source className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
         <div className={styles.cards} aria-label="共通カード" data-motion-board>{deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((card, i) => <span key={i} className={isRedCard(card) ? styles.red : ""}><CardFace card={card}/></span>)}</div>
