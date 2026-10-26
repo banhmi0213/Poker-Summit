@@ -1,5 +1,6 @@
+import {playActionEffect,type ActionKind} from './action-feedback';
 /** Browser-only synthesized effects, matching the existing demo. No audio files or network I/O. */
-export type PokerSound='turn'|'action'|'deal'|'win'|'enter'|'exit';
+export type PokerSound='turn'|'action'|'deal'|'win'|'enter'|'exit'|ActionKind;
 export class PokerSounds {
  #context:AudioContext|null=null;#enabled=true;#closed=false;
  constructor(private factory:()=>AudioContext=()=>new AudioContext()){}
@@ -19,6 +20,7 @@ export class PokerSounds {
     oscillator.connect(gain);gain.connect(c.destination);oscillator.start(start);oscillator.stop(start+duration+.015);
     oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
    };
+   if(['fold','check','call','bet','raise','allin'].includes(kind)){playActionEffect(c,kind as ActionKind);return kind==='allin'?700:350;}
    if(kind==='turn'){tone(880,0,.13,.12);tone(1174.66,.045,.15,.065);}
    else if(kind==='action')tone(310,0,.085,.085,'triangle');
    else if(kind==='deal'){
