@@ -32,6 +32,8 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
    const view=await store.state(users[1-leaver],tid);if(view.play.hand.result||view.play.hand.toAct===null)break;const actor=Number(view.play.hand.toAct.slice(5))-1,current=await store.state(users[actor],tid),revision=current.play.hand.revision;
    assert.ok(current.play.hand.legal);await pages[actor].getByRole('button',{name:current.play.hand.legal.check?'チェック':/^コール/,exact:current.play.hand.legal.check}).click();await pages[actor].waitForFunction(old=>!document.querySelector('[data-hand-revision]')||Number(document.querySelector('[data-hand-revision]').getAttribute('data-hand-revision'))>old,revision);
   }
+  // An all-in may first wait up to 8s for the run-it-twice answers (unanswered = once) before it settles.
+  for(let i=0;i<30&&(await base.state(users[leaver],tid)).membership!==null;i++)await new Promise(r=>setTimeout(r,500));
   assert.equal((await base.state(users[leaver],tid)).membership,null);
   if(mode==='lobby'){if(process.env.POKER_DEFERRED_ALLIN){assert.ok(p.url().includes('/poker-ring/'));await p.locator('[data-board-count="5"][data-result="true"]').waitFor();assert.ok(p.url().includes('/poker-ring/'),'complete board and winner stay visible before exit');}await p.waitForURL('**/poker-lobby');}else await p.getByRole('button',{name:'着席する',exact:true}).waitFor();
   const totals=(await db.query('select sum(available+in_play) n from poker_private.ring_accounts where member_id=any($1::uuid[])',[users.slice(0,2)])).rows[0];assert.equal(Number(totals.n),6000);assert.deepEqual(errors,[]);console.log(`PASS deferred ${mode}: no blank frame, current-hand raise/call/check/timebank, private hand retained, settlement cashout and final destination.`);return;
