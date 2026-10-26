@@ -1,6 +1,7 @@
 "use client";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
+import {MobileWagerEditor} from '@/app/poker-ui/mobile-wager-editor';
 import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
@@ -80,6 +81,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [foldedSeats, setFoldedSeats] = useState<number[]>([]);
   const [streetStep, setStreetStep] = useState(0);
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
+  const [mobileRaiseOpen,setMobileRaiseOpen]=useState(false);
   const [raise, setRaise] = useState((initialHand.terms?.bb ?? initialHand.round.bigBlind)*2);
   const [remaining, setRemaining] = useState(20);
   const [timeBanksUsed, setTimeBanksUsed] = useState(0);
@@ -96,6 +98,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const isYourTurn = activePlayerId === "you";
   const legal = isYourTurn ? legalBettingActions(betting, "you") : null;
   const canAct = isYourTurn && running && remaining > 0;
+  useEffect(()=>{if(!canAct)setMobileRaiseOpen(false);},[canAct]);
   const minRaiseTo = legal?.minRaiseTo ?? 0;
   const maxRaiseTo = legal?.maxRaiseTo ?? 0;
   const raiseTo = legal?.raise ? Math.min(maxRaiseTo, Math.max(minRaiseTo, raise)) : 0;
@@ -412,7 +415,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <span>{blind && <b>{blind} </b>}{displayUnit === "bb" ? `${(p.committed / bigBlind).toFixed(1)} BB` : p.committed.toLocaleString()}</span>
     </div>;
   };
-  return <section className={styles.shell} aria-label="ポーカーテーブルのデザイン試作">
+  return <section className={`${styles.shell} ${styles.demoShell}`} aria-label="ポーカーテーブルのデザイン試作">
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
       <span>POKER SUMMIT · TEXAS HOLD'EM</span>
@@ -496,9 +499,12 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <strong>{showCurrentResult?`🏆 ${winningPlayers.map(p=>p.name).join("・")} がPOT獲得`:lastHandResult?`前ハンド：${lastHandResult.winners.join("・")} がPOT獲得`:"ハンド結果：確定待ち"}</strong>
         <div className={styles.resultDeltas}>{boardRows.map(p => <span key={p.id} className={p.delta > 0 ? styles.resultGain : p.delta < 0 ? styles.resultLoss : styles.resultEven}>{p.name} <b>{p.delta > 0 ? "+" : ""}{p.delta.toLocaleString()}</b></span>)}</div>
       </div>}
-    {!spectating ? <div className={styles.controls}>
+    {!spectating ? <div className={styles.controls} role="region" aria-label="操作パネル">
+      {mobileRaiseOpen && canRaise && <MobileWagerEditor amount={raiseTo} min={minRaiseTo} max={maxRaiseTo} step={bigBlind} format={showChips} label={raiseTo===maxRaiseTo?'オールイン':betting.currentBet>0?'レイズ':'ベット'} onChange={setRaise} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>{setMobileRaiseOpen(false);choose("RAISE");}} presets={[...(streetStep===0?multipliers:betPreferences.potPercentages).map(m=>({label:`${m}${streetStep===0?' BB':'% POT'}`,amount:presetRaiseTo({preflop:streetStep===0,value:m,bb:bigBlind,pot:potTotal(betting),call:legal?.callAmount??0,committed:playerAt("you").committed,min:minRaiseTo,max:maxRaiseTo})})),{label:'ALL-IN額',amount:maxRaiseTo}]}/>}
+
       <div className={styles.turnHeader}><div className={styles.turn}>{tournamentComplete ? "大会終了" : !handActive ? "ハンド開始待ち" : !inHand("you") ? "脱落・進行確認中" : isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : `PLAYER ${activePlayerId?.slice(1) ?? "—"}の番`} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || !isYourTurn || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
 
+      {hint && <details className={styles.phoneHint}><summary>ヒント</summary><p>{hint.toCall>0?`必要勝率 ${Math.round(hint.required*100)}% ／ `:''}推定勝率 {Math.round(hint.equity*100)}%</p><small>相手の手札をランダムと仮定した目安</small></details>}
       {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small></p>}
       <label htmlFor="poker-demo-raise">{betting.currentBet > 0 ? "レイズ後の合計額" : "ベット額"}: {legal?.raise ? showChips(raiseTo) : "—"}</label>
       <input aria-label="レイズ額スライダー" id="poker-demo-raise" type="range" min={minRaiseTo} max={maxRaiseTo} step={1} value={raiseTo} disabled={!canRaise} onChange={e => setRaise(Number(e.target.value))} />
@@ -508,7 +514,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.actions}>
         <button type="button" disabled={!canAct || !legal?.fold} onClick={() => choose("FOLD")}>フォールド</button>
         {legal?.call?<button type="button" disabled={!canAct} onClick={() => choose("CALL")}>{legal.callAmount===playerAt("you").stack?"オールインコール":"コール"}<small>{showChips(legal.callAmount)}</small></button>:<button type="button" disabled={!canAct || !legal?.check} onClick={() => choose("CHECK")}>チェック</button>}
-        <button type="button" disabled={!canRaise} onClick={() => choose("RAISE")}>{legal?.raise && raiseTo === maxRaiseTo ? "オールイン" : betting.currentBet > 0 ? "レイズ" : "ベット"}</button>
+        <button type="button" disabled={!canRaise} onClick={() => {if(typeof window!=="undefined"&&typeof window.matchMedia==="function"&&window.matchMedia("(max-width:899px)").matches){if(mobileRaiseOpen){setMobileRaiseOpen(false);choose("RAISE");}else setMobileRaiseOpen(true);}else choose("RAISE");}}>{legal?.raise && raiseTo === maxRaiseTo ? "オールイン" : betting.currentBet > 0 ? "レイズ" : "ベット"}{mobileRaiseOpen&&<small>{showChips(raiseTo)}</small>}</button>
       </div>
       <div className={styles.demoFoldControls} aria-label="自動アクション予約">
         <span>自動アクション（次の自分の番に適用）</span>

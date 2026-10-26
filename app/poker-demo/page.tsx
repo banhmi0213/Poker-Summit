@@ -41,7 +41,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const button=initialSeatIds.includes("p6")?"p6":initialSeatIds[0];
   const displayName = typeof user?.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
     ? user.user_metadata.display_name.trim() : user ? "会員" : "デモユーザー";
-  return <div className={styles.gamePage}>
+  return <div className={`${styles.gamePage} ${styles.demoViewport}`}>
     <GameNavigation header={<PortalHeader userEmail={user?.email}/>} footer={<PortalFooter/>}/>
     <GameCommunity><main className={styles.gameMain}>
       {isPreview && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>

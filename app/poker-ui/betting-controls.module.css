@@ -27,3 +27,14 @@
 .panel.panel .quick button{border-radius:7px;background:#2c2820;border-color:#746443;color:#e8d8af}
 @media(max-width:899px){.panel.panel .actions button{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.panel.panel .actions button{transition:none}}
+
+@media(max-width:899px){
+ .panel.panel{position:relative;padding:6px 8px;gap:4px;grid-template-rows:auto auto auto}
+ .panel>.turn{grid-row:1}.panel>.actions{grid-row:2}.panel>.auto{grid-row:3}
+ .panel>.amount,.panel>.slider,.panel>.quick,.panel>.limits{display:none}
+ .panel>.turn{min-height:24px;padding-right:34px;font-size:10px}
+ .panel .bank{position:absolute;right:8px;top:5px;width:29px;height:25px;min-height:25px!important;padding:0}.panel .bank b{font-size:12px;line-height:12px}.panel .bank small{font-size:7px;line-height:9px}.panel .bank small:last-child{display:none}
+ .panel .actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .panel.panel .actions button{min-height:54px;font-size:16px;white-space:normal}.panel.panel .actions small{font-size:12px}
+ .panel .auto>span{display:none}.panel.panel .auto button{min-height:25px;padding:3px;font-size:9px}
+}

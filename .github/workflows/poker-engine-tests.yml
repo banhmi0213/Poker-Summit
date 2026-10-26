@@ -181,4 +181,6 @@ jobs:
           POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
           POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
-        run: node tests/poker-motion-browser.cjs
+        run: |
+          node tests/poker-motion-browser.cjs
+          node tests/poker-demo-browser.cjs
