@@ -56,7 +56,8 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  await a.getByRole('link',{name:'着席中の卓へ',exact:true}).click();await a.getByText('席 1（あなた）',{exact:true}).waitFor();await a.reload();await a.getByText('席 1（あなた）',{exact:true}).waitFor();
  await b.getByRole('link',{name:'着席中の卓へ',exact:true}).click();await b.getByText('席 2（あなた）',{exact:true}).waitFor();assert.equal(await b.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await a.screenshot({path:path.join(output,'desktop.png'),fullPage:true});await b.screenshot({path:path.join(output,'mobile.png'),fullPage:true});
- const refreshTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'更新',exact:true}).click();}else await p.getByRole('button',{name:'更新',exact:true}).click();};
+ // At the table the refresh lives in the game menu; once the table is back to waiting (opponent left) it is on screen.
+ const refreshTable=async p=>{const menu=p.getByLabel('ゲームメニューを開く',{exact:true});if(process.env.POKER_TABLE_UI==='1'&&await menu.count())await menu.click();await p.getByRole('button',{name:'更新',exact:true}).first().click();};
  const leaveTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'◉ 観戦',exact:true}).click();await p.getByRole('button',{name:'席から離れて観戦する',exact:true}).click();}else await p.getByRole('button',{name:'退出・chipを返却',exact:true}).click();};
  // The ring info sits in the folding 「卓の情報」 drawer on PC (2026/10/26); open it before reading the status.
  const openInfo=async p=>{const info=p.getByRole('complementary',{name:'リング卓情報',exact:true}),body=info.locator('details');if(await body.count()&&!(await body.evaluate(d=>d.open)))await info.getByText('卓の情報',{exact:true}).click();};
