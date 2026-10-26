@@ -850,3 +850,9 @@
  .table .selfInfo small{font-size:10px;line-height:1.1}.table .selfInfo .madeHand{font-size:8px;line-height:1.1}
 }
 @media(max-width:899px){.table .selfInfo small{display:block;width:100%;white-space:nowrap;font-size:9px}}
+
+/* Phone only: retain the logo behind the board and center the own hand. */
+@media(max-width:899px){
+ .table .cards::before{background-size:75% auto}
+ .table .self .handWithRank{left:50%;transform:translateX(-50%)}
+}
