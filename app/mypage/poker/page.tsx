@@ -4,6 +4,7 @@ import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
 import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
+import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
 import {HandHistoryList} from '@/app/poker-ui/hand-history-list';
 export const dynamic='force-dynamic';
 export default async function Page(){const [data,hands,tendencies]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats()]);
@@ -15,6 +16,7 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
  {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<HandStatsView stats={tendencies.ring}/>:unavailable},
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。',content:<PushFoldChart/>},
+ {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。',content:<RiverSolverPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryList hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ]}/>;
 }
