@@ -728,7 +728,7 @@
  .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
  .showdownPosition .miniCards span{width:58px;height:80px;font-size:26px}
  .betChip{width:30px;height:30px;flex-basis:30px}.streetBet{font-size:14px}
- .controls{gap:5px 8px;padding:8px 10px}.controls>p{display:none}.controls .actions button{min-height:62px;font-size:20px}
+ .controls{gap:5px 8px;padding:8px 10px}.controls>p[role=status]{display:none}.controls .actions button{min-height:62px;font-size:20px}
 }
 /* Phones use the available width instead of leaving a broad outer gutter. */
 @media(max-width:899px){
@@ -739,7 +739,7 @@
 @media(min-width:900px){
  .shell{justify-content:flex-start}
  .heading>span{position:absolute;top:14px;left:80px;font-size:10px}
- .edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:60%;bottom:auto}
- .table[data-showdown=false] .showdownFive{top:calc(60% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
- .table[data-showdown=false] .showdownSix{top:calc(60% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
+ .edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:56%;bottom:auto}
+ .table[data-showdown=false] .showdownFive{top:calc(56% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
+ .table[data-showdown=false] .showdownSix{top:calc(56% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
 }
