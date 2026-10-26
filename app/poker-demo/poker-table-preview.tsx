@@ -167,7 +167,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   };
   const previewSound = (kind: SoundKind) => {
     unlockAudio();
-    window.setTimeout(() => playSound(kind), 100);
+    // Wait for the resume to finish instead of a fixed delay, so the first tap also plays.
+    const context = audioContextRef.current;
+    if (context && context.state !== "running") void context.resume().then(() => playSound(kind)).catch(() => {});
+    else playSound(kind);
   };
   useEffect(() => {
     const activate = () => {
@@ -198,6 +201,13 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     if (previous === undefined || previous === actor || actor !== "you") return;
     playSound("turn");
   }, [betting.toAct, handFinished, showdown, spectating, handActive]);
+  // Hole cards for a new hand: the same "deal" sound as the online tables.
+  const previousHandRef = useRef(motionHand);
+  useEffect(() => {
+    if (previousHandRef.current === motionHand) return;
+    previousHandRef.current = motionHand;
+    playSound("deal");
+  }, [motionHand]);
   const previousStreetRef = useRef(streetStep);
   useEffect(() => {
     if (previousStreetRef.current === streetStep) return;
@@ -424,14 +434,12 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
           <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("turn")}>♪ 自分の番「ポッ」</button>
-            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("action")}>♪ 相手の行動「プッ」</button>
-            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("deal")}>♪ カード「シャシャッ」</button>
-            <button type="button" disabled={!soundEnabled} onClick={() => previewSound("win")}>♪ 勝利「チャリチャリ」</button>
+            {([["deal","配る"],["flop","フロップ"],["turnCard","ターン"],["river","リバー"],["fold","フォールド"],["check","チェック"],["call","コール"],["bet","ベット"],["raise","レイズ"],["allin","オールイン"],["win","ポット獲得"],["turn","自分の番"],["action","相手の行動"]] as [SoundKind,string][]).map(([kind,label]) =>
+              <button key={kind} type="button" disabled={!soundEnabled} onClick={() => previewSound(kind)}>♪ {label}</button>)}
           </div>
           <p>レイズ額の設定</p>
           <BetSizeSettings/>
-          <small>BB表示と倍率はデモに反映。SEは各場面で再生されます。レイズ額の設定は会員ごとに保存できます。</small>
+          <small>BB表示と倍率はデモに反映。SEは各場面で再生されます（上のボタンで1つずつ試せます）。レイズ額の設定は会員ごとに保存できます。</small>
         </div>}
         {menuPage === "structure" && tournament && <div className={styles.menuFields}><TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
