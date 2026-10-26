@@ -1,11 +1,14 @@
 /** Node/server only. Keys and decrypted checkpoints must never enter client bundles/logs. */
 import {createCipheriv,createDecipheriv,randomBytes,randomUUID} from 'node:crypto';
 import {ScheduledTournamentRoom,type ScheduledCheckpoint} from './scheduled-tournament-room';
+import {saveHandHistory,type HistoryRequest} from './ring-hand-owner';
 export type SealedCheckpoint={format:1;keyId:string;iv:string;tag:string;data:string};
 export type KeyRing={active:string;keys:Readonly<Record<string,Uint8Array>>};
 export type SavedRoom={version:number;sealed:SealedCheckpoint};
 export type SaveRequest={roomId:string;expectedVersion:number;writeId:string;sealed:SealedCheckpoint;result:ReturnType<typeof terminalResult>};
-export interface RoomStore {load(roomId:string):Promise<SavedRoom|null>;save(request:SaveRequest):Promise<number>}
+export interface RoomStore {load(roomId:string):Promise<SavedRoom|null>;save(request:SaveRequest):Promise<number>;
+ /** Optional, best effort hand history for a settled hand (see hand-history.ts). */
+ history?(request:HistoryRequest):Promise<unknown>}
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const maxBytes=2*1024*1024;
 function identity(roomId:string,version:number) {if(!uuid.test(roomId)||!Number.isSafeInteger(version)||version<1)throw new Error('Invalid checkpoint identity');return Buffer.from(JSON.stringify(['poker-room',1,roomId.toLowerCase(),version]));}
@@ -64,4 +67,5 @@ export class SupabaseRoomStore implements RoomStore {
   if(error){this.#failure(r.roomId,'save',error);throw new Error('Room save failed; reload owner before serving');}
   if(!Number.isSafeInteger(data)||Number(data)!==r.expectedVersion+1)throw new Error('Invalid save response');return Number(data);
  }
+ async history(r:HistoryRequest){return saveHandHistory(this.client,r);}
 }

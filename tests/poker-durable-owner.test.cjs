@@ -94,3 +94,12 @@ test('six-player durable tournament saves every decision, restarts between hands
    const done=await owner.publicSnapshot();assert.equal(done.hand.players.reduce((v,p)=>v+p.stack,0),1200);assert.ok(o.store.writes.at(-1).result);owner=await DurableRoomOwner.load(o);const restored=await owner.publicSnapshot();assert.deepEqual(restored.hand,done.hand);assert.deepEqual(restored.tournament,done.tournament);if(restored.phase==='finished'){assert.equal(restored.tournament.eliminated.length,5);assert.equal(restored.turn,null);await assert.rejects(owner.nextHand(done.hand.handId),/finished/);break;}for(let n=1;n<=6;n++)tokens[n]=(await owner.connect('m'+n)).connectionId;const next=await owner.nextHand(done.hand.handId);assert.equal(next.handNumber,done.handNumber+1);}
  }finally{shuffle.shuffleDeck=old;}
 });
+test('a settled tournament hand saves its history once after commit; history failures never halt the room',async()=>{
+ const f=await setup(),saved=[];f.o.store.history=async r=>{saved.push(structuredClone(r));};const s=await f.owner.publicSnapshot(),n=actor(s);
+ await f.owner.act('m'+n,f.tokens[n],command(s,'fold'));assert.equal(saved.length,1);
+ const h=saved[0];assert.equal(h.kind,'tournament');assert.equal(h.sourceId,f.o.roomId);assert.equal(h.record.handId,s.hand.handId);
+ assert.deepEqual(h.record.players.map(p=>p.memberId).sort(),['m1','m6']);assert.ok(h.record.actions.some(a=>a.type==='ante'));
+ await f.owner.connect('m1');assert.equal(saved.length,1);
+ const g=await setup();g.o.store.history=async()=>{throw Error('history down');};const t=await g.owner.publicSnapshot(),m=actor(t);
+ await g.owner.act('m'+m,g.tokens[m],command(t,'fold'));assert.equal(g.owner.health.status,'ready');
+});
