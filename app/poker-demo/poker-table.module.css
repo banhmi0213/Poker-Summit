@@ -561,3 +561,6 @@
  .controls{padding:8px;gap:5px}.actions button{min-height:42px;font-size:12px}
  .controls .quickBets button{min-height:32px;padding:6px 2px}
 }
+
+/* Fill the specified horizontal logo bounds without contain shrinking its width. */
+.cards::before{top:0;height:100%;background-size:100% auto}
