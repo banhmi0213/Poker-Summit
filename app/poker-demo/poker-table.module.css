@@ -651,3 +651,16 @@
 @media(min-width:900px){.table{aspect-ratio:16/9}.topSeats{top:-24px}.edgeSeatThree{left:3%;top:15%}.edgeSeatFour{right:3%;top:15%}.edgeSeatFive{left:3%;top:65%}.edgeSeatSix{right:3%;top:65%}}
 @media(max-width:899px){.table,.table[data-felt]{background-image:url('/images/poker-table-mobile.png')!important;aspect-ratio:936/1664;min-height:0!important;max-height:none;width:calc(100% - 44px);height:auto!important;margin:30px 22px 48px}.topSeats{top:-20px}.edgeSeatThree{left:-5%;top:18%}.edgeSeatFour{right:-5%;top:18%}.edgeSeatFive{left:-5%;top:67%}.edgeSeatSix{right:-5%;top:67%}}
 .hint{margin:4px 0 8px;font-size:12px;line-height:1.6;color:#d9e6ee}.hint b{color:#ffe3a0;font-variant-numeric:tabular-nums}.hint small{display:block;font-size:10px;color:#91a8ba}
+
+/* PC: structure / ring info / Summit link fold into a 「卓の情報」 drawer at the top-left instead of being hidden (2026/10/26). */
+.infoDrawer>summary{list-style:none;cursor:pointer}.infoDrawer>summary::-webkit-details-marker{display:none}
+@media(min-width:900px){
+ .shell .desktopStructure{display:block!important;position:absolute;top:50px;left:18px;width:260px;max-height:none;min-height:0;overflow:visible!important;background:transparent!important;padding:0!important;border-radius:0;z-index:8;font-size:11px}
+ .infoDrawer>summary{display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:6px 14px;border:1px solid #b99a58;border-radius:999px;background:linear-gradient(#30261b,#12110e);color:#f3dcaa;font-size:12px;font-weight:700;box-shadow:0 3px 8px #0007}
+ .infoDrawer>summary::after{content:"＋";color:#e5bb67}.infoDrawer[open]>summary::after{content:"－"}
+ .infoBody{display:flex;flex-direction:column;gap:8px;margin-top:6px;max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;padding:8px;background:#2b2721;border:1px solid #a1854c;border-radius:10px;box-shadow:0 8px 22px #000a}
+ /* Fit table + action dock in one screen (e.g. 1440x900) so nobody scrolls mid-hand. */
+ .table{width:min(1100px,calc((100dvh - 330px)*16/9),calc(100% - 70px))}
+ .actionColumn{margin-right:max(0px,calc((100% - min(1100px,calc((100dvh - 330px)*16/9),calc(100% - 70px)))/2 - 40px))}
+}
+@media(max-width:899px){.infoDrawer>summary{display:none}}
