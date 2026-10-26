@@ -8,13 +8,17 @@ import { initialTournamentPositions,nextTournamentPositions,type TournamentPosit
 
 export type TurnDeadline={handId:string;revision:number;actor:string;expiresAt:number};
 type Seat={memberId:string;stack:number;connectionId:string|null};
-export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null;timeBanks?:[string,number][]};
+export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null;timeBanks?:[string,number][];timeBankMs?:[string,number][];timeBankGrants?:[string,number][]};
+/** Tournament time bank: 60s to start, +10s every 10 hands, at most 90s; one use per turn adds up to 20s. */
+export const TOURNAMENT_BANK_START_MS=60000,TOURNAMENT_BANK_STEP_MS=10000,TOURNAMENT_BANK_EVERY_HANDS=10,TOURNAMENT_BANK_MAX_MS=90000,BANK_USE_MS=20000;
 export class SeatedHandRoom {
   #seats=new Map<number,Seat>(); #hand:AuthoritativeHand|null=null; #revision=0;
   #startingStack:number; #terms:HandTerms;
   #tournament:boolean; #positions:TournamentPositions|null=null; #outcome:TournamentOutcome|null=null;
   #settledHandId:string|null=null; #handNumber=0; #completedAt:number|null=null;
   #timeBanks=new Map<string,number>();
+  /** Tournament only: each seat's saved time bank (ms) and the extension granted on the current turn. */
+  #bankMs=new Map<string,number>(); #bankGrant=new Map<string,number>();
   #order=Array.from({length:6},(_,i)=>`seat-${i+1}`);
   #turn:TurnDeadline|null=null; #now:()=>number; #turnMs:number; #lastNow=0;
   constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean}={}) {
@@ -27,7 +31,7 @@ export class SeatedHandRoom {
   }
   /** Server-only checkpoint; connection capabilities are deliberately omitted. */
   checkpoint():RoomCheckpoint {
-    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt,timeBanks:[...this.#timeBanks]});
+    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt,timeBanks:[...this.#timeBanks],timeBankMs:[...this.#bankMs],timeBankGrants:[...this.#bankGrant]});
   }
   /** Only load an authenticated/decrypted server checkpoint. Restored sockets must reconnect. */
   static restore(input:RoomCheckpoint,now:()=>number=Date.now) {
@@ -38,6 +42,8 @@ export class SeatedHandRoom {
     for(const [n,seat] of s.seats){room.seat(seat.memberId,n);if(members.has(seat.memberId)||!Number.isSafeInteger(seat.stack)||seat.stack<0)throw new Error("Invalid saved seat");members.add(seat.memberId);room.#seats.set(n,{...seat,connectionId:null});}
     room.#hand=s.hand?AuthoritativeHand.restore(s.hand):null;room.#revision=s.revision;room.#positions=s.positions;room.#outcome=s.outcome;room.#settledHandId=s.settledHandId;room.#handNumber=s.handNumber;room.#turn=s.turn;room.#lastNow=s.lastNow;
     for(const [id,revision] of s.timeBanks??[]){if(!room.#seats.has(Number(id.replace('seat-','')))||!/^seat-[1-6]$/.test(id)||!Number.isSafeInteger(revision)||revision<0||room.#timeBanks.has(id))throw new Error("Invalid saved time bank");room.#timeBanks.set(id,revision);}
+    for(const [key,saved] of [['timeBankMs',s.timeBankMs],['timeBankGrants',s.timeBankGrants]] as const)for(const [id,ms] of saved??[]){if(!s.tournament||!/^seat-[1-6]$/.test(id)||!room.#seats.has(Number(id.slice(5)))||!Number.isSafeInteger(ms)||ms<0||ms>TOURNAMENT_BANK_MAX_MS)throw new Error("Invalid saved time bank");(key==='timeBankMs'?room.#bankMs:room.#bankGrant).set(id,ms);}
+    if(s.tournament&&s.timeBankMs===undefined)for(const [n] of room.#seats)room.#bankMs.set(`seat-${n}`,TOURNAMENT_BANK_START_MS);
     const h=room.#hand?.snapshot(null),t=room.#turn;
     room.#completedAt=h?.result?(s.completedAt??s.lastNow):null;
     if(room.#completedAt!==null&&(!Number.isSafeInteger(room.#completedAt)||room.#completedAt<0||room.#completedAt>s.lastNow)||!h?.result&&s.completedAt!=null)throw new Error("Invalid completion time");
@@ -71,12 +77,17 @@ export class SeatedHandRoom {
     if(!entry||!entry[1].connectionId||entry[1].connectionId!==connectionId)throw new Error("Connection is not current");
     return entry;
   }
+  #bankView(id:string|null){
+    if(!this.#tournament)return {seconds:20,remaining:id&&!this.#timeBanks.has(id)?1:0};
+    const ms=id?this.#bankMs.get(id)??0:0,usedThisTurn=Boolean(id&&this.#turn&&this.#timeBanks.get(id)===this.#turn.revision&&this.#turn.actor===id);
+    return {seconds:Math.ceil(Math.min(BANK_USE_MS,ms)/1000),remaining:ms>0&&!usedThisTurn?1:0,balanceSeconds:Math.floor(ms/1000)};
+  }
   #snapshot(viewerSeat:number|null) {
     const publicHand=this.#hand?.snapshot(null)??null;
     const id=viewerSeat===null?null:`seat-${viewerSeat}`;
     const hand=id&&publicHand?.players.some(p=>p.id===id)?this.#hand!.snapshot(id):publicHand;
     const outcome=this.#outcome?{...this.#outcome,stacks:{...this.#outcome.stacks},liveIds:[...this.#outcome.liveIds],eliminated:this.#outcome.eliminated.map(p=>({...p}))}:null;
-    return {revision:this.#revision,mode:this.#tournament?"tournament":"single-hand",phase:outcome?.champion?"finished":hand?.result?"complete":hand?"playing":"waiting",handNumber:this.#handNumber,completedAt:this.#completedAt,tournament:outcome,youSeat:viewerSeat,timeBank:{seconds:20,remaining:id&&!this.#timeBanks.has(id)?1:0},turnDurationMs:this.#turnMs+(this.#turn&&this.#timeBanks.get(this.#turn.actor)===this.#turn.revision?20000:0),turn:this.#turn?{...this.#turn}:null,
+    return {revision:this.#revision,mode:this.#tournament?"tournament":"single-hand",phase:outcome?.champion?"finished":hand?.result?"complete":hand?"playing":"waiting",handNumber:this.#handNumber,completedAt:this.#completedAt,tournament:outcome,youSeat:viewerSeat,timeBank:this.#bankView(id),turnDurationMs:this.#turnMs+(this.#turn&&this.#timeBanks.get(this.#turn.actor)===this.#turn.revision?(this.#tournament?this.#bankGrant.get(this.#turn.actor)??0:BANK_USE_MS):0),turn:this.#turn?{...this.#turn}:null,
       seats:Array.from({length:6},(_,i)=>{const s=this.#seats.get(i+1);return {seat:i+1,id:`seat-${i+1}`,occupied:Boolean(s),connected:Boolean(s?.connectionId)};}),hand};
   }
   /** Auth-to-member binding must already be verified. Stack is room policy, not client input. */
@@ -148,7 +159,7 @@ export class SeatedHandRoom {
     const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
     const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;
     const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),terms,positions?{order:this.#order,positions}:undefined);
-    this.#hand=hand;this.#timeBanks.clear();this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+    this.#hand=hand;this.#timeBanks.clear();this.#bankGrant.clear();if(this.#tournament){this.#bankMs.clear();for(const p of players)this.#bankMs.set(p.id,TOURNAMENT_BANK_START_MS);}this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
   }
   /** Trusted tournament scheduler only. A captured completed hand ID makes retries safe.
    * Survivors carry stacks; disconnected survivors remain in play with server deadlines.
@@ -164,7 +175,10 @@ export class SeatedHandRoom {
     const now=this.#readNow();
     const hand=new AuthoritativeHand(players,0,terms,{order:this.#order,positions});
     // Everything above validates before replacing the previous hand/receipt owner.
-    this.#hand=hand;this.#timeBanks.clear();this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber++;this.#armTurn(now);this.#revision++;
+    this.#hand=hand;this.#timeBanks.clear();this.#bankGrant.clear();this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber++;
+    for(const id of [...this.#bankMs.keys()])if(!live.includes(id))this.#bankMs.delete(id);
+    if(this.#handNumber%TOURNAMENT_BANK_EVERY_HANDS===1&&this.#handNumber>1)for(const id of live)this.#bankMs.set(id,Math.min(TOURNAMENT_BANK_MAX_MS,(this.#bankMs.get(id)??0)+TOURNAMENT_BANK_STEP_MS));
+    this.#armTurn(now);this.#revision++;
     return this.publicSnapshot();
   }
   act(authenticatedMemberId:string,connectionId:string,payload:unknown) {
@@ -179,15 +193,19 @@ export class SeatedHandRoom {
     if(!result.replayed){this.#revision++;this.#armTurn(now);}
     return {replayed:result.replayed,acceptedRevision:result.acceptedRevision,state:this.#snapshot(n)};
   }
-  /** One server-owned extension per player per hand. A duplicate for the same
+  /** Ring: one server-owned +20s per player per hand. Tournament: one use per turn from the saved bank.
+   * A duplicate for the same
    * turn is a read-only replay, including after an acknowledgement was lost. */
   timeBank(member:string,connection:string,handId:string,revision:number){
     const [n]=this.#connection(member,connection),id=`seat-${n}`,h=this.#hand?.snapshot(null),t=this.#turn;
     if(!h||h.handId!==handId||!Number.isSafeInteger(revision)||revision<0)throw new Error("Invalid time bank turn");
     if(this.#timeBanks.get(id)===revision)return {replayed:true,state:this.#snapshot(n)};
     const now=this.#readNow();
-    if(!t||t.actor!==id||t.revision!==revision||h.result||now>=t.expiresAt||this.#timeBanks.has(id)||!Number.isSafeInteger(t.expiresAt+20000))throw new Error("Time bank unavailable");
-    this.#timeBanks.set(id,revision);this.#turn={...t,expiresAt:t.expiresAt+20000};this.#revision++;
+    // Ring/single-hand: one +20s per hand. Tournament: once per turn, up to 20s from the saved bank.
+    const grant=this.#tournament?Math.min(BANK_USE_MS,this.#bankMs.get(id)??0):BANK_USE_MS;
+    if(!t||t.actor!==id||t.revision!==revision||h.result||now>=t.expiresAt||grant<=0||(!this.#tournament&&this.#timeBanks.has(id))||!Number.isSafeInteger(t.expiresAt+grant))throw new Error("Time bank unavailable");
+    this.#timeBanks.set(id,revision);this.#turn={...t,expiresAt:t.expiresAt+grant};this.#revision++;
+    if(this.#tournament){this.#bankMs.set(id,(this.#bankMs.get(id)??0)-grant);this.#bankGrant.set(id,grant);}
     return {replayed:false,state:this.#snapshot(n)};
   }
   /** Trusted scheduler callback: compare the captured hand/revision/actor first.
