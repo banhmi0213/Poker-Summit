@@ -2130,6 +2130,7 @@ th {
 .sd-introduction { padding:20px 0; border-bottom:1px solid var(--border); }
 .sd-introduction h2 { font-size:18px; margin:0 0 8px; }
 .sd-introduction p { margin:0; white-space:pre-wrap; line-height:1.8; font-size:14px; overflow-wrap:anywhere; }
+.sd-introduction p + p { margin-top:10px; }
 .sd-content-grid { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); gap:24px; padding-top:22px; }
 .sd-content-main, .sd-content-side { min-width:0; }
 .sd-content-side { padding-left:22px; border-left:1px solid var(--border); }

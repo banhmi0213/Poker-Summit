@@ -8,7 +8,7 @@ const KIND = "アミューズメントポーカー・ポーカーハウス";
 
 // 店の多い区の繁華街の呼び名(「心斎橋 ポーカー」「六本木 ポーカー」のような検索向け、2026/10/26)。
 // 掲載店の住所に実際に多い地名から選んだ。店の分布が変わったら見直す。
-const CITY_NICKNAMES: Record<string, string> = {
+export const CITY_NICKNAMES: Record<string, string> = {
   "大阪市中央区": "ミナミ・心斎橋・難波",
   "大阪市北区": "キタ・梅田",
   "港区": "六本木・新橋・赤坂",
