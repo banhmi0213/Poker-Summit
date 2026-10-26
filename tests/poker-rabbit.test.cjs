@@ -32,3 +32,8 @@ test('rabbit command and reply are strictly parsed',()=>{
  assert.deepEqual(parseRingLobbyState({...base,rabbit:{handId:id,cards:[{rank:13,suit:'s'},{rank:7,suit:'d'}]}}).rabbit.cards,[{rank:13,suit:'s'},{rank:7,suit:'d'}]);
  assert.throws(()=>parseRingLobbyState({...base,rabbit:{handId:id,cards:[{rank:1,suit:'s'}]}}));
 });
+test('ticket time bank command is strictly parsed and the ring view carries the ticket flag',()=>{
+ const id='11111111-1111-4111-8111-111111111111';
+ assert.equal(parseRingCommand({type:'ticket-bank',reservationId:id,requestId:id,handId:id,revision:3}).type,'ticket-bank');
+ assert.throws(()=>parseRingCommand({type:'ticket-bank',reservationId:id,requestId:id,handId:id}));
+});
