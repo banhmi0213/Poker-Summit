@@ -33,6 +33,8 @@ import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge } from "@/app/store-plan-badge";
 import { cityPageHref, prefPageHref } from "@/lib/city";
 import { distanceKm } from "@/lib/geocode";
+import { buildStoreIntro } from "@/lib/store-intro";
+import { CITY_NICKNAMES } from "@/lib/area-seo";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -420,14 +422,25 @@ export default async function StoreDetailPage({
   const categoryLabel = categoryBase.endsWith("ポーカー") ? `${categoryBase}店` : categoryBase;
   const station = store.nearest_station || store.station || "";
   const placeName = [store.pref, store.city].filter(Boolean).join("");
-  // 店舗が紹介文を入れていない場合は、登録されている情報から案内文を組み立てる
-  const autoIntro = [
-    `${store.name}は${placeName || "日本"}にある${categoryLabel}です。`,
-    station ? `最寄り駅は${station}です。` : "",
-    upcomingEvents > 0 ? `現在、${upcomingEvents}件のトーナメント・イベントの開催が予定されています。` : "",
-    "料金や営業時間、最新のイベント情報は各タブをご覧いただくか、店舗へ直接お問い合わせください。",
-    store.city && cityStoreCount > 1 ? `${store.city}には、ほかにも${cityStoreCount - 1}店舗のポーカースポットが${SITE_NAME}に掲載されています。` : "",
-  ].join("");
+  // 店舗が紹介文を入れていない場合は、登録されている情報（住所・営業時間・近くの店・イベント・SNS）から
+  // その店だけの案内文を組み立てる。同じひな形だと Google に重複ページ扱いされるため。
+  const autoIntro = buildStoreIntro({
+    name: store.name,
+    categoryLabel,
+    pref: store.pref,
+    city: store.city,
+    cityNickname: store.city ? CITY_NICKNAMES[store.city] ?? null : null,
+    address: store.address,
+    station: station || null,
+    hoursText: store.hours,
+    googleHoursText: Array.isArray(store.google_hours_text) ? (store.google_hours_text as string[]) : null,
+    nearby: nearby.map((s) => ({ name: s.name, km: hasCoords && s.lat != null && s.lng != null ? distanceKm(store.lat, store.lng, s.lat, s.lng) : null })),
+    cityStoreCount,
+    upcomingEvents,
+    hasX: Boolean(store.x_url),
+    hasInstagram: Boolean(store.instagram_url),
+    siteName: SITE_NAME,
+  });
 
   return (
     <div>
@@ -544,7 +557,7 @@ export default async function StoreDetailPage({
             </Link>
 {ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
 
-            <Link className="btn sd-event-detail" href={`/events/${ev.id}`}>詳細を見る ›</Link>
+            <Link className="btn sd-event-detail" href={`/events/${ev.id}`}>詳細を見る</Link>
             <form
               action={async () => {
                 "use server";
@@ -586,7 +599,7 @@ export default async function StoreDetailPage({
                 <h3>{c.title}</h3>
                 {c.discount && <span className="badge">{c.discount}</span>}
               </div>
-              <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る ›</Link>
+              <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る</Link>
               {c.description && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{c.description}</p>}
               <div className="muted" style={{ marginTop: 6 }}>
                 {c.code && <>クーポンコード: {c.code} </>}
@@ -672,7 +685,7 @@ export default async function StoreDetailPage({
               </div>
               {j.salary && <p className="muted">{j.salary}</p>}
             </Link>
-            <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る ›</Link>
+            <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る</Link>
             <Link href={`/jobs/${j.id}`} className="btn" style={{ fontSize: 12.5, marginTop: 8, display: "inline-flex" }}>
               詳細を見る
             </Link>
@@ -712,7 +725,7 @@ export default async function StoreDetailPage({
         ]} />
         {store.description
           ? <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>
-          : <section className="sd-introduction"><h2>{store.name}について</h2><p>{autoIntro}</p></section>}
+          : <section className="sd-introduction"><h2>{store.name}について</h2>{autoIntro.map((text, i) => <p key={i}>{text}</p>)}</section>}
         {nearby.length > 0 && (
           <section className="sd-introduction sd-nearby" aria-label="近くのポーカー店">
             <h2>{store.city ? `${store.city}周辺のポーカー店` : "近くのポーカー店"}</h2>
@@ -730,9 +743,9 @@ export default async function StoreDetailPage({
             </ul>
             <p style={{ marginTop: 10, display: "flex", gap: 16, flexWrap: "wrap", whiteSpace: "normal" }}>
               {store.pref && store.city && cityStoreCount > 1 && (
-                <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗） ›</Link>
+                <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗）</Link>
               )}
-              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
+              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る</Link>}
             </p>
           </section>
         )}
