@@ -6,6 +6,7 @@ import {SummitMark} from '@/app/poker-ui/brand-mark';
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { estimateEquity, requiredEquity } from "@/lib/poker/equity";
+import { decideCpuAction, CPU_STYLES } from "@/lib/poker/cpu-strategy";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBettingActions, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -267,7 +268,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     const timer = window.setTimeout(() => choose(preferred, true), 0);
     return () => window.clearTimeout(timer);
   }, [remaining, isYourTurn, autoChoice, owedForYou, running, handFinished, showdown, spectating]);
-  // Demo-only bots: check when free, otherwise call (or go all-in).
+  // Demo-only CPU players (2026/10/26): each decides from its own cards and the public table, with its own style.
   // In a real match the server, not the browser, will own this progression.
   useEffect(() => {
     if (!handActive || dealing || handFinished || showdown || spectating) return;
@@ -277,18 +278,31 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const player = betting.players.find(p => p.id === actorId);
       if (!player) return;
       const owed = betting.currentBet - player.committed;
+      const legal = legalBettingActions(betting, actorId);
+      const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
+      const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
+      // リング練習卓だけ考えて打つCPU。大会サンプルは進行確認用のため従来どおり（チェック/コール）。
+      const decision: BettingAction = !tournament && legal && deal.holes[actorId] ? decideCpuAction({
+        hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
+        currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
+        opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
+        playersBehind: betting.players.filter(p => p.id !== actorId && !p.folded && !p.allIn && !p.acted).length,
+        isBigBlind: handPositions.bb === actorId,
+      }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
+      const label = decision.type === "fold" ? "FOLD" : decision.type === "check" ? "CHECK" : decision.type === "call" ? `CALL ${Math.min(owed, player.stack)}` : `${decision.type === "bet" ? "BET" : "RAISE"} ${decision.amount}`;
+      const word = decision.type === "fold" ? "フォールド" : decision.type === "check" ? "チェック" : decision.type === "call" ? "コール" : decision.type === "bet" ? `ベット ${decision.amount}` : `レイズ ${decision.amount}`;
       try {
-        const next = applyBettingAction(betting, actorId, owed > 0 ? { type: "call" } : { type: "check" });
+        const next = applyBettingAction(betting, actorId, decision);
         setBetting(next);
-        setLastActions(prev => ({ ...prev, [actorId]: owed > 0 ? `CALL ${Math.min(owed, player.stack)}` : "CHECK" }));
+        setLastActions(prev => ({ ...prev, [actorId]: label }));
         playSound("action");
-        setBettingMessage(`PLAYER ${actorId.slice(1)}：${owed > 0 ? "コール" : "チェック"}（自動デモ）`);
+        setBettingMessage(`PLAYER ${actorId.slice(1)}：${word}（CPU）`);
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
       }
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [betting, handFinished, showdown, spectating, dealing, handActive]);
+  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, tournament]);
 
   // The next street begins only when every live player has acted and matched
   // the highest contribution, or cannot act because they are all-in.
