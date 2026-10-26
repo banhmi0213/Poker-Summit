@@ -481,3 +481,17 @@
 
 /* Coordinates and animation are assigned together after layout measurement. */
 .awardCoin[data-pot-coin]{animation:none;opacity:0}
+
+/* Reversible beige design trial. Presentation only; seat and game state remain intact. */
+.shell{background:#201e1b;color:#f7efdf}
+.table,.table[data-felt=green],.table[data-felt=black]{background:radial-gradient(ellipse at 50% 42%,#e7d6b5 0%,#d3bd94 65%,#b79c72 100%);border-color:#65503a;outline-color:#b99a61;box-shadow:inset 0 0 0 3px #e7cf98,inset 0 0 35px #78604466,0 12px 28px #0005}
+.felt{--board-card-width:clamp(34px,9vw,52px);--board-card-height:clamp(51px,13vw,68px);--board-gap:4px}
+.cards{position:relative;isolation:isolate;justify-content:flex-start;width:calc(var(--board-card-width)*5 + var(--board-gap)*4);height:var(--board-card-height);flex-shrink:0;gap:var(--board-gap)}
+.cards::before{content:"";position:absolute;z-index:-1;left:calc(var(--board-card-width)*.56);right:calc(var(--board-card-width)*.56);top:20%;height:60%;background:url('/images/logo.webp') center/contain no-repeat;filter:grayscale(1) sepia(1);mix-blend-mode:multiply;opacity:.22;pointer-events:none}
+.cards>span{flex:0 0 var(--board-card-width);width:var(--board-card-width);height:var(--board-card-height);box-shadow:0 3px 6px #49341e40}
+.pot{background:#493b2ddd;border:1px solid #ac8d58;color:#faf2e4}.pot strong{color:#f2d391}.street{color:#51432e;text-shadow:0 1px #fff5}
+.avatar{background:linear-gradient(145deg,#544839,#26231e);border-color:#c4a46d}.seat small,.self small{color:#f3d9a7;text-shadow:0 1px 3px #23190b}
+.controls{background:#302a23;border:1px solid #705c40;box-shadow:0 5px 18px #0002}.controls input{accent-color:#c3a062}.menuToggle,.topExit{background:#302a23}
+.actions button{background:#c6a266;color:#201b13}.actions button:first-child{background:#85484b}.actions button:nth-child(2){background:#5b625e}.actions button:nth-child(3){background:#477563}
+.quickBets button{background:#5b5140}.quickBets button:last-child{background:#a47d38}
+@media(min-width:900px){.gamePage{background:#171715}.desktopStructure{background:#2b2721}.gameMain{max-width:1540px}.shell{grid-template-columns:210px minmax(400px,1fr) 280px}}
