@@ -64,3 +64,9 @@
  .onlineFelt>div[class*="felt"]{--board-card-width:clamp(38px,10vw,46px);--board-card-height:clamp(54px,14vw,64px);--board-gap:4px}
  .onlineFelt [data-motion-board]>span{width:var(--board-card-width);height:var(--board-card-height);font-size:21px}
 }
+
+@media(min-width:900px){
+ .compactShell{max-width:none;width:100%;position:relative}
+ .onlineActions{position:absolute;right:8px;bottom:8px;width:min(480px,36vw);margin:0}
+ .onlineFelt>div[class*="felt"]{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
+}
