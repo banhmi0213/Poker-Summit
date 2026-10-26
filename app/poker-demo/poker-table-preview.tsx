@@ -281,7 +281,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const legal = legalBettingActions(betting, actorId);
       const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
       const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
-      const decision: BettingAction = legal && deal.holes[actorId] ? decideCpuAction({
+      // リング練習卓だけ考えて打つCPU。大会サンプルは進行確認用のため従来どおり（チェック/コール）。
+      const decision: BettingAction = !tournament && legal && deal.holes[actorId] ? decideCpuAction({
         hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
         currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
         opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
@@ -301,7 +302,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       }
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions]);
+  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, tournament]);
 
   // The next street begins only when every live player has acted and matched
   // the highest contribution, or cannot act because they are all-in.
