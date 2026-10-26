@@ -2,7 +2,7 @@
  * No network/authentication or automatic persistence is installed here. All time is server-owned.
  */
 import { SeatedHandRoom, type TurnDeadline, type RoomCheckpoint } from "./seated-hand-room";
-import { tournamentClock,validateStructure,type TournamentStructure } from "./tournament";
+import { tournamentClock,tournamentTiming,validateStructure,type TournamentStructure } from "./tournament";
 import {runoutDuration,PAYOUT_ANIMATION_MS} from './presentation-timing';
 import { tournamentHandTerms } from "./tournament-hand";
 
@@ -18,13 +18,15 @@ export class ScheduledTournamentRoom {
     if(options.now!==undefined&&typeof options.now!=="function")throw new Error("Invalid server clock");
     // Explicit copy/allow-list: unknown configuration fields are not broadcast.
     this.#structure={startingStack:normalized.startingStack,anteType:normalized.anteType,lateRegLevel:normalized.lateRegLevel,reentry:normalized.reentry,
-      periods:normalized.periods.map(p=>({kind:p.kind,minutes:p.minutes,sb:p.sb,bb:p.bb,ante:p.ante,note:p.note}))};
-    this.#startsAt=new Date(start).toISOString();this.#clock=options.now??Date.now;this.#turnMs=options.turnMs??20000;
+      periods:normalized.periods.map(p=>({kind:p.kind,minutes:p.minutes,sb:p.sb,bb:p.bb,ante:p.ante,note:p.note})),
+      ...(normalized.turnSeconds!==undefined?{turnSeconds:normalized.turnSeconds}:{}),...(normalized.timeBankCards!==undefined?{timeBankCards:normalized.timeBankCards}:{}),...(normalized.finalTableCards!==undefined?{finalTableCards:normalized.finalTableCards}:{})};
+    const timing=tournamentTiming(normalized);
+    this.#startsAt=new Date(start).toISOString();this.#clock=options.now??Date.now;this.#turnMs=options.turnMs??timing.turnSeconds*1000;
     this.#handPauseMs=options.handPauseMs??8000;
     if(!Number.isSafeInteger(this.#handPauseMs)||this.#handPauseMs<0||this.#handPauseMs>60000)throw new Error("Invalid hand pause");
     const first=this.#structure.periods[0];
     this.#room=new SeatedHandRoom(this.#structure.startingStack,{level:1,index:0,sb:first.sb,bb:first.bb,ante:first.ante,anteType:this.#structure.anteType},
-      {tournament:true,turnMs:this.#turnMs,now:()=>this.#sample??this.#readNow()});
+      {tournament:true,turnMs:this.#turnMs,bankCards:timing.timeBankCards,finalTableCards:timing.finalTableCards,now:()=>this.#sample??this.#readNow()});
   }
   /** Sensitive server-only checkpoint. No live connection tokens. */
   checkpoint():ScheduledCheckpoint {return structuredClone({version:1,structure:this.#structure,startsAt:this.#startsAt,lastNow:this.#lastNow,room:this.#room.checkpoint(),handPauseMs:this.#handPauseMs,...(this.#runout?{runout:this.#runout}:{}),...(this.#seatedStart?{seatedStart:true}:{})});}
