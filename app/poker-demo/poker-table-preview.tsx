@@ -9,7 +9,9 @@ import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
 import {RUNOUT_STEP_MS} from '@/lib/poker/presentation-timing';
 import {SummitMark} from '@/app/poker-ui/brand-mark';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { estimateEquity, requiredEquity } from "@/lib/poker/equity";
+import { decideCpuAction, CPU_STYLES } from "@/lib/poker/cpu-strategy";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBettingActions, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -33,7 +35,7 @@ const seats = [
   { name: "PLAYER 6", stack: "1,900" },
 ];
 
-export default function PokerTablePreview({ member, initialDeal, tournament, serverNow = 0, isGuestPreview = false, initialSpectating = false, initialSeatIds = clockwiseSeats }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; tournament?: PokerTournament; serverNow?: number; isGuestPreview?: boolean; initialSpectating?: boolean; initialSeatIds?: string[] }) {
+export default function PokerTablePreview({ member, initialDeal, tournament, serverNow = 0, isGuestPreview = false, initialSpectating = false, initialSeatIds = clockwiseSeats, cpuMode = "thinking" }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; tournament?: PokerTournament; serverNow?: number; isGuestPreview?: boolean; initialSpectating?: boolean; initialSeatIds?: string[]; cpuMode?: "thinking" | "calling" }) {
   const [initialHand] = useState(() => {
     const live=tournament?clockwiseSeats.filter(id=>initialSeatIds.includes(id)):clockwiseSeats;
     const button=live.includes("p6")?"p6":live[0];
@@ -256,6 +258,16 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     }
   };
   const owedForYou = Math.max(0, betting.currentBet - playerAt("you").committed);
+  // 練習ヒント(2026/10/26): 自分の番だけ、見えているカードから必要勝率と推定勝率を出す。デモ卓専用。
+  const [hintsOn, setHintsOn] = useState(true);
+  const hintBoard = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
+  const hintOpponents = betting.players.filter(p => p.id !== "you" && !p.folded).length;
+  const hint = useMemo(() => {
+    if (!hintsOn || !isYourTurn || !deal.holes.you || hintOpponents < 1) return null;
+    const pot = potTotal(betting), toCall = Math.min(owedForYou, playerAt("you").stack);
+    return { equity: estimateEquity(deal.holes.you, hintBoard, Math.min(hintOpponents, 8), 1200).equity, required: requiredEquity(toCall, pot), toCall, pot };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hintsOn, isYourTurn, deal, streetStep, hintOpponents, owedForYou, betting.currentBet]);
   // Auto actions never spend chips without explicit consent.
   useEffect(() => {
     if (!isYourTurn || !running || handFinished || showdown || spectating) return;
@@ -264,7 +276,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     const timer = window.setTimeout(() => choose(preferred, true), 0);
     return () => window.clearTimeout(timer);
   }, [remaining, isYourTurn, autoChoice, owedForYou, running, handFinished, showdown, spectating]);
-  // Demo-only bots: check when free, otherwise call (or go all-in).
+  // Demo-only CPU players (2026/10/26): each decides from its own cards and the public table, with its own style.
   // In a real match the server, not the browser, will own this progression.
   useEffect(() => {
     if (!handActive || dealing || handFinished || showdown || spectating) return;
@@ -274,18 +286,32 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const player = betting.players.find(p => p.id === actorId);
       if (!player) return;
       const owed = betting.currentBet - player.committed;
+      const legal = legalBettingActions(betting, actorId);
+      const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
+      const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
+      // 練習卓のCPUは自分の手札と公開情報で考えて打つ（大会のチップが少ない場面はプッシュ/フォールド表）。cpuMode='calling' は進行確認テスト専用。
+      const decision: BettingAction = cpuMode !== "calling" && legal && deal.holes[actorId] ? decideCpuAction({
+        hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
+        currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
+        opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
+        playersBehind: betting.players.filter(p => p.id !== actorId && !p.folded && !p.allIn && !p.acted).length,
+        isBigBlind: handPositions.bb === actorId,
+        maxOpponentStack: Math.max(0, ...betting.players.filter(p => p.id !== actorId && !p.folded).map(p => p.stack + p.committed)),
+      }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
+      const label = decision.type === "fold" ? "FOLD" : decision.type === "check" ? "CHECK" : decision.type === "call" ? `CALL ${Math.min(owed, player.stack)}` : `${decision.type === "bet" ? "BET" : "RAISE"} ${decision.amount}`;
+      const word = decision.type === "fold" ? "フォールド" : decision.type === "check" ? "チェック" : decision.type === "call" ? "コール" : decision.type === "bet" ? `ベット ${decision.amount}` : `レイズ ${decision.amount}`;
       try {
-        const next = applyBettingAction(betting, actorId, owed > 0 ? { type: "call" } : { type: "check" });
+        const next = applyBettingAction(betting, actorId, decision);
         setBetting(next);
-        setLastActions(prev => ({ ...prev, [actorId]: owed > 0 ? `CALL ${Math.min(owed, player.stack)}` : "CHECK" }));
+        setLastActions(prev => ({ ...prev, [actorId]: label }));
         playSound("action");
-        setBettingMessage(`PLAYER ${actorId.slice(1)}：${owed > 0 ? "コール" : "チェック"}（自動デモ）`);
+        setBettingMessage(`PLAYER ${actorId.slice(1)}：${word}（CPU）`);
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
       }
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [betting, handFinished, showdown, spectating, dealing, handActive]);
+  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, cpuMode]);
 
   // The next street begins only when every live player has acted and matched
   // the highest contribution, or cannot act because they are all-in.
@@ -404,6 +430,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
           <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             <button type="button" disabled={!soundEnabled} onClick={() => previewSound("turn")}>♪ 自分の番「ポッ」</button>
             <button type="button" disabled={!soundEnabled} onClick={() => previewSound("action")}>♪ 相手の行動「プッ」</button>
@@ -471,6 +498,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     {!spectating ? <div className={styles.controls}>
       <div className={styles.turnHeader}><div className={styles.turn}>{tournamentComplete ? "大会終了" : !handActive ? "ハンド開始待ち" : !inHand("you") ? "脱落・進行確認中" : isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : `PLAYER ${activePlayerId?.slice(1) ?? "—"}の番`} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div><button type="button" className={styles.timeBankButton} aria-label={`タイムバンクを使用して${timeBankSeconds}秒延長`} title={`タイムバンク +${timeBankSeconds}秒（残り${demoTimeBankLimit - timeBanksUsed}回）`} disabled={timeBanksUsed >= demoTimeBankLimit || remaining === 0 || !isYourTurn || !running} onClick={() => { setRemaining(v => v + timeBankSeconds); setTimeBanksUsed(v => v + 1); setBettingMessage(`タイムバンクを使用しました。+${timeBankSeconds}秒（デモ）`); }}><span aria-hidden="true">◷</span><small>+{timeBankSeconds}s</small></button></div>
 
+      {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small></p>}
       <label htmlFor="poker-demo-raise">{betting.currentBet > 0 ? "レイズ後の合計額" : "ベット額"}: {legal?.raise ? showChips(raiseTo) : "—"}</label>
       <input aria-label="レイズ額スライダー" id="poker-demo-raise" type="range" min={minRaiseTo} max={maxRaiseTo} step={1} value={raiseTo} disabled={!canRaise} onChange={e => setRaise(Number(e.target.value))} />
       <input className={styles.raiseAmountInput} aria-label="レイズ後の合計入力" type="number" inputMode="numeric" min={minRaiseTo} max={maxRaiseTo} value={raiseTo} disabled={!canRaise} onChange={e=>{const n=Number(e.target.value);if(Number.isSafeInteger(n))setRaise(Math.min(maxRaiseTo,Math.max(minRaiseTo,n)));}}/>

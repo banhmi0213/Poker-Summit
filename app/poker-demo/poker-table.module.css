@@ -650,3 +650,4 @@
 .table::after{display:none}
 @media(min-width:900px){.table{aspect-ratio:16/9}.topSeats{top:-24px}.edgeSeatThree{left:3%;top:15%}.edgeSeatFour{right:3%;top:15%}.edgeSeatFive{left:3%;top:65%}.edgeSeatSix{right:3%;top:65%}}
 @media(max-width:899px){.table,.table[data-felt]{background-image:url('/images/poker-table-mobile.png')!important;aspect-ratio:936/1664;min-height:0!important;max-height:none;width:calc(100% - 44px);height:auto!important;margin:30px 22px 48px}.topSeats{top:-20px}.edgeSeatThree{left:-5%;top:18%}.edgeSeatFour{right:-5%;top:18%}.edgeSeatFive{left:-5%;top:67%}.edgeSeatSix{right:-5%;top:67%}}
+.hint{margin:4px 0 8px;font-size:12px;line-height:1.6;color:#d9e6ee}.hint b{color:#ffe3a0;font-variant-numeric:tabular-nums}.hint small{display:block;font-size:10px;color:#91a8ba}

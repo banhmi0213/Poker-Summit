@@ -26,7 +26,7 @@ async function lifecycle(youBust=false){
  const click=async b=>{assert.ok(b);assert.ok(!b.props.disabled);await act(async()=>{await b.props.onClick();});};
  try{
   const tournament={id:'sample',title:'Elimination UI test',owner_store_id:null,starts_at:new Date(now).toISOString(),published:false,image_url:null,structure:{startingStack:200,anteType:'bb',lateRegLevel:0,reentry:false,periods:[{kind:'level',minutes:20,sb:50,bb:100,ante:100,note:''}]}};
-  await act(async()=>{renderer=create(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:{board,holes},tournament,serverNow:now}));});
+  await act(async()=>{renderer=create(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:{board,holes},tournament,serverNow:now,cpuMode:'calling'}));});
   await advance(3000);await click(button('ALL-IN額'));await click(renderer.root.findByProps({className:'actions'}).findAllByType('button')[3]);
   const street=()=>renderer.root.findByProps({className:'table'}).props['data-street'];
   for(let n=0;n<200&&street()===0;n++)await advance(100);
