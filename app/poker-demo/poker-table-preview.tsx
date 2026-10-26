@@ -1,5 +1,6 @@
 "use client";
-import {playActionEffect,publicAction,type ActionKind} from "@/lib/poker/action-feedback";
+import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
+import {playTableEffect} from "@/lib/poker/table-effects";
 import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
@@ -153,34 +154,12 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         osc.connect(gain); gain.connect(context.destination);
         osc.start(start); osc.stop(start + duration + 0.015);
       };
-      if (["fold","check","call","bet","raise","allin"].includes(kind)) {
-        playActionEffect(context,kind as ActionKind);
+      if (["fold","check","call","bet","raise","allin","deal","win"].includes(kind)) {
+        playTableEffect(context, kind as ActionKind | "deal" | "win");
       } else if (kind === "turn") {
         tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
       } else if (kind === "action") {
         tone(310, 0, 0.085, 0.085, "triangle");
-      } else if (kind === "deal") {
-        const buffer = context.createBuffer(1, Math.ceil(context.sampleRate * 0.15), context.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-        [0, 0.12].forEach(delay => {
-          const source = context.createBufferSource();
-          const filter = context.createBiquadFilter();
-          const gain = context.createGain();
-          const start = now + delay;
-          source.buffer = buffer; filter.type = "bandpass";
-          filter.frequency.value = 2400; filter.Q.value = 0.65;
-          gain.gain.setValueAtTime(0.0001, start);
-          gain.gain.exponentialRampToValueAtTime(0.13, start + 0.014);
-          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.105);
-          source.connect(filter); filter.connect(gain); gain.connect(context.destination);
-          source.start(start); source.stop(start + 0.12);
-        });
-      } else {
-        // Original three-note victory sound. A custom audio asset can replace this later.
-        [659.25, 830.61, 987.77].forEach((frequency, index) => {
-          tone(frequency, index * 0.115, 0.3, 0.10);
-        });
       }
     } catch { /* Audio must never interrupt the game. */ }
   };
