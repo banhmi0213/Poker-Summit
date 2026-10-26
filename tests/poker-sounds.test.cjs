@@ -21,3 +21,26 @@ test('polls and reconnect do not replay sounds; new hand, street, own turn and r
  r=onlineSoundEvents(next.marker,snapshot({handId:'h2'}));assert.deepEqual(r.sounds,['deal','turn']);
  const waiting=onlineSoundEvents(null,{youSeat:1,hand:null});assert.deepEqual(onlineSoundEvents(waiting.marker,snapshot()).sounds,['deal','turn']);assert.equal(onlineSoundEvents(r.marker,null).marker,null);
 });
+
+test('public totals classify six actions, including a call that completes a street and all-in',()=>{
+ const {publicAction}=require('../lib/poker/action-feedback.ts');
+ const before=[{id:'seat-1',committed:50,totalCommitted:50,folded:false,allIn:false},{id:'seat-2',committed:100,totalCommitted:100,folded:false,allIn:false}];
+ const next=(change)=>[ {...before[0],...change},before[1] ];
+ assert.equal(publicAction(before,next({folded:true}),'seat-1').kind,'fold');
+ assert.equal(publicAction(before,next({committed:100,totalCommitted:100}),'seat-1').kind,'call');
+ assert.equal(publicAction(before,next({committed:0,totalCommitted:100}),'seat-1').kind,'call');
+ assert.equal(publicAction(before,next({committed:300,totalCommitted:300}),'seat-1').kind,'raise');
+ assert.equal(publicAction(before,next({committed:70,totalCommitted:70,allIn:true}),'seat-1').kind,'allin');
+ const zero=before.map(p=>({...p,committed:0,totalCommitted:100}));
+ assert.equal(publicAction(zero,zero,'seat-1').kind,'check');
+ assert.equal(publicAction(zero,[{...zero[0],committed:75,totalCommitted:175},zero[1]],'seat-1').kind,'bet');
+ assert.equal(publicAction(before,next({}),'missing'),null);
+});
+test('typed cues are emitted once and retained markers exclude hole cards',()=>{
+ const players=[{id:'seat-1',committed:50,totalCommitted:50,folded:false,allIn:false,hole:['secret']},{id:'seat-2',committed:100,totalCommitted:100,folded:false,allIn:false}];
+ const baseline=onlineSoundEvents(null,snapshot({players}));
+ const next=onlineSoundEvents(baseline.marker,snapshot({revision:1,toAct:'seat-2',players:[{...players[0],committed:300,totalCommitted:300},players[1]]}));
+ assert.equal(next.cue.kind,'raise');assert.equal(next.cue.amount,250);assert.ok(next.sounds.includes('raise'));assert.ok(!JSON.stringify(next.marker).includes('secret'));
+ assert.deepEqual(onlineSoundEvents(next.marker,snapshot({revision:1,toAct:'seat-2',players})).sounds,[]);
+ assert.equal(onlineSoundEvents(baseline.marker,snapshot({revision:3,toAct:'seat-2',players})).cue,null);
+});
