@@ -126,15 +126,15 @@ test('finished auto-exit retains its absolute deadline through polls and connect
 
 test('online entry/action/exit sounds obey mute; exit waits for its cue and cleanup releases audio',async t=>{
  const oldDocument=global.document,oldAudio=global.AudioContext,oldWindow=global.window,oldSet=global.setTimeout,oldClear=global.clearTimeout;
- const tones=[],listeners=new Map();let closed=0,exitTimer=null,navigated=null;
+ const tones=[],listeners=new Map();let noises=0,closed=0,exitTimer=null,navigated=null;
  global.document={addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name)};
  const param={setValueAtTime(){},exponentialRampToValueAtTime(){}};
- global.AudioContext=class{state='suspended';currentTime=0;sampleRate=8000;destination={};resume(){this.state='running';return Promise.resolve();}close(){closed++;return Promise.resolve();}createOscillator(){return {type:'sine',frequency:{setValueAtTime:f=>tones.push(f)},connect(){},disconnect(){},start(){},stop(){}};}createGain(){return {gain:param,connect(){},disconnect(){}};}};
+ global.AudioContext=class{state='suspended';currentTime=0;sampleRate=8000;destination={};resume(){this.state='running';return Promise.resolve();}close(){closed++;return Promise.resolve();}createOscillator(){return {type:'sine',frequency:{setValueAtTime:f=>tones.push(f)},connect(){},disconnect(){},start(){},stop(){}};}createGain(){return {gain:param,connect(){},disconnect(){}};}createBiquadFilter(){return {type:'',Q:{value:0},frequency:{value:0,setValueAtTime(){},exponentialRampToValueAtTime(){}},connect(){},disconnect(){}};}createBufferSource(){return {buffer:null,connect(){},disconnect(){},start(){noises++;},stop(){}};}createBuffer(){return {getChannelData:()=>new Float32Array(16)};}createDynamicsCompressor(){return {threshold:{value:0},ratio:{value:0},connect(){},disconnect(){}};}};
  global.window={location:{assign:path=>navigated=path}};
  global.setTimeout=(fn,ms,...args)=>{if(ms===350){exitTimer=fn;return 'audio-exit';}return oldSet(fn,ms,...args);};global.clearTimeout=id=>{if(id!=='audio-exit')oldClear(id);};
  t.after(()=>{global.document=oldDocument;global.AudioContext=oldAudio;global.window=oldWindow;global.setTimeout=oldSet;global.clearTimeout=oldClear;});
  const f=await harness(t);assert.ok(listeners.has('pointerdown'));assert.equal(tones.length,0);await f.click('接続・再接続');assert.deepEqual(tones.slice(0,2),[523.25,783.99]);
- const count=tones.length;await f.poll();assert.equal(tones.length,count);await f.click('コール');assert.deepEqual(tones.slice(count,count+4),[1350,340,1720,420],'call plays the two chip clacks, not the old generic action beep');
+ const count=tones.length;await f.poll();assert.equal(tones.length,count);const noisesBefore=noises;await f.click('コール');assert.ok(noises>noisesBefore,'call plays the chip clacks');assert.ok(!tones.slice(count).includes(310),'call does not play the old generic action beep');
  await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームメニューを開く'}).props.onClick());const toggle=f.renderer.root.findByProps({'aria-label':'SE（効果音）'});
  await act(async()=>toggle.props.onChange({target:{checked:false}}));const muted=tones.length;await f.click('接続・再接続');assert.equal(tones.length,muted);
  await act(async()=>toggle.props.onChange({target:{checked:true}}));assert.ok(tones.includes(880));
