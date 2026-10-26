@@ -1,0 +1,13 @@
+const fs=require('fs'),path=require('path');
+const runtime=process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite';
+const {PGlite}=require(runtime),{pgcrypto}=require(path.join(path.dirname(require.resolve(runtime+'/package.json')),'dist/contrib/pgcrypto.cjs'));
+module.exports=async()=>{const db=new PGlite({extensions:{pgcrypto}});try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema extensions;create extension pgcrypto with schema extensions;
+ create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,is_anonymous boolean default false,raw_user_meta_data jsonb,deleted_at timestamptz,banned_until timestamptz,created_at timestamptz,updated_at timestamptz);
+ create table public.member_status(user_id uuid primary key,suspended boolean default false);create table public.admin_users(user_id uuid primary key);
+ create function auth.uid() returns uuid language sql as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ create function public.is_suspended() returns boolean language sql as $$select coalesce((select suspended from public.member_status where user_id=auth.uid()),false)$$;
+ grant usage on schema public,auth to anon,authenticated,service_role;
+ create table public.poker_ring_tables(id uuid primary key default gen_random_uuid(),title text,capacity integer,sb bigint,bb bigint,min_buy_in bigint,max_buy_in bigint,note text default '',published boolean default false,deleted_at timestamptz,revision integer default 1,sort_order integer default 0,created_at timestamptz default now(),updated_at timestamptz default now());`);
+ const folder=path.resolve(__dirname,'../../supabase/migrations');for(const suffix of ['_poker_welcome_chips_and_escrow.sql','_poker_welcome_member_admin_eligibility.sql','_poker_reservation_member_guard.sql','_poker_ring_seating_and_hand_accounting.sql','_poker_ring_button_context_guard.sql','_poker_ring_atomic_lobby_admission.sql','_poker_ring_deferred_exit.sql','_poker_ring_live_play.sql','_poker_ring_seats_and_timebank.sql','_poker_ring_shorter_result_pause.sql','_poker_ring_twenty_second_turns.sql','_poker_ring_inactivity_policy.sql','_poker_ring_pending_exit_actions.sql']){const file=fs.readdirSync(folder).find(f=>f.endsWith(suffix));await db.exec(fs.readFileSync(path.join(folder,file),'utf8'));}
+ return db;}catch(error){await db.close();throw error;}};

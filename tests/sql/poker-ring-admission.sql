@@ -1,0 +1,34 @@
+begin;
+create function pg_temp.admission_reject(statement text,fragment text) returns void language plpgsql as $$begin begin execute statement;exception when others then if position(fragment in sqlerrm)>0 then return;else raise;end if;end;raise exception 'Expected rejection %',fragment;end;$$;
+do $$
+declare a uuid:=gen_random_uuid();b uuid:=gen_random_uuid();c uuid:=gen_random_uuid();tid uuid:=gen_random_uuid();tid6 uuid:=gen_random_uuid();ra uuid:=gen_random_uuid();rb uuid:=gen_random_uuid();ra2 uuid:=gen_random_uuid();leave1 uuid:=gen_random_uuid();state jsonb;ctx jsonb;hid uuid:=gen_random_uuid();sealed jsonb:='{"format":1,"keyId":"fixture","iv":"AAAAAAAAAAAAAAAA","tag":"AAAAAAAAAAAAAAAAAAAAAA==","data":"fixture"}';
+begin
+ insert into auth.users(id,email,email_confirmed_at,is_anonymous) values(a,'admit-'||a||'@example.invalid',now(),false),(b,'admit-'||b||'@example.invalid',now(),false),(c,'admit-'||c||'@example.invalid',now(),false);
+ insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values(tid,'Rollback admission',2,50,100,1000,3000,true),(tid6,'Rollback hand barrier',6,50,100,1000,3000,true);
+ state:=public.poker_ring_admit(a,tid,1000,ra);perform public.poker_ring_admit(a,tid,1000,ra);
+ if (state->'wallet'->>'available')::bigint<>2000 or (state->'membership'->>'seat')::integer<>1 then raise exception 'Atomic admission failed';end if;
+ perform public.poker_ring_admit(b,tid,2000,rb);
+ perform pg_temp.admission_reject(format('select public.poker_ring_admit(%L,%L,1000,%L)',c,tid,gen_random_uuid()),'Table full');
+ if (select available from poker_private.ring_accounts where member_id=c)<>3000 then raise exception 'Full-table attempt charged chips';end if;
+ state:=public.poker_ring_lobby_state(a,tid);
+ if position(b::text in state::text)>0 or position(rb::text in state::text)>0 or position('email' in state::text)>0 then raise exception 'Opponent private identity exposed';end if;
+ perform pg_temp.admission_reject(format('select public.poker_ring_depart(%L,%L,%L)',b,ra,leave1),'unavailable');
+ perform public.poker_ring_depart(a,ra,leave1);perform public.poker_ring_depart(a,ra,leave1);
+ state:=public.poker_ring_admit(a,tid,1000,ra);
+ if state->'membership'<>'null'::jsonb then raise exception 'Old join replay reseated member';end if;
+ state:=public.poker_ring_admit(a,tid,1000,ra2);
+ perform public.poker_ring_depart(a,ra,leave1);
+ state:=public.poker_ring_lobby_state(a,tid);
+ if state->'membership'->>'reservationId'<>ra2::text or (state->'wallet'->>'available')::bigint<>2000 then raise exception 'Old leave affected newer seating';end if;
+ perform pg_temp.admission_reject(format('select public.poker_ring_admit(%L,%L,1100,%L)',a,tid,ra2),'Request conflict');
+ perform public.poker_ring_depart(a,ra2,gen_random_uuid());perform public.poker_ring_depart(b,rb,gen_random_uuid());
+ perform public.poker_ring_admit(a,tid6,1000,gen_random_uuid());perform public.poker_ring_admit(b,tid6,1000,gen_random_uuid());
+ ctx:=public.poker_ring_context(tid6);perform public.poker_ring_hand_begin(tid6,hid,ctx->'seats',(ctx->'terms')||jsonb_build_object('buttonSeat',ctx->'buttonSeat'),sealed,null);
+ perform pg_temp.admission_reject(format('select public.poker_ring_admit(%L,%L,1000,%L)',c,tid6,gen_random_uuid()),'Hand in progress');
+ if (select available from poker_private.ring_accounts where member_id=c)<>3000 or exists(select 1 from poker_private.ring_fund_reservations where member_id=c) then raise exception 'Seat rejection did not roll back funding';end if;
+ if (select sum(available+in_play) from poker_private.ring_accounts where member_id in(a,b,c))<>9000 then raise exception 'Admission chip total changed';end if;
+end;$$;
+set local role authenticated;
+do $$begin if has_function_privilege(current_user,'public.poker_ring_admit(uuid,uuid,bigint,uuid)','execute') or has_function_privilege(current_user,'public.poker_ring_depart(uuid,uuid,uuid)','execute') or has_function_privilege(current_user,'public.poker_ring_lobby_state(uuid,uuid)','execute') then raise exception 'Client can invoke service-only admission';end if;end;$$;
+reset role;
+rollback;

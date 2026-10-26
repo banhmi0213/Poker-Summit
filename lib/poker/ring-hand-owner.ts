@@ -1,0 +1,67 @@
+/** Server-only ring accounting coordinator. No HTTP endpoint or client-selected identity.
+ * Prepare each encrypted write once; freeze on an uncertain acknowledgement.
+ * Mounting this in the public service still requires timers, admission and owner fencing.
+ */
+import {createCipheriv,createDecipheriv,randomBytes,randomUUID} from 'node:crypto';
+import {AuthoritativeHand,type HandCheckpoint} from './authoritative-hand';
+import type {KeyRing,SealedCheckpoint} from './room-persistence';
+import {buildHandHistory,type HandHistory} from './hand-history';
+export type RingSeat={reservationId:string;memberId:string;seat:number;stack:number};
+export type RingContext={tableId:string;capacity:2|6;terms:{sb:number;bb:number};seats:RingSeat[];published:boolean;activeHandId:string|null;buttonSeat:number|null};
+type Result={reservationId:string;stack:number}[]|null;
+type Saved={handId:string;tableId:string;version:number;seats:RingSeat[];terms:{sb:number;bb:number};buttonSeat:number;sealed:SealedCheckpoint;status:'active'|'complete';result:Result};
+type Begin={tableId:string;handId:string;roster:RingSeat[];terms:{sb:number;bb:number;buttonSeat:number};sealed:SealedCheckpoint;result:Result};
+type Write={handId:string;expected:number;writeId:string;sealed:SealedCheckpoint;result:Result};
+export type HistoryRequest={kind:'ring'|'tournament';sourceId:string;handNumber:number|null;record:HandHistory};
+export interface RingStore {context(tableId:string):Promise<RingContext>;begin(request:Begin):Promise<number>;write(request:Write):Promise<number>;load(handId:string):Promise<Saved|null>;
+ /** Optional, best effort: a settled hand's readable record. Failure never affects play or chips. */
+ history?(request:HistoryRequest):Promise<unknown>}
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,max=4503599627370495;
+function id(v:unknown):asserts v is string{if(typeof v!=='string'||!uuid.test(v))throw Error('Invalid ring identity');}
+function integer(v:unknown,min=0,limit=max):asserts v is number{if(!Number.isSafeInteger(v)||Number(v)<min||Number(v)>limit)throw Error('Invalid ring value');}
+function seats(value:RingSeat[]){if(!Array.isArray(value)||value.length>6)throw Error('Invalid ring seats');let prior=0;const members=new Set(),reservations=new Set();for(const s of value){id(s.memberId);id(s.reservationId);integer(s.seat,1,6);integer(s.stack);if(s.seat<=prior||members.has(s.memberId)||reservations.has(s.reservationId))throw Error('Invalid ring seats');prior=s.seat;members.add(s.memberId);reservations.add(s.reservationId);}}
+function terms(t:RingContext['terms']){if(!t)throw Error('Invalid ring terms');integer(t.sb,1,1000000000);integer(t.bb,t.sb+1,1000000000);}
+function context(c:RingContext){if(!c)throw Error('Invalid ring context');id(c.tableId);terms(c.terms);seats(c.seats);if(![2,6].includes(c.capacity)||c.seats.some(s=>s.seat>c.capacity)||typeof c.published!=='boolean')throw Error('Invalid ring context');if(c.activeHandId!==null)id(c.activeHandId);if(c.buttonSeat!==null)integer(c.buttonSeat,1,c.capacity);}
+function key(keys:KeyRing,keyId:string){if(!/^[a-zA-Z0-9_-]{1,80}$/.test(keyId)||!Object.hasOwn(keys.keys,keyId)||keys.keys[keyId].byteLength!==32)throw Error('Ring checkpoint key unavailable');return keys.keys[keyId];}
+function aad(handId:string,version:number){id(handId);integer(version,1,10000);return Buffer.from(JSON.stringify(['poker-ring-hand',1,handId.toLowerCase(),version]));}
+function seal(handId:string,version:number,state:HandCheckpoint,keys:KeyRing):SealedCheckpoint{const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key(keys,keys.active),iv),plain=Buffer.from(JSON.stringify(state));if(plain.length>2*1024*1024)throw Error('Ring checkpoint too large');cipher.setAAD(aad(handId,version));const data=Buffer.concat([cipher.update(plain),cipher.final()]);return {format:1,keyId:keys.active,iv:iv.toString('base64'),tag:cipher.getAuthTag().toString('base64'),data:data.toString('base64')};}
+function open(handId:string,version:number,s:SealedCheckpoint,keys:KeyRing):HandCheckpoint{if(!s||s.format!==1||typeof s.data!=='string'||s.data.length>2800000||typeof s.iv!=='string'||typeof s.tag!=='string')throw Error('Invalid ring checkpoint');const iv=Buffer.from(s.iv,'base64'),tag=Buffer.from(s.tag,'base64');if(iv.length!==12||tag.length!==16)throw Error('Invalid ring checkpoint');const decipher=createDecipheriv('aes-256-gcm',key(keys,s.keyId),iv);decipher.setAAD(aad(handId,version));decipher.setAuthTag(tag);return JSON.parse(Buffer.concat([decipher.update(Buffer.from(s.data,'base64')),decipher.final()]).toString('utf8'));}
+function result(hand:AuthoritativeHand,roster:RingSeat[]):Result{const s=hand.snapshot(null);return s.result?roster.map(p=>({reservationId:p.reservationId,stack:s.players.find(v=>v.id==='seat-'+p.seat)!.stack})):null;}
+function sameResult(a:Result,b:Result){return a===null?b===null:Array.isArray(b)&&a.length===b.length&&new Set(b.map(e=>e.reservationId)).size===b.length&&a.every(e=>b.some(v=>v.reservationId===e.reservationId&&v.stack===e.stack));}
+export class RingCommandError extends Error{}
+export class RingHandOwner {
+ #hand:AuthoritativeHand;#version:number;#seats:RingSeat[];#tableId:string;#pending:{request:Write;hand:AuthoritativeHand}|null=null;#busy=false;
+ private constructor(private store:RingStore,private keys:KeyRing,hand:AuthoritativeHand,version:number,roster:RingSeat[],tableId:string){this.#hand=hand;this.#version=version;this.#seats=structuredClone(roster);this.#tableId=tableId;}
+ /** Keep this prepared object if startup acknowledgement is lost: retry without re-dealing. */
+ static async prepare(store:RingStore,tableId:string,keys:KeyRing){id(tableId);const c=await store.context(tableId);context(c);if(c.tableId!==tableId||!c.published||c.activeHandId||c.seats.length<2||c.seats.some(s=>s.stack<1))throw Error('Ring table not ready');const button=c.seats.findIndex(s=>s.seat===c.buttonSeat);if(button<0)throw Error('Invalid button');const hand=new AuthoritativeHand(c.seats.map(s=>({id:'seat-'+s.seat,stack:s.stack})),button,{...c.terms,level:0,index:0,ante:0,anteType:'none'},undefined,undefined,{runItTwice:true});const handId=hand.snapshot(null).handId;const request:Begin={tableId,handId,roster:structuredClone(c.seats),terms:{...c.terms,buttonSeat:c.buttonSeat!},sealed:seal(handId,1,hand.checkpoint(),keys),result:result(hand,c.seats)};return {handId,commit:async()=>{const version=await store.begin(structuredClone(request));if(version!==1)throw Error('Invalid ring start acknowledgement');return RingHandOwner.restore(store,handId,keys);}};}
+ static async restore(store:RingStore,handId:string,keys:KeyRing){id(handId);const saved=await store.load(handId);if(!saved||saved.handId!==handId)throw Error('Ring hand unavailable');id(saved.tableId);seats(saved.seats);terms(saved.terms);integer(saved.version,1,10000);if(!['active','complete'].includes(saved.status)||saved.seats.length<2)throw Error('Invalid stored ring hand');const cp=open(handId,saved.version,saved.sealed,keys),hand=AuthoritativeHand.restore(cp),s=hand.snapshot(null);if(s.handId!==handId||cp.initial.buttonIndex!==saved.seats.findIndex(p=>p.seat===saved.buttonSeat)||cp.initial.entries.length!==saved.seats.length||cp.initial.entries.some((p,i)=>p.id!=='seat-'+saved.seats[i].seat||p.stack!==saved.seats[i].stack)||s.terms.sb!==saved.terms.sb||s.terms.bb!==saved.terms.bb||s.terms.ante!==0||s.terms.anteType!=='none'||(saved.status==='complete')!==Boolean(s.result)||!sameResult(result(hand,saved.seats),saved.result))throw Error('Ring checkpoint does not match accounting');return new RingHandOwner(store,keys,hand,saved.version,saved.seats,saved.tableId);}
+ get version(){return this.#version;}
+ get uncertain(){return this.#pending!==null;}
+ wasSeated(memberId:string){return this.#seats.some(s=>s.memberId===memberId);}
+ ownsReservation(memberId:string,reservationId:string){return this.#seats.some(s=>s.memberId===memberId&&s.reservationId===reservationId);}
+ snapshot(memberId:string|null){if(this.#pending||this.#busy)throw Error('Ring commit pending');let viewer:string|null=null;if(memberId!==null){id(memberId);const seat=this.#seats.find(s=>s.memberId===memberId);if(!seat)throw Error('Ring member not seated');viewer='seat-'+seat.seat;}return this.#hand.snapshot(viewer);}
+ async act(memberId:string,command:unknown){if(this.#busy||this.#pending)throw Error('Ring commit pending');id(memberId);const seat=this.#seats.find(p=>p.memberId===memberId);if(!seat)throw Error('Ring member not seated');const hand=AuthoritativeHand.restore(this.#hand.checkpoint());let ack;try{ack=hand.act('seat-'+seat.seat,command);}catch{throw new RingCommandError('Invalid ring action');}if(ack.replayed)return {replayed:true,version:this.#version};const handId=hand.snapshot(null).handId,request:Write={handId,expected:this.#version,writeId:randomUUID(),sealed:seal(handId,this.#version+1,hand.checkpoint(),this.keys),result:result(hand,this.#seats)};this.#pending={request,hand};return this.retryPending();}
+ async retryPending(){if(this.#busy)throw Error('Ring commit pending');const pending=this.#pending;if(!pending)throw Error('No pending ring write');this.#busy=true;try{const version=await this.store.write(structuredClone(pending.request));if(version!==pending.request.expected+1)throw Error('Invalid ring write acknowledgement');const restored=await RingHandOwner.restore(this.store,pending.request.handId,this.keys);this.#hand=restored.#hand;this.#version=restored.#version;this.#seats=restored.#seats;this.#pending=null;if(pending.request.result)await this.#recordHistory();return {replayed:false,version:this.#version};}finally{this.#busy=false;}}
+ /** Hand history is saved after the chips are committed. Errors are swallowed: play must never stop for it. */
+ async #recordHistory(){if(!this.store.history)return;try{const record=buildHandHistory(this.#hand.checkpoint(),Object.fromEntries(this.#seats.map(s=>['seat-'+s.seat,s.memberId])));await this.store.history({kind:'ring',sourceId:this.#tableId,handNumber:null,record});}catch{/* best effort */}}
+}
+
+type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
+/** Pass a dedicated service-role client. No public/authenticated client can call these RPCs. */
+export class SupabaseRingStore implements RingStore{
+ constructor(private client:RpcClient){}
+ private async rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw Error('Ring accounting request failed');return data;}
+ async context(tableId:string){id(tableId);const c=await this.rpc('poker_ring_context',{p_table:tableId}) as RingContext;context(c);return c;}
+ async load(handId:string){id(handId);return await this.rpc('poker_ring_hand_load',{p_hand:handId}) as Saved|null;}
+ async begin(r:Begin){return Number(await this.rpc('poker_ring_hand_begin',{p_table:r.tableId,p_hand:r.handId,p_roster:r.roster,p_terms:r.terms,p_sealed:r.sealed,p_result:r.result}));}
+ async write(r:Write){return Number(await this.rpc('poker_ring_hand_write',{p_hand:r.handId,p_expected:r.expected,p_write:r.writeId,p_sealed:r.sealed,p_result:r.result}));}
+ async history(r:HistoryRequest){return saveHandHistory(this.client,r);}
+ async reserve(memberId:string,tableId:string,amount:number,requestId:string){id(memberId);id(tableId);id(requestId);integer(amount,1,1000000000);return this.rpc('poker_ring_reserve_funds',{p_member:memberId,p_table:tableId,p_amount:amount,p_request:requestId});}
+ async seat(memberId:string,reservationId:string,seat:number){id(memberId);id(reservationId);integer(seat,1,6);return this.rpc('poker_ring_seat_funds',{p_member:memberId,p_reservation:reservationId,p_seat:seat});}
+ async cancel(reservationId:string,requestId:string){id(reservationId);id(requestId);return this.rpc('poker_ring_return_reserved_funds',{p_reservation:reservationId,p_request:requestId});}
+ async cashout(memberId:string,reservationId:string,requestId:string){id(memberId);id(reservationId);id(requestId);return this.rpc('poker_ring_cashout',{p_member:memberId,p_reservation:reservationId,p_request:requestId});}
+ async releaseExpired(tableId:string){id(tableId);return this.rpc('poker_ring_release_expired',{p_table:tableId});}
+}
+
+/** Shared by ring and tournament stores. Idempotent per hand; never sends the record anywhere else. */
+export async function saveHandHistory(client:RpcClient,r:HistoryRequest){id(r.sourceId);id(r.record.handId);const {data,error}=await client.rpc('poker_hand_history_save',{p_hand:r.record.handId,p_kind:r.kind,p_source:r.sourceId,p_hand_number:r.handNumber,p_record:r.record});if(error)throw Error('Hand history save failed');return data;}

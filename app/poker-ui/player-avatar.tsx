@@ -1,0 +1,3 @@
+'use client';
+import {useState} from 'react';
+export function PlayerAvatar({url,name,className}:{url?:string|null;name:string;className?:string}){const [failed,setFailed]=useState<string|null>(null);const safe=typeof url==='string'&&/^https:\/\//i.test(url)&&url!==failed;return safe?<img src={url} alt={name} className={className} referrerPolicy="no-referrer" onError={()=>setFailed(url!)}/>:<svg viewBox="0 0 64 64" role="img" aria-label={`${name}のアイコン未設定`} className={className}><circle cx="32" cy="32" r="32" fill="#382d20"/><circle cx="32" cy="23" r="11" fill="#c1a56d"/><path d="M12 59v-7a20 20 0 0 1 40 0v7" fill="#c1a56d"/></svg>;}

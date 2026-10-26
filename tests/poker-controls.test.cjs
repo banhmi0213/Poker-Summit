@@ -32,17 +32,17 @@ finally {
 require('node:test').test('controls render legal amounts and actions across five betting states', () => {
     let r = createBettingRound([{ id: 'you', stack: 1000, committed: 50 }, { id: 'p5', stack: 1000, committed: 100 }, { id: 'p3', stack: 1000 }, { id: 'p2', stack: 1000 }, { id: 'p4', stack: 1000 }, { id: 'p6', stack: 1000 }], 100, 'you');
     let v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, true, false, false]);
-    assert.match(v.buttons[2].text, /50/);
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, false]);
+    assert.match(v.buttons[1].text, /50/);
     assert.match(v.html, /min="200" max="1050" step="1"/);
     r = createBettingRound([{ id: 'you', stack: 30, committed: 50 }, { id: 'p5', stack: 1000, committed: 100 }, { id: 'p3', stack: 0, folded: true }, { id: 'p2', stack: 0, folded: true }, { id: 'p4', stack: 0, folded: true }, { id: 'p6', stack: 0, folded: true }], 100, 'you');
     v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, true, false, true]);
-    assert.match(v.buttons[2].text, /オールインコール.*30/);
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, true]);
+    assert.match(v.buttons[1].text, /オールインコール.*30/);
     r = createBettingRound([{ id: 'you', stack: 1000 }, { id: 'p5', stack: 1000 }, { id: 'p3', stack: 1000 }, { id: 'p2', stack: 1000 }, { id: 'p4', stack: 1000 }, { id: 'p6', stack: 1000 }], 100, 'you');
     v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, true, false]);
-    assert.equal(v.buttons[3].text, 'ベット');
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, false]);
+    assert.equal(v.buttons[2].text, 'ベット');
     assert.match(v.html, /min="100" max="1000"/);
     r = applyBettingAction(r, 'you', { type: 'check' });
     v = render(r);
@@ -52,7 +52,7 @@ require('node:test').test('controls render legal amounts and actions across five
     for (const id of ['p3', 'p2', 'p4', 'p6'])
         r = applyBettingAction(r, id, { type: 'call' });
     v = render(r);
-    assert.equal(v.buttons[3].text, 'オールイン');
+    assert.equal(v.buttons[2].text, 'オールイン');
     assert.match(v.html, /min="150" max="150"/);
     assert.match(v.html, /オールインのみ/);
     React.useState = original;
@@ -84,8 +84,9 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     const html = render(r).html;
     const { cardLabel } = req(root + '/lib/poker/card-display.ts');
     const hand = html.match(/<div class="hole"[^>]*>([\s\S]*?)<\/div>/)[1];
-    for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
+    for (const card of fixtureDeal.holes.you) assert.ok(hand.replace(/<[^>]+>/g,'').includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
+    assert.equal((html.match(/src="\/images\/summit-finger-clean.webp"/g)||[]).length,10);
     assert.match(html, /aria-label="共通カード"[^>]*><\/div>/);
 });
 
@@ -159,6 +160,6 @@ require('node:test').test('when your seat is outside the current hand, cards and
  const tournament={id:'sample',title:'FOLLOW',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null},ids=['p2','p4'];
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],ids,'p2'),tournament,initialSeatIds:ids,serverNow:Date.parse(tournament.starts_at)}));
  assert.doesNotMatch(html,/class="hole"/);assert.match(html,/脱落・進行確認中/);
- const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,4);
+ const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,3);
  assert.match(html,/<button class="reset" type="button">デモをリセット<\/button>/);
 });
