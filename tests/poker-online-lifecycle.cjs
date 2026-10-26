@@ -135,7 +135,7 @@ test('online entry/action/exit sounds obey mute; exit waits for its cue and clea
  t.after(()=>{global.document=oldDocument;global.AudioContext=oldAudio;global.window=oldWindow;global.setTimeout=oldSet;global.clearTimeout=oldClear;});
  const f=await harness(t);assert.ok(listeners.has('pointerdown'));assert.equal(tones.length,0);await f.click('接続・再接続');assert.deepEqual(tones.slice(0,2),[523.25,783.99]);
  const count=tones.length;await f.poll();assert.equal(tones.length,count);const noisesBefore=noises;await f.click('コール');assert.ok(noises>noisesBefore,'call plays the chip clacks');assert.ok(!tones.slice(count).includes(310),'call does not play the old generic action beep');
- await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームメニューを開く'}).props.onClick());const toggle=f.renderer.root.findByProps({'aria-label':'SE（効果音）'});
+ await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームメニューを開く'}).props.onClick());const toggle=f.renderer.root.findByProps({'aria-label':'効果音'});
  await act(async()=>toggle.props.onChange({target:{checked:false}}));const muted=tones.length;await f.click('接続・再接続');assert.equal(tones.length,muted);
  await act(async()=>toggle.props.onChange({target:{checked:true}}));assert.ok(tones.includes(880));
  await act(async()=>f.renderer.root.findByProps({'aria-label':'ゲームを退出'}).props.onClick());await f.click('退出する');assert.deepEqual(tones.slice(-2),[659.25,440]);assert.equal(navigated,null);assert.ok(exitTimer);exitTimer();assert.equal(navigated,'/poker-lobby');

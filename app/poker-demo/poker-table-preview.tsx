@@ -1,6 +1,8 @@
 "use client";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
+import {useSoundSettings} from "@/lib/poker/sound-settings";
+import {TableBgmPlayer} from "@/app/poker-ui/table-bgm";
 import {MobileWagerEditor} from '@/app/poker-ui/mobile-wager-editor';
 import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
@@ -128,7 +130,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     p5: styles.awardP5, p6: styles.awardP6, you: styles.awardYou,
   };
   const awardWinners = payouts ? clockwiseSeats.filter(id => (payouts[id] ?? 0) > 0) : [];
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [sound, setSound] = useSoundSettings(), soundEnabled = sound.se, setSoundEnabled = (se: boolean) => setSound({ se });
   soundEnabledRef.current = soundEnabled;
   // Unlock Web Audio from any genuine user gesture, including menu and action buttons.
   // Playback is synthesized locally and does not require audio assets.
@@ -415,7 +417,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <span>{blind && <b>{blind} </b>}{displayUnit === "bb" ? `${(p.committed / bigBlind).toFixed(1)} BB` : p.committed.toLocaleString()}</span>
     </div>;
   };
-  return <section className={`${styles.shell} ${styles.demoShell}`} aria-label="ポーカーテーブルのデザイン試作">
+  return <section className={`${styles.shell} ${styles.demoShell}`} aria-label="ポーカーテーブルのデザイン試作"><TableBgmPlayer/>
     <div className={styles.heading}>
       <button type="button" className={styles.menuToggle} aria-label="ゲームメニューを開く" aria-expanded={menuOpen} aria-controls="poker-game-menu" onClick={() => setMenuOpen(v => !v)}>☰</button>
       <span>POKER SUMMIT · TEXAS HOLD'EM</span>
@@ -434,7 +436,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         {menuPage === "settings" && <div className={styles.menuFields}>
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
-          <label>SE（効果音） <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>効果音 <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>BGM <input type="checkbox" checked={sound.bgm} onChange={e => setSound({ bgm: e.target.checked })} /></label>
           <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
           <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             {([["deal","配る"],["flop","フロップ"],["turnCard","ターン"],["river","リバー"],["fold","フォールド"],["check","チェック"],["call","コール"],["bet","ベット"],["raise","レイズ"],["allin","オールイン"],["win","ポット獲得"],["turn","自分の番"],["action","相手の行動"]] as [SoundKind,string][]).map(([kind,label]) =>
