@@ -818,3 +818,15 @@
  .demoShell .phoneHint[open]{top:auto;bottom:calc(100% + 6px);left:0;right:auto;max-width:230px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px}
  .demoShell .phoneHint p{margin:6px 0;line-height:1.5}.demoShell .phoneHint small{font-size:9px}
 }
+
+/* On phones the cards take visual priority over player portraits. */
+@media(max-width:899px){
+ .table .self .handWithRank{left:calc(50% - 18px);top:-4px;z-index:8}
+ .table .self .selfInfo{margin-top:10px}
+ .table[data-reveal-hands=true] .opponentCardsLayer{z-index:10}
+ .table[data-reveal-hands=true] .showdownTwo{top:5px;left:50%;right:auto;transform:translateX(-50%)}
+ .table[data-reveal-hands=true] .showdownThree{top:18%;left:0;right:auto}
+ .table[data-reveal-hands=true] .showdownFour{top:18%;right:0;left:auto}
+ .table[data-reveal-hands=true] .showdownFive{top:67%;left:0;right:auto;bottom:auto}
+ .table[data-reveal-hands=true] .showdownSix{top:67%;right:0;left:auto;bottom:auto}
+}
