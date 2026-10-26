@@ -644,3 +644,9 @@
 }
 @media(min-width:900px){.actionColumn{margin-right:max(0px,calc((100% - min(1100px,calc((100dvh - 250px)*1.75),calc(100% - 70px)))/2 - 40px))}}
 .controls .actions small{display:block;font-size:13px;margin-top:3px;color:inherit}
+
+/* Real tabletop materials; functional cards/seats remain independent layers. */
+.table,.table[data-felt]{background:transparent url('/images/poker-table-desktop.png') center/100% 100% no-repeat!important;border:0!important;outline:0!important;box-shadow:none!important;padding:0;border-radius:0}
+.table::after{display:none}
+@media(min-width:900px){.table{aspect-ratio:16/9}.topSeats{top:-24px}.edgeSeatThree{left:3%;top:15%}.edgeSeatFour{right:3%;top:15%}.edgeSeatFive{left:3%;top:65%}.edgeSeatSix{right:3%;top:65%}}
+@media(max-width:899px){.table,.table[data-felt]{background-image:url('/images/poker-table-mobile.png')!important;aspect-ratio:936/1664;min-height:0!important;max-height:none;width:calc(100% - 44px);height:auto!important;margin:30px 22px 48px}.topSeats{top:-20px}.edgeSeatThree{left:-5%;top:18%}.edgeSeatFour{right:-5%;top:18%}.edgeSeatFive{left:-5%;top:67%}.edgeSeatSix{right:-5%;top:67%}}
