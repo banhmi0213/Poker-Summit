@@ -776,3 +776,6 @@
 .table :is(.cards,.hole,.miniCards)>.cardBack::before{content:'';position:absolute;left:13%;top:24%;width:74%;height:52%;box-sizing:border-box;border:1px solid #d0af69;border-radius:50%;background:#10273d;z-index:1}
 .table :is(.cards,.hole,.miniCards)>.cardBack::after{content:'';position:absolute;inset:3px;border:1px solid #c8a964;border-radius:3px;pointer-events:none}
 .table .cardBack .thumbLogo{position:relative;width:51%;height:47%;object-fit:contain;filter:drop-shadow(0 1px 1px #0008);z-index:2}
+
+/* The player's own made hand under the chip count (flop onward). */
+.madeHand{display:block;font-style:normal;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap;line-height:1.3}
