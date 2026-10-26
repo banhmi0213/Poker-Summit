@@ -1,4 +1,4 @@
-/** Table sound effects chosen by the owner (2026/10/26): deal F, fold E, check D, call/bet/raise E, pot win B.
+/** Table sound effects chosen by the owner (2026/10/26): deal F, fold E, check D, call/bet/raise E, pot win = shove + fanfare.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
 export type EffectKind='deal'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win';
 
@@ -56,7 +56,8 @@ export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
    hiss(c,t,{dur:.45,f0:3000,q:.6,vol:.08,att:.04});for(const x of pile(34,.45,1.1))chip(c,t+x,{vol:.2,pan:rnd(-.4,.4),len:.8});
    thump(c,t+.47,{f:120,f1:65,dur:.18,vol:.4});chip(c,t+.47,{vol:.28,body:950,len:1.8});return 750;
   case 'win':
-   for(const x of pile(45,.8,1.8))chip(c,t+x,{vol:.22,pan:rnd(-.7,.7)});
-   [1318.5,1661.2,1975.5,2637].forEach((f,i)=>thump(c,t+.8+i*.06,{f,f1:f,dur:.5,vol:.06,type:'triangle'}));return 1500;
+   // Pot win = the shove with a short rising fanfare (owner pick, 2026/10/26).
+   hiss(c,t,{dur:.35,f0:3200,q:.6,vol:.07,att:.03});for(const x of pile(26,.35,1.2))chip(c,t+x,{vol:.2,pan:rnd(-.4,.4),len:.8});
+   [392,493.9,587.3,784].forEach((f,i)=>thump(c,t+.4+i*.07,{f,f1:f,dur:.45,vol:.07,type:'triangle'}));return 1100;
  }
 }
