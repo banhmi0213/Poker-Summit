@@ -108,7 +108,7 @@ export class DurableRoomOwner {
     let captured:unknown;try{captured=structuredClone(payload);}catch{return Promise.reject(new Error('Invalid action payload'));}
     return this.#mutate(r=>r.act(member,connection,captured),r=>!r.replayed);
   }
-  timeBank(member:string,connection:string,handId:string,revision:number){return this.#mutate(r=>r.timeBank(member,connection,handId,revision),r=>!r.replayed);}
+  timeBank(member:string,connection:string,handId:string,revision:number,requestId?:string){return this.#mutate(r=>r.timeBank(member,connection,handId,revision,requestId),r=>!r.replayed);}
   /** Scheduler only. Decision + readiness check + mutation share this owner's FIFO/commit. */
   advance(control:TournamentControl){const captured=structuredClone(control);return this.#mutate(r=>r.advance(captured),r=>r.changed);}
   expireTurn(deadline:TurnDeadline) {

@@ -39,7 +39,7 @@ export class PokerPlayerClient {
   this.#pending={handId:this.#state.hand.handId,revision:this.#state.hand.revision,actionId:this.#id(),action:captured};
   return this.#submit();
  });}
- timeBank(){return this.#serial(async()=>{if(this.#pending||!this.#state?.hand?.legal||!this.#connection)throw new PlayerClientError(409);const result=await this.#send({type:'time-bank',handId:this.#state.hand.handId,revision:this.#state.hand.revision},true);return this.#accept(result.state);});}
+ timeBank(){return this.#serial(async()=>{if(this.#pending||!this.#state?.hand?.legal||!this.#connection)throw new PlayerClientError(409);const result=await this.#send({type:'time-bank',handId:this.#state.hand.handId,revision:this.#state.hand.revision,requestId:crypto.randomUUID()},true);return this.#accept(result.state);});}
  retry(){return this.#serial(async()=>{if(!this.#pending)throw new PlayerClientError(409);return this.#submit();});}
  async #submit(){
   try{const result=await this.#send({type:'act',command:this.#pending},true);const state=this.#accept(result.state);this.#pending=null;return state;}
