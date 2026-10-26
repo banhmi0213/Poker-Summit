@@ -5,7 +5,7 @@ import type {BettingAction} from '@/lib/poker/betting';
 import type {RunsChoice} from '@/lib/poker/hand-command';
 import {useTablePreferences} from './table-preferences';
 import {ringWagerAction} from '@/lib/poker/ring-wager-action';
-import {PokerSounds} from '@/lib/poker/online-sounds';
+import {PokerSounds,boardSound} from '@/lib/poker/online-sounds';
 import {SummitMark} from './brand-mark';
 import {BettingControls} from './betting-controls';
 import {useAutoAction} from './use-auto-action';
@@ -25,7 +25,7 @@ export default function RingLiveTable({play:incoming,blocked,onAction,layout='si
  useEffect(()=>{const local=Date.now(),server=play.serverNow;setNow(server);const timer=setInterval(()=>setNow(server+Date.now()-local),100);return()=>clearInterval(timer);},[play.serverNow]);
  useEffect(()=>{const sound=new PokerSounds();audio.current=sound;const unlock=()=>void sound.unlock();document.addEventListener('pointerdown',unlock);document.addEventListener('keydown',unlock);return()=>{document.removeEventListener('pointerdown',unlock);document.removeEventListener('keydown',unlock);sound.close();audio.current=null;};},[]);
  useEffect(()=>{audio.current?.setEnabled(!muted);},[muted]);
- useEffect(()=>{const prior=last.current;if(!prior||prior.hand!==s.handId)audio.current?.play('deal');else if(!prior.won&&s.result)audio.current?.play('win');else if(prior.board!==s.board.length)audio.current?.play('deal');else if(prior.revision!==s.revision)audio.current?.play('action');if(s.toAct===play.viewerSeat&&(!prior||prior.turn!==s.toAct||prior.revision!==s.revision))audio.current?.play('turn');last.current={hand:s.handId,revision:s.revision,board:s.board.length,turn:s.toAct,won:Boolean(s.result)};},[s.handId,s.revision,s.board.length,s.result,s.toAct,play.viewerSeat]);
+ useEffect(()=>{const prior=last.current;if(!prior||prior.hand!==s.handId)audio.current?.play('deal');else if(!prior.won&&s.result)audio.current?.play('win');else if(prior.board!==s.board.length)audio.current?.play(boardSound(s.board.length)??'deal');else if(prior.revision!==s.revision)audio.current?.play('action');if(s.toAct===play.viewerSeat&&(!prior||prior.turn!==s.toAct||prior.revision!==s.revision))audio.current?.play('turn');last.current={hand:s.handId,revision:s.revision,board:s.board.length,turn:s.toAct,won:Boolean(s.result)};},[s.handId,s.revision,s.board.length,s.result,s.toAct,play.viewerSeat]);
  useEffect(()=>{setAmount(legal?.minRaiseTo===null||legal?.minRaiseTo===undefined?'':String(legal.minRaiseTo));},[s.handId,s.revision,legal?.minRaiseTo]);
  const seconds=play.deadline===null?0:Math.max(0,Math.ceil((play.deadline-now)/1000)),elapsed=play.deadline===null?100:Math.min(100,Math.max(0,100-(play.deadline-now)/((play.turnDurationMs??20000)/100))),disabled=blocked||play.hand.handId!==incoming.hand.handId||play.hand.revision!==incoming.hand.revision||play.deadline===null||now>=play.deadline;
  const wager=Number(amount),valid=legal?.raise&&Number.isSafeInteger(wager)&&wager>=legal.minRaiseTo!&&wager<=legal.maxRaiseTo!;

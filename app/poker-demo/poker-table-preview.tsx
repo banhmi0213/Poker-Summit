@@ -136,7 +136,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
-  type SoundKind = "turn" | "action" | "deal" | "win" | ActionKind;
+  type SoundKind = "turn" | "action" | "deal" | "flop" | "turnCard" | "river" | "win" | ActionKind;
   const playSound = (kind: SoundKind) => {
     if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
@@ -154,8 +154,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         osc.connect(gain); gain.connect(context.destination);
         osc.start(start); osc.stop(start + duration + 0.015);
       };
-      if (["fold","check","call","bet","raise","allin","deal","win"].includes(kind)) {
-        playTableEffect(context, kind as ActionKind | "deal" | "win");
+      if (kind === "turnCard") {
+        playTableEffect(context, "turn");
+      } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win"].includes(kind)) {
+        playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win");
       } else if (kind === "turn") {
         tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
       } else if (kind === "action") {
@@ -200,7 +202,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   useEffect(() => {
     if (previousStreetRef.current === streetStep) return;
     previousStreetRef.current = streetStep;
-    if (streetStep > 0 && streetStep < 4) playSound("deal");
+    if (streetStep > 0 && streetStep < 4) playSound(streetStep === 1 ? "flop" : streetStep === 2 ? "turnCard" : "river");
   }, [streetStep]);
 
 

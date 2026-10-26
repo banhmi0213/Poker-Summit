@@ -1,7 +1,10 @@
 import {type ActionKind} from './action-feedback';
 import {playTableEffect} from './table-effects';
 /** Browser-only synthesized effects, matching the existing demo. No audio files or network I/O. */
-export type PokerSound='turn'|'action'|'deal'|'win'|'enter'|'exit'|ActionKind;
+/** 'turn' = it is your turn; 'turnCard' = the turn card appears on the board. */
+export type PokerSound='turn'|'action'|'deal'|'flop'|'turnCard'|'river'|'win'|'enter'|'exit'|ActionKind;
+/** Board sound for a board that just grew to `count` cards (null for a new hand / no board). */
+export const boardSound=(count:number):PokerSound|null=>count===3?'flop':count===4?'turnCard':count===5?'river':null;
 export class PokerSounds {
  #context:AudioContext|null=null;#enabled=true;#closed=false;
  constructor(private factory:()=>AudioContext=()=>new AudioContext()){}
@@ -21,7 +24,8 @@ export class PokerSounds {
     oscillator.connect(gain);gain.connect(c.destination);oscillator.start(start);oscillator.stop(start+duration+.015);
     oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
    };
-   if(['fold','check','call','bet','raise','allin','deal','win'].includes(kind))return playTableEffect(c,kind as ActionKind|'deal'|'win');
+   if(kind==='turnCard')return playTableEffect(c,'turn');
+   if(['fold','check','call','bet','raise','allin','deal','flop','river','win'].includes(kind))return playTableEffect(c,kind as ActionKind|'deal'|'flop'|'river'|'win');
    if(kind==='turn'){tone(880,0,.13,.12);tone(1174.66,.045,.15,.065);}
    else if(kind==='action')tone(310,0,.085,.085,'triangle');
    else if(kind==='enter'){tone(523.25,0,.15,.08);tone(783.99,.11,.20,.09);}

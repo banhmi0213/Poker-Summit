@@ -1,6 +1,7 @@
-/** Table sound effects chosen by the owner (2026/10/26): deal F, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
+/** Table sound effects chosen by the owner (2026/10/26): deal F, board D, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
-export type EffectKind='deal'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win';
+/** flop/turn/river = community cards appearing on the board (flop plays three). */
+export type EffectKind='deal'|'flop'|'turn'|'river'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win';
 
 const noiseByContext=new WeakMap<BaseAudioContext,AudioBuffer>(),masterByContext=new WeakMap<BaseAudioContext,AudioNode>();
 const rnd=(a:number,b:number)=>a+Math.random()*(b-a);
@@ -58,6 +59,9 @@ function orchestraHit(c:BaseAudioContext,t:number){
 export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
  const t=c.currentTime+.01;
  switch(kind){
+  case 'flop':case 'turn':case 'river':
+   // Owner pick (2026/10/26): the same heavy swish as dealing, one per card.
+   for(let i=0;i<(kind==='flop'?3:1);i++)hiss(c,t+i*.13,{dur:.09,f0:1300,f1:2800,q:.9,vol:.3,att:.008,pan:-.2+i*.2,lp:4000});return kind==='flop'?400:150;
   case 'deal':for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
   case 'fold':hiss(c,t,{dur:.12,f0:2400,f1:4000,q:.7,vol:.14,att:.03,lp:5000});return 200;
   case 'check':
