@@ -498,3 +498,24 @@
 
 /* Keep the complete board lane anchored when demo streets advance. */
 .table .felt,.table[data-street="0"] .felt{top:40%}
+
+/* Reference framing: a wide PC table and a portrait phone table. */
+@media(min-width:900px){
+ .gameMain{max-width:1800px;max-height:none;padding:8px 22px 14px}
+ .shell{grid-template-columns:minmax(0,1fr);grid-template-rows:36px 48px minmax(280px,1fr) auto;gap:6px;padding:6px 18px 10px}
+ .shell .desktopStructure{display:none!important}
+ .heading{grid-column:1;grid-row:1}
+ .gameClock{grid-column:1;grid-row:2;width:min(760px,100%);justify-self:center}
+ .table{grid-column:1;grid-row:3;width:calc(100% - 56px);box-sizing:border-box;justify-self:center;min-height:280px;max-height:none;margin:12px 28px 8px;border-radius:48%/44%}
+ .actionColumn{grid-column:1;grid-row:4;width:min(900px,100%);justify-self:center;padding:0;max-height:230px;overflow:auto}
+ .actionColumn>.controls,.actionColumn>.resultOverlay,.actionColumn>.spectatorPanel{margin-top:0}
+ .statusDock{position:absolute;right:20px;top:48px;width:210px;min-height:0}
+ .showdownFive,.showdownSix{top:65%}
+ .demoInfo{top:14px;left:auto;right:80px}
+ .previousResult{display:none}
+ .table .felt,.table[data-street="0"] .felt{top:39%}
+}
+@media(max-width:899px){
+ .gameMain{max-width:540px}
+ .table{border-radius:47%/25%}
+}
