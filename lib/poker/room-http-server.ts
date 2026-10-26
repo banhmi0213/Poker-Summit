@@ -1,6 +1,9 @@
 /** Explicit Node HTTP adapter for a single registry process. Construction never listens. */
 import {createServer,type IncomingMessage,type ServerResponse} from 'node:http';
 type Handler=(request:Request,roomId:string)=>Promise<Response>;
+const startedAt=new Date().toISOString();
+/** Only a validated commit hash and process start time; never other environment values. */
+export function serverVersion(env:Record<string,string|undefined>=process.env){const sha=env.RAILWAY_GIT_COMMIT_SHA??env.POKER_SERVER_COMMIT;return {commit:sha&&/^[0-9a-f]{7,40}$/i.test(sha)?sha.toLowerCase():null,startedAt};}
 export function createPokerRoomHTTPServer(handler:Handler,options:{health?:()=>{ready:boolean};maxInFlight?:number;lobbyHandler?:(request:Request)=>Promise<Response>;managerHandler?:(request:Request)=>Promise<Response>;ringHandler?:(request:Request)=>Promise<Response>}={}){
  const limit=options.maxInFlight??32;if(!Number.isSafeInteger(limit)||limit<1||limit>1024)throw Error('Invalid HTTP limit');let active=0;
  const server=createServer({maxHeaderSize:16384,requestTimeout:10000,headersTimeout:10000,keepAliveTimeout:5000},(req,res)=>{void dispatch(req,res);});
@@ -10,6 +13,12 @@ export function createPokerRoomHTTPServer(handler:Handler,options:{health?:()=>{
   const controller=new AbortController();const abort=()=>{if(!res.writableEnded)controller.abort();};res.on('close',abort);
   const deadline=setTimeout(()=>{controller.abort();if(!res.writableEnded)reject(res,503);},10000);deadline.unref();
   try{
+   if(req.url==='/version'){
+    // Which commit is running (Railway sets RAILWAY_GIT_COMMIT_SHA). Lets operators confirm a deploy without dashboard access.
+    if(req.method!=='GET'&&req.method!=='HEAD'){reject(res,405);return;}
+    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','Connection':'close'});
+    res.end(req.method==='HEAD'?undefined:JSON.stringify(serverVersion()));return;
+   }
    if(options.health&&(req.url==='/healthz'||req.url==='/readyz')){
     if(req.method!=='GET'&&req.method!=='HEAD'){reject(res,405);return;}
     const ready=options.health().ready,ok=req.url==='/healthz'||ready;
