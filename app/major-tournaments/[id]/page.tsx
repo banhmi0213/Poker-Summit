@@ -26,6 +26,9 @@ function tournamentJsonLd(e:any){
  const data:Record<string,unknown>={"@context":"https://schema.org","@type":"Event",name:e.title,url:absoluteUrl(`/major-tournaments/${e.id}`),startDate:e.start_date,eventStatus:"https://schema.org/EventScheduled",eventAttendanceMode:"https://schema.org/OfflineEventAttendanceMode",location:{"@type":"Place",name:e.venue||e.location||"会場未定",address:e.location||e.venue||""}};
  if(e.end_date)data.endDate=e.end_date;
  if(e.description)data.description=clip(e.description,500);
+ data.image=[absoluteUrl(DEFAULT_OG_IMAGE)];
+ // Organizer: the tournament's own official site (only a valid http(s) URL; the series name is the title).
+ try{const url=new URL(e.official_url);if(["https:","http:"].includes(url.protocol))data.organizer={"@type":"Organization",name:e.title,url:url.href};}catch{}
  return data;
 }
 export default async function Page({params}:{params:{id:string}}){
