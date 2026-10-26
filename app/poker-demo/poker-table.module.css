@@ -762,3 +762,17 @@
  .menuBackdrop{z-index:59}.menuPanel{z-index:60}
 }
 @media(max-width:899px){.infoDrawer>summary{display:none}}
+
+/* Approved cards: B jumbo indices on white; back 2 navy with the canonical gold finger. */
+.table :is(.cards,.hole,.miniCards)>span{container-type:size;box-sizing:border-box;overflow:hidden;border-radius:6px;font-family:Arial,Helvetica,sans-serif;text-shadow:none}
+.table :is(.cards,.hole,.miniCards)>span:not(.cardBack){background:#fff;border:1px solid #deded9;box-shadow:0 2px 5px #0005;color:#13161b}
+.table :is(.cards,.hole,.miniCards)>span:is(.red,.redCard){color:#cf1024}
+.table :is(.cards,.hole,.miniCards) .cardCorner{position:absolute;top:4%;left:5%;bottom:auto;right:auto;display:flex;flex-direction:column;align-items:center;gap:0;margin:0;font-size:38cqw;font-style:normal;font-weight:900;line-height:.88;letter-spacing:-.045em;z-index:2}
+.table :is(.cards,.hole,.miniCards) .cardCorner[data-card-rank="10"]{font-size:32cqw;letter-spacing:-.1em}
+.table :is(.cards,.hole,.miniCards) .cardCorner em{font-size:57%;font-style:normal;font-weight:700;line-height:1.05;letter-spacing:0}
+.table :is(.cards,.hole,.miniCards) .cardCornerBottom{top:auto;left:auto;right:5%;bottom:4%;transform:rotate(180deg)}
+.table :is(.cards,.hole,.miniCards) .cardSuit{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:64cqw;line-height:1;margin:0;font-weight:700;z-index:1}
+.table :is(.cards,.hole,.miniCards)>.cardBack{position:relative;display:grid;place-items:center;border:1px solid #d0af69;background-color:#10273d;background-image:repeating-linear-gradient(37deg,transparent 0 6px,#7797b424 6px 6.6px,transparent 6.6px 13px),repeating-linear-gradient(-37deg,transparent 0 6px,#7797b424 6px 6.6px,transparent 6.6px 13px);color:#e0bd77;box-shadow:inset 0 0 0 2px #10273d,0 2px 5px #0005}
+.table :is(.cards,.hole,.miniCards)>.cardBack::before{content:'';position:absolute;left:13%;top:24%;width:74%;height:52%;box-sizing:border-box;border:1px solid #d0af69;border-radius:50%;background:#10273d;z-index:1}
+.table :is(.cards,.hole,.miniCards)>.cardBack::after{content:'';position:absolute;inset:3px;border:1px solid #c8a964;border-radius:3px;pointer-events:none}
+.table .cardBack .thumbLogo{position:relative;width:51%;height:47%;object-fit:contain;filter:drop-shadow(0 1px 1px #0008);z-index:2}
