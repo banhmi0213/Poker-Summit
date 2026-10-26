@@ -11,7 +11,7 @@ function exact(value:Record<string,unknown>,keys:string[]){if(Object.keys(value)
 function parse(value:unknown){
  const body=object(value),type=body.type;
  if(type==='seat'){exact(body,['type','seat']);if(!Number.isSafeInteger(body.seat)||Number(body.seat)<1||Number(body.seat)>6)throw new RequestError(400);return {type,seat:Number(body.seat)} as const;}
- if(type==='time-bank'){exact(body,['type','handId','revision']);if(typeof body.handId!=='string'||body.handId.length>80||!Number.isSafeInteger(body.revision)||Number(body.revision)<0)throw new RequestError(400);return {type,handId:body.handId,revision:Number(body.revision)} as const;}
+ if(type==='time-bank'){exact(body,body.requestId===undefined?['type','handId','revision']:['type','handId','revision','requestId']);if(typeof body.handId!=='string'||body.handId.length>80||!Number.isSafeInteger(body.revision)||Number(body.revision)<0||(body.requestId!==undefined&&(typeof body.requestId!=='string'||!/^[A-Za-z0-9_-]{8,80}$/.test(body.requestId))))throw new RequestError(400);return {type,handId:body.handId,revision:Number(body.revision),...(body.requestId===undefined?{}:{requestId:body.requestId as string})} as const;}
  if(type==='act'){exact(body,['type','command']);try{const command=parseHandCommand(body.command);if(command.actionId.startsWith('timeout_'))throw Error();return {type,command} as const;}catch{throw new RequestError(400);}}
  if(type==='join'||type==='connect'||type==='state'||type==='spectate'||type==='disconnect'||type==='leave'){exact(body,['type']);return {type} as const;}
  throw new RequestError(400);
@@ -60,7 +60,7 @@ export function createPokerPlayerHandler(dependencies:Dependencies){
      case 'join':result=await owner.join(memberId,allowNewSeat===true);break;
      case 'state':result=await owner.snapshot(memberId,connection!);break;
      case 'spectate':result=await owner.publicSnapshot();break;
-     case 'time-bank':result=await owner.timeBank(memberId,connection!,body.handId,body.revision);break;
+     case 'time-bank':result=await owner.timeBank(memberId,connection!,body.handId,body.revision,'requestId' in body?body.requestId:undefined);break;
      case 'act':result=await owner.act(memberId,connection!,body.command);break;
      case 'disconnect':result=await owner.disconnect(memberId,connection!);break;
      case 'leave':result=await owner.leave(memberId,connection!);break;

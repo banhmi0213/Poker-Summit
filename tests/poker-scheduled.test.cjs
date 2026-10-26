@@ -64,9 +64,9 @@ test('time bank extends only current player, replays once, survives restore and 
  assert.throws(()=>f.room.timeBank('m'+other,f.tokens[other],s.hand.handId,s.hand.revision));
  assert.throws(()=>f.room.timeBank('m'+n,'obsolete',s.hand.handId,s.hand.revision));
  const before=s.turn.expiresAt,command={...s.turn};
- const used=f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);assert.equal(used.replayed,false);assert.equal(used.state.turn.expiresAt,before+300000);assert.equal(used.state.timeBank.remaining,0);
+ const used=f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);assert.equal(used.replayed,false);assert.equal(used.state.turn.expiresAt,before+300000);assert.equal(used.state.timeBank.remaining,1);assert.equal(used.state.timeBank.cards,1);
  assert.equal(f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision).replayed,true);assert.equal(f.room.publicSnapshot().turn.expiresAt,before+300000);
- const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});const connected=restored.connect('m'+n);assert.equal(connected.state.timeBank.remaining,0);assert.equal(connected.state.turn.expiresAt,before+300000);
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});const connected=restored.connect('m'+n);assert.equal(connected.state.timeBank.cards,1);assert.equal(connected.state.turn.expiresAt,before+300000);
  f.setNow(before-T);assert.equal(f.room.expireTurn(command).expired,false);
  fold(f);s=f.room.publicSnapshot();f.room.nextHand(s.hand.handId);assert.equal(f.room.snapshot('m'+n,f.tokens[n]).timeBank.remaining,1);
 });
@@ -89,7 +89,7 @@ test('tournament time bank cards: default 2 cards, one card per turn adds one tu
  const view=()=>f.room.snapshot('m'+n,f.tokens[n]).timeBank;
  assert.deepEqual(view(),{seconds:300,remaining:1,cards:2});
  const before=s.turn.expiresAt;f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);
- assert.equal(f.room.publicSnapshot().turn.expiresAt,before+300000);assert.deepEqual(view(),{seconds:300,remaining:0,cards:1});
+ assert.equal(f.room.publicSnapshot().turn.expiresAt,before+300000);assert.deepEqual(view(),{seconds:300,remaining:1,cards:1});
  const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.cards,1);
 });
 test('tournament settings choose 20s or 30s turns, 1-5 cards and optional final table cards',()=>{
@@ -102,4 +102,14 @@ test('tournament settings choose 20s or 30s turns, 1-5 cards and optional final 
  const tokens={};for(const n of [1,6]){room.seat('m'+n,n);tokens[n]=room.connect('m'+n).connectionId;}room.startHand(6);
  const st=room.publicSnapshot(),n=Number(st.hand.toAct.slice(5));assert.equal(st.turn.expiresAt-T,30000);
  assert.deepEqual(room.snapshot('m'+n,tokens[n]).timeBank,{seconds:30,remaining:1,cards:5});
+});
+test('tournament time bank cards can be stacked in one turn; each request id spends exactly one card',()=>{
+ const f=setup();f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),before=s.turn.expiresAt;
+ const use=id=>f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision,id);
+ assert.equal(use('card-request-1').replayed,false);assert.equal(use('card-request-2').replayed,false);
+ assert.equal(use('card-request-2').replayed,true,'a lost acknowledgement retry does not spend another card');
+ assert.equal(f.room.publicSnapshot().turn.expiresAt,before+600000);
+ const v=f.room.snapshot('m'+n,f.tokens[n]);assert.deepEqual(v.timeBank,{seconds:300,remaining:0,cards:0});assert.equal(v.turnDurationMs,900000);
+ assert.throws(()=>use('card-request-3'),/Time bank unavailable/);
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.cards,0);
 });

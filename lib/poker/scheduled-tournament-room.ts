@@ -108,6 +108,6 @@ export class ScheduledTournamentRoom {
   nextHand(previousHandId:string){return this.#run(now=>this.#project(this.#transition(()=>this.#room.nextHand(previousHandId,this.#terms(now))),now));}
   /** Existing hands and their turn deadlines continue through scheduled breaks. */
   act(member:string,connection:string,payload:unknown){return this.#run(now=>{const r=this.#transition(()=>this.#room.act(member,connection,payload));return {...r,state:this.#project(r.state,now)};});}
-  timeBank(member:string,connection:string,handId:string,revision:number){return this.#run(now=>{const r=this.#room.timeBank(member,connection,handId,revision);return {...r,state:this.#project(r.state,now)};});}
+  timeBank(member:string,connection:string,handId:string,revision:number,requestId?:string){return this.#run(now=>{const r=this.#room.timeBank(member,connection,handId,revision,requestId);return {...r,state:this.#project(r.state,now)};});}
   expireTurn(expected:TurnDeadline){return this.#run(now=>{const r=this.#transition(()=>this.#room.expireTurn(expected));return {...r,state:this.#project(r.state,now)};});}
 }
