@@ -123,6 +123,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_live_isolated.cjs
+      - name: Verify hand history privacy and idempotent saves
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_hand_history_isolated.cjs
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer

@@ -4,6 +4,7 @@
 import {ScheduledTournamentRoom,type TournamentControl} from './scheduled-tournament-room';
 import {prepareRoomSave,restoreRoom,type KeyRing,type RoomStore} from './room-persistence';
 import type {TurnDeadline} from './seated-hand-room';
+import {buildHandHistory} from './hand-history';
 
 type Config=ConstructorParameters<typeof ScheduledTournamentRoom>[0];
 type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxPending?:number;expectedConfig?:Config};
@@ -18,7 +19,7 @@ export class DurableRoomOwner {
   #observers=new Set<()=>void>();
   #roomId:string; #store:RoomStore; #keys:KeyRing; #now?:()=>number;
   #expectedConfig?:Config;
-  #version:number; #halted=true; #tail:Promise<void>=Promise.resolve(); #pending=0; #limit:number;
+  #version:number; #halted=true; #historyHand:string|null=null; #tail:Promise<void>=Promise.resolve(); #pending=0; #limit:number;
   private constructor(room:ScheduledTournamentRoom,version:number,options:Options) {
     const limit=options.maxPending??128;
     if(!Number.isSafeInteger(limit)||limit<1||limit>4096)throw new Error('Invalid owner queue limit');
@@ -62,6 +63,18 @@ export class DurableRoomOwner {
       if(version!==expected+1)throw new Error('Invalid storage acknowledgement');
       this.#version=version;
     }catch{this.#halted=true;throw unavailable();}
+    await this.#recordHistory(room);
+  }
+  /** After a settled hand is durably committed, save its readable record once (best effort, never halts play). */
+  async #recordHistory(room:ScheduledTournamentRoom){
+    if(!this.#store.history)return;
+    try{
+      const c=room.checkpoint().room,hand=c.hand,snapshot=room.publicSnapshot();
+      if(!hand||!snapshot.hand?.result||this.#historyHand===hand.id)return;
+      this.#historyHand=hand.id;
+      const members=Object.fromEntries(c.seats.map(([n,p])=>[`seat-${n}`,p.memberId]));
+      await this.#store.history({kind:'tournament',sourceId:this.#roomId,handNumber:snapshot.handNumber??null,record:buildHandHistory(hand,members)});
+    }catch{/* best effort */}
   }
   #mutate<T>(operation:(room:ScheduledTournamentRoom)=>T,changed:(result:T)=>boolean=()=>true) {
     return this.#enqueue(async()=>{
