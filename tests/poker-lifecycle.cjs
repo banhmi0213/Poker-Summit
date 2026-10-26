@@ -27,7 +27,7 @@ async function lifecycle(youBust=false){
  try{
   const tournament={id:'sample',title:'Elimination UI test',owner_store_id:null,starts_at:new Date(now).toISOString(),published:false,image_url:null,structure:{startingStack:200,anteType:'bb',lateRegLevel:0,reentry:false,periods:[{kind:'level',minutes:20,sb:50,bb:100,ante:100,note:''}]}};
   await act(async()=>{renderer=create(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:{board,holes},tournament,serverNow:now,cpuMode:'calling'}));});
-  await advance(3000);await click(button('ALL-IN額'));await click(renderer.root.findByProps({className:'actions'}).findAllByType('button')[3]);
+  await advance(3000);await click(button('ALL-IN額'));await click(renderer.root.findByProps({className:'actions'}).findAllByType('button').at(-1)); /* fold / check-or-call / wager: the wager button is last since #441 */
   const street=()=>renderer.root.findByProps({className:'table'}).props['data-street'];
   for(let n=0;n<200&&street()===0;n++)await advance(100);
   assert.equal(street(),1);assert.equal(renderer.root.findByProps({className:'table'}).props['data-showdown'],'false');
@@ -45,7 +45,7 @@ async function lifecycle(youBust=false){
    for(let n=0;n<5&&!text(renderer.toJSON()).includes('大会終了・優勝');n++){if(n>0)await click(button('次のハンド'));await advance(20000);}
    assert.ok(calls.every(c=>!c.live.includes('you')));
   } else {
-   await advance(1000);await click(button('ALL-IN額'));await click(renderer.root.findByProps({className:'actions'}).findAllByType('button')[3]);await advance(14000);
+   await advance(1000);await click(button('ALL-IN額'));await click(renderer.root.findByProps({className:'actions'}).findAllByType('button').at(-1)); /* fold / check-or-call / wager: the wager button is last since #441 */await advance(14000);
   }
   assert.match(text(renderer.toJSON()),/大会終了・優勝：PLAYER 5/);assert.match(text(renderer.toJSON()),/残り 1人 ／ 開始 6人/);assert.match(text(renderer.toJSON()),/あなたは脱落しました/);
   assert.match(text(renderer.toJSON()),youBust?/同順位（3〜6位）：TEST/:/2位：TEST/);assert.ok(button('大会終了').props.disabled);assert.equal(calls.length,youBust?3:1);
