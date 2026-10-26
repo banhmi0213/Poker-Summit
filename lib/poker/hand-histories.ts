@@ -7,7 +7,7 @@ import type {HistoryAction} from './hand-history';
  * it was shown at showdown, or the caller is an operator. memberId is present only for operators. */
 export type HandHistoryView={handId:string;kind:'ring'|'tournament';title:string|null;handNumber:number|null;playedAt:string;
  terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
- result:{showdown:boolean;winners:string[];payouts:Record<string,number>};
+ result:{showdown:boolean;winners:string[];payouts:Record<string,number>;runs?:{board:Card[];winners:string[]}[]};
  players:{seatId:string;seat:number;position:string;name:string;startStack:number;endStack:number;net:number;folded:boolean;shown:boolean;you:boolean;hole:Card[]|null;memberId?:string}[]};
 
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

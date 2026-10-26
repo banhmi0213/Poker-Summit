@@ -12,6 +12,8 @@ import {measureRing,type RingMetricSink} from './ring-metrics';
 type Client={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
 export type RingPlayMeta={context:RingContext;now:string;changedAt:string|null;lastHandId:string|null;completedAt:string|null;runoutFrom:0|3|4|5|null;ready:string[];penalties?:Record<string,{strikes:number;since:string|null;hands:number}>;bankRevision?:number|null;bankUsed?:Record<string,string>};
 export interface RingPlayStore extends RingStore {meta(table:string):Promise<RingPlayMeta>;tables(limit:number):Promise<string[]>;ready(member:string,reservation:string):Promise<void>;ping(member:string,table:string):Promise<void>;cashout(member:string,reservation:string,request:string):Promise<unknown>;timeout:boolean;from:number;actorReservation?:string;bank?(member:string,reservation:string,hand:string,revision:number,request:string):Promise<void>}
+/** Run-it-twice answers are collected for this long; then the runner answers 1 (once) for whoever is left. */
+export const RUNS_CHOICE_MS=8000;
 const time=(s:string|null)=>{const v=s===null?NaN:Date.parse(s);if(!Number.isFinite(v))throw Error('Ring clock unavailable');return v;};
 export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlayStore{
  timeout=false;from=0;actorReservation?:string;
@@ -35,7 +37,8 @@ export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta
  const duration=state.result.showdown?runoutDuration(from):0;
  if(elapsed<duration){const visible=[from,...[3,4,5].filter(n=>n>from)][Math.floor(elapsed/RUNOUT_STEP_MS)]??5;
   const payouts=state.result.payouts;state.board=state.board.slice(0,visible);state.street=visible===0?'preflop':visible===3?'flop':visible===4?'turn':'river';
-  state.pot=Object.values(payouts).reduce((a,b)=>a+b,0);state.players=state.players.map(p=>({...p,stack:p.stack-(payouts[p.id]??0)}));state.result=null;
+  state.pot=Object.values(payouts).reduce((a,b)=>a+b,0);state.players=state.players.map(p=>({...p,stack:p.stack-(payouts[p.id]??0)}));
+  if(state.result.boards)(state as RingPlayView['hand']).runBoards=state.result.boards.map(b=>b.slice(0,visible));state.result=null;
  }
  state.legal=null;state.toAct=null;return state;
 }
@@ -50,7 +53,21 @@ export class RingPlayRuntime {
  private get limit(){return this.options.maxTables??128;}
  private async serial<T>(table:string,work:()=>Promise<T>,operation='read'):Promise<T>{if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}const prior=this.#queues.get(table)??Promise.resolve();const queued=performance.now();const task=prior.catch(()=>{}).then(()=>{try{this.options.metric?.({type:'ring_timing',stage:'queue',operation,durationMs:Math.round(performance.now()-queued),ok:true});}catch{}return measureRing(this.options.metric,'runtime',operation,work);});this.#queues.set(table,task);try{return await task;}finally{if(this.#queues.get(table)===task)this.#queues.delete(table);}}
  private async advance(table:string,store:RingPlayStore){let meta=await store.meta(table);const c=meta.context;const extra=meta.bankRevision==null?0:20000;
-  if(c.activeHandId){const hasSitOut=Object.values(meta.penalties??{}).some(p=>p.since!==null);if(!hasSitOut&&time(meta.now)<time(meta.changedAt)+20000+extra)return meta;const owner=await RingHandOwner.restore(store,c.activeHandId,this.options.keys),s=owner.snapshot(null);if(!s.toAct||s.result)throw Error('Invalid active ring hand');
+  if(c.activeHandId){const hasSitOut=Object.values(meta.penalties??{}).some(p=>p.since!==null),elapsed=time(meta.now)-time(meta.changedAt);
+   if(!hasSitOut&&elapsed<RUNS_CHOICE_MS)return meta;
+   const owner=await RingHandOwner.restore(store,c.activeHandId,this.options.keys),s=owner.snapshot(null);
+   // All-in runout waiting for run-it-twice answers: after the choice window, answer "once" for someone who has not answered.
+   if(s.runs&&s.runs.decided===null){
+    const open=c.seats.filter(p=>s.runs!.choices['seat-'+p.seat]===null&&s.runs!.participants.includes('seat-'+p.seat));
+    const active=open.find(p=>!meta.penalties?.[p.reservationId]?.since),late=elapsed>=20000+extra,target=late?open[0]:active??open.find(p=>meta.penalties?.[p.reservationId]?.since);
+    if(!target||elapsed<RUNS_CHOICE_MS&&!meta.penalties?.[target.reservationId]?.since)return meta;
+    // The SQL turn fence accepts a normal write before 20s; a sitting-out or late seat uses the timeout path.
+    store.timeout=late||Boolean(meta.penalties?.[target.reservationId]?.since);store.from=s.board.length;store.actorReservation=target.reservationId;
+    await owner.act(target.memberId,{handId:s.handId,revision:s.revision,actionId:'runs-'+owner.version,action:{type:'runs',count:1}});
+    return await store.meta(table);
+   }
+   if(!hasSitOut&&elapsed<20000+extra)return meta;
+   if(!s.toAct||s.result)throw Error('Invalid active ring hand');
    const member=c.seats.find(p=>'seat-'+p.seat===s.toAct);if(!member)throw Error('Missing actor');const sitting=Boolean(meta.penalties?.[member.reservationId]?.since);
    if(sitting||time(meta.now)>=time(meta.changedAt)+20000+extra){const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;store.actorReservation=member.reservationId;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:!sitting&&legal.check?'check':'fold'}});meta=await store.meta(table);}
    return meta;
@@ -91,7 +108,7 @@ export class RingPlayRuntime {
   let hand;try{hand=owner.snapshot(member);}catch{return null;}
   if(meta.penalties?.[seat.reservationId]?.since)hand.legal=null;
   if(!meta.context.activeHandId&&hand.result&&meta.completedAt&&time(meta.now)-time(meta.completedAt)>=ringResultPause(hand.result.showdown,meta.runoutFrom??0))return null;
-  return {sittingOut:Boolean(meta.penalties?.[seat.reservationId]?.since),timeoutStreak:meta.penalties?.[seat.reservationId]?.strikes??0,turnDurationMs:20000+extra,timeBank:{seconds:20,remaining:meta.bankUsed?.[seat.reservationId]?0:1},viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+20000+extra,hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
+  return {sittingOut:Boolean(meta.penalties?.[seat.reservationId]?.since),timeoutStreak:meta.penalties?.[seat.reservationId]?.strikes??0,turnDurationMs:20000+extra,timeBank:{seconds:20,remaining:meta.bankUsed?.[seat.reservationId]?0:1},viewerSeat:'seat-'+seat.seat,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+(hand.runs&&hand.runs.decided===null?RUNS_CHOICE_MS:20000+extra),hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
  }
  async view(table:string,member:string):Promise<RingPlayView|null>{await this.ping(table,member);
   // Share only an in-flight committed read. Each viewer gets a separate private
