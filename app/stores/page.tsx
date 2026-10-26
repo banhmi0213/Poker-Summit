@@ -279,7 +279,11 @@ export default async function StoresPage({
         </div>
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>
-          <h1>{heroPlace}のポーカースポットを探す</h1>
+          {/* 都道府県・市区町村ページは「大阪府 アミューズメントポーカー」「大阪 ポーカーバー」のような検索に合わせた見出しにする(2026/10/26)。
+              語の途中で改行されないよう、区切りごとに折り返す。スマホのバナー見出しは幅が狭いので従来の文言のまま。 */}
+          <h1>{pref
+            ? [`${heroPlace}の`, "アミューズメントポーカー・", "ポーカーバーを探す"].map(part => <span key={part} style={{ display: "inline-block" }}>{part}</span>)
+            : `${heroPlace}のポーカースポットを探す`}</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
         {storeListBanner.map((banner, i) => banner && (
