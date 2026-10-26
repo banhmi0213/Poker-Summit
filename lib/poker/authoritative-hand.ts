@@ -66,6 +66,12 @@ export class AuthoritativeHand {
     for(const entry of saved.commands) {const r=hand.act(entry.actor,entry.command);if(r.replayed)throw new Error("Duplicate saved command");}
     return hand;
   }
+  /** Rabbit hunt: the board cards that were never dealt because the hand ended early (no showdown). */
+  rabbitBoard():Card[]|null{
+    const r=this.#result as {showdown?:boolean}|null;
+    if(!r||r.showdown)return null;const shown=this.#boardCount();
+    return shown>=5?null:structuredClone(this.#deal.board.slice(shown,5));
+  }
   #boardCount(){return this.#street===0?0:this.#street===1?3:this.#street===2?4:5;}
   #progress() {
     while(this.#round.toAct===null&&!this.#result) {
