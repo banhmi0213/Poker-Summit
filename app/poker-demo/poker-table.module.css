@@ -736,3 +736,10 @@
  .shell{padding-left:4px;padding-right:4px}
  .table,.table[data-felt]{width:calc(100% - 24px);margin-left:12px;margin-right:12px}
 }
+@media(min-width:900px){
+ .shell{justify-content:flex-start}
+ .heading>span{position:absolute;top:14px;left:80px;font-size:10px}
+ .edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:60%;bottom:auto}
+ .table[data-showdown=false] .showdownFive{top:calc(60% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
+ .table[data-showdown=false] .showdownSix{top:calc(60% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
+}
