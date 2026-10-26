@@ -163,3 +163,14 @@ not an actual Auth login or a public browser game test.
 - PC（幅1000px以上）はビューポートを使い、メニュー・主要操作を固定。参加卓／受付は2件、履歴は5件ずつページ送り。小さな画面や拡大表示ではパネル内のスクロールで内容に到達できるようにする。スマホでは縦方向の通常表示と横スクロール可能なメニューを使用する。
 - 1440x900、1280x720のロビー各パネルとマイページ履歴を、合成データのブラウザ表示で確認。ページ全体／対象パネルとも縦スクロール不要。390px幅で横はみ出しなし。これはレイアウト確認であり、実ログインの通し検証とは別。
 - 管理画面の権限拒否時に、ログイン中の自分のメールと専用管理ログインへのリンクを表示する。一般会員の権限は変更しない。検証用の管理権限は既存の先に作成したテストアカウントのみ。
+
+## Automatic deploy and running version (2026-10-26)
+
+- GitHub: the Railway App is installed on `banhmi0213` with access to `banhmi0213/Poker-Summit` only.
+- Railway (poker-summit-staging / poker-room-server / staging): branch `chatgpt/poker-authoritative-hand`,
+  no pinned commit, Auto Deploy on, Wait for CI on. Production was not changed.
+- A push to the branch runs "Poker engine tests" (tests + `npm run build:poker-server`); Railway deploys after it succeeds.
+- Check what is running without dashboard access: `GET https://poker-room-server-staging.up.railway.app/version`
+  returns `{commit, startedAt}` (commit = `RAILWAY_GIT_COMMIT_SHA`, validated hex only).
+- If a deploy does not start, waits for approval, or `/version` does not change, share the commit SHA and the
+  Actions result with the Railway owner. Never share login details or tokens.
