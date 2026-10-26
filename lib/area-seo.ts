@@ -6,6 +6,23 @@ import type { AreaStats } from "@/lib/store-list-data";
 
 const KIND = "アミューズメントポーカー・ポーカーハウス";
 
+// 店の多い区の繁華街の呼び名(「心斎橋 ポーカー」「六本木 ポーカー」のような検索向け、2026/10/26)。
+// 掲載店の住所に実際に多い地名から選んだ。店の分布が変わったら見直す。
+const CITY_NICKNAMES: Record<string, string> = {
+  "大阪市中央区": "ミナミ・心斎橋・難波",
+  "大阪市北区": "キタ・梅田",
+  "港区": "六本木・新橋・赤坂",
+  "新宿区": "新宿・歌舞伎町",
+  "渋谷区": "渋谷・恵比寿",
+  "豊島区": "池袋",
+  "名古屋市中区": "栄・錦",
+  "福岡市中央区": "天神・今泉・大名",
+  "福岡市博多区": "中洲・博多",
+  "北九州市小倉北区": "小倉",
+  "神戸市中央区": "三宮",
+  "京都市中京区": "河原町・木屋町",
+};
+
 export function areaTitleBase(place: string, total: number) {
   return total > 0 ? `${place}の${KIND}一覧（${total}店）` : `${place}の${KIND}一覧`;
 }
@@ -44,7 +61,10 @@ export function areaIntro(place: string, pref: string, stats: AreaStats, isCity:
   const parts: string[] = [`${place}には、Poker Summitに掲載中のポーカースポットが${stats.total}店あります。`];
   if (!isCity && stats.topCities.length > 1) {
     const many = stats.topCities[0].n > 1;
-    parts.push(`${many ? "店舗が多いエリアは" : "店舗があるエリアは"}${stats.topCities.map((c) => (many ? `${c.city}（${c.n}店）` : c.city)).join("・")}${hasMoreCities(stats) ? "など" : ""}です。`);
+    parts.push(`${many ? "店舗が多いエリアは" : "店舗があるエリアは"}${stats.topCities.map((c) => {
+      const nick = CITY_NICKNAMES[c.city];
+      return many ? `${c.city}（${nick ? `${nick} ` : ""}${c.n}店）` : nick ? `${c.city}（${nick}）` : c.city;
+    }).join("・")}${hasMoreCities(stats) ? "など" : ""}です。`);
   } else if (!isCity && stats.topCities.length === 1) {
     parts.push(`すべて${stats.topCities[0].city}にあります。`);
   }
