@@ -709,3 +709,30 @@
 .controls .quickBets button{border-radius:7px;background:#2c2820;border-color:#746443;color:#e8d8af}
 @media(max-width:899px){.betChip{width:22px;height:22px;flex-basis:22px}.streetBet{gap:7px;font-size:11px;padding:3px 7px 3px 4px}.actionToast{font-size:14px;padding:8px 14px;max-width:85%;top:60%}.actionToast[data-kind=allin]{font-size:17px}.controls .actions button{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.actionToast{animation:none}.controls .actions button{transition:none}}
+
+/* Reference composition: the table fills the screen, with the action dock over the lower right rail. */
+@media(min-width:900px){
+ .gamePage{min-height:100dvh;height:auto}
+ .gameMain{width:100%;max-width:none;padding:6px 10px 10px;box-sizing:border-box}
+ .shell{position:relative;width:100%;max-width:none;min-height:calc(100dvh - 16px);padding:0 8px 12px;gap:6px;box-sizing:border-box}
+ .heading{height:40px;min-height:40px}
+ .table{width:min(calc(100% - 28px),calc((100dvh - 132px)*16/9));aspect-ratio:16/9;margin:12px 14px 18px;align-self:center}
+ .actionColumn{position:absolute;right:8px;bottom:8px;width:min(480px,36vw);margin:0;max-height:calc(100dvh - 100px);overflow:auto;z-index:5;align-self:auto}
+ .self,.table[data-showdown=true] .self{bottom:4%}
+ .topSeats{top:-24px}
+ .seatTimerRing{width:96px;height:96px}.seatTimerRing .avatar,.avatar{width:88px;height:88px}.seatAvatarRow{min-height:96px;margin-bottom:12px}
+ .self .activeAvatar{width:96px;height:96px}.self .activeAvatar .avatar{width:88px;height:88px}
+ .seat>span:not(.actionBadge):not(.turnSeconds),.seat>small{width:110px;max-width:110px;font-size:13px}.selfInfo{min-width:110px}
+ .self .handWithRank{left:calc(50% + 50px);top:4px}
+ .self .hole span{width:64px;height:88px;font-size:30px}
+ .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
+ .showdownPosition .miniCards span{width:58px;height:80px;font-size:26px}
+ .betChip{width:30px;height:30px;flex-basis:30px}.streetBet{font-size:14px}
+ .controls{gap:5px 8px;padding:8px 10px}.controls>p{display:none}.controls .actions button{min-height:62px;font-size:20px}
+}
+/* Phones use the available width instead of leaving a broad outer gutter. */
+@media(max-width:899px){
+ .gameMain{padding-left:2px;padding-right:2px}
+ .shell{padding-left:4px;padding-right:4px}
+ .table,.table[data-felt]{width:calc(100% - 24px);margin-left:12px;margin-right:12px}
+}
