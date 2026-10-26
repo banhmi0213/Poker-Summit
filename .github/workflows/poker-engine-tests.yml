@@ -33,37 +33,7 @@ on:
       - "package.json"
       - "package-lock.json"
   push:
-    branches: [main]
-    paths:
-      - ".github/workflows/poker-engine-tests.yml"
-      - "lib/poker/**"
-      - "supabase/migrations/*poker*.sql"
-      - "db/tests/poker*"
-      - "app/poker-demo/**"
-      - "app/poker-online/**"
-      - "app/api/poker/**"
-      - "app/poker-tournaments/**"
-      - "app/admin/poker-tournaments/**"
-      - "app/store/(authenticated)/profile/poker-tournaments/**"
-      - "app/store/(authenticated)/store-sidebar.tsx"
-      - "app/store/(authenticated)/layout.tsx"
-      - "app/poker-lobby/**"
-      - "app/poker-ring/**"
-      - "app/poker-ui/ring-admission*"
-      - "app/poker-ui/ring-live*"
-      - "app/poker-ui/use-ring-runout*"
-      - "app/poker-ui/use-auto-action*"
-      - "app/poker-ui/table-action-motion*"
-      - "tests/poker-*.cjs"
-      - "tests/sql/poker*.sql"
-      - "app/mypage/chips/**"
-      - "app/poker-ui/chip-balance*"
-      - "tests/helpers/poker*"
-      - "config/poker-staging.env.example"
-      - "scripts/build-poker-server.cjs"
-      - "tsconfig.json"
-      - "package.json"
-      - "package-lock.json"
+    branches: [main, chatgpt/poker-authoritative-hand]
   workflow_dispatch:
 
 permissions:
@@ -87,6 +57,8 @@ jobs:
           node-version: "24"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Build poker server
+        run: npm run build:poker-server
       - name: Run poker regression tests
         run: npm run test:poker
       - name: Install isolated test runtimes
