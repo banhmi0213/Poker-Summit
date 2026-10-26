@@ -64,9 +64,9 @@ test('time bank extends only current player, replays once, survives restore and 
  assert.throws(()=>f.room.timeBank('m'+other,f.tokens[other],s.hand.handId,s.hand.revision));
  assert.throws(()=>f.room.timeBank('m'+n,'obsolete',s.hand.handId,s.hand.revision));
  const before=s.turn.expiresAt,command={...s.turn};
- const used=f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);assert.equal(used.replayed,false);assert.equal(used.state.turn.expiresAt,before+20000);assert.equal(used.state.timeBank.remaining,0);
- assert.equal(f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision).replayed,true);assert.equal(f.room.publicSnapshot().turn.expiresAt,before+20000);
- const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});const connected=restored.connect('m'+n);assert.equal(connected.state.timeBank.remaining,0);assert.equal(connected.state.turn.expiresAt,before+20000);
+ const used=f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);assert.equal(used.replayed,false);assert.equal(used.state.turn.expiresAt,before+300000);assert.equal(used.state.timeBank.remaining,0);
+ assert.equal(f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision).replayed,true);assert.equal(f.room.publicSnapshot().turn.expiresAt,before+300000);
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});const connected=restored.connect('m'+n);assert.equal(connected.state.timeBank.remaining,0);assert.equal(connected.state.turn.expiresAt,before+300000);
  f.setNow(before-T);assert.equal(f.room.expireTurn(command).expired,false);
  fold(f);s=f.room.publicSnapshot();f.room.nextHand(s.hand.handId);assert.equal(f.room.snapshot('m'+n,f.tokens[n]).timeBank.remaining,1);
 });
@@ -84,15 +84,22 @@ test('targeted tournament opens exactly ten minutes before and starts only seate
 test('fewer than two seated members never auto-win and late initial seating is rejected',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B'],expectedCount:2,seatedStart:true};room.advance(control);room.join('A',true);now=T;assert.equal(room.advance(control).event,'insufficient-seated');assert.equal(room.publicSnapshot().hand,null);assert.throws(()=>room.join('B',true));});
 test('checked-in disconnected player remains; cancelled member is excluded',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B','C'],expectedCount:3,seatedStart:true};room.advance(control);const a=room.join('A',true);room.join('B',true);room.join('C',true);room.disconnect('A',a.connectionId);now=T;assert.equal(room.advance({...control,members:['A','B']}).event,'started');assert.equal(room.publicSnapshot().hand.players.length,2);assert.equal(room.publicSnapshot().seats.filter(s=>s.occupied).length,2);});
 
-test('tournament time bank is a saved 60s pool: up to 20s per turn, +10s every 10 hands, capped at 90s, restored intact',()=>{
+test('tournament time bank cards: default 2 cards, one card per turn adds one turn of time, restored intact',()=>{
  const f=setup();f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));
  const view=()=>f.room.snapshot('m'+n,f.tokens[n]).timeBank;
- assert.deepEqual(view(),{seconds:20,remaining:1,balanceSeconds:60});
+ assert.deepEqual(view(),{seconds:300,remaining:1,cards:2});
  const before=s.turn.expiresAt;f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);
- assert.equal(f.room.publicSnapshot().turn.expiresAt,before+20000);assert.deepEqual(view(),{seconds:20,remaining:0,balanceSeconds:40});
- assert.throws(()=>f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision+1));
- const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.balanceSeconds,40);
- // Hands 2..10 leave the pool alone; hand 11 adds 10s (40 -> 50) and the cap holds at 90.
- for(let hand=2;hand<=11;hand++){fold(f);s=f.room.publicSnapshot();assert.ok(!s.tournament?.champion);f.room.nextHand(s.hand.handId);}
- assert.equal(view().balanceSeconds,50);
+ assert.equal(f.room.publicSnapshot().turn.expiresAt,before+300000);assert.deepEqual(view(),{seconds:300,remaining:0,cards:1});
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.cards,1);
+});
+test('tournament settings choose 20s or 30s turns, 1-5 cards and optional final table cards',()=>{
+ const {validateStructure,defaultStructure}=require('../lib/poker/tournament.ts');
+ assert.equal(validateStructure({...defaultStructure,turnSeconds:30,timeBankCards:5,finalTableCards:2}).turnSeconds,30);
+ assert.throws(()=>validateStructure({...defaultStructure,turnSeconds:25}));assert.throws(()=>validateStructure({...defaultStructure,timeBankCards:0}));assert.throws(()=>validateStructure({...defaultStructure,timeBankCards:6}));assert.throws(()=>validateStructure({...defaultStructure,finalTableCards:6}));
+ assert.equal(validateStructure(defaultStructure).turnSeconds,undefined,'old tournaments keep their saved shape');
+ // Two players already fit a final table, so the final-table cards are added at the start: 3 + 2.
+ let now=T;const room=new ScheduledTournamentRoom({...config(),structure:{...config().structure,turnSeconds:30,timeBankCards:3,finalTableCards:2}},{now:()=>now});
+ const tokens={};for(const n of [1,6]){room.seat('m'+n,n);tokens[n]=room.connect('m'+n).connectionId;}room.startHand(6);
+ const st=room.publicSnapshot(),n=Number(st.hand.toAct.slice(5));assert.equal(st.turn.expiresAt-T,30000);
+ assert.deepEqual(room.snapshot('m'+n,tokens[n]).timeBank,{seconds:30,remaining:1,cards:5});
 });
