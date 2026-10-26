@@ -4,6 +4,7 @@
  * This is a sparring partner, not a GTO solution; styles make the table feel like different opponents.
  */
 import rank from '@/data/poker-gto/preflop-rank.json';
+import pushfold from '@/data/poker-gto/hu-pushfold.json';
 import type {Card} from './engine';
 import type {BettingAction} from './betting';
 import {estimateEquity,requiredEquity} from './equity';
@@ -16,7 +17,9 @@ export const CPU_STYLES:Record<string,CpuStyle>={
  aggressive:{name:'攻撃的',looseness:1.15,aggression:1.4,bluff:0.16},
 };
 export type CpuContext={hole:readonly Card[];board:readonly Card[];pot:number;toCall:number;stack:number;committed:number;currentBet:number;bigBlind:number;
- legal:{check:boolean;call:boolean;raise:boolean;minRaiseTo:number|null;maxRaiseTo:number|null};opponents:number;playersBehind:number;isBigBlind:boolean};
+ legal:{check:boolean;call:boolean;raise:boolean;minRaiseTo:number|null;maxRaiseTo:number|null};opponents:number;playersBehind:number;isBigBlind:boolean;
+ /** Largest stack (chips behind + committed this street) among players still in the hand; defaults to deep. */
+ maxOpponentStack?:number};
 
 const order:string[]=rank.order;
 const R='23456789TJQKA';
@@ -30,7 +33,26 @@ export function handPercentile(h:readonly Card[]){
 const clampTo=(v:number,ctx:CpuContext)=>Math.max(ctx.legal.minRaiseTo??v,Math.min(ctx.legal.maxRaiseTo??v,Math.round(v)));
 const passive=(ctx:CpuContext):BettingAction=>ctx.legal.check?{type:'check'}:{type:'fold'};
 
+// Short stacks (<= 15BB effective): shove-or-fold, from the heads-up push/fold equilibrium (data/poker-gto/hu-pushfold.json).
+// With more players behind or more callers the ranges are narrowed, since the chart is solved for two players.
+const pf=pushfold as unknown as {stacks:number[];spots:Record<string,{pushPct:number;callPct:number}>};
+function chartPct(bb:number,key:'pushPct'|'callPct'){const s=pf.stacks.reduce((best,v)=>Math.abs(v-bb)<Math.abs(best-bb)?v:best,pf.stacks[0]);return pf.spots[String(s)][key]/100;}
+function shortStack(ctx:CpuContext,s:CpuStyle,random:()=>number,effBB:number):BettingAction{
+ const p=handPercentile(ctx.hole),mix=(random()-0.5)*0.02;
+ const allIn={type:'raise' as const,amount:ctx.legal.maxRaiseTo??0};
+ if(ctx.currentBet<=ctx.bigBlind){
+  const push=chartPct(effBB,'pushPct')*Math.pow(0.6,Math.max(0,ctx.playersBehind-1))*s.looseness;
+  if(p<push+mix)return ctx.legal.raise?allIn:ctx.legal.call?{type:'call'}:passive(ctx);
+  return ctx.legal.check?{type:'check'}:{type:'fold'};
+ }
+ const call=chartPct(effBB,'callPct')*(ctx.opponents>1?Math.pow(0.7,ctx.opponents-1):1)*s.looseness;
+ if(p<call*0.5+mix&&ctx.legal.raise)return allIn;
+ return p<call+mix?{type:'call'}:{type:'fold'};
+}
+
 function preflop(ctx:CpuContext,s:CpuStyle,random:()=>number):BettingAction{
+ const effBB=Math.min(ctx.stack+ctx.committed,ctx.maxOpponentStack??Infinity)/ctx.bigBlind;
+ if(effBB<=15)return shortStack(ctx,s,random,Math.max(2,effBB));
  const p=handPercentile(ctx.hole),bb=ctx.bigBlind,mix=(random()-0.5)*0.03;
  const raiseTo=(x:number)=>ctx.legal.raise?{type:'raise' as const,amount:clampTo(x,ctx)}:ctx.legal.call?{type:'call' as const}:passive(ctx);
  if(ctx.currentBet<=bb){

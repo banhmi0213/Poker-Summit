@@ -30,7 +30,7 @@ const seats = [
   { name: "PLAYER 6", stack: "1,900" },
 ];
 
-export default function PokerTablePreview({ member, initialDeal, tournament, serverNow = 0, isGuestPreview = false, initialSpectating = false, initialSeatIds = clockwiseSeats }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; tournament?: PokerTournament; serverNow?: number; isGuestPreview?: boolean; initialSpectating?: boolean; initialSeatIds?: string[] }) {
+export default function PokerTablePreview({ member, initialDeal, tournament, serverNow = 0, isGuestPreview = false, initialSpectating = false, initialSeatIds = clockwiseSeats, cpuMode = "thinking" }: { member: { displayName: string; avatarUrl: string | null }; initialDeal: DemoDeal; tournament?: PokerTournament; serverNow?: number; isGuestPreview?: boolean; initialSpectating?: boolean; initialSeatIds?: string[]; cpuMode?: "thinking" | "calling" }) {
   const [initialHand] = useState(() => {
     const live=tournament?clockwiseSeats.filter(id=>initialSeatIds.includes(id)):clockwiseSeats;
     const button=live.includes("p6")?"p6":live[0];
@@ -281,13 +281,14 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const legal = legalBettingActions(betting, actorId);
       const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
       const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
-      // リング練習卓だけ考えて打つCPU。大会サンプルは進行確認用のため従来どおり（チェック/コール）。
-      const decision: BettingAction = !tournament && legal && deal.holes[actorId] ? decideCpuAction({
+      // 練習卓のCPUは自分の手札と公開情報で考えて打つ（大会のチップが少ない場面はプッシュ/フォールド表）。cpuMode='calling' は進行確認テスト専用。
+      const decision: BettingAction = cpuMode !== "calling" && legal && deal.holes[actorId] ? decideCpuAction({
         hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
         currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
         opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
         playersBehind: betting.players.filter(p => p.id !== actorId && !p.folded && !p.allIn && !p.acted).length,
         isBigBlind: handPositions.bb === actorId,
+        maxOpponentStack: Math.max(0, ...betting.players.filter(p => p.id !== actorId && !p.folded).map(p => p.stack + p.committed)),
       }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
       const label = decision.type === "fold" ? "FOLD" : decision.type === "check" ? "CHECK" : decision.type === "call" ? `CALL ${Math.min(owed, player.stack)}` : `${decision.type === "bet" ? "BET" : "RAISE"} ${decision.amount}`;
       const word = decision.type === "fold" ? "フォールド" : decision.type === "check" ? "チェック" : decision.type === "call" ? "コール" : decision.type === "bet" ? `ベット ${decision.amount}` : `レイズ ${decision.amount}`;
@@ -302,7 +303,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       }
     }, 650);
     return () => window.clearTimeout(timer);
-  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, tournament]);
+  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, cpuMode]);
 
   // The next street begins only when every live player has acted and matched
   // the highest contribution, or cannot act because they are all-in.
