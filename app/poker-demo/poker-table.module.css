@@ -743,3 +743,22 @@
  .table[data-showdown=false] .showdownFive{top:calc(56% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
  .table[data-showdown=false] .showdownSix{top:calc(56% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
 }
+
+/* Table information stays reachable without a permanent sidebar or lost play space. */
+.infoDrawer>summary{list-style:none;cursor:pointer}.infoDrawer>summary::-webkit-details-marker{display:none}
+.infoNotice{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#e56e63;box-shadow:0 0 5px #e56e6355}.infoNotice[hidden],.infoDrawer[open] .infoNotice{display:none}
+.infoBody{min-width:0}
+/* Seat labels are presentation only; game controls must receive every click. */
+.actionBadge,.turnSeconds{pointer-events:none}
+@media(min-width:900px){
+ .gamePage:has(.infoDrawer){height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+ .gameMain:has(.infoDrawer){height:100%;flex:1;min-height:0;max-height:100%;padding:6px 10px 10px;box-sizing:border-box}
+ .shell:has(.infoDrawer){height:100%;min-height:0;max-height:100%;overflow:visible}
+ .shell .desktopStructure:has(.infoDrawer){display:block!important;position:absolute;top:50px;left:18px;width:auto;max-width:320px;min-height:0;max-height:none;overflow:visible!important;background:transparent!important;padding:0!important;border:0;box-shadow:none;z-index:40;pointer-events:none}
+ .infoDrawer>summary,.infoBody{pointer-events:auto}
+ .infoDrawer>summary{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:7px 13px;border:1px solid #a48b56;border-radius:9px;background:#29231a;color:#f3dfb4;font-size:12px;font-weight:700;box-shadow:0 3px 8px #0005}
+ .infoDrawer>summary::after{content:'＋';color:#e3c07b}.infoDrawer[open]>summary::after{content:'－'}
+ .infoBody{display:flex;flex-direction:column;gap:8px;width:300px;margin-top:6px;padding:12px;max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;background:#29251e;border:1px solid #9b8354;border-radius:10px;box-shadow:0 8px 24px #0008}
+ .menuBackdrop{z-index:59}.menuPanel{z-index:60}
+}
+@media(max-width:899px){.infoDrawer>summary{display:none}}

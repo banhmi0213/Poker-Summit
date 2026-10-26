@@ -70,3 +70,21 @@
  .onlineActions{position:absolute;right:8px;bottom:8px;width:min(480px,36vw);margin:0}
  .onlineFelt>div[class*="felt"]{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
 }
+
+/* The felt is one stacking context: no seat, badge or animation can cover the action dock. */
+.onlineFelt{isolation:isolate;z-index:1}
+.onlineActions{position:static;isolation:isolate;z-index:30;pointer-events:auto}
+@media(min-width:900px){
+ .compactShell{height:100%;min-height:0;max-height:100%;display:block}
+ .onlineHeading{position:absolute;top:0;left:8px;right:8px;width:auto;z-index:2}
+ .onlineClock{position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(560px,50%);z-index:2}
+ .onlineClock .clock{padding:6px 10px;font-size:11px}.onlineClock .clock>div{gap:3px 8px}.onlineClock .clock b{font-size:16px}.onlineClock .clock p{font-size:11px}.onlineClock .clock small{font-size:10px;min-height:0}
+ .onlineFelt{position:absolute;top:118px;left:50%;transform:translateX(-50%);width:min(calc(100% - 40px),calc((100dvh - 220px)*16/9));height:auto!important;min-height:0!important;aspect-ratio:16/9;margin:0}
+ .onlineFelt [data-slot=p5],.onlineFelt [data-slot=p6]{top:52%;bottom:auto}
+ .onlineActions{position:absolute;right:8px;bottom:8px;width:min(480px,36vw);max-height:calc(100% - 100px);margin:0;overflow:auto}
+}
+@media(min-width:900px){.onlineHeading>span{left:70px;max-width:calc(25vw - 80px);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:9px}}
+@media(max-width:899px){
+ /* Use the grid's remaining height, not the portrait asset's intrinsic aspect ratio. */
+ .compactShell .onlineFelt{width:calc(100% - 24px);height:100%!important;max-height:100%;min-height:0!important;aspect-ratio:auto;margin:0 12px;align-self:stretch;justify-self:center}
+}
