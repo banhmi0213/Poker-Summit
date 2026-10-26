@@ -683,8 +683,8 @@
 }
 @media(max-width:899px){
  .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(38px,10vw,46px);--board-card-height:clamp(54px,14vw,64px);--board-gap:4px}
- .self .hole span{width:44px;height:60px;font-size:24px}
- .showdownPosition .miniCards span{width:36px;height:50px;font-size:18px}
+ .self .hole span{width:49px;height:67px;font-size:26px}
+ .showdownPosition .miniCards span{width:40px;height:56px;font-size:20px}
  .self .handWithRank{left:calc(50% + 28px);top:0}
  .table[data-showdown=true] .showdownThree,.table[data-showdown=true] .showdownFive{left:20%}
  .table[data-showdown=true] .showdownFour,.table[data-showdown=true] .showdownSix{right:20%}
@@ -724,9 +724,9 @@
  .self .activeAvatar{width:96px;height:96px}.self .activeAvatar .avatar{width:88px;height:88px}
  .seat>span:not(.actionBadge):not(.turnSeconds),.seat>small{width:110px;max-width:110px;font-size:13px}.selfInfo{min-width:110px}
  .self .handWithRank{left:calc(50% + 50px);top:4px}
- .self .hole span{width:64px;height:88px;font-size:30px}
+ .self .hole span{width:72px;height:98px;font-size:34px}
  .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
- .showdownPosition .miniCards span{width:58px;height:80px;font-size:26px}
+ .showdownPosition .miniCards span{width:65px;height:90px;font-size:29px}
  .betChip{width:30px;height:30px;flex-basis:30px}.streetBet{font-size:14px}
  .controls{gap:5px 8px;padding:8px 10px}.controls>p[role=status]{display:none}.controls .actions button{min-height:62px;font-size:20px}
 }
