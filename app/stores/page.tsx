@@ -1,4 +1,5 @@
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
+import { WrapParts } from "@/app/wrap-parts";
 import { STORES_PER_PAGE, paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -282,7 +283,7 @@ export default async function StoresPage({
           {/* 都道府県・市区町村ページは「大阪府 アミューズメントポーカー」「大阪 ポーカーバー」のような検索に合わせた見出しにする(2026/10/26)。
               語の途中で改行されないよう、区切りごとに折り返す。スマホのバナー見出しは幅が狭いので従来の文言のまま。 */}
           <h1>{pref
-            ? [`${heroPlace}の`, "アミューズメントポーカー・", "ポーカーバーを探す"].map(part => <span key={part} style={{ display: "inline-block" }}>{part}</span>)
+            ? <WrapParts parts={[`${heroPlace}の`, "アミューズメントポーカー・", "ポーカーバーを探す"]} style={{ display: "inline-block" }} />
             : `${heroPlace}のポーカースポットを探す`}</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
