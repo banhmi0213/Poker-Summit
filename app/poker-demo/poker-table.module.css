@@ -495,3 +495,6 @@
 .actions button{background:#c6a266;color:#201b13}.actions button:first-child{background:#85484b}.actions button:nth-child(2){background:#5b625e}.actions button:nth-child(3){background:#477563}
 .quickBets button{background:#5b5140}.quickBets button:last-child{background:#a47d38}
 @media(min-width:900px){.gamePage{background:#171715}.desktopStructure{background:#2b2721}.gameMain{max-width:1540px}.shell{grid-template-columns:210px minmax(400px,1fr) 280px}}
+
+/* Keep the complete board lane anchored when demo streets advance. */
+.table .felt,.table[data-street="0"] .felt{top:40%}
