@@ -98,6 +98,17 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  await b.evaluate(()=>{window.ringRevealFrames=[];const record=()=>{const node=document.querySelector('[data-board-count]');if(node){const count=Number(node.dataset.boardCount),result=node.dataset.result==='true',last=window.ringRevealFrames.at(-1);if(!last||last.count!==count||last.result!==result)window.ringRevealFrames.push({count,result,at:performance.now()});}};new MutationObserver(record).observe(document.body,{subtree:true,attributes:true,attributeFilter:['data-board-count','data-result']});record();});
  let lagUntil=0;await b.route('**/api/poker/ring',route=>{const body=route.request().postDataJSON();if(body.type==='act'&&body.command.action.type==='call')lagUntil=Date.now()+6500;return body.type==='state'&&Date.now()<lagUntil?route.fulfill({status:503,contentType:'application/json',body:'{"ok":false}'}):route.continue();});
  await b.getByRole('button',{name:/^コール/}).click();
+ if(process.env.POKER_TABLE_UI==='1'){
+  // Public all-in hands move in front of avatars before the board has finished.
+  for(const [page,viewport] of [[a,{width:1440,height:900}],[b,{width:390,height:844}]]){
+   await page.setViewportSize(viewport);await page.locator('[data-reveal-hands="true"][data-result="false"]').waitFor();
+   const cards=page.getByLabel('各プレイヤーのハンド',{exact:true}).locator('[data-motion-hole] > span');
+   assert.equal(await cards.count(),2);assert.equal(await cards.locator('[data-card-rank]').count(),4);
+   const layout=await page.evaluate(()=>{const layer=document.querySelector('[aria-label="各プレイヤーのハンド"]'),cards=Array.from(layer.querySelectorAll('[data-motion-hole] > span')),avatars=Array.from(document.querySelectorAll('[data-motion-stack]')).map(e=>e.getBoundingClientRect());return {z:Number(getComputedStyle(layer).zIndex),cards:cards.map(e=>{const r=e.getBoundingClientRect();return {onScreen:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,straight:getComputedStyle(e).transform==='none',clear:avatars.every(a=>r.right<=a.left||r.left>=a.right||r.bottom<=a.top||r.top>=a.bottom)};})};});
+   assert.ok(layout.z>=4,'revealed cards render above seat avatars');assert.ok(layout.cards.every(c=>c.onScreen&&c.straight&&c.clear),'both public cards stay fully visible away from avatars');
+   await page.screenshot({path:path.join(output,`all-in-reveal-${viewport.width}.png`),fullPage:true});
+  }
+ }
  // After the all-in call the table waits up to 8s for each player's run-it-twice answer (unanswered = once).
  const boardCounts=[];for(let i=0;i<30;i++){const state=await store.state(users[1],tid);boardCounts.push(state.play.hand.board.length);if(state.play.hand.result)break;await new Promise(r=>setTimeout(r,1000));}
  assert.ok(boardCounts.includes(0)&&boardCounts.includes(3)&&boardCounts.includes(4)&&boardCounts.includes(5));

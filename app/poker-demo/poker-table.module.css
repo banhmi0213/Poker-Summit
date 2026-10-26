@@ -654,23 +654,23 @@
 
 /* Preserve the official gold artwork; reveal both cards inside the rail. */
 .cards::before{filter:none;mix-blend-mode:normal;opacity:1}
-.table[data-showdown=true] .opponentCardsLayer{z-index:4}
-.table[data-showdown=true] .showdownPosition{transform:none}
-.table[data-showdown=true] .showdownPosition .miniCards{gap:4px}
-.table[data-showdown=true] .showdownPosition .miniCards>span{transform:none;margin-left:0}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:4}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition{transform:none}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition .miniCards{gap:4px}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition .miniCards>span{transform:none;margin-left:0}
 @media(min-width:900px){
- .table[data-showdown=true] .showdownTwo{top:20.5%;left:50%;right:auto;transform:translateX(-50%)}
- .table[data-showdown=true] .showdownThree{top:17%;left:16%;right:auto}
- .table[data-showdown=true] .showdownFour{top:17%;right:16%;left:auto}
- .table[data-showdown=true] .showdownFive{top:65%;bottom:auto;left:16%;right:auto}
- .table[data-showdown=true] .showdownSix{top:65%;bottom:auto;right:16%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:20.5%;left:50%;right:auto;transform:translateX(-50%)}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:17%;left:16%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:17%;right:16%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;bottom:auto;left:16%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;bottom:auto;right:16%;left:auto}
 }
 @media(max-width:899px){
- .table[data-showdown=true] .showdownTwo{top:17%;left:50%;right:auto;transform:translateX(-50%)}
- .table[data-showdown=true] .showdownThree{top:22%;left:18%;right:auto}
- .table[data-showdown=true] .showdownFour{top:22%;right:18%;left:auto}
- .table[data-showdown=true] .showdownFive{top:68%;bottom:auto;left:18%;right:auto}
- .table[data-showdown=true] .showdownSix{top:68%;bottom:auto;right:18%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:17%;left:50%;right:auto;transform:translateX(-50%)}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:22%;left:18%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:22%;right:18%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:68%;bottom:auto;left:18%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:68%;bottom:auto;right:18%;left:auto}
 }
 
 /* Larger readable cards and a matching fixed logo footprint. */
@@ -686,8 +686,8 @@
  .self .hole span{width:49px;height:67px;font-size:26px}
  .showdownPosition .miniCards span{width:40px;height:56px;font-size:20px}
  .self .handWithRank{left:calc(50% + 28px);top:0}
- .table[data-showdown=true] .showdownThree,.table[data-showdown=true] .showdownFive{left:20%}
- .table[data-showdown=true] .showdownFour,.table[data-showdown=true] .showdownSix{right:20%}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{left:20%}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{right:20%}
 }
 
 /* Felt-side wagers: burgundy casino chips with ivory edge inserts and stacked rims. */
@@ -740,8 +740,8 @@
  .shell{justify-content:flex-start}
  .heading>span{position:absolute;top:14px;left:80px;font-size:10px}
  .edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:56%;bottom:auto}
- .table[data-showdown=false] .showdownFive{top:calc(56% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
- .table[data-showdown=false] .showdownSix{top:calc(56% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
+ .table[data-showdown=false]:not([data-reveal-hands=true]) .showdownFive{top:calc(56% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
+ .table[data-showdown=false]:not([data-reveal-hands=true]) .showdownSix{top:calc(56% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
 }
 
 /* Table information stays reachable without a permanent sidebar or lost play space. */
