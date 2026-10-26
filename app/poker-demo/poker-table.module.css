@@ -830,3 +830,22 @@
  .table[data-reveal-hands=true] .showdownFive{top:67%;left:0;right:auto;bottom:auto}
  .table[data-reveal-hands=true] .showdownSix{top:67%;right:0;left:auto;bottom:auto}
 }
+
+/* Phone spacing: spend the spare heading space on the table, not overlapping cards. */
+@media(max-width:899px){
+ .demoShell>.demoInfo{position:absolute;top:8px;left:48px;right:auto;margin:0}
+ .demoShell>.heading>span{visibility:hidden}
+ .demoShell:not(:has(>.gameClock)){grid-template-rows:30px 0 minmax(0,1fr) auto;row-gap:2px}
+ .table .self{height:115px;min-height:115px;bottom:4px;justify-content:flex-start}
+ .table .self .activeAvatar{position:absolute;top:0;left:50%;transform:translateX(-50%)}
+ .table .self .handWithRank{top:0}
+ .table .self .selfInfo{position:absolute;top:68px;left:50%;transform:translateX(-50%);margin:0;padding:3px 6px;min-width:100px;gap:1px;font-size:10px;line-height:1.1}
+ .table .selfInfo .actionBadge,.table .selfInfo .positionBadge{display:none}
+ .table .selfInfo .madeHand{font-size:9px;line-height:1.1}.table .selfInfo small{font-size:10px}
+ .table .felt,.table[data-street="0"] .felt{top:32%}
+}
+@media(max-width:899px){
+ .table .self .selfInfo{width:72px;min-width:72px;max-width:72px;padding:2px 3px;font-size:9px;border-radius:5px}
+ .table .selfInfo .memberName,.table .selfInfo>strong{display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.1}
+ .table .selfInfo small{font-size:10px;line-height:1.1}.table .selfInfo .madeHand{font-size:8px;line-height:1.1}
+}
