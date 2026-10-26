@@ -58,7 +58,9 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  await a.screenshot({path:path.join(output,'desktop.png'),fullPage:true});await b.screenshot({path:path.join(output,'mobile.png'),fullPage:true});
  const refreshTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'更新',exact:true}).click();}else await p.getByRole('button',{name:'更新',exact:true}).click();};
  const leaveTable=async p=>{if(process.env.POKER_TABLE_UI==='1'){await p.getByLabel('ゲームメニューを開く',{exact:true}).click();await p.getByRole('button',{name:'◉ 観戦',exact:true}).click();await p.getByRole('button',{name:'席から離れて観戦する',exact:true}).click();}else await p.getByRole('button',{name:'退出・chipを返却',exact:true}).click();};
- const pendingExit=p=>process.env.POKER_TABLE_UI==='1'?p.getByRole('complementary',{name:'リング卓情報',exact:true}).getByText('退出予約済み · ハンドの精算後に返却します。',{exact:true}):p.getByRole('button',{name:'退出予約済み',exact:true});
+ // The ring info sits in the folding 「卓の情報」 drawer on PC (2026/10/26); open it before reading the status.
+ const openInfo=async p=>{const info=p.getByRole('complementary',{name:'リング卓情報',exact:true}),body=info.locator('details');if(await body.count()&&!(await body.evaluate(d=>d.open)))await info.getByText('卓の情報',{exact:true}).click();};
+ const pendingExit=p=>{if(process.env.POKER_TABLE_UI!=='1')return p.getByRole('button',{name:'退出予約済み',exact:true});const status=p.getByRole('complementary',{name:'リング卓情報',exact:true}).getByText('退出予約済み · ハンドの精算後に返却します。',{exact:true});return {waitFor:async o=>{await p.getByRole('complementary',{name:'リング卓情報',exact:true}).waitFor({state:'attached'});await openInfo(p);return status.waitFor(o);}};};
  // Real browser actions -> runtime -> encrypted engine -> PostgreSQL settlement.
  await a.getByRole('button',{name:'対戦に参加（準備完了）',exact:true}).click();await a.getByText('準備完了 · 他の着席者を待っています。この画面を開いてお待ちください。',{exact:true}).waitFor();
  assert.equal((await db.query("select count(*)::int n from poker_private.ring_hands where status='active'")).rows[0].n,0);
