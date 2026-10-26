@@ -10,3 +10,6 @@
 @media(max-width:899px){.fullTable .inlineAlert{top:34px;right:8px;font-size:11px}}
 
 @media(max-width:899px){.fullTable .inlineAlert{top:1px;left:50%;right:auto;transform:translateX(-50%);width:calc(100% - 96px);max-width:360px;height:28px;max-height:28px;padding:3px 6px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:10px;border-radius:7px;overflow:hidden;box-shadow:none}.fullTable .inlineAlert p{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fullTable .inlineAlert button{width:auto;min-height:20px;padding:1px 5px;white-space:nowrap;font-size:10px;flex-shrink:0}}
+
+/* Rabbit hunt: the undealt board after a hand that ended early (ring only, one ticket). */
+.rabbit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.rabbit p{margin:0}.rabbit b{color:#f3c663;letter-spacing:.04em}
