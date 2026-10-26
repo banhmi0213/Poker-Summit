@@ -777,5 +777,44 @@
 .table :is(.cards,.hole,.miniCards)>.cardBack::after{content:'';position:absolute;inset:3px;border:1px solid #c8a964;border-radius:3px;pointer-events:none}
 .table .cardBack .thumbLogo{position:relative;width:51%;height:47%;object-fit:contain;filter:drop-shadow(0 1px 1px #0008);z-index:2}
 
+/* Phone demos share the live table's one-screen, thumb-reachable action area. */
+@media(max-width:899px){
+ .demoViewport{height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+ .demoViewport .gameMain{flex:1;min-height:0;max-height:100%;width:100%;padding:3px 6px max(6px,env(safe-area-inset-bottom));box-sizing:border-box;display:flex;flex-direction:column}
+ .demoViewport .previewLinks{display:none}
+ .demoViewport>.mobileFooterToggle{position:absolute;top:6px;bottom:auto;right:126px;font-size:10px;padding:7px 8px}
+ .demoShell{width:100%;height:100%;min-height:0;max-height:100%;box-sizing:border-box;padding:0 4px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:30px auto minmax(0,1fr) auto;gap:4px;border-radius:0;position:relative}
+ .demoShell>.heading{grid-column:1;grid-row:1;margin:0;min-height:0;align-items:center;padding:0}
+ .demoShell>.heading>span{font-size:8px;letter-spacing:.04em;padding:0 60px}
+ .demoShell>.heading button{height:28px;min-height:28px;min-width:30px;padding:0;display:grid;place-items:center}
+ .demoShell>.gameClock{grid-column:1;grid-row:2;min-height:0}
+ .demoShell>.gameClock aside{margin:0;padding:3px 7px;font-size:9px}
+ .demoShell>.gameClock aside b{font-size:14px}.demoShell>.gameClock aside p{font-size:9px;line-height:1.2}.demoShell>.gameClock aside small{display:none}
+ .demoShell>.statusDock{position:absolute;top:33px;right:6px;min-height:0;z-index:8}
+ .demoShell>.table{grid-column:1;grid-row:3;width:calc(100% - 24px);height:100%!important;min-height:0!important;max-height:100%;aspect-ratio:auto;margin:0 12px;border-width:5px;padding:8px 4px;box-sizing:border-box;align-self:stretch;justify-self:center}
+ .demoShell .topSeats{top:5px}.demoShell .table .self{bottom:14px}
+ .demoShell>.actionColumn{grid-column:1;grid-row:4;position:static;width:100%;min-height:0;max-height:none;overflow:visible;align-self:stretch;margin:0;padding:0;z-index:30}
+ .demoShell .controls{padding:7px 8px;gap:5px 7px}.demoShell .controls .actions button{min-height:54px;font-size:17px}
+ .demoShell .controls>p[role=status]{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}
+ .demoShell .controls>.hint{font-size:9px;line-height:1.2;margin:0}
+ .demoShell .demoTools{margin:0;font-size:9px}.demoShell .demoTools[open]{position:absolute;bottom:6px;left:6px;right:6px;z-index:50;max-height:65dvh;overflow:auto;background:#211e19;border:1px solid #a58a50;border-radius:9px;padding:8px}
+ .demoShell .resultOverlay{padding:4px 7px;margin:0 0 3px;font-size:10px}.demoShell .resultDeltas{display:none}
+ .demoShell>.demoInfo{top:8px;right:44px;font-size:8px;z-index:8}
+ .demoShell .controls{position:relative;grid-template-rows:auto auto auto;padding:6px 8px}
+ .demoShell .controls>.quickBets,.demoShell .controls>input,.demoShell .controls>label,.demoShell .controls>small{display:none}
+ .demoShell .controls>.actions{grid-row:2}.demoShell .controls>.turnHeader{grid-row:1;min-height:22px}.demoShell .controls>.demoFoldControls{grid-row:3}
+ .demoShell .controls>.demoTools{position:absolute;right:0;bottom:calc(100% + 6px);font-size:8px;z-index:5}.demoShell .controls>.demoTools[open]{left:0;bottom:calc(100% + 6px);font-size:10px}
+ .demoShell .controls>.hint{position:absolute;left:0;bottom:calc(100% + 6px);max-width:65%;background:#211e19ee;border-radius:6px;padding:4px;z-index:4}
+}
+
 /* The player's own made hand under the chip count (flop onward). */
 .madeHand{display:block;font-style:normal;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap;line-height:1.3}
+
+.phoneHint{display:none}
+@media(max-width:899px){
+ .demoShell .controls>.hint{display:none}
+ .demoShell .phoneHint{display:block;position:absolute;top:9px;right:49px;z-index:5;font-size:9px;color:#e8d8b5}
+ .demoShell .phoneHint>summary{cursor:pointer;list-style:none}.demoShell .phoneHint>summary::-webkit-details-marker{display:none}
+ .demoShell .phoneHint[open]{top:auto;bottom:calc(100% + 6px);left:0;right:auto;max-width:230px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px}
+ .demoShell .phoneHint p{margin:6px 0;line-height:1.5}.demoShell .phoneHint small{font-size:9px}
+}
