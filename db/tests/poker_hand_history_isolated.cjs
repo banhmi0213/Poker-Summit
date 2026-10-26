@@ -13,13 +13,15 @@ const {PGlite}=require(process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite'),
  const file=fs.readdirSync(path.resolve(__dirname,'../../supabase/migrations')).find(f=>f.endsWith('_poker_hand_histories.sql'));
  const sql=fs.readFileSync(path.resolve(__dirname,'../../supabase/migrations',file),'utf8');
  await db.exec(sql);await db.exec(sql); // re-runnable
+ const statsFile=fs.readdirSync(path.resolve(__dirname,'../../supabase/migrations')).find(f=>f.endsWith('_poker_hand_stats.sql'));
+ const statsSql=fs.readFileSync(path.resolve(__dirname,'../../supabase/migrations',statsFile),'utf8');await db.exec(statsSql);await db.exec(statsSql);
  const ids=[1,2,3].map(i=>`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`),table='30000000-0000-4000-8000-000000000001',hand='40000000-0000-4000-8000-000000000001';
  for(let i=0;i<ids.length;i++)await db.query('insert into auth.users values($1,$2)',[ids[i],{display_name:'P'+(i+1)}]);
  await db.query("insert into public.poker_ring_tables values($1,'テスト卓')",[table]);
  const card=(rank,suit)=>({rank,suit});
  const record={version:1,handId:hand,terms:{sb:50,bb:100,ante:0,anteType:'none',level:0},buttonSeatId:'seat-1',board:[card(2,'c'),card(7,'d'),card(9,'h'),card(11,'s'),card(13,'c')],actions:[{street:'preflop',seatId:'seat-1',type:'call',amount:100,to:100,allIn:false,pot:250}],result:{showdown:true,winners:['seat-1'],payouts:{'seat-1':300}},
-  players:[{seatId:'seat-1',seat:1,memberId:ids[0],position:'BTN',startStack:1000,endStack:1200,net:200,hole:[card(14,'s'),card(14,'h')],folded:false,shown:true},
-           {seatId:'seat-3',seat:3,memberId:ids[1],position:'SB',startStack:1000,endStack:950,net:-50,hole:[card(3,'s'),card(4,'h')],folded:true,shown:false},
+  players:[{seatId:'seat-1',seat:1,memberId:ids[0],position:'BTN',startStack:1000,endStack:1200,net:200,hole:[card(14,'s'),card(14,'h')],folded:false,shown:true,stats:{vpip:true,pfr:true,threeBetOpp:false,threeBet:false,cbetOpp:true,cbet:true,sawFlop:true,wentToShowdown:true,wonAtShowdown:true}},
+           {seatId:'seat-3',seat:3,memberId:ids[1],position:'SB',startStack:1000,endStack:950,net:-50,hole:[card(3,'s'),card(4,'h')],folded:true,shown:false,stats:{vpip:false,threeBetOpp:true,threeBet:false}},
            {seatId:'seat-5',seat:5,memberId:ids[2],position:'BB',startStack:1000,endStack:850,net:-150,hole:[card(5,'s'),card(6,'h')],folded:false,shown:true}]};
  const save=(r=record,h=hand)=>db.query('select public.poker_hand_history_save($1,$2,$3,$4,$5) ok',[h,'ring',table,null,r]);
  // Clients can neither write nor read the private tables or the save RPC.
@@ -45,5 +47,11 @@ const {PGlite}=require(process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite'),
  assert.deepEqual(await as(outsider,false,'select public.poker_hand_history_list() v'),[]);
  const list=await as(ids[0],false,'select public.poker_hand_history_list() v');assert.equal(list.length,1);assert.equal(list[0].handId,hand);
  assert.equal((await as(ids[0],true,'select public.poker_hand_history_list(true) v')).length,1);
- console.log('PASS hand history: service-only idempotent writes, roster validation, own/showdown-only cards for members, full cards for operators, list scoping.');
+ const mine=await as(ids[0],false,'select public.poker_hand_stats() v');
+ assert.equal(Number(mine.ring.hands),1);assert.equal(Number(mine.ring.vpip),1);assert.equal(Number(mine.ring.cbet),1);assert.equal(Number(mine.ring.wsd),1);assert.equal(Number(mine.ring.bb100),200);
+ assert.deepEqual(mine.ring.positions.map(p=>[p.position,Number(p.hands)]),[['BTN',1]]);
+ const sb=await as(ids[1],false,'select public.poker_hand_stats() v');assert.equal(Number(sb.ring.three_bet_opp),1);assert.equal(Number(sb.ring.three_bet),0);
+ await assert.rejects(as(ids[0],false,'select public.poker_hand_stats(true) v'),/Admin required/);
+ const all=await as(ids[2],true,'select public.poker_hand_stats(true) v');assert.equal(all.members.length,3);assert.ok(all.members.every(m=>m.name&&Number(m.hands)===1));
+ console.log('PASS hand history: service-only idempotent writes, roster validation, own/showdown-only cards for members, full cards for operators, list scoping, per-member tendency totals.');
 }finally{await db.close();}})().catch(e=>{console.error(e);process.exit(1);});

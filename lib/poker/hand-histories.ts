@@ -25,3 +25,19 @@ export async function loadHandHistory(handId:string,admin=false):Promise<HandHis
  if(error||!data||!Array.isArray((data as HandHistoryView).players))return null;
  return data as HandHistoryView;
 }
+
+/** Totals from public.poker_hand_stats. Rates are numerator/denominator counts (see lib/poker/hand-stats.ts). */
+export type HandStatsSummary={hands:number;net:number;bb100:number;vpip:number;pfr:number;three_bet_opp:number;three_bet:number;fold_to_3bet_opp:number;fold_to_3bet:number;cbet_opp:number;cbet:number;fold_to_cbet_opp:number;fold_to_cbet:number;saw_flop:number;wtsd:number;wsd:number;
+ positions:{position:string;hands:number;net:number;bb100:number;vpip:number;pfr:number}[]};
+export async function loadHandStats():Promise<{asOf:string;ring:HandStatsSummary;all:HandStatsSummary}|null>{
+ const client=await createClient();const {data:{user},error:authError}=await client.auth.getUser();if(authError||!user)return null;
+ const {data,error}=await client.rpc('poker_hand_stats',{p_admin:false});
+ if(error||!data?.ring)return null;
+ return data;
+}
+export async function loadAdminHandStats():Promise<{asOf:string;members:(HandStatsSummary&{memberId:string;name:string})[]}|null>{
+ const client=await createClient();const {data:{user},error:authError}=await client.auth.getUser();if(authError||!user)return null;
+ const {data,error}=await client.rpc('poker_hand_stats',{p_admin:true});
+ if(error||!Array.isArray(data?.members))return null;
+ return data;
+}

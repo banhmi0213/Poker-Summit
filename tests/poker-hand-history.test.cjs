@@ -56,3 +56,35 @@ test('six-handed positions and per-player antes',()=>{
  assert.equal(h.actions.filter(a=>a.type==='ante').every(a=>a.amount===25),true);
  assert.equal(h.players.reduce((s,p)=>s+p.net,0),0);
 });
+
+test('tendency flags: open, cold call, c-bet and fold to c-bet',()=>{
+ const hand=new AuthoritativeHand([{id:'seat-1',stack:10000},{id:'seat-3',stack:10000},{id:'seat-5',stack:10000}],0,terms);
+ act(hand,{type:'raise',amount:250});act(hand,{type:'fold'});act(hand,{type:'call'});
+ act(hand,{type:'check'});act(hand,{type:'bet',amount:150});act(hand,{type:'fold'});
+ const s=Object.fromEntries(buildHandHistory(hand.checkpoint(),members).players.map(p=>[p.position,p.stats]));
+ assert.deepEqual([s.BTN.vpip,s.BTN.pfr,s.BTN.cbetOpp,s.BTN.cbet,s.BTN.sawFlop],[true,true,true,true,true]);
+ assert.deepEqual([s.SB.vpip,s.SB.threeBetOpp,s.SB.threeBet,s.SB.sawFlop],[false,true,false,false]);
+ assert.deepEqual([s.BB.vpip,s.BB.pfr,s.BB.threeBetOpp,s.BB.foldToCbetOpp,s.BB.foldToCbet,s.BB.cbetOpp],[true,false,true,true,true,false]);
+ assert.ok(Object.values(s).every(v=>!v.wentToShowdown&&!v.foldTo3BetOpp));
+});
+
+test('tendency flags: 3-bet and fold to 3-bet; a second raise in front is not a 3-bet chance',()=>{
+ const hand=new AuthoritativeHand([{id:'seat-1',stack:10000},{id:'seat-3',stack:10000},{id:'seat-5',stack:10000}],0,terms);
+ act(hand,{type:'raise',amount:250});act(hand,{type:'raise',amount:900});act(hand,{type:'fold'});act(hand,{type:'fold'});
+ const s=Object.fromEntries(buildHandHistory(hand.checkpoint(),members).players.map(p=>[p.position,p.stats]));
+ assert.deepEqual([s.SB.threeBetOpp,s.SB.threeBet,s.SB.pfr],[true,true,true]);
+ assert.deepEqual([s.BTN.foldTo3BetOpp,s.BTN.foldTo3Bet,s.BTN.threeBetOpp],[true,true,false]);
+ assert.deepEqual([s.BB.threeBetOpp,s.BB.vpip],[false,false]);
+});
+
+test('tendency flags: limp and free big blind check are not counted alike; all-in showdown counts WTSD/W$SD',()=>{
+ const limp=new AuthoritativeHand([{id:'seat-2',stack:10000},{id:'seat-4',stack:10000}],0,terms);
+ act(limp,{type:'call'});while(!limp.snapshot(null).result)act(limp,{type:'check'});
+ const l=buildHandHistory(limp.checkpoint(),members).players;
+ assert.deepEqual(l.map(p=>[p.position,p.stats.vpip,p.stats.pfr,p.stats.cbetOpp,p.stats.wentToShowdown]),[['BTN',true,false,false,true],['BB',false,false,false,true]]);
+ const allIn=new AuthoritativeHand([{id:'seat-2',stack:500},{id:'seat-4',stack:800}],0,terms);
+ act(allIn,{type:'raise',amount:500});act(allIn,{type:'call'});
+ const h=buildHandHistory(allIn.checkpoint(),members);
+ assert.ok(h.players.every(p=>p.stats.sawFlop&&p.stats.wentToShowdown));
+ for(const p of h.players)assert.equal(p.stats.wonAtShowdown,h.result.winners.includes(p.seatId));
+});
