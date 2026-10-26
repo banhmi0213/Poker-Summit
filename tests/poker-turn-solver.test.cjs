@@ -33,3 +33,17 @@ test('a turn spot converges and the view walks through the river card',()=>{
  assert.equal(root.classes.KK[0],6);assert.ok(river.player===0&&river.classes.KK[0]<=3+1e-9,'KK reach '+river.classes.KK?.[0]);
  assert.ok(river.trail.at(-1).includes('K♠'));
 });
+
+test('flop with no betting = pot x equity over every turn and river (two dealt cards)',()=>{
+ const flop=['Kh','7d','2c'].map(code);
+ const r0=combos(flop,(x,y)=>x>=10&&y>=10).slice(0,10),r1=combos(flop,(x,y)=>x===y&&x<=8).slice(0,14);
+ const s=new PostflopSolver({board:flop,pot:10,stack:0,betSizes:[],raiseSizes:[],maxRaises:0,ranges:[r0,r1]});
+ let num=0,den=0;
+ for(const a of r0)for(const b of r1){const held=[a.c1,a.c2,b.c1,b.c2];if(new Set(held).size<4)continue;
+  for(let t=0;t<52;t++)for(let r=t+1;r<52;r++){if(flop.includes(t)||flop.includes(r)||held.includes(t)||held.includes(r))continue;
+   const x=evalCodes([a.c1,a.c2,...flop,t,r]),y=evalCodes([b.c1,b.c2,...flop,t,r]);num+=x>y?1:x===y?0.5:0;den++;}}
+ const [v0,v1]=s.values();
+ assert.ok(Math.abs(v0-10*num/den)<1e-9,`solver ${v0} vs brute ${10*num/den}`);assert.ok(Math.abs(v0+v1-10)<1e-9);
+ const v=describe(s,[0,0]);assert.equal(v.kind,'chance');assert.equal(v.deal,'turn');assert.equal(v.cards.length,49);
+ const r=describe(s,[0,0,code('As'),0,0]);assert.equal(r.kind,'chance');assert.equal(r.deal,'river');assert.equal(r.cards.length,48);
+});
