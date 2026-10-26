@@ -62,6 +62,6 @@ export function HandReplay({hand}:{hand:HandHistoryView}){
   {reviews.length>0&&<div className={styles.result}><p className={styles.street}>振り返り</p>
    {reviews.some(r=>r.note==='fold-strong'||r.note==='call-thin')?<ul className={styles.log}>{reviews.filter(r=>r.note==='fold-strong'||r.note==='call-thin').map(r=><li key={r.index}><em>{streetNames[r.street]}</em><span>{actionText(hand.actions[r.index])}：{reviewText(r)}</span></li>)}</ul>:<p>このハンドで目立って損な判断は見つかりませんでした。</p>}
    <p>※推定勝率は、残っている相手の手札をランダムと仮定した目安です。相手がレイズしている場面では、実際の勝率はこれより低くなることがあります。</p></div>}
-  {finished&&<div className={styles.result}><p>{hand.result.showdown?'ショーダウン':'ショーダウンなし'} · 勝者：{hand.result.winners.map(name).join('・')}（{hand.result.winners.map(w=>(hand.result.payouts[w]??0).toLocaleString()).join('・')}）</p></div>}
+  {finished&&<div className={styles.result}><p>{hand.result.showdown?'ショーダウン':'ショーダウンなし'} · 勝者：{hand.result.winners.map(name).join('・')}（{hand.result.winners.map(w=>(hand.result.payouts[w]??0).toLocaleString()).join('・')}）</p>{hand.result.runs&&<ul className={styles.log} aria-label="ラン・イット・トゥワイス">{hand.result.runs.map((r,i)=><li key={i}><em>{i+1}回目</em><span><HistoryCards cards={r.board} count={0}/> 勝者：{r.winners.map(name).join('・')}（ポットの半分）</span></li>)}</ul>}</div>}
  </div>;
 }

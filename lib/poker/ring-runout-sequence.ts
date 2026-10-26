@@ -34,7 +34,10 @@ export class RingRunoutSequence {
  private mask(count:number):RingPlayView{
   const final=this.#final!,s=structuredClone(final.hand),payouts=s.result!.payouts;
   s.board=s.board.slice(0,count);s.street=count===0?'preflop':count===3?'flop':count===4?'turn':'river';
-  s.players=s.players.map(p=>({...p,stack:p.stack-(payouts[p.id]??0)}));s.pot=Object.values(payouts).reduce((a,b)=>a+b,0);s.result=null;s.legal=null;s.toAct=null;
+  s.players=s.players.map(p=>({...p,stack:p.stack-(payouts[p.id]??0)}));s.pot=Object.values(payouts).reduce((a,b)=>a+b,0);
+  // Run it twice: both boards are dealt street by street together.
+  if(s.result!.boards)s.runBoards=s.result!.boards.map(b=>b.slice(0,count));
+  s.result=null;s.legal=null;s.toAct=null;
   return {...final,hand:s};
  }
  tick(now:number){

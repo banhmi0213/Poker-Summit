@@ -10,7 +10,9 @@ import {handStats,type HandStats} from './hand-stats';
 export type HistoryStreet='preflop'|'flop'|'turn'|'river';
 export type HistoryAction={street:HistoryStreet;seatId:string;type:'ante'|'sb'|'bb'|'fold'|'check'|'call'|'bet'|'raise';amount:number;to:number;allIn:boolean;pot:number};
 export type HistoryPlayer={seatId:string;seat:number;memberId:string;position:string;startStack:number;endStack:number;net:number;hole:Card[];folded:boolean;shown:boolean;stats:HandStats};
-export type HandHistory={version:1;handId:string;terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;players:HistoryPlayer[];board:Card[];actions:HistoryAction[];result:{showdown:boolean;winners:string[];payouts:Record<string,number>}};
+export type HandHistory={version:1;handId:string;terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;players:HistoryPlayer[];board:Card[];actions:HistoryAction[];result:{showdown:boolean;winners:string[];payouts:Record<string,number>;
+ /** Ring all-in run twice: each run's board and winners (the first run's board is also `board`). */
+ runs?:{board:Card[];winners:string[]}[]}};
 
 const streets:HistoryStreet[]=['preflop','flop','turn','river'];
 const cards=(list:readonly Card[])=>list.map(c=>({rank:c.rank,suit:c.suit}));
@@ -47,15 +49,18 @@ export function buildHandHistory(checkpoint:HandCheckpoint,members:Readonly<Reco
  let before=first;
  checkpoint.commands.forEach((entry,i)=>{
   const after=replay(i+1);
+  // A run-it-twice answer moves no chips and is not a betting action.
+  if(entry.command.action.type==='runs'){before=after;return;}
   const was=before.players.find(p=>p.id===entry.actor)!,now=after.players.find(p=>p.id===entry.actor)!;
   const amount=now.totalCommitted-was.totalCommitted;pot+=amount;
   const street=streets[streets.indexOf(before.street as HistoryStreet)]??'river';
   // Street commitments reset when the street advances; was.committed+amount is the player's street total.
-  actions.push({street,seatId:entry.actor,type:entry.command.action.type,amount,to:was.committed+amount,allIn:now.allIn&&!was.allIn,pot});
+  actions.push({street,seatId:entry.actor,type:entry.command.action.type as HistoryAction['type'],amount,to:was.committed+amount,allIn:now.allIn&&!was.allIn,pot});
   before=after;
  });
  const base=entries.map(e=>{const p=final.players.find(v=>v.id===e.id)!;return {seatId:e.id,seat:seatNumber(e.id),memberId:members[e.id],position:labels[e.id],startStack:e.stack,endStack:p.stack,net:p.stack-e.stack,hole:cards(checkpoint.deal.holes[e.id]),folded:p.folded,shown:p.hole!==null};});
- const board=cards(final.board),result={showdown:final.result.showdown,winners:[...final.result.winners],payouts:{...final.result.payouts}};
+ const board=cards(final.board),runs=final.result.boards?.map((b,i)=>({board:cards(b),winners:[...(final.result!.runWinners?.[i]??[])]}));
+ const result={showdown:final.result.showdown,winners:[...final.result.winners],payouts:{...final.result.payouts},...(runs?{runs}:{})};
  const stats=handStats({actions,players:base,board,result});
  const players=base.map(p=>({...p,stats:stats[p.seatId]}));
  return {version:1,handId:final.handId,terms:{sb:final.terms.sb,bb:final.terms.bb,ante:final.terms.ante,anteType:final.terms.anteType,level:final.terms.level},buttonSeatId:first.positions.button,players,board,actions,result};

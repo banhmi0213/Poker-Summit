@@ -3,3 +3,12 @@
 .seats[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
 
 .player[data-folded=true] [data-motion-hole]{visibility:hidden}
+
+/* Run it twice choice */
+.runsChoice{display:grid;gap:8px;padding:12px 14px;border:1px solid #b79754;border-radius:14px;background:linear-gradient(150deg,#241e15,#110f0b);color:#f6e7c4;box-shadow:0 6px 18px #0007}
+.runsChoice strong{font-size:14px}.runsChoice p{margin:0;font-size:11px;line-height:1.6;color:#d8c7a2}
+.runsChoice ul{display:flex;flex-wrap:wrap;gap:6px 14px;margin:0;padding:0;list-style:none;font-size:12px}
+.runsButtons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.runsButtons button{min-height:52px;border-radius:12px;font-size:18px;font-weight:700;border:1px solid #f0d081;background:linear-gradient(#e4b553,#a76d1c);color:#fff4d4;cursor:pointer}
+.runsButtons button:first-child{border-color:#43a2b4;background:linear-gradient(#18728b,#07384a)}
+.runsButtons button:disabled{opacity:.5;cursor:default}

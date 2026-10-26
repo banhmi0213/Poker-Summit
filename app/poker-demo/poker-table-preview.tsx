@@ -73,6 +73,9 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [betting, setBetting] = useState<BettingRound>(() => initialHand.round);
   const [bettingMessage, setBettingMessage] = useState(initialHand.terms ? `SB ${initialHand.terms.sb} / BB ${initialHand.terms.bb}・Ante ${initialHand.terms.ante}を徴収しました（デモ）。` : "開始前・休憩中は強制ベットを徴収しません。開始可能になったら大会デモを開始してください。");
   const [showdown, setShowdown] = useState(false);
+  // All-in with no more betting possible: cards are turned face up before the remaining board is dealt.
+  const [allInReveal, setAllInReveal] = useState(false);
+  const revealHoles = showdown || allInReveal;
   const [foldedSeats, setFoldedSeats] = useState<number[]>([]);
   const [streetStep, setStreetStep] = useState(0);
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
@@ -327,6 +330,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     const timer = window.setTimeout(() => {
       const result = settleCompletedHand(betting, deal.board, deal.holes, clockwiseSeats, clockwiseSeats[buttonIndex], streetStep >= 3);
       if (result?.showdown && streetStep < 3) {
+        setAllInReveal(true);
         setStreetStep(step => step + 1);
         setBettingMessage(`${streetNames[streetStep + 1]}：オールイン後のカード公開（デモ）`);
         return;
@@ -397,12 +401,12 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const nextDeal=await requestDemoDeal(nextButton,live);
       const nextRound=makeHand(startingStacks,nextButton,terms,nextPos);
       // Clear the previous reveal/awards before changing the participating roster.
-      setPayouts(null);setShowdown(false);setStreetStep(0);
+      setPayouts(null);setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);
       setLastActions({});setTurnRemaining(20);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${needsRefill?"残高0の席があるため、リングデモ全席を初期残高に補充しました。":""}`);
-      setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAction(null);
+      setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(20);setTimeBanksUsed(0);setRunning(true);
     } catch(error) {
       setBettingMessage(error instanceof Error?error.message:"配布に失敗しました。もう一度お試しください");
@@ -479,7 +483,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
         {seats.map((seat, i) => (!handActive || !deal.holes[`p${i + 2}`] || foldedSeats.includes(i + 2) || playerAt(`p${i + 2}`).folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
           {showdown && <strong className={styles.handRank}>{handLabel(deal.holes[`p${i + 2}`], deal.board)}</strong>}
-          <div className={styles.miniCards} data-motion-hole={`p${i+2}`}>{deal.holes[`p${i + 2}`].map((card, j) => showdown
+          <div className={styles.miniCards} data-motion-hole={`p${i+2}`}>{deal.holes[`p${i + 2}`].map((card, j) => revealHoles
             ? <span key={j} className={isRedCard(card) ? styles.redCard : ""}><CardFace card={card}/></span>
             : <span key={j} className={styles.cardBack} aria-label="Poker Summitの親指ロゴ入り裏向きカード"><ThumbLogo /></span>)}</div>
         </div>)}

@@ -65,3 +65,31 @@ export function settleShowdown(entries: readonly ShowdownEntry[], board: readonl
   }
   return { payouts, awards, scores };
 }
+
+/** Run it twice (or more): every side pot is split across the runs first (odd chip to the first run),
+ * then each run's share goes to the best hand on that run's board, odd chips clockwise from the button. */
+export function settleShowdownRuns(entries: readonly ShowdownEntry[], boards: readonly (readonly Card[])[], clockwiseIds: readonly string[], buttonId: string) {
+  if (boards.length < 1 || boards.length > 2 || boards.some(b => b.length !== 5)) throw new Error("Each run needs five board cards");
+  const used = new Set<string>();
+  for (const p of entries) for (const c of p.hole) used.add(c.rank + c.suit);
+  for (const b of boards) { const own = new Set(b.map(c => c.rank + c.suit)); if (own.size !== 5 || b.some(c => used.has(c.rank + c.suit))) throw new Error("Run board overlaps hole cards"); }
+  const start = (clockwiseIds.indexOf(buttonId) + 1) % clockwiseIds.length;
+  const oddChipOrder = [...clockwiseIds.slice(start), ...clockwiseIds.slice(0, start)];
+  const payouts = Object.fromEntries(entries.map(p => [p.id, 0])) as Record<string, number>;
+  const runWinners = boards.map(() => new Set<string>());
+  const scores = boards.map(board => { const m = new Map<string, HandScore>(); for (const p of entries) if (!p.folded) m.set(p.id, bestOfSeven([...p.hole, ...board])); return m; });
+  for (const pot of calculateSidePots(entries)) {
+    if (!pot.eligible.length) throw new Error("Pot has no eligible players");
+    boards.forEach((_, r) => {
+      const share = Math.floor(pot.amount / boards.length) + (r < pot.amount % boards.length ? 1 : 0);
+      const s = scores[r];
+      let best = s.get(pot.eligible[0])!;
+      for (const id of pot.eligible.slice(1)) if (compareScores(s.get(id)!, best) > 0) best = s.get(id)!;
+      const winners = pot.eligible.filter(id => compareScores(s.get(id)!, best) === 0);
+      for (const id of winners) { payouts[id] += Math.floor(share / winners.length); runWinners[r].add(id); }
+      let remainder = share % winners.length;
+      for (const id of oddChipOrder) { if (!remainder) break; if (winners.includes(id)) { payouts[id]++; remainder--; } }
+    });
+  }
+  return { payouts, runWinners: runWinners.map(w => [...w]) };
+}

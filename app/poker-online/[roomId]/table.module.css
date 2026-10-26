@@ -88,3 +88,7 @@
  /* Use the grid's remaining height, not the portrait asset's intrinsic aspect ratio. */
  .compactShell .onlineFelt{width:calc(100% - 24px);height:100%!important;max-height:100%;min-height:0!important;aspect-ratio:auto;margin:0 12px;align-self:stretch;justify-self:center}
 }
+/* Run it twice: two community card rows, each labelled. */
+.runBoards{display:flex;flex-direction:column;gap:6px;align-items:center}
+.runRow{display:flex;align-items:center;gap:8px}.runRow>small{font-size:11px;font-weight:700;color:#f3dcaa;background:#30261bd9;border:1px solid #b79754;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.runRow [data-motion-board],.runRow>div{transform:scale(.86);transform-origin:center}
