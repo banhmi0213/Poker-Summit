@@ -201,6 +201,13 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     if (previous === undefined || previous === actor || actor !== "you") return;
     playSound("turn");
   }, [betting.toAct, handFinished, showdown, spectating, handActive]);
+  // Hole cards for a new hand: the same "deal" sound as the online tables.
+  const previousHandRef = useRef(motionHand);
+  useEffect(() => {
+    if (previousHandRef.current === motionHand) return;
+    previousHandRef.current = motionHand;
+    playSound("deal");
+  }, [motionHand]);
   const previousStreetRef = useRef(streetStep);
   useEffect(() => {
     if (previousStreetRef.current === streetStep) return;
