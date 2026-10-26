@@ -49,3 +49,9 @@
 /* Use the same fixed five-card footprint for every street, including preflop. */
 .onlineFelt>div[class*="felt"]{--board-card-width:52px;--board-card-height:68px;--board-gap:4px}
 @media(max-width:899px){.onlineFelt>div[class*="felt"]{--board-card-width:27px;--board-card-height:37px}.onlineFelt [data-motion-board]>span{flex-basis:var(--board-card-width)}}
+
+@media(min-width:900px){
+ .compactShell .statusDock{position:absolute;top:46px;right:20px;left:auto;width:210px;min-height:0}
+ .onlineActions{grid-column:1;grid-row:4}
+ .onlineFelt>div[class*="felt"]{--board-card-width:clamp(42px,4vw,64px);--board-card-height:clamp(58px,5.6vw,86px)}
+}
