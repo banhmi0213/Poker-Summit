@@ -19,6 +19,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/events", label: "イベント管理" },
   { href: "/admin/poker-statistics", label: "ポーカー成績・ランキング" },
   { href: "/admin/poker-hands", label: "ポーカー ハンド履歴" },
+  { href: "/admin/poker-bots", label: "CPU卓の集計" },
   { href: "/admin/poker-rings", label: "リングゲーム卓設定" },
   { href: "/admin/poker-shop", label: "チップ交換所" },
   { href: "/admin/poker-tournaments", label: "オンライン大会設定" },
