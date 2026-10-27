@@ -5,7 +5,7 @@
 // Usage: node scripts/poker-release/build-production-sql.cjs > scripts/poker-release/production-upgrade.sql
 const fs=require('fs'),path=require('path');
 const root=path.resolve(__dirname,'../..'),list=fs.readFileSync(path.join(__dirname,'production-migrations.txt'),'utf8').split('\n').map(s=>s.trim()).filter(Boolean);
-const wrap=stmt=>`do $release$ begin ${stmt}; exception when duplicate_object or duplicate_table then null; end $release$;`;
+const wrap=stmt=>`do $release$ begin ${stmt}; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;`;
 function idempotent(sql){
  return sql
   .replace(/create table (?!if not exists)/gi,'create table if not exists ')
@@ -14,6 +14,8 @@ function idempotent(sql){
   .replace(/create schema (?!if not exists)/gi,'create schema if not exists ')
   .replace(/create function /gi,'create or replace function ')
   // Policies and triggers have no IF NOT EXISTS: skip them when they already exist (never dropped).
+  // One-time renames/moves: on a re-run the function is already moved, which is fine.
+  .replace(/(^|;)(\s*)(alter function [^;]+? (?:rename to|set schema) [^;]+)(?=;)/gi,(m,lead,ws,stmt)=>`${lead}${ws}${wrap(stmt)}`.replace(/;;$/,';'))
   .replace(/(^|;)(\s*)(alter table [^;]+? add constraint [^;]+)(?=;)/gi,(m,lead,ws,stmt)=>`${lead}${ws}${wrap(stmt)}`.replace(/;;$/,';'))
   .replace(/(^|;)(\s*)(create (?:policy|trigger) [^;]+)(?=;)/gi,(m,lead,ws,stmt)=>`${lead}${ws}${wrap(stmt)}`.replace(/;;$/,';'));
 }

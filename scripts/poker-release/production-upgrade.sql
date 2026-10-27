@@ -545,7 +545,7 @@ begin
  return new;
 end;
 $$;
-revoke all on function poker_private.archive_tournament_finish() from public,anon,authenticated; do $release$ begin create trigger archive_tournament_finish after insert or update of result on poker_private.hand_results for each row execute function poker_private.archive_tournament_finish(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.archive_tournament_finish() from public,anon,authenticated; do $release$ begin create trigger archive_tournament_finish after insert or update of result on poker_private.hand_results for each row execute function poker_private.archive_tournament_finish(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 
 -- Session-scoped read API: caller identity is never accepted as a parameter.
 create or replace function public.poker_statistics(p_admin boolean default false) returns jsonb
@@ -703,8 +703,7 @@ grant usage on schema poker_private to authenticated;
 grant execute on function poker_private.manage_entry(uuid,text[]) to authenticated;
 create or replace function public.poker_entry_manage(p_tournament uuid,p_emails text[] default null) returns jsonb language sql security invoker set search_path='' as $$select poker_private.manage_entry(p_tournament,p_emails);$$;
 revoke all on function public.poker_entry_manage(uuid,text[]) from public,anon;
-grant execute on function public.poker_entry_manage(uuid,text[]) to authenticated;
-alter function public.poker_registration_status(uuid,uuid) rename to poker_registration_status_legacy;
+grant execute on function public.poker_entry_manage(uuid,text[]) to authenticated; do $release$ begin alter function public.poker_registration_status(uuid,uuid) rename to poker_registration_status_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_registration_status(p_tournament uuid,p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select case when coalesce(s.automatic,false) then jsonb_build_object('tournamentId',t.id,'title',t.title,'starts_at',t.starts_at,'capacity',p.capacity,'count',(select count(*) from poker_private.tournament_registrations where tournament_id=t.id),
  'registered',exists(select 1 from poker_private.tournament_registrations where tournament_id=t.id and member_id=p_member),
@@ -713,8 +712,7 @@ create or replace function public.poker_registration_status(p_tournament uuid,p_
  'canCancel',clock_timestamp()<t.starts_at and exists(select 1 from poker_private.tournament_registrations where tournament_id=t.id and member_id=p_member),'eligible',poker_private.entry_eligible(t.id,p_member),'automatic',true)
  else public.poker_registration_status_legacy(p_tournament,p_member)||jsonb_build_object('eligible',true,'automatic',false) end
  from public.poker_tournaments t join poker_private.registration_policies p on p.tournament_id=t.id left join poker_private.entry_settings s on s.tournament_id=t.id where t.id=p_tournament;
-$$;
-alter function public.poker_registration_change(uuid,uuid,text) rename to poker_registration_change_legacy;
+$$; do $release$ begin alter function public.poker_registration_change(uuid,uuid,text) rename to poker_registration_change_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_registration_change(p_tournament uuid,p_member uuid,p_action text) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; p poker_private.registration_policies%rowtype;
 begin
@@ -727,8 +725,7 @@ begin
  else delete from poker_private.tournament_registrations where tournament_id=p_tournament and member_id=p_member; end if;
  return jsonb_build_object('ok',true,'state',public.poker_registration_status(p_tournament,p_member));
 end;
-$$;
-alter function public.poker_registration_freeze(uuid,integer) rename to poker_registration_freeze_legacy;
+$$; do $release$ begin alter function public.poker_registration_freeze(uuid,integer) rename to poker_registration_freeze_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_registration_freeze(p_tournament uuid,p_expected integer) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; f poker_private.registration_finalizations%rowtype; ids uuid[];
 begin
@@ -744,16 +741,13 @@ begin
  if cardinality(f.members)<>p_expected then raise exception 'Target count changed'; end if;
  return jsonb_build_object('tournamentId',f.tournament_id,'roomId',f.room_id,'starts_at',f.starts_at,'structure',f.structure,'members',f.members,'capacity',f.capacity,'allowSpectators',false);
 end;
-$$;
-alter function public.poker_room_authorize(uuid,uuid,text) rename to poker_room_authorize_legacy;
+$$; do $release$ begin alter function public.poker_room_authorize(uuid,uuid,text) rename to poker_room_authorize_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_room_authorize(p_room uuid,p_member uuid,p_operation text) returns boolean language sql volatile security invoker set search_path='' as $$
  select public.poker_room_authorize_legacy(p_room,p_member,p_operation) and coalesce((select case when s.automatic then clock_timestamp()>=r.starts_at-interval '10 minutes' and poker_private.entry_eligible(r.tournament_id,p_member) and exists(select 1 from poker_private.tournament_registrations where tournament_id=r.tournament_id and member_id=p_member) else true end from poker_private.tournament_rooms r left join poker_private.entry_settings s on s.tournament_id=r.tournament_id where r.room_id=p_room),false);
-$$;
-alter function public.poker_room_assignments(uuid) rename to poker_room_assignments_legacy;
+$$; do $release$ begin alter function public.poker_room_assignments(uuid) rename to poker_room_assignments_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_room_assignments(p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select coalesce(jsonb_agg(v),'[]'::jsonb) from jsonb_array_elements(public.poker_room_assignments_legacy(p_member)) v where not exists(select 1 from poker_private.entry_settings where tournament_id=(v->>'tournamentId')::uuid and automatic) or (exists(select 1 from poker_private.tournament_registrations where tournament_id=(v->>'tournamentId')::uuid and member_id=p_member) and clock_timestamp()>=(v->>'starts_at')::timestamptz-interval '10 minutes');
-$$;
-alter function public.poker_room_control(uuid) rename to poker_room_control_legacy;
+$$; do $release$ begin alter function public.poker_room_control(uuid) rename to poker_room_control_legacy; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_room_control(p_room uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select case when coalesce(s.automatic,false) then public.poker_room_control_legacy(p_room)||jsonb_build_object('seatedStart',true,'members',coalesce((select jsonb_agg(a.member_id order by a.member_id) from poker_private.room_admissions a join poker_private.tournament_registrations e on e.tournament_id=a.tournament_id and e.member_id=a.member_id where a.room_id=p_room),'[]'::jsonb)) else public.poker_room_control_legacy(p_room) end from poker_private.tournament_rooms r left join poker_private.entry_settings s on s.tournament_id=r.tournament_id where r.room_id=p_room;
 $$;
@@ -767,7 +761,7 @@ begin
  return new;
 end;
 $$;
-revoke all on function poker_private.guard_entry_schedule() from public,anon,authenticated,service_role; do $release$ begin create trigger poker_entry_schedule_guard before update on public.poker_tournaments for each row execute function poker_private.guard_entry_schedule(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.guard_entry_schedule() from public,anon,authenticated,service_role; do $release$ begin create trigger poker_entry_schedule_guard before update on public.poker_tournaments for each row execute function poker_private.guard_entry_schedule(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 revoke all on function public.poker_registration_status(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_registration_status(uuid,uuid) to service_role;
 revoke all on function public.poker_registration_change(uuid,uuid,text) from public,anon,authenticated;
@@ -820,7 +814,7 @@ create table if not exists public.poker_ring_tables(
 alter table public.poker_ring_tables enable row level security;
 revoke all on public.poker_ring_tables from public,anon,authenticated;
 grant select on public.poker_ring_tables to anon,authenticated; do $release$ begin create policy poker_ring_tables_read on public.poker_ring_tables for select to anon,authenticated
-using(deleted_at is null and (published or ((select public.is_admin()) and not coalesce((select public.is_suspended()),true)))); exception when duplicate_object or duplicate_table then null; end $release$;;
+using(deleted_at is null and (published or ((select public.is_admin()) and not coalesce((select public.is_suspended()),true)))); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create index if not exists poker_ring_tables_catalog on public.poker_ring_tables(sort_order,created_at,id) where deleted_at is null and published;
 
 create or replace function poker_private.admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb
@@ -865,7 +859,7 @@ grant execute on function public.poker_admin_ring_save(uuid,bigint,jsonb),public
 alter table public.poker_tournaments add column if not exists deleted_at timestamptz;
 -- Existing writers can edit settings, but cannot bypass the guarded removal RPC.
 revoke update on public.poker_tournaments from authenticated;
-grant update(title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes) on public.poker_tournaments to authenticated; do $release$ begin alter table public.poker_tournaments add constraint poker_deleted_unpublished check(deleted_at is null or not published); exception when duplicate_object or duplicate_table then null; end $release$;;
+grant update(title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes) on public.poker_tournaments to authenticated; do $release$ begin alter table public.poker_tournaments add constraint poker_deleted_unpublished check(deleted_at is null or not published); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function poker_private.guard_tournament_removal() returns trigger language plpgsql security invoker set search_path='' as $$
 begin
  if tg_op='INSERT' then
@@ -876,7 +870,7 @@ begin
  end if;
  return new;
 end;$$;
-revoke all on function poker_private.guard_tournament_removal() from public,anon,authenticated; do $release$ begin create trigger guard_tournament_removal before insert or update on public.poker_tournaments for each row execute function poker_private.guard_tournament_removal(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.guard_tournament_removal() from public,anon,authenticated; do $release$ begin create trigger guard_tournament_removal before insert or update on public.poker_tournaments for each row execute function poker_private.guard_tournament_removal(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function poker_private.admin_tournament_remove(p_id uuid,p_title text) returns void
 language plpgsql security definer set search_path='' as $$
 declare row public.poker_tournaments%rowtype;
@@ -1027,7 +1021,7 @@ revoke all on function poker_private.ensure_ring_welcome(uuid) from public,anon,
 create or replace function poker_private.on_ring_member_confirmed() returns trigger language plpgsql security definer set search_path='' as $$begin
  if new.email_confirmed_at is not null then perform poker_private.ensure_ring_welcome(new.id);end if;return new;
 end;$$;
-revoke all on function poker_private.on_ring_member_confirmed() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_member_confirmed after insert or update of email_confirmed_at on auth.users for each row execute function poker_private.on_ring_member_confirmed(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.on_ring_member_confirmed() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_member_confirmed after insert or update of email_confirmed_at on auth.users for each row execute function poker_private.on_ring_member_confirmed(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 
 create or replace function poker_private.ring_balance() returns jsonb language plpgsql security definer set search_path='' as $$
 declare who uuid:=auth.uid(); result jsonb;
@@ -1094,11 +1088,11 @@ create or replace function public.poker_ring_return_reserved_funds(p_reservation
 revoke all on function public.poker_ring_reserve_funds(uuid,uuid,bigint,uuid),public.poker_ring_return_reserved_funds(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_reserve_funds(uuid,uuid,bigint,uuid),public.poker_ring_return_reserved_funds(uuid,uuid) to service_role;
 create or replace function poker_private.ring_preserve_ledger() returns trigger language plpgsql set search_path='' as $$begin raise exception 'Accounting history is immutable';end;$$;
-revoke all on function poker_private.ring_preserve_ledger() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_ledger_immutable before update or delete on poker_private.ring_chip_ledger for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin create trigger ring_welcome_immutable before update or delete on poker_private.ring_welcome_claims for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.ring_preserve_ledger() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_ledger_immutable before update or delete on poker_private.ring_chip_ledger for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;; do $release$ begin create trigger ring_welcome_immutable before update or delete on poker_private.ring_welcome_claims for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function poker_private.ring_guard_table_settings() returns trigger language plpgsql security definer set search_path='' as $$begin
  if (new.deleted_at is distinct from old.deleted_at or new.published is distinct from old.published or new.sb<>old.sb or new.bb<>old.bb or new.capacity<>old.capacity or new.min_buy_in<>old.min_buy_in or new.max_buy_in<>old.max_buy_in) and exists(select 1 from poker_private.ring_fund_reservations where table_id=old.id and status='held') then raise exception 'Table has reserved funds';end if;return new;
 end;$$;
-revoke all on function poker_private.ring_guard_table_settings() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_guard_table_settings before update on public.poker_ring_tables for each row execute function poker_private.ring_guard_table_settings(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.ring_guard_table_settings() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_guard_table_settings before update on public.poker_ring_tables for each row execute function poker_private.ring_guard_table_settings(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 -- (own transaction removed: the whole upgrade is one transaction)
 -- 20261020123231_poker_welcome_member_admin_eligibility.sql
 -- (own transaction removed: the whole upgrade is one transaction)
@@ -1160,11 +1154,11 @@ end;$$;
 -- 20261020125126_poker_ring_seating_and_hand_accounting.sql
 -- (own transaction removed: the whole upgrade is one transaction)
 -- Table row first, then accounts in member UUID order: one lock order for all funds paths.
-alter table poker_private.ring_fund_reservations drop constraint ring_fund_reservations_status_check; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned')); exception when duplicate_object or duplicate_table then null; end $release$;;
+alter table poker_private.ring_fund_reservations drop constraint ring_fund_reservations_status_check; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 alter table poker_private.ring_fund_reservations add column if not exists seat_number integer;
 alter table poker_private.ring_fund_reservations add column if not exists table_stack bigint;
 update poker_private.ring_fund_reservations set table_stack=case when status='returned' then 0 else amount end;
-alter table poker_private.ring_fund_reservations alter column table_stack set not null; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_table_stack_check check(table_stack between 0 and 4503599627370495 and (status<>'held' or table_stack=amount) and (status<>'returned' or table_stack=0)); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_seat_check check((status='seated' and seat_number is not null and seat_number between 1 and 6) or (status<>'seated' and seat_number is null)); exception when duplicate_object or duplicate_table then null; end $release$;;
+alter table poker_private.ring_fund_reservations alter column table_stack set not null; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_table_stack_check check(table_stack between 0 and 4503599627370495 and (status<>'held' or table_stack=amount) and (status<>'returned' or table_stack=0)); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_seat_check check((status='seated' and seat_number is not null and seat_number between 1 and 6) or (status<>'seated' and seat_number is null)); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 drop index poker_private.ring_one_hold_per_member;
 create unique index if not exists ring_one_hold_per_member on poker_private.ring_fund_reservations(member_id) where status in('held','seated');
 create unique index if not exists ring_one_member_per_seat on poker_private.ring_fund_reservations(table_id,seat_number) where status='seated';
@@ -1184,16 +1178,16 @@ create table if not exists poker_private.ring_hand_commits(
 alter table poker_private.ring_hands enable row level security;
 alter table poker_private.ring_hand_commits enable row level security;
 revoke all on poker_private.ring_hands,poker_private.ring_hand_commits from public,anon,authenticated,service_role;
-grant select on poker_private.ring_hands,poker_private.ring_hand_commits to service_role; do $release$ begin create trigger ring_commit_immutable before update or delete on poker_private.ring_hand_commits for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;;
+grant select on poker_private.ring_hands,poker_private.ring_hand_commits to service_role; do $release$ begin create trigger ring_commit_immutable before update or delete on poker_private.ring_hand_commits for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 alter table poker_private.ring_chip_ledger add column if not exists hand_id uuid references poker_private.ring_hands(id);
 alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_kind_check;
-alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_check; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout')); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
+alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_check; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
  (kind='welcome' and available_delta=3000 and in_play_delta=0 and reservation_id is null and hand_id is null) or
  (kind='reserve' and available_delta<0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='refund' and available_delta>0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='cashout' and available_delta>=0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='settlement' and available_delta=0 and reservation_id is not null and hand_id is not null)
-); exception when duplicate_object or duplicate_table then null; end $release$;;
+); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 drop index poker_private.ring_one_reservation_event;
 create unique index if not exists ring_one_reservation_event on poker_private.ring_chip_ledger(reservation_id,kind) where kind in('reserve','refund','cashout');
 create unique index if not exists ring_one_hand_settlement on poker_private.ring_chip_ledger(hand_id,member_id) where kind='settlement';
@@ -1504,7 +1498,7 @@ grant execute on function public.poker_ring_lobby_state(uuid,uuid),public.poker_
 -- (own transaction removed: the whole upgrade is one transaction)
 -- An exit belongs to one reservation. Keep its receipt after returning funds so
 -- a delayed retry cannot withdraw chips from a later seat.
-alter table poker_private.ring_fund_reservations add column if not exists exit_request uuid; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_exit_seated check(exit_request is null or status in('seated','returned')); exception when duplicate_object or duplicate_table then null; end $release$;;
+alter table poker_private.ring_fund_reservations add column if not exists exit_request uuid; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_exit_seated check(exit_request is null or status in('seated','returned')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 
 create or replace function poker_private.ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;
@@ -1539,7 +1533,7 @@ begin
  end if;
  return new;
 end;$$;
-revoke all on function poker_private.ring_finish_exits() from public,anon,authenticated; do $release$ begin create trigger ring_finish_exits after update of status on poker_private.ring_hands for each row execute function poker_private.ring_finish_exits(); exception when duplicate_object or duplicate_table then null; end $release$;;
+revoke all on function poker_private.ring_finish_exits() from public,anon,authenticated; do $release$ begin create trigger ring_finish_exits after update of status on poker_private.ring_hands for each row execute function poker_private.ring_finish_exits(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function poker_private.ring_lobby_state(p_member uuid,p_table uuid default null) returns jsonb language plpgsql security definer set search_path='' as $$
 declare membership jsonb;wallet jsonb;catalog jsonb;selected jsonb;
 begin
