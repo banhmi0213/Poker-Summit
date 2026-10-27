@@ -53,7 +53,7 @@
 /* Phone (owner 2026/10/28): bigger finger and character in the buttons, and the buttons as low as they can go without
    touching the control panel frame below the table (measured at 390px: label bottom 708px, panel top 712px). */
 @media(max-width:899px){
- .quick{top:calc(58% + 14px)}
+ .quick{top:calc(58% + 14px);left:-60px;right:-60px}
  .quickIcon img{width:66px;height:66px;transform:translateY(-4%)}
  .quickIcon[data-kind=summit] img{width:32px;height:32px;transform:none}
 }
