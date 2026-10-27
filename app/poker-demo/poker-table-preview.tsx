@@ -22,6 +22,7 @@ import { estimateEquity, requiredEquity } from "@/lib/poker/equity";
 import { decideCpuAction, CPU_STYLES } from "@/lib/poker/cpu-strategy";
 import { positionsFor, type LoggedAction, type Street } from "@/lib/poker/gto-bot";
 import type { GtoReply, GtoRequest } from "@/lib/poker/gto.worker";
+import { reasonText, type GtoAdvice } from "@/lib/poker/gto-review";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBettingActions, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -284,6 +285,26 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     return { equity: estimateEquity(deal.holes.you, hintBoard, Math.min(hintOpponents, 8), 1200).equity, required: requiredEquity(toCall, pot), toCall, pot };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hintsOn, isYourTurn, deal, streetStep, hintOpponents, owedForYou, betting.currentBet]);
+  // GTOヒント(2026/10/27): 練習卓だけ、自分の番で「GTOならどう打つか」を割合で出す。読みは自分の手札と公開情報だけ。
+  const [gtoHint, setGtoHint] = useState<{status:"running"}|{status:"done";advice:GtoAdvice}|{status:"error"}|null>(null);
+  useEffect(() => {
+    const worker = gtoWorker.current, legalYou = isYourTurn ? legalBettingActions(betting, "you") : null;
+    if (!hintsOn || tournament || !isYourTurn || !legalYou || !deal.holes.you || !worker) { setGtoHint(null); return; }
+    const id = ++gtoRequest.current, live = clockwiseSeats.filter(x => betting.players.some(p => p.id === x));
+    const view = { handKey: `demo-${motionHand}`, bb: betting.bigBlind, hero: "you", hole: deal.holes.you, board: hintBoard,
+      positions: positionsFor(live, handPositions), players: betting.players.map(p => ({ id: p.id, stack: p.stack, committed: p.committed, totalCommitted: p.totalCommitted, folded: p.folded, allIn: p.allIn })),
+      legal: legalYou, log: actionLog, startStacks: handStartingStacks };
+    let done = false;
+    const onReply = (e: MessageEvent<GtoReply>) => { if (e.data.id !== id || done) return; done = true; window.clearTimeout(guard); setGtoHint(e.data.type === "advice" ? { status: "done", advice: e.data.advice } : { status: "error" }); };
+    const guard = window.setTimeout(() => { if (!done) { done = true; setGtoHint({ status: "error" }); } }, 10000);
+    setGtoHint({ status: "running" });
+    worker.addEventListener("message", onReply);
+    worker.postMessage({ type: "advise", id, view, budgetMs: 2500 } satisfies GtoRequest);
+    return () => { done = true; window.clearTimeout(guard); worker.removeEventListener("message", onReply); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hintsOn, tournament, isYourTurn, betting, deal, actionLog, motionHand, handPositions, handStartingStacks, streetStep]);
+  const gtoHintText = !gtoHint ? null : gtoHint.status === "running" ? "GTO：計算中…" : gtoHint.status === "error" ? "GTO：計算できませんでした" :
+    gtoHint.advice.source === "none" ? `GTO：${reasonText(gtoHint.advice.reason)}` : `GTO：${gtoHint.advice.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}`;
   // Auto actions never spend chips without explicit consent.
   useEffect(() => {
     if (!isYourTurn || !running || handFinished || showdown || spectating) return;
@@ -485,7 +506,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <label>効果音の音量 <input type="range" aria-label="効果音の音量" min={0} max={100} step={5} value={sound.seVolume} disabled={!soundEnabled} onChange={e => setSound({ seVolume: Number(e.target.value) })} /> <small>{sound.seVolume}</small></label>
           <label>BGM <input type="checkbox" checked={sound.bgm} onChange={e => setSound({ bgm: e.target.checked })} /></label>
           <label>BGMの音量 <input type="range" aria-label="BGMの音量" min={0} max={100} step={5} value={sound.bgmVolume} disabled={!sound.bgm} onChange={e => setSound({ bgmVolume: Number(e.target.value) })} /> <small>{sound.bgmVolume}</small></label>
-          <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
+          <label>練習ヒント（勝率の目安・GTO） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
           <p>レイズ額の設定</p>
           <BetSizeSettings/>
           <small>BB表示と倍率はデモに反映。効果音は各場面で再生されます。レイズ額の設定は会員ごとに保存できます。</small>
@@ -535,7 +556,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       </div>
       {announcement&&<div key={announcement.key} className={styles.actionToast} data-kind={announcement.kind} role="status" aria-live="polite">{announcement.text}</div>}
       <div className={styles.felt}>
-        <div data-pot-source className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
+        <div data-pot-source className={styles.pot}>POT <strong>{showChips(potTotal(betting))}</strong></div>
         <div className={styles.cards} aria-label="共通カード" data-motion-board>{deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((card, i) => <span key={i} className={isRedCard(card) ? styles.red : ""}><CardFace card={card}/></span>)}</div>
         <div className={styles.street}>{streetNames[streetStep]} · {gameType==="ring"?`レート ${ringTerms.sb}/${ringTerms.bb}`:"練習"}</div>
       </div>
@@ -554,8 +575,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
 
       <div className={styles.turnHeader}><div className={styles.turn}>{tournamentComplete ? "大会終了" : !handActive ? "ハンド開始待ち" : !inHand("you") ? "脱落・進行確認中" : isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : `PLAYER ${activePlayerId?.slice(1) ?? "—"}の番`} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div></div>
 
-      {hint && <details className={styles.phoneHint}><summary>ヒント</summary><p>{hint.toCall>0?`必要勝率 ${Math.round(hint.required*100)}% ／ `:''}推定勝率 {Math.round(hint.equity*100)}%</p><small>相手の手札をランダムと仮定した目安</small></details>}
-      {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small></p>}
+      {hint && <details className={styles.phoneHint}><summary>ヒント</summary><p>{hint.toCall>0?`必要勝率 ${Math.round(hint.required*100)}% ／ `:''}推定勝率 {Math.round(hint.equity*100)}%</p>{gtoHintText && <p data-gto-hint>{gtoHintText}</p>}<small>相手の手札をランダムと仮定した目安</small></details>}
+      {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small>{gtoHintText && <span data-gto-hint style={{display:"block"}}>{gtoHintText}</span>}</p>}
       <label htmlFor="poker-demo-raise">{betting.currentBet > 0 ? "レイズ後の合計額" : "ベット額"}: {legal?.raise ? showChips(raiseTo) : "—"}</label>
       <input aria-label="レイズ額スライダー" id="poker-demo-raise" type="range" min={minRaiseTo} max={maxRaiseTo} step={1} value={raiseTo} disabled={!canRaise} onChange={e => setRaise(Number(e.target.value))} />
       <AmountInput className={styles.raiseAmountInput} ariaLabel="レイズ後の合計入力" value={raiseTo} min={minRaiseTo} max={maxRaiseTo} disabled={!canRaise} onChange={setRaise}/>

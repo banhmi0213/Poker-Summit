@@ -63,6 +63,22 @@ function chartIndex(node:PreflopNode,t:Tok):number{
  let best=-1,d=Infinity;node.actions.forEach((a,i)=>{if(a.kind!=='raise'&&a.kind!=='allin')return;const x=Math.abs((a.to??100)-t.to);if(x<d){d=x;best=i;}});return best;
 }
 
+/** How often `node.player` arrives at `node` with each hand class, from their own earlier actions in the chart history
+ * (1 = every time; the first decision of the hand is 1 for every class). For quizzes and range statistics. */
+export function preflopReach(data:PreflopData,node:PreflopNode):Record<string,number>{
+ const m=chart(data),toks=parseHistory(node.history),out:Record<string,number>={};
+ for(const cls of Object.keys(node.strategy))out[cls]=1;
+ toks.forEach((t,i)=>{
+  if(t.pos!==node.player||t.kind==='F')return;
+  const prev=m.get(keyOf(toks.slice(0,i),t.pos));if(!prev)return;
+  const j=chartIndex(prev,t);if(j<0)return;
+  for(const cls of Object.keys(out))out[cls]*=prev.strategy[cls]?.[j]??0;
+ });
+ return out;
+}
+/** The chart's history as tokens for display: position, F/C/R and the raise size in BB (all-in = 100). */
+export function preflopHistory(node:PreflopNode):{pos:Pos;kind:'F'|'C'|'R';to:number}[]{return parseHistory(node.history);}
+
 // ---------- ranges (2704 slots, a*52+b with a<b) ----------
 type Ranges=Map<string,Float64Array>;
 function fullRange(){const w=new Float64Array(2704);for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)w[a*52+b]=1;return w;}
@@ -108,7 +124,7 @@ function flopIndexOf(node:FlopNode,a:LoggedAction):number{
 
 /** The flop row for one combo: the suit-aware row when the file has one ("AKs|21"), else the class row.
  * Suits are counted on the real flop. */
-function flopRow(node:FlopNode,a:number,b:number,board:readonly number[]):number[]|undefined{
+export function flopRow(node:FlopNode,a:number,b:number,board:readonly number[]):number[]|undefined{
  const cls=classOf(a,b);if(node.suits){const n=(c:number)=>board.filter(x=>(x&3)===(c&3)).length,x=n(a),y=n(b),row=node.suits[`${cls}|${x>=y?`${x}${y}`:`${y}${x}`}`];if(row)return row;}
  return node.classes[cls];
 }

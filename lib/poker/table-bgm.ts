@@ -6,14 +6,29 @@ const CHORDS=[[57,60,64,67],[50,53,57,60],[55,59,62,65],[48,52,55,59]],ROOTS=[45
 
 export class TableBgm{
  #ctx:AudioContext|null=null;#master:GainNode|null=null;#verb:ConvolverNode|null=null;#noise:AudioBuffer|null=null;
- #timer:ReturnType<typeof setInterval>|null=null;#starting=false;#stopped=0;#next=0;#bar=0;#volume=.35;
+ #timer:ReturnType<typeof setInterval>|null=null;#starting=false;#wanted=false;#stopped=0;#next=0;#bar=0;#volume=.35;
  constructor(private factory:()=>AudioContext=()=>new AudioContext()){}
  get playing(){return this.#timer!==null;}
  /** Must be called from a user gesture the first time (browser autoplay rules). */
  async start(){
-  if(this.#timer||this.#starting)return;this.#starting=true;
+  if(this.#timer)return;
+  // Resume on every call: a resume() made outside a tap can stay pending for good (Chrome, iOS Safari), so each later
+  // tap must ask again from inside the gesture instead of waiting on the first attempt.
+  let c:AudioContext;
   try{
-   const ticket=this.#stopped,c=this.#ctx??=this.factory();if(c.state==='suspended')await c.resume();if(c.state!=='running'||ticket!==this.#stopped)return;
+   c=this.#ctx??=this.factory();
+   const session=(globalThis.navigator as {audioSession?:{type:string}}|undefined)?.audioSession;
+   // iPhone: play through the silent switch like other game audio (Safari 17+).
+   if(session&&session.type!=='playback')try{session.type='playback';}catch{/* optional */}
+   if(c.state!=='running')void c.resume().then(()=>{if(!this.#starting&&!this.#timer&&this.#wanted&&c.state==='running')void this.start();},()=>{});
+  }catch{return;}
+  this.#wanted=true;
+  if(this.#starting)return;this.#starting=true;
+  try{
+   const ticket=this.#stopped;
+   // Wait briefly for the browser to allow audio (a later tap may be what allows it); never wait forever.
+   for(let waited=0;c.state!=='running'&&waited<1500&&ticket===this.#stopped;waited+=50)await new Promise(r=>setTimeout(r,50));
+   if(c.state!=='running'||ticket!==this.#stopped)return;
    if(!this.#master){
     const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;comp.connect(c.destination);
     this.#master=c.createGain();this.#master.connect(comp);
@@ -28,7 +43,7 @@ export class TableBgm{
   finally{this.#starting=false;}
  }
  stop(){
-  this.#stopped++;if(this.#timer)clearInterval(this.#timer);this.#timer=null;
+  this.#wanted=false;this.#stopped++;if(this.#timer)clearInterval(this.#timer);this.#timer=null;
   const c=this.#ctx,m=this.#master;if(c&&m){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(0,now+.4);}
  }
  /** 0〜1 of the loudest level; 0.7 is the original level. Applies smoothly while playing. */
