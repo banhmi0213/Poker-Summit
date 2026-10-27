@@ -286,6 +286,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const owedForYou = Math.max(0, betting.currentBet - playerAt("you").committed);
   // 練習ヒント(2026/10/26): 自分の番だけ、見えているカードから必要勝率と推定勝率を出す。デモ卓専用。
   const [hintsOn, setHintsOn] = useState(true);
+  const [rowHintOpen, setRowHintOpen] = useState(false);
   const hintBoard = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
   const hintOpponents = betting.players.filter(p => p.id !== "you" && !p.folded).length;
   const hint = useMemo(() => {
@@ -603,7 +604,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <strong>{showCurrentResult?`🏆 ${winningPlayers.map(p=>p.name).join("・")} がPOT獲得`:lastHandResult?`前ハンド：${lastHandResult.winners.join("・")} がPOT獲得`:"ハンド結果：確定待ち"}</strong>
         <div className={styles.resultDeltas}>{boardRows.map(p => <span key={p.id} className={p.delta > 0 ? styles.resultGain : p.delta < 0 ? styles.resultLoss : styles.resultEven}>{p.name} <b>{p.delta > 0 ? "+" : ""}{p.delta.toLocaleString()}</b></span>)}</div>
       </div>}
-    {!spectating ? <div className={styles.controls} role="region" aria-label="操作パネル">
+    {!spectating ? <div className={styles.controls} role="region" aria-label="操作パネル" data-turn={isYourTurn && running ? (remaining <= 5 ? "urgent" : "on") : undefined}>
       {mobileRaiseOpen && canRaise && <MobileWagerEditor amount={raiseTo} min={minRaiseTo} max={maxRaiseTo} step={bigBlind} format={showChips} label={raiseTo===maxRaiseTo?'オールイン':betting.currentBet>0?'レイズ':'ベット'} onChange={setRaise} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>{setMobileRaiseOpen(false);choose("RAISE");}} presets={[...quickSizes.map(m=>({label:quickBetLabel(quickKind,m),amount:quickTo(m)})),{label:'ALL-IN額',amount:maxRaiseTo}]}/>}
 
       <div className={styles.turnHeader}><div className={styles.turn}>{tournamentComplete ? "大会終了" : !handActive ? "ハンド開始待ち" : !inHand("you") ? "脱落・進行確認中" : isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : `PLAYER ${activePlayerId?.slice(1) ?? "—"}の番`} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div></div>
@@ -624,6 +625,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <span>自動アクション（次の自分の番に適用）</span>
         <button type="button" aria-pressed={autoChoice === "CHECK"} disabled={!handActive || !inHand("you") || handFinished || showdown} onClick={() => setAutoChoice(v => v === "CHECK" ? null : "CHECK")}>AUTO CHECK / FOLD</button>
         <button type="button" aria-pressed={autoChoice === "FOLD"} disabled={!handActive || !inHand("you") || handFinished || showdown} onClick={() => setAutoChoice(v => v === "FOLD" ? null : "FOLD")}>AUTO FOLD</button>
+        {/* Phone (owner 2026/10/28): seconds beside AUTO FOLD instead of the header line; the hint opens from here. */}
+        <b className={styles.turnSeconds} data-urgent={isYourTurn && remaining <= 5 ? "" : undefined} aria-label={isYourTurn ? `残り${remaining}秒` : undefined}>{isYourTurn ? `残り ${remaining}秒` : handFinished || showdown ? "ハンド終了" : activePlayerId ? `PLAYER ${activePlayerId.slice(1)}の番` : ""}</b>
+        {hint && <button type="button" className={styles.rowHintToggle} aria-expanded={rowHintOpen} onClick={() => setRowHintOpen(v => !v)}>ヒント</button>}
+        {hint && rowHintOpen && <div className={styles.rowHint} role="note"><p>{hint.toCall>0?`必要勝率 ${Math.round(hint.required*100)}% ／ `:''}推定勝率 {Math.round(hint.equity*100)}%</p>{gtoHintText && <p data-gto-hint>{gtoHintText}</p>}<small>相手の手札をランダムと仮定した目安</small></div>}
         <small>{autoChoice === "CHECK" ? "チェック可能ならCHECK、コールが必要ならFOLD" : autoChoice === "FOLD" ? "自分の番で自動FOLD" : "未選択（0秒でCHECKまたはFOLD）"}</small>
       </div>
       <p role="status" aria-live="polite">{bettingMessage}</p>

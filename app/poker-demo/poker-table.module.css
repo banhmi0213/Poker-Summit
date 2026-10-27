@@ -976,12 +976,6 @@
  .demoShell .edgeSeatThree,.demoShell .edgeSeatFour,.demoShell .showdownThree,.demoShell .showdownFour,.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 26px}
  .demoShell .edgeSeatFive,.demoShell .edgeSeatSix,.demoShell .showdownFive,.demoShell .showdownSix,.demoShell .table .bet_p5,.demoShell .table .bet_p6{translate:0 -26px}
 }
-/* Phone practice table (owner 2026/10/28: これは線より内側に入れる): side wagers stay inside the thin line on the felt
-   (at 22% of the table width on each side). */
-@media(max-width:899px){
- .demoShell .table .bet_p3,.demoShell .table .bet_p5{left:calc(22% + 6px);right:auto;transform:none}
- .demoShell .table .bet_p4,.demoShell .table .bet_p6{left:auto;right:calc(22% + 6px);transform:none}
-}
 /* PLAYER 3・4 wagers sit just below the blinds line instead of on top of it. */
 
 
@@ -992,3 +986,26 @@
 /* When your made hand is listed (flop onward) the chip box is one line taller: grow it upward so it never reaches
    the control panel. */
 @media(max-width:899px){.demoShell .table .self:has([class*=madeHand]){translate:0 18px}}
+
+/* Your turn (owner 2026/10/28): the buttons glow, faster and red in the last 5 seconds; on phones the seconds sit
+   beside AUTO FOLD and the header line is gone. */
+.controls[data-turn] .actions{border-radius:12px;animation:turnGlow 1.6s ease-in-out infinite}
+.controls[data-turn=urgent] .actions{animation:turnUrgent .55s ease-in-out infinite}
+@keyframes turnGlow{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66333}50%{box-shadow:0 0 0 2px #f3c663cc,0 0 22px #f3c66388}}
+@keyframes turnUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5866,0 0 10px #f05b5844}50%{box-shadow:0 0 0 3px #f05b58,0 0 26px #f05b58aa}}
+@media(prefers-reduced-motion:reduce){.controls[data-turn] .actions{animation:none;box-shadow:0 0 0 2px #f3c663}.controls[data-turn=urgent] .actions{box-shadow:0 0 0 3px #f05b58}}
+.turnSeconds,.rowHintToggle,.rowHint{display:none}
+@media(max-width:899px){
+ .demoShell .controls .turnHeader,.demoShell .controls .phoneHint{display:none}
+ .demoShell .turnSeconds{display:inline-block;font-size:11px;font-weight:800;color:#f3d27e;white-space:nowrap}
+ .demoShell .turnSeconds[data-urgent]{color:#ff6b62}
+ .demoShell .demoFoldControls{position:relative}
+ .demoShell .rowHintToggle{display:inline-block;margin-left:auto;background:none!important;border:1px solid #a58a50!important;color:#f3d27e!important}
+ .demoShell .rowHint{display:block;position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;max-width:240px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px;font-size:11px;color:#f1e6cc}
+ .demoShell .rowHint p{margin:4px 0;line-height:1.5}.demoShell .rowHint small{font-size:9px}
+}
+/* Phone practice table (owner 2026/10/28): no PREFLOP/FLOP label; pot and board centred between the side seats. */
+@media(max-width:899px){
+ .demoShell .felt .street{display:none}
+ .demoShell .table .felt{translate:0 30px}
+}
