@@ -21,6 +21,8 @@ export default async function Page(){
  return <main className="container"><h1>CPU卓の集計（テスト環境）</h1>
   <p>CPU 6人がサーバーと同じ進行で回し続けたハンドの集計です。データ集めと不具合・負荷の確認用で、実際のプレイヤーの成績ではありません。</p>
   <p>集計ハンド数 <strong>{hands.toLocaleString()}</strong>（保存中の履歴 {data.stored.toLocaleString()}）・{data.settings?.enabled?`稼働中（${data.settings.tables}卓）`:'停止中'}・直近1時間 {data.speed.hands.toLocaleString()}ハンド・1ハンド平均 {data.speed.avgMs??'—'}ms（最大 {data.speed.maxMs??'—'}ms）・メモリ {data.speed.rssMb??'—'}MB</p>
+  {(()=>{const d=data.decisions,main=['preflop','flop','solver','fallback'],total=main.reduce((s,k)=>s+(d[k]??0),0);const label:Record<string,string>={preflop:'プリフロップ表',flop:'フロップの事前計算',solver:'ターン・リバーのその場計算',fallback:'補助（GTOの対象外）','fallback:multiway':'3人以上のポット','fallback:flop-class-missing':'フロップ計算にない手','fallback:preflop-off-chart':'プリフロップ表にない流れ','fallback:stack-depth':'スタックが浅い・深い','fallback:solver-off-tree':'ターン・リバーの想定外の額','fallback:flop-off-tree':'フロップの想定外の額','fallback:no-flop-data':'フロップ計算が未完成'};
+   return total>0&&<><h2>CPUの判断の内訳</h2><p>{main.map(k=>`${label[k]} ${rate(d[k]??0,total)}`).join('・')}</p><p style={{fontSize:13}}>補助の理由：{Object.entries(d).filter(([k])=>k.startsWith('fallback:')).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${label[k]??k.slice(9)} ${n.toLocaleString()}`).join('・')||'なし'}</p></>;})()}
   <p>検査で見つかった異常 <strong>{data.anomalies.toLocaleString()}件</strong></p>
   {data.recentAnomalies.length>0&&<ul>{data.recentAnomalies.map((a,i)=><li key={i}>{new Date(a.at).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})} {a.kind}：{a.detail}</li>)}</ul>}
   <h2>ポジション別</h2><StatsTable rows={[...byPos,total]} first="ポジション"/>

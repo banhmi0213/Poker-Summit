@@ -5,17 +5,18 @@
 import {randomInt} from 'node:crypto';
 import {AuthoritativeHand,type HandCheckpoint} from './authoritative-hand';
 import {buildHandHistory,type HandHistory} from './hand-history';
-import {decideCpuAction,CPU_STYLES} from './cpu-strategy';
+import {decideGto,positionsFor,type GtoData,type LoggedAction,type Street} from './gto-bot';
 import type {HandTerms} from './tournament-hand';
 import type {BettingAction} from './betting';
 
 export type BotAnomaly={kind:string;detail:string;checkpoint:HandCheckpoint|null};
-export type BotHand={history:HandHistory|null;actions:number;ms:number;anomalies:BotAnomaly[];stacks:Record<string,number>};
-const STYLE_ORDER=['standard','tight','loose','aggressive','standard','aggressive'] as const;
+export type BotHand={history:HandHistory|null;actions:number;ms:number;anomalies:BotAnomaly[];stacks:Record<string,number>;
+ /** How each decision was made: preflop chart, flop solution, turn/river solver, or the equity fallback. */
+ sources:Record<string,number>};
 const MAX_ACTIONS=400;
 
 /** Plays one complete hand with CPU players. Never throws: problems come back as anomalies. */
-export function playBotHand(seats:readonly string[],stacks:Readonly<Record<string,number>>,buttonIndex:number,terms:HandTerms,random:()=>number=()=>randomInt(1_000_000)/1_000_000):BotHand{
+export function playBotHand(seats:readonly string[],stacks:Readonly<Record<string,number>>,buttonIndex:number,terms:HandTerms,data:GtoData|null,random:()=>number=()=>randomInt(1_000_000)/1_000_000,budgetMs=4000):BotHand{
  const started=performance.now(),anomalies:BotAnomaly[]=[];
  const live=seats.filter(id=>(stacks[id]??0)>0),entries=live.map(id=>({id,stack:stacks[id]}));
  const before=entries.reduce((s,p)=>s+p.stack,0);
@@ -23,8 +24,8 @@ export function playBotHand(seats:readonly string[],stacks:Readonly<Record<strin
  const fail=(kind:string,error:unknown)=>{anomalies.push({kind,detail:error instanceof Error?error.message:String(error),checkpoint:safeCheckpoint()});};
  const safeCheckpoint=()=>{try{return hand.checkpoint();}catch{return null;}};
  try{hand=new AuthoritativeHand(entries,Math.max(0,live.indexOf(seats[buttonIndex%seats.length])),terms,undefined,undefined,{runItTwice:true});}
- catch(error){return {history:null,actions:0,ms:performance.now()-started,anomalies:[{kind:'start_failed',detail:error instanceof Error?error.message:String(error),checkpoint:null}],stacks:{...stacks}};}
- const styleOf=(id:string)=>CPU_STYLES[STYLE_ORDER[Math.max(0,seats.indexOf(id))%STYLE_ORDER.length]];
+ catch(error){return {history:null,actions:0,ms:performance.now()-started,anomalies:[{kind:'start_failed',detail:error instanceof Error?error.message:String(error),checkpoint:null}],stacks:{...stacks},sources:{}};}
+ const sources:Record<string,number>={},log:LoggedAction[]=[],start=hand.snapshot(null),positions=positionsFor(live,start.positions),handKey=start.handId;
  while(actions<MAX_ACTIONS){
   const pub=hand.snapshot(null);
   if(pub.result)break;
@@ -41,19 +42,20 @@ export function playBotHand(seats:readonly string[],stacks:Readonly<Record<strin
   if(!legal||!me.hole){fail('no_legal','actor has no legal actions or no cards');break;}
   const others=view.players.filter(p=>p.id!==actor&&!p.folded),currentBet=Math.max(...view.players.map(p=>p.committed));
   let decision:BettingAction;
-  try{decision=decideCpuAction({hole:me.hole,board:view.board,pot:view.pot,toCall:legal.callAmount,stack:me.stack,committed:me.committed,currentBet,bigBlind:terms.bb,legal,
-   opponents:others.length,playersBehind:others.filter(p=>!p.allIn).length,isBigBlind:view.positions.bb===actor,
-   maxOpponentStack:Math.max(0,...others.map(p=>p.stack+p.committed))},styleOf(actor),random);}
-  catch(error){fail('strategy_failed',error);decision=legal.check?{type:'check'}:{type:'fold'};}
-  try{hand.act(actor,{handId:pub.handId,revision:pub.revision,actionId:'b'+actions,action:decision});actions++;}
+  if(data){const d=decideGto({handKey,bb:terms.bb,hero:actor,hole:me.hole,board:view.board,positions,players:view.players,legal,log,startStacks:Object.fromEntries(entries.map(p=>[p.id,p.stack]))},data,random,budgetMs);decision=d.action;sources[d.source]=(sources[d.source]??0)+1;if(d.reason)sources['fallback:'+d.reason]=(sources['fallback:'+d.reason]??0)+1;}
+  else decision=legal.check?{type:'check'}:{type:'fold'};
+  const street=['preflop','flop','turn','river'][Math.min(3,view.board.length===0?0:view.board.length-2)] as Street,before={street,id:actor,potBefore:view.pot,currentBetBefore:currentBet,committedBefore:me.committed};
+  try{hand.act(actor,{handId:pub.handId,revision:pub.revision,actionId:'b'+actions,action:decision});actions++;
+   const after=hand.snapshot(null).players.find(p=>p.id===actor)!,done=decision.type==='bet'||decision.type==='raise'?decision.amount:decision.type==='call'?Math.min(currentBet,me.committed+me.stack):me.committed;
+   log.push({...before,type:decision.type,to:done,allIn:after.allIn});}
   catch(error){
    // A bot choosing an illegal wager is a strategy bug, not an engine bug; record it and fall back.
    fail('action_rejected',`${JSON.stringify(decision)}: ${error instanceof Error?error.message:String(error)}`);
-   try{hand.act(actor,{handId:pub.handId,revision:pub.revision,actionId:'f'+actions,action:legal.check?{type:'check'}:{type:'fold'}});actions++;}catch(e2){fail('fallback_rejected',e2);break;}
+   try{const f:BettingAction=legal.check?{type:'check'}:{type:'fold'};hand.act(actor,{handId:pub.handId,revision:pub.revision,actionId:'f'+actions,action:f});actions++;log.push({...before,type:f.type,to:me.committed,allIn:false});}catch(e2){fail('fallback_rejected',e2);break;}
   }
  }
  const end=hand.snapshot(null);
- if(!end.result){if(actions>=MAX_ACTIONS)fail('too_many_actions',String(actions));return {history:null,actions,ms:performance.now()-started,anomalies,stacks:{...stacks}};}
+ if(!end.result){if(actions>=MAX_ACTIONS)fail('too_many_actions',String(actions));return {history:null,actions,ms:performance.now()-started,anomalies,stacks:{...stacks},sources};}
  const after:Record<string,number>={...stacks};for(const p of end.players)after[p.id]=p.stack;
  const total=end.players.reduce((s,p)=>s+p.stack,0);
  if(total!==before)fail('chips_not_conserved',`before ${before} after ${total}`);
@@ -67,20 +69,19 @@ export function playBotHand(seats:readonly string[],stacks:Readonly<Record<strin
  try{history=buildHandHistory(checkpoint,Object.fromEntries(live.map(id=>[id,'bot-'+id.slice(5)])));
   const net=history.players.reduce((s,p)=>s+p.net,0);if(net!==0)fail('history_net_nonzero',String(net));}
  catch(error){fail('history_failed',error);}
- return {history,actions,ms:performance.now()-started,anomalies,stacks:after};
+ return {history,actions,ms:performance.now()-started,anomalies,stacks:after,sources};
 }
 
-/** A table of 6 bots that keeps going: the button moves, a player who goes bust buys back in for 100BB. */
+/** A table of 6 GTO CPUs that keeps going: the button moves and every hand starts at 100BB (the depth the chart is solved for). */
 export class BotTable{
- readonly seats:string[];#stacks:Record<string,number>;#button=0;#terms:HandTerms;hands=0;
- constructor(readonly table:number,terms:HandTerms,size=6){
+ readonly seats:string[];#button=0;#terms:HandTerms;hands=0;
+ constructor(readonly table:number,terms:HandTerms,private data:GtoData|null,size=6,private budgetMs=4000){
   this.#terms={...terms};this.seats=Array.from({length:size},(_,i)=>`seat-${i+1}`);
-  this.#stacks=Object.fromEntries(this.seats.map(id=>[id,terms.bb*100]));
  }
  play(random?:()=>number){
-  for(const id of this.seats)if(this.#stacks[id]<=0)this.#stacks[id]=this.#terms.bb*100;
-  const result=playBotHand(this.seats,this.#stacks,this.#button,this.#terms,random);
-  this.#stacks=result.stacks;this.#button=(this.#button+1)%this.seats.length;this.hands++;
+  const stacks=Object.fromEntries(this.seats.map(id=>[id,this.#terms.bb*100]));
+  const result=playBotHand(this.seats,stacks,this.#button,this.#terms,this.data,random,this.budgetMs);
+  this.#button=(this.#button+1)%this.seats.length;this.hands++;
   return result;
  }
 }

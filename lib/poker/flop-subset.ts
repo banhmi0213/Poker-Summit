@@ -36,7 +36,7 @@ export function allTextures():(FlopTexture&{example:string})[]{
  const card=(c:number)=>RANKS[c>>2]+SUITS[c&3];
  for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)for(let c=b+1;c<52;c++){
   const text=card(c)+card(b)+card(a),t=texture(text)!;const e=map.get(t.key);
-  if(e)e.weight++;else map.set(t.key,{...t,weight:1,example:canonicalFlop(text)});
+  if(e)e.weight++;else map.set(t.key,{...t,weight:1,example:canonicalFlop(text)??text});
  }
  return [...map.values()];
 }
