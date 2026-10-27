@@ -933,3 +933,6 @@
 .gtoReview b{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:11px;background:#2f6a4a;color:#fff}
 .gtoReview b[data-verdict=mixed]{background:#8a6d2a}.gtoReview b[data-verdict=rare]{background:#8a3a3a}
 .gtoReview small{display:block;color:#9fb3c3}
+/* スタンプ(2026/10/27): アイコンに被せる。出ている間はアイコンを暗くし、カードは常にスタンプより上に出す。 */
+.seatAvatarRow{position:relative}
+.seatAvatarRow:has([data-stamp-bubble]) .seatTimerRing{filter:brightness(.45)}

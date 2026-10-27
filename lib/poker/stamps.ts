@@ -1,24 +1,27 @@
 /** Table stamps (owner 2026/10/27: no free chat at launch; stamps only). Fixed phrases, so they cannot be abused. */
-/** Character stamps (owner 2026/10/27: キャラ＋ポーカーあるあるの一言、標準語). `image` is Daniel's drawing; until it
- * arrives the stamp is drawn with the thumb logo and the phrase. `tone` colours the phrase. */
+/** Character stamps (owner 2026/10/27: キャラ＋ポーカーあるあるの一言、標準語). `image` is Daniel's drawing (512×512, transparent,
+ * top third left empty for the phrase); 13・14 added by the owner. No sub line (owner: 補足はいらん). `tone` colours the phrase. */
 const STAMP_LIST=[
- {id:'hello',label:'よろしく！',sub:'お願いします',tone:'g'},
- {id:'nice',label:'ナイス！',sub:'いい手！',tone:'y'},
- {id:'allin',label:'オールイン！',sub:'勝負！',tone:'r'},
- {id:'read',label:'読まれてた…',sub:'完敗です',tone:'b'},
- {id:'river',label:'リバーで…',sub:'うそでしょ',tone:'b'},
- {id:'nobluff',label:'ブラフじゃない',sub:'本当だよ',tone:'y'},
- {id:'pray',label:'祈り中',sub:'お願い…！',tone:'r'},
- {id:'nicefold',label:'いい降り！',sub:'ナイスフォールド',tone:'g'},
- {id:'shaking',label:'震えてる',sub:'ドキドキ',tone:'b'},
- {id:'gotme',label:'やられた！',sub:'参りました',tone:'r'},
- {id:'thanks',label:'ありがとう',sub:'感謝です',tone:'y'},
- {id:'bye',label:'おつかれ！',sub:'また遊ぼう',tone:'g'},
+ {id:'hello',label:'よろしく！',tone:'g',image:'/images/stamps/stamp-01.webp'},
+ {id:'nice',label:'ナイス！',tone:'y',image:'/images/stamps/stamp-02.webp'},
+ {id:'allin',label:'オールイン！',tone:'r',image:'/images/stamps/stamp-03.webp'},
+ {id:'read',label:'読まれてた…',tone:'b',image:'/images/stamps/stamp-04.webp'},
+ {id:'river',label:'リバーで…',tone:'b',image:'/images/stamps/stamp-05.webp'},
+ {id:'nobluff',label:'ブラフじゃない',tone:'y',image:'/images/stamps/stamp-06.webp'},
+ {id:'pray',label:'祈り中',tone:'r',image:'/images/stamps/stamp-07.webp'},
+ {id:'nicefold',label:'いい降り！',tone:'g',image:'/images/stamps/stamp-08.webp'},
+ {id:'shaking',label:'震えてる',tone:'b',image:'/images/stamps/stamp-09.webp'},
+ {id:'gotme',label:'やられた！',tone:'r',image:'/images/stamps/stamp-10.webp'},
+ {id:'thanks',label:'ありがとう',tone:'y',image:'/images/stamps/stamp-11.webp'},
+ {id:'bye',label:'おつかれ！',tone:'g',image:'/images/stamps/stamp-12.webp'},
+ {id:'burning',label:'焼けてる？',tone:'r',image:'/images/stamps/stamp-13.webp'},
+ {id:'tilt',label:'ティルト',tone:'r',image:'/images/stamps/stamp-14.webp'},
 ] as const;
 export type StampId=typeof STAMP_LIST[number]['id'];
-export type Stamp={id:StampId;label:string;sub:string;tone:'r'|'y'|'b'|'g';image?:string};
+export type Stamp={id:StampId;label:string;tone:'r'|'y'|'b'|'g';image?:string};
 export const STAMPS:readonly Stamp[]=STAMP_LIST;
-export const STAMP_SHOW_MS=4000,STAMP_GAP_MS=3000;
+/** Shown for 3 seconds (owner 2026/10/27); one per member every 3 seconds, a newer one replaces the seat's stamp. */
+export const STAMP_SHOW_MS=3000,STAMP_GAP_MS=3000;
 export const stampLabel=(id:string)=>STAMPS.find(s=>s.id===id)?.label??'';
 export const stampOf=(id:string)=>STAMPS.find(s=>s.id===id)??null;
 export const isStampId=(v:unknown):v is StampId=>typeof v==='string'&&STAMPS.some(s=>s.id===v);
