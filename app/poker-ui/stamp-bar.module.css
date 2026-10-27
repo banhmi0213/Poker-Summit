@@ -55,5 +55,10 @@
 @media(max-width:899px){
  .quick{top:calc(58% + 14px);left:-60px;right:-60px}
  .quickIcon img{width:66px;height:66px;transform:translateY(-16%)}
- .quickIcon[data-kind=summit] img{width:32px;height:32px;transform:none}
+ .quickIcon[data-kind=summit] img{width:36px;height:36px;transform:none}
 }
+/* Stamp button: crop the drawing so the character itself sits in the middle of the circle (owner 2026/10/28: どこが真中なん).
+   Character box in stamp-02 (512px art): x 116–396, y 192–496, centre (256,344). Scaled so the character is ~87% of the circle. */
+.quickIcon{position:relative}
+.quickIcon:not([data-kind=summit]) img{position:absolute;transform:none;width:67px;height:67px;left:-10.7px;top:-22.3px}
+@media(min-width:900px){.quickIcon:not([data-kind=summit]) img{width:79px;height:79px;left:-12.6px;top:-26.2px}}
