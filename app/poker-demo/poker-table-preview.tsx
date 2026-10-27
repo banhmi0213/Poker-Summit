@@ -8,7 +8,8 @@ import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {BetSizeSettings} from '@/app/poker-ui/bet-size-settings';
-import {presetRaiseTo} from '@/lib/poker/bet-presets';
+import {AmountInput} from '@/app/poker-ui/amount-input';
+import {quickBetKind,quickBetLabel,quickBetTo,quickBetValues} from '@/lib/poker/bet-presets';
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
 import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
 import {RUNOUT_STEP_MS} from '@/lib/poker/presentation-timing';
@@ -231,10 +232,11 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const setDisplayUnit=(value:"bb"|"chips")=>changeDisplayPreferences({bb:value==="bb"});
   const [runTwice, setRunTwice] = useState(false);
   const {settings:betPreferences}=useTablePreferences();
-  const multipliers=betPreferences.multipliers;
   const [feltColor, setFeltColor] = useState<"blue" | "green" | "black">("blue");
   const [exitConfirm, setExitConfirm] = useState(false);
   const bigBlind = betting.bigBlind;
+  const quickKind = quickBetKind({preflop:streetStep===0,currentBet:betting.currentBet,bb:bigBlind}), quickSizes = quickBetValues(quickKind,betPreferences);
+  const quickTo = (m:number) => quickBetTo(quickKind,{value:m,bb:bigBlind,pot:potTotal(betting),call:legal?.callAmount??0,committed:playerAt("you").committed,currentBet:betting.currentBet,min:minRaiseTo,max:maxRaiseTo});
   const tournamentComplete = Boolean(tournament && tournamentOutcome?.champion);
   const remainingIds = tournamentOutcome?.liveIds ?? betting.players.map(p=>p.id);
   const showChips = (value: number) => displayUnit === "bb" ? `${(value / bigBlind).toFixed(1)} BB` : `${value.toLocaleString()}`;
@@ -544,7 +546,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <div className={styles.resultDeltas}>{boardRows.map(p => <span key={p.id} className={p.delta > 0 ? styles.resultGain : p.delta < 0 ? styles.resultLoss : styles.resultEven}>{p.name} <b>{p.delta > 0 ? "+" : ""}{p.delta.toLocaleString()}</b></span>)}</div>
       </div>}
     {!spectating ? <div className={styles.controls} role="region" aria-label="操作パネル">
-      {mobileRaiseOpen && canRaise && <MobileWagerEditor amount={raiseTo} min={minRaiseTo} max={maxRaiseTo} step={bigBlind} format={showChips} label={raiseTo===maxRaiseTo?'オールイン':betting.currentBet>0?'レイズ':'ベット'} onChange={setRaise} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>{setMobileRaiseOpen(false);choose("RAISE");}} presets={[...(streetStep===0?multipliers:betPreferences.potPercentages).map(m=>({label:`${m}${streetStep===0?' BB':'% POT'}`,amount:presetRaiseTo({preflop:streetStep===0,value:m,bb:bigBlind,pot:potTotal(betting),call:legal?.callAmount??0,committed:playerAt("you").committed,min:minRaiseTo,max:maxRaiseTo})})),{label:'ALL-IN額',amount:maxRaiseTo}]}/>}
+      {mobileRaiseOpen && canRaise && <MobileWagerEditor amount={raiseTo} min={minRaiseTo} max={maxRaiseTo} step={bigBlind} format={showChips} label={raiseTo===maxRaiseTo?'オールイン':betting.currentBet>0?'レイズ':'ベット'} onChange={setRaise} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>{setMobileRaiseOpen(false);choose("RAISE");}} presets={[...quickSizes.map(m=>({label:quickBetLabel(quickKind,m),amount:quickTo(m)})),{label:'ALL-IN額',amount:maxRaiseTo}]}/>}
 
       <div className={styles.turnHeader}><div className={styles.turn}>{tournamentComplete ? "大会終了" : !handActive ? "ハンド開始待ち" : !inHand("you") ? "脱落・進行確認中" : isYourTurn ? "あなたの番" : handFinished || showdown ? "ハンド終了" : `PLAYER ${activePlayerId?.slice(1) ?? "—"}の番`} · <strong aria-label={`残り${remaining}秒`}>{remaining}秒</strong></div></div>
 
@@ -552,8 +554,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small></p>}
       <label htmlFor="poker-demo-raise">{betting.currentBet > 0 ? "レイズ後の合計額" : "ベット額"}: {legal?.raise ? showChips(raiseTo) : "—"}</label>
       <input aria-label="レイズ額スライダー" id="poker-demo-raise" type="range" min={minRaiseTo} max={maxRaiseTo} step={1} value={raiseTo} disabled={!canRaise} onChange={e => setRaise(Number(e.target.value))} />
-      <input className={styles.raiseAmountInput} aria-label="レイズ後の合計入力" type="number" inputMode="numeric" min={minRaiseTo} max={maxRaiseTo} value={raiseTo} disabled={!canRaise} onChange={e=>{const n=Number(e.target.value);if(Number.isSafeInteger(n))setRaise(Math.min(maxRaiseTo,Math.max(minRaiseTo,n)));}}/>
-      <div className={styles.quickBets}>{(streetStep===0?multipliers:betPreferences.potPercentages).map((m,i) => <button type="button" key={i} disabled={!canRaise} onClick={() => setRaise(presetRaiseTo({preflop:streetStep===0,value:m,bb:bigBlind,pot:potTotal(betting),call:legal?.callAmount??0,committed:playerAt("you").committed,min:minRaiseTo,max:maxRaiseTo}))}>{m}{streetStep===0?' BB':'% POT'}</button>)}<button type="button" disabled={!canRaise} onClick={() => setRaise(maxRaiseTo)}>ALL-IN額</button></div>
+      <AmountInput className={styles.raiseAmountInput} ariaLabel="レイズ後の合計入力" value={raiseTo} min={minRaiseTo} max={maxRaiseTo} disabled={!canRaise} onChange={setRaise}/>
+      <div className={styles.quickBets}>{quickSizes.map((m,i) => <button type="button" key={i} disabled={!canRaise} onClick={() => setRaise(quickTo(m))}>{quickBetLabel(quickKind,m)}</button>)}<button type="button" disabled={!canRaise} onClick={() => setRaise(maxRaiseTo)}>ALL-IN額</button></div>
       <small>{legal?.raise ? `最小 ${showChips(minRaiseTo)} ／ 最大 ${showChips(maxRaiseTo)}${legal.shortAllInOnly ? "（オールインのみ）" : ""}` : legal?.call ? "コールまたはフォールドを選択してください" : ""}</small>
       <div className={styles.actions}>
         <button type="button" disabled={!canAct || !legal?.fold} onClick={() => choose("FOLD")}>フォールド</button>
