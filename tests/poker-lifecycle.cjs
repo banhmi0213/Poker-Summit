@@ -38,7 +38,7 @@ async function lifecycle(youBust=false){
   assert.equal(renderer.root.findAllByProps({className:'eliminatedTag'}).filter(n=>text(n)==='脱落').length,4);
   await click(button('次のハンド'));assert.deepEqual(calls,[{button:1,live:youBust?['p5','p2']:['you','p5']}]);
   assert.equal(renderer.root.findAllByProps({className:'cardBack'}).length,youBust?4:2);
-  assert.match(text(renderer.toJSON()),/BTN\/SB/);
+  assert.ok(renderer.root.findAllByProps({'aria-label':'ディーラーボタン'}).length>=1);
   const chips=renderer.root.findAll(n=>n.type==='div'&&String(n.props.className??'').startsWith('streetBet '));assert.equal(chips.length,2);
   if(youBust){
    assert.equal(renderer.root.findAllByProps({className:'hole'}).length,0);assert.ok(button('AUTO FOLD').props.disabled);

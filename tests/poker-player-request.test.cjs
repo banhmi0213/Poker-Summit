@@ -4,7 +4,7 @@ const {createPokerPlayerHandler,createSupabasePokerPlayerHandler}=require('../li
 const {createSupabasePokerAuthenticator,PokerAuthError}=require('../lib/poker/request-auth.ts');
 const {DurableRoomOwner}=require('../lib/poker/durable-room-owner.ts');
 const T=Date.parse('2026-10-16T10:00:00Z'),origin='https://poker.example',memberA=randomUUID(),memberB=randomUUID(),roomId=randomUUID();
-const config=()=>({starts_at:new Date(T).toISOString(),structure:{startingStack:1000,anteType:'bb',lateRegLevel:1,reentry:false,periods:[{kind:'level',minutes:1,sb:50,bb:100,ante:100,note:''}]}});
+const config=()=>({starts_at:new Date(T).toISOString(),structure:{startingStack:1000,anteType:'bb',lateRegLevel:1,reentry:false,timeBankCards:2,periods:[{kind:'level',minutes:1,sb:50,bb:100,ante:100,note:''}]}});
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 class Store {value=null;gate=null;failure=false;writes=0;async load(){return structuredClone(this.value);}async save(r){const g=this.gate;this.gate=null;if(g){g.enter.resolve();await g.release.promise;}if(this.failure)throw Error('SECRET_DATABASE_DETAIL');if((this.value?.version??0)!==r.expectedVersion)throw Error('conflict');this.value={version:r.expectedVersion+1,sealed:structuredClone(r.sealed)};this.writes++;return this.value.version;}}
 const request=(body,token='A',connection,extra={})=>new Request(origin+'/api/poker/'+roomId,{method:'POST',headers:{origin,'content-type':'application/json',authorization:'Bearer '+token,...(connection?{'x-poker-connection':connection}:{}),...extra},body:JSON.stringify(body)});

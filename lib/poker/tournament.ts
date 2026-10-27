@@ -15,13 +15,13 @@ export type TournamentStructure = {
     periods: BlindPeriod[];
     /** Seconds per decision (20 or 30). Missing = 20. */
     turnSeconds?: 20 | 30;
-    /** Time bank cards each player gets at the start (1-5); one card adds one turn's worth of time. Missing = 2. */
+    /** Time bank cards each player gets at the start (1-5); one card adds one turn's worth of time. Missing (older tournaments) = none. */
     timeBankCards?: number;
     /** Extra cards given when the final table forms (0 = none, up to 5). Missing = none. */
     finalTableCards?: number;
 };
 export const tournamentTiming = (s: Pick<TournamentStructure, "turnSeconds" | "timeBankCards" | "finalTableCards">) =>
-    ({ turnSeconds: s.turnSeconds ?? 20, timeBankCards: s.timeBankCards ?? 2, finalTableCards: s.finalTableCards ?? 0 });
+    ({ turnSeconds: s.turnSeconds ?? 20, timeBankCards: s.timeBankCards ?? 0, finalTableCards: s.finalTableCards ?? 0 });
 export type TournamentPrize = { rank: number; kind: "chips" | "text"; chips: number; description: string };
 export function validateTournamentDetails(organizer: unknown, raw: unknown) {
     if (typeof organizer !== "string" || organizer.trim().length > 200) throw new Error("主催者名は200文字以内で入力してください。");

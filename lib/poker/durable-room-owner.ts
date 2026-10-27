@@ -113,7 +113,7 @@ export class DurableRoomOwner {
   advance(control:TournamentControl){const captured=structuredClone(control);return this.#mutate(r=>r.advance(captured),r=>r.changed);}
   expireTurn(deadline:TurnDeadline) {
     let captured:TurnDeadline;try{captured=structuredClone(deadline);}catch{return Promise.reject(new Error('Invalid deadline'));}
-    return this.#mutate(r=>r.expireTurn(captured),r=>r.expired);
+    return this.#mutate(r=>r.expireTurn(captured),r=>r.expired||Boolean((r as {banked?:boolean}).banked));
   }
   /** Recovery is serialized with queued work. No uncommitted in-memory state is reused.
    * Ambiguous save outcomes are resolved by reading storage, never by inventing a new deal.

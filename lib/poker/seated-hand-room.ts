@@ -18,7 +18,7 @@ export class SeatedHandRoom {
   #settledHandId:string|null=null; #handNumber=0; #completedAt:number|null=null;
   #timeBanks=new Map<string,number>();
   /** Tournament only: each seat's saved time bank (ms) and the extension granted on the current turn. */
-  #cards=new Map<string,number>(); #bankUses=new Map<string,{revision:number;ids:string[]}>(); #bank={cards:2,finalTableCards:0,finalTableSize:6,finalTableGiven:false};
+  #cards=new Map<string,number>(); #bankUses=new Map<string,{revision:number;ids:string[]}>(); #bank={cards:0,finalTableCards:0,finalTableSize:6,finalTableGiven:false};
   #order=Array.from({length:6},(_,i)=>`seat-${i+1}`);
   #turn:TurnDeadline|null=null; #now:()=>number; #turnMs:number; #lastNow=0;
   constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean;bankCards?:number;finalTableCards?:number;finalTableSize?:number}={}) {
@@ -28,8 +28,8 @@ export class SeatedHandRoom {
     const turnMs=options.turnMs??20000;
     if(!Number.isSafeInteger(turnMs)||turnMs<1||turnMs>300000||(options.now!==undefined&&typeof options.now!=="function"))throw new Error("Invalid server clock policy");
     this.#startingStack=startingStack;this.#terms={...terms};this.#turnMs=turnMs;this.#now=options.now??Date.now;
-    const cards=options.bankCards??2,ft=options.finalTableCards??0,size=options.finalTableSize??6;
-    if(!Number.isSafeInteger(cards)||cards<1||cards>5||!Number.isSafeInteger(ft)||ft<0||ft>5||![2,6].includes(size))throw new Error("Invalid time bank policy");
+    const cards=options.bankCards??0,ft=options.finalTableCards??0,size=options.finalTableSize??6;
+    if(!Number.isSafeInteger(cards)||cards<0||cards>5||!Number.isSafeInteger(ft)||ft<0||ft>5||![2,6].includes(size))throw new Error("Invalid time bank policy");
     this.#bank={cards,finalTableCards:ft,finalTableSize:size,finalTableGiven:false};
   }
   /** Server-only checkpoint; connection capabilities are deliberately omitted. */
@@ -45,7 +45,7 @@ export class SeatedHandRoom {
     for(const [n,seat] of s.seats){room.seat(seat.memberId,n);if(members.has(seat.memberId)||!Number.isSafeInteger(seat.stack)||seat.stack<0)throw new Error("Invalid saved seat");members.add(seat.memberId);room.#seats.set(n,{...seat,connectionId:null});}
     room.#hand=s.hand?AuthoritativeHand.restore(s.hand):null;room.#revision=s.revision;room.#positions=s.positions;room.#outcome=s.outcome;room.#settledHandId=s.settledHandId;room.#handNumber=s.handNumber;room.#turn=s.turn;room.#lastNow=s.lastNow;
     for(const [id,revision] of s.timeBanks??[]){if(!room.#seats.has(Number(id.replace('seat-','')))||!/^seat-[1-6]$/.test(id)||!Number.isSafeInteger(revision)||revision<0||room.#timeBanks.has(id))throw new Error("Invalid saved time bank");room.#timeBanks.set(id,revision);}
-    if(s.bankPolicy){const b=s.bankPolicy;if(!Number.isSafeInteger(b.cards)||b.cards<1||b.cards>5||!Number.isSafeInteger(b.finalTableCards)||b.finalTableCards<0||b.finalTableCards>5||![2,6].includes(b.finalTableSize)||typeof b.finalTableGiven!=='boolean')throw new Error("Invalid saved time bank");room.#bank={...b};}
+    if(s.bankPolicy){const b=s.bankPolicy;if(!Number.isSafeInteger(b.cards)||b.cards<0||b.cards>5||!Number.isSafeInteger(b.finalTableCards)||b.finalTableCards<0||b.finalTableCards>5||![2,6].includes(b.finalTableSize)||typeof b.finalTableGiven!=='boolean')throw new Error("Invalid saved time bank");room.#bank={...b};}
     for(const [id,count] of s.timeBankCards??[]){if(!s.tournament||!/^seat-[1-6]$/.test(id)||!room.#seats.has(Number(id.slice(5)))||!Number.isSafeInteger(count)||count<0||count>10)throw new Error("Invalid saved time bank");room.#cards.set(id,count);}
     for(const [id,u] of s.timeBankUses??[]){if(!s.tournament||!/^seat-[1-6]$/.test(id)||!Number.isSafeInteger(u?.revision)||!Array.isArray(u.ids)||u.ids.length>10||u.ids.some(x=>typeof x!=='string'||!/^[A-Za-z0-9_-]{8,80}$/.test(x)))throw new Error("Invalid saved time bank");room.#bankUses.set(id,{revision:u.revision,ids:[...u.ids]});}
     // Checkpoints from before cards existed: everyone still seated gets the starting cards.
@@ -229,6 +229,14 @@ export class SeatedHandRoom {
     if(!t||!expected||expected.handId!==t.handId||expected.revision!==t.revision||expected.actor!==t.actor)return {expired:false,state:this.publicSnapshot()};
     const now=this.#readNow();
     if(now<t.expiresAt)return {expired:false,state:this.publicSnapshot()};
+    // Tournament: a time bank card is used automatically before anything is checked or folded, one card at a time.
+    const cards=this.#tournament?this.#cards.get(t.actor)??0:0;
+    if(cards>0&&Number.isSafeInteger(t.expiresAt+this.#turnMs)){
+     const uses=this.#bankUses.get(t.actor),ids=uses?.revision===t.revision?uses.ids:[];
+     this.#cards.set(t.actor,cards-1);this.#bankUses.set(t.actor,{revision:t.revision,ids:[...ids,`auto-${t.revision}-${ids.length}`]});this.#timeBanks.set(t.actor,t.revision);
+     this.#turn={...t,expiresAt:t.expiresAt+this.#turnMs};this.#revision++;
+     return {expired:false,banked:true,state:this.publicSnapshot()};
+    }
     const hand=this.#hand!;
     const legal=hand.snapshot(t.actor).legal;
     if(!legal)throw new Error("Timer actor is not actionable");
