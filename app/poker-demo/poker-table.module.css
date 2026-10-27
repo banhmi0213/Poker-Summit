@@ -942,3 +942,9 @@
 /* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
 .activeAvatar{position:relative}
 .demoStampBar{display:flex;justify-content:flex-start}
+
+/* ブラインドとポットを卓の中で分かりやすく (owner 2026/10/27, リング・トーナメントとも) */
+.blindsInfo{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--skin-table-text,#51432e);opacity:.85;text-shadow:0 1px #fff5;white-space:nowrap}
+.table[data-table-skin] .blindsInfo{text-shadow:0 1px 2px #0008}
+.pot strong{font-size:1.15em}
+@media(min-width:900px){.blindsInfo{font-size:14px}}
