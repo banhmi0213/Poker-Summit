@@ -14,5 +14,12 @@ const assert=require('node:assert/strict'),{randomUUID}=require('crypto');
  await db.query('update poker_private.ring_accounts set available=0,in_play=500 where member_id=$1',[m]);
  await assert.rejects(as('select public.poker_ring_refill($1) v',[randomUUID()]),/Refill not needed/,'no refill while chips are at a table');
  await assert.rejects(db.query("insert into poker_private.ring_chip_ledger(member_id,request_id,kind,available_delta,in_play_delta) values($1,$2,'refill',5000,0)",[m,randomUUID()]),'a refill can never exceed 3,000');
+ // At a bigger table: 200 left is below its 250 minimum, so 「補充して座り直す」 there may top up; without the table it may not.
+ const big=randomUUID();await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,6,5,10,250,2000,true)',[big,'5/10']);
+ await db.query('update poker_private.ring_accounts set available=200,in_play=0 where member_id=$1',[m]);
+ await assert.rejects(as('select public.poker_ring_refill($1) v',[randomUUID()]),/Refill not needed/,'200 still covers the 1/2 table');
+ assert.equal((await as('select public.poker_ring_refill($1,$2) v',[randomUUID(),big])).v.available,3000,'200 is short of the 5/10 table minimum');
+ await db.query('update poker_private.ring_accounts set available=0 where member_id=$1',[m]);
+ await assert.rejects(as('select public.poker_ring_refill($1,$2) v',[randomUUID(),randomUUID()]),/Table unavailable/);
  console.log('PASS free refill: only when out of chips and not seated, exactly to 3,000, idempotent per request, ledger-checked.');
 }catch(e){console.error(e);process.exitCode=1;}finally{await db.close?.();}})();
