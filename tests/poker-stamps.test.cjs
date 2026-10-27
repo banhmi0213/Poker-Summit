@@ -5,19 +5,19 @@ const {StampBoard,STAMPS,stampLabel}=require('../lib/poker/stamps.ts'),{parseRin
 const id='00000000-0000-4000-8000-000000000001',table='10000000-0000-4000-8000-000000000001';
 test('stamps show for 4 seconds, one per seat, and one every 3 seconds per member',()=>{
  let now=1000;const b=new StampBoard(()=>now);
- assert.equal(b.post(table,'a',1,'hello'),true);assert.equal(b.post(table,'a',1,'gg'),false,'too soon');
- now+=1000;assert.equal(b.post(table,'b',3,'nh'),true);
- assert.deepEqual(b.recent(table).map(s=>[s.seat,s.stamp,s.age]),[[1,'hello',1000],[3,'nh',0]]);
- now+=2500;assert.equal(b.post(table,'a',1,'gg'),true);assert.deepEqual(b.recent(table).map(s=>[s.seat,s.stamp]),[[3,'nh'],[1,'gg']],'the newer stamp replaces the seat');
+ assert.equal(b.post(table,'a',1,'hello'),true);assert.equal(b.post(table,'a',1,'bye'),false,'too soon');
+ now+=1000;assert.equal(b.post(table,'b',3,'nice'),true);
+ assert.deepEqual(b.recent(table).map(s=>[s.seat,s.stamp,s.age]),[[1,'hello',1000],[3,'nice',0]]);
+ now+=2500;assert.equal(b.post(table,'a',1,'bye'),true);assert.deepEqual(b.recent(table).map(s=>[s.seat,s.stamp]),[[3,'nice'],[1,'bye']],'the newer stamp replaces the seat');
  now+=5000;assert.deepEqual(b.recent(table),[]);
- assert.equal(stampLabel('clap'),'👏');assert.equal(stampLabel('free text'),'');assert.equal(STAMPS.length,8);
+ assert.equal(stampLabel('read'),'読まれてた…');assert.equal(stampLabel('free text'),'');assert.equal(STAMPS.length,12);
 });
 test('only the fixed stamps pass the command and state checks',()=>{
- assert.deepEqual(parseRingCommand({type:'stamp',reservationId:id,requestId:id,stamp:'gg'}),{type:'stamp',reservationId:id,requestId:id,stamp:'gg'});
+ assert.deepEqual(parseRingCommand({type:'stamp',reservationId:id,requestId:id,stamp:'bye'}),{type:'stamp',reservationId:id,requestId:id,stamp:'bye'});
  assert.throws(()=>parseRingCommand({type:'stamp',reservationId:id,requestId:id,stamp:'死ね'}));
- assert.throws(()=>parseRingCommand({type:'stamp',reservationId:id,requestId:id,stamp:'gg',text:'hi'}));
+ assert.throws(()=>parseRingCommand({type:'stamp',reservationId:id,requestId:id,stamp:'bye',text:'hi'}));
  const base={wallet:{available:0,inPlay:0,total:0},membership:null,tables:[],table:null,play:null};
- assert.deepEqual(parseRingLobbyState({...base,stamps:[{seat:2,stamp:'nh',age:10}]}).stamps,[{seat:2,stamp:'nh',age:10}]);
+ assert.deepEqual(parseRingLobbyState({...base,stamps:[{seat:2,stamp:'nice',age:10}]}).stamps,[{seat:2,stamp:'nice',age:10}]);
  assert.throws(()=>parseRingLobbyState({...base,stamps:[{seat:2,stamp:'<b>',age:10}]}));
  assert.equal(parseRingLobbyState(base).stamps,undefined);
 });
