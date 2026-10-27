@@ -30,7 +30,7 @@
 
 /* Summit and stamp buttons (owner 2026/10/28): no frame, large, right beside your name and chips — サミット on the left,
    スタンプ on the right. Inside the name box they flank it; elsewhere (ring seat) they flank the seat. */
-.quick{position:absolute;left:-62px;right:-62px;top:50%;transform:translateY(-50%);display:flex;justify-content:space-between;pointer-events:none;z-index:25}
+.quick{position:absolute;left:-72px;right:-72px;top:58%;transform:translateY(-50%);display:flex;justify-content:space-between;pointer-events:none;z-index:25}
 .quickBtn{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:1px;width:56px;padding:0;border:0;background:none;cursor:pointer;color:#f3d9a7}
 .quickIcon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#3a3126,#1a1612);box-shadow:0 0 0 2px #b99a58,0 3px 8px #0009;overflow:hidden}
 .quickIcon img{width:52px;height:52px;object-fit:contain;transform:translateY(-6%)}
