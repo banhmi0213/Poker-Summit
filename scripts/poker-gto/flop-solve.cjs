@@ -12,6 +12,11 @@ const code=s=>RANKS.indexOf(s[0].toUpperCase())*4+SUITS.indexOf(s[1].toLowerCase
 function expand(spec){
  const out=new Set();
  for(const tok of spec.split(',').map(t=>t.trim()).filter(Boolean)){
+  if(tok.includes('-')){// "TT-QQ" or "A9s-AQs": every class from the first to the second
+   const [from,to]=tok.split('-'),x=RANKS.indexOf(from[0]),lo=RANKS.indexOf(from[1]),hi=RANKS.indexOf(to[1]),kind=from[2]??'';
+   if(from[0]===from[1]){for(let r=lo;r<=hi;r++)out.add(RANKS[r]+RANKS[r]);}else for(let r=lo;r<=hi;r++){const l=RANKS[x]+RANKS[r];if(kind!=='o')out.add(l+'s');if(kind!=='s')out.add(l+'o');}
+   continue;
+  }
   const plus=tok.endsWith('+'),t=plus?tok.slice(0,-1):tok,a=RANKS.indexOf(t[0]),b=RANKS.indexOf(t[1]),kind=t[2]??'';
   if(a<0||b<0)throw new Error('bad range token '+tok);
   if(a===b){for(let r=a;r<=(plus?12:a);r++)out.add(RANKS[r]+RANKS[r]);continue;}

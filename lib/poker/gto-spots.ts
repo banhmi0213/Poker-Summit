@@ -2,10 +2,19 @@
  * scripts/poker-gto/flop-solve.cjs with the ranges in scripts/poker-gto/spots.cjs). */
 import flops from '@/data/poker-gto/flops.json';
 export const GTO_SPOTS=[
- {id:'btn-bb',label:'BTN対BB',detail:'BTNオープン → BBコール（ポット5.5BB）'},
- {id:'co-bb',label:'CO対BB',detail:'COオープン → BBコール（ポット5.5BB）'},
- {id:'sb-bb',label:'SB対BB',detail:'SBオープン → BBコール（ポット6BB）'},
- {id:'btn-bb-3bet',label:'3ベットポット',detail:'BTNオープン → BBが3ベット → BTNコール（ポット22.5BB）'},
+ {id:'utg-bb',group:'シングルレイズ',label:'UTG対BB',detail:'UTGオープン → BBコール（ポット5.5BB）'},
+ {id:'hj-bb',group:'シングルレイズ',label:'HJ対BB',detail:'HJオープン → BBコール（ポット5.5BB）'},
+ {id:'co-bb',group:'シングルレイズ',label:'CO対BB',detail:'COオープン → BBコール（ポット5.5BB）'},
+ {id:'btn-bb',group:'シングルレイズ',label:'BTN対BB',detail:'BTNオープン → BBコール（ポット5.5BB）'},
+ {id:'sb-bb',group:'シングルレイズ',label:'SB対BB',detail:'SBオープン → BBコール（ポット6BB、SBが先に打つ）'},
+ {id:'utg-btn',group:'シングルレイズ',label:'UTG対BTN',detail:'UTGオープン → BTNコール（ポット6.5BB、UTGが先に打つ）'},
+ {id:'co-btn',group:'シングルレイズ',label:'CO対BTN',detail:'COオープン → BTNコール（ポット6.5BB、COが先に打つ）'},
+ {id:'utg-bb-3bet',group:'3ベットポット',label:'UTG対BB 3ベット',detail:'UTGオープン → BBが3ベット → UTGコール（ポット24.5BB）'},
+ {id:'co-bb-3bet',group:'3ベットポット',label:'CO対BB 3ベット',detail:'COオープン → BBが3ベット → COコール（ポット22.5BB）'},
+ {id:'btn-bb-3bet',group:'3ベットポット',label:'BTN対BB 3ベット',detail:'BTNオープン → BBが3ベット → BTNコール（ポット22.5BB）'},
+ {id:'btn-sb-3bet',group:'3ベットポット',label:'BTN対SB 3ベット',detail:'BTNオープン → SBが3ベット → BTNコール（ポット23BB、SBが先に打つ）'},
+ {id:'co-btn-3bet',group:'3ベットポット',label:'CO対BTN 3ベット',detail:'COオープン → BTNが3ベット → COコール（ポット23.5BB、COが先に打つ）'},
+ {id:'btn-bb-4bet',group:'4ベットポット',label:'BTN対BB 4ベット',detail:'BBが3ベット → BTNが4ベット → BBコール（ポット50.5BB）'},
 ] as const;
 export type GtoSpotId=typeof GTO_SPOTS[number]['id'];
 /** The 95 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs). */

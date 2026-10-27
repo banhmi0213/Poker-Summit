@@ -13,7 +13,7 @@ const COLORS:Record<string,string>={check:'#4f8f74',call:'#4f8f74',fold:'#5a6b78
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
- const [spot,setSpot]=useState<string>(GTO_SPOTS[0].id),[flop,setFlop]=useState(flops[0]);
+ const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
  const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
  useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);
@@ -26,9 +26,9 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const current=GTO_SPOTS.find(s=>s.id===spot)!;
  return <div className={styles.wrap}>
   <p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
-  <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
+  <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
   <div className={styles.form}>
-   <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{GTO_SPOTS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
+   <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
    <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}</option>)}</select></label>
    <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
    <button type="button" onClick={lookup}>近いフロップを表示</button>
