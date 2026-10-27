@@ -9,7 +9,8 @@ import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {BetSizeSettings} from '@/app/poker-ui/bet-size-settings';
 import {AmountInput} from '@/app/poker-ui/amount-input';
-import {cardSkin,skinProps,tableSkin} from '@/lib/poker/skins';
+import {seOutput} from '@/lib/poker/se-output';
+import {backSkin,cardSkin,skinProps,tableSkin} from '@/lib/poker/skins';
 import {quickBetKind,quickBetLabel,quickBetTo,quickBetValues} from '@/lib/poker/bet-presets';
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
 import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
@@ -168,7 +169,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         gain.gain.setValueAtTime(0.0001, start);
         gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-        osc.connect(gain); gain.connect(context.destination);
+        osc.connect(gain); gain.connect(seOutput(context));
         osc.start(start); osc.stop(start + duration + 0.015);
       };
       if (kind === "turnCard") {
@@ -507,7 +508,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {tournamentComplete && <section aria-label="大会終了結果"><p><strong>大会終了・優勝：{playerName(tournamentOutcome!.champion!)}</strong></p><p>結果ログを確認してから退出できます。</p><button type="button" className={styles.reset} onClick={() => window.location.assign("/poker-lobby")}>退出する</button></section>}
       {Boolean(tournamentOutcome?.eliminated.length) && <details aria-label="大会結果ログ" open={tournamentComplete}><summary>大会結果ログ（デモ順位）</summary><ul>{tournamentOutcome?.champion && <li>1位：{playerName(tournamentOutcome.champion)}</li>}{tournamentOutcome?.eliminated.map(p=><li key={p.id}>{p.place===p.tiedThrough?`${p.place}位`:`同順位（${p.place}〜${p.tiedThrough}位）`}：{playerName(p.id)}</li>)}</ul><small>このブラウザ内のデモ結果です。会員戦績・プライズ付与には未連携です。</small></details>}
     </div></details></div>}
-    <div ref={tableRef} className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} {...(skinProps(tableSkin(betPreferences.tableSkin),cardSkin(betPreferences.cardSkin)) as Record<string,unknown>)} data-showdown={showdown ? "true" : "false"} data-reveal-hands={revealHoles} data-street={streetStep}><TableMotionLayer/>
+    <div ref={tableRef} className={styles.table} onPointerDown={unlockAudio} data-felt={feltColor} {...(skinProps(tableSkin(betPreferences.tableSkin),cardSkin(betPreferences.cardSkin),backSkin(betPreferences.backSkin)) as Record<string,unknown>)} data-showdown={showdown ? "true" : "false"} data-reveal-hands={revealHoles} data-street={streetStep}><TableMotionLayer/>
       {payouts && !awardAnimationDone && <div className={styles.awardAnimationLayer} aria-hidden="true">
         {awardWinners.map(id => <div key={id} data-pot-winner={id} className={`${styles.awardFlight} ${awardDestinations[id]}`}>
           <span data-pot-coin className={styles.awardCoin}>♠</span><span data-pot-coin className={styles.awardCoin}>♠</span><span data-pot-coin className={styles.awardCoin}>♠</span>
@@ -534,7 +535,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.felt}>
         <div data-pot-source className={styles.pot}>POT <strong>{potTotal(betting).toLocaleString()}</strong></div>
         <div className={styles.cards} aria-label="共通カード" data-motion-board>{deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((card, i) => <span key={i} className={isRedCard(card) ? styles.red : ""}><CardFace card={card}/></span>)}</div>
-        <div className={styles.street}>{streetNames[streetStep]} · デモ表示</div>
+        <div className={styles.street}>{streetNames[streetStep]} · {gameType==="ring"?`レート ${ringTerms.sb}/${ringTerms.bb}`:"練習"}</div>
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} stack={displayStack("p5")} index={5} winnerGlow={Boolean(payouts?.p5)} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} seatStatus={seatStatus("p5")} positionLabel={positionFor("p5")} dealer={handActive&&handPositions.button==="p5"} lastAction={lastActions["p5"]} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} stack={displayStack("p6")} index={6} winnerGlow={Boolean(payouts?.p6)} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} seatStatus={seatStatus("p6")} positionLabel={positionFor("p6")} dealer={handActive&&handPositions.button==="p6"} lastAction={lastActions["p6"]} /></div>
