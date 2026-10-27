@@ -73,7 +73,7 @@ test('completed result remains during next hand and is cleared on connection los
  test('time bank shows only the card count (used automatically) and the active avatar renders its countdown',async t=>{
  const f=await harness(t);await f.click('接続・再接続');
  assert.equal(f.renderer.root.findAllByType('button').some(b=>String(b.props['aria-label']??'').startsWith('タイムバンク')),false,'no manual time bank button');
- const status=f.renderer.root.findAll(n=>n.type==='span'&&String(n.props['aria-label']??'').startsWith('タイムバンク'));assert.ok(status.length>0);assert.match(text(status[0]),/⏰\s*\d+枚/);
+ const status=f.renderer.root.findAll(n=>n.type==='span'&&String(n.props['aria-label']??'').startsWith('タイムバンク'));assert.ok(status.length>0);assert.ok(status.every(s=>/⏰\s*\d+/.test(text(s))));
  const ring=f.renderer.root.findByProps({role:'progressbar'});assert.match(ring.props.style.background,/conic-gradient/);
  assert.equal(f.packets.filter(p=>p.type==='time-bank').length,0,'nothing is sent until the server spends a card at the deadline');
  });
