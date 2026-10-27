@@ -95,7 +95,7 @@ require('node:test').test('tournament sample renders top clock, structure menu a
  const ids=['you','p5','p3','p2','p4','p6'],r=createBettingRound(ids.map(id=>({id,stack:1000})),100,'you');
  const tournament={id:'sample',title:'TEST CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  const html=render(r,{tournament,serverNow:Date.parse(tournament.starts_at)}).html;
- assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>卓情報<\/button>/);assert.match(html,/大会設定連動デモ/);
+ assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>テーブル情報<\/button>/);assert.match(html,/大会設定連動デモ/);
 });
 require('node:test').test('structure table renders all levels, break and late registration details',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');

@@ -423,7 +423,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)}>×</button></div>
       <nav className={styles.menuNav} aria-label="ゲームメニュー">
         <button type="button" className={menuPage === "settings" ? styles.menuSelected : ""} onClick={() => setMenuPage("settings")}>⚙ 設定</button>
-        <button type="button" className={menuPage === "structure" ? styles.menuSelected : ""} onClick={() => setMenuPage("structure")}>卓情報</button>
+        <button type="button" className={menuPage === "structure" ? styles.menuSelected : ""} onClick={() => setMenuPage("structure")}>テーブル情報</button>
         <button type="button" className={menuPage === "community" ? styles.menuSelected : ""} onClick={() => setMenuPage("community")}>サミット</button>
         <button type="button" className={menuPage === "site" ? styles.menuSelected : ""} onClick={() => setMenuPage("site")}>サイト</button>
         <button type="button" className={menuPage === "spectate" ? styles.menuSelected : ""} disabled={gameType === "tournament"} onClick={() => setMenuPage("spectate")}>◉ 観戦</button>
@@ -440,7 +440,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <BetSizeSettings/>
           <small>BB表示と倍率はデモに反映。効果音は各場面で再生されます。レイズ額の設定は会員ごとに保存できます。</small>
         </div>}
-        {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リング卓情報</h2><p>SB 50 / BB 100</p><p>6人卓・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
+        {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リングテーブル情報</h2><p>SB 50 / BB 100</p><p>6人卓・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
         {menuPage === "community" && <div className={styles.menuFields}><h2>サミット連携</h2><section><h3>チップ残高</h3><p>デモの持ち点と会員の残高は別です。</p><a href="/mypage/chips" target="_blank" rel="noreferrer">会員のチップ残高・付与履歴を確認 ↗</a></section><details onToggle={e=>setCommunityOpen(e.currentTarget.open)}><summary>掲示板を開く</summary>{communityOpen&&<iframe title="サミット掲示板" src="/poker-community" style={{width:"100%",height:"55dvh",border:"1px solid #9b8354",borderRadius:8}}/>}</details></div>}
         {menuPage === "site" && <div className={styles.menuFields}><h2>サイト</h2><p>プレイ画面を残して別タブで開きます。</p><p><a href="/" target="_blank" rel="noreferrer">Poker Summit トップ ↗</a></p><p><a href="/poker-lobby" target="_blank" rel="noreferrer">ポーカーロビー ↗</a></p><p><a href="/mypage" target="_blank" rel="noreferrer">マイページ ↗</a></p></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}

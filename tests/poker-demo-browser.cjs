@@ -12,7 +12,7 @@ const root=path.resolve(__dirname,'..'),output=process.env.POKER_DEMO_OUTPUT||'/
  browser=await pw.launch({executablePath:await chromium.executablePath(),args:chromium.args.filter(a=>!['--single-process','--disable-web-security','--allow-running-insecure-content'].includes(a)),headless:true});
  const desktop=await browser.newPage({viewport:{width:1440,height:900}});desktop.on('pageerror',e=>errors.push(e.message));await desktop.goto(origin);
  await desktop.getByRole('button',{name:'ゲームメニューを開く',exact:true}).click();
- await desktop.getByRole('button',{name:'卓情報',exact:true}).click();await desktop.getByRole('heading',{name:'リング卓情報',exact:true}).waitFor();
+ await desktop.getByRole('button',{name:'テーブル情報',exact:true}).click();await desktop.getByRole('heading',{name:'リングテーブル情報',exact:true}).waitFor();
  await desktop.getByRole('button',{name:'サミット',exact:true}).click();await desktop.getByRole('heading',{name:'サミット連携',exact:true}).waitFor();
  assert.equal(await desktop.evaluate(()=>document.documentElement.scrollHeight>innerHeight+1),false,'PC table and menu fit one screen');
  await desktop.screenshot({path:path.join(output,'pc-summit-tab.png'),fullPage:true});
