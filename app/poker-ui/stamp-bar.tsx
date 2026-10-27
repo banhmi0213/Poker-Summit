@@ -37,8 +37,8 @@ export function SeatQuickBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;d
   :<div className={styles.summitSheet} role="dialog" aria-label="サミット掲示板" onClick={e=>e.stopPropagation()}><div className={styles.summitHead}><strong>サミット</strong><button type="button" aria-label="サミットを閉じる" onClick={()=>setOpen(null)}>×</button></div><iframe title="サミット掲示板" src="/poker-community" referrerPolicy="same-origin"/></div>}
  </div>,document.body):null;
  return <div className={styles.quick} role="group" aria-label="スタンプとサミット">
-  <button type="button" className={styles.quickBtn} aria-label="スタンプ" aria-expanded={open==='stamp'} disabled={disabled} onClick={()=>setOpen(v=>v==='stamp'?null:'stamp')}><img src="/images/stamps/stamp-01.webp" alt=""/></button>
-  <button type="button" className={styles.quickBtn} aria-label="サミット" aria-expanded={open==='summit'} onClick={()=>setOpen(v=>v==='summit'?null:'summit')}><img src="/images/summit-finger-clean.webp" alt="" data-summit/></button>
+  <button type="button" className={styles.quickBtn} aria-label="サミット" aria-expanded={open==='summit'} onClick={()=>setOpen(v=>v==='summit'?null:'summit')}><span className={styles.quickIcon} data-kind="summit"><img src="/images/summit-finger-clean.webp" alt="" data-summit/></span><span className={styles.quickLabel} aria-hidden="true">サミット</span></button>
+  <button type="button" className={styles.quickBtn} aria-label="スタンプ" aria-expanded={open==='stamp'} disabled={disabled} onClick={()=>setOpen(v=>v==='stamp'?null:'stamp')}><span className={styles.quickIcon}><img src="/images/stamps/stamp-02.webp" alt=""/></span><span className={styles.quickLabel} aria-hidden="true">スタンプ</span></button>
   {sheet}
  </div>;
 }

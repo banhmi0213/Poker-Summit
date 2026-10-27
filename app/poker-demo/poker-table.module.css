@@ -960,3 +960,10 @@
  .table .self .hole span{width:clamp(72px,10.5vh,92px);height:clamp(98px,14.3vh,125px);font-size:clamp(34px,4.9vh,42px)}
  .table .showdownPosition .miniCards span{width:clamp(65px,9.5vh,82px);height:clamp(90px,13.1vh,113px);font-size:clamp(29px,4.2vh,37px)}
 }
+
+/* Phone header (owner 2026/10/28): menu and exit as plain gold icons, no frame. */
+@media(max-width:899px){
+ .menuToggle,.topExit{border:0!important;background:none!important;box-shadow:none!important;padding:0;display:grid;place-items:center;line-height:0;color:#f3d27e}
+ .menuToggle svg,.topExit svg{width:26px;height:26px}
+}
+@media(min-width:900px){.menuToggle,.topExit{line-height:0}}
