@@ -96,7 +96,11 @@ for(let step=0;step<40;step++){
  const meta=await factory().meta(policyTable);if(meta.penalties[policyReservations[0]].strikes===3)break;
  if(!meta.context.activeHandId){await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '16 seconds' where id=$1",[meta.lastHandId]);await db.exec('set role service_role');await runner.tick(policyTable);continue;}
  const owner=await RingHandOwner.restore(factory(),meta.context.activeHandId,keys),h=owner.snapshot(null),actor=h.toAct==='seat-1'?0:1;
- if(actor===0){await db.exec("select set_config('poker_test.offset','21 seconds',false)");await runner.tick(policyTable);await db.exec("select set_config('poker_test.offset','0 seconds',false)");}
+ if(actor===0){
+  // At 0 the free +20s is spent automatically first; the timeout follows when the extended 40s also runs out.
+  await db.exec("select set_config('poker_test.offset','21 seconds',false)");const before=await factory().meta(policyTable);await runner.tick(policyTable);const banked=await factory().meta(policyTable);
+  if(!before.bankUsed?.[policyReservations[0]]){assert.ok(banked.bankUsed?.[policyReservations[0]],'free time bank is used when the turn runs out');assert.equal(banked.context.activeHandId,before.context.activeHandId);}
+  await db.exec("select set_config('poker_test.offset','41 seconds',false)");await runner.tick(policyTable);await db.exec("select set_config('poker_test.offset','0 seconds',false)");}
  else {const legal=owner.snapshot(policyMembers[1]).legal;await runner.act(policyMembers[1],policyTable,{handId:h.handId,revision:h.revision,actionId:randomUUID(),action:{type:legal.check?'check':'call'}});}
 }
 let policyMeta=await factory().meta(policyTable);assert.equal(policyMeta.penalties[policyReservations[0]].strikes,3);assert.ok(policyMeta.penalties[policyReservations[0]].since);
