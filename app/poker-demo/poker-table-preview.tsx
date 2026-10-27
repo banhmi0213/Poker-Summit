@@ -9,6 +9,7 @@ import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {BetSizeSettings} from '@/app/poker-ui/bet-size-settings';
 import {AmountInput} from '@/app/poker-ui/amount-input';
+import {seOutput} from '@/lib/poker/se-output';
 import {backSkin,cardSkin,skinProps,tableSkin} from '@/lib/poker/skins';
 import {quickBetKind,quickBetLabel,quickBetTo,quickBetValues} from '@/lib/poker/bet-presets';
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
@@ -168,7 +169,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         gain.gain.setValueAtTime(0.0001, start);
         gain.gain.exponentialRampToValueAtTime(volume, start + 0.008);
         gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-        osc.connect(gain); gain.connect(context.destination);
+        osc.connect(gain); gain.connect(seOutput(context));
         osc.start(start); osc.stop(start + duration + 0.015);
       };
       if (kind === "turnCard") {

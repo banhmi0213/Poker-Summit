@@ -1,3 +1,4 @@
+import {seOutput} from './se-output';
 /** Table sound effects chosen by the owner (2026/10/26): deal F, board D, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
 /** flop/turn/river = community cards appearing on the board (flop plays three). */
@@ -12,7 +13,7 @@ function noise(c:BaseAudioContext){
 }
 function out(c:BaseAudioContext,pan=0):AudioNode{
  let m=masterByContext.get(c);
- if(!m){const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.connect(c.destination);m=comp;masterByContext.set(c,m);}
+ if(!m){const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.connect(seOutput(c));m=comp;masterByContext.set(c,m);}
  if(typeof c.createStereoPanner!=='function')return m;
  const p=c.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));p.connect(m);return p;
 }

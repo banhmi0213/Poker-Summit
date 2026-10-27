@@ -1,3 +1,4 @@
+import {seOutput} from './se-output';
 import {type ActionKind} from './action-feedback';
 import {playTableEffect} from './table-effects';
 /** Browser-only synthesized effects, matching the existing demo. No audio files or network I/O. */
@@ -21,7 +22,7 @@ export class PokerSounds {
     const oscillator=c.createOscillator(),gain=c.createGain(),start=now+delay;
     oscillator.type=wave;oscillator.frequency.setValueAtTime(frequency,start);
     gain.gain.setValueAtTime(.0001,start);gain.gain.exponentialRampToValueAtTime(volume,start+.008);gain.gain.exponentialRampToValueAtTime(.0001,start+duration);
-    oscillator.connect(gain);gain.connect(c.destination);oscillator.start(start);oscillator.stop(start+duration+.015);
+    oscillator.connect(gain);gain.connect(seOutput(c));oscillator.start(start);oscillator.stop(start+duration+.015);
     oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
    };
    if(kind==='turnCard')return playTableEffect(c,'turn');
