@@ -1004,10 +1004,11 @@
  .demoShell .rowHint{display:block;position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;max-width:240px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px;font-size:11px;color:#f1e6cc}
  .demoShell .rowHint p{margin:4px 0;line-height:1.5}.demoShell .rowHint small{font-size:9px}
 }
-/* Phone practice table (owner 2026/10/28): no PREFLOP/FLOP label; pot and board centred between the side seats. */
+/* Phone practice table (owner 2026/10/28): no PREFLOP/FLOP label; the board (and the logo behind it) sits exactly in the
+   middle of the table on every phone height: the felt starts 88px (pot + gap + half the board) above the centre. */
 @media(max-width:899px){
  .demoShell .felt .street{display:none}
- .demoShell .table .felt{translate:0 30px}
+ .demoShell .table .felt{top:calc(50% - 88px)!important;translate:none}
 }
 
 /* Whose turn it is, at every seat (owner 2026/10/28): the acting player's ring glows, red and faster in the last 5 s. */
