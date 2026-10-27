@@ -34,3 +34,5 @@
 20261027080000_poker_ring_refill
 20261027090000_poker_ring_player_hud
 20261027100000_poker_abuse_controls
+20261027110000_poker_hand_shares
+20261027120000_poker_skin_shop
