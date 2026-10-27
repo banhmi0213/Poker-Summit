@@ -17,7 +17,7 @@ test('preflop reach: first decisions are 1, a 3-bet decision only holds hands th
 
 test('preflop questions: valid cards, options, normalised frequencies, and the hero holds the hand in this spot',()=>{
  const rand=seeded(7),kinds={};
- for(let i=0;i<300;i++){const q=preflopQuestion(preflop,rand);assert.ok(q);kinds[q.scene.split('、').length]=1;
+ for(let i=0;i<300;i++){const q=preflopQuestion(preflop,rand);assert.ok(q);assert.match(q.category,/^preflop-(open|vsopen|vs3bet|vs4bet|vs5bet|overcall)$/);kinds[q.scene.split('、').length]=1;
   assert.equal(q.cards.length,2);assert.notEqual(q.cards[0],q.cards[1]);
   assert.equal(q.options.length,q.freqs.length);assert.equal(q.options.length,q.rangeFreqs.length);
   assert.ok(Math.abs(sum(q.freqs)-1)<1e-9);assert.ok(Math.abs(sum(q.rangeFreqs)-1)<1e-9);
@@ -31,7 +31,7 @@ test('flop questions use computed files, avoid board cards and use suit-aware ro
  const rand=seeded(11);let n=0;
  for(const [spot,list] of Object.entries(index))for(const flop of list.slice(0,4)){
   const file=JSON.parse(fs.readFileSync(path.join(root,'flops',spot,flop+'.json'),'utf8'));
-  for(let i=0;i<10;i++){const q=flopQuestion(file,spot,'detail',rand);if(!q)continue;n++;
+  for(let i=0;i<10;i++){const q=flopQuestion(file,spot,'title','detail',rand);if(!q)continue;n++;assert.equal(q.category,'flop-'+spot);
    assert.ok(!q.board.includes(q.cards[0])&&!q.board.includes(q.cards[1]));assert.equal(q.board.length,3);
    assert.ok(Math.abs(sum(q.freqs)-1)<1e-9);assert.ok(q.made);
    for(let c=0;c<q.options.length;c++){const lines=explainQuiz(q,gradeQuiz(q,c));assert.ok(lines.every(l=>!/undefined|NaN/.test(l)),lines.join('\n'));}
@@ -44,4 +44,8 @@ test('grading: best option 100 / 正解, a never-played option ミス',()=>{
  assert.deepEqual(gradeQuiz(q,2),{choice:2,freq:0.7,points:100,verdict:'正解'});
  assert.equal(gradeQuiz(q,1).verdict,'まずまず');assert.equal(gradeQuiz(q,0).verdict,'ミス');
  assert.match(explainQuiz(q,gradeQuiz(q,0)).join('\n'),/選ばない打ち方/);
+});
+
+test('practising one preflop category asks only that kind',()=>{
+ const rand=seeded(3);for(let i=0;i<40;i++){const q=preflopQuestion(preflop,rand,'vs3bet');assert.equal(q.category,'preflop-vs3bet');}
 });

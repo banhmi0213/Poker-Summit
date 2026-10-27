@@ -9,6 +9,8 @@ import type {FlopData,FlopNode} from './gto-spots';
 const R='23456789TJQKA',S='cdhs';
 export type QuizQuestion={
  kind:'preflop'|'flop';
+ /** Result category kept per member: preflop-<chart kind> or flop-<spot id>. */
+ category:string;
  /** Short name of the situation, e.g. 「BTN対BB・フロップ」. */
  title:string;
  /** What happened before the hero's decision. */
@@ -67,15 +69,18 @@ function sceneText(node:PreflopNode){
  flush();
  return parts.length?`${parts.join('、')}。`:'';
 }
-export function preflopQuestion(data:PreflopData,random:()=>number=Math.random):QuizQuestion|null{
+/** Category names shown to members. */
+export const PREFLOP_CATEGORY:Record<string,string>={'preflop-open':'プリフロップ：オープン','preflop-vsopen':'プリフロップ：オープンを受けて','preflop-vs3bet':'プリフロップ：3ベットを受けて','preflop-vs4bet':'プリフロップ：4ベットを受けて','preflop-vs5bet':'プリフロップ：5ベットを受けて','preflop-overcall':'プリフロップ：オーバーコール'};
+/** `kind`: only that chart kind (open, vsOpen, …), e.g. to practise a weak category. */
+export function preflopQuestion(data:PreflopData,random:()=>number=Math.random,kind?:string):QuizQuestion|null{
  for(let attempt=0;attempt<8;attempt++){
-  const node=pick(data.nodes,n=>(KIND_WEIGHT[n.kind]??1)/Math.max(1,data.nodes.filter(m=>m.kind===n.kind).length),random);if(!node)return null;
+  const node=pick(data.nodes,n=>kind&&n.kind.toLowerCase()!==kind.toLowerCase()?0:(KIND_WEIGHT[n.kind]??1)/Math.max(1,data.nodes.filter(m=>m.kind===n.kind).length),random);if(!node)return null;
   const reach=preflopReach(data,node),fold=node.actions.findIndex(a=>a.kind==='fold');
   const classes=Object.keys(node.strategy);
   const cls=pick(classes,c=>handWeight(reach[c],combosOf(c),node.strategy[c],fold),random);if(!cls)continue;
   const cards=cardsFor(cls,[],random);if(!cards)continue;
   const range=node.actions.map((_,k)=>classes.reduce((s,c)=>s+reach[c]*combosOf(c)*(node.strategy[c][k]??0),0));
-  return {kind:'preflop',title:`6人卓・100BB・プリフロップ`,scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
+  return {kind:'preflop',category:`preflop-${node.kind.toLowerCase()}`,title:`6人卓・100BB・プリフロップ`,scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
    options:node.actions.map(a=>a.label),freqs:norm(node.strategy[cls]),rangeFreqs:norm(range),made:null};
  }
  return null;
@@ -93,7 +98,7 @@ function flopNodeFor(file:FlopData,random:()=>number):{node:FlopNode;history:str
  }
  return {node:root,history:[]};
 }
-export function flopQuestion(file:FlopData,title:string,detail:string,random:()=>number=Math.random):QuizQuestion|null{
+export function flopQuestion(file:FlopData,spot:string,title:string,detail:string,random:()=>number=Math.random):QuizQuestion|null{
  for(let attempt=0;attempt<6;attempt++){
   const {node,history}=flopNodeFor(file,random),fold=node.actions.findIndex(a=>a.kind==='fold');
   const classes=Object.keys(node.classes);
@@ -102,7 +107,7 @@ export function flopQuestion(file:FlopData,title:string,detail:string,random:()=
   // Suit-aware row for these exact cards when the file has one (flush draws, backdoors).
   const row=flopRow(node,cards[0],cards[1],file.board)??node.classes[cls];if(!row||!(row[0]>0))continue;
   const hero=node.player===0?file.spot.oop:file.spot.ip;
-  return {kind:'flop',title,scene:`${detail}。${history.length?`フロップで${history.join('、')}。`:''}`,hero,cards,board:[...file.board],handClass:cls,
+  return {kind:'flop',category:`flop-${spot}`,title,scene:`${detail}。${history.length?`フロップで${history.join('、')}。`:''}`,hero,cards,board:[...file.board],handClass:cls,
    options:node.actions.map(a=>a.label),freqs:norm(row.slice(1)),rangeFreqs:norm(node.total),made:madeHandLabel(cards.map(toCard),file.board.map(toCard))};
  }
  return null;

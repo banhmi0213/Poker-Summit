@@ -119,6 +119,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_hand_share_isolated.cjs
+      - name: Verify GTO quiz results per member
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_gto_quiz_isolated.cjs
       - name: Verify anti-abuse (confirmed e-mail, throttles, reports, bans)
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
