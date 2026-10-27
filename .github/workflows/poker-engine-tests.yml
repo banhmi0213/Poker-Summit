@@ -112,7 +112,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-ring-browser-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify full ring table UI with real seating and settlement
         timeout-minutes: 4
@@ -124,7 +124,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-full-ring-browser-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify selected seats and per-hand timebank in browsers
         env:
@@ -136,7 +136,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-selected-seat-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify deferred spectator departure during a live hand
         env:
@@ -149,7 +149,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-watch-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify deferred lobby exit during a live hand
         env:
@@ -162,7 +162,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-lobby-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify all-in board and winner before deferred lobby exit
         env:
@@ -176,7 +176,7 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-allin-e2e
         run: |
-          node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
       - name: Verify six-browser tournament end to end
         timeout-minutes: 4
