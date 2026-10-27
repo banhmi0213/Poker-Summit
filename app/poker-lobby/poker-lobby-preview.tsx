@@ -21,7 +21,7 @@ const tournaments = [
 
 import RingAdmissionPanel from '@/app/poker-ui/ring-admission-panel';
 
-export default function PokerLobbyPreview({ isGuestPreview, ringEnabled=false, configuredTournaments = [], configuredRings=[],ringError=false, compact=false }: { ringEnabled?:boolean;configuredRings?:RingTable[];ringError?:boolean;compact?:boolean;isGuestPreview: boolean; configuredTournaments?: {id:string;title:string;starts_at:string;structure:TournamentStructure;image_url:string|null;organizer_name?:string;prizes?:import("@/lib/poker/tournament").TournamentPrize[]}[] }) {
+export default function PokerLobbyPreview({ isGuestPreview, tournamentsEnabled=true, ringEnabled=false, configuredTournaments = [], configuredRings=[],ringError=false, compact=false }: { tournamentsEnabled?:boolean;ringEnabled?:boolean;configuredRings?:RingTable[];ringError?:boolean;compact?:boolean;isGuestPreview: boolean; configuredTournaments?: {id:string;title:string;starts_at:string;structure:TournamentStructure;image_url:string|null;organizer_name?:string;prizes?:import("@/lib/poker/tournament").TournamentPrize[]}[] }) {
   const [page,setPage]=useState(0);
   const [type, setType] = useState<GameType>("ring");
   const [selected, setSelected] = useState<{ title: string; action: "join" | "watch" } | null>(null);
@@ -32,7 +32,7 @@ export default function PokerLobbyPreview({ isGuestPreview, ringEnabled=false, c
     {!isGuestPreview&&type==="ring"&&<SummitChipBalance/>}
     <div className={styles.tabs} style={compact?{margin:'12px 0'}:undefined} role="tablist" aria-label="ゲーム形式">
       <button type="button" role="tab" aria-selected={type === "ring"} className={type === "ring" ? styles.active : ""} onClick={() => {setPage(0);setType("ring");}}>リングゲーム</button>
-      <button type="button" role="tab" aria-selected={type === "tournament"} className={type === "tournament" ? styles.active : ""} onClick={() => {setPage(0);setType("tournament");}}>トーナメント</button>
+      {tournamentsEnabled&&<button type="button" role="tab" aria-selected={type === "tournament"} className={type === "tournament" ? styles.active : ""} onClick={() => {setPage(0);setType("tournament");}}>トーナメント</button>}
     </div>
     {type==='ring'&&!isGuestPreview&&ringEnabled&&<RingAdmissionPanel enabled productionFlow/>}
     {type==='ring'&&(!ringEnabled||isGuestPreview)&&<section aria-label="運営登録のリング卓"><div className={styles.sectionHeading}><h2>公開リング卓</h2><span>{configuredRings.length} 件</span></div>{ringError?<p role="alert">卓設定を読み込めませんでした。時間をおいて再読み込みしてください。</p>:!configuredRings.length?<p>現在、公開されているリング卓設定はありません。</p>:<div className={styles.list}>{configuredRings.map(t=><article className={styles.item} key={t.id}><div className={styles.emblem} aria-hidden="true"><span>♠</span><small>NLH</small></div><div className={styles.details}><div className={styles.itemTop}><strong>{t.title}</strong><span className={styles.live}>対戦準備中</span></div><p>SB {t.sb.toLocaleString()} / BB {t.bb.toLocaleString()} · {t.capacity}人卓</p><p>持込 {t.min_buy_in.toLocaleString()}〜{t.max_buy_in.toLocaleString()} チップ</p>{t.note&&<p>{t.note}</p>}<small>着席・会員チップによる対戦は準備中です。</small></div></article>)}</div>}</section>}

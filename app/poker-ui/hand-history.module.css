@@ -34,3 +34,7 @@
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .log small.review{display:block;font-size:11px;color:#91a8ba;margin-top:2px}.log small.review[data-flag=true]{color:#f0b06a}
 .log li span{min-width:0}
+.log small.gto{display:block;font-size:11px;color:#91a8ba;margin-top:2px}
+.gtoBadge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:9px;font-size:10px;font-weight:700;background:#2b4355;color:#d7e4ee}
+.gtoBadge[data-verdict=gto]{background:#2f6a4c;color:#e2f7ea}.gtoBadge[data-verdict=mixed]{background:#6b5a2c;color:#fbecc4}.gtoBadge[data-verdict=rare]{background:#7a3a3a;color:#fde3e3}
+.gtoBar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
