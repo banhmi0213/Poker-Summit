@@ -970,3 +970,9 @@
 /* Phone practice table (owner 2026/10/28: 手札とチップの欄を両方下げる・アイコンも): your avatar, cards and chip box move
    down together to just above the control panel; the Summit/Stamp buttons stay where they were. */
 @media(max-width:899px){.demoShell .table .self{translate:0 30px}}
+/* Phone practice table (owner 2026/10/28): PLAYER 3・4 a little lower and PLAYER 5・6 a little higher so the four side
+   seats sit evenly between the top seat and yours. Their cards and wagers move with them. */
+@media(max-width:899px){
+ .demoShell .edgeSeatThree,.demoShell .edgeSeatFour,.demoShell .showdownThree,.demoShell .showdownFour,.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 26px}
+ .demoShell .edgeSeatFive,.demoShell .edgeSeatSix,.demoShell .showdownFive,.demoShell .showdownSix,.demoShell .table .bet_p5,.demoShell .table .bet_p6{translate:0 -26px}
+}
