@@ -95,6 +95,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_live_isolated.cjs
+      - name: Verify ring release gate (4 players, mid-hand leave, restart/reconnect, side pots, settlement)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_release_gate_isolated.cjs
       - name: Verify hand history privacy and idempotent saves
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
