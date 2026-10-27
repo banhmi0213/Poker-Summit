@@ -18,7 +18,7 @@ const root=path.resolve(__dirname,'..'),output=process.env.POKER_DEMO_OUTPUT||'/
  await desktop.screenshot({path:path.join(output,'pc-summit-tab.png'),fullPage:true});
  await desktop.getByRole('button',{name:'サイト',exact:true}).click();await desktop.getByRole('link',{name:'Poker Summit トップ ↗',exact:true}).waitFor();
  await desktop.screenshot({path:path.join(output,'pc-site-tab.png'),fullPage:true});
- await desktop.getByRole('button',{name:'メニューを閉じる',exact:true}).click();await desktop.close();
+ await desktop.getByRole('button',{name:'メニューを閉じる',exact:true}).click();const dock=await desktop.getByRole('region',{name:'操作パネル',exact:true}).boundingBox();assert.ok(dock.x+dock.width<=1440-80,'PC controls move inward from the right edge');await desktop.screenshot({path:path.join(output,'pc-controls-inward.png'),fullPage:true});await desktop.close();
  for(const [width,height,mode] of [[390,844,'ring'],[360,740,'ring'],[375,667,'ring'],[390,844,'tournament'],[375,667,'tournament']]){
   const page=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true});page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/?'+mode);
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent.startsWith('コール')&&!b.disabled));
