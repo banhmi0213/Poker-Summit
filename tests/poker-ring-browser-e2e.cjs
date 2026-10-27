@@ -44,9 +44,13 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
  // Stamps (owner 2026/10/27): laid over the sender's avatar for 3 seconds, never over any card.
  {const me=await store.state(users[0],tid);await store.change(users[0],{type:'stamp',reservationId:me.membership.reservationId,requestId:randomUUID(),stamp:'nobluff'});
   for(const p of pages){const bubble=p.locator('[aria-label="スタンプ：ブラフじゃない"]');await bubble.waitFor({timeout:10000});
-   const covered=await p.evaluate(()=>[...document.querySelectorAll('[data-motion-hole] > *,[data-motion-board] > *')].filter(el=>{const r=el.getBoundingClientRect();if(!r.width||!r.height)return false;
-    return [[.5,.5],[.2,.2],[.8,.8]].some(([x,y])=>{const hit=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);return hit&&hit.closest('[data-stamp-bubble]');});}).length);
-   assert.equal(covered,0,'no card is covered by a stamp');
+   // Hit-testing needs the stamp to take pointer events for a moment (it ignores them on the table).
+   const {covered,visible}=await p.evaluate(()=>{const bubbles=[...document.querySelectorAll('[data-stamp-bubble],[data-stamp-bubble] *')];bubbles.forEach(e=>e.style.pointerEvents='auto');
+    const covered=[...document.querySelectorAll('[data-motion-hole] > *,[data-motion-board] > *')].filter(el=>{const r=el.getBoundingClientRect();if(!r.width||!r.height)return false;
+     return [[.5,.5],[.2,.2],[.8,.8]].some(([x,y])=>{const hit=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);return hit&&hit.closest('[data-stamp-bubble]');});}).length;
+    const b=document.querySelector('[data-stamp-bubble]').getBoundingClientRect(),hit=document.elementFromPoint(b.left+b.width/2,b.top+b.height*.65),visible=Boolean(hit&&hit.closest('[data-stamp-bubble]'));
+    bubbles.forEach(e=>e.style.pointerEvents='');return {covered,visible};});
+   assert.equal(covered,0,'no card is covered by a stamp');assert.equal(visible,true,'the stamp itself is not hidden under cards');
    const box=await bubble.boundingBox(),line=await p.evaluate(()=>{const b=document.querySelector('[data-stamp-bubble] b');return b?b.getClientRects().length:0;});assert.ok(box&&box.width>0);assert.equal(line,1,'the phrase stays on one line');}
   await pages[1].screenshot({path:path.join(output,'stamp-over-avatar.png')});
   await pages[1].locator('[aria-label="スタンプ：ブラフじゃない"]').waitFor({state:'detached',timeout:6000});}

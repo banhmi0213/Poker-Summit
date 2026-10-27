@@ -1,5 +1,8 @@
 /* Stamps (owner 2026/10/27): no frame, laid over the avatar, phrase over the character, one line, 3 seconds. */
 .bubble{position:absolute;left:50%;bottom:-6px;z-index:1;pointer-events:none;transform:translateX(-50%);animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
+/* Own seat: the hole cards sit over the avatar, so the stamp goes just left of them instead. */
+.bubble[data-side=left]{left:auto;right:calc(100% + 30px);transform:none;animation-name:popSide}
+@keyframes popSide{0%{transform:scale(.3) rotate(-12deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 @keyframes pop{0%{transform:translateX(-50%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translateX(-50%) scale(1) rotate(0);opacity:1}}
 .sticker{position:relative;display:block}
 .sticker[data-size=bubble]{width:88px;height:88px}

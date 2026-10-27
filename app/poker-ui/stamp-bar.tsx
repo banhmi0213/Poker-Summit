@@ -11,10 +11,11 @@ function Sticker({s,size}:{s:Stamp;size:'bubble'|'pick'}){
 }
 /** A stamp laid over the sender's avatar for 3 seconds (owner 2026/10/27). It sits under every card on the table,
  * so cards stay visible even when a new hand starts while it is shown. `age`: ms since it was sent. */
-export function StampBubble({stamp,age=0}:{stamp:string;age?:number}){
+/** side='left': beside the avatar instead of over it (your own seat, where your cards sit over the avatar). */
+export function StampBubble({stamp,age=0,side}:{stamp:string;age?:number;side?:'left'}){
  const s=stampOf(stamp),[shown,setShown]=useState(true);
  useEffect(()=>{setShown(true);const t=window.setTimeout(()=>setShown(false),Math.max(0,STAMP_SHOW_MS-age));return()=>window.clearTimeout(t);},[stamp,age]);
- return s&&shown?<span className={styles.bubble} data-stamp-bubble role="status" aria-label={`スタンプ：${s.label}`}><Sticker s={s} size="bubble"/></span>:null;
+ return s&&shown?<span className={styles.bubble} data-stamp-bubble data-side={side} role="status" aria-label={`スタンプ：${s.label}`}><Sticker s={s} size="bubble"/></span>:null;
 }
 /** Fixed stamps for seated players (no free text). */
 export function StampBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;disabled?:boolean}){
