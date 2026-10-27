@@ -655,7 +655,7 @@ function Seat({ name, stack, index, active, seconds, positionLabel, lastAction, 
   const progress = Math.max(0, Math.min(100, (1 - seconds / 20) * 100));
   return <div className={`${styles.seat} ${seatStatus ? styles.inactiveSeat : ""} ${active ? styles.seatActive : ""} ${winnerGlow ? styles.winnerSeat : ""}`}>
     <div className={styles.seatAvatarRow}>
-      <div className={styles.seatTimerRing} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div data-pot-target={`p${index}`} data-motion-stack={`p${index}`} className={styles.avatar}><PlayerAvatar name={`PLAYER ${index}`} className={styles.memberAvatarImage}/></div></div>
+      <div className={styles.seatTimerRing} data-turn={active ? (seconds <= 5 ? "urgent" : "on") : undefined} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div data-pot-target={`p${index}`} data-motion-stack={`p${index}`} className={styles.avatar}><PlayerAvatar name={`PLAYER ${index}`} className={styles.memberAvatarImage}/></div></div>
       {stamp && <StampBubble key={stamp.key} stamp={stamp.stamp}/>}
     </div>
     <span>{name}</span><small>{stack}</small>{seatStatus && <span className={styles.eliminatedTag}>{seatStatus}</span>}
