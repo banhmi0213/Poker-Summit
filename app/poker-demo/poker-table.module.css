@@ -918,3 +918,8 @@
 .table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=c]{color:var(--skin-card-c)}
 .table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack{background:var(--skin-card-back) center/cover no-repeat!important}
 .table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack::before,.table[data-card-back=image] .cardBack .thumbLogo{display:none}
+@font-face{font-family:'PokerSkinRoboto';src:url('/images/skins/fonts/RobotoCondensed-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) .cardCorner{font-family:var(--skin-card-font,inherit);font-weight:700}
+.cardArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;border-radius:inherit;z-index:3;pointer-events:none;user-select:none}
+.srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.table[data-table-skin] .street{color:var(--skin-table-text,inherit)}

@@ -19,3 +19,9 @@ test('every skin image in the registry exists',()=>{
  for(const s of CARD_SKINS)for(const f of [s.thumb].filter(Boolean))assert.ok(fs.existsSync('public'+f),f);
  for(const s of BACK_SKINS)for(const f of [s.image,s.thumb].filter(Boolean))assert.ok(fs.existsSync('public'+f),f);
 });
+test('every shop skin has an exchange item in the migration, and the registry has 4 tables, 3 faces, 4 backs',()=>{
+ const {SKIN_SHOP_ITEMS}=require('../lib/poker/skins.ts');const sql=fs.readFileSync(require('node:path').join(__dirname,'../supabase/migrations',fs.readdirSync(require('node:path').join(__dirname,'../supabase/migrations')).find(f=>f.endsWith('_poker_skin_shop.sql'))),'utf8');
+ for(const s of [...TABLE_SKINS,...CARD_SKINS,...BACK_SKINS].filter(s=>s.shopCode)){assert.match(sql,new RegExp(`'${s.shopCode}'`),s.shopCode);assert.ok(SKIN_SHOP_ITEMS.some(i=>i.code===s.shopCode));}
+ assert.equal(TABLE_SKINS.length,4);assert.equal(CARD_SKINS.length,3);assert.equal(BACK_SKINS.length,4);
+ const royal=cardSkin('royal');for(const r of [11,12,13])for(const su of ['s','h','d','c'])assert.ok(fs.existsSync('public'+royal.art[r][su]),`${r}${su}`);
+});
