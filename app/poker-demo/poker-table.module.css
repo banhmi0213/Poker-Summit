@@ -983,4 +983,9 @@
  .demoShell .table .bet_p4,.demoShell .table .bet_p6{left:auto;right:calc(22% + 6px);transform:none}
 }
 /* PLAYER 3・4 wagers sit just below the blinds line instead of on top of it. */
-@media(max-width:899px){.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 64px}}
+
+
+/* Blinds as a small second line inside the pot (owner 2026/10/28): keeps the felt free for wagers and the board. */
+.pot .blindsInfo{display:block;margin-top:2px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#cdb98f;opacity:.9;text-shadow:none;text-align:center}
+.pot{text-align:center}
+@media(min-width:900px){.pot .blindsInfo{font-size:12px}}
