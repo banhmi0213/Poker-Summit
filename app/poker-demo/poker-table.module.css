@@ -935,9 +935,8 @@
 .gtoReview small{display:block;color:#9fb3c3}
 /* スタンプ(2026/10/27): アイコンに被せる。出ている間はアイコンを暗くし、カードは常にスタンプより上に出す。 */
 .seatAvatarRow{position:relative}
-.seatAvatarRow:has([data-stamp-bubble]) .seatTimerRing{filter:brightness(.45)}
+.seatAvatarRow:has([data-stamp-bubble]:not([data-side])) .seatTimerRing{filter:brightness(.45)}
 
 /* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
 .activeAvatar{position:relative}
-.activeAvatar:has([data-stamp-bubble]) .avatar{filter:brightness(.45)}
 .demoStampBar{display:flex;justify-content:flex-start}
