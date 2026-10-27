@@ -7,6 +7,7 @@ import {SupabaseRoomDirectory} from './room-directory';
 import {SupabaseRoomStore} from './room-persistence';
 import {createPokerRoomService} from './room-service';
 import {readRoomServerConfig} from './room-server-config';
+import {BotRunner} from './bot-runner';
 export function createConfiguredPokerRoomService(env:Readonly<Record<string,string|undefined>>,network:typeof fetch=fetch){
  const config=readRoomServerConfig(env);
  // Bound backend and Auth calls. Preserve caller cancellation; never log requests.
@@ -15,7 +16,11 @@ export function createConfiguredPokerRoomService(env:Readonly<Record<string,stri
  const metric:RingMetricSink=event=>console.log(JSON.stringify(event));
  const ringBackend={rpc:(name:string,args:Record<string,unknown>)=>measureRing(metric,'rpc',name,()=>backend.rpc(name,args),result=>!result.error)};
  const ringRuntime=new RingPlayRuntime({store:()=>new SupabaseRingPlayStore(ringBackend),keys:config.keys,maxTables:Math.min(config.maxRooms,128),diagnostic:event=>console.log(JSON.stringify(event)),metric});
- return createPokerRoomService({ringRuntime,ringHandler:createSupabaseRingLobbyHandler({store:new PlayingRingAdmissionStore(new SupabaseRingAdmissionStore(ringBackend),ringRuntime),metric,auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins}),onDiagnostic:event=>console.log(JSON.stringify({type:'poker_room_diagnostic',...event})),registry:{directory:new SupabaseRoomDirectory(backend),store:new SupabaseRoomStore(backend,event=>console.log(JSON.stringify({type:'poker_storage_failure',...event}))),keys:config.keys,maxRooms:config.maxRooms},auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins,host:config.host,port:config.port});
+ const service=createPokerRoomService({ringRuntime,ringHandler:createSupabaseRingLobbyHandler({store:new PlayingRingAdmissionStore(new SupabaseRingAdmissionStore(ringBackend),ringRuntime),metric,auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins}),onDiagnostic:event=>console.log(JSON.stringify({type:'poker_room_diagnostic',...event})),registry:{directory:new SupabaseRoomDirectory(backend),store:new SupabaseRoomStore(backend,event=>console.log(JSON.stringify({type:'poker_storage_failure',...event}))),keys:config.keys,maxRooms:config.maxRooms},auth:{url:config.url,publicKey:config.publicKey,fetch:boundedFetch},origins:config.origins,host:config.host,port:config.port});
+ // Staging CPU hands (off unless poker_private.bot_settings.enabled; never on production).
+ const bots=new BotRunner({url:config.url,rpc:(name,args)=>backend.rpc(name,args),log:event=>console.log(JSON.stringify(event))});
+ return {start:async()=>{const started=await service.start();void bots.start().catch(()=>console.log(JSON.stringify({type:'poker_bot_start_failed'})));return started;},
+  close:async()=>{await bots.close().catch(()=>undefined);await service.close();},recover:service.recover,get health(){return service.health;}};
 }
 /** Explicit host integration only; caller owns exit status and hard-stop policy. */
 export function registerPokerRoomShutdown(service:{close:()=>Promise<void>},host:{on:(event:string,callback:()=>void)=>unknown;off:(event:string,callback:()=>void)=>unknown},onClosed:(failed:boolean)=>void){
