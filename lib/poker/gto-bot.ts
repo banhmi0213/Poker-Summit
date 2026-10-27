@@ -133,8 +133,18 @@ function solverIndex(node:ActNode,a:LoggedAction,bb:number):number{
 }
 
 // ---------- main ----------
+/** One option at the decision point; `to` is the street total in chips (null: from the label). */
+export type GtoOption={kind:string;label:string;to:number|null};
+/** The model's mixed strategy for the hero's hand at this decision. `indexOf` maps a played action onto an option (-1: none). */
+export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number}|{source:'fallback';reason:string};
 export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,budgetMs=5000):GtoDecision{
- const fb=(reason='other'):GtoDecision=>({action:fallback(v,random),source:'fallback',reason});
+ const s=gtoStrategy(v,data,budgetMs);
+ if(s.source==='fallback')return {action:fallback(v,random),source:'fallback',reason:s.reason};
+ try{const o=s.options[sample(s.freqs,random)];return {action:toTable(v,o.kind,o.label,o.to),source:s.source};}
+ catch(e){return {action:fallback(v,random),source:'fallback',reason:'error:'+(e instanceof Error?e.message:String(e)).slice(0,60)};}
+}
+export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
+ const fb=(reason='other'):GtoStrategy=>({source:'fallback',reason});
  try{
   if(v.hole.length!==2)return fb('no-cards');
   const me=v.players.find(p=>p.id===v.hero);if(!me)return fb('no-hero');
@@ -142,7 +152,7 @@ export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,b
   // The chart is solved for 100BB; very short or very deep tables use the equity CPU (push/fold when short).
   if(effective<40||effective>250)return fb('stack-depth');
   const toks=preflopToks(v),ranges=trackPreflop(v,data,toks);
-  if(v.board.length===0)return preflopDecision(v,data,toks,random)??fb('preflop-off-chart');
+  if(v.board.length===0)return preflopStrategy(v,data,toks)??fb('preflop-off-chart');
   const live=v.players.filter(p=>!p.folded);if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
   const pair=[...live].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id) as [string,string];
   const spot=spotFor(v,toks,pair);if(!spot)return fb('no-spot');
@@ -155,7 +165,8 @@ export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,b
    for(const a of flopActs){if(!node)break;const i=flopIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
    if(!node||node.player!==pair.indexOf(v.hero))return fb('flop-off-tree');
    const cls=classOf(code(v.hole[0]),code(v.hole[1])),row=node.classes[cls];if(!row)return fb('flop-class-missing');
-   const i=sample(row.slice(1),random);return {action:toTable(v,node.actions[i].kind,node.actions[i].label,null),source:'flop'};
+   const at=node;
+   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a)};
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
   if(file)trackFlop(file,flopActs,ranges,pair);
@@ -176,8 +187,8 @@ export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,b
   if(!at||!s)return fb('solver-off-tree');
   const player=at.node.player,side=s.solver.sides[player],h=side.keyIndex.get(key2(code(v.hole[0]),code(v.hole[1])));
   if(pair[player]!==v.hero||h===undefined)return fb('solver-hero-missing');
-  const st=s.solver.strategy(at.node,true,at.ctx),k=at.node.actions.length,i=sample(Array.from(st.slice(h*k,h*k+k)),random),a=at.node.actions[i];
-  return {action:toTable(v,a.kind,a.label,a.to*v.bb),source:'solver'};
+  const st=s.solver.strategy(at.node,true,at.ctx),k=at.node.actions.length,node=at.node,bb=s.bb;
+  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb)};
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
@@ -196,13 +207,14 @@ function nodeFor(data:GtoData,toks:readonly Tok[],pos:Pos):{node:PreflopNode;noC
  void mine;
  return null;
 }
-function preflopDecision(v:GtoView,data:GtoData,toks:Tok[],random:()=>number):GtoDecision|null{
+function preflopStrategy(v:GtoView,data:GtoData,toks:Tok[]):GtoStrategy|null{
  const found=nodeFor(data,toks,v.positions[v.hero]);if(!found)return null;
- if(found==='fold')return {action:toTable(v,'fold','',null),source:'preflop'};
+ if(found==='fold')return {source:'preflop',options:[{kind:'fold',label:'',to:null}],freqs:[1],indexOf:a=>a.type==='fold'||a.type==='check'?0:-1};
  const node=found.node,cls=classOf(code(v.hole[0]),code(v.hole[1])),row0=node.strategy[cls];if(!row0)return null;
  const row=found.noCall?row0.map((p,i)=>node.actions[i].kind==='call'?0:node.actions[i].kind==='fold'?p+(row0[node.actions.findIndex(a=>a.kind==='call')]??0):p):row0;
- const a=node.actions[sample(row,random)];
- return {action:toTable(v,a.kind,'',a.kind==='allin'?Infinity:(a.to??0)*v.bb),source:'preflop'};
+ const pos=v.positions[v.hero];
+ return {source:'preflop',options:node.actions.map(a=>({kind:a.kind,label:'',to:a.kind==='allin'?Infinity:(a.to??0)*v.bb})),freqs:[...row],
+  indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb})};
 }
 /** Each player's range after their preflop actions (null when the hand left the chart). */
 function trackPreflop(v:GtoView,data:GtoData,toks:Tok[]):Ranges|null{
