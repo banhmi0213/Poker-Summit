@@ -4,6 +4,7 @@ import {useRouter} from 'next/navigation';
 import {createClient} from '@/lib/supabase/client';
 import {parseShop,shopError,type ShopView} from '@/lib/poker/shop';
 import styles from './wallet.module.css';
+import {SKINS_FREE_FOR_NOW} from '@/lib/poker/skins';
 
 /** Exchange: trade available Summit chips for ring tickets (time bank, rabbit). */
 export function ChipShop({ticketLabels}:{ticketLabels:Record<string,string>}){
@@ -25,9 +26,9 @@ export function ChipShop({ticketLabels}:{ticketLabels:Record<string,string>}){
  const skins=new Set(shop?.items.filter(i=>i.kind==='skin').map(i=>i.code)??[]),owned=shop?Object.entries(shop.tickets).filter(([code,n])=>n>0&&!skins.has(code)&&!/^(table|card_front|card_back)_/.test(code)):[];
  return <section className={styles.card} aria-labelledby="chip-shop-title">
   <h2 id="chip-shop-title">チップ交換所</h2>
-  <p className={styles.shopLead}>使用可能なchipを、リングで使えるチケットや卓・カードの着せ替えに交換できます。</p>
+  <p className={styles.shopLead}>使用可能なchipを、リングで使えるチケット{SKINS_FREE_FOR_NOW?'':'や卓・カードの着せ替え'}に交換できます。{SKINS_FREE_FOR_NOW?'卓・カードの着せ替えは、今はゲームメニューの設定から無料で選べます。':''}</p>
   <div className={styles.tickets} aria-label="持っているチケット">{owned.length?owned.map(([code,n])=><span key={code}>{ticketLabels[code]??code} <b>{n.toLocaleString()}枚</b></span>):<span>チケットはまだ持っていません。</span>}</div>
-  {!shop?<p role="status">{message}</p>:!shop.items.length?<p>交換できる品は準備中です。</p>:<ul className={styles.shopItems}>{shop.items.map(item=>{const skin=item.kind==='skin',have=skin&&(shop.tickets[item.code]??0)>0,q=skin?1:quantity[item.code]??1,cost=item.price*q,short=shop.available<cost;
+  {!shop?<p role="status">{message}</p>:!shop.items.length?<p>交換できる品は準備中です。</p>:<ul className={styles.shopItems}>{shop.items.filter(item=>!(SKINS_FREE_FOR_NOW&&item.kind==='skin')).map(item=>{const skin=item.kind==='skin',have=skin&&(shop.tickets[item.code]??0)>0,q=skin?1:quantity[item.code]??1,cost=item.price*q,short=shop.available<cost;
    if(have)return <li key={item.code}><div><strong>{item.label}</strong><small>{item.description}</small></div><div className={styles.shopBuy}><span className={styles.price}>交換済み・メニューの着せ替えで選べます</span></div></li>;
    return <li key={item.code}><div><strong>{item.label}</strong><small>{item.description}</small></div>
     <div className={styles.shopBuy}><span className={styles.price}>{item.price.toLocaleString()} chip{skin?'':'／枚'}</span>
