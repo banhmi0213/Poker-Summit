@@ -858,3 +858,9 @@
 }
 
 @media(min-width:900px){.demoShell .menuNav{grid-template-columns:repeat(3,minmax(0,1fr))}.demoShell .menuFields a{display:block;padding:10px;border:1px solid #8e794e;border-radius:8px;color:#f5d991;text-decoration:none}.demoShell .menuFields details>summary{cursor:pointer;padding:10px 0;color:#f5d991}}
+
+/* PC: bring the controls inward and remove the duplicate result strip. */
+@media(min-width:900px){
+ .shell .actionColumn{right:clamp(80px,8vw,160px)}
+ .shell .actionColumn>.resultOverlay{display:none}
+}
