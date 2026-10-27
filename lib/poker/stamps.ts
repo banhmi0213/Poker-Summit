@@ -1,6 +1,6 @@
 /** Table stamps (owner 2026/10/27: no free chat at launch; stamps only). Fixed phrases, so they cannot be abused. */
 export const STAMPS=[
- {id:'hello',label:'よろしく'},{id:'nh',label:'nh'},{id:'gg',label:'gg'},{id:'ty',label:'ty'},
+ {id:'hello',label:'よろしく'},{id:'nh',label:'ナイスハンド'},{id:'gg',label:'おつかれ'},{id:'ty',label:'ありがとう'},
  {id:'clap',label:'👏'},{id:'laugh',label:'😂'},{id:'shock',label:'😱'},{id:'think',label:'🤔'},
 ] as const;
 export type StampId=typeof STAMPS[number]['id'];
