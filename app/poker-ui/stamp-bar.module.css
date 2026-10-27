@@ -15,7 +15,8 @@
 .sticker[data-size=pick] .phrase{font-size:10.5px;-webkit-text-stroke:3.5px #1b1813}
 .sticker[data-size=pick][data-long] .phrase{font-size:8.5px}
 .sticker[data-tone=r] .phrase{color:#ff4d5a}.sticker[data-tone=y] .phrase{color:#ffd23f}.sticker[data-tone=b] .phrase{color:#53b7ff}.sticker[data-tone=g] .phrase{color:#4fd18b}
-@media(max-width:480px){.sticker[data-size=bubble]{width:104px;height:104px}.sticker[data-size=bubble] .phrase{font-size:16px;-webkit-text-stroke:5px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:13px}}
+/* Phone: the stamp about the size of the avatar (owner 2026/10/27: スマホはアイコンサイズ); PC stays big. */
+@media(max-width:899px){.sticker[data-size=bubble]{width:80px;height:80px}.sticker[data-size=bubble] .phrase{font-size:14px;-webkit-text-stroke:4px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:11px}}
 .bar{position:relative;display:inline-flex}
 .toggle{background:#302a23;color:#f3d9a7;border:1px solid #705c40;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:36px}
 /* All 14 at a glance (owner 2026/10/27: こんだけ？ — the top rows were scrolled out of view). */
