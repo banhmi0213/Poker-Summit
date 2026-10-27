@@ -64,5 +64,5 @@
 @media(min-width:900px){.quickIcon:not([data-kind=summit]) img{width:79px;height:79px;left:-12.6px;top:-26.2px}}
 /* Summit finger larger (owner 2026/10/28: 指もおおきくしていい) */
 .quickIcon[data-kind=summit] img{width:38px!important;height:38px!important}
-@media(max-width:899px){.quickIcon[data-kind=summit] img{width:52px!important;height:52px!important;transform:translate(-3%,-9%)!important}}
-@media(min-width:900px){.quickIcon[data-kind=summit] img{width:60px!important;height:60px!important;transform:translate(-3%,-9%)!important}}
+@media(max-width:899px){.quickIcon[data-kind=summit] img{width:52px!important;height:52px!important;transform:translate(-9%,-9%)!important}}
+@media(min-width:900px){.quickIcon[data-kind=summit] img{width:60px!important;height:60px!important;transform:translate(-9%,-9%)!important}}
