@@ -387,8 +387,9 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     const terms=tournament?tournamentHandTerms(tournament,Date.now()):ringTerms;
     if (!terms) { setBettingMessage("開始前・休憩中のため、新しいハンドは開始できません。"); return; }
     const carried=carriedDemoStacks(betting,payouts);
-    const needsRefill=!tournament&&Object.values(carried).some(stack=>stack<=0);
-    const startingStacks=needsRefill?initialStacks:carried;
+    // Ring demo: only a player who went bust buys back in; everyone else keeps what they won.
+    const refilled=tournament?[]:Object.keys(carried).filter(id=>carried[id]<=0);
+    const startingStacks=tournament?carried:Object.fromEntries(Object.entries(carried).map(([id,stack])=>[id,stack>0?stack:initialStacks[id]]));
     const live=clockwiseSeats.filter(id=>(startingStacks[id]??0)>0);
     if(live.length<2){setBettingMessage("大会終了：優勝が確定しました。");return;}
     const nextPos=handActive?(tournament?nextTournamentPositions(clockwiseSeats,live,handPositions):initialTournamentPositions(clockwiseSeats,live,clockwiseSeats[(buttonIndex+1)%clockwiseSeats.length])):handPositions;
@@ -402,7 +403,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);
       setLastActions({});setTurnRemaining(20);setHandFinished(false);
-      setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${needsRefill?"残高0の席があるため、リングデモ全席を初期残高に補充しました。":""}`);
+      setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(20);setTimeBanksUsed(0);setRunning(true);
     } catch(error) {
