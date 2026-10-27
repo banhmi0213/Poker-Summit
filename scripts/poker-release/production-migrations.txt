@@ -33,3 +33,4 @@
 20261027040000_poker_ring_timebank_at_deadline
 20261027080000_poker_ring_refill
 20261027090000_poker_ring_player_hud
+20261027100000_poker_abuse_controls
