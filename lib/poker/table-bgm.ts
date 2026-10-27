@@ -30,8 +30,12 @@ export class TableBgm{
    for(let waited=0;c.state!=='running'&&waited<1500&&ticket===this.#stopped;waited+=50)await new Promise(r=>setTimeout(r,50));
    if(c.state!=='running'||ticket!==this.#stopped)return;
    if(!this.#master){
-    const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.ratio.value=3;comp.connect(c.destination);
-    this.#master=c.createGain();this.#master.connect(comp);
+    // Clean output (owner 2026/10/27: 音割れ): cut the sub-bass that small speakers distort on, then a firm limiter
+    // so the sum of kick, bass and chords never pushes the device; the output stays well under full scale.
+    const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=70;hp.Q.value=.7;
+    const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.knee.value=6;comp.ratio.value=6;comp.attack.value=.003;comp.release.value=.25;
+    const out=c.createGain();out.gain.value=.5;hp.connect(comp);comp.connect(out);out.connect(c.destination);
+    this.#master=c.createGain();this.#master.connect(hp);
     const len=Math.floor(c.sampleRate*2.2),ir=c.createBuffer(2,len,c.sampleRate);
     for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2);}
     this.#verb=c.createConvolver();this.#verb.buffer=ir;const wet=c.createGain();wet.gain.value=.3;this.#verb.connect(wet);wet.connect(this.#master);
@@ -47,7 +51,7 @@ export class TableBgm{
   const c=this.#ctx,m=this.#master;if(c&&m){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(0,now+.4);}
  }
  /** 0〜1 of the loudest level; 0.7 is the original level. Applies smoothly while playing. */
- setVolume(level:number){this.#volume=.5*Math.min(1,Math.max(0,level));const c=this.#ctx,m=this.#master;if(c&&m&&this.#timer){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(this.#volume,now+.2);}}
+ setVolume(level:number){this.#volume=.5*Math.min(1,Math.max(0,level));const c=this.#ctx,m=this.#master;if(c&&m&&this.#timer){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setTargetAtTime(this.#volume,now,.06);}}
  close(){this.stop();const c=this.#ctx;this.#ctx=null;this.#master=null;if(c)setTimeout(()=>void c.close().catch(()=>{}),500);}
  #schedule(){const c=this.#ctx;if(!c)return;while(this.#next<c.currentTime+LOOKAHEAD){this.#playBar(this.#next,this.#bar++);this.#next+=BAR;}}
  #out(g:AudioNode,pan=0,send=.3){const c=this.#ctx!,p=c.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.#master!);if(send>0){const s=c.createGain();s.gain.value=send;p.connect(s);s.connect(this.#verb!);}}
@@ -57,12 +61,12 @@ export class TableBgm{
   const c=this.#ctx!,s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=this.#noise;fl.type=type;fl.frequency.value=f;fl.Q.value=q;this.#env(g,t,a,vol,len);
   s.connect(fl);fl.connect(g);this.#out(g,pan,send);s.start(t,Math.random());s.stop(t+len+.5);
  }
- #kick(t:number,v:number){const c=this.#ctx!,g=c.createGain();this.#env(g,t,.002,.7*v,.28);const o=this.#osc('sine',130,t,t+.5);o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.15);o.connect(g);this.#out(g,0,0);}
+ #kick(t:number,v:number){const c=this.#ctx!,g=c.createGain();this.#env(g,t,.002,.5*v,.22);const o=this.#osc('sine',150,t,t+.5);o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(60,t+.12);o.connect(g);this.#out(g,0,0);}
  #hat(t:number,v:number,open:boolean){this.#hiss(t,open?.22:.04,{f:10000,q:.8,type:'highpass',vol:.05*v,pan:.25,send:.05});}
  #clap(t:number,v:number){for(const d of [0,.012,.024])this.#hiss(t+d,.09,{f:1500,q:1,vol:.06*v,send:.4});}
  #bass(m:number,t:number,len:number,v:number){
   const c=this.#ctx!,f=mtof(m),g=c.createGain(),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.32*v,t+.008);g.gain.setTargetAtTime(.16*v,t+.008,len*.4);g.gain.setTargetAtTime(0,t+len*.9,.03);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.24*v,t+.008);g.gain.setTargetAtTime(.12*v,t+.008,len*.4);g.gain.setTargetAtTime(0,t+len*.9,.03);
   const a=this.#osc('sine',f,t,t+len+.3),b=this.#osc('triangle',f,t,t+len+.3),bg=c.createGain();bg.gain.value=.35;a.connect(lp);b.connect(bg);bg.connect(lp);lp.connect(g);this.#out(g,0,.05);
  }
  #ep(m:number,t:number,len:number,v:number,pan:number){

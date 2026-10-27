@@ -2,7 +2,7 @@ const {test}=require('node:test'),assert=require('node:assert/strict'),fs=requir
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
 const {TableBgm}=require('../lib/poker/table-bgm.ts');
 function fakeContext(){let started=0;const param={value:0,setValueAtTime(){},linearRampToValueAtTime(){},setTargetAtTime(){},exponentialRampToValueAtTime(){},cancelScheduledValues(){}};
- const node=()=>({connect(){},disconnect(){},start(){started++;},stop(){},frequency:{...param},detune:{...param},Q:{...param},gain:{...param},pan:{...param},threshold:{...param},ratio:{...param},type:'',buffer:null});
+ const node=()=>({connect(){},disconnect(){},start(){started++;},stop(){},frequency:{...param},detune:{...param},Q:{...param},gain:{...param},pan:{...param},threshold:{...param},ratio:{...param},knee:{...param},attack:{...param},release:{...param},type:'',buffer:null});
  const c={state:'running',currentTime:0,sampleRate:8000,destination:{},resume:async()=>{},close:async()=>{},createOscillator:node,createGain:node,createBiquadFilter:node,createBufferSource:node,createStereoPanner:node,createDynamicsCompressor:node,createConvolver:node,createBuffer:(ch,len)=>({getChannelData:()=>new Float32Array(len)})};
  return {c,started:()=>started};}
 test('High Roller BGM schedules a bar on start, stops cleanly and never starts twice',async()=>{
