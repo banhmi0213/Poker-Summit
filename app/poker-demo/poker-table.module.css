@@ -907,3 +907,14 @@
 @media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
 @media(min-width:900px){.shell .actionColumn .actions button{font-size:clamp(15px,1.2vw,20px);white-space:nowrap}}
 @media(max-width:899px){.dealerSpot.bet_p3 .dealerButton,.dealerSpot.bet_p4 .dealerButton{left:-12px;top:calc(50% + 28px)}}
+
+/* Skins (2026/10/27, lib/poker/skins.ts). Only non-standard skins set these attributes, so the standard design is untouched. */
+.table[data-table-skin]{background-image:var(--skin-table-desktop)!important}
+@media(max-width:899px){.table[data-table-skin]{background-image:var(--skin-table-mobile)!important}}
+.table[data-card-skin] :is(.cards,.hole,.miniCards)>span:not(.cardBack){background:var(--skin-card-bg);border-color:var(--skin-card-border);font-family:var(--skin-card-font,inherit)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=s]{color:var(--skin-card-s)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=h]{color:var(--skin-card-h)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=d]{color:var(--skin-card-d)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=c]{color:var(--skin-card-c)}
+.table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack{background:var(--skin-card-back) center/cover no-repeat!important}
+.table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack::before,.table[data-card-back=image] .cardBack .thumbLogo{display:none}

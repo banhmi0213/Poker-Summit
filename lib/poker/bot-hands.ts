@@ -5,7 +5,7 @@
 import {randomInt} from 'node:crypto';
 import {AuthoritativeHand,type HandCheckpoint} from './authoritative-hand';
 import {buildHandHistory,type HandHistory} from './hand-history';
-import {decideGto,positionsFor,type GtoData,type LoggedAction,type Street} from './gto-bot';
+import {clearGtoSolves,decideGto,positionsFor,type GtoData,type LoggedAction,type Street} from './gto-bot';
 import type {HandTerms} from './tournament-hand';
 import type {BettingAction} from './betting';
 
@@ -16,7 +16,11 @@ export type BotHand={history:HandHistory|null;actions:number;ms:number;anomalies
 const MAX_ACTIONS=400;
 
 /** Plays one complete hand with CPU players. Never throws: problems come back as anomalies. */
+/** One hand; the GTO solve cache is cleared afterwards so memory does not pile up across hands. */
 export function playBotHand(seats:readonly string[],stacks:Readonly<Record<string,number>>,buttonIndex:number,terms:HandTerms,data:GtoData|null,random:()=>number=()=>randomInt(1_000_000)/1_000_000,budgetMs=4000):BotHand{
+ try{return playBotHandOnce(seats,stacks,buttonIndex,terms,data,random,budgetMs);}finally{clearGtoSolves();}
+}
+function playBotHandOnce(seats:readonly string[],stacks:Readonly<Record<string,number>>,buttonIndex:number,terms:HandTerms,data:GtoData|null,random:()=>number=()=>randomInt(1_000_000)/1_000_000,budgetMs=4000):BotHand{
  const started=performance.now(),anomalies:BotAnomaly[]=[];
  const live=seats.filter(id=>(stacks[id]??0)>0),entries=live.map(id=>({id,stack:stacks[id]}));
  const before=entries.reduce((s,p)=>s+p.stack,0);

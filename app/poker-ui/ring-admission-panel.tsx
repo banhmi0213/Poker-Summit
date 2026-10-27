@@ -33,7 +33,7 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
    if(lastSeat!==null&&!t.seats.some(s=>s.seat===lastSeat))await transport.perform({type:'join',tableId:t.id,amount:buy,seat:lastSeat,requestId:crypto.randomUUID()});
    else{setSelectSeat(true);setRefillNote('3,000 chipを補充しました。空いている席を選んでください。');}
    setLastSeat(null);
-  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだ補充できません（この卓に着ける分のchipが残っています）。':'補充できませんでした。時間をおいてもう一度お試しください。');}
+  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだ補充できません（この卓に着ける分のchipが残っています）。':e instanceof Error&&e.message.includes('Refill limit')?'chipの補充は1日3回までです。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
   finally{setRefilling(false);}};
  if(!enabled)return <p>リング卓の接続は準備中です。</p>;
  if(!member)return <p>着席と残高の確認には<Link href="/login?next=%2Fpoker-lobby">ログイン</Link>してください。</p>;
