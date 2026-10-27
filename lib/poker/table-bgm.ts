@@ -31,6 +31,8 @@ export class TableBgm{
   this.#stopped++;if(this.#timer)clearInterval(this.#timer);this.#timer=null;
   const c=this.#ctx,m=this.#master;if(c&&m){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(0,now+.4);}
  }
+ /** 0〜1 of the loudest level; 0.7 is the original level. Applies smoothly while playing. */
+ setVolume(level:number){this.#volume=.5*Math.min(1,Math.max(0,level));const c=this.#ctx,m=this.#master;if(c&&m&&this.#timer){const now=c.currentTime;m.gain.cancelScheduledValues(now);m.gain.setValueAtTime(m.gain.value,now);m.gain.linearRampToValueAtTime(this.#volume,now+.2);}}
  close(){this.stop();const c=this.#ctx;this.#ctx=null;this.#master=null;if(c)setTimeout(()=>void c.close().catch(()=>{}),500);}
  #schedule(){const c=this.#ctx;if(!c)return;while(this.#next<c.currentTime+LOOKAHEAD){this.#playBar(this.#next,this.#bar++);this.#next+=BAR;}}
  #out(g:AudioNode,pan=0,send=.3){const c=this.#ctx!,p=c.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(this.#master!);if(send>0){const s=c.createGain();s.gain.value=send;p.connect(s);s.connect(this.#verb!);}}
