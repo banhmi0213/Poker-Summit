@@ -50,3 +50,10 @@
 .summitHead{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#f3d9a7;border-bottom:1px solid #2f4a5f}
 .summitHead button{background:none;border:0;color:#f3d9a7;font-size:22px;line-height:1;cursor:pointer;min-width:36px;min-height:36px}
 .summitSheet iframe{flex:1;width:100%;border:0;background:#fff}
+/* Phone (owner 2026/10/28): bigger finger and character in the buttons, and the buttons as low as they can go without
+   touching the control panel frame below the table (measured at 390px: label bottom 708px, panel top 712px). */
+@media(max-width:899px){
+ .quick{top:calc(58% + 14px)}
+ .quickIcon img{width:66px;height:66px;transform:translateY(-4%)}
+ .quickIcon[data-kind=summit] img{width:32px;height:32px;transform:none}
+}
