@@ -1,7 +1,7 @@
 name: Poker flop solutions collect
 
-# Copies the flop-* artifacts of a "Poker flop solutions" run into public/poker-gto/flops and pushes them
-# to the gto-flop-results branch, so they can be reviewed and merged like any other change.
+# Copies the flop-* artifacts of a "Poker flop solutions" run into public/poker-gto/flops/<spot>/ and pushes them
+# to a gto-flop-out/<run id> branch, so they can be reviewed and merged like any other change.
 # Trigger: push a gto-flop-collect/<run id> branch.
 on:
   push:
@@ -29,10 +29,13 @@ jobs:
           github-token: ${{ github.token }}
       - name: Commit to gto-flop-results
         run: |
+          set -o pipefail
+          exec > >(tee log.txt) 2>&1
+          trap 'tail -n 8 log.txt | while IFS= read -r l; do echo "::warning::${l:0:500}"; done' EXIT
           ls -la public/poker-gto/flops
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b gto-flop-results
+          git checkout -b "gto-flop-out/${{ steps.run.outputs.id }}"
           git add public/poker-gto/flops
           git commit -m "フロップ戦略の計算結果（run ${{ steps.run.outputs.id }}）"
-          git push -f origin gto-flop-results
+          git push -f origin "gto-flop-out/${{ steps.run.outputs.id }}"
