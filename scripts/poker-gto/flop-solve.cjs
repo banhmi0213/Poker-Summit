@@ -4,7 +4,9 @@
 const fs=require('fs'),path=require('path');
 require('./common.cjs'); // registers the .ts loader
 const {PostflopSolver}=require(path.resolve(__dirname,'../../lib/poker/postflop-solver.ts'));
-const {describe}=require(path.resolve(__dirname,'../../lib/poker/solver-view.ts'));
+const {describe,classOf}=require(path.resolve(__dirname,'../../lib/poker/solver-view.ts'));
+const {NO_CARDS}=require(path.resolve(__dirname,'../../lib/poker/postflop-solver.ts'));
+const {chartSpot}=require('./chart-ranges.cjs');
 
 const RANKS='23456789TJQKA',SUITS='cdhs';
 const code=s=>RANKS.indexOf(s[0].toUpperCase())*4+SUITS.indexOf(s[1].toLowerCase());
@@ -44,7 +46,12 @@ const outDir=path.join(arg('out',path.resolve(__dirname,'../../public/poker-gto/
 const board=[0,2,4].map(i=>code(flop.slice(i,i+2)));
 const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(exclude):[])l.delete(x);return l;};
 // --oop / --ip override the ranges (used by the quick self-check).
-const spot={board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
+// Chart spots (version 2): weighted ranges, pot and stack from the preflop chart along SPOT.line.
+const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line):null;
+if(fromChart&&(fromChart.oop!==SPOT.oop||fromChart.ip!==SPOT.ip))throw new Error(`chart line positions ${fromChart.oop}/${fromChart.ip} differ from the spot ${SPOT.oop}/${SPOT.ip}`);
+const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));
+const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}
+ :{board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
 const solver=new PostflopSolver(spot);
 const t0=Date.now(),log=m=>console.log(`[${flop} ${((Date.now()-t0)/60000).toFixed(1)}min] ${m}`);
 log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${solver.sides[1].n}`);
@@ -59,16 +66,28 @@ while(solver.iterations<maxIters){
 // Export every flop decision: per starting-hand class, reach weight (combos) and the share of each action.
 const round=v=>Math.round(v*1000)/1000;
 const nodes=[];
+// Suit-aware rows (version 2): the class row averages flush draws with non-draws. "AKs|21" = the hole cards' suits
+// appear 2 and 1 times on the board. Kept only where they differ from the class row by more than 3 points.
+const boardSuits=[0,0,0,0];for(const c of board)boardSuits[c&3]++;
+const sigOf=(a,b)=>{const x=boardSuits[a&3],y=boardSuits[b&3];return x>=y?`${x}${y}`:`${y}${x}`;};
+function suitRows(steps,classes){
+ let node=solver.tree;const reach=[Float64Array.from(solver.sides[0].w),Float64Array.from(solver.sides[1].w)];
+ for(const step of steps){const st=solver.strategy(node,true,NO_CARDS),k=node.actions.length,r=reach[node.player];for(let h=0;h<r.length;h++)r[h]*=st[h*k+step];node=node.children[step];}
+ const side=solver.sides[node.player],st=solver.strategy(node,true,NO_CARDS),k=node.actions.length,r=reach[node.player],acc={};
+ for(let h=0;h<side.n;h++){if(r[h]<=1e-12)continue;const l=classOf(side.c1[h],side.c2[h])+'|'+sigOf(side.c1[h],side.c2[h]),e=acc[l]??=new Array(k+1).fill(0);e[0]+=r[h];for(let a=0;a<k;a++)e[a+1]+=r[h]*st[h*k+a];}
+ const out={};for(const [l,e] of Object.entries(acc)){for(let a=1;a<=k;a++)e[a]/=e[0];const base=classes[l.split('|')[0]];if(base&&e.slice(1).some((x,a)=>Math.abs(x-base[a+1])>0.03))out[l]=e.map(round);}
+ return out;
+}
 function visit(steps){
  const v=describe(solver,steps);if(v.kind!=='act'||v.street!=='flop')return null;
  const idx=nodes.length,node={path:steps,player:v.player,actions:v.actions.map(a=>({label:a.label,kind:a.kind})),total:v.total.map(round),
-  classes:Object.fromEntries(Object.entries(v.classes).map(([l,e])=>[l,e.map(round)])),children:[]};
+  classes:Object.fromEntries(Object.entries(v.classes).map(([l,e])=>[l,e.map(round)])),suits:suitRows(steps,v.classes),children:[]};
  nodes.push(node);node.children=v.actions.map((_,i)=>visit([...steps,i]));
  return idx;
 }
 visit([]);
 const [ev0,ev1]=solver.values();
-const out={version:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:SPOT.pot,stack:SPOT.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},sizes:SPOT.sizes},
+const out={version:fromChart?2:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
  iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
