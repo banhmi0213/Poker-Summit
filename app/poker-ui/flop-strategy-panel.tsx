@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {GTO_FLOPS,GTO_SPOTS,loadFlop,type FlopData} from '@/lib/poker/gto-spots';
+import {GTO_FLOPS,GTO_SPOTS,loadFlop,loadFlopIndex,type FlopData} from '@/lib/poker/gto-spots';
 import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 
@@ -16,11 +16,14 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
  const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
+ const [index,setIndex]=useState<Record<string,string[]>|null>(null);
+ useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
+ const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
  useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);
   void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');});
   return ()=>{live=false;};},[spot,flop]);
  const lookup=()=>{const t=typed.replace(/\s+/g,'').replace(/(.)(.)/g,(_,r:string,su:string)=>r.toUpperCase()+su.toLowerCase());const c=canonicalFlop(t);if(!c){setNearNote('「Kh7d2c」のように3枚を入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}
-  const n=nearestFlop(t,flops);if(!n)return;setFlop(n.flop);setNearNote(n.exact?(n.flop===t?`${flopText(t)} は計算済みです。`:`${flopText(t)} はスートの入れ替えだけ違う ${flopText(n.flop)} と同じ形なので、その計算結果を表示しています（手札の表は同じになります）。`):`${flopText(t)} にいちばん近い計算済みのフロップ ${flopText(n.flop)} を表示しています（スートの並びと高いカードが近いもの）。`);};
+  const n=nearestFlop(t,ready.length?ready:flops);if(!n)return;setFlop(n.flop);setNearNote(n.exact?(n.flop===t?`${flopText(t)} は計算済みです。`:`${flopText(t)} はスートの入れ替えだけ違う ${flopText(n.flop)} と同じ形なので、その計算結果を表示しています（手札の表は同じになります）。`):`${flopText(t)} にいちばん近い計算済みのフロップ ${flopText(n.flop)} を表示しています（スートの並びと高いカードが近いもの）。`);};
  const node=data?data.nodes[trail[trail.length-1]]:null;
  const who=(p:0|1)=>p===0?`${data!.spot.oop}（先に打つ人）`:`${data!.spot.ip}（後に打つ人）`;
  const current=GTO_SPOTS.find(s=>s.id===spot)!;
@@ -29,11 +32,11 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
-   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}</option>)}</select></label>
+   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
    <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
    <button type="button" onClick={lookup}>近いフロップを表示</button>
   </div>
-  <p className={styles.note}>{current.detail}</p>
+  <p className={styles.note}>{current.detail}{index?`（計算済み ${ready.length}／${flops.length}フロップ）`:''}</p>
   {nearNote&&<p role="status" className={styles.note}>{nearNote}</p>}
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}

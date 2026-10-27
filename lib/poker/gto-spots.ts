@@ -25,3 +25,7 @@ export type FlopData={flop:string;board:number[];spot:{id?:string;name:string;po
 export async function loadFlop(spot:string,flop:string):Promise<FlopData|null>{
  try{const r=await fetch(`/poker-gto/flops/${spot}/${flop}.json`);if(!r.ok)return null;return await r.json() as FlopData;}catch{return null;}
 }
+/** Which flops are computed so far, per spot (public/poker-gto/flops/index.json). */
+export async function loadFlopIndex():Promise<Record<string,string[]>>{
+ try{const r=await fetch('/poker-gto/flops/index.json');if(!r.ok)return {};return await r.json() as Record<string,string[]>;}catch{return {};}
+}

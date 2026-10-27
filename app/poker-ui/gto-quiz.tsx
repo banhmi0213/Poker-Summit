@@ -1,6 +1,6 @@
 'use client';
 import {useCallback,useEffect,useState} from 'react';
-import {GTO_FLOPS,GTO_SPOTS,loadFlop,type FlopData,type FlopNode} from '@/lib/poker/gto-spots';
+import {GTO_SPOTS,loadFlop,loadFlopIndex,type FlopData,type FlopNode} from '@/lib/poker/gto-spots';
 import styles from './gto-chart.module.css';
 
 /** Practice quiz: a random precomputed flop decision; the answer is graded by how often GTO takes that action. */
@@ -26,8 +26,10 @@ export function GtoQuiz(){
  const [loading,setLoading]=useState(false),[error,setError]=useState(''),[score,setScore]=useState({count:0,points:0});
  const next=useCallback(async()=>{
   setLoading(true);setError('');setGraded(null);
-  for(let attempt=0;attempt<10;attempt++){
-   const spot=spots==='all'?GTO_SPOTS[Math.floor(Math.random()*GTO_SPOTS.length)].id:spots,flop=GTO_FLOPS[Math.floor(Math.random()*GTO_FLOPS.length)];
+  // Only ask about flops that are already computed.
+  const index=await loadFlopIndex(),pool=Object.entries(index).filter(([id,f])=>f.length&&(spots==='all'||id===spots));
+  for(let attempt=0;attempt<10&&pool.length;attempt++){
+   const [spot,list]=pool[Math.floor(Math.random()*pool.length)],flop=list[Math.floor(Math.random()*list.length)];
    const data=await loadFlop(spot,flop);if(!data)continue;
    // Mostly the first decision, sometimes one step later (after a check or a bet).
    let nodeIndex=0;const history:string[]=[];const root=data.nodes[0];
