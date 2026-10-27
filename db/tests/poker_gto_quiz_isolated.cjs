@@ -1,0 +1,32 @@
+// Disposable PostgreSQL: GTO quiz results are kept per member, validated and throttled.
+const {PGlite}=require(process.env.POKER_PGLITE_MODULE||'@electric-sql/pglite'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const folder=path.resolve(__dirname,'../../supabase/migrations'),load=suffix=>fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith(suffix))),'utf8');
+(async()=>{const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema auth;create schema poker_private;
+ create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+ create function auth.jwt() returns jsonb language sql as $$select '{}'::jsonb$$;
+ create function public.is_suspended() returns boolean language sql as $$select coalesce(nullif(current_setting('test.suspended',true),''),'false')::boolean$$;
+ grant usage on schema public,auth to authenticated,anon,service_role;`);
+ const sql=load('_poker_gto_quiz.sql');await db.exec(sql);await db.exec(sql);
+ const a='00000000-0000-4000-8000-000000000001',b='00000000-0000-4000-8000-000000000002';
+ const as=async(uid,q,params=[])=>{await db.exec(`set test.uid='${uid}';set role authenticated`);try{return (await db.query(q,params)).rows[0].v;}finally{await db.exec('reset role');}};
+ let s=await as(a,'select public.poker_gto_quiz_stats() v');assert.deepEqual(s,{answered:0,points:0,correct:0,categories:[]});
+ await as(a,"select public.poker_gto_quiz_record('preflop-open',100) v");await as(a,"select public.poker_gto_quiz_record('preflop-open',40) v");
+ s=await as(a,"select public.poker_gto_quiz_record('flop-btn-bb-3bet',85) v");
+ assert.equal(s.answered,3);assert.equal(s.points,225);assert.equal(s.correct,2);
+ assert.deepEqual(s.categories.find(c=>c.category==='preflop-open'),{category:'preflop-open',answered:2,points:140,correct:1});
+ assert.equal((await as(b,'select public.poker_gto_quiz_stats() v')).answered,0,'members see only their own results');
+ await assert.rejects(as(a,"select public.poker_gto_quiz_record('preflop-open',101) v"),/Invalid points/);
+ await assert.rejects(as(a,"select public.poker_gto_quiz_record('turn-x',50) v"),/Invalid category/);
+ await assert.rejects(as(a,"select public.poker_gto_quiz_record('preflop-Open; drop',50) v"),/Invalid category/);
+ await assert.rejects(as('',"select public.poker_gto_quiz_record('preflop-open',50) v"),/Login required/);
+ await db.exec("set test.suspended='true'");await assert.rejects(as(a,"select public.poker_gto_quiz_record('preflop-open',50) v"),/Login required/);await db.exec("set test.suspended='false'");
+ await assert.rejects(as(a,'select count(*) v from poker_private.gto_quiz_stats'),/permission denied/);
+ for(let i=0;i<38;i++)await as(a,`select public.poker_gto_quiz_record('flop-x${i}',10) v`);
+ await assert.rejects(as(a,"select public.poker_gto_quiz_record('flop-one-too-many',10) v"),/Too many categories/);
+ await db.query("update poker_private.gto_quiz_daily set answered=1000");
+ await assert.rejects(as(a,"select public.poker_gto_quiz_record('preflop-open',10) v"),/Too many answers today/);
+ s=await as(a,'select public.poker_gto_quiz_reset() v');assert.equal(s.answered,0);
+ assert.equal((await as(b,"select public.poker_gto_quiz_record('preflop-vs3bet',90) v")).answered,1,'another member is unaffected');
+ console.log('poker gto quiz isolated test passed');
+}finally{await db.close();}})().catch(error=>{console.error(error);process.exit(1);});
