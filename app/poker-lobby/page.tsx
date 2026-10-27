@@ -1,3 +1,4 @@
+import {pokerAccess} from '@/lib/poker/access';
 import {ringColumns,type RingTable} from '@/lib/poker/ring-tables';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -15,6 +16,7 @@ export default async function PokerLobbyPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
   if (!user && !isPreview) redirect("/signup");
+  if (user && pokerAccess(user) === "verify") redirect("/mypage?poker=verify");
   const {data: tournaments} = await supabase.from("poker_tournaments").select("id,title,starts_at,structure,image_url,organizer_name,prizes").eq("published",true).order("starts_at");
   const {data:ringRows,error:ringError}=await supabase.from('poker_ring_tables').select(ringColumns).eq('published',true).is('deleted_at',null).order('sort_order').order('created_at');
   const {data:isAdmin}=user?await supabase.rpc('is_admin'):{data:false};
