@@ -1,0 +1,31 @@
+begin;
+create function pg_temp.live_reject(statement text,fragment text) returns void language plpgsql as $$begin begin execute statement;exception when others then if position(fragment in sqlerrm)>0 then return;else raise;end if;end;raise exception 'Expected rejection %',fragment;end;$$;
+do $$
+declare a uuid:=gen_random_uuid();b uuid:=gen_random_uuid();tid uuid:=gen_random_uuid();ra uuid:=gen_random_uuid();rb uuid:=gen_random_uuid();hid uuid:=gen_random_uuid();wid uuid:=gen_random_uuid();ctx jsonb;meta jsonb;changed text;sealed jsonb:='{"format":1,"keyId":"fixture","iv":"AAAAAAAAAAAAAAAA","tag":"AAAAAAAAAAAAAAAAAAAAAA==","data":"fixture"}';
+begin
+ insert into auth.users(id,email,email_confirmed_at) values(a,'live-'||a||'@example.invalid',now()),(b,'live-'||b||'@example.invalid',now());
+ insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values(tid,'Rollback live fixture',2,50,100,1000,3000,true);
+ perform public.poker_ring_admit(a,tid,1000,ra);perform public.poker_ring_admit(b,tid,1000,rb);ctx:=public.poker_ring_context(tid);
+ perform pg_temp.live_reject(format('select public.poker_ring_play_begin(%L,%L,%L,%L,%L,null)',tid,hid,ctx->'seats',ctx->'terms'||jsonb_build_object('buttonSeat',ctx->'buttonSeat'),sealed),'Players not ready');
+ perform pg_temp.live_reject(format('select public.poker_ring_play_ready(%L,%L)',b,ra),'Seat unavailable');
+ perform public.poker_ring_play_ready(a,ra);perform public.poker_ring_play_ping(b,tid);
+ if jsonb_array_length(public.poker_ring_play_meta(tid)->'ready')<>1 then raise exception 'Ping opted member into play';end if;
+ perform public.poker_ring_play_ready(b,rb);
+ perform public.poker_ring_play_begin(tid,hid,ctx->'seats',ctx->'terms'||jsonb_build_object('buttonSeat',ctx->'buttonSeat'),sealed,null);
+ meta:=public.poker_ring_play_meta(tid);changed:=meta->>'changedAt';perform public.poker_ring_play_ping(a,tid);
+ if public.poker_ring_play_meta(tid)->>'changedAt'<>changed then raise exception 'Heartbeat reset timer';end if;
+ perform pg_temp.live_reject(format('select public.poker_ring_play_write(%L,1,%L,%L,null,true,0)',hid,gen_random_uuid(),sealed),'Turn deadline changed');
+ perform pg_temp.live_reject(format('select public.poker_ring_play_write(%L,1,%L,%L,null,false,2)',hid,gen_random_uuid(),sealed),'Invalid board phase');
+ perform public.poker_ring_play_write(hid,1,wid,sealed,null,false,0);perform public.poker_ring_play_write(hid,1,wid,sealed,null,false,0);
+ if (select version from poker_private.ring_hands where id=hid)<>2 then raise exception 'Duplicate action changed version';end if;
+ perform public.poker_ring_depart(a,ra,gen_random_uuid());
+ perform public.poker_ring_play_write(hid,2,gen_random_uuid(),sealed,jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',1000),jsonb_build_object('reservationId',rb,'stack',1000)),false,3);
+ if (select status from poker_private.ring_fund_reservations where id=ra)<>'returned' or (public.poker_ring_play_meta(tid)->>'runoutFrom')::integer<>3 then raise exception 'Result/runout/exit not atomic';end if;
+ ra:=gen_random_uuid();perform public.poker_ring_admit(a,tid,1000,ra);perform public.poker_ring_play_ready(a,ra);ctx:=public.poker_ring_context(tid);
+ perform pg_temp.live_reject(format('select public.poker_ring_play_begin(%L,%L,%L,%L,%L,null)',tid,gen_random_uuid(),ctx->'seats',ctx->'terms'||jsonb_build_object('buttonSeat',ctx->'buttonSeat'),sealed),'Presentation in progress');
+ if (select sum(available+in_play) from poker_private.ring_accounts where member_id in(a,b))<>6000 then raise exception 'Live play changed chip total';end if;
+end;$$;
+set local role authenticated;
+do $$declare f text;begin foreach f in array array['poker_ring_play_ready(uuid,uuid)','poker_ring_play_ping(uuid,uuid)','poker_ring_play_meta(uuid)','poker_ring_play_tables(integer)','poker_ring_play_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb)','poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer)'] loop if has_function_privilege(current_user,'public.'||f,'execute') then raise exception 'Public ring runtime access';end if;end loop;end;$$;
+reset role;
+rollback;

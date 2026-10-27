@@ -2,9 +2,9 @@ import {ringColumns,type RingTable} from '@/lib/poker/ring-tables';
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PortalHeader } from "@/app/portal-header";
-import { PortalFooter } from "@/app/portal-footer";
-import { BottomTabs } from "@/app/bottom-tabs";
+import {PokerWorkspace} from "@/app/poker-ui/workspace";
+import TournamentRegistration from "./tournament-registration";
+import AssignedRooms from "./assigned-rooms";
 import PokerLobbyPreview from "./poker-lobby-preview";
 
 export const metadata: Metadata = { title: "オンラインポーカー ロビー試作 | Poker Summit", robots: { index: false, follow: false } };
@@ -16,12 +16,10 @@ export default async function PokerLobbyPage() {
   if (!user && !isPreview) redirect("/signup");
   const {data: tournaments} = await supabase.from("poker_tournaments").select("id,title,starts_at,structure,image_url,organizer_name,prizes").eq("published",true).order("starts_at");
   const {data:ringRows,error:ringError}=await supabase.from('poker_ring_tables').select(ringColumns).eq('published',true).is('deleted_at',null).order('sort_order').order('created_at');
-  return <div className="portal">
-    <PortalHeader userEmail={user?.email} />
-    <main style={{ maxWidth: 940, margin: "0 auto", padding: "20px 12px 100px" }}>
-      <PokerLobbyPreview configuredRings={(ringRows??[]) as RingTable[]} ringError={Boolean(ringError)} configuredTournaments={tournaments ?? []} isGuestPreview={!user} />
-    </main>
-    <PortalFooter />
-    <BottomTabs />
-  </div>;
+  const {data:isAdmin}=user?await supabase.rpc('is_admin'):{data:false};
+  return <PokerWorkspace kind="lobby" admin={isAdmin===true} guest={!user} panes={[
+   {id:'demo',label:'リング／トーナメント',eyebrow:'RING & TOURNAMENT',description:'会員chipのリング卓と、トーナメント・練習卓をご案内します。',content:<PokerLobbyPreview ringEnabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)} configuredRings={(ringRows??[]) as RingTable[]} ringError={Boolean(ringError)} compact configuredTournaments={tournaments??[]} isGuestPreview={!user}/>},
+   {id:'assigned',label:'あなたの参加卓',eyebrow:'YOUR TABLE',description:'割り当て済みの卓へ入室・再接続できます。',content:user?<AssignedRooms enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>:<p>参加卓の確認には<a href="/login">ログイン</a>してください。</p>},
+   {id:'registration',label:'大会の参加受付',eyebrow:'TOURNAMENT ENTRY',description:'受付中の大会へ参加登録し、開催を待ちましょう。',content:user?<TournamentRegistration enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>:<p>大会への登録には<a href="/login">ログイン</a>してください。</p>},
+  ]}/>;
 }

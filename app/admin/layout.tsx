@@ -31,9 +31,10 @@ export default async function AdminLayout({
     return (
       <div className="container">
         <p className="err">
-          このアカウントには運営権限がありません。管理者に admin_users
-          テーブルへの登録を依頼してください。
+          このアカウントには運営権限がありません。管理者用アカウントでログインしてください。
         </p>
+        <p>現在ログイン中：{user.email}</p>
+        <p><Link className="btn" href="/admin-login?next=/admin/poker-statistics">管理者アカウントでログイン</Link> <Link className="btn" href="/poker-lobby">ポーカーロビーへ戻る</Link></p>
       </div>
     );
   }

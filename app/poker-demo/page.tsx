@@ -1,3 +1,4 @@
+import {GameCommunity} from '@/app/poker-ui/game-community';
 import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -40,15 +41,15 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const button=initialSeatIds.includes("p6")?"p6":initialSeatIds[0];
   const displayName = typeof user?.user_metadata?.display_name === "string" && user.user_metadata.display_name.trim()
     ? user.user_metadata.display_name.trim() : user ? "会員" : "デモユーザー";
-  return <div className={styles.gamePage}>
+  return <div className={`${styles.gamePage} ${styles.demoViewport}`}>
     <GameNavigation header={<PortalHeader userEmail={user?.email}/>} footer={<PortalFooter/>}/>
-    <main className={styles.gameMain}>
+    <GameCommunity><main className={styles.gameMain}>
       {isPreview && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast">1分レベル・BBアンティ検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&ante=per-player">1分レベル・全員アンティ検証</a></p>}
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast&scenario=short">200チップ・脱落検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&scenario=heads-up">2人卓・優勝確定の検証</a></p>}
       {shortScenario && <p>検証専用：開始{initialSeatIds.length}人・各200チップ。保存された大会設定・会員残高には影響しません。</p>}
       </details>}
       <PokerTablePreview initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={!tournament && searchParams?.mode === "spectate"} />
-    </main>
+    </main></GameCommunity>
   </div>;
 }

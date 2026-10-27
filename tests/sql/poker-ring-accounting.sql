@@ -1,0 +1,70 @@
+-- Rollback-only fixtures. No real accounts or live tables are modified.
+begin;
+create function pg_temp.ring_reject(statement text,fragment text) returns void language plpgsql as $$begin
+ begin execute statement;exception when others then if position(fragment in sqlerrm)>0 then return;else raise;end if;end;
+ raise exception 'Expected rejection: %',fragment;
+end;$$;
+do $$
+declare a uuid:=gen_random_uuid();b uuid:=gen_random_uuid();c uuid:=gen_random_uuid();tid uuid:=gen_random_uuid();ra uuid:=gen_random_uuid();rb uuid:=gen_random_uuid();rc uuid:=gen_random_uuid();hid uuid:=gen_random_uuid();write_id uuid:=gen_random_uuid();cash_id uuid:=gen_random_uuid();ctx jsonb;roster jsonb;outcome jsonb;sealed jsonb:='{"format":1,"keyId":"fixture","iv":"AAAAAAAAAAAAAAAA","tag":"AAAAAAAAAAAAAAAAAAAAAA==","data":"ciphertext-fixture"}';
+begin
+ insert into auth.users(id,email,email_confirmed_at,is_anonymous,created_at,updated_at) values(a,'ring-'||a||'@example.invalid',now(),false,now(),now()),(b,'ring-'||b||'@example.invalid',now(),false,now(),now()),(c,'ring-'||c||'@example.invalid',now(),false,now(),now());
+ insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values(tid,'Rollback ring accounting',2,50,100,1000,3000,true);
+ perform public.poker_ring_reserve_funds(a,tid,1000,ra);perform public.poker_ring_reserve_funds(b,tid,1000,rb);
+ perform pg_temp.ring_reject(format('select public.poker_ring_seat_funds(%L,%L,1)',b,ra),'unavailable');
+ perform public.poker_ring_seat_funds(a,ra,1);perform public.poker_ring_seat_funds(a,ra,1);
+ perform pg_temp.ring_reject(format('select public.poker_ring_seat_funds(%L,%L,1)',b,rb),'occupied');
+ perform pg_temp.ring_reject(format('select public.poker_ring_seat_funds(%L,%L,3)',b,rb),'Invalid seat');
+ perform public.poker_ring_seat_funds(b,rb,2);
+ update poker_private.ring_fund_reservations set expires_at=now()-interval '1 second' where id in(ra,rb);
+ if public.poker_ring_release_expired(tid)<>0 then raise exception 'Seated funds expired';end if;
+ perform pg_temp.ring_reject(format('select public.poker_ring_cashout(%L,%L,%L)',b,ra,gen_random_uuid()),'unavailable');
+ perform pg_temp.ring_reject(format('update public.poker_ring_tables set bb=200 where id=%L',tid),'reserved funds');
+ perform pg_temp.ring_reject(format('select public.poker_ring_return_reserved_funds(%L,%L)',ra,gen_random_uuid()),'require cashout');
+ perform pg_temp.ring_reject(format('select public.poker_ring_reserve_funds(%L,%L,1000,%L)',c,tid,rc),'Table full');
+ ctx:=public.poker_ring_context(tid);roster:=ctx->'seats';ctx:=jsonb_set(ctx,'{terms}',(ctx->'terms')||jsonb_build_object('buttonSeat',ctx->'buttonSeat'));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_begin(%L,%L,%L,%L,%L,null)',tid,gen_random_uuid(),roster,(ctx->'terms')||jsonb_build_object('buttonSeat',2),sealed),'Seating changed');
+ perform public.poker_ring_hand_begin(tid,hid,roster,ctx->'terms',sealed,null);
+ perform public.poker_ring_hand_begin(tid,hid,roster,ctx->'terms',sealed,null);
+ perform pg_temp.ring_reject(format('select public.poker_ring_cashout(%L,%L,%L)',a,ra,cash_id),'Hand in progress');
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_begin(%L,%L,%L,%L,%L,null)',tid,gen_random_uuid(),roster,ctx->'terms',sealed),'Table unavailable');
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,2,%L,%L,null)',hid,gen_random_uuid(),sealed),'Stale hand version');
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',2100),jsonb_build_object('reservationId',rb,'stack',0));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,%L)',hid,write_id,sealed,outcome),'Chip total changed');
+ if (select version from poker_private.ring_hands where id=hid)<>1 or (select in_play from poker_private.ring_accounts where member_id=a)<>1000 then raise exception 'Rejected result mutated state';end if;
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',2000),jsonb_build_object('reservationId',ra,'stack',0));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,%L)',hid,write_id,sealed,outcome),'Invalid hand result');
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',2000),jsonb_build_object('reservationId',gen_random_uuid(),'stack',0));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,%L)',hid,write_id,sealed,outcome),'Participant mismatch');
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',2001),jsonb_build_object('reservationId',rb,'stack',-1));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,%L)',hid,write_id,sealed,outcome),'Invalid hand result');
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',1999.5),jsonb_build_object('reservationId',rb,'stack',0.5));
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,%L)',hid,write_id,sealed,outcome),'Invalid hand result');
+ outcome:=jsonb_build_array(jsonb_build_object('reservationId',ra,'stack',2000),jsonb_build_object('reservationId',rb,'stack',0));
+ perform public.poker_ring_hand_write(hid,1,write_id,sealed,outcome);perform public.poker_ring_hand_write(hid,1,write_id,sealed,outcome);
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,1,%L,%L,null)',hid,write_id,sealed),'Request conflict');
+ perform pg_temp.ring_reject(format('select public.poker_ring_hand_write(%L,2,%L,%L,null)',hid,gen_random_uuid(),sealed),'Stale hand version');
+ if (select in_play from poker_private.ring_accounts where member_id=a)<>2000 or (select in_play from poker_private.ring_accounts where member_id=b)<>0 then raise exception 'Winner/loser accounting incorrect';end if;
+ if (select count(*) from poker_private.ring_chip_ledger where hand_id=hid)<>2 then raise exception 'Duplicate result receipts';end if;
+ perform pg_temp.ring_reject(format('select public.poker_ring_cashout(%L,%L,%L)',a,ra,ra),'Request conflict');
+ perform public.poker_ring_cashout(a,ra,cash_id);perform public.poker_ring_cashout(a,ra,cash_id);perform public.poker_ring_cashout(a,ra,gen_random_uuid());
+ perform public.poker_ring_cashout(b,rb,gen_random_uuid());
+ if (select available from poker_private.ring_accounts where member_id=a)<>4000 or (select available from poker_private.ring_accounts where member_id=b)<>2000 or (select sum(in_play) from poker_private.ring_accounts where member_id in(a,b))<>0 then raise exception 'Cashout did not return final stack exactly once';end if;
+ if (select sum(available+in_play) from poker_private.ring_accounts where member_id in(a,b,c))<>9000 then raise exception 'Global total changed';end if;
+ if (select count(*) from poker_private.ring_hand_commits where hand_id=hid)<>2 then raise exception 'Duplicate durable commit';end if;
+ if exists(select 1 from poker_private.ring_accounts ac where ac.member_id in(a,b,c) and (ac.available<>(select sum(available_delta) from poker_private.ring_chip_ledger where member_id=ac.member_id) or ac.in_play<>(select sum(in_play_delta) from poker_private.ring_chip_ledger where member_id=ac.member_id))) then raise exception 'Ledger and accounts diverged';end if;
+ perform public.poker_ring_reserve_funds(c,tid,1000,rc);
+ update poker_private.ring_fund_reservations set expires_at=now()-interval '1 second' where id=rc;
+ perform pg_temp.ring_reject(format('select public.poker_ring_seat_funds(%L,%L,1)',c,rc),'unavailable');
+ if public.poker_ring_release_expired(tid)<>1 or public.poker_ring_release_expired(tid)<>0 then raise exception 'Expiry replay';end if;
+ if (select available from poker_private.ring_accounts where member_id=c)<>3000 then raise exception 'Expired hold not refunded';end if;
+ perform pg_temp.ring_reject(format('update poker_private.ring_hand_commits set version=99 where hand_id=%L',hid),'immutable');
+end;$$;
+set local role authenticated;
+do $$declare f record;begin
+ for f in select oid::regprocedure signature from pg_proc where pronamespace='public'::regnamespace and proname in('poker_ring_context','poker_ring_seat_funds','poker_ring_cashout','poker_ring_release_expired','poker_ring_hand_begin','poker_ring_hand_write','poker_ring_hand_load') loop
+  if has_function_privilege(current_user,f.signature,'EXECUTE') then raise exception 'Client can invoke service-only RPC %',f.signature;end if;
+ end loop;
+ perform pg_temp.ring_reject('select * from poker_private.ring_hands','permission denied');
+end;$$;
+reset role;
+rollback;
