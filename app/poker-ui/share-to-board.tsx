@@ -2,8 +2,8 @@
 import {useState} from 'react';
 import styles from './hand-history.module.css';
 /** 「掲示板で相談する」: freeze the hand (viewer-safe) and post a thread linking to its replay. */
-export function ShareToBoard({handId,defaultTitle}:{handId:string;defaultTitle:string}){
- const [open,setOpen]=useState(false),[title,setTitle]=useState(defaultTitle),[comment,setComment]=useState(''),[state,setState]=useState<{busy?:boolean;error?:string;postId?:string}>({});
+export function ShareToBoard({handId,defaultTitle,startOpen=false}:{handId:string;defaultTitle:string;startOpen?:boolean}){
+ const [open,setOpen]=useState(startOpen),[title,setTitle]=useState(defaultTitle),[comment,setComment]=useState(''),[state,setState]=useState<{busy?:boolean;error?:string;postId?:string}>({});
  const submit=async()=>{setState({busy:true});
   try{
    const s=await fetch('/api/poker/hand-share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({hand:handId})});const sb=await s.json().catch(()=>({}));if(!s.ok)throw Error(sb.error??'このハンドは共有できません。');
