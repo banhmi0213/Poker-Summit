@@ -7,10 +7,10 @@ require.extensions['.ts']=(m,f)=>{if(f.endsWith('/lib/supabase/server.ts')){m.ex
 const hud=require('../lib/poker/player-hud.ts'),route=require('../app/api/poker/table-members/hud/route.ts'),members=require('../app/api/poker/table-members/route.ts');
 const table='30000000-0000-4000-8000-000000000001',base='https://www.pokersummit.jp/api/poker/table-members';
 const post=(body,origin='https://www.pokersummit.jp')=>new Request(base+'/hud',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
-test('rates show a dash until there is an opportunity and keep the sample size',()=>{
+test('rates show a dash until there is an opportunity and no counts',()=>{
  const rows=hud.hudRows({hands:10,vpip:3,pfr:2,threeBet:1,threeBetOpp:4,cbet:0,cbetOpp:0,foldTo3Bet:1,foldTo3BetOpp:2,foldToCbet:2,foldToCbetOpp:3,sawFlop:4,wtsd:2,wsd:1});
  assert.deepEqual(rows.map(r=>r[0]),['VPIP','PFR','3ベット','3ベットにフォールド','CB','CBにフォールド','WTSD','W$SD']);
- assert.deepEqual(rows.map(r=>r[1]),['30%','20%','25%','50%','—','67%','50%','50%']);assert.equal(rows[0][2],'3/10');
+ assert.deepEqual(rows.map(r=>r[1]),['30%','20%','25%','50%','—','67%','50%','50%']);assert.ok(rows.every(r=>r.length===2),'no sample counts, rates only');
 });
 test('note payload validation',()=>{
  assert.deepEqual(hud.parseHudNote({table,seat:3,note:'  強め ',color:'red'}),{table,seat:3,note:'強め',color:'red'});

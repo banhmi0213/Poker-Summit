@@ -17,15 +17,15 @@ export function parseHudNote(value:unknown){
 }
 // "—" until there is at least one opportunity; whole percent otherwise.
 export function hudRate(count:number,opportunities:number){return opportunities>0?`${Math.round(count*100/opportunities)}%`:'—';}
-export function hudRows(s:HudStats):[string,string,string][]{
+export function hudRows(s:HudStats):[string,string][]{
  return [
-  ['VPIP',hudRate(s.vpip,s.hands),`${s.vpip}/${s.hands}`],
-  ['PFR',hudRate(s.pfr,s.hands),`${s.pfr}/${s.hands}`],
-  ['3ベット',hudRate(s.threeBet,s.threeBetOpp),`${s.threeBet}/${s.threeBetOpp}`],
-  ['3ベットにフォールド',hudRate(s.foldTo3Bet,s.foldTo3BetOpp),`${s.foldTo3Bet}/${s.foldTo3BetOpp}`],
-  ['CB',hudRate(s.cbet,s.cbetOpp),`${s.cbet}/${s.cbetOpp}`],
-  ['CBにフォールド',hudRate(s.foldToCbet,s.foldToCbetOpp),`${s.foldToCbet}/${s.foldToCbetOpp}`],
-  ['WTSD',hudRate(s.wtsd,s.sawFlop),`${s.wtsd}/${s.sawFlop}`],
-  ['W$SD',hudRate(s.wsd,s.wtsd),`${s.wsd}/${s.wtsd}`],
+  ['VPIP',hudRate(s.vpip,s.hands)],
+  ['PFR',hudRate(s.pfr,s.hands)],
+  ['3ベット',hudRate(s.threeBet,s.threeBetOpp)],
+  ['3ベットにフォールド',hudRate(s.foldTo3Bet,s.foldTo3BetOpp)],
+  ['CB',hudRate(s.cbet,s.cbetOpp)],
+  ['CBにフォールド',hudRate(s.foldToCbet,s.foldToCbetOpp)],
+  ['WTSD',hudRate(s.wtsd,s.sawFlop)],
+  ['W$SD',hudRate(s.wsd,s.wtsd)],
  ];
 }
