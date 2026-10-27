@@ -865,8 +865,7 @@ grant execute on function public.poker_admin_ring_save(uuid,bigint,jsonb),public
 alter table public.poker_tournaments add column if not exists deleted_at timestamptz;
 -- Existing writers can edit settings, but cannot bypass the guarded removal RPC.
 revoke update on public.poker_tournaments from authenticated;
-grant update(title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes) on public.poker_tournaments to authenticated;
-alter table public.poker_tournaments add constraint poker_deleted_unpublished check(deleted_at is null or not published);
+grant update(title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes) on public.poker_tournaments to authenticated; do $release$ begin alter table public.poker_tournaments add constraint poker_deleted_unpublished check(deleted_at is null or not published); exception when duplicate_object or duplicate_table then null; end $release$;;
 create or replace function poker_private.guard_tournament_removal() returns trigger language plpgsql security invoker set search_path='' as $$
 begin
  if tg_op='INSERT' then
@@ -1161,14 +1160,11 @@ end;$$;
 -- 20261020125126_poker_ring_seating_and_hand_accounting.sql
 -- (own transaction removed: the whole upgrade is one transaction)
 -- Table row first, then accounts in member UUID order: one lock order for all funds paths.
-alter table poker_private.ring_fund_reservations drop constraint ring_fund_reservations_status_check;
-alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned'));
+alter table poker_private.ring_fund_reservations drop constraint ring_fund_reservations_status_check; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned')); exception when duplicate_object or duplicate_table then null; end $release$;;
 alter table poker_private.ring_fund_reservations add column if not exists seat_number integer;
 alter table poker_private.ring_fund_reservations add column if not exists table_stack bigint;
 update poker_private.ring_fund_reservations set table_stack=case when status='returned' then 0 else amount end;
-alter table poker_private.ring_fund_reservations alter column table_stack set not null;
-alter table poker_private.ring_fund_reservations add constraint ring_table_stack_check check(table_stack between 0 and 4503599627370495 and (status<>'held' or table_stack=amount) and (status<>'returned' or table_stack=0));
-alter table poker_private.ring_fund_reservations add constraint ring_seat_check check((status='seated' and seat_number is not null and seat_number between 1 and 6) or (status<>'seated' and seat_number is null));
+alter table poker_private.ring_fund_reservations alter column table_stack set not null; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_table_stack_check check(table_stack between 0 and 4503599627370495 and (status<>'held' or table_stack=amount) and (status<>'returned' or table_stack=0)); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_seat_check check((status='seated' and seat_number is not null and seat_number between 1 and 6) or (status<>'seated' and seat_number is null)); exception when duplicate_object or duplicate_table then null; end $release$;;
 drop index poker_private.ring_one_hold_per_member;
 create unique index if not exists ring_one_hold_per_member on poker_private.ring_fund_reservations(member_id) where status in('held','seated');
 create unique index if not exists ring_one_member_per_seat on poker_private.ring_fund_reservations(table_id,seat_number) where status='seated';
@@ -1191,15 +1187,13 @@ revoke all on poker_private.ring_hands,poker_private.ring_hand_commits from publ
 grant select on poker_private.ring_hands,poker_private.ring_hand_commits to service_role; do $release$ begin create trigger ring_commit_immutable before update or delete on poker_private.ring_hand_commits for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;;
 alter table poker_private.ring_chip_ledger add column if not exists hand_id uuid references poker_private.ring_hands(id);
 alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_kind_check;
-alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_check;
-alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout'));
-alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
+alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_check; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout')); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
  (kind='welcome' and available_delta=3000 and in_play_delta=0 and reservation_id is null and hand_id is null) or
  (kind='reserve' and available_delta<0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='refund' and available_delta>0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='cashout' and available_delta>=0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='settlement' and available_delta=0 and reservation_id is not null and hand_id is not null)
-);
+); exception when duplicate_object or duplicate_table then null; end $release$;;
 drop index poker_private.ring_one_reservation_event;
 create unique index if not exists ring_one_reservation_event on poker_private.ring_chip_ledger(reservation_id,kind) where kind in('reserve','refund','cashout');
 create unique index if not exists ring_one_hand_settlement on poker_private.ring_chip_ledger(hand_id,member_id) where kind='settlement';
@@ -1510,8 +1504,7 @@ grant execute on function public.poker_ring_lobby_state(uuid,uuid),public.poker_
 -- (own transaction removed: the whole upgrade is one transaction)
 -- An exit belongs to one reservation. Keep its receipt after returning funds so
 -- a delayed retry cannot withdraw chips from a later seat.
-alter table poker_private.ring_fund_reservations add column if not exists exit_request uuid;
-alter table poker_private.ring_fund_reservations add constraint ring_exit_seated check(exit_request is null or status in('seated','returned'));
+alter table poker_private.ring_fund_reservations add column if not exists exit_request uuid; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_exit_seated check(exit_request is null or status in('seated','returned')); exception when duplicate_object or duplicate_table then null; end $release$;;
 
 create or replace function poker_private.ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;
