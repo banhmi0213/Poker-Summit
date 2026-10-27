@@ -106,6 +106,12 @@ function flopIndexOf(node:FlopNode,a:LoggedAction):number{
  const r=kinds.indexOf('raise');return r>=0?r:kinds.indexOf('allin');
 }
 
+/** The flop row for one combo: the suit-aware row when the file has one ("AKs|21"), else the class row.
+ * Suits are counted on the real flop. */
+function flopRow(node:FlopNode,a:number,b:number,board:readonly number[]):number[]|undefined{
+ const cls=classOf(a,b);if(node.suits){const n=(c:number)=>board.filter(x=>(x&3)===(c&3)).length,x=n(a),y=n(b),row=node.suits[`${cls}|${x>=y?`${x}${y}`:`${y}${x}`}`];if(row)return row;}
+ return node.classes[cls];
+}
 // ---------- turn/river solver cache ----------
 type Solve={solver:PostflopSolver;board:number[];players:[string,string];bb:number;startPot:number};
 const solves=new Map<string,Solve>();
@@ -167,12 +173,12 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
    let node:FlopNode|undefined=file.nodes[0];
    for(const a of flopActs){if(!node)break;const i=flopIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
    if(!node||node.player!==pair.indexOf(v.hero))return fb('flop-off-tree');
-   const cls=classOf(code(v.hole[0]),code(v.hole[1])),row=node.classes[cls];if(!row)return fb('flop-class-missing');
+   const row=flopRow(node,code(v.hole[0]),code(v.hole[1]),v.board.slice(0,3).map(code));if(!row)return fb('flop-class-missing');
    const at=node;
    return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a)};
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
-  if(file)trackFlop(file,flopActs,ranges,pair);
+  if(file)trackFlop(file,flopActs,ranges,pair,v.board.slice(0,3).map(code));
   const board=v.board.map(code),turnKey=`${v.handKey}|${board.slice(0,4).join(',')}`;
   let s=solves.get(turnKey);
   const turnActs=v.log.filter(a=>a.street==='turn'),riverActs=v.log.filter(a=>a.street==='river');
@@ -231,10 +237,10 @@ function trackPreflop(v:GtoView,data:GtoData,toks:Tok[]):Ranges|null{
  }
  return ranges;
 }
-function trackFlop(file:FlopData,acts:readonly LoggedAction[],ranges:Ranges,pair:[string,string]){
+function trackFlop(file:FlopData,acts:readonly LoggedAction[],ranges:Ranges,pair:[string,string],board:readonly number[]){
  let node:FlopNode|undefined=file.nodes[0];
  for(const a of acts){if(!node)return;const i=flopIndexOf(node,a);if(i<0)return;const w=ranges.get(pair[node.player]),cur=node;
-  if(w)scale(w,(x,y)=>{const row=cur.classes[classOf(x,y)];return row?row[1+i]:cur.total[i]??1;});
+  if(w)scale(w,(x,y)=>{const row=flopRow(cur,x,y,board);return row?row[1+i]:cur.total[i]??1;});
   const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
 }
 function trackSolver(s:Solve,acts:readonly LoggedAction[],river:number|null,ranges:Ranges){
