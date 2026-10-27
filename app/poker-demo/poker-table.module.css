@@ -967,3 +967,6 @@
  .menuToggle svg,.topExit svg{width:26px;height:26px}
 }
 @media(min-width:900px){.menuToggle,.topExit{line-height:0}}
+/* Phone practice table (owner 2026/10/28: 手札とチップの欄を両方下げる・アイコンも): your avatar, cards and chip box move
+   down together to just above the control panel; the Summit/Stamp buttons stay where they were. */
+@media(max-width:899px){.demoShell .table .self{translate:0 30px}}

@@ -66,3 +66,5 @@
 .quickIcon[data-kind=summit] img{width:38px!important;height:38px!important}
 @media(max-width:899px){.quickIcon[data-kind=summit] img{width:52px!important;height:52px!important;transform:translate(-9%,-9%)!important}}
 @media(min-width:900px){.quickIcon[data-kind=summit] img{width:60px!important;height:60px!important;transform:translate(-9%,-9%)!important}}
+/* The practice table moves your seat 30px down on phones; keep the buttons at the same place on screen. */
+@media(max-width:899px){[class*=demoShell] .quick{top:calc(58% - 16px)}}
