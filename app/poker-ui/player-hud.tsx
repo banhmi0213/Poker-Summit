@@ -4,7 +4,7 @@ import {HUD_COLORS,HUD_COLOR_LABELS,HUD_COLOR_VALUES,hudRows,isHudColor,type Hud
 import styles from './player-hud.module.css';
 // Opponent stats (ring hands only) with a private note and colour label that only the viewer can see.
 export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:number;name:string;onClose:()=>void;onSaved:(seat:number,color:HudColor|null)=>void}){
- const [player,setPlayer]=useState<HudPlayer|null>(null),[error,setError]=useState(''),[note,setNote]=useState(''),[color,setColor]=useState<HudColor|null>(null),[saving,setSaving]=useState(false),[message,setMessage]=useState('');
+ const [reportReason,setReportReason]=useState('abuse'),[reportNote,setReportNote]=useState(''),[reportState,setReportState]=useState<''|'sending'|'sent'|string>(''),[player,setPlayer]=useState<HudPlayer|null>(null),[error,setError]=useState(''),[note,setNote]=useState(''),[color,setColor]=useState<HudColor|null>(null),[saving,setSaving]=useState(false),[message,setMessage]=useState('');
  useEffect(()=>{let active=true;setPlayer(null);setError('');setMessage('');
   fetch(`/api/poker/table-members/hud?table=${encodeURIComponent(table)}&seat=${seat}`,{cache:'no-store'}).then(async r=>{const body=await r.json().catch(()=>({}));if(!active)return;
    if(!r.ok||!body.player){setError(body.error??'成績を取得できません。');return;}
@@ -13,6 +13,7 @@ export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:n
  useEffect(()=>{const key=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose();};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[onClose]);
  const save=async()=>{setSaving(true);setMessage('');try{const r=await fetch('/api/poker/table-members/hud',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table,seat,note,color})});const body=await r.json().catch(()=>({}));
   if(!r.ok){setMessage(body.error??'メモを保存できません。');return;}setMessage('保存しました');onSaved(seat,color);}catch{setMessage('メモを保存できません。');}finally{setSaving(false);}};
+ const report=async()=>{setReportState('sending');try{const r=await fetch('/api/poker/table-members/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({table,seat,reason:reportReason,note:reportNote})});const b=await r.json().catch(()=>({}));setReportState(r.ok?'sent':b.error??'通報を送れませんでした。');}catch{setReportState('通報を送れませんでした。');}};
  return <><div className={styles.backdrop} aria-hidden="true" onClick={onClose}/>
   <div className={styles.panel} role="dialog" aria-modal="true" aria-label={`${name}の成績`}>
    <div className={styles.top}><strong>{name}</strong><button type="button" aria-label="閉じる" onClick={onClose}>×</button></div>
@@ -31,6 +32,15 @@ export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:n
      {message&&<p className={styles.message} role="status">{message}</p>}
      <p className={styles.private}>メモと色分けはあなたにしか見えません。</p>
     </div>}
+    {!player.you&&<details className={styles.report}><summary>このプレイヤーを通報する</summary>
+     {reportState==='sent'?<p className={styles.message} role="status">通報を受け付けました。運営が確認します。</p>:<>
+      <label htmlFor="player-hud-report">理由</label>
+      <select id="player-hud-report" value={reportReason} onChange={e=>setReportReason(e.target.value)}><option value="abuse">暴言・嫌がらせ</option><option value="name">不適切な名前・アイコン</option><option value="griefing">わざと進行を妨げる</option><option value="cheating">不正の疑い（通し・複数アカウント）</option><option value="other">その他</option></select>
+      <textarea aria-label="通報の内容" maxLength={500} value={reportNote} onChange={e=>setReportNote(e.target.value)} placeholder="具体的な内容（任意）"/>
+      <button type="button" className={styles.save} disabled={reportState==='sending'} onClick={report}>{reportState==='sending'?'送信中…':'通報する'}</button>
+      {reportState&&reportState!=='sending'&&<p className={styles.message} role="alert">{reportState}</p>}
+     </>}
+    </details>}
    </>}
   </div></>;
 }

@@ -19,18 +19,19 @@ export function ChipShop({ticketLabels}:{ticketLabels:Record<string,string>}){
   try{if(error)throw Error(error.message);setShop(parseShop(data));setMessage('交換しました。');setConfirming(null);setRequest(null);router.refresh();}
   catch(e){const m=e instanceof Error?e.message:undefined;setMessage(shopError(m));setConfirming(null);
    // A definite server refusal frees the id; an unknown failure keeps it so a retry cannot charge twice.
-   if(m&&/Insufficient chips|Item unavailable|Login required|Invalid exchange|Request conflict/.test(m))setRequest(null);}
+   if(m&&/Insufficient chips|Item unavailable|Login required|Invalid exchange|Request conflict|Already owned/.test(m))setRequest(null);}
   finally{setBusy(false);}
  };
- const owned=shop?Object.entries(shop.tickets).filter(([,n])=>n>0):[];
+ const skins=new Set(shop?.items.filter(i=>i.kind==='skin').map(i=>i.code)??[]),owned=shop?Object.entries(shop.tickets).filter(([code,n])=>n>0&&!skins.has(code)&&!/^(table|card_front|card_back)_/.test(code)):[];
  return <section className={styles.card} aria-labelledby="chip-shop-title">
   <h2 id="chip-shop-title">チップ交換所</h2>
-  <p className={styles.shopLead}>使用可能なchipを、リングで使えるチケットに交換できます。</p>
+  <p className={styles.shopLead}>使用可能なchipを、リングで使えるチケットや卓・カードの着せ替えに交換できます。</p>
   <div className={styles.tickets} aria-label="持っているチケット">{owned.length?owned.map(([code,n])=><span key={code}>{ticketLabels[code]??code} <b>{n.toLocaleString()}枚</b></span>):<span>チケットはまだ持っていません。</span>}</div>
-  {!shop?<p role="status">{message}</p>:!shop.items.length?<p>交換できる品は準備中です。</p>:<ul className={styles.shopItems}>{shop.items.map(item=>{const q=quantity[item.code]??1,cost=item.price*q,short=shop.available<cost;
+  {!shop?<p role="status">{message}</p>:!shop.items.length?<p>交換できる品は準備中です。</p>:<ul className={styles.shopItems}>{shop.items.map(item=>{const skin=item.kind==='skin',have=skin&&(shop.tickets[item.code]??0)>0,q=skin?1:quantity[item.code]??1,cost=item.price*q,short=shop.available<cost;
+   if(have)return <li key={item.code}><div><strong>{item.label}</strong><small>{item.description}</small></div><div className={styles.shopBuy}><span className={styles.price}>交換済み・メニューの着せ替えで選べます</span></div></li>;
    return <li key={item.code}><div><strong>{item.label}</strong><small>{item.description}</small></div>
-    <div className={styles.shopBuy}><span className={styles.price}>{item.price.toLocaleString()} chip／枚</span>
-     <label>枚数<select value={q} disabled={busy} onChange={e=>{setQuantity({...quantity,[item.code]:Number(e.target.value)});setConfirming(null);}}>{Array.from({length:10},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</select></label>
+    <div className={styles.shopBuy}><span className={styles.price}>{item.price.toLocaleString()} chip{skin?'':'／枚'}</span>
+     {!skin&&<label>枚数<select value={q} disabled={busy} onChange={e=>{setQuantity({...quantity,[item.code]:Number(e.target.value)});setConfirming(null);}}>{Array.from({length:10},(_,i)=><option key={i} value={i+1}>{i+1}</option>)}</select></label>}
      {confirming===item.code?<><span className={styles.confirmText}>{cost.toLocaleString()} chipを使って交換しますか？</span><button type="button" disabled={busy} onClick={()=>void exchange(item.code)}>交換する</button><button type="button" className={styles.secondary} disabled={busy} onClick={()=>setConfirming(null)}>やめる</button></>
       :<button type="button" disabled={busy||short} onClick={()=>{setConfirming(item.code);setMessage('');}}>{short?'chipが足りません':`${cost.toLocaleString()} chipで交換`}</button>}
     </div></li>;})}</ul>}
