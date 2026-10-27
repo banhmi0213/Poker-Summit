@@ -171,13 +171,6 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       }
     } catch { /* Audio must never interrupt the game. */ }
   };
-  const previewSound = (kind: SoundKind) => {
-    unlockAudio();
-    // Wait for the resume to finish instead of a fixed delay, so the first tap also plays.
-    const context = audioContextRef.current;
-    if (context && context.state !== "running") void context.resume().then(() => playSound(kind)).catch(() => {});
-    else playSound(kind);
-  };
   useEffect(() => {
     const activate = () => {
       try {
@@ -443,13 +436,9 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <label>効果音 <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
           <label>BGM <input type="checkbox" checked={sound.bgm} onChange={e => setSound({ bgm: e.target.checked })} /></label>
           <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
-          <details><summary>検証用：効果音を試聴</summary><div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-            {([["deal","配る"],["flop","フロップ"],["turnCard","ターン"],["river","リバー"],["fold","フォールド"],["check","チェック"],["call","コール"],["bet","ベット"],["raise","レイズ"],["allin","オールイン"],["win","ポット獲得"],["turn","自分の番"],["action","相手の行動"]] as [SoundKind,string][]).map(([kind,label]) =>
-              <button key={kind} type="button" disabled={!soundEnabled} onClick={() => previewSound(kind)}>♪ {label}</button>)}
-          </div></details>
           <p>レイズ額の設定</p>
           <BetSizeSettings/>
-          <small>BB表示と倍率はデモに反映。SEは各場面で再生されます（上のボタンで1つずつ試せます）。レイズ額の設定は会員ごとに保存できます。</small>
+          <small>BB表示と倍率はデモに反映。効果音は各場面で再生されます。レイズ額の設定は会員ごとに保存できます。</small>
         </div>}
         {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リング卓情報</h2><p>SB 50 / BB 100</p><p>6人卓・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
         {menuPage === "community" && <div className={styles.menuFields}><h2>サミット連携</h2><section><h3>チップ残高</h3><p>デモの持ち点と会員の残高は別です。</p><a href="/mypage/chips" target="_blank" rel="noreferrer">会員のチップ残高・付与履歴を確認 ↗</a></section><details onToggle={e=>setCommunityOpen(e.currentTarget.open)}><summary>掲示板を開く</summary>{communityOpen&&<iframe title="サミット掲示板" src="/poker-community" style={{width:"100%",height:"55dvh",border:"1px solid #9b8354",borderRadius:8}}/>}</details></div>}
