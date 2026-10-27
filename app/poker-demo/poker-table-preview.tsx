@@ -8,6 +8,7 @@ import {CardFace} from '@/app/poker-ui/card-face';
 import {PlayerAvatar} from '@/app/poker-ui/player-avatar';
 import {useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {BetSizeSettings} from '@/app/poker-ui/bet-size-settings';
+import {AmountInput} from '@/app/poker-ui/amount-input';
 import {quickBetKind,quickBetLabel,quickBetTo,quickBetValues} from '@/lib/poker/bet-presets';
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
 import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
@@ -553,7 +554,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {hint && <p className={styles.hint} role="note">{hint.toCall > 0 ? <>必要勝率 <b>{Math.round(hint.required * 100)}%</b>（{hint.toCall.toLocaleString()}をコールしてPOT {(hint.pot + hint.toCall).toLocaleString()}）・</> : null}推定勝率 <b>{Math.round(hint.equity * 100)}%</b><small>相手の手札をランダムと仮定した目安</small></p>}
       <label htmlFor="poker-demo-raise">{betting.currentBet > 0 ? "レイズ後の合計額" : "ベット額"}: {legal?.raise ? showChips(raiseTo) : "—"}</label>
       <input aria-label="レイズ額スライダー" id="poker-demo-raise" type="range" min={minRaiseTo} max={maxRaiseTo} step={1} value={raiseTo} disabled={!canRaise} onChange={e => setRaise(Number(e.target.value))} />
-      <input className={styles.raiseAmountInput} aria-label="レイズ後の合計入力" type="number" inputMode="numeric" min={minRaiseTo} max={maxRaiseTo} value={raiseTo} disabled={!canRaise} onChange={e=>{const n=Number(e.target.value);if(Number.isSafeInteger(n))setRaise(Math.min(maxRaiseTo,Math.max(minRaiseTo,n)));}}/>
+      <AmountInput className={styles.raiseAmountInput} ariaLabel="レイズ後の合計入力" value={raiseTo} min={minRaiseTo} max={maxRaiseTo} disabled={!canRaise} onChange={setRaise}/>
       <div className={styles.quickBets}>{quickSizes.map((m,i) => <button type="button" key={i} disabled={!canRaise} onClick={() => setRaise(quickTo(m))}>{quickBetLabel(quickKind,m)}</button>)}<button type="button" disabled={!canRaise} onClick={() => setRaise(maxRaiseTo)}>ALL-IN額</button></div>
       <small>{legal?.raise ? `最小 ${showChips(minRaiseTo)} ／ 最大 ${showChips(maxRaiseTo)}${legal.shortAllInOnly ? "（オールインのみ）" : ""}` : legal?.call ? "コールまたはフォールドを選択してください" : ""}</small>
       <div className={styles.actions}>
