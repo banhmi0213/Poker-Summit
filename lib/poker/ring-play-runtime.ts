@@ -9,6 +9,7 @@ import type {RingLobbyCommand,RingLobbyState} from './ring-admission';
 import type {RingPlayView} from './ring-play-state';
 import {parseHandCommand} from './authoritative-hand';
 import {measureRing,type RingMetricSink} from './ring-metrics';
+import {StampBoard} from './stamps';
 type Client={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
 export type RingPlayMeta={context:RingContext;now:string;changedAt:string|null;lastHandId:string|null;completedAt:string|null;runoutFrom:0|3|4|5|null;ready:string[];penalties?:Record<string,{strikes:number;since:string|null;hands:number}>;bankRevision?:number|null;bankUsed?:Record<string,string>;/** Version whose turn got a +30s time bank ticket. */ticketRevision?:number|null};
 export interface RingPlayStore extends RingStore {meta(table:string):Promise<RingPlayMeta>;tables(limit:number):Promise<string[]>;ready(member:string,reservation:string):Promise<void>;ping(member:string,table:string):Promise<void>;cashout(member:string,reservation:string,request:string):Promise<unknown>;timeout:boolean;from:number;actorReservation?:string;bank?(member:string,reservation:string,hand:string,revision:number,request:string):Promise<void>;ticketBank?(member:string,reservation:string,hand:string,revision:number,request:string):Promise<void>;ticket?(member:string,item:'rabbit'|'time_bank',ref:string):Promise<boolean>}
@@ -152,12 +153,15 @@ export class RingPlayRuntime {
 }
 /** Auth has already resolved the member; all money changes still use SQL. */
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
- constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime){}
- private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null};}
- async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table)};return state;}
+ constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime,private stampBoard=new StampBoard()){}
+ #stamps(table:string){const list=this.stampBoard.recent(table);return list.length?{stamps:list.map(({seat,stamp,age})=>({seat,stamp,age}))}:{};}
+ private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null,...this.#stamps(table)};}
+ async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table),...this.#stamps(table)};return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
-  if(command.type==='ready'||command.type==='act'||command.type==='bank'||command.type==='ticket-bank'||command.type==='rabbit'){const state=await this.base.state(member,null),own=state.membership;
+  if(command.type==='ready'||command.type==='act'||command.type==='bank'||command.type==='ticket-bank'||command.type==='rabbit'||command.type==='stamp'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();
+   // Stamps: seated players only, one every few seconds (extra ones are dropped).
+   if(command.type==='stamp'){if(own.seat!==null)this.stampBoard.post(own.tableId,member,own.seat,command.stamp);return this.projected(member,own.tableId);}
    if(command.type==='rabbit'){const cards=await this.runtime.rabbit(member,own.tableId,command.handId);return {...await this.projected(member,own.tableId),rabbit:{handId:command.handId,cards}};}
    if(command.type==='ticket-bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.ticketBank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}
    if(command.type==='bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.bank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}
