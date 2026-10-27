@@ -1031,3 +1031,11 @@
  .demoShell .table .dealerSpot.bet_p6{left:80.9%;top:71.8%}
  .demoShell .table .dealerSpot.bet_you{left:68.2%;top:78.1%}
 }
+/* Phone practice table wagers (owner 2026/10/28): PLAYER 3・4 inside the felt line beside their seat (clear of the pot),
+   PLAYER 5・6 straight in front of their own seat, also inside the line. % of the table box, measured at 390px. */
+@media(max-width:899px){
+ .demoShell .table .bet_p3,.demoShell .table .bet_p5{left:23.7%;right:auto;bottom:auto;transform:none;translate:none}
+ .demoShell .table .bet_p4,.demoShell .table .bet_p6{left:auto;right:23.7%;bottom:auto;transform:none;translate:none}
+ .demoShell .table .bet_p3,.demoShell .table .bet_p4{top:27.6%}
+ .demoShell .table .bet_p5,.demoShell .table .bet_p6{top:65%}
+}
