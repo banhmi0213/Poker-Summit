@@ -861,6 +861,6 @@
 
 /* PC: bring the controls inward and remove the duplicate result strip. */
 @media(min-width:900px){
- .shell .actionColumn{right:clamp(80px,8vw,160px)}
+ .shell .actionColumn{right:clamp(80px,8vw,160px);width:min(480px,28vw)}
  .shell .actionColumn>.resultOverlay{display:none}
 }
