@@ -29,6 +29,9 @@ jobs:
           github-token: ${{ github.token }}
       - name: Commit to gto-flop-results
         run: |
+          set -o pipefail
+          exec > >(tee log.txt) 2>&1
+          trap 'tail -n 8 log.txt | while IFS= read -r l; do echo "::warning::${l:0:500}"; done' EXIT
           ls -la public/poker-gto/flops
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
