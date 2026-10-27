@@ -880,7 +880,13 @@
 }
 
 /* Dealer button on the felt next to the button seat; it hops to the next seat every hand. */
-.dealerButton{position:absolute;right:-14px;bottom:-6px;z-index:4;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,#e6e1d4 70%,#c9c2b0);color:#1d1a14;font:900 12px/1 system-ui,sans-serif;box-shadow:0 2px 5px #0008,inset 0 0 0 2px #fff,inset 0 0 0 3px #b9b1a0;animation:dealerHop .45s ease-out}
+.dealerButton{position:absolute;top:50%;left:0;width:24px;height:24px;margin-top:-12px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,#e6e1d4 70%,#c9c2b0);color:#1d1a14;font:900 12px/1 system-ui,sans-serif;box-shadow:0 2px 5px #0008,inset 0 0 0 2px #fff,inset 0 0 0 3px #b9b1a0;animation:dealerHop .45s ease-out}
+/* The spot shares each seat's bet position on the felt; the disc sits beside the bet chip, toward the table center. */
+.streetBets>.dealerSpot{position:absolute;width:0;height:24px;padding:0;border:0;background:none;box-shadow:none;transform:none;z-index:2}
+.dealerSpot .dealerButton{left:48px}
+.dealerSpot.bet_p4 .dealerButton,.dealerSpot.bet_p6 .dealerButton{left:-72px}
+.streetBets>.dealerSpot.bet_p2{top:20%;bottom:auto;left:50%}
+.streetBets>.dealerSpot.bet_you{top:auto}
 @keyframes dealerHop{from{transform:scale(.4) translateY(-8px);opacity:0}to{transform:none;opacity:1}}
 @media(prefers-reduced-motion:reduce){.dealerButton{animation:none}}
 .seatAvatarRow,.activeAvatar{position:relative}
@@ -900,3 +906,4 @@
 }
 @media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
 @media(min-width:900px){.shell .actionColumn .actions button{font-size:clamp(15px,1.2vw,20px);white-space:nowrap}}
+@media(max-width:899px){.dealerSpot.bet_p3 .dealerButton,.dealerSpot.bet_p4 .dealerButton{left:-12px;top:calc(50% + 28px)}}
