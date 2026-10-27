@@ -93,7 +93,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [running, setRunning] = useState(true);
   const [turnRemaining, setTurnRemaining] = useState(20);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPage, setMenuPage] = useState<"settings" | "structure" | "spectate" | "exit">("settings");
+  const [communityOpen,setCommunityOpen]=useState(false);
+  const [menuPage, setMenuPage] = useState<"settings" | "structure" | "spectate" | "exit" | "community" | "site">("settings");
   const [spectating, setSpectating] = useState(initialSpectating);
   const activePlayerId = handActive && !dealing && !handFinished && !showdown && !spectating ? betting.toAct : null;
   useTableActionMotion(tableRef,handActive?{handId:`demo-${motionHand}`,revision:0,boardCount:streetStep===0?0:streetStep===1?3:streetStep===2?4:5,settled:Boolean(payouts),players:betting.players.map(p=>({id:p.id,committed:p.committed,totalCommitted:p.totalCommitted,folded:p.folded||foldedSeats.includes(Number(p.id.slice(1)))}))}:null);
@@ -428,7 +429,9 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.menuTop}><strong>ゲームメニュー</strong><button type="button" aria-label="メニューを閉じる" onClick={() => setMenuOpen(false)}>×</button></div>
       <nav className={styles.menuNav} aria-label="ゲームメニュー">
         <button type="button" className={menuPage === "settings" ? styles.menuSelected : ""} onClick={() => setMenuPage("settings")}>⚙ 設定</button>
-        {tournament && <button type="button" className={menuPage === "structure" ? styles.menuSelected : ""} onClick={() => setMenuPage("structure")}>ストラクチャー</button>}
+        <button type="button" className={menuPage === "structure" ? styles.menuSelected : ""} onClick={() => setMenuPage("structure")}>卓情報</button>
+        <button type="button" className={menuPage === "community" ? styles.menuSelected : ""} onClick={() => setMenuPage("community")}>サミット</button>
+        <button type="button" className={menuPage === "site" ? styles.menuSelected : ""} onClick={() => setMenuPage("site")}>サイト</button>
         <button type="button" className={menuPage === "spectate" ? styles.menuSelected : ""} disabled={gameType === "tournament"} onClick={() => setMenuPage("spectate")}>◉ 観戦</button>
         <button type="button" className={menuPage === "exit" ? styles.menuSelected : ""} onClick={() => { setMenuPage("exit"); setExitConfirm(false); }}>↪ 退出</button>
       </nav>
@@ -439,21 +442,23 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <label>効果音 <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
           <label>BGM <input type="checkbox" checked={sound.bgm} onChange={e => setSound({ bgm: e.target.checked })} /></label>
           <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
-          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+          <details><summary>検証用：効果音を試聴</summary><div style={{display:"flex",flexWrap:"wrap",gap:6}}>
             {([["deal","配る"],["flop","フロップ"],["turnCard","ターン"],["river","リバー"],["fold","フォールド"],["check","チェック"],["call","コール"],["bet","ベット"],["raise","レイズ"],["allin","オールイン"],["win","ポット獲得"],["turn","自分の番"],["action","相手の行動"]] as [SoundKind,string][]).map(([kind,label]) =>
               <button key={kind} type="button" disabled={!soundEnabled} onClick={() => previewSound(kind)}>♪ {label}</button>)}
-          </div>
+          </div></details>
           <p>レイズ額の設定</p>
           <BetSizeSettings/>
           <small>BB表示と倍率はデモに反映。SEは各場面で再生されます（上のボタンで1つずつ試せます）。レイズ額の設定は会員ごとに保存できます。</small>
         </div>}
-        {menuPage === "structure" && tournament && <div className={styles.menuFields}><TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/></div>}
+        {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リング卓情報</h2><p>SB 50 / BB 100</p><p>6人卓・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
+        {menuPage === "community" && <div className={styles.menuFields}><h2>サミット連携</h2><section><h3>チップ残高</h3><p>デモの持ち点と会員の残高は別です。</p><a href="/mypage/chips" target="_blank" rel="noreferrer">会員のチップ残高・付与履歴を確認 ↗</a></section><details onToggle={e=>setCommunityOpen(e.currentTarget.open)}><summary>掲示板を開く</summary>{communityOpen&&<iframe title="サミット掲示板" src="/poker-community" style={{width:"100%",height:"55dvh",border:"1px solid #9b8354",borderRadius:8}}/>}</details></div>}
+        {menuPage === "site" && <div className={styles.menuFields}><h2>サイト</h2><p>プレイ画面を残して別タブで開きます。</p><p><a href="/" target="_blank" rel="noreferrer">Poker Summit トップ ↗</a></p><p><a href="/poker-lobby" target="_blank" rel="noreferrer">ポーカーロビー ↗</a></p><p><a href="/mypage" target="_blank" rel="noreferrer">マイページ ↗</a></p></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してトップへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
       </div>
     </div>
     <details className={styles.demoInfo}><summary>デモについて</summary><h1>オンラインポーカー テーブル試作</h1><p>チップと進行はブラウザ内のデモです。会員残高とは連携していません。</p></details>
-    <aside className={styles.desktopStructure} aria-label="大会ストラクチャー">{tournament ? <TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/> : <><h2>リングゲーム</h2><p>SB 50 / BB 100</p><p>ブラウザ内のゲーム進行デモです。</p><a href="/poker-lobby">ロビーへ戻る</a></>}</aside>
+
     {tournament && <div className={styles.gameClock}><TournamentPanel tournament={tournament} serverNow={serverNow} gameLinked/></div>}
     {tournament && <div className={styles.statusDock}><details className={styles.tournamentStatus} open={tournamentComplete}><summary>大会状況・結果：残り {remainingIds.length}人{tournamentComplete?"・大会終了":""}</summary><div role="status">
       {handActive && handTerms ? <p>現在のハンド：LV{handTerms.level} ／ SB {handTerms.sb.toLocaleString()} / BB {handTerms.bb.toLocaleString()} ／ Ante {handTerms.ante.toLocaleString()}（{handTerms.anteType==="bb"?"BBアンティ・BB優先":handTerms.anteType==="per-player"?"全員アンティ":"なし"}）</p> : <p>現在のハンド：未開始（強制ベット未徴収）</p>}
