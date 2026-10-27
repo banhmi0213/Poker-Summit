@@ -6,21 +6,22 @@
 @keyframes pop{0%{transform:translateX(-50%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translateX(-50%) scale(1) rotate(0);opacity:1}}
 .sticker{position:relative;display:block}
 .sticker[data-size=bubble]{width:88px;height:88px}
-.sticker[data-size=pick]{width:76px;height:76px}
+.sticker[data-size=pick]{width:58px;height:58px}
 .art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 4px #000a) drop-shadow(0 0 1px #000)}
 .thumb{position:absolute;left:50%;bottom:6%;width:60%;transform:translateX(-50%);filter:drop-shadow(0 3px 4px #000a)}
 .phrase{position:absolute;left:-6px;right:-6px;top:33%;z-index:1;text-align:center;white-space:nowrap;font-weight:900;line-height:1;letter-spacing:-.03em;color:#fff;
  -webkit-text-stroke:5px #1b1813;paint-order:stroke fill;transform:rotate(-6deg);font-size:15px}
 .sticker[data-long] .phrase{font-size:12.5px;letter-spacing:-.06em}
-.sticker[data-size=pick] .phrase{font-size:13px;-webkit-text-stroke:4px #1b1813}
-.sticker[data-size=pick][data-long] .phrase{font-size:11px}
+.sticker[data-size=pick] .phrase{font-size:10.5px;-webkit-text-stroke:3.5px #1b1813}
+.sticker[data-size=pick][data-long] .phrase{font-size:8.5px}
 .sticker[data-tone=r] .phrase{color:#ff4d5a}.sticker[data-tone=y] .phrase{color:#ffd23f}.sticker[data-tone=b] .phrase{color:#53b7ff}.sticker[data-tone=g] .phrase{color:#4fd18b}
 @media(max-width:480px){.sticker[data-size=bubble]{width:72px;height:72px}.sticker[data-size=bubble] .phrase{font-size:13px;-webkit-text-stroke:4px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:10.5px}}
 .bar{position:relative;display:inline-flex}
 .toggle{background:#302a23;color:#f3d9a7;border:1px solid #705c40;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:36px}
-.list{position:absolute;bottom:calc(100% + 6px);left:0;z-index:30;display:grid;grid-template-columns:repeat(4,84px);gap:8px;max-width:calc(100vw - 32px);max-height:60vh;overflow-y:auto;background:#182430;border:1px solid #a78a54;border-radius:12px;padding:10px;box-shadow:0 10px 24px #0008}
-@media(max-width:420px){.list{grid-template-columns:repeat(3,84px)}}
-.list button{display:grid;place-items:center;height:84px;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
+/* All 14 at a glance (owner 2026/10/27: こんだけ？ — the top rows were scrolled out of view). */
+.list{position:absolute;bottom:calc(100% + 6px);left:0;z-index:30;display:grid;grid-template-columns:repeat(5,60px);gap:6px;max-width:calc(100vw - 24px);background:#182430;border:1px solid #a78a54;border-radius:12px;padding:10px;box-shadow:0 10px 24px #0008}
+@media(max-width:360px){.list{grid-template-columns:repeat(5,54px);gap:4px}.sticker[data-size=pick]{width:52px;height:52px}}
+.list button{display:grid;place-items:center;height:60px;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
 .list button:hover:not(:disabled){background:#ffffff12}
 .list button:disabled{opacity:.45;cursor:default}
 .list button:focus-visible{outline:2px solid #f3c663;outline-offset:2px}
