@@ -6,8 +6,18 @@
 const fs=require('fs'),path=require('path');
 const root=path.resolve(__dirname,'../..'),list=fs.readFileSync(path.join(__dirname,'production-migrations.txt'),'utf8').split('\n').map(s=>s.trim()).filter(Boolean);
 const wrap=stmt=>`do $release$ begin ${stmt}; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;`;
-function idempotent(sql){
+/** Apply `fix` only outside dollar-quoted bodies ($$ … $$, $tag$ … $tag$), so function and DO bodies are never touched. */
+function outsideBodies(sql,fix){
+ const out=[];let i=0;const re=/\$([A-Za-z_]*)\$/g;
+ while(i<sql.length){re.lastIndex=i;const m=re.exec(sql);if(!m){out.push(fix(sql.slice(i)));break;}
+  out.push(fix(sql.slice(i,m.index)));const end=sql.indexOf(m[0],m.index+m[0].length);if(end<0){out.push(sql.slice(m.index));break;}
+  out.push(sql.slice(m.index,end+m[0].length));i=end+m[0].length;}
+ return out.join('');
+}
+function idempotent(sql){return outsideBodies(sql,fixStatements);}
+function fixStatements(sql){
  return sql
+  .replace(/drop constraint (?!if exists)/gi,'drop constraint if exists ')
   .replace(/create table (?!if not exists)/gi,'create table if not exists ')
   .replace(/create (unique )?index (?!if not exists)/gi,(m,u)=>`create ${u??''}index if not exists `)
   .replace(/add column (?!if not exists)/gi,'add column if not exists ')

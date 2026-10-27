@@ -1154,7 +1154,7 @@ end;$$;
 -- 20261020125126_poker_ring_seating_and_hand_accounting.sql
 -- (own transaction removed: the whole upgrade is one transaction)
 -- Table row first, then accounts in member UUID order: one lock order for all funds paths.
-alter table poker_private.ring_fund_reservations drop constraint ring_fund_reservations_status_check; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
+alter table poker_private.ring_fund_reservations drop constraint if exists ring_fund_reservations_status_check; do $release$ begin alter table poker_private.ring_fund_reservations add constraint ring_fund_reservations_status_check check(status in('held','seated','returned')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 alter table poker_private.ring_fund_reservations add column if not exists seat_number integer;
 alter table poker_private.ring_fund_reservations add column if not exists table_stack bigint;
 update poker_private.ring_fund_reservations set table_stack=case when status='returned' then 0 else amount end;
@@ -1180,8 +1180,8 @@ alter table poker_private.ring_hand_commits enable row level security;
 revoke all on poker_private.ring_hands,poker_private.ring_hand_commits from public,anon,authenticated,service_role;
 grant select on poker_private.ring_hands,poker_private.ring_hand_commits to service_role; do $release$ begin create trigger ring_commit_immutable before update or delete on poker_private.ring_hand_commits for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 alter table poker_private.ring_chip_ledger add column if not exists hand_id uuid references poker_private.ring_hands(id);
-alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_kind_check;
-alter table poker_private.ring_chip_ledger drop constraint ring_chip_ledger_check; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
+alter table poker_private.ring_chip_ledger drop constraint if exists ring_chip_ledger_kind_check;
+alter table poker_private.ring_chip_ledger drop constraint if exists ring_chip_ledger_check; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_kind_check check(kind in('welcome','reserve','refund','settlement','cashout')); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;; do $release$ begin alter table poker_private.ring_chip_ledger add constraint ring_chip_ledger_check check(
  (kind='welcome' and available_delta=3000 and in_play_delta=0 and reservation_id is null and hand_id is null) or
  (kind='reserve' and available_delta<0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
  (kind='refund' and available_delta>0 and in_play_delta=-available_delta and reservation_id is not null and hand_id is null) or
@@ -1984,7 +1984,7 @@ alter table poker_private.hand_history_members add column if not exists stats js
 alter table poker_private.hand_history_members add column if not exists bb integer;
 do $$ begin
  if not exists(select 1 from pg_constraint where conname='hand_history_members_stats_object') then
-  do $release$ begin alter table poker_private.hand_history_members add constraint hand_history_members_stats_object check(jsonb_typeof(stats)='object' and length(stats::text)<=2000); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
+  alter table poker_private.hand_history_members add constraint hand_history_members_stats_object check(jsonb_typeof(stats)='object' and length(stats::text)<=2000);
  end if;
 end $$;
 
