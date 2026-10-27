@@ -4,7 +4,7 @@ Module._resolveFilename=function(n,p,...args){if(n.startsWith('@/'))n=root+'/'+n
 let stored={},writes=[];const user={id:'00000000-0000-4000-8000-000000000001',user_metadata:{}};
 const client={auth:{getUser:async()=>({data:{user:{...user,user_metadata:stored}},error:null}),updateUser:async value=>{writes.push(value);stored=value.data;return {error:null}}}};
 require.extensions['.ts']=(m,f)=>{if(f.endsWith('/lib/supabase/server.ts')){m.exports={createClient:async()=>client};return;}m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);};
-const route=require('../app/api/poker/table-preferences/route.ts'),settings={bb:true,multipliers:[2.5,3.5,5],potPercentages:[25,60,75,110],raiseMultipliers:[2.2,3,4,5],runItTwice:'twice'};
+const route=require('../app/api/poker/table-preferences/route.ts'),settings={bb:true,multipliers:[2.5,3.5,5],potPercentages:[25,60,75,110],raiseMultipliers:[2.2,3,4,5],runItTwice:'twice',tableSkin:'standard',cardSkin:'standard'};
 const request=(body,origin='https://preview.example')=>new Request('https://preview.example/api/poker/table-preferences',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
 test('member settings save on every environment, reject account switches and round-trip the selected values',async()=>{const previous=process.env.NEXT_PUBLIC_SUPABASE_URL;try{
  process.env.NEXT_PUBLIC_SUPABASE_URL='https://tjmeqnzvuoguoffltxrp.supabase.co';assert.equal((await route.POST(request({accountId:'other',settings}))).status,409);assert.equal(writes.length,0);assert.equal((await route.POST(request({accountId:user.id,settings},'https://other.example'))).status,403);
