@@ -80,7 +80,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   // GTO CPUs (2026/10/27): every voluntary action of the hand, for the CPUs' range reading.
   const [actionLog, setActionLog] = useState<LoggedAction[]>([]);
   const gtoWorker = useRef<Worker | null>(null), gtoRequest = useRef(0);
-  useEffect(() => { try { gtoWorker.current = new Worker(new URL("../../lib/poker/gto.worker.ts", import.meta.url)); } catch { gtoWorker.current = null; } return () => { gtoWorker.current?.terminate(); gtoWorker.current = null; }; }, []);
+  useEffect(() => { let live = true; import("./gto-worker-client").then(m => { if (!live) return; try { gtoWorker.current = m.createGtoWorker(); } catch { gtoWorker.current = null; } }).catch(() => { gtoWorker.current = null; }); return () => { live = false; gtoWorker.current?.terminate(); gtoWorker.current = null; }; }, []);
   const [betting, setBetting] = useState<BettingRound>(() => initialHand.round);
   const [bettingMessage, setBettingMessage] = useState(initialHand.terms ? `SB ${initialHand.terms.sb} / BB ${initialHand.terms.bb}・Ante ${initialHand.terms.ante}を徴収しました（デモ）。` : "開始前・休憩中は強制ベットを徴収しません。開始可能になったら大会デモを開始してください。");
   const [showdown, setShowdown] = useState(false);
