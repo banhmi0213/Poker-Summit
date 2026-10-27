@@ -32,7 +32,8 @@ import { requestDemoDeal } from "./actions";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 const clockwiseSeats = ["you", "p5", "p3", "p2", "p4", "p6"];
-const initialStacks: Record<string, number> = { you: 2500, p5: 2260, p3: 1850, p2: 2500, p4: 3100, p6: 1900 };
+// 100BB each: the GTO CPUs play the chart solved for 100BB (owner 2026/10/27).
+const initialStacks: Record<string, number> = { you: 10000, p5: 10000, p3: 10000, p2: 10000, p4: 10000, p6: 10000 };
 const makeHand = (stacks:Record<string,number>, buttonIndex:number, terms:HandTerms, assigned?:TournamentPositions) => startForcedHand(clockwiseSeats.filter(id=>stacks[id]>0).map(id=>({id,stack:stacks[id]})),assigned?0:buttonIndex,terms,assigned).round;
 const seats = [
   { name: "PLAYER 2", stack: "2,500" },
