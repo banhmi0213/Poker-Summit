@@ -86,7 +86,7 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     const hand = html.match(/<div class="hole"[^>]*>([\s\S]*?)<\/div>/)[1];
     for (const card of fixtureDeal.holes.you) assert.ok(hand.replace(/<[^>]+>/g,'').includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
-    assert.equal((html.match(/src="\/images\/summit-finger-clean.webp"/g)||[]).length,10);
+    assert.equal((html.match(/src="\/images\/summit-finger-clean.webp"(?! alt="" data-summit)/g)||[]).length,10,'ten card backs (the Summit button beside your avatar is not a card)');
     assert.match(html, /aria-label="共通カード"[^>]*><\/div>/);
 });
 
