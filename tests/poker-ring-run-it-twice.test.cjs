@@ -4,7 +4,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 // The runner never reaches Supabase here; stub the client package so this runs without it.
 const load=Module._load;Module._load=function(r,...a){if(r==='@supabase/supabase-js')return {createClient(){throw Error('no network in tests');}};return load.call(this,r,...a);};
 const {RingHandOwner}=require('../lib/poker/ring-hand-owner.ts');
-const {RingPlayRuntime,RUNS_CHOICE_MS}=require('../lib/poker/ring-play-runtime.ts');
+const {RingPlayRuntime,RUNS_CHOICE_MS,AUTO_BANK_AT_MS}=require('../lib/poker/ring-play-runtime.ts');
 const keys={active:'k1',keys:{k1:randomBytes(32)}};
 function world(){
  const table=randomUUID(),seats=[1,2].map(n=>({reservationId:randomUUID(),memberId:randomUUID(),seat:n,stack:1000})),hands={},writes=[];
@@ -43,4 +43,15 @@ test('both players answering 2 settles twice without the runner',async()=>{
  for(const p of w.seats){const v=owner.snapshot(p.memberId);w.store.actorReservation=p.reservationId;await owner.act(p.memberId,{handId:v.handId,revision:v.revision,actionId:randomUUID(),action:{type:'runs',count:2}});}
  const done=owner.snapshot(null);assert.equal(done.result.boards.length,2);
  assert.equal(done.players.reduce((a,p)=>a+p.stack,0),2000);
+});
+
+test('ring free time bank is used automatically just before the turn runs out, once per hand',async()=>{
+ const w=world(),owner=await (await RingHandOwner.prepare(w.store,w.table,keys)).commit(),s=owner.snapshot(null),banks=[];
+ w.store.bank=async(member,reservation,hand,revision,request)=>{banks.push({member,reservation,hand,revision,request});};
+ const rt=runner(w),actor=w.seats.find(p=>'seat-'+p.seat===s.toAct);
+ w.now=w.changedAt+AUTO_BANK_AT_MS-500;await rt['advance'](w.table,w.store);assert.equal(banks.length,0,'not yet');
+ w.now=w.changedAt+AUTO_BANK_AT_MS+100;await rt['advance'](w.table,w.store);
+ assert.equal(banks.length,1);assert.equal(banks[0].reservation,actor.reservationId);assert.equal(banks[0].hand,s.handId);assert.equal(banks[0].revision,s.revision);
+ const meta=w.store.meta;w.store.meta=async()=>({...(await meta()),bankUsed:{[actor.reservationId]:s.handId}});
+ await rt['advance'](w.table,w.store);assert.equal(banks.length,1,'a used bank is not requested again');
 });

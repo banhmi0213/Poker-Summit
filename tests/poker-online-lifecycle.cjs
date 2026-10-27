@@ -70,16 +70,12 @@ test('completed result remains during next hand and is cleared on connection los
  assert.ok(!text(renderer.toJSON()).includes('直前の結果'));
 });
 
- test('time bank button extends server deadline once and the active avatar renders its countdown',async t=>{
+ test('time bank shows only the card count (used automatically) and the active avatar renders its countdown',async t=>{
  const f=await harness(t);await f.click('接続・再接続');
- const View=require('../app/poker-online/[roomId]/online-table-view.tsx').OnlineTableView;
- const before=f.renderer.root.findByType(View).props.state.turn.expiresAt;
- const bank=()=>f.renderer.root.findAllByType('button').find(b=>b.props['aria-label']?.startsWith('タイムバンク'));
- assert.equal(bank().props.disabled,false);await act(async()=>bank().props.onClick());
- assert.equal(f.renderer.root.findByType(View).props.state.turn.expiresAt,before+20000);assert.equal(bank().props.disabled,false,'a second card can be used in the same turn');
- const ring=f.renderer.root.findByProps({role:'progressbar'});assert.equal(ring.props['aria-valuenow'],40);assert.match(ring.props.style.background,/conic-gradient/);
- await act(async()=>bank().props.onClick());assert.equal(f.renderer.root.findByType(View).props.state.turn.expiresAt,before+40000);assert.equal(bank().props.disabled,true,'no cards left');
- const banks=f.packets.filter(p=>p.type==='time-bank');assert.equal(banks.length,2);assert.notEqual(banks[0].requestId,banks[1].requestId);
+ assert.equal(f.renderer.root.findAllByType('button').some(b=>String(b.props['aria-label']??'').startsWith('タイムバンク')),false,'no manual time bank button');
+ const status=f.renderer.root.findAll(n=>n.type==='span'&&String(n.props['aria-label']??'').startsWith('タイムバンク'));assert.ok(status.length>0);assert.match(text(status[0]),/⏰\s*\d+枚/);
+ const ring=f.renderer.root.findByProps({role:'progressbar'});assert.match(ring.props.style.background,/conic-gradient/);
+ assert.equal(f.packets.filter(p=>p.type==='time-bank').length,0,'nothing is sent until the server spends a card at the deadline');
  });
 
 test('poker workspace links lobby and account and switches only the selected panel',async t=>{

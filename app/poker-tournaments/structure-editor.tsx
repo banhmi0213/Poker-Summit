@@ -8,7 +8,7 @@ import StructureView from "./structure-view";
 export default function StructureEditor({ initial = defaultStructure }: {
     initial?: TournamentStructure;
 }) {
-    const [s, setS] = useState<TournamentStructure>(initial);
+    const [s, setS] = useState<TournamentStructure>({ ...initial, timeBankCards: initial.timeBankCards ?? 2 });
     const [minutes, setMinutes] = useState(20);
     const update = (i: number, patch: Partial<BlindPeriod>) => setS(prev => ({ ...prev, periods: prev.periods.map((p, j) => j === i ? { ...p, ...patch } : p) }));
     let level = 0;

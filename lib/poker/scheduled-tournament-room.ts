@@ -77,7 +77,7 @@ export class ScheduledTournamentRoom {
     if(!control.enabled)return result("disabled");
     if(state.phase==="finished")return result("finished");
     if(state.phase==="playing"){
-      if(state.turn&&now>=state.turn.expiresAt){const r=this.#transition(()=>this.#room.expireTurn(state.turn!));return result("timed-out",r.expired,this.#room.publicSnapshot().turn?.expiresAt??null);}
+      if(state.turn&&now>=state.turn.expiresAt){const r=this.#transition(()=>this.#room.expireTurn(state.turn!));return result(r.expired?"timed-out":"time-bank",r.expired||Boolean((r as {banked?:boolean}).banked),this.#room.publicSnapshot().turn?.expiresAt??null);}
       return result("playing",false,state.turn?.expiresAt??null);
     }
     if(state.clock.phase==="scheduled")return result("scheduled",false,Date.parse(this.#startsAt));

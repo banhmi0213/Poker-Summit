@@ -10,7 +10,9 @@ export function onlineTableSeats(state:PlayerSnapshot,includeEmpty=false,fixedSe
   const player=state.hand?.players.find(p=>p.id===seat.id);
   return {seat,slot,player,isYou:state.youSeat===seat.seat,
    stack:player?.stack??state.tournament?.stacks[seat.id]??null,
-   positions:state.hand?(['button','sb','bb'] as const).filter(p=>state.hand!.positions[p]===seat.id).map(p=>p==='button'?'BTN':p.toUpperCase()).join(' / '):'',
+   // The button is shown as a dealer button on the felt, not as a seat label.
+   positions:state.hand?(['sb','bb'] as const).filter(p=>state.hand!.positions[p]===seat.id).map(p=>p.toUpperCase()).join(' / '):'',
+   dealer:Boolean(state.hand&&state.hand.positions.button===seat.id),
    committed:state.hand?.result?0:player?.committed??0,
    payout:state.hand?.result?.payouts[seat.id]??0,delta:state.hand?.result?(state.hand.result.payouts[seat.id]??0)-(player?.totalCommitted??0):null};
  });

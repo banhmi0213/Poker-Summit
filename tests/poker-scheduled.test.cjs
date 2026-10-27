@@ -3,7 +3,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {ScheduledTournamentRoom}=require('../lib/poker/scheduled-tournament-room.ts');
 const start='2026-10-16T10:00:00.000Z',T=Date.parse(start);
 const config=()=>({starts_at:start,structure:{startingStack:10000,anteType:'bb',lateRegLevel:2,reentry:false,periods:[{kind:'level',minutes:1,sb:50,bb:100,ante:100,note:''},{kind:'level',minutes:1,sb:75,bb:150,ante:150,note:''},{kind:'break',minutes:1,sb:0,bb:0,ante:0,note:'休憩'},{kind:'level',minutes:1,sb:100,bb:200,ante:200,note:''}]}});
-function setup(at=0,turnMs=300000){let now=T+at;const room=new ScheduledTournamentRoom(config(),{now:()=>now,turnMs}),tokens={};for(const n of [1,6]){room.seat('m'+n,n);tokens[n]=room.connect('m'+n).connectionId;}return {room,tokens,setNow:offset=>{now=T+offset;}};}
+function setup(at=0,turnMs=300000,cards){let now=T+at;const cfg=config();if(cards)cfg.structure.timeBankCards=cards;const room=new ScheduledTournamentRoom(cfg,{now:()=>now,turnMs}),tokens={};for(const n of [1,6]){room.seat('m'+n,n);tokens[n]=room.connect('m'+n).connectionId;}return {room,tokens,setNow:offset=>{now=T+offset;}};}
 const command=(s,action,id='a')=>({handId:s.hand.handId,revision:s.hand.revision,actionId:id,action});
 function fold(f){const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));return f.room.act('m'+n,f.tokens[n],command(s,{type:'fold'}));}
 const chips=s=>s.hand.players.reduce((v,p)=>v+p.stack,0)+s.hand.pot;
@@ -60,7 +60,7 @@ test('default result pause lasts eight seconds, including restored legacy defaul
 });
 
 test('time bank extends only current player, replays once, survives restore and resets next hand',()=>{
- const f=setup();f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),other=n===1?6:1;
+ const f=setup(0,300000,2);f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),other=n===1?6:1;
  assert.throws(()=>f.room.timeBank('m'+other,f.tokens[other],s.hand.handId,s.hand.revision));
  assert.throws(()=>f.room.timeBank('m'+n,'obsolete',s.hand.handId,s.hand.revision));
  const before=s.turn.expiresAt,command={...s.turn};
@@ -84,8 +84,8 @@ test('targeted tournament opens exactly ten minutes before and starts only seate
 test('fewer than two seated members never auto-win and late initial seating is rejected',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B'],expectedCount:2,seatedStart:true};room.advance(control);room.join('A',true);now=T;assert.equal(room.advance(control).event,'insufficient-seated');assert.equal(room.publicSnapshot().hand,null);assert.throws(()=>room.join('B',true));});
 test('checked-in disconnected player remains; cancelled member is excluded',()=>{let now=T-1000;const room=new ScheduledTournamentRoom(config(),{now:()=>now}),control={enabled:true,published:true,members:['A','B','C'],expectedCount:3,seatedStart:true};room.advance(control);const a=room.join('A',true);room.join('B',true);room.join('C',true);room.disconnect('A',a.connectionId);now=T;assert.equal(room.advance({...control,members:['A','B']}).event,'started');assert.equal(room.publicSnapshot().hand.players.length,2);assert.equal(room.publicSnapshot().seats.filter(s=>s.occupied).length,2);});
 
-test('tournament time bank cards: default 2 cards, one card per turn adds one turn of time, restored intact',()=>{
- const f=setup();f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));
+test('tournament time bank cards: 2 cards, one card per turn adds one turn of time, restored intact',()=>{
+ const f=setup(0,300000,2);f.room.startHand(6);let s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5));
  const view=()=>f.room.snapshot('m'+n,f.tokens[n]).timeBank;
  assert.deepEqual(view(),{seconds:300,remaining:1,cards:2});
  const before=s.turn.expiresAt;f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision);
@@ -104,12 +104,20 @@ test('tournament settings choose 20s or 30s turns, 1-5 cards and optional final 
  assert.deepEqual(room.snapshot('m'+n,tokens[n]).timeBank,{seconds:30,remaining:1,cards:5});
 });
 test('tournament time bank cards can be stacked in one turn; each request id spends exactly one card',()=>{
- const f=setup();f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),before=s.turn.expiresAt;
+ const f=setup(0,300000,2);f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),before=s.turn.expiresAt;
  const use=id=>f.room.timeBank('m'+n,f.tokens[n],s.hand.handId,s.hand.revision,id);
  assert.equal(use('card-request-1').replayed,false);assert.equal(use('card-request-2').replayed,false);
  assert.equal(use('card-request-2').replayed,true,'a lost acknowledgement retry does not spend another card');
  assert.equal(f.room.publicSnapshot().turn.expiresAt,before+600000);
  const v=f.room.snapshot('m'+n,f.tokens[n]);assert.deepEqual(v.timeBank,{seconds:300,remaining:0,cards:0});assert.equal(v.turnDurationMs,900000);
  assert.throws(()=>use('card-request-3'),/Time bank unavailable/);
+ const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.cards,0);
+});
+test('turn expiry spends one time bank card automatically before folding',()=>{
+ const f=setup(0,300000,2);f.room.startHand(6);const s=f.room.publicSnapshot(),n=Number(s.hand.toAct.slice(5)),deadline=s.turn.expiresAt;
+ f.setNow(deadline-T);let r=f.room.expireTurn(f.room.publicSnapshot().turn);assert.equal(r.expired,false);assert.equal(r.banked,true);
+ assert.equal(f.room.publicSnapshot().turn.expiresAt,deadline+300000);assert.equal(f.room.snapshot('m'+n,f.tokens[n]).timeBank.cards,1);
+ f.setNow(deadline+300000-T);r=f.room.expireTurn(f.room.publicSnapshot().turn);assert.equal(r.banked,true);assert.equal(f.room.snapshot('m'+n,f.tokens[n]).timeBank.cards,0);
+ f.setNow(deadline+600000-T);r=f.room.expireTurn(f.room.publicSnapshot().turn);assert.equal(r.expired,true);
  const restored=ScheduledTournamentRoom.restore(f.room.checkpoint(),{now:()=>T});assert.equal(restored.connect('m'+n).state.timeBank.cards,0);
 });
