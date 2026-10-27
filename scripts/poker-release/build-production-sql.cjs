@@ -18,6 +18,8 @@ function idempotent(sql){return outsideBodies(sql,fixStatements);}
 function fixStatements(sql){
  return sql
   .replace(/drop constraint (?!if exists)/gi,'drop constraint if exists ')
+  // One-time seed rows (e.g. the ring identity secret) are kept on a re-run, never regenerated.
+  .replace(/(^|;)(\s*insert into [^;]+)(?=;)/gim,(m,lead,stmt)=>/on conflict/i.test(stmt)?m:`${lead}${stmt} on conflict do nothing`)
   .replace(/create table (?!if not exists)/gi,'create table if not exists ')
   .replace(/create (unique )?index (?!if not exists)/gi,(m,u)=>`create ${u??''}index if not exists `)
   .replace(/add column (?!if not exists)/gi,'add column if not exists ')

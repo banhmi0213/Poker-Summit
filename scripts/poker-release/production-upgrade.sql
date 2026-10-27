@@ -971,7 +971,7 @@ do $$declare c record;begin
  end loop;
 end;$$;
 create table if not exists poker_private.ring_identity_secret(id boolean primary key default true check(id),secret bytea not null check(octet_length(secret)=32));
-insert into poker_private.ring_identity_secret values(true,extensions.gen_random_bytes(32));
+insert into poker_private.ring_identity_secret values(true,extensions.gen_random_bytes(32)) on conflict do nothing;
 create table if not exists poker_private.ring_welcome_claims(
  identity_key bytea primary key check(octet_length(identity_key)=32),member_id uuid not null unique,amount bigint not null default 3000 check(amount=3000),created_at timestamptz not null default now()
 );
