@@ -1,4 +1,5 @@
 import {loadPokerStatistics} from '@/lib/poker/statistics';
+import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
@@ -12,7 +13,7 @@ import {HandHistoryList} from '@/app/poker-ui/hand-history-list';
 export const dynamic='force-dynamic';
 export default async function Page(){const [data,hands,tendencies]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats()]);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
- return <PokerWorkspace kind="account" panes={[
+ const panes=[
  {id:'ring',label:'チップ残高・順位',eyebrow:'RING CHIP BALANCE',description:'リング用チップの残高と自分のランキング。',content:data?<StatisticsView data={data} section="ring"/>:unavailable},
  {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
  {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加卓を確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},
@@ -24,5 +25,7 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。',content:<GtoQuiz/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。',content:<RiverSolverPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryList hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
- ]}/>;
+ ];
+ // Ring-first release: tournament panes stay hidden until tournaments open.
+ return <PokerWorkspace kind="account" panes={POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id))}/>;
 }

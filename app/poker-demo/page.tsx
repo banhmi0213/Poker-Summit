@@ -1,3 +1,4 @@
+import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {GameCommunity} from '@/app/poker-ui/game-community';
 import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
@@ -20,6 +21,8 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const { data: profile } = user ? await supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle() : { data: null };
   const serverNow = Date.now();
   let tournament: PokerTournament | undefined;
+  // Ring-first release: tournament samples are hidden with the tournaments.
+  if (!POKER_TOURNAMENTS_ENABLED && (searchParams?.tournament || searchParams?.game === "tournament")) notFound();
   if (searchParams?.tournament) {
     if (!/^[a-f0-9-]{36}$/i.test(searchParams.tournament)) notFound();
     const { data, error } = await supabase.from("poker_tournaments").select("id,title,owner_store_id,starts_at,published,structure,image_url,organizer_name,prizes").eq("id",searchParams.tournament).eq("published",true).maybeSingle();
