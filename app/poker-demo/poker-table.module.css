@@ -881,7 +881,7 @@
 
 /* PC: center cards over portraits and bring the action dock farther inward. */
 @media(min-width:900px){
- .shell .actionColumn{right:clamp(140px,14vw,280px)}
+ .shell .actionColumn{right:clamp(180px,20vw,400px);width:min(480px,24vw)}
  .table .self .handWithRank{left:50%;top:0;transform:translateX(-50%);z-index:8}
  .table .opponentCardsLayer,.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:10}
  .table .showdownTwo,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:0;left:50%;right:auto;transform:translateX(-50%)}
@@ -890,3 +890,4 @@
  .table .showdownFive,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;left:calc(3% - 12px);right:auto;bottom:auto}
  .table .showdownSix,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;right:calc(3% - 12px);left:auto;bottom:auto}
 }
+@media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
