@@ -1,7 +1,6 @@
 // Precompute heads-up flop solutions for the my-page flop browser (2026/10/26).
-// Spot: single-raised pot, BTN opens 2.5BB and BB calls, 100BB stacks (pot 5.5BB, 97.5BB behind).
-// Ranges are standard-looking reference ranges (not solved preflop); they are written into the output.
-// Usage: node scripts/poker-gto/flop-solve.cjs --flop Kh7d2c [--target 0.01] [--max-iters 300] [--max-minutes 300] [--out dir]
+// Spots (ranges, pot, sizes) are in spots.cjs; ranges are standard reference ranges, written into the output.
+// Usage: node scripts/poker-gto/flop-solve.cjs --spot btn-bb --flop Kh7d2c [--target 0.01] [--max-iters 300] [--max-minutes 300] [--out dir]
 const fs=require('fs'),path=require('path');
 require('./common.cjs'); // registers the .ts loader
 const {PostflopSolver}=require(path.resolve(__dirname,'../../lib/poker/postflop-solver.ts'));
@@ -30,27 +29,20 @@ function combos(labels,board){
  }
  return out;
 }
-const SPOT={
- name:'BTN対BB・シングルレイズ・100BB',
- pot:5.5,stack:97.5,
- btn:'22+,A2s+,K2s+,Q2s+,J4s+,T6s+,96s+,85s+,75s+,64s+,54s,A2o+,K8o+,Q9o+,J9o+,T8o+,98o,87o',
- // BB flats vs a 2.5x button open; QQ+, AK, A5s and A4s are 3-bet instead.
- bbDefend:'22+,A2s+,K2s+,Q2s+,J2s+,T4s+,95s+,84s+,74s+,63s+,53s+,43s,A2o+,K5o+,Q7o+,J7o+,T7o+,97o+,86o+,76o,65o',
- bb3bet:'QQ+,AKs,AKo,A5s,A4s',
- sizes:{betSizes:[0.33,0.75],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5},
-};
+const SPOTS=require('./spots.cjs');
 
 function arg(name,def){const i=process.argv.indexOf('--'+name);return i>=0?process.argv[i+1]:def;}
 const flop=arg('flop');if(!flop||!/^([2-9TJQKA][cdhs]){3}$/i.test(flop))throw new Error('--flop like Kh7d2c is required');
 const target=Number(arg('target',0.01)),maxIters=Number(arg('max-iters',300)),maxMinutes=Number(arg('max-minutes',300));
-const outDir=arg('out',path.resolve(__dirname,'../../public/poker-gto/flops'));
+const spotId=arg('spot','btn-bb'),SPOT=SPOTS[spotId];if(!SPOT)throw new Error('--spot must be one of '+Object.keys(SPOTS).join(', '));
+const outDir=path.join(arg('out',path.resolve(__dirname,'../../public/poker-gto/flops')),spotId);
 const board=[0,2,4].map(i=>code(flop.slice(i,i+2)));
-// --btn / --bb override the ranges (used by the quick self-check).
-const bbLabels=expand(arg('bb',SPOT.bbDefend));if(!arg('bb'))for(const l of expand(SPOT.bb3bet))bbLabels.delete(l);
-const spot={board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(bbLabels,board),combos(expand(arg('btn',SPOT.btn)),board)]};
+const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(exclude):[])l.delete(x);return l;};
+// --oop / --ip override the ranges (used by the quick self-check).
+const spot={board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
 const solver=new PostflopSolver(spot);
 const t0=Date.now(),log=m=>console.log(`[${flop} ${((Date.now()-t0)/60000).toFixed(1)}min] ${m}`);
-log(`combos OOP(BB) ${solver.sides[0].n} IP(BTN) ${solver.sides[1].n}`);
+log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${solver.sides[1].n}`);
 let expl=Infinity,checks=[];
 while(solver.iterations<maxIters){
  solver.run(1);
@@ -71,7 +63,7 @@ function visit(steps){
 }
 visit([]);
 const [ev0,ev1]=solver.values();
-const out={version:1,flop,board,spot:{name:SPOT.name,pot:SPOT.pot,stack:SPOT.stack,oop:'BB',ip:'BTN',ranges:{btn:SPOT.btn,bbDefend:SPOT.bbDefend,bb3bet:SPOT.bb3bet},sizes:SPOT.sizes},
+const out={version:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:SPOT.pot,stack:SPOT.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},sizes:SPOT.sizes},
  iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
