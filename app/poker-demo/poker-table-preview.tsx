@@ -475,14 +475,16 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <button type="button" className={menuPage === "community" ? styles.menuSelected : ""} onClick={() => setMenuPage("community")}>サミット</button>
         <button type="button" className={menuPage === "site" ? styles.menuSelected : ""} onClick={() => setMenuPage("site")}>サイト</button>
         <button type="button" className={menuPage === "spectate" ? styles.menuSelected : ""} disabled={gameType === "tournament"} onClick={() => setMenuPage("spectate")}>◉ 観戦</button>
-        <button type="button" className={menuPage === "exit" ? styles.menuSelected : ""} onClick={() => { setMenuPage("exit"); setExitConfirm(false); }}>↪ 退出</button>
+        <button type="button" className={menuPage === "exit" ? styles.menuSelected : ""} onClick={() => { setMenuPage("exit"); setExitConfirm(false); }}>退出</button>
       </nav>
       <div className={styles.menuContent}>
         {menuPage === "settings" && <div className={styles.menuFields}>
           <h2>設定</h2>
           <label>BB表示 <input type="checkbox" checked={displayUnit === "bb"} onChange={e => setDisplayUnit(e.target.checked ? "bb" : "chips")} /></label>
           <label>効果音 <input type="checkbox" checked={soundEnabled} onChange={e => setSoundEnabled(e.target.checked)} /></label>
+          <label>効果音の音量 <input type="range" aria-label="効果音の音量" min={0} max={100} step={5} value={sound.seVolume} disabled={!soundEnabled} onChange={e => setSound({ seVolume: Number(e.target.value) })} /> <small>{sound.seVolume}</small></label>
           <label>BGM <input type="checkbox" checked={sound.bgm} onChange={e => setSound({ bgm: e.target.checked })} /></label>
+          <label>BGMの音量 <input type="range" aria-label="BGMの音量" min={0} max={100} step={5} value={sound.bgmVolume} disabled={!sound.bgm} onChange={e => setSound({ bgmVolume: Number(e.target.value) })} /> <small>{sound.bgmVolume}</small></label>
           <label>練習ヒント（勝率の目安） <input type="checkbox" checked={hintsOn} onChange={e => setHintsOn(e.target.checked)} /></label>
           <p>レイズ額の設定</p>
           <BetSizeSettings/>
