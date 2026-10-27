@@ -870,12 +870,13 @@
  .table .seatTimerRing,.table .self .activeAvatar{width:120px;height:120px}
  .table .seatTimerRing .avatar,.table .self .activeAvatar .avatar{width:112px;height:112px}
  .table .seatAvatarRow{min-height:120px}
- .table .bet_p3{left:16%;top:30%;bottom:auto}
- .table .bet_p4{left:84%;top:30%;bottom:auto}
- .table .bet_p5{left:16%;top:64%;bottom:auto}
- .table .bet_p6{left:84%;top:64%;bottom:auto}
+ .table .bet_p3{left:22%;top:30%;bottom:auto}
+ .table .bet_p4{left:78%;top:30%;bottom:auto}
+ .table .bet_p5{left:24%;top:56%;bottom:auto}
+ .table .bet_p6{left:76%;top:56%;bottom:auto}
  .table .bet_you{left:50%;bottom:30%;top:auto}
- .table>.streetBets>.bet_p2{top:172px;left:50%;bottom:auto}
+ .table .topSeats .bet_p2{top:calc(100% + 42px)}
+ .table>.streetBets>.bet_p2{top:24%;left:50%;bottom:auto}
 }
 
 /* Dealer button on the felt next to the button seat; it hops to the next seat every hand. */
@@ -886,3 +887,16 @@
 /* Time bank cards left, next to the player's name. */
 .bankCards{flex:0 0 auto;margin-left:6px;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap}
 .nameRow{display:flex;align-items:center;gap:0;max-width:100%;min-width:0}
+/* PC: center cards over portraits and bring the action dock farther inward. */
+@media(min-width:900px){
+ .shell .actionColumn{right:clamp(180px,20vw,400px);width:min(480px,24vw)}
+ .table .self .handWithRank{left:50%;top:0;transform:translateX(-50%);z-index:8}
+ .table .opponentCardsLayer,.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:10}
+ .table .showdownTwo,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:0;left:50%;right:auto;transform:translateX(-50%)}
+ .table .showdownThree,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:15%;left:calc(3% - 12px);right:auto}
+ .table .showdownFour,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:15%;right:calc(3% - 12px);left:auto}
+ .table .showdownFive,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;left:calc(3% - 12px);right:auto;bottom:auto}
+ .table .showdownSix,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;right:calc(3% - 12px);left:auto;bottom:auto}
+}
+@media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
+@media(min-width:900px){.shell .actionColumn .actions button{font-size:clamp(15px,1.2vw,20px);white-space:nowrap}}

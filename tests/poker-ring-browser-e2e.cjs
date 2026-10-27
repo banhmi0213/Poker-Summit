@@ -106,7 +106,7 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
    const cards=page.getByLabel('各プレイヤーのハンド',{exact:true}).locator('[data-motion-hole] > span');
    assert.equal(await cards.count(),2);assert.equal(await cards.locator('[data-card-rank]').count(),4);
    const layout=await page.evaluate(()=>{const layer=document.querySelector('[aria-label="各プレイヤーのハンド"]'),cards=Array.from(layer.querySelectorAll('[data-motion-hole] > span')),avatars=Array.from(document.querySelectorAll('[data-motion-stack]')).map(e=>e.getBoundingClientRect());return {z:Number(getComputedStyle(layer).zIndex),cards:cards.map(e=>{const r=e.getBoundingClientRect();return {onScreen:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,straight:getComputedStyle(e).transform==='none',clear:avatars.every(a=>r.right<=a.left||r.left>=a.right||r.bottom<=a.top||r.top>=a.bottom)};})};});
-   assert.ok(layout.z>=(viewport.width<900?10:4),'revealed cards render above seat avatars');assert.ok(layout.cards.every(c=>c.onScreen&&c.straight&&(viewport.width<900||c.clear)),'both public cards stay fully visible; phone cards may overlap portraits');
+   assert.ok(layout.z>=(viewport.width<900?10:4),'revealed cards render above seat avatars');assert.ok(layout.cards.every(c=>c.onScreen&&c.straight),'both public cards stay fully visible above the portraits (larger PC portraits since 50bc8b3 may sit under them)');
    await page.screenshot({path:path.join(output,`all-in-reveal-${viewport.width}.png`),fullPage:true});
   }
  }
