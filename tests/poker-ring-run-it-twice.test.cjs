@@ -45,7 +45,7 @@ test('both players answering 2 settles twice without the runner',async()=>{
  assert.equal(done.players.reduce((a,p)=>a+p.stack,0),2000);
 });
 
-test('ring free time bank is used automatically just before the turn runs out, once per hand',async()=>{
+test('ring free time bank is used automatically when the turn runs out (at 0), once per hand',async()=>{
  const w=world(),owner=await (await RingHandOwner.prepare(w.store,w.table,keys)).commit(),s=owner.snapshot(null),banks=[];
  w.store.bank=async(member,reservation,hand,revision,request)=>{banks.push({member,reservation,hand,revision,request});};
  const rt=runner(w),actor=w.seats.find(p=>'seat-'+p.seat===s.toAct);
@@ -54,4 +54,10 @@ test('ring free time bank is used automatically just before the turn runs out, o
  assert.equal(banks.length,1);assert.equal(banks[0].reservation,actor.reservationId);assert.equal(banks[0].hand,s.handId);assert.equal(banks[0].revision,s.revision);
  const meta=w.store.meta;w.store.meta=async()=>({...(await meta()),bankUsed:{[actor.reservationId]:s.handId}});
  await rt['advance'](w.table,w.store);assert.equal(banks.length,1,'a used bank is not requested again');
+});
+test('if the time bank cannot be used at 0, the turn times out as before instead of hanging',async()=>{
+ const w=world(),owner=await (await RingHandOwner.prepare(w.store,w.table,keys)).commit();
+ w.store.bank=async()=>{throw Error('Seat unavailable');};
+ const before=w.writes.length;w.now=w.changedAt+AUTO_BANK_AT_MS+100;await runner(w)['advance'](w.table,w.store);
+ assert.equal(w.writes.length,before+1);assert.equal(w.writes.at(-1).timeout,true);
 });

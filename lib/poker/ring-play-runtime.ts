@@ -14,8 +14,8 @@ export type RingPlayMeta={context:RingContext;now:string;changedAt:string|null;l
 export interface RingPlayStore extends RingStore {meta(table:string):Promise<RingPlayMeta>;tables(limit:number):Promise<string[]>;ready(member:string,reservation:string):Promise<void>;ping(member:string,table:string):Promise<void>;cashout(member:string,reservation:string,request:string):Promise<unknown>;timeout:boolean;from:number;actorReservation?:string;bank?(member:string,reservation:string,hand:string,revision:number,request:string):Promise<void>;ticketBank?(member:string,reservation:string,hand:string,revision:number,request:string):Promise<void>;ticket?(member:string,item:'rabbit'|'time_bank',ref:string):Promise<boolean>}
 /** Run-it-twice answers are collected for this long; then the runner answers 1 (once) for whoever is left. */
 export const RUNS_CHOICE_MS=8000;
-/** The free time bank is applied automatically this far into a 20s turn (the SQL fence only accepts it before 20s). */
-export const AUTO_BANK_AT_MS=17000;
+/** The free +20s is spent automatically the moment the 20s turn runs out (owner 2026/10/27: at 0, not before). */
+export const AUTO_BANK_AT_MS=20000;
 const time=(s:string|null)=>{const v=s===null?NaN:Date.parse(s);if(!Number.isFinite(v))throw Error('Ring clock unavailable');return v;};
 export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlayStore{
  timeout=false;from=0;actorReservation?:string;
@@ -72,10 +72,13 @@ export class RingPlayRuntime {
     await owner.act(target.memberId,{handId:s.handId,revision:s.revision,actionId:'runs-'+owner.version,action:{type:'runs',count:1}});
     return await store.meta(table);
    }
-   // The free +20s is used automatically just before the turn runs out (owner choice 2026/10/27).
-   if(s.toAct&&!s.result&&meta.bankRevision==null&&elapsed>=AUTO_BANK_AT_MS&&elapsed<20000&&store.bank){
+   // Time ran out: the free +20s is spent first (owner choice 2026/10/27). If the bank cannot be used, the normal timeout follows.
+   if(s.toAct&&!s.result&&meta.bankRevision==null&&elapsed>=AUTO_BANK_AT_MS&&store.bank){
     const actor=c.seats.find(p=>'seat-'+p.seat===s.toAct);
-    if(actor&&!meta.penalties?.[actor.reservationId]?.since&&!meta.bankUsed?.[actor.reservationId]){try{await store.bank(actor.memberId,actor.reservationId,s.handId,s.revision,crypto.randomUUID());}catch{/* the turn moved on; the next tick decides */}return await store.meta(table);}
+    if(actor&&!meta.penalties?.[actor.reservationId]?.since&&!meta.bankUsed?.[actor.reservationId]){
+     let banked=false;try{await store.bank(actor.memberId,actor.reservationId,s.handId,s.revision,crypto.randomUUID());banked=true;}catch{/* fall through to the timeout */}
+     if(banked)return await store.meta(table);
+    }
    }
    if(!hasSitOut&&elapsed<20000+extra)return meta;
    if(!s.toAct||s.result)throw Error('Invalid active ring hand');
