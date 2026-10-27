@@ -1009,3 +1009,10 @@
  .demoShell .felt .street{display:none}
  .demoShell .table .felt{translate:0 30px}
 }
+
+/* Whose turn it is, at every seat (owner 2026/10/28): the acting player's ring glows, red and faster in the last 5 s. */
+.seatTimerRing[data-turn]{animation:seatTurn 1.6s ease-in-out infinite}
+.seatTimerRing[data-turn=urgent]{animation:seatUrgent .55s ease-in-out infinite}
+@keyframes seatTurn{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66355}50%{box-shadow:0 0 0 3px #f3c663,0 0 24px #f3c663aa}}
+@keyframes seatUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5877,0 0 10px #f05b5855}50%{box-shadow:0 0 0 4px #f05b58,0 0 28px #f05b58cc}}
+@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
