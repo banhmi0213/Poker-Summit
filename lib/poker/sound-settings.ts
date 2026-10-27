@@ -1,12 +1,13 @@
 'use client';
 /** Per-browser sound settings shared by every table: effects and BGM, both on by default, remembered across visits. */
 import {useSyncExternalStore} from 'react';
-export type SoundSettings={se:boolean;bgm:boolean};
-const KEY='poker-sound-v1',DEFAULTS:SoundSettings={se:true,bgm:true};
+/** bgmVolume: 0〜100 (70 = the original level). */
+export type SoundSettings={se:boolean;bgm:boolean;bgmVolume:number};
+const KEY='poker-sound-v1',DEFAULTS:SoundSettings={se:true,bgm:true,bgmVolume:70};
 let current:SoundSettings|null=null;const listeners=new Set<()=>void>();
 function read():SoundSettings{
  if(current)return current;current=DEFAULTS;
- try{const raw=typeof window==='undefined'?null:window.localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw);current={se:typeof v?.se==='boolean'?v.se:true,bgm:typeof v?.bgm==='boolean'?v.bgm:true};}}catch{/* Storage may be blocked; defaults still work. */}
+ try{const raw=typeof window==='undefined'?null:window.localStorage.getItem(KEY);if(raw){const v=JSON.parse(raw);current={se:typeof v?.se==='boolean'?v.se:true,bgm:typeof v?.bgm==='boolean'?v.bgm:true,bgmVolume:Number.isFinite(v?.bgmVolume)?Math.min(100,Math.max(0,Math.round(v.bgmVolume))):70};}}catch{/* Storage may be blocked; defaults still work. */}
  return current;
 }
 export function getSoundSettings(){return read();}

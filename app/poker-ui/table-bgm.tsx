@@ -8,7 +8,7 @@ export function TableBgmPlayer(){
  const [settings]=useSoundSettings(),player=useRef<TableBgm|null>(null),wanted=useRef(settings.bgm);
  wanted.current=settings.bgm;
  useEffect(()=>{
-  const bgm=new TableBgm();player.current=bgm;
+  const bgm=new TableBgm();player.current=bgm;bgm.setVolume(settings.bgmVolume/100);
   const visible=()=>typeof document!=='undefined'&&document.visibilityState==='visible';
   const tryStart=()=>{if(wanted.current&&visible())void bgm.start();};
   const visibility=()=>{if(visible())tryStart();else bgm.stop();};
@@ -19,5 +19,6 @@ export function TableBgmPlayer(){
   return()=>{target?.removeEventListener('pointerdown',tryStart,true);target?.removeEventListener('keydown',tryStart,true);if(typeof document!=='undefined'&&typeof document.removeEventListener==='function')document.removeEventListener('visibilitychange',visibility);bgm.close();player.current=null;};
  },[]);
  useEffect(()=>{const bgm=player.current;if(!bgm)return;if(settings.bgm)void bgm.start();else bgm.stop();},[settings.bgm]);
+ useEffect(()=>{player.current?.setVolume(settings.bgmVolume/100);},[settings.bgmVolume]);
  return null;
 }
