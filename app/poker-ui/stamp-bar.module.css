@@ -1,11 +1,11 @@
-/* Stamps (owner 2026/10/27): no frame, laid over the avatar, phrase over the character, one line, 3 seconds. */
-.bubble{position:absolute;left:50%;bottom:-6px;z-index:1;pointer-events:none;transform:translateX(-50%);animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
-/* Own seat: the hole cards sit over the avatar, so the stamp goes just left of them instead. */
-.bubble[data-side=left]{left:auto;right:calc(100% + 30px);transform:none;animation-name:popSide}
-@keyframes popSide{0%{transform:scale(.3) rotate(-12deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
-@keyframes pop{0%{transform:translateX(-50%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translateX(-50%) scale(1) rotate(0);opacity:1}}
+/* Stamps (owner 2026/10/27): no frame, big, over the avatar AND the cards (「これぐらい大きくていい・トランプの上」),
+   phrase over the character, one line, 3 seconds; gone as soon as a new hand starts so the new cards are seen. */
+.bubble{position:absolute;left:50%;top:50%;z-index:20;pointer-events:none;transform:translate(-50%,-52%);animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:translate(-50%,-52%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translate(-50%,-52%) scale(1) rotate(0);opacity:1}}
 .sticker{position:relative;display:block}
-.sticker[data-size=bubble]{width:88px;height:88px}
+.sticker[data-size=bubble]{width:136px;height:136px}
+.sticker[data-size=bubble] .phrase{font-size:21px;-webkit-text-stroke:6px #1b1813}
+.sticker[data-size=bubble][data-long] .phrase{font-size:17px}
 .sticker[data-size=pick]{width:58px;height:58px}
 .art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 4px #000a) drop-shadow(0 0 1px #000)}
 .thumb{position:absolute;left:50%;bottom:6%;width:60%;transform:translateX(-50%);filter:drop-shadow(0 3px 4px #000a)}
@@ -15,7 +15,7 @@
 .sticker[data-size=pick] .phrase{font-size:10.5px;-webkit-text-stroke:3.5px #1b1813}
 .sticker[data-size=pick][data-long] .phrase{font-size:8.5px}
 .sticker[data-tone=r] .phrase{color:#ff4d5a}.sticker[data-tone=y] .phrase{color:#ffd23f}.sticker[data-tone=b] .phrase{color:#53b7ff}.sticker[data-tone=g] .phrase{color:#4fd18b}
-@media(max-width:480px){.sticker[data-size=bubble]{width:72px;height:72px}.sticker[data-size=bubble] .phrase{font-size:13px;-webkit-text-stroke:4px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:10.5px}}
+@media(max-width:480px){.sticker[data-size=bubble]{width:104px;height:104px}.sticker[data-size=bubble] .phrase{font-size:16px;-webkit-text-stroke:5px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:13px}}
 .bar{position:relative;display:inline-flex}
 .toggle{background:#302a23;color:#f3d9a7;border:1px solid #705c40;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:36px}
 /* All 14 at a glance (owner 2026/10/27: こんだけ？ — the top rows were scrolled out of view). */
