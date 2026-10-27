@@ -220,7 +220,7 @@ function trackFlop(file:FlopData,acts:readonly LoggedAction[],ranges:Ranges,pair
  let node:FlopNode|undefined=file.nodes[0];
  for(const a of acts){if(!node)return;const i=flopIndexOf(node,a);if(i<0)return;const w=ranges.get(pair[node.player]),cur=node;
   if(w)scale(w,(x,y)=>{const row=cur.classes[classOf(x,y)];return row?row[1+i]:cur.total[i]??1;});
-  const next=node.children[i];node=next===null?undefined:file.nodes[next];}
+  const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
 }
 function trackSolver(s:Solve,acts:readonly LoggedAction[],river:number|null,ranges:Ranges){
  let node:Node=s.solver.tree,ctx=NO_CARDS;
