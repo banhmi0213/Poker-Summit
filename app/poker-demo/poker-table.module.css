@@ -948,3 +948,5 @@
 .table[data-table-skin] .blindsInfo{text-shadow:0 1px 2px #0008}
 .pot strong{font-size:1.15em}
 @media(min-width:900px){.blindsInfo{font-size:14px}}
+/* Your own stamp: your avatar box is its own layer (transform), so lift it above your hole cards while a stamp shows. */
+.activeAvatar:has([data-stamp-bubble]),.seatAvatarRow:has([data-stamp-bubble]){z-index:30}
