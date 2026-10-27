@@ -12,6 +12,7 @@ function idempotent(sql){
   .replace(/create (unique )?index (?!if not exists)/gi,(m,u)=>`create ${u??''}index if not exists `)
   .replace(/add column (?!if not exists)/gi,'add column if not exists ')
   .replace(/create schema (?!if not exists)/gi,'create schema if not exists ')
+  .replace(/create function /gi,'create or replace function ')
   // Policies and triggers have no IF NOT EXISTS: skip them when they already exist (never dropped).
   .replace(/(^|;)(\s*)(create (?:policy|trigger) [^;]+)(?=;)/gi,(m,lead,ws,stmt)=>`${lead}${ws}${wrap(stmt)}`.replace(/;;$/,';'));
 }

@@ -27,13 +27,13 @@ revoke all on poker_private.room_checkpoints,poker_private.hand_results from pub
 grant select,insert,update on poker_private.room_checkpoints to service_role;
 grant select,insert on poker_private.hand_results to service_role;
 
-create function public.poker_room_load(p_room uuid) returns jsonb
+create or replace function public.poker_room_load(p_room uuid) returns jsonb
 language sql security invoker set search_path = '' as $$
  select jsonb_build_object('version',version,'sealed',sealed)
  from poker_private.room_checkpoints where room_id=p_room;
 $$;
 
-create function public.poker_room_save(p_room uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb)
+create or replace function public.poker_room_save(p_room uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb)
 returns bigint language plpgsql security invoker set search_path = '' as $$
 declare current_row poker_private.room_checkpoints%rowtype; existing_result jsonb; h uuid;
 begin
@@ -108,18 +108,18 @@ revoke all on poker_private.tournament_rooms,poker_private.room_admissions from 
 grant select,insert on poker_private.tournament_rooms,poker_private.room_admissions to service_role;
 -- Operational disable/revocation is a trusted direct DB/maintenance operation, not a player RPC.
 
-create function public.poker_room_tournament_config(p_tournament uuid) returns jsonb
+create or replace function public.poker_room_tournament_config(p_tournament uuid) returns jsonb
 language sql security invoker set search_path='' as $$
  select jsonb_build_object('tournamentId',id,'starts_at',starts_at,'structure',structure)
  from public.poker_tournaments where id=p_tournament and published and starts_at>now();
 $$;
-create function public.poker_room_binding(p_room uuid) returns jsonb
+create or replace function public.poker_room_binding(p_room uuid) returns jsonb
 language sql security invoker set search_path='' as $$
  select jsonb_build_object('roomId',room_id,'tournamentId',tournament_id,'starts_at',starts_at,
   'structure',structure,'capacity',capacity,'allowSpectators',allow_spectators,'enabled',enabled)
  from poker_private.tournament_rooms where room_id=p_room;
 $$;
-create function public.poker_room_authorize(p_room uuid,p_member uuid,p_operation text) returns boolean
+create or replace function public.poker_room_authorize(p_room uuid,p_member uuid,p_operation text) returns boolean
 language sql security invoker set search_path='' as $$
  select coalesce((select r.enabled and
    case when p_operation='spectate' then
@@ -133,7 +133,7 @@ language sql security invoker set search_path='' as $$
  where r.room_id=p_room and p_member is not null),false);
 $$;
 
-create function public.poker_room_provision(p_room uuid,p_tournament uuid,p_members uuid[],p_capacity integer,
+create or replace function public.poker_room_provision(p_room uuid,p_tournament uuid,p_members uuid[],p_capacity integer,
  p_spectators boolean,p_starts timestamptz,p_structure jsonb) returns boolean
 language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; r poker_private.tournament_rooms%rowtype; v bigint; existing uuid[]; requested uuid[];
@@ -209,7 +209,7 @@ begin
 end;
 $$;
 
-create function public.poker_room_control(p_room uuid) returns jsonb
+create or replace function public.poker_room_control(p_room uuid) returns jsonb
 language sql security invoker set search_path='' as $$
  select jsonb_build_object('roomId',r.room_id,'enabled',r.enabled,'published',t.published,
   'expectedCount',r.expected_count,'members',coalesce((select jsonb_agg(a.member_id order by a.member_id)
@@ -224,7 +224,7 @@ grant execute on function public.poker_room_control(uuid) to service_role;
 -- 20261017031737_poker_room_lobby.sql
 -- Prepared only. Backend lookup receives a verified member UUID; no browser RPC grants.
 create index if not exists room_admissions_member on poker_private.room_admissions(member_id,tournament_id);
-create function public.poker_room_assignments(p_member uuid) returns jsonb
+create or replace function public.poker_room_assignments(p_member uuid) returns jsonb
 language sql stable security invoker set search_path='' as $$
  select coalesce(jsonb_agg(jsonb_build_object('roomId',r.room_id,'tournamentId',r.tournament_id,
    'title',left(t.title,200),'starts_at',r.starts_at,'capacity',r.capacity,'published',t.published)
@@ -260,7 +260,7 @@ revoke all on poker_private.registration_policies,poker_private.tournament_regis
 grant select,insert,update on poker_private.registration_policies to service_role;
 grant select,insert,delete on poker_private.tournament_registrations to service_role;
 
-create function public.poker_registration_status(p_tournament uuid,p_member uuid) returns jsonb
+create or replace function public.poker_registration_status(p_tournament uuid,p_member uuid) returns jsonb
 language sql volatile security invoker set search_path='' as $$
  select jsonb_build_object('tournamentId',t.id,'title',t.title,'starts_at',t.starts_at,'capacity',p.capacity,
   'count',(select count(*) from poker_private.tournament_registrations e where e.tournament_id=t.id),
@@ -271,7 +271,7 @@ language sql volatile security invoker set search_path='' as $$
     and exists(select 1 from poker_private.tournament_registrations e where e.tournament_id=t.id and e.member_id=p_member))
  from public.poker_tournaments t join poker_private.registration_policies p on p.tournament_id=t.id where t.id=p_tournament;
 $$;
-create function public.poker_registration_configure(p_tournament uuid,p_capacity integer,p_enabled boolean) returns jsonb
+create or replace function public.poker_registration_configure(p_tournament uuid,p_capacity integer,p_enabled boolean) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; n integer;
 begin
@@ -285,14 +285,14 @@ begin
  return public.poker_registration_status(p_tournament,null);
 end;
 $$;
-create function public.poker_registration_catalog(p_member uuid) returns jsonb
+create or replace function public.poker_registration_catalog(p_member uuid) returns jsonb
 language sql volatile security invoker set search_path='' as $$
  select coalesce(jsonb_agg(public.poker_registration_status(t.id,p_member) order by t.starts_at,t.id),'[]'::jsonb)
  from (select t.id,t.starts_at from public.poker_tournaments t join poker_private.registration_policies p on p.tournament_id=t.id
   where (t.published and t.starts_at>clock_timestamp()) or exists(select 1 from poker_private.tournament_registrations e where e.tournament_id=t.id and e.member_id=p_member)
   order by t.starts_at,t.id limit 65) t;
 $$;
-create function public.poker_registration_change(p_tournament uuid,p_member uuid,p_action text) returns jsonb
+create or replace function public.poker_registration_change(p_tournament uuid,p_member uuid,p_action text) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; p poker_private.registration_policies%rowtype; present boolean; n integer;
 begin
@@ -338,7 +338,7 @@ revoke all on poker_private.registration_finalizations from public,anon,authenti
 grant select,insert on poker_private.registration_finalizations to service_role;
 
 -- User-context boolean only. No arbitrary actor UUID, definer privilege or private data.
-create function public.poker_registration_manage_allowed(p_tournament uuid) returns boolean
+create or replace function public.poker_registration_manage_allowed(p_tournament uuid) returns boolean
 language sql stable security invoker set search_path='' as $$
  select coalesce((auth.uid() is not null and not public.is_suspended() and exists(
   select 1 from public.poker_tournaments t where t.id=p_tournament and
@@ -348,7 +348,7 @@ $$;
 revoke all on function public.poker_registration_manage_allowed(uuid) from public,anon,service_role;
 grant execute on function public.poker_registration_manage_allowed(uuid) to authenticated;
 
-create function public.poker_registration_management_status(p_tournament uuid) returns jsonb
+create or replace function public.poker_registration_management_status(p_tournament uuid) returns jsonb
 language sql volatile security invoker set search_path='' as $$
  select jsonb_build_object('policy',public.poker_registration_status(t.id,null),'enabled',coalesce((select p.enabled from poker_private.registration_policies p where p.tournament_id=t.id),false),
  'finalization',(select jsonb_build_object('roomId',f.room_id,'participants',cardinality(f.members),
@@ -356,7 +356,7 @@ language sql volatile security invoker set search_path='' as $$
   from poker_private.registration_finalizations f where f.tournament_id=t.id))
  from public.poker_tournaments t where t.id=p_tournament;
 $$;
-create function public.poker_registration_freeze(p_tournament uuid,p_expected integer) returns jsonb
+create or replace function public.poker_registration_freeze(p_tournament uuid,p_expected integer) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; f poker_private.registration_finalizations%rowtype; ids uuid[];
 begin
@@ -475,7 +475,7 @@ $$;
 -- Prepared only: trusted startup discovery. No browser execution or plaintext state.
 create index if not exists tournament_rooms_enabled_startup on poker_private.tournament_rooms(room_id) where enabled;
 
-create function public.poker_room_startup_ids(p_limit integer) returns jsonb
+create or replace function public.poker_room_startup_ids(p_limit integer) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 declare result jsonb;
 begin
@@ -513,7 +513,7 @@ revoke all on poker_private.tournament_finishes,poker_private.ring_accounts from
 grant select,insert on poker_private.tournament_finishes to service_role;
 -- Read model only; ring-game ledger integration will own balance mutations.
 grant select on poker_private.ring_accounts to service_role;
-create function poker_private.archive_tournament_finish() returns trigger
+create or replace function poker_private.archive_tournament_finish() returns trigger
 language plpgsql security definer set search_path='' as $$
 declare tid uuid; rows jsonb; existing jsonb; expected integer;
 begin
@@ -548,7 +548,7 @@ $$;
 revoke all on function poker_private.archive_tournament_finish() from public,anon,authenticated; do $release$ begin create trigger archive_tournament_finish after insert or update of result on poker_private.hand_results for each row execute function poker_private.archive_tournament_finish(); exception when duplicate_object or duplicate_table then null; end $release$;;
 
 -- Session-scoped read API: caller identity is never accepted as a parameter.
-create function public.poker_statistics(p_admin boolean default false) returns jsonb
+create or replace function public.poker_statistics(p_admin boolean default false) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare who uuid:=auth.uid(); payload jsonb;
 begin
@@ -635,7 +635,7 @@ alter function public.poker_statistics(boolean) set schema poker_private;
 grant usage on schema poker_private to authenticated;
 revoke all on function poker_private.poker_statistics(boolean) from public,anon;
 grant execute on function poker_private.poker_statistics(boolean) to authenticated;
-create function public.poker_statistics(p_admin boolean default false) returns jsonb
+create or replace function public.poker_statistics(p_admin boolean default false) returns jsonb
 language sql security invoker set search_path='' as $$
  select poker_private.poker_statistics(p_admin);
 $$;
@@ -645,7 +645,7 @@ grant execute on function public.poker_statistics(boolean) to authenticated;
 -- 20261019081323_poker_ring_balance.sql
 -- All existing accounts start at zero only if no wallet exists. Never reset balances.
 insert into poker_private.ring_accounts(member_id) select id from auth.users on conflict(member_id) do nothing;
-create function poker_private.ring_balance() returns jsonb
+create or replace function poker_private.ring_balance() returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare who uuid:=auth.uid(); result jsonb;
 begin
@@ -659,7 +659,7 @@ end;
 $$;
 revoke all on function poker_private.ring_balance() from public,anon;
 grant execute on function poker_private.ring_balance() to authenticated;
-create function public.poker_ring_balance() returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_balance();$$;
+create or replace function public.poker_ring_balance() returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_balance();$$;
 revoke all on function public.poker_ring_balance() from public,anon;
 grant execute on function public.poker_ring_balance() to authenticated;
 
@@ -671,12 +671,12 @@ alter table poker_private.entry_targets enable row level security;
 alter table poker_private.entry_settings enable row level security;
 revoke all on poker_private.entry_targets,poker_private.entry_settings from public,anon,authenticated;
 grant select on poker_private.entry_targets,poker_private.entry_settings to service_role;
-create function poker_private.entry_eligible(tid uuid,mid uuid) returns boolean language sql stable security invoker set search_path='' as $$
+create or replace function poker_private.entry_eligible(tid uuid,mid uuid) returns boolean language sql stable security invoker set search_path='' as $$
  select mid is not null and (not exists(select 1 from poker_private.entry_settings where tournament_id=tid and automatic) or exists(select 1 from poker_private.entry_targets where tournament_id=tid and member_id=mid));
 $$;
 revoke all on function poker_private.entry_eligible(uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.entry_eligible(uuid,uuid) to service_role;
-create function poker_private.manage_entry(tid uuid,emails text[] default null) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.manage_entry(tid uuid,emails text[] default null) returns jsonb language plpgsql security definer set search_path='' as $$
 declare t public.poker_tournaments%rowtype; ids uuid[]; result jsonb;
 begin
  if auth.uid() is null or coalesce(public.is_suspended(),true) or not public.poker_registration_manage_allowed(tid) then raise exception 'Not authorized'; end if;
@@ -701,11 +701,11 @@ $$;
 revoke all on function poker_private.manage_entry(uuid,text[]) from public,anon;
 grant usage on schema poker_private to authenticated;
 grant execute on function poker_private.manage_entry(uuid,text[]) to authenticated;
-create function public.poker_entry_manage(p_tournament uuid,p_emails text[] default null) returns jsonb language sql security invoker set search_path='' as $$select poker_private.manage_entry(p_tournament,p_emails);$$;
+create or replace function public.poker_entry_manage(p_tournament uuid,p_emails text[] default null) returns jsonb language sql security invoker set search_path='' as $$select poker_private.manage_entry(p_tournament,p_emails);$$;
 revoke all on function public.poker_entry_manage(uuid,text[]) from public,anon;
 grant execute on function public.poker_entry_manage(uuid,text[]) to authenticated;
 alter function public.poker_registration_status(uuid,uuid) rename to poker_registration_status_legacy;
-create function public.poker_registration_status(p_tournament uuid,p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
+create or replace function public.poker_registration_status(p_tournament uuid,p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select case when coalesce(s.automatic,false) then jsonb_build_object('tournamentId',t.id,'title',t.title,'starts_at',t.starts_at,'capacity',p.capacity,'count',(select count(*) from poker_private.tournament_registrations where tournament_id=t.id),
  'registered',exists(select 1 from poker_private.tournament_registrations where tournament_id=t.id and member_id=p_member),
  'assigned',exists(select 1 from poker_private.room_admissions a join poker_private.tournament_registrations e on e.tournament_id=a.tournament_id and e.member_id=a.member_id where a.tournament_id=t.id and a.member_id=p_member),
@@ -715,7 +715,7 @@ create function public.poker_registration_status(p_tournament uuid,p_member uuid
  from public.poker_tournaments t join poker_private.registration_policies p on p.tournament_id=t.id left join poker_private.entry_settings s on s.tournament_id=t.id where t.id=p_tournament;
 $$;
 alter function public.poker_registration_change(uuid,uuid,text) rename to poker_registration_change_legacy;
-create function public.poker_registration_change(p_tournament uuid,p_member uuid,p_action text) returns jsonb language plpgsql security invoker set search_path='' as $$
+create or replace function public.poker_registration_change(p_tournament uuid,p_member uuid,p_action text) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; p poker_private.registration_policies%rowtype;
 begin
  if not exists(select 1 from poker_private.entry_settings where tournament_id=p_tournament and automatic) then return public.poker_registration_change_legacy(p_tournament,p_member,p_action); end if;
@@ -729,7 +729,7 @@ begin
 end;
 $$;
 alter function public.poker_registration_freeze(uuid,integer) rename to poker_registration_freeze_legacy;
-create function public.poker_registration_freeze(p_tournament uuid,p_expected integer) returns jsonb language plpgsql security invoker set search_path='' as $$
+create or replace function public.poker_registration_freeze(p_tournament uuid,p_expected integer) returns jsonb language plpgsql security invoker set search_path='' as $$
 declare t public.poker_tournaments%rowtype; f poker_private.registration_finalizations%rowtype; ids uuid[];
 begin
  if not exists(select 1 from poker_private.entry_settings where tournament_id=p_tournament and automatic) then return public.poker_registration_freeze_legacy(p_tournament,p_expected); end if;
@@ -746,22 +746,22 @@ begin
 end;
 $$;
 alter function public.poker_room_authorize(uuid,uuid,text) rename to poker_room_authorize_legacy;
-create function public.poker_room_authorize(p_room uuid,p_member uuid,p_operation text) returns boolean language sql volatile security invoker set search_path='' as $$
+create or replace function public.poker_room_authorize(p_room uuid,p_member uuid,p_operation text) returns boolean language sql volatile security invoker set search_path='' as $$
  select public.poker_room_authorize_legacy(p_room,p_member,p_operation) and coalesce((select case when s.automatic then clock_timestamp()>=r.starts_at-interval '10 minutes' and poker_private.entry_eligible(r.tournament_id,p_member) and exists(select 1 from poker_private.tournament_registrations where tournament_id=r.tournament_id and member_id=p_member) else true end from poker_private.tournament_rooms r left join poker_private.entry_settings s on s.tournament_id=r.tournament_id where r.room_id=p_room),false);
 $$;
 alter function public.poker_room_assignments(uuid) rename to poker_room_assignments_legacy;
-create function public.poker_room_assignments(p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
+create or replace function public.poker_room_assignments(p_member uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select coalesce(jsonb_agg(v),'[]'::jsonb) from jsonb_array_elements(public.poker_room_assignments_legacy(p_member)) v where not exists(select 1 from poker_private.entry_settings where tournament_id=(v->>'tournamentId')::uuid and automatic) or (exists(select 1 from poker_private.tournament_registrations where tournament_id=(v->>'tournamentId')::uuid and member_id=p_member) and clock_timestamp()>=(v->>'starts_at')::timestamptz-interval '10 minutes');
 $$;
 alter function public.poker_room_control(uuid) rename to poker_room_control_legacy;
-create function public.poker_room_control(p_room uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
+create or replace function public.poker_room_control(p_room uuid) returns jsonb language sql volatile security invoker set search_path='' as $$
  select case when coalesce(s.automatic,false) then public.poker_room_control_legacy(p_room)||jsonb_build_object('seatedStart',true,'members',coalesce((select jsonb_agg(a.member_id order by a.member_id) from poker_private.room_admissions a join poker_private.tournament_registrations e on e.tournament_id=a.tournament_id and e.member_id=a.member_id where a.room_id=p_room),'[]'::jsonb)) else public.poker_room_control_legacy(p_room) end from poker_private.tournament_rooms r left join poker_private.entry_settings s on s.tournament_id=r.tournament_id where r.room_id=p_room;
 $$;
-create function public.poker_entry_due() returns jsonb language sql volatile security invoker set search_path='' as $$
+create or replace function public.poker_entry_due() returns jsonb language sql volatile security invoker set search_path='' as $$
  select coalesce(jsonb_agg(jsonb_build_object('tournamentId',t.id,'count',(select count(*) from poker_private.entry_targets where tournament_id=t.id))),'[]'::jsonb) from (select t.id from public.poker_tournaments t join poker_private.entry_settings s on s.tournament_id=t.id join poker_private.registration_policies p on p.tournament_id=t.id where s.automatic and p.enabled and t.published and clock_timestamp()>=t.starts_at-interval '10 minutes' and clock_timestamp()<t.starts_at and not exists(select 1 from poker_private.tournament_rooms where tournament_id=t.id) order by t.starts_at limit 128) t;
 $$;
 -- Trigger-only guard; public table RLS still authorizes every write.
-create function poker_private.guard_entry_schedule() returns trigger language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.guard_entry_schedule() returns trigger language plpgsql security definer set search_path='' as $$
 begin
  if (new.starts_at is distinct from old.starts_at or new.structure is distinct from old.structure or new.owner_store_id is distinct from old.owner_store_id) and exists(select 1 from poker_private.entry_settings where tournament_id=old.id and automatic) and (clock_timestamp()>=old.starts_at-interval '10 minutes' or exists(select 1 from poker_private.registration_finalizations where tournament_id=old.id)) then raise exception 'Automatic tournament schedule is locked'; end if;
  return new;
@@ -787,7 +787,7 @@ grant execute on function public.poker_entry_due() to service_role;
 -- 20261019123737_poker_targeted_policy_guard.sql
 -- A stale manual management panel must not overwrite a designated-member pool.
 alter function public.poker_registration_configure(uuid,integer,boolean) rename to poker_registration_configure_manual;
-create function public.poker_registration_configure(p_tournament uuid,p_capacity integer,p_enabled boolean) returns jsonb
+create or replace function public.poker_registration_configure(p_tournament uuid,p_capacity integer,p_enabled boolean) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 begin
  if exists(select 1 from poker_private.entry_settings where tournament_id=p_tournament and automatic) then
@@ -823,7 +823,7 @@ grant select on public.poker_ring_tables to anon,authenticated; do $release$ beg
 using(deleted_at is null and (published or ((select public.is_admin()) and not coalesce((select public.is_suspended()),true)))); exception when duplicate_object or duplicate_table then null; end $release$;;
 create index if not exists poker_ring_tables_catalog on public.poker_ring_tables(sort_order,created_at,id) where deleted_at is null and published;
 
-create function poker_private.admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb
+create or replace function poker_private.admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb
 language plpgsql security definer set search_path='' as $$
 declare row public.poker_ring_tables%rowtype; v_id uuid;
 begin
@@ -844,7 +844,7 @@ begin
  select * into row from public.poker_ring_tables where id=v_id;
  return to_jsonb(row);
 end;$$;
-create function poker_private.admin_ring_remove(p_id uuid,p_expected bigint,p_title text) returns void
+create or replace function poker_private.admin_ring_remove(p_id uuid,p_expected bigint,p_title text) returns void
 language plpgsql security definer set search_path='' as $$
 declare row public.poker_ring_tables%rowtype;
 begin
@@ -856,8 +856,8 @@ begin
 end;$$;
 revoke all on function poker_private.admin_ring_save(uuid,bigint,jsonb),poker_private.admin_ring_remove(uuid,bigint,text) from public,anon;
 grant execute on function poker_private.admin_ring_save(uuid,bigint,jsonb),poker_private.admin_ring_remove(uuid,bigint,text) to authenticated;
-create function public.poker_admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb language sql security invoker set search_path='' as $$select poker_private.admin_ring_save(p_id,p_expected,p_settings);$$;
-create function public.poker_admin_ring_remove(p_id uuid,p_expected bigint,p_title text) returns void language sql security invoker set search_path='' as $$select poker_private.admin_ring_remove(p_id,p_expected,p_title);$$;
+create or replace function public.poker_admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb language sql security invoker set search_path='' as $$select poker_private.admin_ring_save(p_id,p_expected,p_settings);$$;
+create or replace function public.poker_admin_ring_remove(p_id uuid,p_expected bigint,p_title text) returns void language sql security invoker set search_path='' as $$select poker_private.admin_ring_remove(p_id,p_expected,p_title);$$;
 revoke all on function public.poker_admin_ring_save(uuid,bigint,jsonb),public.poker_admin_ring_remove(uuid,bigint,text) from public,anon;
 grant execute on function public.poker_admin_ring_save(uuid,bigint,jsonb),public.poker_admin_ring_remove(uuid,bigint,text) to authenticated;
 
@@ -867,7 +867,7 @@ alter table public.poker_tournaments add column if not exists deleted_at timesta
 revoke update on public.poker_tournaments from authenticated;
 grant update(title,owner_store_id,starts_at,published,structure,image_url,image_path,organizer_name,prizes) on public.poker_tournaments to authenticated;
 alter table public.poker_tournaments add constraint poker_deleted_unpublished check(deleted_at is null or not published);
-create function poker_private.guard_tournament_removal() returns trigger language plpgsql security invoker set search_path='' as $$
+create or replace function poker_private.guard_tournament_removal() returns trigger language plpgsql security invoker set search_path='' as $$
 begin
  if tg_op='INSERT' then
   if new.deleted_at is not null then raise exception 'Cannot insert removed tournament'; end if;
@@ -878,7 +878,7 @@ begin
  return new;
 end;$$;
 revoke all on function poker_private.guard_tournament_removal() from public,anon,authenticated; do $release$ begin create trigger guard_tournament_removal before insert or update on public.poker_tournaments for each row execute function poker_private.guard_tournament_removal(); exception when duplicate_object or duplicate_table then null; end $release$;;
-create function poker_private.admin_tournament_remove(p_id uuid,p_title text) returns void
+create or replace function poker_private.admin_tournament_remove(p_id uuid,p_title text) returns void
 language plpgsql security definer set search_path='' as $$
 declare row public.poker_tournaments%rowtype;
 begin
@@ -895,7 +895,7 @@ begin
 end;$$;
 revoke all on function poker_private.admin_tournament_remove(uuid,text) from public,anon;
 grant execute on function poker_private.admin_tournament_remove(uuid,text) to authenticated;
-create function public.poker_admin_tournament_remove(p_id uuid,p_title text) returns void language sql security invoker set search_path='' as $$select poker_private.admin_tournament_remove(p_id,p_title);$$;
+create or replace function public.poker_admin_tournament_remove(p_id uuid,p_title text) returns void language sql security invoker set search_path='' as $$select poker_private.admin_tournament_remove(p_id,p_title);$$;
 revoke all on function public.poker_admin_tournament_remove(uuid,text) from public,anon;
 grant execute on function public.poker_admin_tournament_remove(uuid,text) to authenticated;
 
@@ -1010,7 +1010,7 @@ alter table poker_private.ring_chip_ledger enable row level security;
 revoke all on poker_private.ring_accounts,poker_private.ring_identity_secret,poker_private.ring_welcome_claims,poker_private.ring_fund_reservations,poker_private.ring_chip_ledger from public,anon,authenticated,service_role;
 grant select on poker_private.ring_accounts,poker_private.ring_fund_reservations,poker_private.ring_chip_ledger to service_role;
 
-create function poker_private.ensure_ring_welcome(p_member uuid) returns void language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ensure_ring_welcome(p_member uuid) returns void language plpgsql security definer set search_path='' as $$
 declare email_address text; identity bytea; accepted uuid;
 begin
  select lower(btrim(u.email)) into email_address from auth.users u where u.id=p_member and u.email_confirmed_at is not null and not coalesce(u.is_anonymous,false) and u.deleted_at is null and (u.banned_until is null or u.banned_until<now()) and u.email is not null and u.email not ilike '%@login.poker-summit.jp' and not exists(select 1 from public.admin_users a where a.user_id=u.id) and not exists(select 1 from public.member_status s where s.user_id=u.id and s.suspended) for key share;
@@ -1025,7 +1025,7 @@ begin
  insert into poker_private.ring_chip_ledger(member_id,request_id,kind,available_delta,in_play_delta) values(p_member,gen_random_uuid(),'welcome',3000,0);
 end;$$;
 revoke all on function poker_private.ensure_ring_welcome(uuid) from public,anon,authenticated,service_role;
-create function poker_private.on_ring_member_confirmed() returns trigger language plpgsql security definer set search_path='' as $$begin
+create or replace function poker_private.on_ring_member_confirmed() returns trigger language plpgsql security definer set search_path='' as $$begin
  if new.email_confirmed_at is not null then perform poker_private.ensure_ring_welcome(new.id);end if;return new;
 end;$$;
 revoke all on function poker_private.on_ring_member_confirmed() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_member_confirmed after insert or update of email_confirmed_at on auth.users for each row execute function poker_private.on_ring_member_confirmed(); exception when duplicate_object or duplicate_table then null; end $release$;;
@@ -1048,7 +1048,7 @@ revoke all on function public.poker_ring_balance() from public,anon,service_role
 grant execute on function public.poker_ring_balance() to authenticated;
 
 -- Funding reservations are server-only groundwork, not playable seats.
-create function poker_private.ring_reserve_funds(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_reserve_funds(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare t public.poker_ring_tables%rowtype;r poker_private.ring_fund_reservations%rowtype;a poker_private.ring_accounts%rowtype;
 begin
  if p_request is null or p_amount is null or p_amount<1 then raise exception 'Invalid reservation';end if;
@@ -1071,7 +1071,7 @@ begin
  insert into poker_private.ring_chip_ledger(member_id,request_id,kind,reservation_id,available_delta,in_play_delta) values(p_member,p_request,'reserve',p_request,-p_amount,p_amount);
  return to_jsonb(r);
 end;$$;
-create function poker_private.ring_return_reserved_funds(p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_return_reserved_funds(p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;old_event poker_private.ring_chip_ledger%rowtype;
 begin
  if p_request is null then raise exception 'Invalid request';end if;
@@ -1090,13 +1090,13 @@ begin
 end;$$;
 revoke all on function poker_private.ring_reserve_funds(uuid,uuid,bigint,uuid),poker_private.ring_return_reserved_funds(uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_reserve_funds(uuid,uuid,bigint,uuid),poker_private.ring_return_reserved_funds(uuid,uuid) to service_role;
-create function public.poker_ring_reserve_funds(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_reserve_funds(p_member,p_table,p_amount,p_request);$$;
-create function public.poker_ring_return_reserved_funds(p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_return_reserved_funds(p_reservation,p_request);$$;
+create or replace function public.poker_ring_reserve_funds(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_reserve_funds(p_member,p_table,p_amount,p_request);$$;
+create or replace function public.poker_ring_return_reserved_funds(p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_return_reserved_funds(p_reservation,p_request);$$;
 revoke all on function public.poker_ring_reserve_funds(uuid,uuid,bigint,uuid),public.poker_ring_return_reserved_funds(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_reserve_funds(uuid,uuid,bigint,uuid),public.poker_ring_return_reserved_funds(uuid,uuid) to service_role;
-create function poker_private.ring_preserve_ledger() returns trigger language plpgsql set search_path='' as $$begin raise exception 'Accounting history is immutable';end;$$;
+create or replace function poker_private.ring_preserve_ledger() returns trigger language plpgsql set search_path='' as $$begin raise exception 'Accounting history is immutable';end;$$;
 revoke all on function poker_private.ring_preserve_ledger() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_ledger_immutable before update or delete on poker_private.ring_chip_ledger for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;; do $release$ begin create trigger ring_welcome_immutable before update or delete on poker_private.ring_welcome_claims for each row execute function poker_private.ring_preserve_ledger(); exception when duplicate_object or duplicate_table then null; end $release$;;
-create function poker_private.ring_guard_table_settings() returns trigger language plpgsql security definer set search_path='' as $$begin
+create or replace function poker_private.ring_guard_table_settings() returns trigger language plpgsql security definer set search_path='' as $$begin
  if (new.deleted_at is distinct from old.deleted_at or new.published is distinct from old.published or new.sb<>old.sb or new.bb<>old.bb or new.capacity<>old.capacity or new.min_buy_in<>old.min_buy_in or new.max_buy_in<>old.max_buy_in) and exists(select 1 from poker_private.ring_fund_reservations where table_id=old.id and status='held') then raise exception 'Table has reserved funds';end if;return new;
 end;$$;
 revoke all on function poker_private.ring_guard_table_settings() from public,anon,authenticated,service_role; do $release$ begin create trigger ring_guard_table_settings before update on public.poker_ring_tables for each row execute function poker_private.ring_guard_table_settings(); exception when duplicate_object or duplicate_table then null; end $release$;;
@@ -1204,7 +1204,7 @@ drop index poker_private.ring_one_reservation_event;
 create unique index if not exists ring_one_reservation_event on poker_private.ring_chip_ledger(reservation_id,kind) where kind in('reserve','refund','cashout');
 create unique index if not exists ring_one_hand_settlement on poker_private.ring_chip_ledger(hand_id,member_id) where kind='settlement';
 
-create function poker_private.ring_member_eligible(p_member uuid) returns boolean language sql stable set search_path='' as $$
+create or replace function poker_private.ring_member_eligible(p_member uuid) returns boolean language sql stable set search_path='' as $$
  select exists(select 1 from auth.users u where u.id=p_member and u.email_confirmed_at is not null and u.deleted_at is null and not coalesce(u.is_anonymous,false) and u.email is not null and u.email not ilike '%@login.poker-summit.jp' and (u.banned_until is null or u.banned_until<now()) and not exists(select 1 from public.member_status s where s.user_id=u.id and s.suspended));
 $$;
 revoke all on function poker_private.ring_member_eligible(uuid) from public,anon,authenticated,service_role;
@@ -1255,7 +1255,7 @@ begin
  return to_jsonb(r);
 end;$$;
 
-create function poker_private.ring_context(p_table uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_context(p_table uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare t public.poker_ring_tables%rowtype; seats jsonb;
 begin
  select * into t from public.poker_ring_tables where id=p_table;
@@ -1264,7 +1264,7 @@ begin
  return jsonb_build_object('tableId',t.id,'capacity',t.capacity,'terms',jsonb_build_object('sb',t.sb,'bb',t.bb),'seats',seats,'published',t.published and t.deleted_at is null,'buttonSeat',coalesce((select min(seat_number) from poker_private.ring_fund_reservations where table_id=p_table and status='seated' and seat_number>coalesce((select button_seat from poker_private.ring_hands where table_id=p_table order by created_at desc,id desc limit 1),0)),(select min(seat_number) from poker_private.ring_fund_reservations where table_id=p_table and status='seated')),'activeHandId',(select id from poker_private.ring_hands where table_id=p_table and status='active'));
 end;$$;
 
-create function poker_private.ring_seat_funds(p_member uuid,p_reservation uuid,p_seat integer) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_seat_funds(p_member uuid,p_reservation uuid,p_seat integer) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;t public.poker_ring_tables%rowtype;
 begin
  select * into r from poker_private.ring_fund_reservations where id=p_reservation;
@@ -1281,7 +1281,7 @@ begin
  return to_jsonb(r);
 end;$$;
 
-create function poker_private.ring_cashout(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_cashout(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;e poker_private.ring_chip_ledger%rowtype;
 begin
  if p_request is null then raise exception 'Invalid request';end if;
@@ -1306,7 +1306,7 @@ begin
 end;$$;
 
 -- Only unseated funding holds expire. A disconnected player's seated stack is never refunded blindly.
-create function poker_private.ring_release_expired(p_table uuid) returns integer language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_release_expired(p_table uuid) returns integer language plpgsql security definer set search_path='' as $$
 declare r record;released integer:=0;
 begin
  perform 1 from public.poker_ring_tables where id=p_table for update;
@@ -1316,12 +1316,12 @@ begin
  return released;
 end;$$;
 
-create function poker_private.ring_validate_sealed(p_sealed jsonb) returns void language plpgsql set search_path='' as $$begin
+create or replace function poker_private.ring_validate_sealed(p_sealed jsonb) returns void language plpgsql set search_path='' as $$begin
  if p_sealed is null or jsonb_typeof(p_sealed)<>'object' or p_sealed->>'format' is distinct from '1' or jsonb_typeof(p_sealed->'keyId') is distinct from 'string' or jsonb_typeof(p_sealed->'iv') is distinct from 'string' or jsonb_typeof(p_sealed->'tag') is distinct from 'string' or jsonb_typeof(p_sealed->'data') is distinct from 'string' or octet_length(p_sealed::text)>3000000 then raise exception 'Invalid encrypted hand';end if;
 end;$$;
 
 -- Caller holds table lock. Terminal checkpoint, all balances and all receipts commit in ONE transaction.
-create function poker_private.ring_apply_result(p_hand uuid,p_write uuid,p_result jsonb) returns void language plpgsql set search_path='' as $$
+create or replace function poker_private.ring_apply_result(p_hand uuid,p_write uuid,p_result jsonb) returns void language plpgsql set search_path='' as $$
 declare h poker_private.ring_hands%rowtype;entry jsonb;value jsonb;r poker_private.ring_fund_reservations%rowtype;total_before numeric:=0;total_after numeric:=0;new_stack bigint;
 begin
  if p_result is null then return;end if;
@@ -1348,7 +1348,7 @@ begin
  update poker_private.ring_hands set status='complete',result=p_result,completed_at=now() where id=p_hand;
 end;$$;
 
-create function poker_private.ring_hand_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_hand_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$
 declare ctx jsonb;fingerprint bytea;receipt poker_private.ring_hand_commits%rowtype;
 begin
  if p_hand is null then raise exception 'Invalid hand';end if;
@@ -1367,7 +1367,7 @@ begin
  return 1;
 end;$$;
 
-create function poker_private.ring_hand_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_hand_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$
 declare h poker_private.ring_hands%rowtype;receipt poker_private.ring_hand_commits%rowtype;fingerprint bytea;
 begin
  if p_write is null or p_expected is null or p_expected<1 or p_expected>=10000 then raise exception 'Invalid write';end if;
@@ -1386,7 +1386,7 @@ begin
  return p_expected+1;
 end;$$;
 
-create function poker_private.ring_hand_load(p_hand uuid) returns jsonb language sql security definer set search_path='' as $$
+create or replace function poker_private.ring_hand_load(p_hand uuid) returns jsonb language sql security definer set search_path='' as $$
  select jsonb_build_object('handId',id,'tableId',table_id,'version',version,'buttonSeat',button_seat,'seats',participants,'terms',terms,'sealed',sealed,'status',status,'result',result) from poker_private.ring_hands where id=p_hand;
 $$;
 
@@ -1397,37 +1397,37 @@ end;$$;
 -- Deny every helper by default. Only the listed service-role entry points are exposed.
 revoke all on function poker_private.ring_context(uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_context(uuid) to service_role;
-create function public.poker_ring_context(p_table uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_context(p_table);$$;
+create or replace function public.poker_ring_context(p_table uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_context(p_table);$$;
 revoke all on function public.poker_ring_context(uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_context(uuid) to service_role;
 revoke all on function poker_private.ring_seat_funds(uuid,uuid,integer) from public,anon,authenticated;
 grant execute on function poker_private.ring_seat_funds(uuid,uuid,integer) to service_role;
-create function public.poker_ring_seat_funds(p_member uuid,p_reservation uuid,p_seat integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_seat_funds(p_member,p_reservation,p_seat);$$;
+create or replace function public.poker_ring_seat_funds(p_member uuid,p_reservation uuid,p_seat integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_seat_funds(p_member,p_reservation,p_seat);$$;
 revoke all on function public.poker_ring_seat_funds(uuid,uuid,integer) from public,anon,authenticated;
 grant execute on function public.poker_ring_seat_funds(uuid,uuid,integer) to service_role;
 revoke all on function poker_private.ring_cashout(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_cashout(uuid,uuid,uuid) to service_role;
-create function public.poker_ring_cashout(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_cashout(p_member,p_reservation,p_request);$$;
+create or replace function public.poker_ring_cashout(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_cashout(p_member,p_reservation,p_request);$$;
 revoke all on function public.poker_ring_cashout(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_cashout(uuid,uuid,uuid) to service_role;
 revoke all on function poker_private.ring_release_expired(uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_release_expired(uuid) to service_role;
-create function public.poker_ring_release_expired(p_table uuid) returns integer language sql security invoker set search_path='' as $$select poker_private.ring_release_expired(p_table);$$;
+create or replace function public.poker_ring_release_expired(p_table uuid) returns integer language sql security invoker set search_path='' as $$select poker_private.ring_release_expired(p_table);$$;
 revoke all on function public.poker_ring_release_expired(uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_release_expired(uuid) to service_role;
 revoke all on function poker_private.ring_hand_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function poker_private.ring_hand_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
-create function public.poker_ring_hand_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_hand_begin(p_table,p_hand,p_roster,p_terms,p_sealed,p_result);$$;
+create or replace function public.poker_ring_hand_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_hand_begin(p_table,p_hand,p_roster,p_terms,p_sealed,p_result);$$;
 revoke all on function public.poker_ring_hand_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function public.poker_ring_hand_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
 revoke all on function poker_private.ring_hand_write(uuid,bigint,uuid,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function poker_private.ring_hand_write(uuid,bigint,uuid,jsonb,jsonb) to service_role;
-create function public.poker_ring_hand_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_hand_write(p_hand,p_expected,p_write,p_sealed,p_result);$$;
+create or replace function public.poker_ring_hand_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_hand_write(p_hand,p_expected,p_write,p_sealed,p_result);$$;
 revoke all on function public.poker_ring_hand_write(uuid,bigint,uuid,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function public.poker_ring_hand_write(uuid,bigint,uuid,jsonb,jsonb) to service_role;
 revoke all on function poker_private.ring_hand_load(uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_hand_load(uuid) to service_role;
-create function public.poker_ring_hand_load(p_hand uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_hand_load(p_hand);$$;
+create or replace function public.poker_ring_hand_load(p_hand uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_hand_load(p_hand);$$;
 revoke all on function public.poker_ring_hand_load(uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_hand_load(uuid) to service_role;
 revoke all on function poker_private.ring_validate_sealed(jsonb),poker_private.ring_apply_result(uuid,uuid,jsonb) from public,anon,authenticated,service_role;
@@ -1455,7 +1455,7 @@ end;$$;
 -- (own transaction removed: the whole upgrade is one transaction)
 -- 20261020131825_poker_ring_atomic_lobby_admission.sql
 -- (own transaction removed: the whole upgrade is one transaction)
-create function poker_private.ring_lobby_state(p_member uuid,p_table uuid default null) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_lobby_state(p_member uuid,p_table uuid default null) returns jsonb language plpgsql security definer set search_path='' as $$
 declare membership jsonb;wallet jsonb;catalog jsonb;selected jsonb;
 begin
  if not poker_private.ring_member_eligible(p_member) then raise exception 'Account unavailable';end if;
@@ -1470,7 +1470,7 @@ begin
 end;$$;
 
 -- One transaction: failed seat acceptance rolls back the hold and debit as well.
-create function poker_private.ring_admit(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_admit(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r jsonb;seat integer;t public.poker_ring_tables%rowtype;
 begin
  select * into t from public.poker_ring_tables where id=p_table for update;
@@ -1485,7 +1485,7 @@ begin
  return poker_private.ring_lobby_state(p_member,p_table);
 end;$$;
 
-create function poker_private.ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;
 begin
  select * into r from poker_private.ring_fund_reservations where id=p_reservation;
@@ -1500,9 +1500,9 @@ begin
 end;$$;
 revoke all on function poker_private.ring_lobby_state(uuid,uuid),poker_private.ring_admit(uuid,uuid,bigint,uuid),poker_private.ring_depart(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_lobby_state(uuid,uuid),poker_private.ring_admit(uuid,uuid,bigint,uuid),poker_private.ring_depart(uuid,uuid,uuid) to service_role;
-create function public.poker_ring_lobby_state(p_member uuid,p_table uuid default null) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_lobby_state(p_member,p_table);$$;
-create function public.poker_ring_admit(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_admit(p_member,p_table,p_amount,p_request);$$;
-create function public.poker_ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_depart(p_member,p_reservation,p_request);$$;
+create or replace function public.poker_ring_lobby_state(p_member uuid,p_table uuid default null) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_lobby_state(p_member,p_table);$$;
+create or replace function public.poker_ring_admit(p_member uuid,p_table uuid,p_amount bigint,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_admit(p_member,p_table,p_amount,p_request);$$;
+create or replace function public.poker_ring_depart(p_member uuid,p_reservation uuid,p_request uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_depart(p_member,p_reservation,p_request);$$;
 revoke all on function public.poker_ring_lobby_state(uuid,uuid),public.poker_ring_admit(uuid,uuid,bigint,uuid),public.poker_ring_depart(uuid,uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_lobby_state(uuid,uuid),public.poker_ring_admit(uuid,uuid,bigint,uuid),public.poker_ring_depart(uuid,uuid,uuid) to service_role;
 -- (own transaction removed: the whole upgrade is one transaction)
@@ -1536,7 +1536,7 @@ end;$$;
 -- ring_apply_result updates every participant's final stack before marking the
 -- hand complete. Return pending exits in that SAME transaction, under its table
 -- and account locks. A failed payout rolls back both the result and the exits.
-create function poker_private.ring_finish_exits() returns trigger language plpgsql set search_path='' as $$
+create or replace function poker_private.ring_finish_exits() returns trigger language plpgsql set search_path='' as $$
 declare r record;
 begin
  if old.status='active' and new.status='complete' then
@@ -1567,7 +1567,7 @@ alter table poker_private.ring_fund_reservations add column if not exists play_e
 alter table poker_private.ring_fund_reservations add column if not exists present_until timestamptz;
 alter table poker_private.ring_hands add column if not exists runout_from smallint check(runout_from in(0,3,4,5));
 
-create function poker_private.ring_play_ready(p_member uuid,p_reservation uuid) returns void language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_play_ready(p_member uuid,p_reservation uuid) returns void language plpgsql security definer set search_path='' as $$
 declare r poker_private.ring_fund_reservations%rowtype;
 begin
  select * into r from poker_private.ring_fund_reservations where id=p_reservation;
@@ -1575,22 +1575,22 @@ begin
  perform 1 from public.poker_ring_tables where id=r.table_id for update;
  update poker_private.ring_fund_reservations set play_enabled=true,present_until=clock_timestamp()+interval '20 seconds' where id=r.id and status='seated' and exit_request is null;
 end;$$;
-create function poker_private.ring_play_ping(p_member uuid,p_table uuid) returns void language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_play_ping(p_member uuid,p_table uuid) returns void language plpgsql security definer set search_path='' as $$
 begin
  if not poker_private.ring_member_eligible(p_member) then raise exception 'Account unavailable';end if;
  perform 1 from public.poker_ring_tables where id=p_table for update;
  update poker_private.ring_fund_reservations set present_until=clock_timestamp()+interval '20 seconds' where member_id=p_member and table_id=p_table and status='seated' and play_enabled;
 end;$$;
-create function poker_private.ring_play_meta(p_table uuid) returns jsonb language sql security definer set search_path='' as $$
+create or replace function poker_private.ring_play_meta(p_table uuid) returns jsonb language sql security definer set search_path='' as $$
  select jsonb_build_object('context',poker_private.ring_context(p_table),'now',clock_timestamp(),'changedAt',(select c.created_at from poker_private.ring_hand_commits c where c.hand_id=h.id and c.version=h.version),'lastHandId',h.id,'completedAt',h.completed_at,'runoutFrom',h.runout_from,
  'ready',coalesce((select jsonb_agg(r.id) from poker_private.ring_fund_reservations r where r.table_id=p_table and r.status='seated' and r.play_enabled and r.present_until>clock_timestamp() and r.exit_request is null),'[]'::jsonb))
  from (select 1) stub left join lateral(select * from poker_private.ring_hands where table_id=p_table order by created_at desc,id desc limit 1) h on true;
 $$;
-create function poker_private.ring_play_tables(p_limit integer) returns jsonb language plpgsql security definer set search_path='' as $$begin
+create or replace function poker_private.ring_play_tables(p_limit integer) returns jsonb language plpgsql security definer set search_path='' as $$begin
  if p_limit is null or p_limit<1 or p_limit>128 then raise exception 'Invalid limit';end if;
  return coalesce((select jsonb_agg(t.id) from(select id from public.poker_ring_tables t where exists(select 1 from poker_private.ring_hands h where h.table_id=t.id and h.status='active') or exists(select 1 from poker_private.ring_fund_reservations r where r.table_id=t.id and r.status='seated' and r.play_enabled) order by t.created_at,t.id limit p_limit) t),'[]'::jsonb);
 end;$$;
-create function poker_private.ring_play_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$begin
+create or replace function poker_private.ring_play_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language plpgsql security definer set search_path='' as $$begin
  perform 1 from public.poker_ring_tables where id=p_table for update;
  if not exists(select 1 from poker_private.ring_hand_commits where hand_id=p_hand and request_id=p_hand) then
   if exists(select 1 from poker_private.ring_fund_reservations where table_id=p_table and status='seated' and (not play_enabled or present_until is null or present_until<=clock_timestamp() or exit_request is not null)) then raise exception 'Players not ready';end if;
@@ -1598,7 +1598,7 @@ create function poker_private.ring_play_begin(p_table uuid,p_hand uuid,p_roster 
  end if;
  return poker_private.ring_hand_begin(p_table,p_hand,p_roster,p_terms,p_sealed,p_result);
 end;$$;
-create function poker_private.ring_play_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer) returns bigint language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_play_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer) returns bigint language plpgsql security definer set search_path='' as $$
 declare tid uuid;changed timestamptz;v bigint;
 begin
  select table_id into tid from poker_private.ring_hands where id=p_hand;
@@ -1631,37 +1631,37 @@ end;$$;
 
 revoke all on function poker_private.ring_play_ready(uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_ready(uuid,uuid) to service_role;
-create function public.poker_ring_play_ready(p_member uuid,p_reservation uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_play_ready(p_member,p_reservation);$$;
+create or replace function public.poker_ring_play_ready(p_member uuid,p_reservation uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_play_ready(p_member,p_reservation);$$;
 revoke all on function public.poker_ring_play_ready(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_ready(uuid,uuid) to service_role;
 
 revoke all on function poker_private.ring_play_ping(uuid,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_ping(uuid,uuid) to service_role;
-create function public.poker_ring_play_ping(p_member uuid,p_table uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_play_ping(p_member,p_table);$$;
+create or replace function public.poker_ring_play_ping(p_member uuid,p_table uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_play_ping(p_member,p_table);$$;
 revoke all on function public.poker_ring_play_ping(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_ping(uuid,uuid) to service_role;
 
 revoke all on function poker_private.ring_play_meta(uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_meta(uuid) to service_role;
-create function public.poker_ring_play_meta(p_table uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_play_meta(p_table);$$;
+create or replace function public.poker_ring_play_meta(p_table uuid) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_play_meta(p_table);$$;
 revoke all on function public.poker_ring_play_meta(uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_meta(uuid) to service_role;
 
 revoke all on function poker_private.ring_play_tables(integer) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_tables(integer) to service_role;
-create function public.poker_ring_play_tables(p_limit integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_play_tables(p_limit);$$;
+create or replace function public.poker_ring_play_tables(p_limit integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_play_tables(p_limit);$$;
 revoke all on function public.poker_ring_play_tables(integer) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_tables(integer) to service_role;
 
 revoke all on function poker_private.ring_play_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
-create function public.poker_ring_play_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_begin(p_table,p_hand,p_roster,p_terms,p_sealed,p_result);$$;
+create or replace function public.poker_ring_play_begin(p_table uuid,p_hand uuid,p_roster jsonb,p_terms jsonb,p_sealed jsonb,p_result jsonb) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_begin(p_table,p_hand,p_roster,p_terms,p_sealed,p_result);$$;
 revoke all on function public.poker_ring_play_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_begin(uuid,uuid,jsonb,jsonb,jsonb,jsonb) to service_role;
 
 revoke all on function poker_private.ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer) to service_role;
-create function public.poker_ring_play_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_write(p_hand,p_expected,p_write,p_sealed,p_result,p_timeout,p_from);$$;
+create or replace function public.poker_ring_play_write(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_write(p_hand,p_expected,p_write,p_sealed,p_result,p_timeout,p_from);$$;
 revoke all on function public.poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer) to service_role;
 -- (own transaction removed: the whole upgrade is one transaction)
@@ -1708,7 +1708,7 @@ begin
 end;$$;
 
 -- Selection and debit are one transaction, including seat contention and retries.
-create function poker_private.ring_choose_seat(p_member uuid,p_table uuid,p_amount bigint,p_request uuid,p_seat integer) returns jsonb language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_choose_seat(p_member uuid,p_table uuid,p_amount bigint,p_request uuid,p_seat integer) returns jsonb language plpgsql security definer set search_path='' as $$
 declare r jsonb;t public.poker_ring_tables%rowtype;
 begin
  select * into t from public.poker_ring_tables where id=p_table for update;
@@ -1724,7 +1724,7 @@ begin
  perform poker_private.ring_play_ready(p_member,p_request);
  return poker_private.ring_lobby_state(p_member,p_table);
 end;$$;
-create function poker_private.ring_timebank(p_member uuid,p_reservation uuid,p_hand uuid,p_revision bigint,p_request uuid) returns void language plpgsql security definer set search_path='' as $$
+create or replace function poker_private.ring_timebank(p_member uuid,p_reservation uuid,p_hand uuid,p_revision bigint,p_request uuid) returns void language plpgsql security definer set search_path='' as $$
 declare h poker_private.ring_hands%rowtype;changed timestamptz;prior jsonb;
 begin
  select * into h from poker_private.ring_hands where id=p_hand;
@@ -1745,8 +1745,8 @@ begin
 end;$$;
 revoke all on function poker_private.ring_choose_seat(uuid,uuid,bigint,uuid,integer),poker_private.ring_timebank(uuid,uuid,uuid,bigint,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_choose_seat(uuid,uuid,bigint,uuid,integer),poker_private.ring_timebank(uuid,uuid,uuid,bigint,uuid) to service_role;
-create function public.poker_ring_choose_seat(p_member uuid,p_table uuid,p_amount bigint,p_request uuid,p_seat integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_choose_seat(p_member,p_table,p_amount,p_request,p_seat);$$;
-create function public.poker_ring_timebank(p_member uuid,p_reservation uuid,p_hand uuid,p_revision bigint,p_request uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_timebank(p_member,p_reservation,p_hand,p_revision,p_request);$$;
+create or replace function public.poker_ring_choose_seat(p_member uuid,p_table uuid,p_amount bigint,p_request uuid,p_seat integer) returns jsonb language sql security invoker set search_path='' as $$select poker_private.ring_choose_seat(p_member,p_table,p_amount,p_request,p_seat);$$;
+create or replace function public.poker_ring_timebank(p_member uuid,p_reservation uuid,p_hand uuid,p_revision bigint,p_request uuid) returns void language sql security invoker set search_path='' as $$select poker_private.ring_timebank(p_member,p_reservation,p_hand,p_revision,p_request);$$;
 revoke all on function public.poker_ring_choose_seat(uuid,uuid,bigint,uuid,integer),public.poker_ring_timebank(uuid,uuid,uuid,bigint,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_choose_seat(uuid,uuid,bigint,uuid,integer),public.poker_ring_timebank(uuid,uuid,uuid,bigint,uuid) to service_role;
 -- (own transaction removed: the whole upgrade is one transaction)
@@ -1848,7 +1848,7 @@ end;$$;
 
 revoke all on function poker_private.ring_play_write_v2(uuid,bigint,uuid,jsonb,jsonb,boolean,integer,uuid) from public,anon,authenticated;
 grant execute on function poker_private.ring_play_write_v2(uuid,bigint,uuid,jsonb,jsonb,boolean,integer,uuid) to service_role;
-create function public.poker_ring_play_write_v2(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer,p_actor uuid) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_write_v2(p_hand,p_expected,p_write,p_sealed,p_result,p_timeout,p_from,p_actor);$$;
+create or replace function public.poker_ring_play_write_v2(p_hand uuid,p_expected bigint,p_write uuid,p_sealed jsonb,p_result jsonb,p_timeout boolean,p_from integer,p_actor uuid) returns bigint language sql security invoker set search_path='' as $$select poker_private.ring_play_write_v2(p_hand,p_expected,p_write,p_sealed,p_result,p_timeout,p_from,p_actor);$$;
 revoke all on function public.poker_ring_play_write_v2(uuid,bigint,uuid,jsonb,jsonb,boolean,integer,uuid) from public,anon,authenticated;
 grant execute on function public.poker_ring_play_write_v2(uuid,bigint,uuid,jsonb,jsonb,boolean,integer,uuid) to service_role;
 -- (own transaction removed: the whole upgrade is one transaction)
