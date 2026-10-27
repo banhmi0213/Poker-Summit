@@ -17,6 +17,8 @@ import {SummitMark} from '@/app/poker-ui/brand-mark';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { estimateEquity, requiredEquity } from "@/lib/poker/equity";
 import { decideCpuAction, CPU_STYLES } from "@/lib/poker/cpu-strategy";
+import { positionsFor, type LoggedAction, type Street } from "@/lib/poker/gto-bot";
+import type { GtoReply, GtoRequest } from "@/lib/poker/gto.worker";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBettingActions, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -30,7 +32,8 @@ import { requestDemoDeal } from "./actions";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 const clockwiseSeats = ["you", "p5", "p3", "p2", "p4", "p6"];
-const initialStacks: Record<string, number> = { you: 2500, p5: 2260, p3: 1850, p2: 2500, p4: 3100, p6: 1900 };
+// 100BB each: the GTO CPUs play the chart solved for 100BB (owner 2026/10/27).
+const initialStacks: Record<string, number> = { you: 10000, p5: 10000, p3: 10000, p2: 10000, p4: 10000, p6: 10000 };
 const makeHand = (stacks:Record<string,number>, buttonIndex:number, terms:HandTerms, assigned?:TournamentPositions) => startForcedHand(clockwiseSeats.filter(id=>stacks[id]>0).map(id=>({id,stack:stacks[id]})),assigned?0:buttonIndex,terms,assigned).round;
 const seats = [
   { name: "PLAYER 2", stack: "2,500" },
@@ -74,6 +77,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [announcement,setAnnouncement]=useState<{kind:ActionKind;text:string;key:number}|null>(null);
   useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
+  // GTO CPUs (2026/10/27): every voluntary action of the hand, for the CPUs' range reading.
+  const [actionLog, setActionLog] = useState<LoggedAction[]>([]);
+  const gtoWorker = useRef<Worker | null>(null), gtoRequest = useRef(0);
+  useEffect(() => { let live = true; import("./gto-worker-client").then(m => { if (!live) return; try { gtoWorker.current = m.createGtoWorker(); } catch { gtoWorker.current = null; } }).catch(() => { gtoWorker.current = null; }); return () => { live = false; gtoWorker.current?.terminate(); gtoWorker.current = null; }; }, []);
   const [betting, setBetting] = useState<BettingRound>(() => initialHand.round);
   const [bettingMessage, setBettingMessage] = useState(initialHand.terms ? `SB ${initialHand.terms.sb} / BB ${initialHand.terms.bb}・Ante ${initialHand.terms.ante}を徴収しました（デモ）。` : "開始前・休憩中は強制ベットを徴収しません。開始可能になったら大会デモを開始してください。");
   const [showdown, setShowdown] = useState(false);
@@ -236,6 +243,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     const timer = window.setTimeout(() => setRemaining(t => Math.max(0, t - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [running, isYourTurn, remaining]);
+  const logEntry = (round: BettingRound, after: BettingRound, id: string, a: BettingAction): LoggedAction => {
+    const me = round.players.find(p => p.id === id)!, now = after.players.find(p => p.id === id)!;
+    return { street: (["preflop", "flop", "turn", "river"] as Street[])[Math.min(3, streetStep)], id, type: a.type, to: now.committed, allIn: now.allIn, potBefore: potTotal(round), currentBetBefore: round.currentBet, committedBefore: me.committed };
+  };
   const choose = (next: Action, automatic = false) => {
     if (!isYourTurn || !running || (!automatic && remaining <= 0) || !legal) return;
     if ((next === "CHECK" && !legal.check) || (next === "CALL" && !legal.call) || (next === "RAISE" && !legal.raise)) return;
@@ -248,7 +259,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const updated = applyBettingAction(betting, "you", betAction);
       const cue=publicAction(betting.players,updated.players,"you");
       if(cue){playSound(cue.kind);setAnnouncement({kind:cue.kind,text:`${member.displayName} · ${cue.label}${cue.amount?` ${showChips(cue.amount)}`:""}`,key:Date.now()});}
-      setBetting(updated);
+      setBetting(updated);setActionLog(l => [...l, logEntry(betting, updated, "you", betAction)]);
       setLastActions(prev => ({ ...prev, you: automatic ? next : next === "RAISE" ? `${betAction.type.toUpperCase()} ${raiseTo}` : next }));
       setAction(next);
       setAutoChoice(null);
@@ -285,27 +296,18 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     if (!handActive || dealing || handFinished || showdown || spectating) return;
     const actorId = betting.toAct;
     if (!actorId || actorId === "you") return;
-    const timer = window.setTimeout(() => {
+    let cancelled = false;
+    const started = Date.now();
+    const apply = (decision: BettingAction) => {
+      if (cancelled) return;
       const player = betting.players.find(p => p.id === actorId);
       if (!player) return;
       const owed = betting.currentBet - player.committed;
-      const legal = legalBettingActions(betting, actorId);
-      const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
-      const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
-      // 練習卓のCPUは自分の手札と公開情報で考えて打つ（大会のチップが少ない場面はプッシュ/フォールド表）。cpuMode='calling' は進行確認テスト専用。
-      const decision: BettingAction = cpuMode !== "calling" && legal && deal.holes[actorId] ? decideCpuAction({
-        hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
-        currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
-        opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
-        playersBehind: betting.players.filter(p => p.id !== actorId && !p.folded && !p.allIn && !p.acted).length,
-        isBigBlind: handPositions.bb === actorId,
-        maxOpponentStack: Math.max(0, ...betting.players.filter(p => p.id !== actorId && !p.folded).map(p => p.stack + p.committed)),
-      }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
       const label = decision.type === "fold" ? "FOLD" : decision.type === "check" ? "CHECK" : decision.type === "call" ? `CALL ${Math.min(owed, player.stack)}` : `${decision.type === "bet" ? "BET" : "RAISE"} ${decision.amount}`;
       const word = decision.type === "fold" ? "フォールド" : decision.type === "check" ? "チェック" : decision.type === "call" ? "コール" : decision.type === "bet" ? `ベット ${decision.amount}` : `レイズ ${decision.amount}`;
       try {
         const next = applyBettingAction(betting, actorId, decision);
-        setBetting(next);
+        setBetting(next);setActionLog(l => [...l, logEntry(betting, next, actorId, decision)]);
         setLastActions(prev => ({ ...prev, [actorId]: label }));
         const cue=publicAction(betting.players,next.players,actorId);
         if(cue){playSound(cue.kind);setAnnouncement({kind:cue.kind,text:`PLAYER ${actorId.slice(1)} · ${cue.label}${cue.amount?` ${showChips(cue.amount)}`:""}`,key:Date.now()});}
@@ -313,9 +315,47 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       } catch (error) {
         setBettingMessage(error instanceof Error ? error.message : "自動操作に失敗しました");
       }
-    }, 650);
-    return () => window.clearTimeout(timer);
-  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, cpuMode]);
+    };
+    // Equity CPU: used when the GTO worker is unavailable or fails (cpuMode='calling' is the progression test only).
+    const simple = (): BettingAction => {
+      const player = betting.players.find(p => p.id === actorId)!, owed = betting.currentBet - player.committed, legal = legalBettingActions(betting, actorId);
+      const cpuStyles: Record<string, keyof typeof CPU_STYLES> = { p2: "standard", p3: "tight", p4: "loose", p5: "aggressive", p6: "standard" };
+      const board = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
+      return cpuMode !== "calling" && legal && deal.holes[actorId] ? decideCpuAction({
+        hole: deal.holes[actorId], board, pot: potTotal(betting), toCall: legal.callAmount, stack: player.stack, committed: player.committed,
+        currentBet: betting.currentBet, bigBlind: betting.bigBlind, legal,
+        opponents: betting.players.filter(p => p.id !== actorId && !p.folded).length,
+        playersBehind: betting.players.filter(p => p.id !== actorId && !p.folded && !p.allIn && !p.acted).length,
+        isBigBlind: handPositions.bb === actorId,
+        maxOpponentStack: Math.max(0, ...betting.players.filter(p => p.id !== actorId && !p.folded).map(p => p.stack + p.committed)),
+      }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
+    };
+    const worker = gtoWorker.current, legal = legalBettingActions(betting, actorId);
+    // 練習卓のCPUはGTO通りに打つ（プリフロップ表・フロップの事前計算・ターンとリバーはその場で計算）。読みは自分の手札と公開情報だけ。
+    if (worker && cpuMode !== "calling" && legal && deal.holes[actorId]) {
+      const id = ++gtoRequest.current, live = clockwiseSeats.filter(x => betting.players.some(p => p.id === x));
+      const view = { handKey: `demo-${motionHand}`, bb: betting.bigBlind, hero: actorId, hole: deal.holes[actorId], board: deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5),
+        positions: positionsFor(live, handPositions), players: betting.players.map(p => ({ id: p.id, stack: p.stack, committed: p.committed, totalCommitted: p.totalCommitted, folded: p.folded, allIn: p.allIn })),
+        legal, log: actionLog, startStacks: handStartingStacks };
+      const onReply = (e: MessageEvent<GtoReply>) => {
+        worker.removeEventListener("message", wrapped);
+        const decision = e.data.type === "decision" ? e.data.decision.action : simple();
+        window.setTimeout(() => apply(decision), Math.max(0, 650 - (Date.now() - started)));
+      };
+      // A worker that fails to load or hangs must not freeze the table: decide with the equity CPU instead.
+      let settled = false;
+      const giveUp = () => { if (settled) return; settled = true; worker.removeEventListener("message", onReply); worker.removeEventListener("error", giveUp); apply(simple()); };
+      const guard = window.setTimeout(giveUp, 8000);
+      const first = onReply;
+      const wrapped = (e: MessageEvent<GtoReply>) => { if (e.data.id !== id || settled) return; settled = true; window.clearTimeout(guard); worker.removeEventListener("error", giveUp); first(e); };
+      worker.addEventListener("message", wrapped);
+      worker.addEventListener("error", giveUp);
+      worker.postMessage({ type: "decide", id, view, budgetMs: 2500 } satisfies GtoRequest);
+      return () => { cancelled = true; settled = true; window.clearTimeout(guard); worker.removeEventListener("message", wrapped); worker.removeEventListener("error", giveUp); };
+    }
+    const timer = window.setTimeout(() => apply(simple()), 650);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [betting, handFinished, showdown, spectating, dealing, handActive, deal, streetStep, handPositions, cpuMode, actionLog, motionHand, handStartingStacks]);
 
   // The next street begins only when every live player has acted and matched
   // the highest contribution, or cannot act because they are all-in.
@@ -399,7 +439,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setPayouts(null);setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);
-      setLastActions({});setTurnRemaining(20);setHandFinished(false);
+      setLastActions({});setActionLog([]);setTurnRemaining(20);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(20);if(!tournament)setTimeBanksUsed(0);setRunning(true);
