@@ -14,3 +14,10 @@ test('BGM stays silent when the browser has not allowed audio yet',async()=>{
  const f=fakeContext();f.c.state='suspended';const bgm=new TableBgm(()=>f.c);await bgm.start();assert.equal(bgm.playing,false);assert.equal(f.started(),0);
 });
 test('a broken audio device never throws into the table',async()=>{const bgm=new TableBgm(()=>{throw Error('no audio');});await bgm.start();assert.equal(bgm.playing,false);});
+test('a resume left pending outside a tap does not block the BGM: the next tap starts it',async()=>{
+ const f=fakeContext();f.c.state='suspended';let calls=0;f.c.resume=()=>{calls++;return calls===1?new Promise(()=>{}):(f.c.state='running',Promise.resolve());};
+ const bgm=new TableBgm(()=>f.c);const first=bgm.start();// page load: no gesture, resume hangs
+ await new Promise(r=>setTimeout(r,100));await bgm.start();// tap
+ await first;assert.equal(bgm.playing,true,'the tap started the BGM');
+ bgm.stop();assert.equal(bgm.playing,false);bgm.close();
+});

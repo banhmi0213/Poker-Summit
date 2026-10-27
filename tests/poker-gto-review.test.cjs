@@ -40,3 +40,17 @@ test('decision point is rebuilt from the public record',()=>{
  const me=v.players.find(p=>p.id==='seat-1');assert.equal(me.stack,195);assert.equal(me.committed,0);assert.equal(v.players.find(p=>p.id==='seat-2').folded,true);
  assert.equal(v.legal.check,true);
 });
+
+test('practice-table GTO hint: advice for a live decision is sorted and sums to 1',()=>{
+ const {adviseGto}=require('../lib/poker/gto-review.ts');
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));const t=new BotTable(3,ringTerms,data,6,100);let checked=0;
+ for(let i=0;i<4&&checked<10;i++){const h=t.play(seeded(300+i)).history;if(!h)continue;
+  for(const p of h.players){const view=asViewer(h,p.seatId);
+   view.actions.forEach((a,k)=>{if(a.seatId!==p.seatId||['ante','sb','bb'].includes(a.type)||a.street!=='preflop')return;const v=viewAt(view,k);if(!v)return;
+    const adv=adviseGto(v,data,300);if(adv.source==='none')return;checked++;
+    assert.ok(Math.abs(adv.options.reduce((s,o)=>s+o.freq,0)-1)<0.02);
+    for(let j=1;j<adv.options.length;j++)assert.ok(adv.options[j-1].freq>=adv.options[j].freq);
+    assert.ok(adv.options.every(o=>!/undefined|NaN/.test(o.text)));});
+  }}
+ assert.ok(checked>0);
+});

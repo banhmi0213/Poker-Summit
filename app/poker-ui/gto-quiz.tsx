@@ -1,68 +1,78 @@
 'use client';
-import {useCallback,useEffect,useState} from 'react';
-import {GTO_SPOTS,loadFlop,loadFlopIndex,type FlopData,type FlopNode} from '@/lib/poker/gto-spots';
+import {useCallback,useEffect,useRef,useState} from 'react';
+import {GTO_SPOTS,loadFlop,loadFlopIndex} from '@/lib/poker/gto-spots';
+import type {PreflopData} from '@/lib/poker/gto-bot';
+import {explainQuiz,flopQuestion,gradeQuiz,preflopQuestion,type QuizGrade,type QuizQuestion} from '@/lib/poker/gto-quiz';
 import styles from './gto-chart.module.css';
 
-/** Practice quiz: a random precomputed flop decision; the answer is graded by how often GTO takes that action. */
-const R='23456789TJQKA',S='cdhs',MARK:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
-const cardText=(c:number)=>R[c>>2]+MARK[S[c&3]];
-const pct=(v:number)=>`${Math.round(v*100)}%`;
-type Question={spot:string;data:FlopData;node:FlopNode;nodeIndex:number;hand:string;cards:[number,number];history:string[]};
-type Graded={choice:number;points:number;verdict:string};
+/** GTO practice (2026/10/27): preflop questions from the 6-max chart and flop questions from the computed flops.
+ * The answer is graded against how often GTO takes each action with that hand, with an explanation. */
+const R='23456789TJQKA',MARK='♣♦♥♠';
+const cardText=(c:number)=>R[c>>2]+MARK[c&3];
+const red=(c:number)=>(c&3)===1||(c&3)===2;
+const SCORE_KEY='poker-gto-quiz-score';
+type Score={count:number;points:number;right:number};
+const emptyScore:Score={count:0,points:0,right:0};
+function readScore():Score{try{const v=JSON.parse(window.localStorage.getItem(SCORE_KEY)??'null');return v&&typeof v.count==='number'?{...emptyScore,...v}:emptyScore;}catch{return emptyScore;}}
+function writeScore(s:Score){try{window.localStorage.setItem(SCORE_KEY,JSON.stringify(s));}catch{/* score is a convenience only */}}
 
-/** Pick a concrete pair of cards for a hand class ("AKs", "QJo", "77") that does not clash with the board. */
-function cardsFor(label:string,board:number[]):[number,number]|null{
- const a=R.indexOf(label[0]),b=R.indexOf(label[1]),opts:[number,number][]=[];
- for(let x=0;x<4;x++)for(let y=0;y<4;y++){
-  if(a===b&&y<=x)continue;if(label[2]==='s'&&x!==y)continue;if(label[2]==='o'&&x===y)continue;
-  const c1=a*4+x,c2=b*4+y;if(!board.includes(c1)&&!board.includes(c2))opts.push([c1,c2]);
- }
- return opts.length?opts[Math.floor(Math.random()*opts.length)]:null;
+function Cards({cards}:{cards:readonly number[]}){
+ return <>{cards.map(c=><b key={c} style={{color:red(c)?'#ff8a80':undefined,marginRight:4}}>{cardText(c)}</b>)}</>;
 }
-function pickWeighted<T>(items:T[],weight:(t:T)=>number){const total=items.reduce((s,t)=>s+weight(t),0);let r=Math.random()*total;for(const t of items){r-=weight(t);if(r<=0)return t;}return items[items.length-1];}
 
 export function GtoQuiz(){
- const [spots,setSpots]=useState<string>('all'),[q,setQ]=useState<Question|null>(null),[graded,setGraded]=useState<Graded|null>(null);
- const [loading,setLoading]=useState(false),[error,setError]=useState(''),[score,setScore]=useState({count:0,points:0});
+ const [mode,setMode]=useState<string>('all'),[index,setIndex]=useState<Record<string,string[]>>({});
+ const [q,setQ]=useState<QuizQuestion|null>(null),[graded,setGraded]=useState<QuizGrade|null>(null);
+ const [loading,setLoading]=useState(false),[error,setError]=useState(''),[score,setScore]=useState<Score>(emptyScore);
+ const preflop=useRef<Promise<PreflopData|null>|null>(null);
+ useEffect(()=>{setScore(readScore());void loadFlopIndex().then(setIndex);},[]);
+ const loadPreflop=()=>{if(!preflop.current)preflop.current=fetch('/poker-gto/preflop.json').then(r=>r.ok?r.json() as Promise<PreflopData>:null).catch(()=>null);return preflop.current;};
  const next=useCallback(async()=>{
   setLoading(true);setError('');setGraded(null);
-  // Only ask about flops that are already computed.
-  const index=await loadFlopIndex(),pool=Object.entries(index).filter(([id,f])=>f.length&&(spots==='all'||id===spots));
-  for(let attempt=0;attempt<10&&pool.length;attempt++){
-   const [spot,list]=pool[Math.floor(Math.random()*pool.length)],flop=list[Math.floor(Math.random()*list.length)];
-   const data=await loadFlop(spot,flop);if(!data)continue;
-   // Mostly the first decision, sometimes one step later (after a check or a bet).
-   let nodeIndex=0;const history:string[]=[];const root=data.nodes[0];
-   if(Math.random()<.45){const kids=root.children.map((c,i)=>[c,i] as const).filter(([c])=>c!==null);if(kids.length){const [c,i]=kids[Math.floor(Math.random()*kids.length)];nodeIndex=c!;history.push(`${root.player===0?data.spot.oop:data.spot.ip} ${root.actions[i].label}`);}}
-   const node=data.nodes[nodeIndex],entries=Object.entries(node.classes).filter(([,e])=>e[0]>0);if(!entries.length)continue;
-   const [hand]=pickWeighted(entries,([,e])=>e[0]),cards=cardsFor(hand,data.board);if(!cards)continue;
-   setQ({spot,data,node,nodeIndex,hand,cards,history});setLoading(false);return;
-  }
-  setLoading(false);setError('問題を用意できませんでした。計算が終わっている場面が少ないか、通信が不安定です。しばらくしてから試してください。');
- },[spots]);
- useEffect(()=>{void next();},[next]);
+  try{
+   const flopIndex=Object.keys(index).length?index:await loadFlopIndex();
+   const flopPool=Object.entries(flopIndex).filter(([id,f])=>f.length&&(mode==='all'||id===mode));
+   // 全部: about 4 in 10 questions are preflop.
+   const wantPreflop=mode==='preflop'||(mode==='all'&&(Math.random()<0.4||!flopPool.length));
+   if(wantPreflop){const data=await loadPreflop();const made=data&&preflopQuestion(data);if(made){setQ(made);return;}}
+   for(let attempt=0;attempt<8&&flopPool.length;attempt++){
+    const [spot,list]=flopPool[Math.floor(Math.random()*flopPool.length)],flop=list[Math.floor(Math.random()*list.length)];
+    const data=await loadFlop(spot,flop);if(!data)continue;
+    const info=GTO_SPOTS.find(s=>s.id===spot);
+    const made=flopQuestion(data,`${info?.label??spot}・フロップ`,info?.detail??'');if(made){setQ(made);return;}
+   }
+   setError('問題を用意できませんでした。通信が不安定かもしれません。しばらくしてから試してください。');
+  }catch{setError('問題を用意できませんでした。通信が不安定かもしれません。しばらくしてから試してください。');}
+  finally{setLoading(false);}
+ },[mode,index]);
+ const asked=useRef('');
+ useEffect(()=>{if(asked.current===mode)return;asked.current=mode;void next();},[mode,next]);
  const answer=(i:number)=>{
-  if(!q||graded)return;const e=q.node.classes[q.hand],freqs=q.node.actions.map((_,k)=>e[k+1]),best=Math.max(...freqs),ratio=best>0?freqs[i]/best:0;
-  const points=Math.round(ratio*100),verdict=ratio>=.8?'正解':ratio>=.3?'まずまず（GTOも混ぜて使う打ち方）':'ミス';
-  setGraded({choice:i,points,verdict});setScore(s=>({count:s.count+1,points:s.points+points}));
+  if(!q||graded)return;const g=gradeQuiz(q,i);setGraded(g);
+  setScore(s=>{const n={count:s.count+1,points:s.points+g.points,right:s.right+(g.verdict==='正解'?1:0)};writeScore(n);return n;});
  };
- const spotInfo=q?GTO_SPOTS.find(s=>s.id===q.spot):null;
+ const reset=()=>{setScore(emptyScore);writeScore(emptyScore);};
+ const spotsWithData=GTO_SPOTS.filter(s=>index[s.id]?.length);
  return <div className={styles.wrap}>
-  <p>計算済みの場面から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方をする割合と照らして採点します。いちばん多い打ち方を選べば100点、GTOが一部で混ぜる打ち方は割合に応じた点数です。</p>
+  <p>GTOの計算結果から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。いちばん多い打ち方を選べば100点、GTOが混ぜて使う打ち方は割合に応じた点数です。</p>
   <div className={styles.form}>
-   <label>出題する場面<select value={spots} onChange={e=>{setSpots(e.target.value);setScore({count:0,points:0});}}><option value="all">全部</option>{GTO_SPOTS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
-   <span role="status">{score.count?`${score.count}問 ・ 平均 ${Math.round(score.points/score.count)}点`:'まだ解いていません'}</span>
+   <label>出題する場面<select value={mode} onChange={e=>setMode(e.target.value)}>
+    <option value="all">全部</option><option value="preflop">プリフロップ</option>
+    {spotsWithData.map(s=><option key={s.id} value={s.id}>{s.label}・フロップ</option>)}
+   </select></label>
+   <span role="status">{score.count?`${score.count}問・正解 ${score.right}問・平均 ${Math.round(score.points/score.count)}点`:'まだ解いていません'}</span>
+   {score.count>0&&<button type="button" onClick={reset}>成績をリセット</button>}
   </div>
   {error&&<p role="alert">{error}</p>}
   {loading&&<p role="status">問題を用意しています…</p>}
   {q&&!loading&&<>
-   <p className={styles.note}>{spotInfo?.label}：{spotInfo?.detail}</p>
-   <p><b>ボード</b> {q.data.board.map(cardText).join(' ')}　<b>あなた（{q.node.player===0?q.data.spot.oop:q.data.spot.ip}）</b> {q.cards.map(cardText).join(' ')}</p>
-   <p>{q.history.length?`${q.history.join('、')}。`:''}{q.node.player===0?`${q.data.spot.oop}（先に打つ人）`:`${q.data.spot.ip}（後に打つ人）`}のあなたの番です。どうしますか？</p>
-   <div className={styles.path}>{q.node.actions.map((a,i)=><button key={i} type="button" disabled={Boolean(graded)} aria-pressed={graded?.choice===i} onClick={()=>answer(i)}>{a.label}</button>)}</div>
+   <p className={styles.note}>{q.title}</p>
+   <p>{q.board.length>0&&<><span>ボード </span><Cards cards={q.board}/>　</>}<span>あなた（{q.hero}） </span><Cards cards={q.cards}/></p>
+   <p>{q.scene}あなたの番です。どうしますか？</p>
+   <div className={styles.path}>{q.options.map((label,i)=><button key={i} type="button" disabled={Boolean(graded)} aria-pressed={graded?.choice===i} onClick={()=>answer(i)}>{label}</button>)}</div>
    {graded&&<div role="status">
     <p><b>{graded.verdict}</b>（{graded.points}点）</p>
-    <p>GTOは {q.hand} で：{q.node.actions.map((a,i)=>`${a.label} ${pct(q.node.classes[q.hand][i+1])}`).join('・')}</p>
+    <ul style={{margin:'6px 0 10px',paddingLeft:18,display:'grid',gap:4}}>{explainQuiz(q,graded).map((line,i)=><li key={i}>{line}</li>)}</ul>
     <button type="button" onClick={()=>void next()}>次の問題</button>
    </div>}
   </>}

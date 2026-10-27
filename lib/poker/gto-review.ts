@@ -71,3 +71,12 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500):GtoRevi
  });
  return out;
 }
+
+/** GTO advice for a live decision (practice table hint, 2026/10/27): the hero's options with frequencies, most frequent first. */
+export type GtoAdvice={source:'preflop'|'flop'|'solver';options:{text:string;freq:number}[]}|{source:'none';reason:string};
+export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
+ const s=gtoStrategy(v,data,budgetMs);
+ if(s.source==='fallback')return {source:'none',reason:s.reason};
+ const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
+ return {source:s.source,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),freq:Math.max(0,s.freqs[k])/total})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
+}
