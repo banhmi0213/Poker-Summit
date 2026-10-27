@@ -22,7 +22,7 @@ import { estimateEquity, requiredEquity } from "@/lib/poker/equity";
 import { decideCpuAction, CPU_STYLES } from "@/lib/poker/cpu-strategy";
 import { positionsFor, type LoggedAction, type Street } from "@/lib/poker/gto-bot";
 import type { GtoReply, GtoRequest } from "@/lib/poker/gto.worker";
-import { reasonText, type GtoAdvice } from "@/lib/poker/gto-review";
+import { reasonText, verdictText, type GtoAdvice, type LiveDecision, type LiveReview } from "@/lib/poker/gto-review";
 import styles from "./poker-table.module.css";
 import { applyBettingAction, beginNextBettingStreet, createBettingRound, legalBettingActions, potTotal, type BettingRound, type BettingAction } from "@/lib/poker/betting";
 
@@ -264,7 +264,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const updated = applyBettingAction(betting, "you", betAction);
       const cue=publicAction(betting.players,updated.players,"you");
       if(cue){playSound(cue.kind);setAnnouncement({kind:cue.kind,text:`${member.displayName} · ${cue.label}${cue.amount?` ${showChips(cue.amount)}`:""}`,key:Date.now()});}
-      setBetting(updated);setActionLog(l => [...l, logEntry(betting, updated, "you", betAction)]);
+      const played = logEntry(betting, updated, "you", betAction);
+      // ハンド後の「GTOで振り返る」用に、自分の判断をその時点の状況ごと残す（自分の手札と公開情報だけ）。
+      if (!tournament && deal.holes.you) myDecisions.current.push({ view: youView(legal), played });
+      setBetting(updated);setActionLog(l => [...l, played]);
       setLastActions(prev => ({ ...prev, you: automatic ? next : next === "RAISE" ? `${betAction.type.toUpperCase()} ${raiseTo}` : next }));
       setAction(next);
       setAutoChoice(null);
@@ -285,15 +288,32 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     return { equity: estimateEquity(deal.holes.you, hintBoard, Math.min(hintOpponents, 8), 1200).equity, required: requiredEquity(toCall, pot), toCall, pot };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hintsOn, isYourTurn, deal, streetStep, hintOpponents, owedForYou, betting.currentBet]);
+  /** The decision point for "you" as the GTO model sees it (own cards + public actions only). */
+  const youView = (legalYou: NonNullable<ReturnType<typeof legalBettingActions>>) => {
+    const live = clockwiseSeats.filter(x => betting.players.some(p => p.id === x));
+    return { handKey: `demo-${motionHand}`, bb: betting.bigBlind, hero: "you", hole: deal.holes.you, board: hintBoard,
+      positions: positionsFor(live, handPositions), players: betting.players.map(p => ({ id: p.id, stack: p.stack, committed: p.committed, totalCommitted: p.totalCommitted, folded: p.folded, allIn: p.allIn })),
+      legal: legalYou, log: actionLog, startStacks: handStartingStacks };
+  };
+  // ハンド後の「GTOで振り返る」(2026/10/27): 練習卓だけ。保存はせず、この画面の中で見る。
+  const myDecisions = useRef<LiveDecision[]>([]);
+  const [liveReview, setLiveReview] = useState<{status:"running"}|{status:"done";reviews:LiveReview[]}|{status:"error"}|null>(null);
+  const startLiveReview = () => {
+    const worker = gtoWorker.current, items = [...myDecisions.current];
+    if (!worker || !items.length) { setLiveReview({ status: "error" }); return; }
+    const id = ++gtoRequest.current;let done = false;
+    const onReply = (e: MessageEvent<GtoReply>) => { if (e.data.id !== id || done) return; done = true; window.clearTimeout(guard); worker.removeEventListener("message", onReply); setLiveReview(e.data.type === "liveReview" ? { status: "done", reviews: e.data.reviews } : { status: "error" }); };
+    const guard = window.setTimeout(() => { if (!done) { done = true; worker.removeEventListener("message", onReply); setLiveReview({ status: "error" }); } }, 60000);
+    setLiveReview({ status: "running" });
+    worker.addEventListener("message", onReply);
+    worker.postMessage({ type: "reviewLive", id, items, budgetMs: 1500 } satisfies GtoRequest);
+  };
   // GTOヒント(2026/10/27): 練習卓だけ、自分の番で「GTOならどう打つか」を割合で出す。読みは自分の手札と公開情報だけ。
   const [gtoHint, setGtoHint] = useState<{status:"running"}|{status:"done";advice:GtoAdvice}|{status:"error"}|null>(null);
   useEffect(() => {
     const worker = gtoWorker.current, legalYou = isYourTurn ? legalBettingActions(betting, "you") : null;
     if (!hintsOn || tournament || !isYourTurn || !legalYou || !deal.holes.you || !worker) { setGtoHint(null); return; }
-    const id = ++gtoRequest.current, live = clockwiseSeats.filter(x => betting.players.some(p => p.id === x));
-    const view = { handKey: `demo-${motionHand}`, bb: betting.bigBlind, hero: "you", hole: deal.holes.you, board: hintBoard,
-      positions: positionsFor(live, handPositions), players: betting.players.map(p => ({ id: p.id, stack: p.stack, committed: p.committed, totalCommitted: p.totalCommitted, folded: p.folded, allIn: p.allIn })),
-      legal: legalYou, log: actionLog, startStacks: handStartingStacks };
+    const id = ++gtoRequest.current, view = youView(legalYou);
     let done = false;
     const onReply = (e: MessageEvent<GtoReply>) => { if (e.data.id !== id || done) return; done = true; window.clearTimeout(guard); setGtoHint(e.data.type === "advice" ? { status: "done", advice: e.data.advice } : { status: "error" }); };
     const guard = window.setTimeout(() => { if (!done) { done = true; setGtoHint({ status: "error" }); } }, 10000);
@@ -464,7 +484,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setPayouts(null);setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);
-      setLastActions({});setActionLog([]);setTurnRemaining(20);setHandFinished(false);
+      setLastActions({});setActionLog([]);myDecisions.current=[];setLiveReview(null);setTurnRemaining(20);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(20);if(!tournament)setTimeBanksUsed(0);setRunning(true);
@@ -594,6 +614,15 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <small>{autoChoice === "CHECK" ? "チェック可能ならCHECK、コールが必要ならFOLD" : autoChoice === "FOLD" ? "自分の番で自動FOLD" : "未選択（0秒でCHECKまたはFOLD）"}</small>
       </div>
       <p role="status" aria-live="polite">{bettingMessage}</p>
+      {!tournament && handFinished && myDecisions.current.length > 0 && <div className={styles.gtoReview} aria-label="GTOで振り返る">
+        {!liveReview && <button type="button" onClick={startLiveReview}>GTOで振り返る</button>}
+        {liveReview?.status === "running" && <p role="status">GTOを計算中…（数秒かかります）</p>}
+        {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
+        {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
+          <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
+          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}</small></>}
+        </li>)}</ol>}
+      </div>}
       <details className={styles.demoTools}><summary>デモ検証操作</summary>
       {!tournament && <div className={styles.demoFoldControls}><span>相手のフォールド確認（デモ）</span>{seats.map((seat, i) => <button type="button" key={seat.name} aria-pressed={foldedSeats.includes(i + 2)} onClick={() => setFoldedSeats(prev => prev.includes(i + 2) ? prev.filter(n => n !== i + 2) : [...prev, i + 2])}>P{i + 2} {foldedSeats.includes(i + 2) ? "復帰" : "FOLD"}</button>)}</div>}
       <div className={styles.demoSteps}><button type="button" disabled onClick={() => {}}>{streetStep === 4 ? "ショーダウン表示中" : `自動進行中：${streetNames[streetStep + 1]}`}</button><button className={styles.reset} type="button" disabled={dealing || !canStartHand || tournamentComplete} onClick={reset}>{dealing ? "配布中…" : tournamentComplete ? "大会終了" : !handActive ? "大会デモを開始" : payouts ? "次のハンド" : "デモをリセット"}</button></div>

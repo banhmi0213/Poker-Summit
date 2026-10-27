@@ -80,3 +80,19 @@ export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
  return {source:s.source,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),freq:Math.max(0,s.freqs[k])/total})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
 }
+
+/** Review of decisions captured live (practice table, 2026/10/27: ハンド後にその場で「GTOで振り返る」): each item is the
+ * decision point as it was when the hero acted, plus what was played. */
+export type LiveDecision={view:GtoView;played:LoggedAction};
+export type LiveReview={street:LoggedAction['street'];played:string;options:{text:string;freq:number}[];freq:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver'}
+ |{street:LoggedAction['street'];played:string;source:'none';reason:string};
+const playedText=(a:LoggedAction,bb:number)=>a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/bb*10)/10}BB${a.allIn?'（オールイン）':''}`;
+export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1500):LiveReview[]{
+ return items.map(({view,played})=>{
+  const text=playedText(played,view.bb),s=gtoStrategy(view,data,budgetMs);
+  if(s.source==='fallback')return {street:played.street,played:text,source:'none',reason:s.reason};
+  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:null;
+  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),
+   options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k]})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
+ });
+}

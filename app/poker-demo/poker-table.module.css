@@ -923,3 +923,13 @@
 .cardArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;border-radius:inherit;z-index:3;pointer-events:none;user-select:none}
 .srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .table[data-table-skin] .street{color:var(--skin-table-text,inherit)}
+
+/* ハンド後の「GTOで振り返る」(2026/10/27) */
+.gtoReview{display:grid;gap:6px;margin:6px 0;font-size:12px;color:#d6e0e8}
+.gtoReview button{justify-self:start;background:#d9b368;color:#14283a;border:0;border-radius:8px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer}
+.gtoReview ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.gtoReview li{background:#132a3c;border:1px solid #2f4a5f;border-radius:8px;padding:6px 8px;line-height:1.5}
+.gtoReview em{font-style:normal;color:#e6bd70;margin-right:4px}
+.gtoReview b{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:11px;background:#2f6a4a;color:#fff}
+.gtoReview b[data-verdict=mixed]{background:#8a6d2a}.gtoReview b[data-verdict=rare]{background:#8a3a3a}
+.gtoReview small{display:block;color:#9fb3c3}
