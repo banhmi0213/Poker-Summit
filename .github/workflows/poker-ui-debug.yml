@@ -1,0 +1,26 @@
+name: Poker UI lifecycle debug
+on:
+  push:
+    branches: ["claude/ci-debug"]
+permissions:
+  contents: read
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm install --no-audit --no-fund
+      - run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10
+      - name: production upgrade + gate
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_DB_MODE: production-upgrade
+        run: |
+          set +e
+          node scripts/poker-release/build-production-sql.cjs | diff -q - scripts/poker-release/production-upgrade.sql; echo "::warning::sql up to date: $?"
+          node db/tests/poker_ring_release_gate_isolated.cjs > o.txt 2>&1; echo "::warning::gate exit $? $(grep PASS o.txt | cut -c1-200)"
+          grep -v node_modules o.txt | grep -iE "error|position|line|at |PASS" | head -20 | while IFS= read -r l; do echo "::warning::${l:0:600}"; done
