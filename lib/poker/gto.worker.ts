@@ -2,11 +2,11 @@
  * runs decideGto / reviewGto (turn/river solves take seconds) off the main thread.
  * Messages in: decide, advise, review. Messages out: decision, advice, review. */
 import {decideGto,type GtoData,type GtoView,type GtoDecision,type PreflopData} from './gto-bot';
-import {adviseGto,reviewGto,type GtoAdvice,type GtoReview,type GtoReviewHand} from './gto-review';
+import {adviseGto,reviewGto,reviewLive,type LiveDecision,type LiveReview,type GtoAdvice,type GtoReview,type GtoReviewHand} from './gto-review';
 import type {FlopData} from './gto-spots';
 
-export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number};
-export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'advice';id:number;advice:GtoAdvice}|{type:'review';id:number;reviews:GtoReview[]}|{type:'error';id:number;message:string};
+export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number};
+export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'advice';id:number;advice:GtoAdvice}|{type:'liveReview';id:number;reviews:LiveReview[]}|{type:'review';id:number;reviews:GtoReview[]}|{type:'error';id:number;message:string};
 
 const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:MessageEvent<GtoRequest>)=>void)|null};
 const flops=new Map<string,FlopData|null>(),missing=new Set<string>();
@@ -17,16 +17,16 @@ function load(){
  return base;
 }
 scope.onmessage=async e=>{
- const m=e.data;if(m.type!=='decide'&&m.type!=='review'&&m.type!=='advise')return;
+ const m=e.data;if(m.type!=='decide'&&m.type!=='review'&&m.type!=='advise'&&m.type!=='reviewLive')return;
  try{
   const b=await load();
   const data:GtoData={...b,flop(spot,flop){const k=spot+'/'+flop;if(flops.has(k))return flops.get(k)!;missing.add(k);return null;}};
-  const run=()=>m.type==='decide'?decideGto(m.view,data,Math.random,m.budgetMs):m.type==='advise'?adviseGto(m.view,data,m.budgetMs):reviewGto(m.hand,data,m.budgetMs);
+  const run=()=>m.type==='decide'?decideGto(m.view,data,Math.random,m.budgetMs):m.type==='advise'?adviseGto(m.view,data,m.budgetMs):m.type==='reviewLive'?reviewLive(m.items,data,m.budgetMs):reviewGto(m.hand,data,m.budgetMs);
   let d=run();
   // A flop file was needed but not loaded yet: fetch it and decide again.
   for(let i=0;i<3&&missing.size>0;i++){const keys=[...missing];missing.clear();
    await Promise.all(keys.map(async k=>{flops.set(k,await json<FlopData>(`/poker-gto/flops/${k}.json`));}));
    d=run();}
-  scope.postMessage(m.type==='decide'?{type:'decision',id:m.id,decision:d as GtoDecision}:m.type==='advise'?{type:'advice',id:m.id,advice:d as GtoAdvice}:{type:'review',id:m.id,reviews:d as GtoReview[]});
+  scope.postMessage(m.type==='decide'?{type:'decision',id:m.id,decision:d as GtoDecision}:m.type==='advise'?{type:'advice',id:m.id,advice:d as GtoAdvice}:m.type==='reviewLive'?{type:'liveReview',id:m.id,reviews:d as LiveReview[]}:{type:'review',id:m.id,reviews:d as GtoReview[]});
  }catch(error){scope.postMessage({type:'error',id:m.id,message:error instanceof Error?error.message:String(error)});}
 };

@@ -54,3 +54,16 @@ test('practice-table GTO hint: advice for a live decision is sorted and sums to 
   }}
  assert.ok(checked>0);
 });
+
+test('practice table: decisions captured live are reviewed like the hand history review',()=>{
+ const {reviewLive}=require('../lib/poker/gto-review.ts');
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));const t=new BotTable(5,ringTerms,data,6,100);let n=0;
+ for(let i=0;i<3;i++){const h=t.play(seeded(500+i)).history;if(!h)continue;const p=h.players[0],view=asViewer(h,p.seatId),items=[];
+  view.actions.forEach((a,k)=>{if(a.seatId!==p.seatId||['ante','sb','bb'].includes(a.type))return;const v=viewAt(view,k);if(!v)return;
+   items.push({view:v,played:{street:a.street,id:a.seatId,type:a.type,to:a.to,allIn:a.allIn,potBefore:k>0?view.actions[k-1].pot:0,currentBetBefore:Math.max(0,...v.players.map(x=>x.committed)),committedBefore:v.players.find(x=>x.id===a.seatId).committed}});});
+  const old=reviewGto(view,data,300),live=reviewLive(items,data,300);assert.equal(live.length,old.length);
+  live.forEach((r,j)=>{n++;assert.equal(r.source==='none'?'none':'model',old[j].source==='none'?'none':'model');assert.ok(!/undefined|NaN/.test(r.played));
+   if(r.source!=='none'&&old[j].source!=='none'&&r.source!=='solver'){assert.equal(r.verdict,old[j].verdict);}});
+ }
+ assert.ok(n>0);
+});
