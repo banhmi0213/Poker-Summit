@@ -1,11 +1,11 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {BACK_SKINS,CARD_SKINS,TABLE_SKINS,skinUnlocked} from '@/lib/poker/skins';
+import {BACK_SKINS,CARD_SKINS,SKINS_FREE_FOR_NOW,TABLE_SKINS,skinUnlocked} from '@/lib/poker/skins';
 import {useTablePreferences} from './table-preferences';
 /** 卓・カードの着せ替え. Shop skins stay locked until exchanged in the chip shop (ticket count > 0). Hidden while only the standard designs exist. */
 export function SkinSettings(){
  const {settings,change}=useTablePreferences(),[owned,setOwned]=useState<Record<string,number>>({});
- const needsShop=[...TABLE_SKINS,...CARD_SKINS,...BACK_SKINS].some(s=>!s.free);
+ const needsShop=!SKINS_FREE_FOR_NOW&&[...TABLE_SKINS,...CARD_SKINS,...BACK_SKINS].some(s=>!s.free);
  useEffect(()=>{if(!needsShop)return;let live=true;// Loaded lazily and failure-tolerant: without the shop the paid skins simply stay locked.
   void import('@/lib/supabase/client').then(m=>m.createClient().rpc('poker_shop')).then(({data,error})=>{if(!live||error||!data||typeof data!=='object')return;const t=(data as {tickets?:unknown}).tickets;if(t&&typeof t==='object')setOwned(t as Record<string,number>);}).catch(()=>{});return()=>{live=false;};},[needsShop]);
  if(TABLE_SKINS.length<2&&CARD_SKINS.length<2&&BACK_SKINS.length<2)return null;

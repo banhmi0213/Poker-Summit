@@ -41,8 +41,11 @@ export const cardArt=(skin:CardSkin,card:{rank:number;suit:'s'|'h'|'d'|'c'})=>sk
 export const tableSkin=(id:string|undefined,list=TABLE_SKINS)=>list.find(s=>s.id===id)??list[0];
 export const cardSkin=(id:string|undefined,list=CARD_SKINS)=>list.find(s=>s.id===id)??list[0];
 export const backSkin=(id:string|undefined,list=BACK_SKINS)=>list.find(s=>s.id===id)??list[0];
-/** Free skins, or shop skins the member has exchanged for. */
-export function skinUnlocked(skin:{free:boolean;shopCode?:string},owned:Readonly<Record<string,number>>){return skin.free||Boolean(skin.shopCode&&(owned[skin.shopCode]??0)>0);}
+/** 一旦すべて無料（owner 2026/10/27: トランプ・テーブルのデザインを変えたいから一旦無料で変えれるように）.
+ * While true every skin can be chosen and the shop hides its skin items. Set false to go back to shop skins. */
+export const SKINS_FREE_FOR_NOW=true;
+/** Free skins, or shop skins the member has exchanged for (everything while SKINS_FREE_FOR_NOW). */
+export function skinUnlocked(skin:{free:boolean;shopCode?:string},owned:Readonly<Record<string,number>>,allFree=SKINS_FREE_FOR_NOW){return allFree||skin.free||Boolean(skin.shopCode&&(owned[skin.shopCode]??0)>0);}
 /** Attributes and CSS variables for the felt element. The standard skins add nothing, so the stylesheet applies as is. */
 export function skinProps(table:TableSkin,card:CardSkin,back:BackSkin=BACK_SKINS[0]):{'data-table-skin'?:string;'data-card-skin'?:string;'data-card-back'?:string;style?:Record<string,string>}{
  const style:Record<string,string>={},out:ReturnType<typeof skinProps>={};

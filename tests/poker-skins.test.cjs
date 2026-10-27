@@ -12,7 +12,9 @@ test('a non-standard skin sets the felt images, card colours per suit and the ca
  const p=skinProps(t,c,k);assert.equal(skinProps(t,c)['data-card-back'],undefined,'standard back');
  assert.equal(p['data-table-skin'],'velvet');assert.equal(p['data-card-skin'],'four');assert.equal(p['data-card-back'],'image');
  assert.equal(p.style['--skin-table-desktop'],"url('/images/skins/velvet/desktop.webp')");assert.equal(p.style['--skin-card-d'],'#06c');assert.equal(p.style['--skin-card-c'],'#080');
- assert.equal(skinUnlocked(t,{}),false);assert.equal(skinUnlocked(t,{skin_table_velvet:1}),true);assert.equal(skinUnlocked(c,{}),true);
+ assert.equal(skinUnlocked(t,{},false),false);assert.equal(skinUnlocked(t,{skin_table_velvet:1},false),true);assert.equal(skinUnlocked(c,{},false),true);
+ // 一旦すべて無料 (2026/10/27): every skin can be chosen without exchanging.
+ assert.equal(skinUnlocked(t,{}),true);
 });
 test('every skin image in the registry exists',()=>{
  for(const s of TABLE_SKINS)for(const f of [s.desktop,s.mobile,s.thumb].filter(Boolean))assert.ok(fs.existsSync('public'+f),f);
