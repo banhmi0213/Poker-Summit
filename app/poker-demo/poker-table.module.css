@@ -878,3 +878,15 @@
  .table .topSeats .bet_p2{top:calc(100% + 42px)}
  .table>.streetBets>.bet_p2{top:24%;left:50%;bottom:auto}
 }
+
+/* PC: center cards over portraits and bring the action dock farther inward. */
+@media(min-width:900px){
+ .shell .actionColumn{right:clamp(140px,14vw,280px)}
+ .table .self .handWithRank{left:50%;top:0;transform:translateX(-50%);z-index:8}
+ .table .opponentCardsLayer,.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:10}
+ .table .showdownTwo,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:0;left:50%;right:auto;transform:translateX(-50%)}
+ .table .showdownThree,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:15%;left:calc(3% - 12px);right:auto}
+ .table .showdownFour,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:15%;right:calc(3% - 12px);left:auto}
+ .table .showdownFive,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;left:calc(3% - 12px);right:auto;bottom:auto}
+ .table .showdownSix,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;right:calc(3% - 12px);left:auto;bottom:auto}
+}
