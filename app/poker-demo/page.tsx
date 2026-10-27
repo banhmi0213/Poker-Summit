@@ -1,3 +1,4 @@
+import {pokerAccess} from '@/lib/poker/access';
 import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {GameCommunity} from '@/app/poker-ui/game-community';
 import type { Metadata } from "next";
@@ -18,6 +19,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const { data: { user } } = await supabase.auth.getUser();
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
   if (!user && !isPreview) redirect("/signup");
+  if (user && pokerAccess(user) === "verify") redirect("/mypage?poker=verify");
   const { data: profile } = user ? await supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle() : { data: null };
   const serverNow = Date.now();
   let tournament: PokerTournament | undefined;
