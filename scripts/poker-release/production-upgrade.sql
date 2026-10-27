@@ -631,7 +631,7 @@ $$;
 -- 20261018175059_poker_statistics_private_reader.sql
 -- Keep elevated reads out of PostgREST's public API schema. The private function
 -- independently verifies auth.uid(), suspension and admin status on every call.
-alter function public.poker_statistics(boolean) set schema poker_private;
+do $release$ begin alter function public.poker_statistics(boolean) set schema poker_private; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 grant usage on schema poker_private to authenticated;
 revoke all on function poker_private.poker_statistics(boolean) from public,anon;
 grant execute on function poker_private.poker_statistics(boolean) to authenticated;
@@ -780,7 +780,7 @@ grant execute on function public.poker_entry_due() to service_role;
 
 -- 20261019123737_poker_targeted_policy_guard.sql
 -- A stale manual management panel must not overwrite a designated-member pool.
-alter function public.poker_registration_configure(uuid,integer,boolean) rename to poker_registration_configure_manual;
+do $release$ begin alter function public.poker_registration_configure(uuid,integer,boolean) rename to poker_registration_configure_manual; exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
 create or replace function public.poker_registration_configure(p_tournament uuid,p_capacity integer,p_enabled boolean) returns jsonb
 language plpgsql security invoker set search_path='' as $$
 begin
@@ -1984,7 +1984,7 @@ alter table poker_private.hand_history_members add column if not exists stats js
 alter table poker_private.hand_history_members add column if not exists bb integer;
 do $$ begin
  if not exists(select 1 from pg_constraint where conname='hand_history_members_stats_object') then
-  alter table poker_private.hand_history_members add constraint hand_history_members_stats_object check(jsonb_typeof(stats)='object' and length(stats::text)<=2000);
+  do $release$ begin alter table poker_private.hand_history_members add constraint hand_history_members_stats_object check(jsonb_typeof(stats)='object' and length(stats::text)<=2000); exception when duplicate_object or duplicate_table or duplicate_function or undefined_function then null; end $release$;;
  end if;
 end $$;
 
