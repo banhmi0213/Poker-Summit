@@ -26,3 +26,23 @@
 .list button:hover:not(:disabled){background:#ffffff12}
 .list button:disabled{opacity:.45;cursor:default}
 .list button:focus-visible{outline:2px solid #f3c663;outline-offset:2px}
+
+/* Quick bar beside your own avatar (owner 2026/10/27) */
+.quick{position:absolute;right:calc(100% + 8px);top:50%;transform:translateY(-50%);z-index:25;display:flex;gap:6px;padding:5px 7px;border-radius:999px;background:#0d1117d9;border:1px solid #ffffff2b;box-shadow:0 3px 10px #0007}
+.quickBtn{width:38px;height:38px;border-radius:50%;border:0;background:#1f2a36;display:grid;place-items:center;padding:0;cursor:pointer}
+.quickBtn img{width:34px;height:34px;object-fit:contain}
+.quickBtn img[data-summit]{width:22px;height:22px}
+.quickBtn:disabled{opacity:.45;cursor:default}
+.quickBtn[aria-expanded=true]{box-shadow:0 0 0 2px #f3c663}
+.quickBtn:focus-visible{outline:2px solid #f3c663;outline-offset:2px}
+@media(max-width:899px){.quick{gap:4px;padding:4px 5px}.quickBtn{width:32px;height:32px}.quickBtn img{width:28px;height:28px}.quickBtn img[data-summit]{width:18px;height:18px}}
+.sheetBackdrop{position:fixed;inset:0;z-index:1000;background:#0006;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.sheetList{display:grid;grid-template-columns:repeat(5,60px);gap:6px;background:#182430;border:1px solid #a78a54;border-radius:14px;padding:10px;box-shadow:0 10px 24px #0008;margin-bottom:8vh}
+.sheetList button{display:grid;place-items:center;height:60px;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
+.sheetList button:hover:not(:disabled){background:#ffffff12}
+.sheetList button:disabled{opacity:.45;cursor:default}
+@media(max-width:360px){.sheetList{grid-template-columns:repeat(5,54px);gap:4px}}
+.summitSheet{width:min(560px,100%);height:min(75dvh,720px);display:flex;flex-direction:column;background:#0f1a24;border:1px solid #a78a54;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px #0008}
+.summitHead{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#f3d9a7;border-bottom:1px solid #2f4a5f}
+.summitHead button{background:none;border:0;color:#f3d9a7;font-size:22px;line-height:1;cursor:pointer;min-width:36px;min-height:36px}
+.summitSheet iframe{flex:1;width:100%;border:0;background:#fff}
