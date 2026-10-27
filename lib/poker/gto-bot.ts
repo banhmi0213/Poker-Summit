@@ -109,7 +109,10 @@ function flopIndexOf(node:FlopNode,a:LoggedAction):number{
 // ---------- turn/river solver cache ----------
 type Solve={solver:PostflopSolver;board:number[];players:[string,string];bb:number;startPot:number};
 const solves=new Map<string,Solve>();
-function remember(k:string,s:Solve){solves.set(k,s);while(solves.size>24)solves.delete(solves.keys().next().value as string);}
+// Each solve holds large strategy tables (tens to hundreds of MB): keep only the current hand's turn and river solves.
+function remember(k:string,s:Solve){solves.set(k,s);while(solves.size>2)solves.delete(solves.keys().next().value as string);}
+/** Drop cached turn/river solves (call when a hand ends, so memory does not pile up across hands). */
+export function clearGtoSolves(){solves.clear();}
 function runSolver(s:PostflopSolver,budgetMs:number){const t=Date.now(),step=budgetMs<1000?2:10;let n=0;while(Date.now()-t<budgetMs&&n<400){s.run(step);n+=step;if(n%80===0&&s.exploitability()<0.003)break;}}
 /** Walk a solver tree along the logged actions (bb units); returns the node, its card context, or null when off the tree. */
 function walk(s:Solve,acts:readonly LoggedAction[],river:number|null,startStreet:Street):{node:ActNode;ctx:number}|null{
