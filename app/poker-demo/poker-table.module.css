@@ -1019,3 +1019,15 @@
 /* Phones (owner 2026/10/28: これもいらん): no 「PLAYER 6・フォールド」 banner in the middle of the felt; each seat already
    shows its action. */
 @media(max-width:899px){.actionToast{display:none!important}}
+/* Phone practice table (owner 2026/10/28): the dealer button sits right beside the dealer's seat, just inside the
+   felt, instead of out in the middle of the table. Positions are % of the table box. */
+@media(max-width:899px){
+ .demoShell .table .dealerSpot{height:0;translate:none;transform:none;right:auto;bottom:auto}
+ .demoShell .table .dealerSpot .dealerButton,.demoShell .table .dealerSpot.bet_p4 .dealerButton,.demoShell .table .dealerSpot.bet_p6 .dealerButton{left:-12px;top:-12px}
+ .demoShell .table .dealerSpot.bet_p2{left:63%;top:13%}
+ .demoShell .table .dealerSpot.bet_p3{left:25%;top:23.5%}
+ .demoShell .table .dealerSpot.bet_p4{left:75%;top:23.5%}
+ .demoShell .table .dealerSpot.bet_p5{left:25%;top:67%}
+ .demoShell .table .dealerSpot.bet_p6{left:75%;top:67%}
+ .demoShell .table .dealerSpot.bet_you{left:70%;top:82%}
+}
