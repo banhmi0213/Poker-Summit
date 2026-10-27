@@ -1,12 +1,11 @@
 'use client';
 import {useEffect,useState} from 'react';
+import {GTO_FLOPS,GTO_SPOTS,loadFlop,type FlopData} from '@/lib/poker/gto-spots';
+import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 
-/** Precomputed flop solutions (scripts/poker-gto/flop-solve.cjs → public/poker-gto/flops/<flop>.json). */
-type FlopNode={path:number[];player:0|1;actions:{label:string;kind:string}[];total:number[];classes:Record<string,number[]>;children:(number|null)[]};
-type FlopData={flop:string;spot:{name:string;pot:number;stack:number;oop:string;ip:string};iterations:number;exploitability:number;nodes:FlopNode[]};
-export const FLOPS=['Ah7d2c','AhKd5c','AhJd8c','Ah5d4c','AhAd7c','Kh7d2c','KhQd6c','KhTd9c','Kh8d8c','Qh8d3c','QhJdTc','Qh9d5c','Jh8d4c','JhTd7c','Th9d6c',
- 'Th7d3c','9h5d2c','8h7d5c','6h5d4c','5h4d2c','7h7d2c','QhQd5c','AhTh4c','Kh9h3c','Jh9h5c','8h6h4c','KhTh4h','7h5h2h','AhQhJh','9h8h3c'];
+/** Precomputed flop solutions for four spots × 95 representative flops (public/poker-gto/flops/<spot>/<flop>.json). */
+export const FLOPS=GTO_FLOPS;
 const R='AKQJT98765432',SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
 const flopText=(f:string)=>[0,2,4].map(i=>f[i]+SUIT[f[i+1]]).join(' ');
@@ -14,18 +13,28 @@ const COLORS:Record<string,string>={check:'#4f8f74',call:'#4f8f74',fold:'#5a6b78
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
- const [flop,setFlop]=useState(flops[0]);
+ const [spot,setSpot]=useState<string>(GTO_SPOTS[0].id),[flop,setFlop]=useState(flops[0]);
  const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
- const [trail,setTrail]=useState<number[]>([0]);
+ const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
  useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);
-  fetch(`/poker-gto/flops/${flop}.json`).then(r=>{if(!r.ok)throw new Error(String(r.status));return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live)setError('このフロップの計算結果を読み込めませんでした。');});
-  return ()=>{live=false;};},[flop]);
+  void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');});
+  return ()=>{live=false;};},[spot,flop]);
+ const lookup=()=>{const t=typed.replace(/\s+/g,'').replace(/(.)(.)/g,(_,r:string,su:string)=>r.toUpperCase()+su.toLowerCase());const c=canonicalFlop(t);if(!c){setNearNote('「Kh7d2c」のように3枚を入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}
+  const n=nearestFlop(t,flops);if(!n)return;setFlop(n.flop);setNearNote(n.exact?(n.flop===t?`${flopText(t)} は計算済みです。`:`${flopText(t)} はスートの入れ替えだけ違う ${flopText(n.flop)} と同じ形なので、その計算結果を表示しています（手札の表は同じになります）。`):`${flopText(t)} にいちばん近い計算済みのフロップ ${flopText(n.flop)} を表示しています（スートの並びと高いカードが近いもの）。`);};
  const node=data?data.nodes[trail[trail.length-1]]:null;
  const who=(p:0|1)=>p===0?`${data!.spot.oop}（先に打つ人）`:`${data!.spot.ip}（後に打つ人）`;
+ const current=GTO_SPOTS.find(s=>s.id===spot)!;
  return <div className={styles.wrap}>
-  <p>よくあるフロップを前もって計算した、フロップでの正解の打ち方です。BTNが2.5BBでオープン、BBがコールした100BBのポット（ポット5.5BB）を、ターン・リバーのカードまで全部計算しています。</p>
-  <p className={styles.note}>ベット額の前提：フロップはポットの33%・75%と3倍レイズ、ターンは66%、リバーは75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは標準的な目安レンジです。</p>
-  <label className={styles.stack}>フロップを選ぶ<select value={flop} onChange={e=>setFlop(e.target.value)}>{flops.map(f=><option key={f} value={f}>{flopText(f)}</option>)}</select></label>
+  <p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
+  <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
+  <div className={styles.form}>
+   <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{GTO_SPOTS.map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</select></label>
+   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}</option>)}</select></label>
+   <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
+   <button type="button" onClick={lookup}>近いフロップを表示</button>
+  </div>
+  <p className={styles.note}>{current.detail}</p>
+  {nearNote&&<p role="status" className={styles.note}>{nearNote}</p>}
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}
   {data&&node&&<>
