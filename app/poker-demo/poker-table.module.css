@@ -891,3 +891,4 @@
  .table .showdownSix,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;right:calc(3% - 12px);left:auto;bottom:auto}
 }
 @media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
+@media(min-width:900px){.shell .actionColumn .actions button{font-size:clamp(15px,1.2vw,20px);white-space:nowrap}}
