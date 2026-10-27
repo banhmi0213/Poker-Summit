@@ -62,3 +62,7 @@
 .quickIcon{position:relative}
 .quickIcon:not([data-kind=summit]) img{position:absolute;transform:none;width:67px;height:67px;left:-10.7px;top:-22.3px}
 @media(min-width:900px){.quickIcon:not([data-kind=summit]) img{width:79px;height:79px;left:-12.6px;top:-26.2px}}
+/* Summit finger larger (owner 2026/10/28: 指もおおきくしていい) */
+.quickIcon[data-kind=summit] img{width:38px!important;height:38px!important}
+@media(max-width:899px){.quickIcon[data-kind=summit] img{width:42px!important;height:42px!important}}
+@media(min-width:900px){.quickIcon[data-kind=summit] img{width:48px!important;height:48px!important}}
