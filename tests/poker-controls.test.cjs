@@ -144,7 +144,7 @@ require('node:test').test('scheduled and break pages keep full stacks, no forced
  const tournament={id:'sample',title:'WAIT',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  for(const offset of [-1,80*60000]){
   const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)+offset}));
-  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000/);assert.match(html,/POT <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
+  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000/);assert.match(html,/ポット <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
  }
 });
 require('node:test').test('heads-up render combines BTN/SB, deals only two live hands and marks unused seats empty',()=>{

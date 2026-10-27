@@ -588,9 +588,10 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       </div>
       {announcement&&<div key={announcement.key} className={styles.actionToast} data-kind={announcement.kind} role="status" aria-live="polite">{announcement.text}</div>}
       <div className={styles.felt}>
-        <div data-pot-source className={styles.pot}>POT <strong>{showChips(potTotal(betting))}</strong></div>
+        <div data-pot-source className={styles.pot}>ポット <strong>{showChips(potTotal(betting))}</strong></div>
         <div className={styles.cards} aria-label="共通カード" data-motion-board>{deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5).map((card, i) => <span key={i} className={isRedCard(card) ? styles.red : ""}><CardFace card={card}/></span>)}</div>
-        <div className={styles.street}>{streetNames[streetStep]} · {gameType==="ring"?`レート ${ringTerms.sb}/${ringTerms.bb}`:"練習"}</div>
+        <div className={styles.street}>{streetNames[streetStep]}</div>
+        {(()=>{const t=handTerms??(gameType==="ring"?ringTerms:null);return t&&<div className={styles.blindsInfo} aria-label="ブラインド">{tournament&&t.level?`LV${t.level}・`:""}ブラインド {t.sb.toLocaleString()}/{t.bb.toLocaleString()}{t.ante?`・アンティ ${t.ante.toLocaleString()}`:""}</div>;})()}
       </div>
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} stamp={demoStamps["p5"]} stack={displayStack("p5")} index={5} winnerGlow={Boolean(payouts?.p5)} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} seatStatus={seatStatus("p5")} positionLabel={positionFor("p5")} dealer={handActive&&handPositions.button==="p5"} lastAction={lastActions["p5"]} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} stamp={demoStamps["p6"]} stack={displayStack("p6")} index={6} winnerGlow={Boolean(payouts?.p6)} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} seatStatus={seatStatus("p6")} positionLabel={positionFor("p6")} dealer={handActive&&handPositions.button==="p6"} lastAction={lastActions["p6"]} /></div>
