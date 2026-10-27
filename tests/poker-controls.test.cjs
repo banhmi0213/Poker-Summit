@@ -153,7 +153,7 @@ require('node:test').test('heads-up render combines BTN/SB, deals only two live 
  const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
  const initialDeal=dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],['you','p2'],'you');
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal,tournament,initialSeatIds:['you','p2'],serverNow:Date.parse(tournament.starts_at)}));
- assert.match(html,/残り 2人 ／ 開始 2人・ヘッズアップ/);assert.match(html,/>SB</);assert.match(html,/aria-label="ディーラーボタン"/);assert.doesNotMatch(html,/>BTN/);assert.equal((html.match(/class="cardBack"/g)||[]).length,2);assert.equal((html.match(/class="eliminatedTag">空席/g)||[]).length,4);assert.match(html,/POT <strong>150/);assert.doesNotMatch(html,/相手のフォールド確認/);
+ assert.match(html,/残り 2人 ／ 開始 2人・ヘッズアップ/);assert.match(html,/<b>SB <\/b>/,'SB is shown on the chip');assert.doesNotMatch(html,/positionBadge/,'no position badge on players');assert.match(html,/aria-label="ディーラーボタン"/);assert.doesNotMatch(html,/>BTN/);assert.equal((html.match(/class="cardBack"/g)||[]).length,2);assert.equal((html.match(/class="eliminatedTag">空席/g)||[]).length,4);assert.match(html,/POT <strong>150/);assert.doesNotMatch(html,/相手のフォールド確認/);
 });
 require('node:test').test('when your seat is outside the current hand, cards and action controls stay inactive',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
