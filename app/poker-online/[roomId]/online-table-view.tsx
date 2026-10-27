@@ -6,7 +6,7 @@ import {PlayerHud,HudColorMark,hudAvatarButtonClass} from '@/app/poker-ui/player
 import {StampBubble} from '@/app/poker-ui/stamp-bar';
 import {TableGameMenu} from '@/app/poker-ui/table-game-menu';
 import {useTablePreferences,formatTableChips} from '@/app/poker-ui/table-preferences';
-import {cardSkin,skinProps,tableSkin} from '@/lib/poker/skins';
+import {backSkin,cardSkin,skinProps,tableSkin} from '@/lib/poker/skins';
 
 import {TableMotionLayer,useTableActionMotion} from '@/app/poker-ui/table-action-motion';
 import {usePotFlight} from '@/app/poker-ui/use-pot-flight';
@@ -67,7 +67,7 @@ export function OnlineTableView({stamps,state:source,children,onExit,onSound,sou
  useTableActionMotion(tableRef,hand?{handId:hand.handId,revision:hand.revision,boardCount:hand.board.length,settled:Boolean(hand.result),players:hand.players.map(p=>({id:p.id,committed:p.committed,totalCommitted:p.totalCommitted,folded:p.folded}))}:null);
  const seatClasses={p2:shared.topSeats,p3:shared.edgeSeatThree,p4:shared.edgeSeatFour,p5:shared.edgeSeatFive,p6:shared.edgeSeatSix,you:shared.self};
  const cardClasses={p2:shared.showdownTwo,p3:shared.showdownThree,p4:shared.showdownFour,p5:shared.showdownFive,p6:shared.showdownSix,you:''};
- const {settings}=useTablePreferences(),skin=skinProps(tableSkin(settings.tableSkin),cardSkin(settings.cardSkin)) as Record<string,unknown>,showAmount=(value:number|null)=>formatTableChips(value,hand?.terms.bb??0,settings.bb);
+ const {settings}=useTablePreferences(),skin=skinProps(tableSkin(settings.tableSkin),cardSkin(settings.cardSkin),backSkin(settings.backSkin)) as Record<string,unknown>,showAmount=(value:number|null)=>formatTableChips(value,hand?.terms.bb??0,settings.bb);
  const ringBlinds=hand?.terms??(state?.clock.period?.kind==='level'?state.clock.period:null);
  const street=hand?.street==='preflop'?0:hand?.street==='flop'?1:hand?.street==='turn'?2:3;
  const next=state?.phase==='finished'?null:state?.clock.following,clockText=!state?'未接続':state.phase==='finished'?'大会終了':state.clock.phase==='final'?'最終レベル継続':`${Math.floor(state.clock.remaining/60).toString().padStart(2,'0')}:${(state.clock.remaining%60).toString().padStart(2,'0')}`;
