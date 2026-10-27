@@ -99,6 +99,11 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_release_gate_isolated.cjs
+      - name: Verify the production upgrade SQL (production-shaped DB, upgraded twice, then the release gate)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_DB_MODE: production-upgrade
+        run: node scripts/poker-release/build-production-sql.cjs | diff - scripts/poker-release/production-upgrade.sql && node db/tests/poker_ring_release_gate_isolated.cjs
       - name: Verify hand history privacy and idempotent saves
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
