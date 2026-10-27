@@ -989,3 +989,6 @@
 .pot .blindsInfo{display:block;margin-top:2px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#cdb98f;opacity:.9;text-shadow:none;text-align:center}
 .pot{text-align:center}
 @media(min-width:900px){.pot .blindsInfo{font-size:12px}}
+/* When your made hand is listed (flop onward) the chip box is one line taller: grow it upward so it never reaches
+   the control panel. */
+@media(max-width:899px){.demoShell .table .self:has([class*=madeHand]){translate:0 18px}}
