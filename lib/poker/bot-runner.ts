@@ -37,7 +37,7 @@ export class BotRunner{
   if(this.#worker&&(changed||config.enabled))this.#worker.postMessage({type:'config',config});
  }
  #save(batch:BotBatch){
-  const payload={hands:batch.hands,anomalies:batch.anomalies,stats:{avg_ms:batch.avgMs,max_ms:batch.maxMs,rss_mb:Math.round(process.memoryUsage().rss/1048576)}};
+  const payload={hands:batch.hands,anomalies:batch.anomalies,stats:{sources:batch.sources,avg_ms:batch.avgMs,max_ms:batch.maxMs,rss_mb:Math.round(process.memoryUsage().rss/1048576)}};
   this.#saving=this.#saving.then(async()=>{try{const {error}=await this.options.rpc('poker_bot_record',{p_batch:payload});if(error)throw error;}catch{this.options.log({type:'poker_bot_record_failed',hands:batch.hands.length});}
    if(batch.anomalies.length)this.options.log({type:'poker_bot_anomaly',kinds:[...new Set(batch.anomalies.map(a=>a.kind))]});});
  }
