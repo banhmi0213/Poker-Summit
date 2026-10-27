@@ -22,8 +22,12 @@ function useBoardMutation(): [boolean, (task: () => Promise<void>) => void] {
     void task().finally(() => { busy.current=false; setPending(false); });
   }];
 }
+// Hands shared from the poker hand history (/poker-hands/<id>) open as a card under the text.
+const SHARED_HAND = /https?:\/\/[^\s/]+\/poker-hands\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi;
 export function BoardBody({ body }: { body: string }) {
-  return <div className={s.body}>{splitMentions(body).map((part, i) => part.userId ? <Link className={s.mention} key={i} href={`/members/${part.userId}`}>{part.text}</Link> : <span key={i}>{part.text}</span>)}</div>;
+  const hands = [...new Set([...body.matchAll(SHARED_HAND)].map(m => m[1].toLowerCase()))].slice(0, 3);
+  return <div className={s.body}>{splitMentions(body).map((part, i) => part.userId ? <Link className={s.mention} key={i} href={`/members/${part.userId}`}>{part.text}</Link> : <span key={i}>{part.text}</span>)}
+    {hands.map(id => <Link key={id} className={s.handCard} href={`/poker-hands/${id}`}><b>ハンドを再生する</b><span>リプレイとGTO振り返りを開きます</span></Link>)}</div>;
 }
 export function BoardHelp() {
   return <details className={s.help}><summary>サミットの使い方：メンション・返信・フォローなど</summary><dl>
