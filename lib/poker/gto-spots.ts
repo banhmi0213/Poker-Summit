@@ -20,7 +20,9 @@ export type GtoSpotId=typeof GTO_SPOTS[number]['id'];
 /** The 95 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs). */
 export const GTO_FLOPS:string[]=flops as string[];
 
-export type FlopNode={path:number[];player:0|1;actions:{label:string;kind:string}[];total:number[];classes:Record<string,number[]>;children:(number|null)[]};
+/** classes: per starting-hand class [reach, action shares…]. suits (version 2): the same keyed "AKs|21" (how many board
+ * cards share each hole card's suit), only where it differs from the class row. */
+export type FlopNode={path:number[];player:0|1;actions:{label:string;kind:string}[];total:number[];classes:Record<string,number[]>;suits?:Record<string,number[]>;children:(number|null)[]};
 export type FlopData={flop:string;board:number[];spot:{id?:string;name:string;pot:number;stack:number;oop:string;ip:string;note?:string};iterations:number;exploitability:number;nodes:FlopNode[]};
 export async function loadFlop(spot:string,flop:string):Promise<FlopData|null>{
  try{const r=await fetch(`/poker-gto/flops/${spot}/${flop}.json`);if(!r.ok)return null;return await r.json() as FlopData;}catch{return null;}
