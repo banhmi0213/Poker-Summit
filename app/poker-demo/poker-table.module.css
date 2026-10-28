@@ -1167,3 +1167,11 @@
  .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
  .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
 }
+/* PC practice table: during play the face-down cards sit behind each avatar, peeking out on the table side (as on the
+   phone); at showdown they come back in front so the hands can be read. */
+@media(min-width:900px){
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .opponentCardsLayer{z-index:2}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownThree,.demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownFive{translate:56px -46px}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownFour,.demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownSix{translate:-56px -46px}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownTwo{translate:0 -12px}
+}
