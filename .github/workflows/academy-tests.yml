@@ -1,0 +1,46 @@
+name: Academy learning tests
+
+on:
+  pull_request:
+    paths:
+      - 'app/learn/**'
+      - 'app/academy-hero*'
+      - 'tests/academy-*'
+      - '.github/workflows/academy-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/learn/**'
+      - 'app/academy-hero*'
+      - 'tests/academy-*'
+      - '.github/workflows/academy-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: academy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  academy-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install project dependencies
+        run: npm install --include=dev --no-audit --no-fund
+      - name: Check scoring, calculations and stored progress
+        run: node --test tests/academy-*.test.cjs
+      - name: Install isolated browser test runtimes
+        run: npm install --prefix "$RUNNER_TEMP/academy-tests" --no-audit --no-fund esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
+      - name: Verify lessons, exam, persistence and mobile layout
+        env:
+          ACADEMY_ESBUILD_MODULE: ${{ runner.temp }}/academy-tests/node_modules/esbuild
+          ACADEMY_CHROMIUM_MODULE: ${{ runner.temp }}/academy-tests/node_modules/@sparticuz/chromium/build/index.js
+          ACADEMY_PLAYWRIGHT_MODULE: ${{ runner.temp }}/academy-tests/node_modules/playwright-core
+        run: node tests/academy-level3-browser.cjs

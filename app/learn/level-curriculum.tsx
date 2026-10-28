@@ -3,9 +3,9 @@ import styles from "./learn.module.css";
 export const advancedLevels = [
  {
   level: 3,
-  name: "実戦チャレンジャー（仮）",
+  name: "実戦チャレンジャー",
   theme: "基本を、実戦の判断につなげる",
-  summary: "レンジ・ベット・ストリート別の判断",
+  summary: "6レッスン・実戦判断テスト（12問）",
   prerequisite: "初心者コースの内容を理解した方",
   goal: "手札の強さだけでなく、相手のレンジと状況から行動の理由を説明できる。",
   lessons: [
@@ -54,21 +54,22 @@ export const advancedLevels = [
  },
 ] as const;
 
-export function LevelCurriculum() {
+export function LevelCurriculum({ onStartLevelThree }: { onStartLevelThree?: () => void }) {
  return <div className={styles.curriculum}>
-  <p className={styles.curriculumLead}>Lv.3から順に、実戦判断・GTOの理解・ソルバー活用へ。各レベルを開くと、学ぶ順番と到達目標を確認できます。</p>
+  <p className={styles.curriculumLead}>Lv.3の実戦判断から、今後のGTOの理解・ソルバー活用へ。各レベルを開くと、学ぶ順番と到達目標を確認できます。</p>
   {advancedLevels.map(course => <details key={course.level} id={`academy-level-${course.level}`} className={styles.curriculumCard}>
    <summary className={styles.curriculumSummary}>
     <span className={styles.curriculumLevel}>Lv.{course.level}</span>
     <span className={styles.curriculumHeading}><strong>{course.name}</strong><span>{course.theme}</span></span>
-    <span className={styles.planned}>開発予定</span>
+    <span className={course.level === 3 ? styles.available : styles.planned}>{course.level === 3 ? "公開中" : "開発予定"}</span>
    </summary>
    <div className={styles.curriculumBody}>
     <dl className={styles.curriculumGoals}><div><dt>学習の目安</dt><dd>{course.prerequisite}</dd></div><div><dt>到達目標</dt><dd>{course.goal}</dd></div></dl>
     <ol className={styles.curriculumLessons}>{course.lessons.map(lesson => <li key={lesson.title}><strong>{lesson.title}</strong><p>{lesson.description}</p></li>)}</ol>
-    <div className={styles.curriculumAssessment}><strong>最後に挑戦するテスト（予定）</strong><p>{course.assessment}</p></div>
+    {course.level === 3 && onStartLevelThree && <button type="button" className={styles.achievementAction} onClick={onStartLevelThree}>Lv.3を学ぶ</button>}
+    <div className={styles.curriculumAssessment}><strong>最後に挑戦するテスト{course.level === 3 ? "" : "（予定）"}</strong><p>{course.assessment}</p></div>
    </div>
   </details>)}
-  <p className={styles.achievementNote}>GTOはゲーム理論上の最適戦略、ソルバーは設定した条件のもとで戦略を解析するツールです。ソルバーの演習は対戦後の学習用として計画しています。Lv.3以降の教材・テスト・バッジは未公開で、名称・獲得条件・提供時期は今後お知らせします。</p>
+  <p className={styles.achievementNote}>GTOはゲーム理論上の最適戦略、ソルバーは設定した条件のもとで戦略を解析するツールです。ソルバーの演習は対戦後の学習用として計画しています。Lv.3の学習記録はブラウザ内に保存され、会員レベル・公式バッジには連動しません。Lv.4以降の教材・テストや認定機能の提供時期は今後お知らせします。</p>
  </div>;
 }
