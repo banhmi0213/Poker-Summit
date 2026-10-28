@@ -72,7 +72,10 @@ export function OnlineTableView({onShow,shows,onStamp,stampDisabled,stamps,state
  // Last action per seat on this street, for the ribbon on each avatar (owner 2026/10/28: リング・トナメも練習卓と同じ).
  const [seatActions,setSeatActions]=useState<{key:string;acts:Record<string,string>}>({key:'',acts:{}});
  useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
- useEffect(()=>{const next=onlineSoundEvents(soundMarker.current,state);soundMarker.current=next.marker;const streetKey=`${state?.hand?.handId??''}:${state?.hand?.board.length??0}`;setSeatActions(prev=>{const base=prev.key===streetKey?prev.acts:{};
+ useEffect(()=>{const prior=soundMarker.current,next=onlineSoundEvents(prior,state);soundMarker.current=next.marker;
+  // A move shown at tap time that the server turned down goes back to the server state: take its ribbon away too.
+  const rolledBack=Boolean(prior&&next.marker&&prior.handId===next.marker.handId&&next.marker.revision<prior.revision);
+  if(rolledBack){const own=state?.youSeat!=null?'seat-'+state.youSeat:null;setSeatActions(prev=>{if(!own||!(own in prev.acts))return prev;const acts={...prev.acts};delete acts[own];return {...prev,acts};});return;}const streetKey=`${state?.hand?.handId??''}:${state?.hand?.board.length??0}`;setSeatActions(prev=>{const base=prev.key===streetKey?prev.acts:{};
   // The action that closes a street arrives together with the new card: it belongs to the old street, so the new street starts clean (owner 2026/10/28: 4枚目チェックしてないのにマーク出てる).
   const closedStreet=Boolean(next.cue)&&prev.key!==streetKey&&prev.key.split(':')[0]===streetKey.split(':')[0]&&Number(prev.key.split(':')[1])<Number(streetKey.split(':')[1]);
   return next.cue&&!closedStreet?{key:streetKey,acts:{...base,[next.cue.actor]:next.cue.kind}}:prev.key===streetKey?prev:{key:streetKey,acts:{}};});if(next.cue){const c=next.cue;setAnnouncement({kind:c.kind,text:`${names(c.actor)} · ${c.label}${c.amount?` ${c.amount.toLocaleString()}`:""}`,key:Date.now()});}for(const kind of next.sounds)onSound?.(kind);},[state?.hand?.handId,state?.hand?.revision,state?.hand?.board.length,state?.hand?.toAct,Boolean(state?.hand?.result),state?.youSeat,onSound]);
