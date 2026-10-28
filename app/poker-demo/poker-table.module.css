@@ -1040,5 +1040,5 @@
  .demoShell .table .bet_p3,.demoShell .table .bet_p4{top:27.6%}
  .demoShell .table .bet_p5,.demoShell .table .bet_p6{top:65%}
 }
-/* Phone practice table (owner 2026/10/28): PLAYER 6 (avatar, cards and name/chip box) a little higher. */
-@media(max-width:899px){.demoShell .edgeSeatSix,.demoShell .showdownSix{translate:0 -42px}}
+/* Phone practice table (owner 2026/10/28): PLAYER 2 (avatar, cards and name/chip box) a little higher. */
+@media(max-width:899px){.demoShell .topSeats,.demoShell .showdownTwo{translate:0 -16px}}
