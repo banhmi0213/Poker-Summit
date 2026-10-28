@@ -75,3 +75,5 @@
 /* PC (owner 2026/10/28): the action panel sits to the right of your seat, so both round buttons go on the left of your
    name plate (サミット then スタンプ) instead of one under the panel. */
 @media(min-width:900px){.quick{left:auto;right:calc(100% + 10px);justify-content:flex-end;gap:10px}}
+/* PC: the stamp on a seat is as big as the avatar it covers (owner 2026/10/28: PCスタンプアイコンぐらい大きく). */
+@media(min-width:900px){.sticker[data-size=bubble]{width:172px;height:172px}.sticker[data-size=bubble] .phrase{font-size:25px;-webkit-text-stroke:7px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:20px}}
