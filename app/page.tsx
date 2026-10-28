@@ -4,6 +4,7 @@ import { CouponCategoryEntrances } from "./coupon-category-entrances";
 import { couponCategoryHref } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
+import "./home-navy-preview.css";
 import { EventSign } from "./event-sign";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -230,7 +231,7 @@ export default async function HomePage({
   }
 
   return (
-    <div>
+    <div className="navy-preview">
       <JsonLd data={HOME_JSON_LD} />
       <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
 
@@ -327,7 +328,7 @@ export default async function HomePage({
           memberCount: memberCountRaw ?? 0,
           summitPostCount: threadCount ?? 0,
         }} />
-        <section className="home-section">
+        <section className="home-section" data-tone="ivory">
           <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
@@ -365,18 +366,18 @@ export default async function HomePage({
 
         <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
         {communityBanners.length > 0 && <div className="home-section" data-tone="ivory" aria-label="サイト内のご案内"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
-        <section className="home-section home-summit" data-tone="soft">
+        <section className="home-section home-summit" data-tone="ivory">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
         {rankingBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
-        <section className="home-section">
+        <section className="home-section" data-tone="soft">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
+        <div className="home-section" data-tone="soft" data-tone-banner><HomeRankingBanner stores={rankedStores} /></div>
         <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
@@ -388,9 +389,9 @@ export default async function HomePage({
           </Link>)}</div>}
         </section>
         <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
-        <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
-          <div><span style={{ color: "#9b7129", fontSize: 11, letterSpacing: "0.13em", fontWeight: 800 }}>POKER SUMMIT ACADEMY</span><h2 style={{ fontSize: "clamp(17px,2.4vw,24px)", margin: "7px 0" }}>遊びながら、ポーカーを学ぼう。</h2><p style={{ margin: 0, fontSize: 12, color: "#765f42" }}>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
-          <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ</Link>
+        <section className="home-academy-preview" aria-label="無料ポーカー学習コース">
+          <div><span>POKER SUMMIT ACADEMY</span><h2>遊びながら、ポーカーを学ぼう。</h2><p>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
+          <Link href="/learn">無料学習コースへ</Link>
         </section>
         {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
         <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
@@ -428,3 +429,4 @@ export default async function HomePage({
     </div>
   );
 }
+

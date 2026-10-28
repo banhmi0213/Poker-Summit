@@ -1,0 +1,87 @@
+/* Homepage colour study, isolated to the preview homepage wrapper. */
+.navy-preview {
+ --bg:#fff; --surface:#fff; --surface-2:#f0f4f8; --surface-3:#e2e9f0;
+ --text:#13253d; --text-2:#536477; --muted:#65758a;
+ --border:rgba(29,53,80,.13); --border-strong:rgba(29,53,80,.24);
+ --accent:#d2bf98; --accent-mid:#b49a6c; --accent-ink:#101e32;
+ --accent-text:#80683f; --accent-soft:#f5f1e9; --accent-line:#d2bf98;
+ --accent-gradient:linear-gradient(130deg,#e4d9c2,#c9b38a);
+ --shadow:0 4px 12px #10223c08,0 18px 38px #10223c0a;
+ background:#fff; color:var(--text); min-height:100vh;
+}
+.navy-preview .portal-nav {
+ background:radial-gradient(ellipse at 72% 0%,#2a4467 0%,transparent 58%),linear-gradient(115deg,#080f1e 0%,#132740 54%,#091424 100%);
+ border-bottom:1px solid #bfa77b; box-shadow:0 6px 24px #07132626;
+ color:#f5f7fb;
+}
+.navy-preview .portal-nav .logo-img {filter:drop-shadow(0 2px 8px #0005)}
+.navy-preview .portal-nav .portal-cta {background:transparent;color:#f4eee2;border:1px solid #a99b8277;box-shadow:none}
+.navy-preview .portal-nav .portal-cta:first-of-type {background:var(--accent-gradient);color:#101e32;border-color:#e0cfac}
+.navy-preview .portal-nav .ps-pref-selector {background:#ffffff0d;border-color:#ffffff30}
+.navy-preview .portal-nav .ps-pref-selector__label {color:#d8c7a5}
+.navy-preview .portal-nav .ps-pref-selector__select {color:#fff}
+.navy-preview .portal-nav .ps-pref-selector__select option {background:#fff;color:#13253d}
+.navy-preview .portal-nav .nav-hamburger {color:#f5f7fb}
+.navy-preview .portal-nav .mobile-nav-drawer {background:#0e1f35;color:#fff;border-color:#ffffff24}
+.navy-preview .ps-region-hero__search.ps-region-hero__search {background:#f2f5f9;border-color:#dce4ed;box-shadow:none;border-radius:12px;margin-top:24px;padding:12px 14px}
+.navy-preview .ps-region-hero__search .search-box input[type=text],.navy-preview .ps-region-hero__search .search-box select {background:#fff!important;color:#13253d;border-color:#d2dce7}
+.navy-preview .ps-region-hero__search .btn.primary {background:#182f4d;color:#fff;border-color:#182f4d;box-shadow:0 3px 8px #0c1b3020}
+.navy-preview .home-feed.home-feed {color:#13253d}
+.navy-preview .home-feed.home-feed .ps-region-stats {background:#f3f6fa;border:1px solid #dce4ed;border-radius:12px;box-shadow:none}
+.navy-preview .home-feed.home-feed .ps-region-stat {color:#152d48}
+.navy-preview .home-feed.home-feed .ps-region-stat__icon {color:#8e7954}
+.navy-preview .home-feed.home-feed .ps-region-stat+.ps-region-stat::before {background:#d6dfe9}
+.navy-preview .home-feed.home-feed .home-section[data-tone] {padding-block:38px}
+.navy-preview .home-feed.home-feed .home-section[data-tone="soft"] {--section-tone:#edf2f7}
+.navy-preview .home-feed.home-feed .home-section[data-tone="ivory"] {--section-tone:#fff;border-color:#e2e8ef}
+.navy-preview .home-feed.home-feed .home-section[data-tone="navy"] {--section-tone:#10233c;color:#fff}
+.navy-preview .home-feed.home-feed .home-section[data-tone="navy"]::before {background:radial-gradient(ellipse at 90% 0%,#243e5d66,transparent 60%),#10233c;box-shadow:0 0 0 100vmax #10233c}
+.navy-preview .home-feed.home-feed .home-section[data-tone-banner] {padding-top:0;padding-bottom:34px}
+.navy-preview .home-feed.home-feed .home-section-head {margin-bottom:22px;gap:14px;align-items:center}
+.navy-preview .home-feed.home-feed .home-section-head h2 {color:#152d48;font-weight:800;letter-spacing:.025em;line-height:1.7}
+.navy-preview .home-feed.home-feed .home-section-head h2>span {display:inline-grid;place-items:center;width:34px;height:34px;background:#e8eef5;border:1px solid #dbe4ee;border-radius:10px;margin-right:5px;font-size:18px;vertical-align:middle}
+.navy-preview .home-feed.home-feed .home-section-head>a {color:#52657b;font-size:12px;text-decoration:none;border-bottom:1px solid #c4b18b;padding-bottom:4px}
+.navy-preview .home-feed.home-feed :is(.home-store-card,.home-event-card,.home-coupon-card,.home-job-card) {background:#fff;border-color:#dce4ed;box-shadow:0 4px 16px #10223c08;border-radius:12px}
+.navy-preview .home-feed.home-feed :is(h3,.home-event-date strong) {color:#182f4d}
+.navy-preview .home-feed.home-feed :is(p,small,.home-location,.muted) {color:#586a7e}
+.navy-preview .home-feed.home-feed .home-tag {background:#edf2f7;color:#405671;border:1px solid #dce4ed}
+.navy-preview .home-feed.home-feed .home-card-cta {color:#52657b}
+.navy-preview .home-feed.home-feed .home-post {background:#f5f7fa;border-color:#dce4ed;box-shadow:none}
+.navy-preview .home-feed.home-feed .home-post:hover {background:#eaf0f6;box-shadow:inset 0 0 0 1px #c6d3e2}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-section-head h2 {color:#f6f8fc}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-section-head h2>span {background:#ffffff0d;border-color:#ffffff20}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-section-head>a {color:#d9c8a7;border-color:#9b8968}
+.navy-preview .home-feed.home-feed [data-tone="navy"] :is(.home-event-card,.home-job-card) {background:linear-gradient(135deg,#203b5b,#172f4b);border-color:#ffffff26;box-shadow:0 8px 22px #0002}
+.navy-preview .home-feed.home-feed [data-tone="navy"] :is(h3,.home-event-date strong,.home-job-salary) {color:#f5f8fc}
+.navy-preview .home-feed.home-feed [data-tone="navy"] :is(p,small,.home-location,.muted,.home-event-date span) {color:#c2cfde}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-card-cta {color:#dfcfad}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-tag {background:#ffffff09;color:#dfcfad;border-color:#aa98744d}
+.navy-preview .home-academy-preview {margin:32px 0;padding:28px;border:1px solid #dbe3ec;border-left:3px solid #c4af87;border-radius:12px;background:linear-gradient(110deg,#f0f4f8,#fff);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px}
+.navy-preview .home-academy-preview span {color:#8b7551;font-size:11px;letter-spacing:.15em;font-weight:800}
+.navy-preview .home-academy-preview h2 {font-size:clamp(18px,2.4vw,25px);margin:8px 0;color:#152d48}
+.navy-preview .home-academy-preview p {font-size:13px;color:#586a7e}
+.navy-preview .home-academy-preview>a {display:inline-block;border-radius:8px;padding:14px 22px;background:#182f4d;color:#fff;font-size:13px;font-weight:800}
+.navy-preview .cta-banner {background:radial-gradient(ellipse at 75% 20%,#29496b80,transparent 55%),linear-gradient(110deg,#0b1628,#162e49 55%,#0a1425);border-top:1px solid #c7b18a;border-bottom:1px solid #ffffff16;box-shadow:none}
+.navy-preview .cta-banner :is(h2,p) {color:#f3f6fa}
+.navy-preview .cta-banner .eyebrow {color:#d6c4a3;letter-spacing:.18em}
+.navy-preview .cta-banner .btn-outline-gold {background:linear-gradient(130deg,#e4d9c2,#c9b38a);color:#10233c;border-color:#ddcdaf;box-shadow:0 3px 12px #0002}
+.navy-preview .portal-footer {background:radial-gradient(ellipse at 95% 0%,#233f6266,transparent 55%),linear-gradient(145deg,#101f35,#070f1d 72%);border-color:#ffffff12;color:#aebed0;padding-top:38px}
+.navy-preview .portal-footer :is(p,.muted,.footer-areas a) {color:#b9c6d6}
+.navy-preview .portal-footer a {color:#d7c8aa}
+.navy-preview .portal-footer a:hover {color:#fff}
+.navy-preview .portal-footer .footer-areas__title {color:#f5f7fb;letter-spacing:.06em}
+.navy-preview .portal-footer .footer-areas__region {color:#d7c8aa}
+.navy-preview .portal-footer .footer-areas {border-color:#ffffff1c}
+.navy-preview .portal-footer .btn {background:#ffffff09;border-color:#ffffff2b;color:#d7c8aa}
+.navy-preview .portal-footer .footer-copyright {color:#8d9eb4}
+.navy-preview .bottom-tabs {background:#0e1f35f5;color:#e5ecf5;border-color:#b5a17a;backdrop-filter:blur(12px)}
+.navy-preview :is(a,button,input,select):focus-visible {outline:3px solid #a38a5b;outline-offset:3px}
+@media(max-width:767px) {
+ .navy-preview .home-feed.home-feed .home-section[data-tone] {padding-block:26px}
+ .navy-preview .home-feed.home-feed .home-section[data-tone-banner] {padding-top:0;padding-bottom:24px}
+ .navy-preview .home-feed.home-feed .home-section-head {gap:10px;margin-bottom:18px;align-items:flex-start}
+ .navy-preview .home-feed.home-feed .home-section-head h2 {font-size:17px;flex:1 1 55%}
+ .navy-preview .home-feed.home-feed .home-section-head>a {max-width:40%;line-height:1.7}
+ .navy-preview .home-feed.home-feed .home-section-head h2>span {width:28px;height:28px;font-size:16px;border-radius:8px}
+ .navy-preview .home-academy-preview {padding:22px 18px}
+}

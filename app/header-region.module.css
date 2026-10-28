@@ -112,3 +112,16 @@
 
 .mobileGroup summary>span{display:block;width:8px;height:8px;border-right:1.5px solid #92733b;border-bottom:1.5px solid #92733b;transform:rotate(45deg);margin-right:4px}
 .mobileGroup[open] summary>span{transform:rotate(225deg)}
+
+/* Homepage-only navy navigation; menu content stays on a light reading surface. */
+:global(.navy-preview) .title{background:#ffffff07;border-color:#ffffff20;color:#e6edf6;box-shadow:inset 0 1px #ffffff08}
+:global(.navy-preview) .title:hover,:global(.navy-preview) .activeTitle{background:#294567;border-color:#cbb99488;color:#eadcc1}
+:global(.navy-preview) .caret{color:#d7c6a5}
+:global(.navy-preview) .megaPanel{background:#fff;border-color:#dce4ed;border-top-color:#c7b18a;box-shadow:0 18px 40px #07132630}
+:global(.navy-preview) .menuLink{background:#f2f5f9;border-color:#dce4ed;color:#18304f}
+:global(.navy-preview) .menuLink:hover{background:#e8eef5;border-color:#b9c9dc}
+:global(.navy-preview) .panelHeading{color:#806a45}
+:global(.navy-preview) .mobileGroup{border-color:#ffffff20}
+:global(.navy-preview) .mobileGroup summary,:global(.navy-preview) .mobileDirect{color:#ecf1f8}
+:global(.navy-preview) .mobileGroup[open] summary{color:#deccaa}
+
