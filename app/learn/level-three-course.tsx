@@ -8,6 +8,7 @@ import {
 } from "./level-three-content";
 import styles from "./level-three.module.css";
 import { LessonQuiz } from "./lesson-quiz";
+import { LevelThreeDiagram } from "./level-three-diagrams";
 
 const number = (value: number) => new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 2 }).format(value);
 
@@ -99,7 +100,7 @@ export function LevelThreeCourse() {
     <h3 id="level-three-current-title" tabIndex={-1}>{lesson ? `${String(index + 1).padStart(2, "0")} ${lesson.title}` : "07 実戦判断テスト"}</h3>
     {lesson ? <>
      <p className={styles.subtitle}>{lesson.subtitle}</p><p className={styles.goal}><strong>このレッスンの目標</strong>{lesson.goal}</p>
-     {lesson.sections.map(item => <section key={item.title} className={styles.explanation}><h4>{item.title}</h4><p>{item.text}</p></section>)}
+     <LevelThreeDiagram lessonId={lesson.id} />{lesson.sections.map(item => <section key={item.title} className={styles.explanation}><h4>{item.title}</h4><p>{item.text}</p></section>)}
      <p className={styles.takeaway}><strong>覚えておきたいこと</strong>{lesson.takeaway}</p>
      {lesson.id === "ranges" && <RangeExercise />}{lesson.id === "spr" && <SprExercise />}{lesson.id === "betting" && <SizeExercise />}{lesson.id === "flop" && <BoardExercise />}{lesson.id === "streets" && <RunoutExercise />}{lesson.id === "review" && <ReviewExercise />}
      <LessonQuiz key={lesson.id} questions={lesson.questions} onFinish={() => setPracticeDone(true)} />
