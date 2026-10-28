@@ -2,6 +2,7 @@
 
 import { AcademyHero } from "@/app/academy-hero";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PositionTrainer } from "@/app/blog/position-trainer";
 import { PreflopRangeTrainer } from "@/app/blog/preflop-range-trainer";
@@ -9,7 +10,10 @@ import { HandStrengthQuiz } from "@/app/blog/hand-strength-quiz";
 import { PotOddsTrainer } from "./pot-odds-trainer";
 import { PreflopDecisionSimulator } from "./preflop-decision-simulator";
 import { GraduationTest } from "./graduation-test";
+import { advancedLevels, LevelCurriculum } from "./level-curriculum";
 import styles from "./learn.module.css";
+
+const LevelThreeCourse = dynamic(() => import("./level-three-course").then(module => module.LevelThreeCourse), { loading: () => <p role="status">Lv.3の教材を読み込んでいます。</p> });
 
 const storageKey = "poker-summit-academy-v1";
 const lessons = [
@@ -25,6 +29,7 @@ const courseLessons = lessons.filter(l => l.id !== "graduation");
 const upcoming = ["修了証の発行", "会員別の学習履歴とランキング"];
 
 export function Academy() {
+ const [course, setCourse] = useState<"beginner" | "level3">("beginner");
  const [completed, setCompleted] = useState<LessonId[]>([]);
  const [selected, setSelected] = useState<typeof lessons[number]["id"]>("position");
  const [loaded, setLoaded] = useState(false);
@@ -47,7 +52,12 @@ export function Academy() {
  const index = lessons.findIndex(l => l.id === selected);
  const percent = Math.round(completed.length / courseLessons.length * 100);
  return <div className={styles.academy}>
-  <AcademyHero variant="course" />
+  <AcademyHero variant="course" courseLevel={course} />
+  <nav id="academy-course-selector" className={styles.courseSelector} aria-label="学習コースを選ぶ">
+   <button type="button" aria-pressed={course === "beginner"} onClick={() => setCourse("beginner")}><strong>Lv.1・2 初心者コース</strong><span>基本の5レッスンと卒業テスト</span></button>
+   <button type="button" aria-pressed={course === "level3"} onClick={() => setCourse("level3")}><strong>Lv.3 実戦チャレンジャー</strong><span>6レッスンと実戦判断テスト</span></button>
+  </nav>
+  {course === "beginner" ? <>
   <section className={styles.progressPanel} aria-label="学習進捗">
    <div><span className={styles.eyebrow}>YOUR LEARNING JOURNEY</span><h2>初心者コース</h2><p>{loaded ? `${completed.length} / 5 レッスンを学習済みに設定` : "学習状況を読み込み中"}</p></div>
    <div className={styles.progressRight}><strong>{loaded ? percent : 0}<small>%</small></strong><div className={styles.track}><span style={{width: (loaded ? percent : 0) + "%"}}/></div></div>
@@ -80,15 +90,13 @@ export function Academy() {
     </div>
    </div>
    <div className={styles.levelRoadmap}>
-    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>現在はLv.1とLv.2に対応。以降のレベル名・獲得条件は開発予定の案です。</p></div>
+    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>Lv.1・2の基本から、Lv.3の実戦判断へ。Lv.4以降ではGTO・ソルバー活用の学習を計画しています。</p></div>
     <div className={styles.levelRows}>
      <div><span className={styles.levelNumber}>Lv.1</span><strong>ポーカー入門者</strong><small>会員の初期レベル</small><span className={styles.available}>公開中</span></div>
      <div><span className={styles.levelNumber}>Lv.2</span><strong>ポーカー卒業生</strong><small>初心者卒業テスト合格・会員バッジ保存</small><span className={styles.available}>公開中</span></div>
-     <div><span className={styles.levelNumber}>Lv.3</span><strong>実戦チャレンジャー（仮）</strong><small>応用レッスン・実戦判断テストを想定</small><span className={styles.planned}>構想中</span></div>
-     <div><span className={styles.levelNumber}>Lv.4</span><strong>戦略マスター（仮）</strong><small>戦略・確率の応用テストを想定</small><span className={styles.planned}>構想中</span></div>
-     <div><span className={styles.levelNumber}>Lv.5</span><strong>アカデミーエキスパート（仮）</strong><small>総合上級チャレンジを想定</small><span className={styles.planned}>構想中</span></div>
+     {advancedLevels.map(course => <div key={course.level}><span className={styles.levelNumber}>Lv.{course.level}</span><strong>{course.name}</strong><small>{course.summary}</small><span className={course.level === 3 ? styles.available : styles.planned}>{course.level === 3 ? "公開中" : "開発予定"}</span></div>)}
     </div>
-    <p className={styles.achievementNote}>※Lv.3以降の名称・条件・提供時期は未確定です。修了証、会員別学習履歴、ランキングも今後の開発予定です。</p>
+    <LevelCurriculum onStartLevelThree={() => { setCourse("level3"); document.getElementById("academy-course-selector")?.scrollIntoView({ behavior: "auto", block: "start" }); }} />
    </div>
   </section>
   <div id="academy-lessons" className={styles.layout}>
@@ -107,6 +115,7 @@ export function Academy() {
    </section>
   </div>
   {loaded && completed.length === courseLessons.length && <section className={styles.congrats} role="status"><span>✦ COURSE COMPLETE ✦</span><h2>初心者コース、学習完了！</h2><p>5つのレッスンをすべて学習済みにしました。卒業テストに挑戦して、合格バッジを獲得しましょう。</p><small>※現在は自己申告による学習完了表示です。公式の認定・修了証ではありません。</small></section>}
+  </> : <LevelThreeCourse />}
   <section className={styles.future}><span className={styles.eyebrow}>COMING NEXT</span><h2>これから増える学習コンテンツ</h2><p>ポーカーの判断力を磨く、次のステップを順次制作予定です。</p><div className={styles.futureGrid}>{upcoming.map(name => <div key={name}><span>✧</span><strong>{name}</strong><small>今後公開予定</small></div>)}</div></section>
  </div>;
 }
