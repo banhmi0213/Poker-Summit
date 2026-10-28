@@ -20,6 +20,6 @@ test('online table and practice table offer tap-to-show after the hand only',()=
  const online=fs.readFileSync(path.join(root,'app/poker-online/[roomId]/online-table-view.tsx'),'utf8'),practice=fs.readFileSync(path.join(root,'app/poker-demo/poker-table-preview.tsx'),'utf8'),panel=fs.readFileSync(path.join(root,'app/poker-ui/ring-admission-panel.tsx'),'utf8');
  assert.match(online,/onShow&&hand\?\.result&&player\.hole\?<ShowHole/);
  assert.match(online,/shownBy\(s\.seat\.seat\)/,'cards another player showed are drawn face up at their seat');
- assert.match(panel,/data\.play\?\.hand\.result\?cards=>void transport\.stamp\(\{type:'show'/,'only after the hand has a result');
+ assert.match(panel,/data\.play\?\.hand\.result\?cards=>\{[^}]*\}?[^]*?transport\.stamp\(\{type:'show'/,'only after the hand has a result');
  assert.match(practice,/\{payouts \? <div className=\{styles\.hole\}[^>]*data-show-hole/);
 });
