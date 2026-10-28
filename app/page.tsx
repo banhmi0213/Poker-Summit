@@ -364,7 +364,7 @@ export default async function HomePage({
         </section>
 
         <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
-        {communityBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
+        {communityBanners.length > 0 && <div className="home-section" data-tone="ivory" aria-label="サイト内のご案内"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
         <section className="home-section home-summit" data-tone="soft">
           <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}

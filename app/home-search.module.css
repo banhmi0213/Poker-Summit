@@ -107,3 +107,7 @@
 /* Keep month/day together in the four-column tournament cards. */
 .readable :global(.home-event-date) strong,.readable :global(.home-event-date) span{white-space:nowrap;font-variant-numeric:tabular-nums}
 @media(min-width:768px){.readable :global(.home-grid-four) :global(.home-event-body){grid-template-columns:58px minmax(0,1fr);gap:10px}.readable :global(.home-grid-four) :global(.home-event-date) strong{font-size:17px}}
+
+/* The four navigation banners are separate from the coupon section above. */
+.readable :global(.home-section[data-tone="ivory"]){--section-tone:#fffdf8;padding-top:28px;padding-bottom:28px;border-block:1px solid #e2d7bf}
+@media(max-width:767px){.readable :global(.home-section[data-tone="ivory"]){padding-top:22px;padding-bottom:22px}}
