@@ -1118,5 +1118,5 @@
  .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){width:72px;max-width:72px;font-size:9px;padding:4px 5px 1px}
  .demoShell .table .seat>small{width:72px;max-width:72px;font-size:12px;padding:0 5px 3px}
  .demoShell .seatAct b{font-size:12px;padding:3px 13px 4px;top:-22px}
- .demoShell .controls .actions button{min-height:46px}
+ .demoShell .controls .actions button{min-height:46px;padding-top:4px;padding-bottom:4px;font-size:15px;line-height:1.1}
 }
