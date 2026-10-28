@@ -1120,3 +1120,17 @@
  .demoShell .seatAct b{font-size:12px;padding:3px 13px 4px;top:-22px}
  .demoShell .controls .actions button{min-height:46px;padding-top:4px;padding-bottom:4px;font-size:15px;line-height:1.1}
 }
+/* Phone practice table (owner 2026/10/28): your own plate matches the opponents' (gold edge, gold stack), your own action
+   ribbon sits on top of it, FOLD shows on your avatar, and the red timer ring only shows while it is your turn. */
+@media(max-width:899px){
+ .demoShell .table .self .selfInfo{width:84px;min-width:84px;max-width:84px;padding:4px 6px 4px;border:1px solid #c9a35c;border-radius:10px;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;box-shadow:0 4px 8px #0009}
+ .demoShell .table .selfInfo .memberName{font-size:10px;font-weight:600;color:#e8dcc4;letter-spacing:.02em}
+ .demoShell .table .selfInfo small{color:#ffd987;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+ .demoShell .table .selfInfo .seatAct{position:absolute;left:50%;top:0;width:0}
+ .demoShell .table .selfInfo .seatAct b{top:-12px}
+ .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
+ .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
+}
+@media(max-width:899px) and (max-height:620px){
+ .demoShell .table .felt{top:calc(50% - 40px)!important}
+}
