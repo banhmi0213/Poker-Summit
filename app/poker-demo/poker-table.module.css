@@ -1075,7 +1075,10 @@
  .demoShell>.heading{position:absolute;top:4px;left:8px;right:8px;z-index:20;pointer-events:none}
  .demoShell>.heading>*{pointer-events:auto}
  .demoShell .table,.demoShell .table[data-felt]{width:calc(100% - 20px);margin-left:10px;margin-right:10px}
- .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4,.demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{translate:0 70px}
+ .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{translate:0 70px}
+ /* PLAYER 3・4 wagers move less than the seats so they stay clear of the pot; the pot and board sit a little lower. */
+ .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4{translate:0 40px}
+ .demoShell .table .felt{top:calc(50% - 58px)!important}
  .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6,.demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{translate:0 -70px}
 }
 /* Seat action ribbon on the avatar (owner 2026/10/28: アイコンにアクション, 英語, カラー, 真っ直ぐ). Phone practice table only. */
