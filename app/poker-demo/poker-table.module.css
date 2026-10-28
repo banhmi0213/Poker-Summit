@@ -1128,6 +1128,8 @@
  .demoShell .table .selfInfo small{color:#ffd987;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
  .demoShell .table .selfInfo .seatAct{position:absolute;left:50%;top:0;width:0}
  .demoShell .table .selfInfo .seatAct b{top:-12px}
+ /* Your plate (and its ribbon) sits in front of the bottom of your cards, so the ribbon is not hidden. */
+ .demoShell .table .self .selfInfo{z-index:9}
  .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
  .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
 }
