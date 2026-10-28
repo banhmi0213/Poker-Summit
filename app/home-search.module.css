@@ -103,3 +103,7 @@
 .readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:28px}
 .readable :global(.home-section[data-tone-banner])::before{top:-26px}
 @media(max-width:767px){.search.search{padding:10px}.statsBar.statsBar{padding:6px}.readable :global(.home-section[data-tone]){padding-block:22px}.readable :global(.home-section[data-tone-banner]){padding-top:0}}
+
+/* Keep month/day together in the four-column tournament cards. */
+.readable :global(.home-event-date) strong,.readable :global(.home-event-date) span{white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(min-width:768px){.readable :global(.home-grid-four) :global(.home-event-body){grid-template-columns:58px minmax(0,1fr);gap:10px}.readable :global(.home-grid-four) :global(.home-event-date) strong{font-size:17px}}
