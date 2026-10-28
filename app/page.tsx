@@ -249,7 +249,11 @@ export default async function HomePage({
         </aside>
       )}
 
-      {bannersForDevice(topBanners, "mobile").length > 0 && <div className="home-mobile-top-ad banner-mobile-only"><HomeBannerSlider banners={bannersForDevice(topBanners, "mobile")} /></div>}
+      {topBanners.length > 0 && <section className="home-top-banner-stage" aria-label="注目のお知らせ">
+        <div className="home-top-banner-inner">
+          {(["pc", "mobile"] as const).map(device => bannersForDevice(topBanners, device).length > 0 && <div key={device} className={device === "pc" ? "banner-pc-only" : "banner-mobile-only"}><HomeBannerSlider banners={bannersForDevice(topBanners, device)} /></div>)}
+        </div>
+      </section>}
 
       {settings?.announcement && (
         <div className="container" style={{ paddingBottom: 0 }}>
@@ -328,17 +332,12 @@ export default async function HomePage({
           memberCount: memberCountRaw ?? 0,
           summitPostCount: threadCount ?? 0,
         }} />
-        <section className="home-section" data-tone="ivory">
+        <section className="home-section" data-tone="light-navy">
           <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        {pickupBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={pickupBanners} layout="wide" pickup /></div>}
-        {bannersForDevice(topBanners, "pc").length > 0 && (
-          <div className="home-section banner-pc-only">
-            <HomeBannerSlider banners={bannersForDevice(topBanners, "pc")} />
-          </div>
-        )}
+        {pickupBanners.length > 0 && <div className="home-section" data-tone="light-navy" data-tone-banner><HomeSectionBanners banners={pickupBanners} layout="wide" pickup /></div>}
         <section className="home-section" data-tone="navy">
           <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
