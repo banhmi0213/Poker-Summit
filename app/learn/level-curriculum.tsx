@@ -20,9 +20,9 @@ export const advancedLevels = [
  },
  {
   level: 4,
-  name: "戦略マスター（仮）",
+  name: "戦略マスター",
   theme: "期待値とGTOで、判断の根拠を深める",
-  summary: "期待値・GTOの基礎・ソルバー読解",
+  summary: "6レッスン・戦略・確率テスト（12問）",
   prerequisite: "Lv.3相当の実戦判断を学んだ方",
   goal: "GTOの考え方を理解し、ソルバーが示す頻度と期待値を区別して読める。",
   lessons: [
@@ -54,22 +54,23 @@ export const advancedLevels = [
  },
 ] as const;
 
-export function LevelCurriculum({ onStartLevelThree }: { onStartLevelThree?: () => void }) {
+export function LevelCurriculum({ onStartLevelThree, onStartLevelFour }: { onStartLevelThree?: () => void; onStartLevelFour?: () => void }) {
  return <div className={styles.curriculum}>
-  <p className={styles.curriculumLead}>Lv.3の実戦判断から、今後のGTOの理解・ソルバー活用へ。各レベルを開くと、学ぶ順番と到達目標を確認できます。</p>
+  <p className={styles.curriculumLead}>Lv.3の実戦判断、Lv.4のGTOの理解から、今後のソルバー活用へ。各レベルを開くと、学ぶ順番と到達目標を確認できます。</p>
   {advancedLevels.map(course => <details key={course.level} id={`academy-level-${course.level}`} className={styles.curriculumCard}>
    <summary className={styles.curriculumSummary}>
     <span className={styles.curriculumLevel}>Lv.{course.level}</span>
     <span className={styles.curriculumHeading}><strong>{course.name}</strong><span>{course.theme}</span></span>
-    <span className={course.level === 3 ? styles.available : styles.planned}>{course.level === 3 ? "公開中" : "開発予定"}</span>
+    <span className={course.level < 5 ? styles.available : styles.planned}>{course.level < 5 ? "公開中" : "開発予定"}</span>
    </summary>
    <div className={styles.curriculumBody}>
     <dl className={styles.curriculumGoals}><div><dt>学習の目安</dt><dd>{course.prerequisite}</dd></div><div><dt>到達目標</dt><dd>{course.goal}</dd></div></dl>
     <ol className={styles.curriculumLessons}>{course.lessons.map(lesson => <li key={lesson.title}><strong>{lesson.title}</strong><p>{lesson.description}</p></li>)}</ol>
     {course.level === 3 && onStartLevelThree && <button type="button" className={styles.achievementAction} onClick={onStartLevelThree}>Lv.3を学ぶ</button>}
-    <div className={styles.curriculumAssessment}><strong>最後に挑戦するテスト{course.level === 3 ? "" : "（予定）"}</strong><p>{course.assessment}</p></div>
+    {course.level === 4 && onStartLevelFour && <button type="button" className={styles.achievementAction} onClick={onStartLevelFour}>Lv.4を学ぶ</button>}
+    <div className={styles.curriculumAssessment}><strong>最後に挑戦するテスト{course.level < 5 ? "" : "（予定）"}</strong><p>{course.assessment}</p></div>
    </div>
   </details>)}
-  <p className={styles.achievementNote}>GTOはゲーム理論上の最適戦略、ソルバーは設定した条件のもとで戦略を解析するツールです。ソルバーの演習は対戦後の学習用として計画しています。Lv.3の学習記録はブラウザ内に保存され、会員レベル・公式バッジには連動しません。Lv.4以降の教材・テストや認定機能の提供時期は今後お知らせします。</p>
+  <p className={styles.achievementNote}>GTOはゲーム理論上の最適戦略、ソルバーは設定した条件のもとで戦略を解析するツールです。Lv.4の出力例は読み方を学ぶ教材用の架空データで、実際の解析結果ではありません。Lv.3・4の学習記録はブラウザ内に保存され、会員レベル・公式バッジには連動しません。Lv.5の教材や認定機能の提供時期は今後お知らせします。</p>
  </div>;
 }

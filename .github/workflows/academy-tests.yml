@@ -43,4 +43,6 @@ jobs:
           ACADEMY_ESBUILD_MODULE: ${{ runner.temp }}/academy-tests/node_modules/esbuild
           ACADEMY_CHROMIUM_MODULE: ${{ runner.temp }}/academy-tests/node_modules/@sparticuz/chromium/build/index.js
           ACADEMY_PLAYWRIGHT_MODULE: ${{ runner.temp }}/academy-tests/node_modules/playwright-core
-        run: node tests/academy-level3-browser.cjs
+        run: |
+          node tests/academy-level3-browser.cjs
+          node tests/academy-level4-browser.cjs
