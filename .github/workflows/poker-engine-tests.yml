@@ -130,7 +130,7 @@ jobs:
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
-        run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs
+        run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs tests/poker-lobby-lifecycle.cjs
       - name: Verify ring seating and chip return in real browsers
         timeout-minutes: 4
         env:
