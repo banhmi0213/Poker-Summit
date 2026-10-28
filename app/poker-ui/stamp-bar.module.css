@@ -72,3 +72,6 @@
 @media(max-width:899px) and (max-height:620px){.quickLabel{display:none}}
 /* Ring tables wrap the table in panels whose generic button style (navy box) used to win over these round buttons. */
 .quick .quickBtn.quickBtn{padding:0;border:0;border-radius:0;background:none;min-height:0;color:#f3d9a7}
+/* PC (owner 2026/10/28): the action panel sits to the right of your seat, so both round buttons go on the left of your
+   name plate (サミット then スタンプ) instead of one under the panel. */
+@media(min-width:900px){.quick{left:auto;right:calc(100% + 10px);justify-content:flex-end;gap:10px}}
