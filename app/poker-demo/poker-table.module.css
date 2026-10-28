@@ -1175,3 +1175,5 @@
  .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownFour,.demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownSix{translate:-56px -46px}
  .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownTwo{translate:0 -12px}
 }
+/* Ring and tournament tables share the practice-table design (owner 2026/10/28): the site bar goes on phones there too. */
+@media(max-width:899px){.gamePage:has(.demoShell) .mobileSiteBar,.gamePage:has(.demoShell) .mobileFooterToggle{display:none}}
