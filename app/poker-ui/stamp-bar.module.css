@@ -68,3 +68,5 @@
 @media(min-width:900px){.quickIcon[data-kind=summit] img{width:60px!important;height:60px!important;transform:translate(-9%,-9%)!important}}
 /* The practice table moves your seat 30px down on phones; keep the buttons at the same place on screen. */
 @media(max-width:899px){[class*=demoShell] .quick{top:calc(58% - 16px)}}
+/* Very short phone screens (owner 2026/10/28): the pictures stay, the サミット・スタンプ captions go to save height. */
+@media(max-width:899px) and (max-height:620px){.quickLabel{display:none}}
