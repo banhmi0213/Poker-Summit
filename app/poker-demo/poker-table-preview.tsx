@@ -38,6 +38,8 @@ import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
+// First think time 10s, each time bank +20s (owner 2026/10/28).
+const DEMO_TURN_SECONDS = 10;
 const clockwiseSeats = ["you", "p5", "p3", "p2", "p4", "p6"];
 // 100BB each: the GTO CPUs play the chart solved for 100BB (owner 2026/10/27).
 const initialStacks: Record<string, number> = { you: 10000, p5: 10000, p3: 10000, p2: 10000, p4: 10000, p6: 10000 };
@@ -83,6 +85,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [handFinished, setHandFinished] = useState(false);
   /** 「見せる」 after a hand (owner 2026/10/28): which of your two cards you showed this hand. */
   const [shownMine, setShownMine] = useState<number[]>([]);
+  // Practice only: after a hand some CPUs that stayed to the end show one or both cards at random (owner 2026/10/28). Folded cards are mucked.
+  const [cpuShows, setCpuShows] = useState<Record<string, number[]>>({});
   const [announcement,setAnnouncement]=useState<{kind:ActionKind;text:string;key:number}|null>(null);
   useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
@@ -104,7 +108,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const streetNames = ["PREFLOP", "FLOP", "TURN", "RIVER", "SHOWDOWN"] as const;
   const [mobileRaiseOpen,setMobileRaiseOpen]=useState(false);
   const [raise, setRaise] = useState((initialHand.terms?.bb ?? initialHand.round.bigBlind)*2);
-  const [remaining, setRemaining] = useState(20);
+  const [remaining, setRemaining] = useState(DEMO_TURN_SECONDS);
   const [timeBanksUsed, setTimeBanksUsed] = useState(0);
   const timeBankSeconds = 20;
   // Time bank cards: tournaments hand out the configured number for the whole event; the practice ring gets one per hand.
@@ -112,7 +116,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const bankCardsLeft = Math.max(0, demoTimeBankLimit - timeBanksUsed);
   const [autoChoice, setAutoChoice] = useState<"CHECK" | "FOLD" | null>(null);
   const [running, setRunning] = useState(true);
-  const [turnRemaining, setTurnRemaining] = useState(20);
+  const [turnRemaining, setTurnRemaining] = useState(DEMO_TURN_SECONDS);
   const [menuOpen, setMenuOpen] = useState(false);
   const [communityOpen,setCommunityOpen]=useState(false);
   const [menuPage, setMenuPage] = useState<"settings" | "structure" | "spectate" | "exit" | "community" | "site">("settings");
@@ -430,6 +434,13 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         }
         setLastHandResult({winners:result.winners.map(playerName),rows:betting.players.map(p=>({id:p.id,name:playerName(p.id),delta:p.stack+(result.payouts[p.id]??0)-handStartingStacks[p.id]}))});
         setPayouts(result.payouts);
+        {
+          const dealt = betting.players.filter(p => p.id !== "you" && !p.folded && !foldedSeats.includes(Number(p.id.slice(1))) && deal.holes[p.id]); // folded cards are mucked and cannot be shown
+          const picks: Record<string, number[]> = {};
+          for (const p of dealt) if (Math.random() < 0.5) picks[p.id] = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];
+          if (!Object.keys(picks).length && dealt.length) { const p = dealt[Math.floor(Math.random() * dealt.length)]; picks[p.id] = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1]; }
+          setCpuShows(picks);
+        }
         // CPUs sometimes react after the hand (practice only): the winner thanks, someone who lost a big pot sighs.
         if (Math.random() < 0.45) {
           const cpus = betting.players.filter(p => p.id !== "you"), winners = cpus.filter(p => (result.payouts[p.id] ?? 0) > 0), losers = cpus.filter(p => !p.folded && !(result.payouts[p.id] ?? 0));
@@ -456,7 +467,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setBetting(beginNextBettingStreet(betting, firstId!));
       setLastActions({});
       setAction(null);
-      setRemaining(20);
+      setRemaining(DEMO_TURN_SECONDS);
       setRunning(true);
       setBettingMessage(`${streetNames[nextStep]}：次のベットラウンドです（自動デモ）`);
     }, RUNOUT_STEP_MS);
@@ -465,14 +476,14 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
 
   useEffect(() => {
     if (handActive && betting.toAct === "you" && !handFinished && !showdown && !spectating) {
-      setRemaining(20);
+      setRemaining(DEMO_TURN_SECONDS);
       setRunning(true);
       setAction(null);
     }
   }, [betting.toAct, handFinished, showdown, spectating, handActive]);
 
   useEffect(() => {
-    setTurnRemaining(20);
+    setTurnRemaining(DEMO_TURN_SECONDS);
   }, [activePlayerId, streetStep]);
   useEffect(() => {
     if (!activePlayerId || (activePlayerId === "you" && !running) || turnRemaining <= 0) return;
@@ -497,13 +508,13 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       const nextDeal=await requestDemoDeal(nextButton,live);
       const nextRound=makeHand(startingStacks,nextButton,terms,nextPos);
       // Clear the previous reveal/awards before changing the participating roster.
-      setPayouts(null);setShowdown(false);setAllInReveal(false);setStreetStep(0);
+      setPayouts(null);setCpuShows({});setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
-      setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);
-      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setTurnRemaining(20);setHandFinished(false);
+      setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);setCpuShows({});
+      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setTurnRemaining(DEMO_TURN_SECONDS);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
-      setAutoChoice(null);setRaise(terms.bb*2);setRemaining(20);if(!tournament)setTimeBanksUsed(0);setRunning(true);
+      setAutoChoice(null);setRaise(terms.bb*2);setRemaining(DEMO_TURN_SECONDS);if(!tournament)setTimeBanksUsed(0);setRunning(true);
     } catch(error) {
       setBettingMessage(error instanceof Error?error.message:"配布に失敗しました。もう一度お試しください");
     } finally {setDealing(false);}
@@ -578,12 +589,12 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.edgeSeatThree}><Seat {...seats[1]} stamp={demoStamps["p3"]} stack={displayStack("p3")} index={3} winnerGlow={Boolean(payouts?.p3)} showdown={showdown} active={activePlayerId === "p3"} seconds={turnRemaining} seatStatus={seatStatus("p3")} positionLabel={positionFor("p3")} dealer={handActive&&handPositions.button==="p3"} lastAction={lastActions["p3"]} folded={handActive && (foldedSeats.includes(3) || playerAt("p3").folded)} allIn={handActive && playerAt("p3").allIn} /></div>
       <div className={styles.edgeSeatFour}><Seat {...seats[2]} stamp={demoStamps["p4"]} stack={displayStack("p4")} index={4} winnerGlow={Boolean(payouts?.p4)} showdown={showdown} active={activePlayerId === "p4"} seconds={turnRemaining} seatStatus={seatStatus("p4")} positionLabel={positionFor("p4")} dealer={handActive&&handPositions.button==="p4"} lastAction={lastActions["p4"]} folded={handActive && (foldedSeats.includes(4) || playerAt("p4").folded)} allIn={handActive && playerAt("p4").allIn} /></div>
       <div className={styles.opponentCardsLayer} aria-label="各プレイヤーのハンド（ショーダウンまでは裏向き）">
-        {seats.map((seat, i) => (!handActive || !deal.holes[`p${i + 2}`] || foldedSeats.includes(i + 2) || playerAt(`p${i + 2}`).folded) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`}>
-          {showdown && <strong className={styles.handRank}>{handLabel(deal.holes[`p${i + 2}`], deal.board)}</strong>}
-          <div className={styles.miniCards} data-motion-hole={`p${i+2}`}>{deal.holes[`p${i + 2}`].map((card, j) => revealHoles
+        {seats.map((seat, i) => { const id = `p${i + 2}`, folded = foldedSeats.includes(i + 2) || playerAt(id).folded, shown = payouts ? cpuShows[id] ?? [] : []; return (!handActive || !deal.holes[id] || (folded && !shown.length)) ? null : <div key={seat.name} className={`${styles.showdownPosition} ${[styles.showdownTwo, styles.showdownThree, styles.showdownFour, styles.showdownFive, styles.showdownSix][i]}`} data-shown={shown.length && !(revealHoles && !folded) ? true : undefined}>
+          {showdown && !folded && <strong className={styles.handRank}>{handLabel(deal.holes[id], deal.board)}</strong>}
+          <div className={styles.miniCards} data-motion-hole={`p${i+2}`}>{deal.holes[id].map((card, j) => (revealHoles && !folded) || shown.includes(j)
             ? <span key={j} className={isRedCard(card) ? styles.redCard : ""}><CardFace card={card}/></span>
             : <span key={j} className={styles.cardBack} aria-label="Poker Summitの親指ロゴ入り裏向きカード"><ThumbLogo /></span>)}</div>
-        </div>)}
+        </div>; })}
       </div>
       <div className={styles.streetBets} aria-label="各席のベット額">
         {clockwiseSeats.filter(id => id !== "p2").map(streetBet)}
@@ -599,7 +610,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       <div className={styles.edgeSeatFive}><Seat {...seats[3]} stamp={demoStamps["p5"]} stack={displayStack("p5")} index={5} winnerGlow={Boolean(payouts?.p5)} showdown={showdown} active={activePlayerId === "p5"} seconds={turnRemaining} seatStatus={seatStatus("p5")} positionLabel={positionFor("p5")} dealer={handActive&&handPositions.button==="p5"} lastAction={lastActions["p5"]} folded={handActive && (foldedSeats.includes(5) || playerAt("p5").folded)} allIn={handActive && playerAt("p5").allIn} /></div>
       <div className={styles.edgeSeatSix}><Seat {...seats[4]} stamp={demoStamps["p6"]} stack={displayStack("p6")} index={6} winnerGlow={Boolean(payouts?.p6)} showdown={showdown} active={activePlayerId === "p6"} seconds={turnRemaining} seatStatus={seatStatus("p6")} positionLabel={positionFor("p6")} dealer={handActive&&handPositions.button==="p6"} lastAction={lastActions["p6"]} folded={handActive && (foldedSeats.includes(6) || playerAt("p6").folded)} allIn={handActive && playerAt("p6").allIn} /></div>
       {spectating && <div className={styles.spectatorSeat}><button type="button" className={styles.seatPlus} aria-label="空席に着席する" onClick={() => setSeatConfirm(true)}>＋</button><span>空席 · 着席可能</span></div>}
-      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""} ${payouts?.you ? styles.winnerGlow : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={20 + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} data-extended={isYourTurn && timeBanksUsed > 0 ? true : undefined} style={{ background: `conic-gradient(from 0deg, ${timeBanksUsed > 0 ? "#5ab0ff" : remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (20 + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div data-pot-target="you" data-motion-stack="you" className={styles.avatar}><PlayerAvatar url={member.avatarUrl} name={member.displayName} className={styles.memberAvatarImage}/>{handActive && action === "FOLD" && <span className={styles.seatFold} aria-hidden="true">FOLD</span>}</div>{demoStamps.you && <StampBubble key={demoStamps.you.key} stamp={demoStamps.you.stamp}/>}</div><div className={styles.selfInfo}><SeatQuickBar onStamp={id => showStamp("you", id)}/>{(() => { const k = handActive && action !== "FOLD" ? seatActionKind(lastActions.you, playerAt("you").allIn, false) : null; return k && <div className={styles.seatAct} data-kind={k}><b key={lastActions.you}>{k === "allin" ? "ALL-IN" : k === "bet" ? (lastActions.you?.startsWith("BET") ? "BET" : "RAISE") : k.toUpperCase()}</b></div>; })()}{seatStatus("you") && <span className={styles.eliminatedTag}>{seatStatus("you")}</span>}<span className={styles.nameRow}>{isYourTurn && timeBanksUsed > 0 && <b className={styles.extTag}>延長</b>}<strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong><span className={styles.bankCards} aria-label={`タイムバンクカード${bankCardsLeft}枚`}>⏰{bankCardsLeft}</span></span><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small>{handActive && inHand("you") && action !== "FOLD" && !showdown && (() => { const made = madeHandLabel(deal.holes.you, hintBoard); return made && <em className={styles.madeHand}>{made}</em>; })()}</div>{handActive && inHand("you") && deal.holes.you && action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>{handLabel(deal.holes.you, deal.board)}</strong>}{payouts ? <div className={styles.hole} data-motion-hole="you" data-show-hole>{deal.holes.you.map((card, i) => <span key={i} role="button" tabIndex={shownMine.includes(i) ? -1 : 0} className={`${isRedCard(card) ? styles.redCard : styles.blackCard} ${styles.showCard}`} data-shown={shownMine.includes(i) || undefined} aria-pressed={shownMine.includes(i)} aria-disabled={shownMine.includes(i) || undefined} aria-label={shownMine.includes(i) ? "見せています" : "タップで見せる"} onClick={() => setShownMine(prev => prev.includes(i) ? prev : [...prev, i])} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setShownMine(prev => prev.includes(i) ? prev : [...prev, i]); } }}><CardFace card={card}/></span>)}<small className={styles.showHint}>{shownMine.length === 2 ? "2枚見せています" : shownMine.length ? "もう1枚タップで2枚見せる" : "タップで見せる"}</small></div> : <div className={styles.hole} data-motion-hole="you">{deal.holes.you.map((card, i) => <span key={i} className={isRedCard(card) ? styles.redCard : styles.blackCard}><CardFace card={card}/></span>)}</div>}</div>}</div>}
+      {!spectating && <div className={styles.self}><div className={`${styles.activeAvatar} ${isYourTurn ? styles.turnActive : ""} ${payouts?.you ? styles.winnerGlow : ""}`} role="progressbar" aria-label="あなたのターン 残り時間" aria-valuemin={0} aria-valuemax={DEMO_TURN_SECONDS + timeBanksUsed * timeBankSeconds} aria-valuenow={remaining} data-extended={isYourTurn && timeBanksUsed > 0 ? true : undefined} style={{ background: `conic-gradient(from 0deg, ${timeBanksUsed > 0 ? "#5ab0ff" : remaining <= 5 ? "#f05b58" : "#f3c663"} ${Math.max(0, Math.min(100, (1 - remaining / (DEMO_TURN_SECONDS + timeBanksUsed * timeBankSeconds)) * 100))}%, #42586c 0)` }}><div data-pot-target="you" data-motion-stack="you" className={styles.avatar}><PlayerAvatar url={member.avatarUrl} name={member.displayName} className={styles.memberAvatarImage}/>{handActive && action === "FOLD" && <span className={styles.seatFold} aria-hidden="true">FOLD</span>}</div>{demoStamps.you && <StampBubble key={demoStamps.you.key} stamp={demoStamps.you.stamp}/>}</div><div className={styles.selfInfo}><SeatQuickBar onStamp={id => showStamp("you", id)}/>{(() => { const k = handActive && action !== "FOLD" ? seatActionKind(lastActions.you, playerAt("you").allIn, false) : null; return k && <div className={styles.seatAct} data-kind={k}><b key={lastActions.you}>{k === "allin" ? "ALL-IN" : k === "bet" ? (lastActions.you?.startsWith("BET") ? "BET" : "RAISE") : k.toUpperCase()}</b></div>; })()}{seatStatus("you") && <span className={styles.eliminatedTag}>{seatStatus("you")}</span>}<span className={styles.nameRow}>{isYourTurn && timeBanksUsed > 0 ? <b className={styles.extTag}>延長</b> : <strong className={styles.memberName} title={member.displayName}>{member.displayName}</strong>}<span className={styles.bankCards} aria-label={`タイムバンクカード${bankCardsLeft}枚`}>⏰{bankCardsLeft}</span></span><small>{showChips(playerAt("you").stack + (payouts?.you ?? 0))}</small>{handActive && inHand("you") && action !== "FOLD" && !showdown && (() => { const made = madeHandLabel(deal.holes.you, hintBoard); return made && <em className={styles.madeHand}>{made}</em>; })()}</div>{handActive && inHand("you") && deal.holes.you && action !== "FOLD" && <div className={styles.handWithRank}>{showdown && <strong className={styles.handRank}>{handLabel(deal.holes.you, deal.board)}</strong>}{payouts ? <div className={styles.hole} data-motion-hole="you" data-show-hole>{deal.holes.you.map((card, i) => <span key={i} role="button" tabIndex={shownMine.includes(i) ? -1 : 0} className={`${isRedCard(card) ? styles.redCard : styles.blackCard} ${styles.showCard}`} data-shown={shownMine.includes(i) || undefined} aria-pressed={shownMine.includes(i)} aria-disabled={shownMine.includes(i) || undefined} aria-label={shownMine.includes(i) ? "見せています" : "タップで見せる"} onClick={() => setShownMine(prev => prev.includes(i) ? prev : [...prev, i])} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setShownMine(prev => prev.includes(i) ? prev : [...prev, i]); } }}><CardFace card={card}/></span>)}<small className={styles.showHint}>{shownMine.length === 2 ? "2枚見せています" : shownMine.length ? "もう1枚タップで2枚見せる" : "タップで見せる"}</small></div> : <div className={styles.hole} data-motion-hole="you">{deal.holes.you.map((card, i) => <span key={i} className={isRedCard(card) ? styles.redCard : styles.blackCard}><CardFace card={card}/></span>)}</div>}</div>}</div>}
     </div>
     <div className={styles.actionColumn}>
       {<div className={`${styles.resultOverlay} ${showCurrentResult?"":styles.previousResult}`} role="status" aria-live="polite">
@@ -628,7 +639,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <button type="button" aria-pressed={autoChoice === "CHECK"} disabled={!handActive || !inHand("you") || handFinished || showdown} onClick={() => setAutoChoice(v => v === "CHECK" ? null : "CHECK")}>AUTO CHECK / FOLD</button>
         <button type="button" aria-pressed={autoChoice === "FOLD"} disabled={!handActive || !inHand("you") || handFinished || showdown} onClick={() => setAutoChoice(v => v === "FOLD" ? null : "FOLD")}>AUTO FOLD</button>
         {/* Phone (owner 2026/10/28): seconds beside AUTO FOLD instead of the header line; the hint opens from here. */}
-        <b className={styles.turnSeconds} data-urgent={isYourTurn && remaining <= 5 ? "" : undefined} aria-label={isYourTurn ? `残り${remaining}秒` : undefined}>{isYourTurn ? `残り ${remaining}秒` : handFinished || showdown ? "ハンド終了" : activePlayerId ? `PLAYER ${activePlayerId.slice(1)}の番` : ""}</b>
+        <b className={styles.DEMO_TURN_SECONDS} data-urgent={isYourTurn && remaining <= 5 ? "" : undefined} aria-label={isYourTurn ? `残り${remaining}秒` : undefined}>{isYourTurn ? `残り ${remaining}秒` : handFinished || showdown ? "ハンド終了" : activePlayerId ? `PLAYER ${activePlayerId.slice(1)}の番` : ""}</b>
         {hint && <button type="button" className={styles.rowHintToggle} aria-expanded={rowHintOpen} onClick={() => setRowHintOpen(v => !v)}>ヒント</button>}
         {hint && rowHintOpen && <div className={styles.rowHint} role="note"><p>{hint.toCall>0?`必要勝率 ${Math.round(hint.required*100)}% ／ `:''}推定勝率 {Math.round(hint.equity*100)}%</p>{gtoHintText && <p data-gto-hint>{gtoHintText}</p>}<small>相手の手札をランダムと仮定した目安</small></div>}
         <small>{autoChoice === "CHECK" ? "チェック可能ならCHECK、コールが必要ならFOLD" : autoChoice === "FOLD" ? "自分の番で自動FOLD" : "未選択（0秒でCHECKまたはFOLD）"}</small>
@@ -654,7 +665,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
 }
 
 function Seat({ name, stack, index, active, seconds, winnerGlow, seatStatus, stamp, folded, lastAction, allIn }: { allIn?: boolean; folded?: boolean; name: string; stack: string; index: number; showdown: boolean; active: boolean; seconds: number; positionLabel?: string; lastAction?: string; winnerGlow?: boolean; seatStatus?: string; dealer?: boolean; stamp?: { stamp: StampId; key: number } }) {
-  const progress = Math.max(0, Math.min(100, (1 - seconds / 20) * 100));
+  const progress = Math.max(0, Math.min(100, (1 - seconds / DEMO_TURN_SECONDS) * 100));
   return <div className={`${styles.seat} ${seatStatus ? styles.inactiveSeat : ""} ${active ? styles.seatActive : ""} ${winnerGlow ? styles.winnerSeat : ""}`} data-folded={folded || undefined}>
     <div className={styles.seatAvatarRow}>
       <div className={styles.seatTimerRing} data-turn={active ? (seconds <= 5 ? "urgent" : "on") : undefined} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div data-pot-target={`p${index}`} data-motion-stack={`p${index}`} className={styles.avatar}><PlayerAvatar name={`PLAYER ${index}`} className={styles.memberAvatarImage}/>{folded && <span className={styles.seatFold} aria-hidden="true">FOLD</span>}</div></div>
