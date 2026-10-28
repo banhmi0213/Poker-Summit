@@ -85,7 +85,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [handFinished, setHandFinished] = useState(false);
   /** 「見せる」 after a hand (owner 2026/10/28): which of your two cards you showed this hand. */
   const [shownMine, setShownMine] = useState<number[]>([]);
-  // Practice only: after a hand some CPUs show one or both cards at random, so you can see how shown cards look (owner 2026/10/28).
+  // Practice only: after a hand some CPUs that stayed to the end show one or both cards at random (owner 2026/10/28). Folded cards are mucked.
   const [cpuShows, setCpuShows] = useState<Record<string, number[]>>({});
   const [announcement,setAnnouncement]=useState<{kind:ActionKind;text:string;key:number}|null>(null);
   useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
@@ -435,7 +435,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         setLastHandResult({winners:result.winners.map(playerName),rows:betting.players.map(p=>({id:p.id,name:playerName(p.id),delta:p.stack+(result.payouts[p.id]??0)-handStartingStacks[p.id]}))});
         setPayouts(result.payouts);
         {
-          const dealt = betting.players.filter(p => p.id !== "you" && deal.holes[p.id]);
+          const dealt = betting.players.filter(p => p.id !== "you" && !p.folded && !foldedSeats.includes(Number(p.id.slice(1))) && deal.holes[p.id]); // folded cards are mucked and cannot be shown
           const picks: Record<string, number[]> = {};
           for (const p of dealt) if (Math.random() < 0.5) picks[p.id] = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1];
           if (!Object.keys(picks).length && dealt.length) { const p = dealt[Math.floor(Math.random() * dealt.length)]; picks[p.id] = Math.random() < 0.5 ? [0, 1] : [Math.random() < 0.5 ? 0 : 1]; }
