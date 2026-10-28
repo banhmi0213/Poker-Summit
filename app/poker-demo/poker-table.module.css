@@ -1085,7 +1085,7 @@
 .seatAct,.seatFold{display:none}
 @media(max-width:899px){
  .demoShell .seatAct{display:block;position:relative;z-index:4;height:0;align-self:center}
- .demoShell .seatAct b{position:absolute;left:50%;top:-25px;translate:-50% 0;padding:3px 16px 4px;font:900 13px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
+ .demoShell .seatAct b{position:absolute;left:50%;top:-29px;translate:-50% 0;padding:3px 16px 4px;font:900 13px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
  .demoShell .seatAct b::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(#ffffff59,#ffffff00);pointer-events:none}
  .demoShell .seatAct[data-kind=check] b{background:linear-gradient(90deg,#3b6fae,#6aa2e0,#3b6fae)}
  .demoShell .seatAct[data-kind=call] b{background:linear-gradient(90deg,#118a5b,#38c98b,#118a5b)}
