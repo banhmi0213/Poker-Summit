@@ -3,42 +3,15 @@
 import { useEffect, useState } from "react";
 import {
  betMetrics, LEVEL_THREE_PASS_SCORE, LEVEL_THREE_STORAGE_KEY, levelThreeExam,
- levelThreeLessons, parseLevelThreeProgress, scoreLevelThree, sprMetrics,
- type LevelThreeProgress, type PracticeQuestion,
+ levelThreeLessons, parseLevelThreeProgress, sprMetrics,
+ type LevelThreeProgress,
 } from "./level-three-content";
 import styles from "./level-three.module.css";
+import { LessonQuiz } from "./lesson-quiz";
+import { LevelThreeDiagram } from "./level-three-diagrams";
 
 const number = (value: number) => new Intl.NumberFormat("ja-JP", { maximumFractionDigits: 2 }).format(value);
 
-function Quiz({ questions, exam = false, onFinish }: {
- questions: readonly PracticeQuestion[]; exam?: boolean; onFinish: (score: number) => void;
-}) {
- const [index, setIndex] = useState(0);
- const [answers, setAnswers] = useState<number[]>([]);
- const [finished, setFinished] = useState(false);
- const question = questions[index];
- const selected = answers[index];
- const score = exam ? scoreLevelThree(answers) : questions.reduce((total, item, i) => total + (answers[i] === item.answer ? 1 : 0), 0);
- function next() {
-  if (selected === undefined) return;
-  if (index === questions.length - 1) { setFinished(true); onFinish(score); }
-  else setIndex(value => value + 1);
-  requestAnimationFrame(() => document.getElementById("level3-question-title")?.focus());
- }
- return <section className={styles.quiz} aria-label={exam ? "Lv.3実戦判断テスト" : "理解度チェック"}>
-  <div className={styles.sectionHead}><h3>{exam ? "実戦判断テスト" : "2問で理解度チェック"}</h3><span>{finished ? "結果" : `${index + 1} / ${questions.length}`}</span></div>
-  {finished ? <div className={styles.result}>
-   <div role="status"><h4 id="level3-question-title" tabIndex={-1}>{score} / {questions.length} 問正解</h4><p>{exam ? (score >= LEVEL_THREE_PASS_SCORE ? "合格です。状況と理由を結びつける基本を確認できました。" : "解説を復習して、もう一度挑戦しましょう。") : "全問の解説を確認しました。間違えた問題も見直して、学習済みにできます。"}</p></div>
-   {exam && <p className={styles.note}>この結果はブラウザ内の学習記録です。会員レベル・公式バッジの付与とは連動しません。</p>}
-   <details><summary>回答と解説を振り返る</summary><ol className={styles.reviewList}>{questions.map((item, i) => <li key={item.id}><strong>{answers[i] === item.answer ? "正解" : "復習"}：{item.question}</strong><p>{item.situation}</p><p>あなたの回答：{item.choices[answers[i]]}</p><p>正解：{item.choices[item.answer]}</p><p>{item.explanation}</p></li>)}</ol></details>
-   <button type="button" onClick={() => { setIndex(0); setAnswers([]); setFinished(false); }}>もう一度挑戦する</button>
-  </div> : <>
-   <p className={styles.topic}>{question.topic}</p><p className={styles.situation}>{question.situation}</p><h4 id="level3-question-title" tabIndex={-1}>{question.question}</h4>
-   <div className={styles.choices}>{question.choices.map((choice, i) => <button key={choice} type="button" disabled={selected !== undefined} aria-pressed={selected === i} onClick={() => setAnswers(previous => previous.length === index ? [...previous, i] : previous)}>{choice}</button>)}</div>
-   {selected !== undefined && <div className={styles.feedback}><div role="status"><strong>{selected === question.answer ? "正解" : "復習ポイント"}：{question.choices[question.answer]}</strong><p>{question.explanation}</p></div><button type="button" onClick={next}>{index === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
-  </>}
- </section>;
-}
 
 function SprExercise() {
  const [own, setOwn] = useState("8000"), [opponent, setOpponent] = useState("3000"), [pot, setPot] = useState("1000");
@@ -127,15 +100,15 @@ export function LevelThreeCourse() {
     <h3 id="level-three-current-title" tabIndex={-1}>{lesson ? `${String(index + 1).padStart(2, "0")} ${lesson.title}` : "07 実戦判断テスト"}</h3>
     {lesson ? <>
      <p className={styles.subtitle}>{lesson.subtitle}</p><p className={styles.goal}><strong>このレッスンの目標</strong>{lesson.goal}</p>
-     {lesson.sections.map(item => <section key={item.title} className={styles.explanation}><h4>{item.title}</h4><p>{item.text}</p></section>)}
+     <LevelThreeDiagram lessonId={lesson.id} />{lesson.sections.map(item => <section key={item.title} className={styles.explanation}><h4>{item.title}</h4><p>{item.text}</p></section>)}
      <p className={styles.takeaway}><strong>覚えておきたいこと</strong>{lesson.takeaway}</p>
      {lesson.id === "ranges" && <RangeExercise />}{lesson.id === "spr" && <SprExercise />}{lesson.id === "betting" && <SizeExercise />}{lesson.id === "flop" && <BoardExercise />}{lesson.id === "streets" && <RunoutExercise />}{lesson.id === "review" && <ReviewExercise />}
-     <Quiz key={lesson.id} questions={lesson.questions} onFinish={() => setPracticeDone(true)} />
+     <LessonQuiz key={lesson.id} questions={lesson.questions} onFinish={() => setPracticeDone(true)} />
      <div className={styles.footer}><button type="button" disabled={!loaded || (!complete && !practiceDone)} aria-pressed={complete} onClick={() => { if (!loaded || (!complete && !practiceDone)) return; persist({ ...progress, completed: complete ? progress.completed.filter(id => id !== lesson.id) : [...progress.completed, lesson.id] }); }}>{complete ? "学習済みを解除する" : "解説を確認して学習済みにする"}</button><button type="button" onClick={() => goTo(index < levelThreeLessons.length - 1 ? levelThreeLessons[index + 1].id : "exam")}>{index < levelThreeLessons.length - 1 ? "次のレッスンへ" : "実戦判断テストへ"}</button></div>
      {!complete && !practiceDone && <p className={styles.note}>2問に回答し、解説の後で「結果を見る」を押すと、学習済みにできます。</p>}
     </> : <>
      <p>全6レッスンから12問。{LEVEL_THREE_PASS_SCORE}問以上の正解で合格です。レッスンの学習済みチェックとは別に採点し、何度でも受け直せます。</p>
-     {loaded ? <Quiz key="level3-exam" questions={levelThreeExam} exam onFinish={score => persist({ ...progress, bestScore: Math.max(progress.bestScore ?? 0, score) })} /> : <p>学習記録を読み込んでいます。</p>}
+     {loaded ? <LessonQuiz key="level3-exam" questions={levelThreeExam} exam onFinish={score => persist({ ...progress, bestScore: Math.max(progress.bestScore ?? 0, score) })} /> : <p>学習記録を読み込んでいます。</p>}
     </>}
    </div>
   </div>

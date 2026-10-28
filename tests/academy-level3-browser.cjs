@@ -22,6 +22,7 @@ assert.equal(await page.locator('#academy-course-hero a').getAttribute('href'),'
 const nav=page.getByRole('navigation',{name:'Lv.3のレッスンを選ぶ'});
 for(let i=0;i<levelThreeLessons.length;i++){
  const lesson=levelThreeLessons[i];await nav.getByRole('button',{name:new RegExp(lesson.title)}).click();
+ assert.equal(await page.locator(`figure[data-lesson="${lesson.id}"]`).count(),1);
  const mark=page.getByRole('button',{name:'解説を確認して学習済みにする',exact:true});assert.equal(await mark.isEnabled(),false);
  if(lesson.id==='spr') {await page.getByLabel('自分の残りスタック',{exact:true}).fill('6000');await page.getByLabel('相手の残りスタック',{exact:true}).fill('4000');await page.getByLabel('現在のポット',{exact:true}).fill('2000');assert.match(await page.getByLabel('SPR計算演習').innerText(),/SPR 2/);await page.getByLabel('現在のポット',{exact:true}).fill('0');assert.match(await page.getByLabel('SPR計算演習').innerText(),/ポットは1以上/);await page.getByLabel('現在のポット',{exact:true}).fill('2000');}
  if(lesson.id==='betting'){await page.getByRole('button',{name:'100% POT',exact:true}).click();assert.match(await page.getByLabel('ベットサイズ比較').innerText(),/33.33%/);}
@@ -39,6 +40,7 @@ assert.match(await page.getByLabel('Lv.3学習進捗').innerText(),/12 \/ 12/);
 let saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),LEVEL_THREE_STORAGE_KEY);assert.equal(saved.completed.length,6);assert.equal(saved.bestScore,12);
 await page.reload();await page.getByRole('button',{name:'Lv.3 実戦チャレンジャー 6レッスンと実戦判断テスト',exact:true}).click();await page.getByLabel('Lv.3学習進捗').getByText('6 / 6 レッスン学習済み',{exact:true}).waitFor();assert.match(await page.getByLabel('Lv.3学習進捗').innerText(),/6 \/ 6/);assert.match(await page.getByLabel('Lv.3学習進捗').innerText(),/12 \/ 12/);
 for(const width of [1440,375,320]){await page.setViewportSize({width,height:1000});await nav.getByRole('button',{name:/スタックとSPR/}).click();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);await page.evaluate(()=>document.fonts.ready);if(screenshots){fs.mkdirSync(screenshots,{recursive:true});await page.screenshot({path:path.join(screenshots,`level3-${width}.png`),fullPage:true});}}
+for(const width of [1440,375,320]){await page.setViewportSize({width,height:1000});for(const lesson of levelThreeLessons){await nav.getByRole('button',{name:new RegExp(lesson.title)}).click();const figure=page.locator(`figure[data-lesson="${lesson.id}"]`);await figure.waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);if(screenshots){await page.evaluate(()=>document.fonts.ready);await figure.screenshot({path:path.join(screenshots,`level3-diagram-${lesson.id}-${width}.png`)});}}}
 await page.getByRole('button',{name:'Lv.1・2 初心者コース 基本の5レッスンと卒業テスト',exact:true}).click();
 await page.locator('#academy-level-3 summary').click();await page.getByRole('button',{name:'Lv.3を学ぶ',exact:true}).click();await page.getByRole('heading',{name:'実戦チャレンジャー',exact:true}).waitFor();
 assert.deepEqual(errors,[]);

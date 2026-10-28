@@ -15,6 +15,8 @@ import styles from "./learn.module.css";
 
 const LevelThreeCourse = dynamic(() => import("./level-three-course").then(module => module.LevelThreeCourse), { loading: () => <p role="status">Lv.3の教材を読み込んでいます。</p> });
 
+const LevelFourCourse = dynamic(() => import("./level-four-course").then(module => module.LevelFourCourse), { loading: () => <p role="status">Lv.4の教材を読み込んでいます。</p> });
+
 const storageKey = "poker-summit-academy-v1";
 const lessons = [
  { id: "position", number: "01", title: "ポジションを覚える", subtitle: "6人テーブルの席・行動順・特徴を学ぶ", article: "/blog/poker-position-beginners", Component: PositionTrainer },
@@ -29,7 +31,7 @@ const courseLessons = lessons.filter(l => l.id !== "graduation");
 const upcoming = ["修了証の発行", "会員別の学習履歴とランキング"];
 
 export function Academy() {
- const [course, setCourse] = useState<"beginner" | "level3">("beginner");
+ const [course, setCourse] = useState<"beginner" | "level3" | "level4">("beginner");
  const [completed, setCompleted] = useState<LessonId[]>([]);
  const [selected, setSelected] = useState<typeof lessons[number]["id"]>("position");
  const [loaded, setLoaded] = useState(false);
@@ -56,6 +58,7 @@ export function Academy() {
   <nav id="academy-course-selector" className={styles.courseSelector} aria-label="学習コースを選ぶ">
    <button type="button" aria-pressed={course === "beginner"} onClick={() => setCourse("beginner")}><strong>Lv.1・2 初心者コース</strong><span>基本の5レッスンと卒業テスト</span></button>
    <button type="button" aria-pressed={course === "level3"} onClick={() => setCourse("level3")}><strong>Lv.3 実戦チャレンジャー</strong><span>6レッスンと実戦判断テスト</span></button>
+   <button type="button" aria-pressed={course === "level4"} onClick={() => setCourse("level4")}><strong>Lv.4 戦略マスター</strong><span>6レッスンと戦略・確率テスト</span></button>
   </nav>
   {course === "beginner" ? <>
   <section className={styles.progressPanel} aria-label="学習進捗">
@@ -90,13 +93,13 @@ export function Academy() {
     </div>
    </div>
    <div className={styles.levelRoadmap}>
-    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>Lv.1・2の基本から、Lv.3の実戦判断へ。Lv.4以降ではGTO・ソルバー活用の学習を計画しています。</p></div>
+    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>Lv.1・2の基本、Lv.3の実戦判断から、Lv.4のGTO・ソルバー読解へ。Lv.5では解析の活用と総合演習を計画しています。</p></div>
     <div className={styles.levelRows}>
      <div><span className={styles.levelNumber}>Lv.1</span><strong>ポーカー入門者</strong><small>会員の初期レベル</small><span className={styles.available}>公開中</span></div>
      <div><span className={styles.levelNumber}>Lv.2</span><strong>ポーカー卒業生</strong><small>初心者卒業テスト合格・会員バッジ保存</small><span className={styles.available}>公開中</span></div>
-     {advancedLevels.map(course => <div key={course.level}><span className={styles.levelNumber}>Lv.{course.level}</span><strong>{course.name}</strong><small>{course.summary}</small><span className={course.level === 3 ? styles.available : styles.planned}>{course.level === 3 ? "公開中" : "開発予定"}</span></div>)}
+     {advancedLevels.map(course => <div key={course.level}><span className={styles.levelNumber}>Lv.{course.level}</span><strong>{course.name}</strong><small>{course.summary}</small><span className={course.level < 5 ? styles.available : styles.planned}>{course.level < 5 ? "公開中" : "開発予定"}</span></div>)}
     </div>
-    <LevelCurriculum onStartLevelThree={() => { setCourse("level3"); document.getElementById("academy-course-selector")?.scrollIntoView({ behavior: "auto", block: "start" }); }} />
+    <LevelCurriculum onStartLevelFour={() => { setCourse("level4"); document.getElementById("academy-course-selector")?.scrollIntoView({ behavior: "auto", block: "start" }); }} onStartLevelThree={() => { setCourse("level3"); document.getElementById("academy-course-selector")?.scrollIntoView({ behavior: "auto", block: "start" }); }} />
    </div>
   </section>
   <div id="academy-lessons" className={styles.layout}>
@@ -115,7 +118,7 @@ export function Academy() {
    </section>
   </div>
   {loaded && completed.length === courseLessons.length && <section className={styles.congrats} role="status"><span>✦ COURSE COMPLETE ✦</span><h2>初心者コース、学習完了！</h2><p>5つのレッスンをすべて学習済みにしました。卒業テストに挑戦して、合格バッジを獲得しましょう。</p><small>※現在は自己申告による学習完了表示です。公式の認定・修了証ではありません。</small></section>}
-  </> : <LevelThreeCourse />}
+  </> : course === "level3" ? <LevelThreeCourse /> : <LevelFourCourse />}
   <section className={styles.future}><span className={styles.eyebrow}>COMING NEXT</span><h2>これから増える学習コンテンツ</h2><p>ポーカーの判断力を磨く、次のステップを順次制作予定です。</p><div className={styles.futureGrid}>{upcoming.map(name => <div key={name}><span>✧</span><strong>{name}</strong><small>今後公開予定</small></div>)}</div></section>
  </div>;
 }
