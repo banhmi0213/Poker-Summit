@@ -1042,3 +1042,13 @@
 }
 /* Phone practice table (owner 2026/10/28): PLAYER 2 (avatar, cards and name/chip box) a little higher. */
 @media(max-width:899px){.demoShell .topSeats,.demoShell .showdownTwo{translate:0 -16px}}
+/* Practice table (owner 2026/10/28): no action badges (RAISE / FOLD) or SB/BB labels on the chips, since the amounts show it;
+   folded players are greyed out; PLAYER 2's cards fan out behind the avatar like your own hand. */
+.demoShell .seat[data-folded]{filter:grayscale(1) brightness(.62);opacity:.7}
+@media(max-width:899px){
+ .demoShell .table .showdownTwo,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{left:50%;right:auto;transform:translateX(-50%);translate:0 -16px;z-index:2}
+ .demoShell .table[data-showdown=false] .showdownTwo [class*=cardBack]{width:50px;height:64px}
+ .demoShell .table[data-showdown=false] .showdownTwo [class*=thumbLogo]{width:24px;height:30px}
+}
+/* Phone practice table (owner 2026/10/28): smaller bet chips. */
+@media(max-width:899px){.demoShell .streetBet{gap:4px;font-size:10px;padding:2px 6px 2px 2px}.demoShell .betChip{width:16px;height:16px;flex-basis:16px;border-width:1px}.demoShell .betChip::before{inset:3px}.demoShell .betChip::after{font-size:8px}}
