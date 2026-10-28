@@ -658,7 +658,7 @@ function Seat({ name, stack, index, active, seconds, winnerGlow, seatStatus, sta
       <div className={styles.seatTimerRing} data-turn={active ? (seconds <= 5 ? "urgent" : "on") : undefined} style={{ background: active ? `conic-gradient(from 0deg, ${seconds <= 5 ? "#f05b58" : "#f3c663"} ${progress}%, #42586c 0)` : undefined }} aria-label={active ? `残り${seconds}秒` : undefined}><div data-pot-target={`p${index}`} data-motion-stack={`p${index}`} className={styles.avatar}><PlayerAvatar name={`PLAYER ${index}`} className={styles.memberAvatarImage}/>{folded && <span className={styles.seatFold} aria-hidden="true">FOLD</span>}</div></div>
       {stamp && <StampBubble key={stamp.key} stamp={stamp.stamp}/>}
     </div>
-    {(() => { const k = seatActionKind(lastAction, allIn, folded); return k && k !== "fold" && <span className={styles.seatAct} data-kind={k}><b key={lastAction}>{k === "allin" ? "ALL-IN" : k === "bet" ? (lastAction?.startsWith("BET") ? "BET" : "RAISE") : k.toUpperCase()}</b></span>; })()}
+    {(() => { const k = seatActionKind(lastAction, allIn, folded); return k && k !== "fold" && <div className={styles.seatAct} data-kind={k}><b key={lastAction}>{k === "allin" ? "ALL-IN" : k === "bet" ? (lastAction?.startsWith("BET") ? "BET" : "RAISE") : k.toUpperCase()}</b></div>; })()}
     <span>{name}</span><small>{stack}</small>{seatStatus && <span className={styles.eliminatedTag}>{seatStatus}</span>}
 
   </div>;
