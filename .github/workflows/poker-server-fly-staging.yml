@@ -1,0 +1,54 @@
+name: Deploy poker server to Fly (staging, Tokyo)
+
+# Runs after "Poker engine tests" pass on the staging branch, like the Railway auto deploy.
+# Needs repository secrets: FLY_API_TOKEN and the server values listed in config/poker-staging.env.example
+# (POKER_SUPABASE_URL, POKER_SUPABASE_SECRET_KEY, POKER_SUPABASE_PUBLIC_KEY, POKER_ROOM_KEYS_JSON,
+# POKER_ROOM_ACTIVE_KEY, POKER_ROOM_ORIGINS). Without FLY_API_TOKEN the job is skipped.
+on:
+  workflow_run:
+    workflows: ["Poker engine tests"]
+    types: [completed]
+    branches: [chatgpt/poker-authoritative-hand]
+  workflow_dispatch:
+
+concurrency:
+  group: fly-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - name: Check the Fly token
+        id: token
+        run: if [ -n "$FLY_API_TOKEN" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "FLY_API_TOKEN is not set; skipping."; fi
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.ok == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: superfly/flyctl-actions/setup-flyctl@1.5
+        if: steps.token.outputs.ok == 'true'
+      - name: Create the app once
+        if: steps.token.outputs.ok == 'true'
+        run: flyctl apps list --json | grep -q '"poker-room-server-staging"' || flyctl apps create poker-room-server-staging
+      - name: Server secrets
+        if: steps.token.outputs.ok == 'true'
+        env:
+          POKER_SUPABASE_URL: ${{ secrets.POKER_SUPABASE_URL }}
+          POKER_SUPABASE_SECRET_KEY: ${{ secrets.POKER_SUPABASE_SECRET_KEY }}
+          POKER_SUPABASE_PUBLIC_KEY: ${{ secrets.POKER_SUPABASE_PUBLIC_KEY }}
+          POKER_ROOM_KEYS_JSON: ${{ secrets.POKER_ROOM_KEYS_JSON }}
+          POKER_ROOM_ACTIVE_KEY: ${{ secrets.POKER_ROOM_ACTIVE_KEY }}
+          POKER_ROOM_ORIGINS: ${{ secrets.POKER_ROOM_ORIGINS }}
+        run: |
+          flyctl secrets set --stage --app poker-room-server-staging \
+            POKER_SUPABASE_URL="$POKER_SUPABASE_URL" POKER_SUPABASE_SECRET_KEY="$POKER_SUPABASE_SECRET_KEY" \
+            POKER_SUPABASE_PUBLIC_KEY="$POKER_SUPABASE_PUBLIC_KEY" POKER_ROOM_KEYS_JSON="$POKER_ROOM_KEYS_JSON" \
+            POKER_ROOM_ACTIVE_KEY="$POKER_ROOM_ACTIVE_KEY" POKER_ROOM_ORIGINS="$POKER_ROOM_ORIGINS" \
+            POKER_SERVER_COMMIT="${{ github.event.workflow_run.head_sha || github.sha }}"
+      - name: Deploy (one machine in Tokyo)
+        if: steps.token.outputs.ok == 'true'
+        run: flyctl deploy --remote-only --ha=false --config deploy/fly-staging/fly.toml --dockerfile deploy/fly-staging/Dockerfile --app poker-room-server-staging
