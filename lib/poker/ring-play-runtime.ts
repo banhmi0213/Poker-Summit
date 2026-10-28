@@ -22,6 +22,8 @@ export const RING_TURN_MS=10000;
 export const AUTO_BANK_AT_MS=RING_TURN_MS;
 /** Time bank tickets (tap the clock): +20s each, at most 2 per player per hand (owner 2026/10/28). */
 export const RING_TICKET_MS=20000,RING_TICKETS_PER_HAND=2;
+/** A move sent at the last moment still counts if it lands within this grace after the shown deadline (SQL ring_turn_grace). */
+export const RING_GRACE_MS=1500;
 const ticketMs=(meta:RingPlayMeta,version?:number)=>(version===undefined?meta.ticketRevision!=null:meta.ticketRevision===version)?Math.max(1,meta.ticketCount??1)*RING_TICKET_MS:0;
 const time=(s:string|null)=>{const v=s===null?NaN:Date.parse(s);if(!Number.isFinite(v))throw Error('Ring clock unavailable');return v;};
 export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlayStore{
@@ -73,7 +75,7 @@ export class RingPlayRuntime {
    // All-in runout waiting for run-it-twice answers: after the choice window, answer "once" for someone who has not answered.
    if(s.runs&&s.runs.decided===null){
     const open=c.seats.filter(p=>s.runs!.choices['seat-'+p.seat]===null&&s.runs!.participants.includes('seat-'+p.seat));
-    const active=open.find(p=>!meta.penalties?.[p.reservationId]?.since),late=elapsed>=this.turnMs+extra,target=late?open[0]:active??open.find(p=>meta.penalties?.[p.reservationId]?.since);
+    const active=open.find(p=>!meta.penalties?.[p.reservationId]?.since),late=elapsed>=this.turnMs+extra+RING_GRACE_MS,target=late?open[0]:active??open.find(p=>meta.penalties?.[p.reservationId]?.since);
     if(!target||elapsed<RUNS_CHOICE_MS&&!meta.penalties?.[target.reservationId]?.since)return meta;
     // The SQL turn fence accepts a normal write before 20s; a sitting-out or late seat uses the timeout path.
     store.timeout=late||Boolean(meta.penalties?.[target.reservationId]?.since);store.from=s.board.length;store.actorReservation=target.reservationId;
@@ -88,10 +90,10 @@ export class RingPlayRuntime {
      if(banked)return await store.meta(table);
     }
    }
-   if(!hasSitOut&&elapsed<this.turnMs+extra)return meta;
+   if(!hasSitOut&&elapsed<this.turnMs+extra+RING_GRACE_MS)return meta;
    if(!s.toAct||s.result)throw Error('Invalid active ring hand');
    const member=c.seats.find(p=>'seat-'+p.seat===s.toAct);if(!member)throw Error('Missing actor');const sitting=Boolean(meta.penalties?.[member.reservationId]?.since);
-   if(sitting||time(meta.now)>=time(meta.changedAt)+this.turnMs+extra){const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;store.actorReservation=member.reservationId;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:!sitting&&legal.check?'check':'fold'}});meta=await store.meta(table);}
+   if(sitting||time(meta.now)>=time(meta.changedAt)+this.turnMs+extra+RING_GRACE_MS){const legal=owner.snapshot(member.memberId).legal;if(!legal)throw Error('Missing legal actions');store.timeout=true;store.from=s.board.length;store.actorReservation=member.reservationId;await owner.act(member.memberId,{handId:s.handId,revision:s.revision,actionId:'timeout-'+owner.version,action:{type:!sitting&&legal.check?'check':'fold'}});meta=await store.meta(table);}
    return meta;
   }
   if(meta.completedAt&&meta.lastHandId&&time(meta.now)-time(meta.completedAt)<ringResultPause(true,0)){const prior=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);if(time(meta.now)-time(meta.completedAt)<ringResultPause(Boolean(prior.snapshot(null).result?.showdown),meta.runoutFrom??0))return meta;}
@@ -148,7 +150,7 @@ export class RingPlayRuntime {
  async rabbit(member:string,table:string,hand:string){return this.serial(table,async()=>{const store=this.options.store(),[meta,saved]=await Promise.all([store.meta(table),store.load(hand)]);if(!saved||saved.tableId!==table||meta.lastHandId!==hand||!saved.seats.some(p=>p.memberId===member))throw new RingAdmissionConflict();const owner=await RingHandOwner.restore(store,hand,this.options.keys),cards=owner.rabbit(member);if(!cards)throw new RingAdmissionConflict();if(!store.ticket||!await store.ticket(member,'rabbit','rabbit:'+hand))throw new RingTicketRequired();return cards;},'rabbit');}
  async act(member:string,table:string,input:unknown){const command=parseHandCommand(input);this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store();const [meta,saved]=await Promise.all([store.meta(table),store.load(command.handId)]);if(!saved||saved.tableId!==table)throw new RingAdmissionConflict();
    const own=meta.context.seats.find(p=>p.memberId===member);if(!own||!saved.seats.some(p=>p.memberId===member&&p.reservationId===own.reservationId))throw new RingAdmissionConflict();
-   store.actorReservation=own.reservationId;const owner=await RingHandOwner.restore(store,command.handId,this.options.keys);if(meta.penalties?.[own.reservationId]?.since&&command.revision===owner.snapshot(member).revision)throw new RingAdmissionConflict();store.from=owner.snapshot(member).board.length;
+   store.actorReservation=own.reservationId;const owner=await RingHandOwner.restore(store,command.handId,this.options.keys,saved);if(meta.penalties?.[own.reservationId]?.since&&command.revision===owner.snapshot(member).revision)throw new RingAdmissionConflict();store.from=owner.snapshot(member).board.length;
    // Existing receipts remain replayable after their original deadline. A new
    // late command is rejected by the SQL clock fence, then the runner times out.
    try{await owner.act(member,command);}catch(error){if(error instanceof RingCommandError)throw new RingAdmissionConflict();throw error;}
@@ -164,19 +166,20 @@ export class RingPlayRuntime {
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime,private stampBoard=new StampBoard(),private showBoard=new ShowBoard()){}
  #stamps(table:string){const list=this.stampBoard.recent(table),shows=this.showBoard.recent(table);return {...(list.length?{stamps:list.map(({seat,stamp,age})=>({seat,stamp,age}))}:{}),...(shows.length?{shows}:{})};}
- private async projected(member:string,table:string,confirmed?:RingPlayView|null){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null,...this.#stamps(table)};}
+ private async projected(member:string,table:string,confirmed?:RingPlayView|null,known?:RingLobbyState){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=known&&known.table?.id===table?known:await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null,...this.#stamps(table)};}
  async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table),...this.#stamps(table)};return state;}
  async change(member:string,command:RingLobbyCommand):Promise<RingLobbyState>{
   if(command.type==='ready'||command.type==='act'||command.type==='bank'||command.type==='ticket-bank'||command.type==='rabbit'||command.type==='stamp'||command.type==='show'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();
    // Stamps: seated players only, one every few seconds (extra ones are dropped).
-   if(command.type==='stamp'){if(own.seat!==null)this.stampBoard.post(own.tableId,member,own.seat,command.stamp);return this.projected(member,own.tableId);}
+   if(command.type==='stamp'){if(own.seat!==null)this.stampBoard.post(own.tableId,member,own.seat,command.stamp);return this.projected(member,own.tableId,undefined,state);}
    // 「見せる」 after a hand: one or both of your own cards, to everyone at the table until the next hand.
    if(command.type==='show'){const hole=await this.runtime.ownHole(member,own.tableId,command.handId);if(own.seat!==null)this.showBoard.post(own.tableId,command.handId,own.seat,command.cards==='both'?hole:[hole[command.cards==='first'?0:1]]);return this.projected(member,own.tableId);}
    if(command.type==='rabbit'){const cards=await this.runtime.rabbit(member,own.tableId,command.handId);return {...await this.projected(member,own.tableId),rabbit:{handId:command.handId,cards}};}
    if(command.type==='ticket-bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.ticketBank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}
    if(command.type==='bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.bank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}
-   if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.act(member,own.tableId,command.command);return this.projected(member,own.tableId,play);}
+   if(command.type==='ready')await this.runtime.ready(member,own.reservationId,own.tableId);else {if(!own.playEnabled)throw new RingAdmissionConflict();// Read the table lobby alongside the move instead of after it (one database round trip less per move).
+    const [play,tableState]=await Promise.all([this.runtime.act(member,own.tableId,command.command),this.base.state(member,own.tableId)]);return this.projected(member,own.tableId,play,tableState);}
    return this.projected(member,own.tableId);
   }
   const changed=await this.base.change(member,command);if(command.type==='join'&&changed.membership?.tableId===command.tableId&&changed.membership.playEnabled)return this.projected(member,command.tableId);if(command.type==='leave'&&changed.table)return this.state(member,changed.table.id);return changed;

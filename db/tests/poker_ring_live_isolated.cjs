@@ -41,7 +41,8 @@ await db.exec('reset role');await db.query('update poker_private.ring_fund_reser
 const beforeCheck={...rpcCounts};
 const check={type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'counted-check',action:{type:'check'}}};
 const checked=await service.change(members[1],check);
-assert.equal(count('poker_ring_hand_load')-(beforeCheck.poker_ring_hand_load??0),2);
+// One move = one hand load; the table lobby read runs alongside the move (owner 2026/10/28: 重過ぎ — fewer database round trips).
+assert.equal(count('poker_ring_hand_load')-(beforeCheck.poker_ring_hand_load??0),1);
 assert.equal(count('poker_ring_play_meta')-(beforeCheck.poker_ring_play_meta??0),2);
 assert.equal(count('poker_ring_lobby_state')-(beforeCheck.poker_ring_lobby_state??0),2);
 assert.equal(count('poker_ring_play_write_v2')-(beforeCheck.poker_ring_play_write_v2??0),1);
