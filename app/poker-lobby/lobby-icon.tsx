@@ -11,6 +11,6 @@ const paths:Record<Exclude<LobbyIconName,'finger'>,string>={
  settings:'m9 3 1-1h4l1 1 .5 2 2 1 2-.5 2 3-.5 2-1.5 1v2l1.5 1 .5 2-2 3-2-.5-2 1L15 21l-1 1h-4l-1-1-.5-2-2-1-2 .5-2-3 .5-2 1.5-1v-2L3.5 9 3 7l2-3 2 .5 2-1ZM15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
 };
 export function LobbyIcon({name,className,style}:{name:LobbyIconName;className?:string;style?:CSSProperties}){
- if(name==='finger')return <svg className={className} style={style} width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><image href="/images/summit-finger-clean.webp" x="3" y="0" width="18" height="24"/></svg>;
+ if(name==='finger')return <svg className={className} style={style} width="24" height="24" viewBox="66 10 154 198" aria-hidden="true"><image href="/images/summit-finger-clean.webp" width="256" height="228"/></svg>;
  return <svg className={className} style={style} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]}/></svg>;
 }
