@@ -4,7 +4,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 // The runner never reaches Supabase here; stub the client package so this runs without it.
 const load=Module._load;Module._load=function(r,...a){if(r==='@supabase/supabase-js')return {createClient(){throw Error('no network in tests');}};return load.call(this,r,...a);};
 const {RingHandOwner}=require('../lib/poker/ring-hand-owner.ts');
-const {RingPlayRuntime,RUNS_CHOICE_MS,AUTO_BANK_AT_MS}=require('../lib/poker/ring-play-runtime.ts');
+const {RingPlayRuntime,RUNS_CHOICE_MS,AUTO_BANK_AT_MS,RING_GRACE_MS}=require('../lib/poker/ring-play-runtime.ts');
 const keys={active:'k1',keys:{k1:randomBytes(32)}};
 function world(){
  const table=randomUUID(),seats=[1,2].map(n=>({reservationId:randomUUID(),memberId:randomUUID(),seat:n,stack:1000})),hands={},writes=[];
@@ -58,6 +58,6 @@ test('ring free time bank is used automatically when the turn runs out (at 0), o
 test('if the time bank cannot be used at 0, the turn times out as before instead of hanging',async()=>{
  const w=world(),owner=await (await RingHandOwner.prepare(w.store,w.table,keys)).commit();
  w.store.bank=async()=>{throw Error('Seat unavailable');};
- const before=w.writes.length;w.now=w.changedAt+AUTO_BANK_AT_MS+100;await runner(w)['advance'](w.table,w.store);
+ const before=w.writes.length;w.now=w.changedAt+AUTO_BANK_AT_MS+RING_GRACE_MS+100;await runner(w)['advance'](w.table,w.store);
  assert.equal(w.writes.length,before+1);assert.equal(w.writes.at(-1).timeout,true);
 });
