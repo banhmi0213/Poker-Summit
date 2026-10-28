@@ -48,7 +48,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
               : link.image ? <img src={link.image} alt="" />
               : <span className={styles.learningArtwork}><span>POKER SUMMIT ACADEMY</span><strong>遊びながら、<br />ポーカーを学ぼう。</strong></span>}
           </span>}
-          <span className={styles.menuCopy}><strong>{link.label}{link.href === "/news" && <NewsDot />}</strong>{!mobile && <small>{link.description}</small>}</span><span className={styles.menuArrow} aria-hidden="true">›</span>
+          <span className={styles.menuCopy}><strong>{link.label}{link.href === "/news" && <NewsDot />}</strong>{!mobile && <small>{link.description}</small>}</span>
         </Link>
       : <span key={link.label} className={styles.disabled} aria-disabled="true"><strong>{link.label}</strong></span>
   );
@@ -86,7 +86,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
                     window.setTimeout(() => { const panel = document.getElementById(`mega-panel-${index}`); if (panel?.getAttribute("aria-hidden") === "false") panel.querySelector<HTMLAnchorElement>("a")?.focus(); }, 250);
                   }
                 }}>
-                {group.label}<span className={styles.caret} aria-hidden="true">⌄</span>
+                {group.label}<span className={styles.caret} aria-hidden="true"></span>
               </button>)}
         </div>
         {GROUPS.map((group, index) => !group.href && <div key={group.label} id={`mega-panel-${index}`}
@@ -100,7 +100,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
       <div className="mobile-nav-drawer">
         {GROUPS.map((group, index) => group.href
           ? <Link key={group.label} href={group.href} className={styles.mobileDirect} onClick={closeMobile}>{group.label}</Link>
-          : <details key={group.label} className={styles.mobileGroup}><summary>{group.label}<span aria-hidden="true">⌄</span></summary><div className={styles.mobileLinks}>{renderLinks(index, true)}</div></details>)}
+          : <details key={group.label} className={styles.mobileGroup}><summary>{group.label}<span aria-hidden="true"></span></summary><div className={styles.mobileLinks}>{renderLinks(index, true)}</div></details>)}
         {memberLinks}
       </div>
     </nav>

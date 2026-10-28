@@ -75,49 +75,31 @@
 }
 
 
-/* Pattern B: white / bordeaux / gold. Pattern A retained at 53be87b. */
-/* Preview: light reading surfaces complement the navy header and feature panel. */
-.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#ffffff!important;color:#3b2028;border-color:#cdbcc2}
-.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#3b2028}
-.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#6d535c}
-.readable.readable :global(.home-card-cta),.readable.readable :global(.home-section-head)>a{color:#806024}
-.readable.readable :global(.home-tag){background:#f2e7cd;color:#73561e}
-.readable.readable :global(.home-job-salary){color:#3b2028}
-.readable :global(.home-post){background:#ffffff;border-color:#eadfe3}
-.readable :global(.home-post:hover){background:#f3e5ea}
-.statsBar.statsBar{background:#603044;border-color:#d2ad60}
-.statsBar :global(.ps-region-stat){color:#ffffff}
-.statsBar :global(.ps-region-stat__icon){color:#d2ad60}
-.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#9d7a88}
-.statsBar :global(.ps-region-stat):nth-child(n+3){border-top-color:#966878}
-
-
-/* Match the reference's deliberate alternation of light, tinted and dark editorial sections. */
-.readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-top:24px;padding-bottom:24px}
+/* Champagne reading surfaces alternate with deliberate, softly lit navy bands. */
+.search.search{padding:10px 14px;border:1px solid #e0d2b4;border-radius:12px;background:linear-gradient(120deg,#fffefaee,#f4ead5cc);box-shadow:0 5px 18px #80633108}
+.search.search :global(.search-box){padding:0;gap:8px}
+.search.search :global(.search-box) input[type="text"],.search.search :global(.search-box) select{background:#fffef9!important;color:#233e50;border-color:#d2c7b0;border-radius:7px;min-height:42px}
+.readable.readable :global(.home-section-head) h2,.readable.readable h3{color:#203b4e}
+.readable.readable p,.readable.readable small,.readable.readable :global(.home-location),.readable.readable :global(.muted){color:#536370}
+.readable.readable :global(.home-section-head)>a,.readable.readable :global(.home-card-cta){color:#795a27;font-weight:700}
+.readable.readable :global(.home-tag){background:#f4ead0;color:#71562a}
+.readable :global(.home-post){background:#fffdf7;border:1px solid #ded2b8;padding:18px;border-radius:10px}
+.readable :global(.home-post:hover){background:#f6ecd4}
+.statsBar.statsBar{margin-bottom:28px;padding:16px 10px;background:linear-gradient(120deg,#fffdf7,#f0e4ca);border:1px solid #d1bb8b;border-radius:12px;box-shadow:0 5px 16px #785b2408}
+.statsBar :global(.ps-region-stat){color:#203b4e}.statsBar :global(.ps-region-stat__icon){color:#9b7630}
+.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#c8b078}
+.readable :global(.home-section[data-tone]){position:relative;isolation:isolate;padding-block:30px}
 .readable :global(.home-section[data-tone])::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;box-shadow:0 0 0 100vmax var(--section-tone);background:var(--section-tone);clip-path:inset(0 -100vmax)}
-.readable :global(.home-section[data-tone="soft"]){--section-tone:#f7eff1}
-.readable :global(.home-section[data-tone="navy"]){--section-tone:#512637;color:#ffffff}
-.readable.readable :global(.home-section-head) h2{color:#98712c}
-.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#ffffff}
-.readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#e0c48c}
-.readable.readable :global([data-tone="navy"]) :global(.home-event-card),
-.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:#704052;border-color:#966878}
-.readable.readable :global([data-tone="navy"]) h3,
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,
-.readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
-.readable.readable :global([data-tone="navy"]) p,
-.readable.readable :global([data-tone="navy"]) small,
-.readable.readable :global([data-tone="navy"]) :global(.home-location),
-.readable.readable :global([data-tone="navy"]) :global(.muted),
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#e3cfd7}
-.readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#e0c48c}
-.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#a47b8c}
-.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#7c4a60;border:1px solid #9b7c71;color:#e4c993}
-.statsBar.statsBar{background:#fffdf8;border-color:#e0d5be}
-.statsBar :global(.ps-region-stat){color:#3b2028}
-.statsBar :global(.ps-region-stat)+:global(.ps-region-stat)::before{background:#cdbb96}
-
-
-/* Keep each tinted section and its following banners within one continuous colour band. */
-.readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:24px}
+.readable :global(.home-section[data-tone="soft"]){--section-tone:#f0e6d1}
+.readable :global(.home-section[data-tone="navy"]){--section-tone:#294657;color:#fff9eb}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head) h2{color:#fff8e7}
+.readable.readable :global([data-tone="navy"]) :global(.home-section-head)>a{color:#eed297}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-card),.readable.readable :global([data-tone="navy"]) :global(.home-job-card){background:linear-gradient(130deg,#365365,#3d5c6c);border-color:#8a968f;box-shadow:0 4px 14px #102c3920}
+.readable.readable :global([data-tone="navy"]) h3,.readable.readable :global([data-tone="navy"]) :global(.home-event-date) strong,.readable.readable :global([data-tone="navy"]) :global(.home-job-salary){color:#fffaf0}
+.readable.readable :global([data-tone="navy"]) p,.readable.readable :global([data-tone="navy"]) small,.readable.readable :global([data-tone="navy"]) :global(.home-location),.readable.readable :global([data-tone="navy"]) :global(.muted),.readable.readable :global([data-tone="navy"]) :global(.home-event-date) span{color:#e0e8eb}
+.readable.readable :global([data-tone="navy"]) :global(.home-card-cta){color:#f0d599}
+.readable.readable :global([data-tone="navy"]) :global(.home-event-date){border-color:#9aabac}
+.readable.readable :global([data-tone="navy"]) :global(.home-tag){background:#284554;border:1px solid #a18f68;color:#f1dca8}
+.readable :global(.home-section[data-tone-banner]){padding-top:0;padding-bottom:28px}
 .readable :global(.home-section[data-tone-banner])::before{top:-26px}
+@media(max-width:767px){.search.search{padding:10px}.statsBar.statsBar{padding:6px}.readable :global(.home-section[data-tone]){padding-block:22px}.readable :global(.home-section[data-tone-banner]){padding-top:0}}

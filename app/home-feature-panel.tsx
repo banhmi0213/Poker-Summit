@@ -69,7 +69,7 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
                 <span className={styles.badge}>{item.category}</span>
                 <h2>{item.title}</h2>
                 <p>{item.description}</p>
-                <a tabIndex={active ? 0 : -1} className={styles.detail} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>詳細を見る <span aria-hidden="true">›</span></a>
+                <a tabIndex={active ? 0 : -1} className={styles.detail} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>詳細を見る</a>
               </div>
             </article>;
           })}
@@ -81,7 +81,6 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
           onPointerEnter={event => { if (event.pointerType !== "touch") setSelectedId(item.id); }} onFocus={() => setSelectedId(item.id)} onClick={() => setSelectedId(item.id)}>
           <span className={styles.badge}>{item.category}</span>
           <strong>{item.title}</strong>
-          <span className={styles.chevron} aria-hidden="true">›</span>
         </button>)}
       </div>
     </section>
