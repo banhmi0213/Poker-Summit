@@ -1050,5 +1050,5 @@
  .demoShell .table[data-showdown=false] .showdownTwo [class*=cardBack]{width:50px;height:64px}
  .demoShell .table[data-showdown=false] .showdownTwo [class*=thumbLogo]{width:24px;height:30px}
 }
-/* Phone practice table (owner 2026/10/28): smaller bet chips. */
-@media(max-width:899px){.demoShell .streetBet{gap:4px;font-size:10px;padding:2px 6px 2px 2px}.demoShell .betChip{width:16px;height:16px;flex-basis:16px;border-width:1px}.demoShell .betChip::before{inset:3px}.demoShell .betChip::after{font-size:8px}}
+/* Phone practice table (owner 2026/10/28): smaller chip icon on bets; the amount stays the same size. */
+@media(max-width:899px){.demoShell .streetBet{gap:6px}.demoShell .betChip{width:16px;height:16px;flex-basis:16px;border-width:1px}.demoShell .betChip::before{inset:3px}.demoShell .betChip::after{font-size:8px}}
