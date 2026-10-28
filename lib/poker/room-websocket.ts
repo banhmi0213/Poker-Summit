@@ -31,6 +31,8 @@ export function attachPokerRoomWebSocket(server:Server,options:Options){
   }catch{end(p);}finally{clearTimeout(deadline);checks--;if(p.abort===abort)p.abort=null;p.busy=false;if(p.again&&!p.closed){p.again=false;void check(p);}}
  }
  const upgrade=(req:IncomingMessage,socket:Duplex,head:Buffer)=>{
+  // Ring table pushes have their own handler on the same server (ring-events.ts).
+  if((req.url??'').split('?')[0]==='/api/poker/ring/events')return;
   const path=/^\/api\/poker\/rooms\/([a-f0-9-]{36})\/events$/i.exec(req.url??''),origin=req.headers.origin;
   if(closed||!path||typeof origin!=='string'||!origins.has(origin)||peers.size>=limit||req.headers.authorization||req.headers['sec-websocket-protocol']){socket.destroy();return;}
   const duplicates=new Set();for(let i=0;i<req.rawHeaders.length;i+=2){const name=req.rawHeaders[i].toLowerCase();if(name==='origin'){if(duplicates.has(name)){socket.destroy();return;}duplicates.add(name);}}
