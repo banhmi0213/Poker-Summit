@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import styles from "./portal-footer.module.css";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { prefPageHref } from "@/lib/city";
@@ -33,6 +34,7 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
 
   return (
     <div className="portal-footer">
+      <div className={styles.discovery}>
       {areaRows.length > 0 && (
         <nav className="footer-areas" aria-label="都道府県からポーカー店を探す">
           <p className="footer-areas__title">都道府県からポーカー店を探す</p>
@@ -48,6 +50,19 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
           ))}
         </nav>
       )}
+        <nav className={styles.social} aria-label="Poker Summit公式SNS">
+          <p className={styles.socialTitle}>公式SNS</p>
+          <div className={styles.socialLinks}>
+            <a href="https://x.com/Poker_Summit" target="_blank" rel="noopener noreferrer" aria-label="Poker Summit公式X（新しいタブで開きます）" title="公式X">
+              <svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l7.4-8.5L1.8 2h6.5l4.5 6.8L18.9 2Zm-1.1 18h1.7L7.4 3.9H5.5L17.8 20Z" /></svg>
+            </a>
+            <span className={styles.socialDivider} aria-hidden="true" />
+            <a href="https://www.instagram.com/pokersummit_official/" target="_blank" rel="noopener noreferrer" aria-label="Poker Summit公式Instagram（新しいタブで開きます）" title="公式Instagram">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+            </a>
+          </div>
+        </nav>
+      </div>
       Poker Summit — 全国のポーカースポット・求人・交流をつなぐポータル
       <br />
       <a href="/contact" className="btn" style={{ fontSize: 12.5, padding: "4px 8px", marginTop: 6, display: "inline-flex" }}>
