@@ -29,3 +29,15 @@
 .item{background:linear-gradient(115deg,#3b5968,#405e6d);border-color:#82949e66;color:#fff}
 .selected{background:linear-gradient(115deg,#456574,#3b5968);border-color:#d2bf98;box-shadow:inset 3px 0 #d2bf98,0 5px 16px #0002}
 .item:hover:not(.selected){background:#4a6a79;border-color:#a7b6bf}
+
+/* Unified slate blue-grey headings and controls, with a translucent gold state. */
+.feature{border:1px solid #d2b77d;box-shadow:0 0 0 1px #d2b77d30,0 7px 22px #0003}
+.caption{background:#3b5968;border-top-color:#d2b77d66}
+.item{background:#3b5968;border-color:#82949e88;isolation:isolate;overflow:hidden}
+.item::before{content:"";position:absolute;inset:0;background:rgba(230,204,147,.24);opacity:0;transition:opacity .2s;pointer-events:none;z-index:-1}
+.item:hover:not(.selected),.item:focus-visible,.selected{background:#3b5968;border-color:#d2b77d;box-shadow:inset 3px 0 #d2bf98,0 4px 12px #0002}
+.item:hover::before,.item:focus-visible::before,.selected::before{opacity:1}
+.item strong,.selected strong{color:#fff}
+.badge,.item .badge,.selected .badge{background:#ffffff08;border-color:#cbb99477;color:#ead7af}
+.playback{background:#3b5968;border-color:#cbb99477;color:#ead7af}
+@media(prefers-reduced-motion:reduce){.item::before{transition:none}}
