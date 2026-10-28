@@ -1,9 +1,10 @@
-const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{Module}=require('node:module'),ts=require('typescript'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),{act,create}=require(process.env.POKER_REACT_RENDERER_MODULE||'react-test-renderer');
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{Module}=require('node:module'),ts=require('typescript'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server');
 const root=path.resolve(__dirname,'..'),resolve=Module._resolveFilename,load=Module._load;
 Module._resolveFilename=function(name,parent,...args){if(name.startsWith('@/'))name=root+'/'+name.slice(2);try{return resolve.call(this,name,parent,...args);}catch(e){for(const ext of ['.ts','.tsx'])try{return resolve.call(this,name+ext,parent,...args);}catch{}throw e;}};
 Module._load=function(name,parent,...args){if(name==='react')return React;if(name==='next/navigation')return {useRouter:()=>({refresh(){}})};if(name==='next/link')return ({href,children,...props})=>React.createElement('a',{href,...props},children);return load.call(this,name,parent,...args);};
 for(const ext of ['.ts','.tsx'])require.extensions[ext]=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX,esModuleInterop:true}}).outputText,f);
 require.extensions['.css']=m=>m.exports={__esModule:true,default:new Proxy({},{get:(_,key)=>key})};
+const {act,create}=require(process.env.POKER_REACT_RENDERER_MODULE||'react-test-renderer');
 const {RingLobbyList}=require('../app/poker-lobby/ring-lobby-list.tsx');
 const rows=Array.from({length:7},(_,i)=>({id:String(i),title:'TABLE '+i,sb:i<4?1:5,bb:i<4?2:10,capacity:6,minBuyIn:80,maxBuyIn:200,occupied:i===0?null:i===1?6:3}));
 const actions=()=>React.createElement('button',null,'参加する');
