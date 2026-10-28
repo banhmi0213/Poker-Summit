@@ -13,7 +13,7 @@ const root=path.resolve(__dirname,'..'),output=process.env.POKER_DEMO_OUTPUT||'/
  const desktop=await browser.newPage({viewport:{width:1440,height:900}});desktop.on('pageerror',e=>errors.push(e.message));await desktop.goto(origin);
  await desktop.getByRole('button',{name:'ゲームメニューを開く',exact:true}).click();
  await desktop.getByRole('button',{name:'テーブル情報',exact:true}).click();await desktop.getByRole('heading',{name:'リングテーブル情報',exact:true}).waitFor();
- await desktop.getByRole('button',{name:'サミット',exact:true}).click();await desktop.getByRole('heading',{name:'サミット連携',exact:true}).waitFor();
+ await desktop.getByLabel('ゲームメニュー',{exact:true}).getByRole('button',{name:'サミット',exact:true}).click();await desktop.getByRole('heading',{name:'サミット連携',exact:true}).waitFor();
  assert.equal(await desktop.evaluate(()=>document.documentElement.scrollHeight>innerHeight+1),false,'PC table and menu fit one screen');
  await desktop.screenshot({path:path.join(output,'pc-summit-tab.png'),fullPage:true});
  await desktop.getByRole('button',{name:'サイト',exact:true}).click();await desktop.getByRole('link',{name:'Poker Summit トップ ↗',exact:true}).waitFor();
@@ -22,7 +22,7 @@ const root=path.resolve(__dirname,'..'),output=process.env.POKER_DEMO_OUTPUT||'/
  for(const [width,height,mode] of [[390,844,'ring'],[360,740,'ring'],[375,667,'ring'],[390,844,'tournament'],[375,667,'tournament']]){
   const page=await browser.newPage({viewport:{width,height},isMobile:true,hasTouch:true});page.on('pageerror',e=>errors.push(e.message));await page.goto(origin+'/?'+mode);
   await page.waitForFunction(()=>Array.from(document.querySelectorAll('button')).some(b=>b.textContent.startsWith('コール')&&!b.disabled));
-  const panel=page.getByRole('region',{name:'操作パネル',exact:true});const selfInfo=await page.locator('[class*="selfInfo"]').boundingBox();assert.ok(selfInfo.width<=80&&selfInfo.height<=50,'own name and stack panel stays as compact as other seats');
+  const panel=page.getByRole('region',{name:'操作パネル',exact:true});const selfInfo=await page.locator('[class*="selfInfo"]').boundingBox();assert.ok(selfInfo.width<=90&&selfInfo.height<=64,'own name and stack plate matches the other seats\' plates (owner 2026/10/28)');
   const check=async()=>{assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight>innerHeight+1||document.documentElement.scrollWidth>innerWidth+1),false,'entire demo fits without page scrolling');assert.equal(await page.evaluate(()=>scrollY),0);
    const bounds=await panel.boundingBox();assert.ok(bounds.y>=height*.45&&bounds.y+bounds.height<=height,'actions stay at the bottom within thumb reach');
    for(const button of [panel.getByRole('button',{name:'フォールド',exact:true}),panel.getByRole('button',{name:/^コール/}),panel.getByRole('button',{name:/^(レイズ|ベット|オールイン)$/})]){const b=await button.boundingBox();assert.ok(b.height>=48&&b.width>=80&&b.y+b.height<=height,'primary action is a full-size touch target');assert.equal(await button.evaluate(e=>{const r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return e===hit||e.contains(hit);}),true,'no footer or seat intercepts a primary action');}

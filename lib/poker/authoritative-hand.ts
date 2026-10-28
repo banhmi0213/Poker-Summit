@@ -67,6 +67,8 @@ export class AuthoritativeHand {
     return hand;
   }
   /** Rabbit hunt: the board cards that were never dealt because the hand ended early (no showdown). */
+  /** A finished hand's hole cards of one seat (for 「見せる」 after the hand). */
+  finishedHole(seatId:string):Card[]|null{const r=this.#result;if(!r)return null;const h=this.#deal.holes[seatId];return Array.isArray(h)&&h.length===2?copyCards(h):null;}
   rabbitBoard():Card[]|null{
     const r=this.#result as {showdown?:boolean}|null;
     if(!r||r.showdown)return null;const shown=this.#boardCount();
