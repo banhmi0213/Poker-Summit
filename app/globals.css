@@ -3160,7 +3160,7 @@ input::placeholder, textarea::placeholder { font-weight: 400; }
 }
 body{background:radial-gradient(ellipse at 8% 1%,#eddfbe80,transparent 38%),radial-gradient(ellipse at 100% 15%,#cedbe155,transparent 42%),linear-gradient(145deg,#fffdf7,#f4ecdc 55%,#f7f8f7);background-attachment:fixed;color:var(--text)}
 .portal-nav{background:linear-gradient(115deg,#fffdf8 12%,#f5ecd8 62%,#eef1f1);border-bottom:1px solid #cbb278;box-shadow:0 5px 24px #20384a09}
-.portal-nav .logo-img{filter:drop-shadow(0 1px 1px #704f1933)}
+.portal-nav .logo-img{filter:drop-shadow(.45px .45px 0 #80571899) drop-shadow(-.45px -.45px 0 #80571877) drop-shadow(0 1px 2px #704f1926)}
 .portal-cta{border:1px solid #d4b46f;box-shadow:0 2px 6px #8a662515}
 .home-store-card,.home-event-card,.home-coupon-card,.home-job-card{background:#fffefa;border-color:#dfd5c1;box-shadow:0 4px 16px #233d4d07;border-radius:12px}
 .home-section-head h2{color:#183247}
