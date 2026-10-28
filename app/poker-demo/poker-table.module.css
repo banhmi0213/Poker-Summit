@@ -973,8 +973,8 @@
 /* Phone practice table (owner 2026/10/28): PLAYER 3・4 a little lower and PLAYER 5・6 a little higher so the four side
    seats sit evenly between the top seat and yours. Their cards and wagers move with them. */
 @media(max-width:899px){
- .demoShell .edgeSeatThree,.demoShell .edgeSeatFour,.demoShell .showdownThree,.demoShell .showdownFour,.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 26px}
- .demoShell .edgeSeatFive,.demoShell .edgeSeatSix,.demoShell .showdownFive,.demoShell .showdownSix,.demoShell .table .bet_p5,.demoShell .table .bet_p6{translate:0 -26px}
+ .demoShell .edgeSeatThree,.demoShell .edgeSeatFour,.demoShell .showdownThree,.demoShell .showdownFour,.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 70px}
+ .demoShell .edgeSeatFive,.demoShell .edgeSeatSix,.demoShell .showdownFive,.demoShell .showdownSix,.demoShell .table .bet_p5,.demoShell .table .bet_p6{translate:0 -70px}
 }
 /* PLAYER 3・4 wagers sit just below the blinds line instead of on top of it. */
 
@@ -1066,3 +1066,30 @@
  .demoShell .table:not([data-table-skin]) .pot strong{color:#2b1d0f}
  .demoShell .table:not([data-table-skin]) .pot small{color:#5e4a30}
 }
+/* Phone practice table (owner 2026/10/28): more room for the table and evenly spaced seats.
+   The site bar goes (the game menu has サイト), the menu/exit icons sit over the table's top corners, the table uses
+   more of the width, and PLAYER 3・4 / 5・6 (with their cards, wagers and dealer button) sit evenly between PLAYER 2 and you. */
+@media(max-width:899px){
+ .demoViewport .mobileSiteBar,.demoViewport .mobileFooterToggle{display:none}
+ .demoShell{position:relative}
+ .demoShell>.heading{position:absolute;top:4px;left:8px;right:8px;z-index:20;pointer-events:none}
+ .demoShell>.heading>*{pointer-events:auto}
+ .demoShell .table,.demoShell .table[data-felt]{width:calc(100% - 20px);margin-left:10px;margin-right:10px}
+ .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4,.demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{translate:0 70px}
+ .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6,.demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{translate:0 -70px}
+}
+/* Seat action ribbon on the avatar (owner 2026/10/28: アイコンにアクション, 英語, カラー, 真っ直ぐ). Phone practice table only. */
+.seatAct,.seatFold{display:none}
+@media(max-width:899px){
+ .demoShell .seatAct{display:block;position:relative;z-index:4;height:0;align-self:center}
+ .demoShell .seatAct b{position:absolute;left:50%;top:-14px;translate:-50% 0;padding:3px 16px 4px;font:900 13px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
+ .demoShell .seatAct b::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(#ffffff59,#ffffff00);pointer-events:none}
+ .demoShell .seatAct[data-kind=check] b{background:linear-gradient(90deg,#3b6fae,#6aa2e0,#3b6fae)}
+ .demoShell .seatAct[data-kind=call] b{background:linear-gradient(90deg,#118a5b,#38c98b,#118a5b)}
+ .demoShell .seatAct[data-kind=bet] b{background:linear-gradient(90deg,#d8620c,#ffb13b,#d8620c)}
+ .demoShell .seatAct[data-kind=allin] b{background:linear-gradient(90deg,#a5121f,#ff4b4b,#a5121f)}
+ .demoShell .seatFold{display:grid;position:absolute;inset:0;place-items:center;border-radius:50%;background:radial-gradient(circle,#000a 0 55%,#0006 100%);color:#f1e2bd;font:900 13px/1 'Arial Black',system-ui,sans-serif;letter-spacing:.1em;-webkit-text-stroke:.5px #c9a35c;z-index:3;pointer-events:none}
+ .demoShell .table .seat .seatTimerRing .avatar{position:relative}
+}
+@keyframes seatActPop{from{scale:.4;opacity:0}to{scale:1;opacity:1}}
+@media(prefers-reduced-motion:reduce){.demoShell .seatAct b{animation:none}}
