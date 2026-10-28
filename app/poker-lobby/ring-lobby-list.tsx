@@ -14,7 +14,7 @@ export function RingLobbyList<T extends LobbyRingRow>({rows,renderActions,onRefr
   <div role="table" aria-label="リング卓一覧" className={styles.table}>
    <div role="row" className={styles.head}><span role="columnheader">卓名</span><span role="columnheader">ブラインド</span><span role="columnheader">人数</span><span role="columnheader">持込チップ</span><span role="columnheader" className={styles.srOnly}>操作</span></div>
    {filtered.slice(current*5,current*5+5).map(row=><div role="row" className={styles.row} key={row.id}>
-    <div role="cell" className={styles.name}><span className={styles.emblem}><LobbyIcon name="spade"/></span><strong>{row.title}</strong></div>
+    <div role="cell" className={styles.name}><span className={styles.emblem}><LobbyIcon name="finger"/></span><strong>{row.title}</strong></div>
     <div role="cell" className={styles.blind}><small>ブラインド</small>{row.sb.toLocaleString()} / {row.bb.toLocaleString()}</div>
     <div role="cell" className={styles.players}><span>{row.occupied===null?'—':row.occupied} / {row.capacity}人</span><span className={styles.seats} aria-hidden="true">{Array.from({length:row.capacity},(_,i)=><i key={i} data-occupied={row.occupied!==null&&i<row.occupied}/>)}</span>{row.occupied!==null&&row.occupied>=row.capacity&&<small className={styles.full}>満席</small>}</div>
     <div role="cell" className={styles.buyIn}><small>持込チップ</small>{row.minBuyIn.toLocaleString()}<span>〜</span>{row.maxBuyIn.toLocaleString()}</div>
