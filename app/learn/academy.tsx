@@ -9,6 +9,7 @@ import { HandStrengthQuiz } from "@/app/blog/hand-strength-quiz";
 import { PotOddsTrainer } from "./pot-odds-trainer";
 import { PreflopDecisionSimulator } from "./preflop-decision-simulator";
 import { GraduationTest } from "./graduation-test";
+import { advancedLevels, LevelCurriculum } from "./level-curriculum";
 import styles from "./learn.module.css";
 
 const storageKey = "poker-summit-academy-v1";
@@ -80,15 +81,13 @@ export function Academy() {
     </div>
    </div>
    <div className={styles.levelRoadmap}>
-    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>現在はLv.1とLv.2に対応。以降のレベル名・獲得条件は開発予定の案です。</p></div>
+    <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>現在はLv.1とLv.2を公開中です。Lv.3以降は、実戦判断からGTO・ソルバー活用へ進む学習内容を計画しています。</p></div>
     <div className={styles.levelRows}>
      <div><span className={styles.levelNumber}>Lv.1</span><strong>ポーカー入門者</strong><small>会員の初期レベル</small><span className={styles.available}>公開中</span></div>
      <div><span className={styles.levelNumber}>Lv.2</span><strong>ポーカー卒業生</strong><small>初心者卒業テスト合格・会員バッジ保存</small><span className={styles.available}>公開中</span></div>
-     <div><span className={styles.levelNumber}>Lv.3</span><strong>実戦チャレンジャー（仮）</strong><small>応用レッスン・実戦判断テストを想定</small><span className={styles.planned}>構想中</span></div>
-     <div><span className={styles.levelNumber}>Lv.4</span><strong>戦略マスター（仮）</strong><small>戦略・確率の応用テストを想定</small><span className={styles.planned}>構想中</span></div>
-     <div><span className={styles.levelNumber}>Lv.5</span><strong>アカデミーエキスパート（仮）</strong><small>総合上級チャレンジを想定</small><span className={styles.planned}>構想中</span></div>
+     {advancedLevels.map(course => <div key={course.level}><span className={styles.levelNumber}>Lv.{course.level}</span><strong>{course.name}</strong><small>{course.summary}</small><span className={styles.planned}>開発予定</span></div>)}
     </div>
-    <p className={styles.achievementNote}>※Lv.3以降の名称・条件・提供時期は未確定です。修了証、会員別学習履歴、ランキングも今後の開発予定です。</p>
+    <LevelCurriculum />
    </div>
   </section>
   <div id="academy-lessons" className={styles.layout}>
