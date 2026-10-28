@@ -1059,5 +1059,9 @@
  .demoShell .table .seat .seatTimerRing .avatar{width:56px;height:56px;overflow:hidden}
  .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){position:relative;z-index:2;margin-top:-8px;width:80px;max-width:80px;padding:5px 6px 1px;border:1px solid #c9a35c;border-bottom:0;border-radius:10px 10px 0 0;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;font-size:10px;font-weight:600;letter-spacing:.02em}
  .demoShell .table .seat>small{position:relative;z-index:2;width:80px;max-width:80px;padding:0 6px 4px;border:1px solid #c9a35c;border-top:0;border-radius:0 0 10px 10px;background:#16120ef7;color:#ffd987;font-size:13px;font-weight:800;line-height:1.15;box-shadow:0 4px 8px #0009;font-variant-numeric:tabular-nums}
- .demoShell .table .pot{background:none;border:0;box-shadow:none;padding:0;text-shadow:0 1px 3px #000c}
+ .demoShell .table .pot{background:none;border:0;box-shadow:none;padding:0;color:#f3e6c8;text-shadow:0 1px 3px #000c}
+ /* The standard beige felt needs dark text; the darker skins keep light text. */
+ .demoShell .table:not([data-table-skin]) .pot{color:#4a3720;text-shadow:0 1px 0 #fff6}
+ .demoShell .table:not([data-table-skin]) .pot strong{color:#2b1d0f}
+ .demoShell .table:not([data-table-skin]) .pot small{color:#5e4a30}
 }
