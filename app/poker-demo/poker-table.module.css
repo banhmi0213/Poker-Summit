@@ -1136,3 +1136,34 @@
 @media(max-width:899px) and (max-height:620px){
  .demoShell .table .felt{top:calc(50% - 40px)!important}
 }
+/* PC practice table (owner 2026/10/28: PCも同じに、サイズはPCに合ったサイズ): the same avatar badge, gold plates,
+   action ribbons, FOLD on the avatar and plain pot text as the phone, sized for the larger PC seats. Face-down cards sit
+   behind the avatar instead of covering it. */
+@media(min-width:900px){
+ .demoShell .table .seat .seatAvatarRow{margin-bottom:0;position:relative;z-index:1}
+ .demoShell .table .seat .seatTimerRing{box-shadow:0 6px 16px #000a}
+ .demoShell .table .seat .seatTimerRing .avatar{position:relative;overflow:hidden}
+ .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){position:relative;z-index:2;margin-top:-16px;width:136px;max-width:136px;padding:7px 8px 2px;border:1px solid #c9a35c;border-bottom:0;border-radius:12px 12px 0 0;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;font-size:13px;font-weight:600;letter-spacing:.02em}
+ .demoShell .table .seat>small{position:relative;z-index:2;width:136px;max-width:136px;padding:0 8px 6px;border:1px solid #c9a35c;border-top:0;border-radius:0 0 12px 12px;background:#16120ef7;color:#ffd987;font-size:18px;font-weight:800;line-height:1.15;box-shadow:0 6px 12px #0009;font-variant-numeric:tabular-nums}
+ .demoShell .seatAct{display:block;position:relative;z-index:4;height:0;align-self:center}
+ .demoShell .seatAct b{position:absolute;left:50%;top:-34px;translate:-50% 0;padding:5px 22px 6px;font:900 17px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
+ .demoShell .seatAct b::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(#ffffff59,#ffffff00);pointer-events:none}
+ .demoShell .seatAct[data-kind=check] b{background:linear-gradient(90deg,#3b6fae,#6aa2e0,#3b6fae)}
+ .demoShell .seatAct[data-kind=call] b{background:linear-gradient(90deg,#118a5b,#38c98b,#118a5b)}
+ .demoShell .seatAct[data-kind=bet] b{background:linear-gradient(90deg,#d8620c,#ffb13b,#d8620c)}
+ .demoShell .seatAct[data-kind=allin] b{background:linear-gradient(90deg,#a5121f,#ff4b4b,#a5121f)}
+ .demoShell .seatFold{display:grid;position:absolute;inset:0;place-items:center;border-radius:50%;background:radial-gradient(circle,#000a 0 55%,#0006 100%);color:#f1e2bd;font:900 22px/1 'Arial Black',system-ui,sans-serif;letter-spacing:.1em;-webkit-text-stroke:.6px #c9a35c;z-index:3;pointer-events:none}
+ .demoShell .table[data-showdown=false] .showdownPosition{z-index:2}
+ .demoShell .table[data-showdown=false] .showdownPosition .miniCards span{width:58px;height:80px}
+ .demoShell .table .pot{background:none;border:0;box-shadow:none;padding:0;color:#f3e6c8;text-shadow:0 1px 3px #000c}
+ .demoShell .table:not([data-table-skin]) .pot{color:#4a3720;text-shadow:0 1px 0 #fff6}
+ .demoShell .table:not([data-table-skin]) .pot strong{color:#2b1d0f}
+ .demoShell .table:not([data-table-skin]) .pot small{color:#5e4a30}
+ .demoShell .table .self .selfInfo{z-index:9;min-width:140px;padding:6px 10px;border:1px solid #c9a35c;border-radius:12px;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;box-shadow:0 6px 12px #0009}
+ .demoShell .table .selfInfo .memberName{color:#e8dcc4;font-weight:600}
+ .demoShell .table .selfInfo small{color:#ffd987;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+ .demoShell .table .selfInfo .seatAct{position:absolute;left:50%;top:0;width:0}
+ .demoShell .table .selfInfo .seatAct b{top:-16px}
+ .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
+ .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
+}
