@@ -1104,9 +1104,9 @@
  .demoShell .table .showdownThree,.demoShell .table .showdownFour,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:calc(26% + 8px);bottom:auto;translate:none}
  .demoShell .table .showdownFive,.demoShell .table .showdownSix,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:calc(54% + 8px);bottom:auto;translate:none}
  .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4{top:calc(26% + 52px);translate:none}
- .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6{top:calc(54% - 14px);translate:none}
+ .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6{top:calc(54% + 44px);translate:none}
  .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p5{left:27.5%;translate:none}
  .demoShell .table .dealerSpot.bet_p4,.demoShell .table .dealerSpot.bet_p6{left:72.5%;translate:none}
- .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{top:calc(26% + 30px)}
- .demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{top:calc(54% + 30px)}
+ .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{top:calc(26% + 14px)}
+ .demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{top:calc(54% + 14px)}
 }
