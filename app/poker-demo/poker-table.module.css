@@ -1198,3 +1198,7 @@
 .self .seatTimerRing[data-extended]::after{display:none}
 .extTag{flex:0 0 auto;display:inline-block;margin-right:4px;padding:0 5px;border-radius:999px;background:linear-gradient(#3d8fe0,#1f5fa8);border:1px solid #bfe0ff;color:#fff;font-size:9px;font-weight:800;line-height:14px;letter-spacing:.06em;vertical-align:1px;white-space:nowrap}
 .self .hole>span.showCard:nth-of-type(2){transform:rotate(7deg)}
+/* Tap your ⏰ to extend the turn (owner 2026/10/28). Only a button on your own turn; it gently pulses so it reads as tappable. */
+.bankCards.clockButton.clockButton{appearance:none;margin-left:4px;padding:0 6px;border:1px solid #f3c66399;border-radius:999px;background:#f3c66324;color:#f3c663;font:inherit;font-size:11px;font-weight:800;line-height:16px;min-height:0;min-width:0;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:clockPulse 1.2s ease-in-out infinite}
+.bankCards.clockButton.clockButton:active{transform:scale(.94)}
+@keyframes clockPulse{0%,100%{box-shadow:0 0 0 0 #f3c66300}50%{box-shadow:0 0 0 3px #f3c66355}}

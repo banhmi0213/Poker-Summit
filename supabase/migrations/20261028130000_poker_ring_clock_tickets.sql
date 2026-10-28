@@ -74,3 +74,5 @@ create or replace function poker_private.ring_play_meta(p_table uuid) returns js
  'penalties',coalesce((select jsonb_object_agg(r.id::text,jsonb_build_object('strikes',r.timeout_streak,'since',r.sit_out_since,'hands',r.sit_out_hands)) from poker_private.ring_fund_reservations r where r.table_id=p_table and r.status='seated'),'{}'::jsonb),'ready',coalesce((select jsonb_agg(r.id) from poker_private.ring_fund_reservations r where r.table_id=p_table and r.status='seated' and r.play_enabled  and r.exit_request is null),'[]'::jsonb))
  from (select 1) stub left join lateral(select * from poker_private.ring_hands where table_id=p_table order by created_at desc,id desc limit 1) h on true;
 $$;
+
+update poker_private.shop_items set label='タイムバンク +20秒',description='リングで持ち時間を20秒延ばせます（1ハンド2回まで）。' where code='time_bank';

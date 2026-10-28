@@ -33,7 +33,7 @@ export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlay
  private async playRPC(name:string,args:Record<string,unknown>){const {data,error}=await this.playClient.rpc(name,args);if(error)throw Error('Ring play persistence unavailable');return data;}
  /** Spend one ticket; the same ref is never charged twice. False when the member has none. */
  async ticket(member:string,item:'rabbit'|'time_bank',ref:string){return (await this.playRPC('poker_ticket_use',{p_member:member,p_item:item,p_ref:ref}))===true;}
- /** +30s for one time bank ticket on this turn. A missing ticket becomes RingTicketRequired. */
+ /** +20s for one time bank ticket (at most 2 per hand, both may be on one turn). A missing ticket becomes RingTicketRequired. */
  async ticketBank(member:string,reservation:string,hand:string,revision:number,request:string){const {error}=await this.playClient.rpc('poker_ring_ticket_timebank',{p_member:member,p_reservation:reservation,p_hand:hand,p_revision:revision,p_request:request});if(error){if(String((error as {message?:unknown}).message??'').includes('No ticket'))throw new RingTicketRequired();throw Error('Ring play persistence unavailable');}}
  async bank(member:string,reservation:string,hand:string,revision:number,request:string){await this.playRPC('poker_ring_timebank',{p_member:member,p_reservation:reservation,p_hand:hand,p_revision:revision,p_request:request});}
  async meta(table:string){return await this.playRPC('poker_ring_play_meta',{p_table:table}) as RingPlayMeta;}
