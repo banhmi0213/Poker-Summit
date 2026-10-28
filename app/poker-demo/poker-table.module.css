@@ -1177,3 +1177,9 @@
 }
 /* Ring and tournament tables share the practice-table design (owner 2026/10/28): the site bar goes on phones there too. */
 @media(max-width:899px){.gamePage:has(.demoShell) .mobileSiteBar,.gamePage:has(.demoShell) .mobileFooterToggle{display:none}}
+/* PC practice table: the ribbons now show each action, so the centre action banner goes (as on the phone), and
+   PLAYER 2's wager sits a little higher, clear of the pot text. */
+@media(min-width:900px){
+ .demoShell .actionToast{display:none!important}
+ .demoShell .table .streetBet.bet_p2{translate:0 -16px}
+}
