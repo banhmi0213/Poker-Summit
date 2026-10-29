@@ -5,6 +5,7 @@ import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
+import {FlopAggregate} from './flop-aggregate';
 
 /** Precomputed flop solutions for 13 spots × up to 200 representative flops (2026/10/29: 95 → 200; the list shows only computed ones) (public/poker-gto/flops/<spot>/<flop>.json). */
 export const FLOPS=GTO_FLOPS;
@@ -17,7 +18,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
  const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
- const [index,setIndex]=useState<Record<string,string[]>|null>(null);
+ const [index,setIndex]=useState<Record<string,string[]>|null>(null),[mode,setMode]=useState<'flop'|'summary'>('flop');
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
  const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
  useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);
@@ -40,6 +41,12 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
    <button type="button" onClick={lookup}>近いフロップを表示</button>
   </div>
   <p className={styles.note}>{current.detail}{index?`（計算済み ${ready.length}／${flops.length}フロップ）`:''}</p>
+  <nav className={styles.path} aria-label="表示を選ぶ">
+   <button type="button" onClick={()=>setMode('flop')} disabled={mode==='flop'}>フロップごとの表</button>
+   <button type="button" onClick={()=>setMode('summary')} disabled={mode==='summary'}>全体まとめ</button>
+  </nav>
+  {mode==='summary'&&<FlopAggregate spot={spot} onPick={f=>{setFlop(f);setNearNote('');setMode('flop');}}/>}
+  {mode==='flop'&&<>
   {nearNote&&<p role="status" className={styles.note}>{nearNote}</p>}
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}
@@ -57,6 +64,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
     let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
     return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table>
    
+  </>}
   </>}
  </div>;
 }
