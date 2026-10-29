@@ -5,7 +5,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {BotTable}=require('../lib/poker/bot-hands.ts');
 const {ringTerms}=require('../lib/poker/tournament-hand.ts');
 const {loadGtoData}=require('../lib/poker/gto-data-node.ts');
-const {reviewGto,gtoVerdict,viewAt}=require('../lib/poker/gto-review.ts');
+const {reviewGto,gtoVerdict,viewAt,summarizeDeviation}=require('../lib/poker/gto-review.ts');
 const seeded=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
 const asViewer=(h,seatId)=>({handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.seatId===seatId,hole:p.seatId===seatId?p.hole:null}))});
 
@@ -82,4 +82,17 @@ test('each reviewed decision carries the whole range: 169-class grid, shares sum
    }}
  }
  console.log('ranges by source',JSON.stringify(seen));assert.ok(seen.preflop>0);assert.ok(seen.flop+seen.solver>0);
+});
+
+test('deviation summary counts only preflop and flop, and a GTO CPU is almost never off',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100),hands=[];
+ for(let i=0;i<Number(process.env.GTO_REVIEW_HANDS||10)*2;i++){const r=t.play(seeded(500+i));if(r.history)hands.push(r.history);}
+ const seat=hands[0].players[0].seatId,mine=hands.filter(h=>h.players.some(p=>p.seatId===seat)).map(h=>asViewer(h,seat));
+ const t0=Date.now(),s=summarizeDeviation(mine,data);
+ console.log('deviation',JSON.stringify({hands:s.hands,preflop:s.preflop,flop:s.flop,ms:Date.now()-t0}));
+ assert.ok(s.preflop.judged>0);
+ for(const st of [s.preflop,s.flop])assert.equal(st.gto+st.mixed+st.rare,st.judged);
+ assert.ok(s.preflop.rare/s.preflop.judged<0.1,'GTO CPU rarely plays a ほぼやらない preflop action');
+ assert.ok(s.worst.length<=8);assert.ok(s.worst.every((w,i,a)=>i===0||a[i-1].freq<=w.freq));
 });

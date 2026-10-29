@@ -64,11 +64,11 @@ function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:st
  const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
  return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:classOf(code(hole[0]),code(hole[1])),nearFlop:s.nearFlop};
 }
-export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500):GtoReview[]{
+export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
  const out:GtoReview[]=[];
  hand.actions.forEach((a,i)=>{
-  if(a.seatId!==me.seatId||forced.has(a.type))return;
+  if(a.seatId!==me.seatId||forced.has(a.type)||(streets&&!streets.includes(a.street)))return;
   const v=viewAt(hand,i);if(!v)return;
   const s=gtoStrategy(v,data,budgetMs);
   if(s.source==='fallback'){out.push({index:i,street:a.street,source:'none',reason:s.reason});return;}
@@ -107,3 +107,27 @@ export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1
    options:all.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(({text,freq})=>({text,freq}))};
  });
 }
+
+/** How far the viewer's play strays from GTO over many hands (2026/10/29: 成績・癖の分析の「GTOから外れた率」).
+ * Preflop and flop only (precomputed data, no solving), so a hundred hands take well under a second.
+ * A decision counts as off when GTO plays it under 5% (ほぼやらない). */
+export type DeviationStreet={judged:number;gto:number;mixed:number;rare:number};
+export type DeviationSummary={hands:number;preflop:DeviationStreet;flop:DeviationStreet;
+ /** The most clearly off decisions, rarest first (at most 8). */
+ worst:{handId:string;street:'preflop'|'flop';played:string;freq:number;best:string}[]};
+export function summarizeDeviation(hands:readonly GtoReviewHand[],data:GtoData):DeviationSummary{
+ const zero=():DeviationStreet=>({judged:0,gto:0,mixed:0,rare:0});
+ const out:DeviationSummary={hands:0,preflop:zero(),flop:zero(),worst:[]};
+ for(const h of hands){
+  const rs=reviewGto(h,data,0,['preflop','flop']);let counted=false;
+  for(const r of rs){if(r.source==='none'||!r.verdict||r.played===null||(r.street!=='preflop'&&r.street!=='flop'))continue;
+   const st=out[r.street];st.judged++;st[r.verdict]++;counted=true;
+   if(r.verdict==='rare'){const best=[...r.options].sort((a,b)=>b.freq-a.freq)[0];
+    out.worst.push({handId:h.handId,street:r.street,played:playedOf(h,r.index),freq:r.played,best:best?`${best.text} ${Math.round(best.freq*100)}%`:''});}
+  }
+  if(counted)out.hands++;
+ }
+ out.worst.sort((a,b)=>a.freq-b.freq);out.worst=out.worst.slice(0,8);
+ return out;
+}
+function playedOf(h:GtoReviewHand,i:number){const a=h.actions[i];return a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/h.terms.bb*10)/10}BB${a.allIn?'（オールイン）':''}`;}
