@@ -13,9 +13,3 @@
 
 /* Rabbit hunt: the undealt board after a hand that ended early (ring only, one ticket). */
 .rabbit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.rabbit p{margin:0}.rabbit b{color:#f3c663;letter-spacing:.04em}
-/* Owner 2026/10/29 (チケットで＋20秒もラビットも枠が動く): these float over the table's top-right corner instead of
-   pushing the action panel up when they appear. */
-.fullTable .rabbit{position:absolute;z-index:54;top:48px;right:12px;margin:0;padding:6px 8px;border:1px solid #bda15d;border-radius:9px;background:#1d2a33f0;box-shadow:0 6px 18px #0007;max-width:min(320px,calc(100% - 24px));box-sizing:border-box}
-.fullTable .rabbit button{min-height:36px;padding:6px 12px}
-.fullTable:has(.inlineAlert) .rabbit{top:118px}
-@media(max-width:899px){.fullTable .rabbit{top:34px;right:8px;font-size:11px;padding:4px 6px}.fullTable .rabbit button{min-height:30px;padding:4px 8px}.fullTable:has(.inlineAlert) .rabbit{top:34px}}

@@ -27,18 +27,19 @@ export function StampBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;disab
 
 /** Round buttons beside your own avatar (owner 2026/10/27: 左にスタンプとサミット): stamps and the Summit board.
  * The stamp list and the board open as sheets over the page, so they never get cut off at the table edge. */
-export function SeatQuickBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;disabled?:boolean}){
+export function SeatQuickBar({onStamp,disabled,extra}:{onStamp:(stamp:StampId)=>void;disabled?:boolean;/** Shown under the round buttons: ticket +20s, rabbit (owner 2026/10/29). */extra?:import('react').ReactNode}){
  const [open,setOpen]=useState<'stamp'|'summit'|null>(null),[cool,setCool]=useState(false),[mounted,setMounted]=useState(false);
  useEffect(()=>setMounted(true),[]);
  useEffect(()=>{if(!open)return;const key=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(null);};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[open]);
  const send=(id:StampId)=>{if(cool)return;onStamp(id);setOpen(null);setCool(true);setTimeout(()=>setCool(false),STAMP_GAP_MS);};
- const sheet=open&&mounted?createPortal(<div className={styles.sheetBackdrop} onClick={()=>setOpen(null)}>
+ const sheet=open&&mounted?createPortal(<div className={styles.sheetBackdrop} data-kind={open} onClick={()=>setOpen(null)}>
   {open==='stamp'?<div className={styles.sheetList} role="group" aria-label="スタンプを送る" onClick={e=>e.stopPropagation()}>{STAMPS.map(s=><button type="button" key={s.id} aria-label={s.label} disabled={disabled||cool} onClick={()=>send(s.id)}><Sticker s={s} size="pick"/></button>)}</div>
   :<div className={styles.summitSheet} role="dialog" aria-label="サミット掲示板" onClick={e=>e.stopPropagation()}><div className={styles.summitHead}><strong>サミット</strong><button type="button" aria-label="サミットを閉じる" onClick={()=>setOpen(null)}>×</button></div><iframe title="サミット掲示板" src="/poker-community" referrerPolicy="same-origin"/></div>}
  </div>,document.body):null;
  return <div className={styles.quick} role="group" aria-label="スタンプとサミット">
   <button type="button" className={styles.quickBtn} aria-label="サミット" aria-expanded={open==='summit'} onClick={()=>setOpen(v=>v==='summit'?null:'summit')}><span className={styles.quickIcon} data-kind="summit"><img src="/images/summit-finger-clean.webp" alt="" data-summit/></span><span className={styles.quickLabel} aria-hidden="true">サミット</span></button>
   <button type="button" className={styles.quickBtn} aria-label="スタンプ" aria-expanded={open==='stamp'} disabled={disabled} onClick={()=>setOpen(v=>v==='stamp'?null:'stamp')}><span className={styles.quickIcon}><img src="/images/stamps/stamp-02.webp" alt=""/></span><span className={styles.quickLabel} aria-hidden="true">スタンプ</span></button>
+  {extra&&<div className={styles.quickExtra}>{extra}</div>}
   {sheet}
  </div>;
 }
