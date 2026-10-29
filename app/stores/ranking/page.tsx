@@ -19,7 +19,7 @@ export function generateMetadata({ searchParams }: { searchParams: { pref?: stri
   const qs = pref ? `?pref=${encodeURIComponent(pref)}` : region ? `?region=${encodeURIComponent(region)}` : "";
   return staticPageMetadata({
     title: `${place}のポーカー店ランキング`,
-    description: `${place}で人気のアミューズメントポーカー店・ポーカーバーのランキング。営業時間・アクセス・イベント情報もPoker Summitでチェックできます。`,
+    description: `${place}で人気のアミューズメントポーカー店・ポーカーバーのランキング。住所や営業時間などの店舗情報もPoker Summitで確認できます。`,
     path: `/stores/ranking${qs}`,
   });
 }
