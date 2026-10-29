@@ -98,7 +98,7 @@ function handEv(p){const v=solver.handValues(p),side=solver.sides[p],acc={};
  return Object.fromEntries(Object.entries(acc).map(([l,[s,w]])=>[l,Math.round(s/w*100)/100]));}
 const out={version:fromChart?3:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
  iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},...(fromChart?{handEv:{oop:handEv(0),ip:handEv(1)},
- riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+ riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),threads,peakGB:+(process.resourceUsage().maxRSS/1048576).toFixed(2),nodes};
 if(stopThreads)stopThreads();
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
