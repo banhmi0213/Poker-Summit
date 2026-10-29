@@ -30,7 +30,7 @@ test('six players: every move is pushed at once with only your own cards, and ch
  const server=http.createServer((_,res)=>{res.writeHead(404);res.end();});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  const port=server.address().port,members=new Map(w.seats.map(s=>[s.memberId,s]));
  const hub=attachRingEvents(server,{origins:[ORIGIN],verify:async token=>({memberId:token}),source:runtime,playEnabled:async()=>true,extras:()=>({})});
- const startTotal=total(w),inbox=new Map(),clients=[];
+ const startTotal=total(w),inbox=new Map(),clients=[];let house=0;
  try{
   for(const s of w.seats){const ws=new WS(`ws://127.0.0.1:${port}${RING_EVENTS_PATH}`,{headers:{origin:ORIGIN}});inbox.set(s.memberId,[]);clients.push(ws);
    await new Promise((res,rej)=>{ws.once('open',res);ws.once('error',rej);});
@@ -55,10 +55,10 @@ test('six players: every move is pushed at once with only your own cards, and ch
    }
    const done=runtime.latest(w.table).owner.snapshot(null);assert.ok(done.result,'hand finished');
    // Settle like the database does at the end of the hand.
-   for(const p of done.players){const s=w.seats.find(x=>'seat-'+x.seat===p.id);s.stack=p.stack;}
+   for(const p of done.players){const s=w.seats.find(x=>'seat-'+x.seat===p.id);s.stack=p.stack;}house+=done.result.rake??0;
    w.context.seats=structuredClone(w.seats.filter(s=>s.stack>0));if(w.context.seats.length<2)break;
    w.context.buttonSeat=w.context.seats[(w.context.seats.findIndex(s=>s.seat===w.context.buttonSeat)+1)%w.context.seats.length]?.seat??w.context.seats[0].seat;
-   assert.equal(total(w),startTotal,'chips conserved');
+   assert.equal(total(w)+house,startTotal,'chips conserved (rake goes to the house)');
   }
   assert.ok(moves>=20,`moves ${moves}`);
   assert.ok(worst<250,`slowest push ${Math.round(worst)}ms`);
