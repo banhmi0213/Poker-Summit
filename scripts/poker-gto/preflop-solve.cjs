@@ -4,6 +4,8 @@ const fs=require('fs'),path=require('path');require('./common.cjs');
 const {PreflopSolver,POSITIONS}=require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts'));
 const equity=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/preflop-equity.json'),'utf8'));
 const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
+// --fit file (2026/10/29): realisation fitted from the per-hand flop EVs (scripts/poker-gto/calibrate-hands.cjs).
+const fitFile=arg('fit');if(fitFile){require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts')).setRealizeFit(JSON.parse(fs.readFileSync(fitFile,'utf8')));console.log('realisation fit',fitFile);}
 const iters=Number(arg('iters',2000)),s=new PreflopSolver(equity),t0=Date.now();
 const terminals=(function count(n){return n.type==='terminal'?1:n.children.reduce((a,c)=>a+count(c),0);})(s.root);
 console.log(`decisions ${s.decisions.length} terminals ${terminals}`);

@@ -30,7 +30,14 @@ export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number}>={s
 export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={limp:[0.85,1.0],srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
 /** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
+/** Per-class playability fitted from the per-hand flop EVs (scripts/poker-gto/calibrate-hands.cjs), when loaded. */
+let PLAY_TABLE:Record<string,number>|null=null;
+/** Load a realisation fit ({role, play}) before solving (2026/10/29). Classes missing from `play` keep the formula. */
+export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Record<string,number>}|null){
+ PLAY_TABLE=fit?.play??null;for(const [k,v] of Object.entries(fit?.role??{}))if(v)REALIZE_ROLE[k as keyof typeof REALIZE_ROLE]={...v};
+}
 export function playability(label:string){
+ if(PLAY_TABLE&&PLAY_TABLE[label]!==undefined)return PLAY_TABLE[label];
  const r='23456789TJQKA',a=r.indexOf(label[0]),b=r.indexOf(label[1]);if(a===b)return 1+PLAYABILITY.pair;
  const gap=Math.min(4,a-b-1),wheel=label[0]==='A'?0.5:1;
  return 1+(label[2]==='s'?PLAYABILITY.suited:PLAYABILITY.offsuit)-PLAYABILITY.gapStep*gap*wheel;
