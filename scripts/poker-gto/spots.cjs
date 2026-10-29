@@ -70,3 +70,15 @@ const LINES={'btn-bb':'UTGF HJF COF BTN2.5 SBF BBC','co-bb':'UTGF HJF CO2.5 BTNF
  'btn-bb-3bet':'UTGF HJF COF BTN2.5 SBF BB11 BTNC','co-bb-3bet':'UTGF HJF CO2.5 BTNF SBF BB11 COC','utg-bb-3bet':'UTG2.5 HJF COF BTNF SBF BB11 UTGC',
  'btn-sb-3bet':'UTGF HJF COF BTN2.5 SB11 BTNC','co-btn-3bet':'UTGF HJF CO2.5 BTN7.5 COC','btn-bb-4bet':'UTGF HJF COF BTN2.5 SBF BB11 BTN24.2 BBC'};
 for(const [id,line] of Object.entries(LINES))if(module.exports[id])module.exports[id].line=line;
+
+// ---- Heads-up (2026/10/29): two players dealt in, the button is the SB and acts last after the flop. Ranges from
+// preflop-hu.json along each line; the reference ranges are only for the page text. ----
+const HU_LIMP={betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
+Object.assign(module.exports,{
+ 'hu-srp':{name:'2人・SB（ボタン）オープン対BB・100BB',short:'SBオープン→BBコール（2人）',pot:5,stack:97.5,oop:'BB',ip:'SB',sizes:SRP,chart:'hu',line:'SB2.5 BBC',
+  note:'2人のとき。SB（ボタン）が2.5BBでオープン、BBがコール（ポット5BB）。BBが先に打つ。',oopRange:'2人用プリフロップ表のBBのコール',ipRange:'2人用プリフロップ表のSBのオープン'},
+ 'hu-limp':{name:'2人・リンプポット・100BB',short:'SBリンプ→BBチェック（2人）',pot:2,stack:99,oop:'BB',ip:'SB',sizes:HU_LIMP,chart:'hu',line:'SBC BBC',
+  note:'2人のとき。SB（ボタン）がリンプ、BBがチェック（ポット2BB）。BBが先に打つ。',oopRange:'2人用プリフロップ表のBBのチェック',ipRange:'2人用プリフロップ表のSBのリンプ'},
+ 'hu-3bet':{name:'2人・3ベットポット・100BB',short:'SBオープン→BB3ベット→SBコール（2人）',pot:20,stack:90,oop:'BB',ip:'SB',sizes:THREE_BET,chart:'hu',line:'SB2.5 BB10 SBC',
+  note:'2人のとき。SBが2.5BBでオープン、BBが10BBに3ベット、SBがコール（ポット20BB）。BBが先に打つ。',oopRange:'2人用プリフロップ表のBBの3ベット',ipRange:'2人用プリフロップ表のSBのコール'},
+});

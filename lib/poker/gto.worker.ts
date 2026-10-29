@@ -10,10 +10,10 @@ export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'adv
 
 const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:MessageEvent<GtoRequest>)=>void)|null};
 const flops=new Map<string,FlopData|null>(),missing=new Set<string>();
-let base:Promise<{preflop:PreflopData;flopIndex:Record<string,string[]>}>|null=null;
+let base:Promise<{preflop:PreflopData;preflopHu?:PreflopData;flopIndex:Record<string,string[]>}>|null=null;
 const json=async<T,>(url:string):Promise<T|null>=>{try{const r=await fetch(url);return r.ok?await r.json() as T:null;}catch{return null;}};
 function load(){
- if(!base)base=(async()=>{const preflop=await json<PreflopData>('/poker-gto/preflop.json');if(!preflop)throw Error('GTO data unavailable');return {preflop,flopIndex:(await json<Record<string,string[]>>('/poker-gto/flops/index.json'))??{}};})();
+ if(!base)base=(async()=>{const preflop=await json<PreflopData>('/poker-gto/preflop.json');if(!preflop)throw Error('GTO data unavailable');return {preflop,preflopHu:(await json<PreflopData>('/poker-gto/preflop-hu.json'))??undefined,flopIndex:(await json<Record<string,string[]>>('/poker-gto/flops/index.json'))??{}};})();
  return base;
 }
 scope.onmessage=async e=>{
