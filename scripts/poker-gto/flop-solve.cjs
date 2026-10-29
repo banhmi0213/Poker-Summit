@@ -62,7 +62,7 @@ log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${sol
 let expl=Infinity,checks=[];
 while(solver.iterations<maxIters){
  solver.run(1);
- const it=solver.iterations,every=it<40?20:10;
+ const it=solver.iterations,every=Number(arg('check-every',0))||(it<40?20:10);
  if(it%every===0||it>=maxIters){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log(`iter ${it} exploitability ${(expl*100).toFixed(2)}% of pot · tables ${solver.tableCount()} · rss ${(process.memoryUsage().rss/1e9).toFixed(1)}GB`);
   if(expl<=target)break;}
  if((Date.now()-t0)/60000>maxMinutes){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log('time limit');break;}
