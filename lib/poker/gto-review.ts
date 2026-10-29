@@ -11,7 +11,7 @@ export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;b
  players:{seatId:string;seat:number;startStack:number;you:boolean;hole:Card[]|null}[]};
 export type GtoVerdict='gto'|'mixed'|'rare';
 /** The whole range at a reviewed decision, for the 13×13 chart (options in model order). */
-export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string;
+export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string;proxySpot?:string;
  /** Board card codes after the flop (for the hand-strength breakdown); absent preflop. */
  board?:number[]};
 export type GtoReview={index:number;street:HistoryAction['street'];
@@ -26,7 +26,7 @@ const forced=new Set(['ante','sb','bb']);
 /** Played ≥30%: GTO通り, 5〜30%: ときどき, under 5%: ほぼやらない. */
 export function gtoVerdict(freq:number):GtoVerdict{return freq>=0.3?'gto':freq>=0.05?'mixed':'rare';}
 export const verdictText:Record<GtoVerdict,string>={gto:'GTO通り',mixed:'ときどき',rare:'ほぼやらない'};
-export const reasonText=(reason:string)=>reason==='stack-depth'?'スタックが浅すぎる・深すぎるため対象外':reason==='multiway'?'3人以上のポットは対象外':reason.startsWith('preflop-off')?'GTOの表にない進行のため対象外':reason==='no-flop-data'?'このフロップは計算中':'GTOの計算範囲外';
+export const reasonText=(reason:string)=>reason==='stack-depth'?'スタックが浅すぎる・深すぎるため対象外':reason==='multiway'?'3人以上のポットは対象外':reason==='no-flop-data'?'この場面のフロップはまだ計算中':reason.startsWith('preflop-off')?'GTOの表にない進行のため対象外':reason==='no-flop-data'?'このフロップは計算中':'GTOの計算範囲外';
 
 function optionText(kind:string,label:string,to:number|null,bb:number){
  if(kind==='fold')return 'フォールド';if(kind==='check')return 'チェック';if(kind==='call')return 'コール';if(kind==='allin')return 'オールイン';
@@ -64,10 +64,10 @@ export function viewAt(hand:GtoReviewHand,index:number,seatId?:string):GtoView|n
   startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
 }
 
-function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
+function rangeOf(s:{grid?:GtoGrid;nearFlop?:string;proxySpot?:string},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
  if(!s.grid)return undefined;
  const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
- return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:hole.length===2?classOf(code(hole[0]),code(hole[1])):'',nearFlop:s.nearFlop,board:board.length>=3?board.map(code):undefined};
+ return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:hole.length===2?classOf(code(hole[0]),code(hole[1])):'',nearFlop:s.nearFlop,proxySpot:s.proxySpot,board:board.length>=3?board.map(code):undefined};
 }
 export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];

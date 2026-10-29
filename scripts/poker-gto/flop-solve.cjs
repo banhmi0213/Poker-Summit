@@ -47,7 +47,7 @@ const board=[0,2,4].map(i=>code(flop.slice(i,i+2)));
 const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(exclude):[])l.delete(x);return l;};
 // --oop / --ip override the ranges (used by the quick self-check).
 // Chart spots (version 2): weighted ranges, pot and stack from the preflop chart along SPOT.line.
-const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line):null;
+const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line,SPOT.chart):null;
 if(fromChart&&(fromChart.oop!==SPOT.oop||fromChart.ip!==SPOT.ip))throw new Error(`chart line positions ${fromChart.oop}/${fromChart.ip} differ from the spot ${SPOT.oop}/${SPOT.ip}`);
 const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));
 const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}

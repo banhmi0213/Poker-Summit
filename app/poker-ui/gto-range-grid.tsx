@@ -35,7 +35,7 @@ export function GtoRangeGrid({range,who}:{range:GtoRange;who:string}){
  const totals=new Array(k).fill(0);let all=0;
  for(const [cls,e] of Object.entries(range.grid)){const w=combos(cls)*e.reach;all+=w;for(let a=0;a<k;a++)totals[a]+=w*(e.freqs[a]??0);}
  return <div className={styles.wrap}>
-  <p className={styles.note}>{who}のレンジ全体：{range.options.map((o,i)=>`${o.text} ${pct(all>0?totals[i]/all:0)}`).join('・')}{range.nearFlop?`（計算済みの近いフロップ ${range.nearFlop} の答え）`:''}</p>
+  <p className={styles.note}>{who}のレンジ全体：{range.options.map((o,i)=>`${o.text} ${pct(all>0?totals[i]/all:0)}`).join('・')}{range.nearFlop?`（計算済みの近いフロップ ${range.nearFlop} の答え）`:''}{range.proxySpot?`（2人用のこの場面はまだ計算中のため、6人卓の${range.proxySpot.toUpperCase()}の答えで代用）`:''}</p>
   <StrategyLegend actions={range.options.map(o=>({kind:o.kind,label:o.text}))}/><table className={styles.grid} aria-label="手札ごとのGTOの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{
    const l=label(i,j),e=range.grid[l],mine=l===range.hero;
    if(!e||e.reach<0.005)return <td key={j} data-on="none" data-hero={mine||undefined}>{l}</td>;

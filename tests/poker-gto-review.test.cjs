@@ -118,3 +118,18 @@ test('ranges at other players\' decisions use only the public record',()=>{
  }
  console.log('other ranges',n,'postflop',post);assert.ok(n>0);
 });
+
+test('heads-up hands use the heads-up chart: limps are judged, the button acts last after the flop',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));assert.ok(data.preflopHu,'heads-up chart loaded');
+ const c=(rank,suit)=>({rank,suit});
+ const hand={handId:'hu1',terms:{bb:2},buttonSeatId:'s1',board:[c(14,'h'),c(7,'d'),c(2,'c'),c(9,'s'),c(4,'h')],
+  players:[{seatId:'s1',seat:1,startStack:200,you:true,hole:[c(13,'s'),c(9,'h')]},{seatId:'s2',seat:2,startStack:200,you:false,hole:null}],
+  actions:[{street:'preflop',seatId:'s1',type:'sb',amount:1,to:1,allIn:false,pot:3},{street:'preflop',seatId:'s2',type:'bb',amount:2,to:2,allIn:false,pot:3},
+   {street:'preflop',seatId:'s1',type:'call',amount:1,to:2,allIn:false,pot:4},{street:'preflop',seatId:'s2',type:'check',amount:0,to:2,allIn:false,pot:4},
+   {street:'flop',seatId:'s2',type:'check',amount:0,to:0,allIn:false,pot:4},{street:'flop',seatId:'s1',type:'check',amount:0,to:0,allIn:false,pot:4},
+   {street:'turn',seatId:'s2',type:'check',amount:0,to:0,allIn:false,pot:4},{street:'turn',seatId:'s1',type:'bet',amount:2,to:2,allIn:false,pot:6}]};
+ const rs=reviewGto(hand,data,400);
+ const pre=rs.find(r=>r.street==='preflop');assert.equal(pre.source,'preflop','the limp is on the heads-up chart');assert.ok(pre.options.some(o=>o.kind==='call'));assert.notEqual(pre.played,null);
+ const turn=rs.find(r=>r.street==='turn');assert.equal(turn.source,'solver',`turn judged (${turn.reason??''})`);
+ const others=reviewRanges(hand,data,300);assert.ok(others.some(o=>hand.actions[o.index].type==='check'&&hand.actions[o.index].street==='preflop'),'the BB check after the limp has a range');
+});
