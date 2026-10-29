@@ -20,6 +20,9 @@ export const GTO_SPOTS=[
  {id:'hu-srp',group:'2人（ヘッズアップ）',label:'2人 SBオープン対BB',detail:'SB（ボタン）が2.5BBオープン → BBコール（ポット5BB、BBが先に打つ）'},
  {id:'hu-limp',group:'2人（ヘッズアップ）',label:'2人 リンプポット',detail:'SB（ボタン）がリンプ → BBチェック（ポット2BB、BBが先に打つ）'},
  {id:'hu-3bet',group:'2人（ヘッズアップ）',label:'2人 3ベットポット',detail:'SBオープン → BBが10BBに3ベット → SBコール（ポット20BB）'},
+ {id:'co-btn-bb',group:'3人のポット',label:'CO・BTN・BB',detail:'COオープン → BTNコール → BBコール（ポット8BB、BB → CO → BTNの順に打つ）'},
+ {id:'btn-sb-bb',group:'3人のポット',label:'BTN・SB・BB',detail:'BTNオープン → SBコール → BBコール（ポット7.5BB、SB → BB → BTNの順に打つ）'},
+ {id:'utg-btn-bb',group:'3人のポット',label:'UTG・BTN・BB',detail:'UTGオープン → BTNコール → BBコール（ポット8BB、BB → UTG → BTNの順に打つ）'},
 ] as const;
 export type GtoSpotId=typeof GTO_SPOTS[number]['id'];
 /** The 200 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs; the first 95 are the
@@ -28,8 +31,19 @@ export const GTO_FLOPS:string[]=flops as string[];
 
 /** classes: per starting-hand class [reach, action shares…]. suits (version 2): the same keyed "AKs|21" (how many board
  * cards share each hole card's suit), only where it differs from the class row. */
-export type FlopNode={path:number[];player:0|1;actions:{label:string;kind:string}[];total:number[];classes:Record<string,number[]>;suits?:Record<string,number[]>;children:(number|null)[]};
-export type FlopData={flop:string;board:number[];spot:{id?:string;name:string;pot:number;stack:number;oop:string;ip:string;note?:string};iterations:number;exploitability:number;nodes:FlopNode[]};
+export type FlopNode={path:number[];player:number;actions:{label:string;kind:string}[];total:number[];classes:Record<string,number[]>;suits?:Record<string,number[]>;children:(number|null)[]};
+export type FlopSizes={betSizes:number[];raiseSizes:number[];turnBetSizes?:number[];turnRaiseSizes?:number[];riverBetSizes?:number[];riverRaiseSizes?:number[];allinMaxPot?:number};
+/** Three-way files (multiway: true) have `order` (seats in acting order) instead of oop/ip; node.player indexes it. */
+export type FlopData={flop:string;board:number[];multiway?:boolean;version?:number;spot:{id?:string;name:string;pot:number;stack:number;oop?:string;ip?:string;order?:string[];note?:string;sizes?:FlopSizes};iterations:number;exploitability:number;nodes:FlopNode[]};
+/** Seat of the player to act at a node (0 = first to act). */
+export function seatOf(file:FlopData,player:number):string{return file.spot.order?.[player]??(player===0?file.spot.oop:file.spot.ip)??'';}
+/** The bet menu the file was solved with, in words (2026/10/29: shown from the file, so it always matches). */
+export function sizeNote(sizes:FlopSizes|undefined,multiway=false):string|null{
+ if(!sizes)return null;const p=(l:number[]|undefined)=>(l??[]).map(x=>`${Math.round(x*100)}%`).join('・'),r=(l:number[]|undefined)=>l?.length?`、レイズ${l.join('・')}倍`:'、レイズなし';
+ const flop=`フロップ ${p(sizes.betSizes)}${r(sizes.raiseSizes)}`;
+ if(multiway)return `ベット額の前提：${flop}。ターン・リバーは打ち合わず、残りのカードを全部配ったときの勝率で分けます。`;
+ return `ベット額の前提：${flop}、ターン ${p(sizes.turnBetSizes??sizes.betSizes)}${r(sizes.turnRaiseSizes??sizes.raiseSizes)}、リバー ${p(sizes.riverBetSizes??sizes.betSizes)}${r(sizes.riverRaiseSizes??sizes.raiseSizes)}（オールインはポットの${sizes.allinMaxPot??1.5}倍以内のときだけ）。`;
+}
 export async function loadFlop(spot:string,flop:string):Promise<FlopData|null>{
  try{const r=await fetch(`/poker-gto/flops/${spot}/${flop}.json`);if(!r.ok)return null;return await r.json() as FlopData;}catch{return null;}
 }

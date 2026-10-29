@@ -4,7 +4,7 @@
 import {flopRow,preflopHistory,preflopReach,type PreflopData,type PreflopNode} from './gto-bot';
 import {madeHandLabel} from './card-display';
 import type {Card} from './engine';
-import type {FlopData,FlopNode} from './gto-spots';
+import {seatOf,type FlopData,type FlopNode} from './gto-spots';
 
 const R='23456789TJQKA',S='cdhs';
 export type QuizQuestion={
@@ -94,7 +94,7 @@ function flopNodeFor(file:FlopData,random:()=>number):{node:FlopNode;history:str
  const root=file.nodes[0];
  if(random()<0.45){
   const kids=root.children.map((c,i)=>[c,i] as const).filter(([c])=>c!==null);
-  if(kids.length){const [c,i]=kids[Math.floor(random()*kids.length)];return {node:file.nodes[c!],history:[`${root.player===0?file.spot.oop:file.spot.ip}が${actionPhrase(root.actions[i].label)}`]};}
+  if(kids.length){const [c,i]=kids[Math.floor(random()*kids.length)];return {node:file.nodes[c!],history:[`${seatOf(file,root.player)}が${actionPhrase(root.actions[i].label)}`]};}
  }
  return {node:root,history:[]};
 }
@@ -106,7 +106,7 @@ export function flopQuestion(file:FlopData,spot:string,title:string,detail:strin
   const cards=cardsFor(cls,file.board,random);if(!cards)continue;
   // Suit-aware row for these exact cards when the file has one (flush draws, backdoors).
   const row=flopRow(node,cards[0],cards[1],file.board)??node.classes[cls];if(!row||!(row[0]>0))continue;
-  const hero=node.player===0?file.spot.oop:file.spot.ip;
+  const hero=seatOf(file,node.player);
   return {kind:'flop',category:`flop-${spot}`,title,scene:`${detail}。${history.length?`フロップで${history.join('、')}。`:''}`,hero,cards,board:[...file.board],handClass:cls,
    options:node.actions.map(a=>a.label),freqs:norm(row.slice(1)),rangeFreqs:norm(node.total),made:madeHandLabel(cards.map(toCard),file.board.map(toCard))};
  }
