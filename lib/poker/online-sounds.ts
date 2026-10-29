@@ -1,9 +1,10 @@
 import {seOutput} from './se-output';
 import {type ActionKind} from './action-feedback';
 import {playTableEffect} from './table-effects';
+import {preloadTableSamples} from './table-samples';
 /** Browser-only synthesized effects, matching the existing demo. No audio files or network I/O. */
 /** 'turn' = it is your turn; 'turnCard' = the turn card appears on the board. */
-export type PokerSound='turn'|'action'|'deal'|'flop'|'turnCard'|'river'|'win'|'enter'|'exit'|ActionKind;
+export type PokerSound='turn'|'action'|'deal'|'flop'|'turnCard'|'river'|'win'|'enter'|'exit'|'stamp'|ActionKind;
 /** Board sound for a board that just grew to `count` cards (null for a new hand / no board). */
 export const boardSound=(count:number):PokerSound|null=>count===3?'flop':count===4?'turnCard':count===5?'river':null;
 export class PokerSounds {
@@ -12,7 +13,7 @@ export class PokerSounds {
  setEnabled(enabled:boolean){this.#enabled=enabled;}
  async unlock(){
   if(this.#closed)return;
-  try{this.#context??=this.factory();if(this.#context.state==='suspended')await this.#context.resume();}catch{/* Optional audio cannot block a game. */}
+  try{this.#context??=this.factory();preloadTableSamples(this.#context);if(this.#context.state==='suspended')await this.#context.resume();}catch{/* Optional audio cannot block a game. */}
  }
  play(kind:PokerSound):number {
   const c=this.#context;if(this.#closed||!this.#enabled||!c||c.state!=='running')return 0;
@@ -26,8 +27,9 @@ export class PokerSounds {
     oscillator.onended=()=>{oscillator.disconnect();gain.disconnect();};
    };
    if(kind==='turnCard')return playTableEffect(c,'turn');
-   if(['fold','check','call','bet','raise','allin','deal','flop','river','win'].includes(kind))return playTableEffect(c,kind as ActionKind|'deal'|'flop'|'river'|'win');
-   if(kind==='turn'){tone(880,0,.13,.12);tone(1174.66,.045,.15,.065);}
+   if(['fold','check','call','bet','raise','allin','deal','flop','river','win','stamp'].includes(kind))return playTableEffect(c,kind as ActionKind|'deal'|'flop'|'river'|'win'|'stamp');
+   // Owner 2026/10/29 (カードが出る前のピコンみたいな音いらん): the your-turn ping is silent.
+   if(kind==='turn')return 0;
    else if(kind==='action')tone(310,0,.085,.085,'triangle');
    else if(kind==='enter'){tone(523.25,0,.15,.08);tone(783.99,.11,.20,.09);}
    else{tone(659.25,0,.13,.08);tone(440,.10,.20,.08);}

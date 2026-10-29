@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 import "./admin/major-tournaments/tournament.css";
@@ -7,6 +7,7 @@ import { BackToTop } from "./back-to-top";
 import { ImageUploadCompressor } from "./image-upload-compressor";
 import { FormDraftKeeper } from "./form-draft-keeper";
 import Script from "next/script";
+import { ServiceWorkerRegister } from "./service-worker-register";
 
 // Google アナリティクス(GA4、2026/10)。本番(pokersummit.jp)だけで計測し、プレビュー環境では読み込まない。
 const GA_MEASUREMENT_ID = "G-M5QMYFSCHJ";
@@ -28,7 +29,11 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", images: [DEFAULT_OG_IMAGE] },
   // Google Search Console の所有権確認(2026/10)。確認後も消さないこと(消すと確認が外れる)
   verification: { google: "v-vQFn2rvqxcBghuEN-zxIqLPHhekhHJkCHDVuPbF3M" },
+  // ホーム画面に追加したとき(iPhone)の名前と全画面表示(2026/10/28 PWA)
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "black" },
 };
+
+export const viewport: Viewport = { themeColor: "#0d1b28" };
 
 export default function RootLayout({
   children,
@@ -50,6 +55,7 @@ export default function RootLayout({
         <BackToTop />
         <ImageUploadCompressor />
         <FormDraftKeeper />
+        <ServiceWorkerRegister />
         {ENABLE_ANALYTICS && (
           <>
             <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />

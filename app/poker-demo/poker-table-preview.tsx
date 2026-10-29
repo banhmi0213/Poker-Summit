@@ -1,6 +1,7 @@
 "use client";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
+import {preloadTableSamples} from "@/lib/poker/table-samples";
 import {useSoundSettings} from "@/lib/poker/sound-settings";
 import {TableBgmPlayer} from "@/app/poker-ui/table-bgm";
 import {MobileWagerEditor} from '@/app/poker-ui/mobile-wager-editor';
@@ -83,6 +84,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [lastHandResult,setLastHandResult]=useState<{winners:string[];rows:{id:string;name:string;delta:number}[]}|null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const soundEnabledRef = useRef(true);
+  // Stamp pop (owner 2026/10/29: スタンプだした時も音出したい); set once playSound exists below.
+  const stampSoundRef = useRef<(() => void) | null>(null);
   const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialHand.stacks);
   const [handFinished, setHandFinished] = useState(false);
   /** 「見せる」 after a hand (owner 2026/10/28): which of your two cards you showed this hand. */
@@ -94,7 +97,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
   // スタンプ(2026/10/27): 練習卓でも見えるように。自分のスタンプと、ハンド後のCPUのひとこと。この画面の中だけ。
   const [demoStamps, setDemoStamps] = useState<Record<string, { stamp: StampId; key: number }>>({});
-  const showStamp = (seat: string, stamp: StampId) => setDemoStamps(prev => ({ ...prev, [seat]: { stamp, key: Date.now() + Math.random() } }));
+  const showStamp = (seat: string, stamp: StampId) => { setDemoStamps(prev => ({ ...prev, [seat]: { stamp, key: Date.now() + Math.random() } })); stampSoundRef.current?.(); };
   // GTO CPUs (2026/10/27): every voluntary action of the hand, for the CPUs' range reading.
   const [actionLog, setActionLog] = useState<LoggedAction[]>([]);
   const gtoWorker = useRef<Worker | null>(null), gtoRequest = useRef(0);
@@ -165,11 +168,11 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const unlockAudio = () => {
     if (typeof window === "undefined") return;
     try {
-      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
-  type SoundKind = "turn" | "action" | "deal" | "flop" | "turnCard" | "river" | "win" | ActionKind;
+  type SoundKind = "turn" | "action" | "deal" | "flop" | "turnCard" | "river" | "win" | "stamp" | ActionKind;
   const playSound = (kind: SoundKind) => {
     if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
@@ -189,19 +192,20 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       };
       if (kind === "turnCard") {
         playTableEffect(context, "turn");
-      } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win"].includes(kind)) {
-        playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win");
+      } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win","stamp"].includes(kind)) {
+        playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win" | "stamp");
       } else if (kind === "turn") {
-        tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
+        // Owner 2026/10/29: no your-turn ping.
       } else if (kind === "action") {
         tone(310, 0, 0.085, 0.085, "triangle");
       }
     } catch { /* Audio must never interrupt the game. */ }
   };
+  stampSoundRef.current = () => playSound("stamp");
   useEffect(() => {
     const activate = () => {
       try {
-        if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+        if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
         if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
       } catch { /* Audio is optional. */ }
     };

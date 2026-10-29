@@ -1,8 +1,9 @@
 import {seOutput} from './se-output';
+import {playTableSample} from './table-samples';
 /** Table sound effects chosen by the owner (2026/10/26): deal F, board D, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
 /** flop/turn/river = community cards appearing on the board (flop plays three). */
-export type EffectKind='deal'|'flop'|'turn'|'river'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win';
+export type EffectKind='deal'|'flop'|'turn'|'river'|'fold'|'check'|'call'|'bet'|'raise'|'allin'|'win'|'stamp';
 
 const noiseByContext=new WeakMap<BaseAudioContext,AudioBuffer>(),masterByContext=new WeakMap<BaseAudioContext,AudioNode>();
 const rnd=(a:number,b:number)=>a+Math.random()*(b-a);
@@ -43,8 +44,8 @@ function stacks(c:BaseAudioContext,t:number,count:number){
 }
 
 /** Tonal voice for the all-in orchestra hit. */
-function voice(c:BaseAudioContext,t:number,{f,type='sawtooth',vol=.05,att=.01,dur=.5,detune=0,lp=0,pan=0}:{f:number;type?:OscillatorType;vol?:number;att?:number;dur?:number;detune?:number;lp?:number;pan?:number}){
- const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;o.detune.value=detune;let last:AudioNode=o;
+function voice(c:BaseAudioContext,t:number,{f,type='sawtooth',vol=.05,att=.01,dur=.5,detune=0,lp=0,pan=0,glide=0}:{f:number;type?:OscillatorType;vol?:number;att?:number;dur?:number;detune?:number;lp?:number;pan?:number;/** Slide to this pitch over the note. */glide?:number}){
+ const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(glide)o.frequency.exponentialRampToValueAtTime(glide,t+att+dur);o.detune.value=detune;let last:AudioNode=o;
  if(lp){const l=c.createBiquadFilter();l.type='lowpass';l.frequency.setValueAtTime(lp,t);l.frequency.exponentialRampToValueAtTime(Math.max(300,lp*.3),t+dur);o.connect(l);last=l;}
  envelope(g,t,vol,att,dur);last.connect(g);const p=out(c,pan);g.connect(p);o.start(t);o.stop(t+att+dur+.05);o.onended=()=>{o.disconnect();last.disconnect();g.disconnect();p.disconnect();};
 }
@@ -60,10 +61,20 @@ function orchestraHit(c:BaseAudioContext,t:number){
 export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
  const t=c.currentTime+.01;
  switch(kind){
-  case 'flop':case 'turn':case 'river':
-   // Owner pick (2026/10/26): the same heavy swish as dealing, one per card.
-   for(let i=0;i<(kind==='flop'?3:1);i++)hiss(c,t+i*.13,{dur:.09,f0:1300,f1:2800,q:.9,vol:.3,att:.008,pan:-.2+i*.2,lp:4000});return kind==='flop'?400:150;
-  case 'deal':for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
+  case 'flop':case 'turn':case 'river':{
+   // Owner 2026/10/29: recorded sounds - three cards for the flop, one card for the turn and the river; 2026/10/30 a little quieter (さげて).
+   const recorded=playTableSample(c,kind==='flop'?'three':'one',t,.6);if(recorded!==null)return recorded;}
+   // Owner 2026/10/29 (カチャカチャ機械音がださい): a card laid on the felt - a soft paper slide and a gentle tap, one per card.
+   for(let i=0;i<(kind==='flop'?3:1);i++){const at=t+i*.17,pan=-.2+i*.2;
+    hiss(c,at,{dur:.11,f0:700,f1:1500,q:.6,vol:.1,att:.035,pan,lp:2400});
+    thump(c,at+.1,{f:150,f1:95,dur:.05,vol:.13,pan});hiss(c,at+.1,{dur:.025,f0:500,q:.7,vol:.06,att:.002,pan,lp:1200});}
+   return kind==='flop'?520:200;
+  case 'stamp':
+   // Owner pick 2026/10/29: C「ぷにっ」, a soft bouncy two-step.
+   voice(c,t,{f:300,type:'sine',vol:.13,att:.005,dur:.07,glide:620});voice(c,t+.08,{f:520,type:'sine',vol:.07,att:.004,dur:.08,glide:440});return 220;
+  // Owner 2026/10/30 (カード配る音もちょい下げて): dealing plays the three-card recording a little quieter than the flop.
+  case 'deal':{const recorded=playTableSample(c,'three',t,.6);if(recorded!==null)return recorded;}
+ for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
   case 'fold':hiss(c,t,{dur:.12,f0:2400,f1:4000,q:.7,vol:.14,att:.03,lp:5000});return 200;
   case 'check':
    thump(c,t,{f:180,f1:95,dur:.09,vol:.45});hiss(c,t,{dur:.04,f0:400,q:.8,vol:.2,att:.002,lp:900});

@@ -53,11 +53,13 @@ for(let step=0;step<40;step++){
 }
 const saved=await factory().load(handId);assert.ok(saved&&saved.status==='complete','hand settled');
 const finalStacks=Object.fromEntries(saved.result.map(r=>[r.reservationId,r.stack]));
-assert.equal(Object.values(finalStacks).reduce((s,x)=>s+x,0),buyIns.reduce((s,x)=>s+x,0),'chips on the table conserved through the side pots');
+const handRake=saved.result.reduce((s,r)=>s+(r.rake??0),0);assert.ok(handRake>=0&&handRake<=300,'rake at most 3 BB');
+assert.equal(Object.values(finalStacks).reduce((s,x)=>s+x,0)+handRake,buyIns.reduce((s,x)=>s+x,0),'chips on the table plus the house rake conserved through the side pots');
 
 // 5) Settlement: the leaver is paid out at the end of the hand; everyone's wallet matches the engine's final stacks.
 for(let k=0;k<6;k++){await runner.tick(table);await new Promise(r=>setTimeout(r,200));}
-const after=await wallets();assert.equal(total(after),startTotal,'wallet totals conserved');
+const after=await wallets();assert.equal(total(after)+handRake,startTotal,'wallet totals plus the house rake conserved');
+await db.exec('reset role');assert.equal(Number((await db.query('select coalesce(sum(amount),0)::bigint t from poker_private.ring_rake where member_id=any($1::uuid[])',[members])).rows[0].t),handRake,'the rake is in the house ledger');await db.exec('set role service_role');
 const leaver=await service.state(members[3],table);assert.equal(leaver.membership,null,'the leaver is out after the hand');
 assert.equal(after[members[3]].inPlay,0);assert.equal(after[members[3]].available,before[members[3]].available+finalStacks[reservations[3]],'leaver gets exactly the final stack');
 for(let i=0;i<3;i++){const w=after[members[i]];assert.equal(w.available+w.inPlay,before[members[i]].available+finalStacks[reservations[i]],'seated player keeps exactly the final stack');}
