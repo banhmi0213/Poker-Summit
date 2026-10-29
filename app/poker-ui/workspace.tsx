@@ -3,8 +3,11 @@ import {useState,type ReactNode} from 'react';
 import Link from 'next/link';
 import styles from './workspace.module.css';
 import {SummitMark} from './brand-mark';
+import {PokerAccountWorkspace} from './account-workspace';
 export type PokerPane={id:string;label:string;eyebrow:string;description:string;content:ReactNode};
-export function PokerWorkspace({kind,panes,admin=false,guest=false}:{kind:'lobby'|'account';panes:PokerPane[];admin?:boolean;guest?:boolean}){
+type WorkspaceProps={kind:'lobby'|'account';panes:PokerPane[];admin?:boolean;guest?:boolean};
+export function PokerWorkspace(props:WorkspaceProps){return props.kind==='account'?<PokerAccountWorkspace panes={props.panes}/>:<LegacyWorkspace {...props}/>;}
+function LegacyWorkspace({kind,panes,admin=false,guest=false}:{kind:'lobby'|'account';panes:PokerPane[];admin?:boolean;guest?:boolean}){
  const [active,setActive]=useState(panes[0]?.id),pane=panes.find(p=>p.id===active)??panes[0];
  return <div className={styles.shell}>
  <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><SummitMark className={styles.brandMark}/><div>POKER SUMMIT<small>ONLINE POKER</small></div></Link><nav aria-label="ポーカーナビゲーション"><Link href="/poker-lobby" aria-current={kind==='lobby'?'page':undefined}>ロビー</Link><Link href="/mypage/poker" aria-current={kind==='account'?'page':undefined}>マイページ</Link><Link href="/">サイトトップ</Link>{admin&&<Link href="/admin/poker-statistics">総合管理</Link>}</nav></header>

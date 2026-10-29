@@ -5,7 +5,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {BotTable}=require('../lib/poker/bot-hands.ts');
 const {ringTerms}=require('../lib/poker/tournament-hand.ts');
 const {loadGtoData}=require('../lib/poker/gto-data-node.ts');
-const {reviewGto,gtoVerdict,viewAt}=require('../lib/poker/gto-review.ts');
+const {reviewGto,gtoVerdict,viewAt,summarizeDeviation}=require('../lib/poker/gto-review.ts');
 const seeded=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
 const asViewer=(h,seatId)=>({handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.seatId===seatId,hole:p.seatId===seatId?p.hole:null}))});
 
@@ -66,4 +66,43 @@ test('practice table: decisions captured live are reviewed like the hand history
    if(r.source!=='none'&&old[j].source!=='none'&&r.source!=='solver'){assert.equal(r.verdict,old[j].verdict);}});
  }
  assert.ok(n>0);
+});
+
+test('each reviewed decision carries the whole range: 169-class grid, shares sum to 1, viewer\'s class marked',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100),seen={preflop:0,flop:0,solver:0};
+ for(let i=0;i<Number(process.env.GTO_REVIEW_HANDS||10);i++){const r=t.play(seeded(300+i));const h=r.history;if(!h)continue;
+  for(const p of h.players){const view=asViewer(h,p.seatId);
+   for(const rv of reviewGto(view,data,300)){if(rv.source==='none'||!rv.range)continue;seen[rv.source]++;
+    const g=rv.range.grid,cls=Object.keys(g);assert.ok(cls.length>5&&cls.length<=169,`${rv.source} grid has classes`);
+    assert.equal(rv.range.options.length,rv.options.length);
+    for(const c of cls){const e=g[c];assert.ok(e.reach>=0&&e.reach<=1+1e-9);if(e.reach>0.01){const s=e.freqs.reduce((a,b)=>a+b,0);assert.ok(Math.abs(s-1)<0.02,`${rv.source} ${c} shares sum ${s}`);}}
+    assert.ok(/^[AKQJT2-9]{2}[so]?$/.test(rv.range.hero));
+    if(rv.source==='preflop'&&g[rv.range.hero])assert.ok(g[rv.range.hero].reach>0,'the viewer reached this spot with their class');
+   }}
+ }
+ console.log('ranges by source',JSON.stringify(seen));assert.ok(seen.preflop>0);assert.ok(seen.flop+seen.solver>0);
+});
+
+test('deviation summary counts only preflop and flop, and a GTO CPU is almost never off',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100),hands=[];
+ for(let i=0;i<Number(process.env.GTO_REVIEW_HANDS||10)*2;i++){const r=t.play(seeded(500+i));if(r.history)hands.push(r.history);}
+ const seat=hands[0].players[0].seatId,mine=hands.filter(h=>h.players.some(p=>p.seatId===seat)).map(h=>asViewer(h,seat));
+ const t0=Date.now(),s=summarizeDeviation(mine,data);
+ console.log('deviation',JSON.stringify({hands:s.hands,preflop:s.preflop,flop:s.flop,ms:Date.now()-t0}));
+ assert.ok(s.preflop.judged>0);
+ for(const st of [s.preflop,s.flop])assert.equal(st.gto+st.mixed+st.rare,st.judged);
+ assert.ok(s.preflop.rare/s.preflop.judged<0.1,'GTO CPU rarely plays a ほぼやらない preflop action');
+ assert.ok(s.worst.length<=8);assert.ok(s.worst.every((w,i,a)=>i===0||a[i-1].freq<=w.freq));
+});
+
+test('hand categories on the board',()=>{
+ const {handCategory,combosOfClass}=require('../lib/poker/hand-category.ts');
+ const R='23456789TJQKA',c=s=>(R.indexOf(s[0]))*4+'cdhs'.indexOf(s[1]),h=(a,b)=>[c(a),c(b)],bd=s=>s.match(/../g).map(c);
+ const cases=[['As','Ks','8h4s4d','ノーペア'],['Ah','Kh','8h4h2c','フラッシュドロー'],['9c','8d','7h6s2d','両面ストレートドロー'],['9c','5d','8h7s2d','ガットショット'],['Ac','2d','3h4s9d','ガットショット'],['8c','8d','8h4s4d','フルハウス以上'],['Kc','Kd','8h4s2d','オーバーペア'],['8c','Ad','8h4s2d','トップペア'],
+  ['4c','Ad','8h4s2d','ミドルペア'],['2c','Ad','8h4s2d','ロウペア'],['5c','5d','8h4s2d','ミドルペア'],['3c','3d','8h4s2d','ロウペア'],['8c','4d','8h4s2d','ツーペア'],['4c','4d','8h4s2d','セット・スリーカード'],
+  ['5c','6d','8h4s7d','ストレート'],['Ah','2h','8h4h7h','フラッシュ'],['7c','7d','7h7s2d','フルハウス以上'],['Ac','Kd','QhJs2d','ガットショット'],['9c','9d','QhJsTd','ロウペア'],['9c','8d','QhJs2d','ガットショット'],['Tc','9d','QhJs2d','両面ストレートドロー']];
+ for(const [a,b,board,want] of cases)assert.equal(handCategory(h(a,b),bd(board)),want,`${a}${b} on ${board}`);
+ assert.equal(combosOfClass('AKs',bd('AhKs2d')).length,2);assert.equal(combosOfClass('88',bd('8h4s2d')).length,3);assert.equal(combosOfClass('AKo',[]).length,12);
 });

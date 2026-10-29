@@ -7,6 +7,8 @@ import type {HistoryAction} from '@/lib/poker/hand-history';
 import {reviewDecisions,type DecisionReview} from '@/lib/poker/hand-review';
 import {reasonText,verdictText,type GtoReview} from '@/lib/poker/gto-review';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
+import {GtoRangeGrid} from './gto-range-grid';
+import chartStyles from './gto-chart.module.css';
 
 const verbs:Record<HistoryAction['type'],string>={ante:'アンティ',sb:'スモールブラインド',bb:'ビッグブラインド',fold:'フォールド',check:'チェック',call:'コール',bet:'ベット',raise:'レイズ'};
 const streetNames={preflop:'プリフロップ',flop:'フロップ',turn:'ターン',river:'リバー'} as const;
@@ -50,7 +52,7 @@ export function gtoText(r:GtoReview){
 export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boolean}){
  const forced=hand.actions.findIndex(a=>!['ante','sb','bb'].includes(a.type));
  const first=forced<0?hand.actions.length:forced,last=hand.actions.length;
- const [step,setStep]=useState(first);
+ const [step,setStep]=useState(first),[rangeAt,setRangeAt]=useState<number|null>(null);
  const reviews=useMemo(()=>reviewDecisions(hand),[hand]);
  const reviewAt=new Map(reviews.map(r=>[r.index,r]));
  const gto=useGtoReview(hand),gtoAt=new Map(gto.reviews.map(r=>[r.index,r])),canGto=hand.players.some(p=>p.you&&p.hole?.length===2)&&hand.actions.some(a=>!['ante','sb','bb'].includes(a.type)&&hand.players.find(p=>p.seatId===a.seatId)?.you);
@@ -83,7 +85,7 @@ export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boo
   </div>
   <div>{(['preflop','flop','turn','river'] as const).filter(s=>hand.actions.some(a=>a.street===s)).map(s=><section key={s} aria-label={streetNames[s]}>
    <p className={styles.street}>{streetNames[s]}</p>
-   <ol className={styles.log}>{hand.actions.map((a,i)=>a.street!==s?null:<li key={i} data-current={i===step-1} data-future={i>=step}><em>{hand.players.find(p=>p.seatId===a.seatId)?.position}</em><span>{name(a.seatId)}：{actionText(a)}{reviewAt.has(i)&&<small className={styles.review} data-flag={reviewAt.get(i)!.note==='fold-strong'||reviewAt.get(i)!.note==='call-thin'}>{reviewText(reviewAt.get(i)!)}</small>}{gtoAt.has(i)&&(()=>{const g=gtoAt.get(i)!;return <small className={styles.gto}>{g.source!=='none'&&g.verdict&&<span className={styles.gtoBadge} data-verdict={g.verdict}>{verdictText[g.verdict]}{g.played!==null?` ${pct(g.played)}`:''}</span>}{gtoText(g)}</small>;})()}</span></li>)}</ol>
+   <ol className={styles.log}>{hand.actions.map((a,i)=>a.street!==s?null:<li key={i} data-current={i===step-1} data-future={i>=step}><em>{hand.players.find(p=>p.seatId===a.seatId)?.position}</em><span>{name(a.seatId)}：{actionText(a)}{reviewAt.has(i)&&<small className={styles.review} data-flag={reviewAt.get(i)!.note==='fold-strong'||reviewAt.get(i)!.note==='call-thin'}>{reviewText(reviewAt.get(i)!)}</small>}{gtoAt.has(i)&&(()=>{const g=gtoAt.get(i)!;return <small className={styles.gto}>{g.source!=='none'&&g.verdict&&<span className={styles.gtoBadge} data-verdict={g.verdict}>{verdictText[g.verdict]}{g.played!==null?` ${pct(g.played)}`:''}</span>}{gtoText(g)}{g.source!=='none'&&g.range&&<button type="button" className={chartStyles.rangeToggle} aria-expanded={rangeAt===i} onClick={()=>setRangeAt(rangeAt===i?null:i)}>{rangeAt===i?'レンジ表を閉じる':'レンジ表'}</button>}</small>;})()}{rangeAt===i&&(()=>{const g=gtoAt.get(i);return g&&g.source!=='none'&&g.range?<GtoRangeGrid range={g.range} who={shared?'投稿者':'あなた'}/>:null;})()}</span></li>)}</ol>
   </section>)}</div>
   {canGto&&<div className={styles.gtoBar}>{gto.status==='idle'&&<button type="button" onClick={gto.start}>GTOで振り返る</button>}{gto.status==='running'&&<span role="status">GTOを計算中…（数秒かかります）</span>}{gto.status==='error'&&<><span role="alert">GTOの計算に失敗しました。</span><button type="button" onClick={gto.start}>もう一度</button></>}{gto.status==='done'&&<span role="status">{(()=>{const judged=gto.reviews.filter(r=>r.source!=='none'&&r.verdict);return judged.length?`${shared?'投稿者':'あなた'}の判断 ${judged.length}回：GTO通り ${judged.filter(r=>r.source!=='none'&&r.verdict==='gto').length}・ときどき ${judged.filter(r=>r.source!=='none'&&r.verdict==='mixed').length}・ほぼやらない ${judged.filter(r=>r.source!=='none'&&r.verdict==='rare').length}`:'このハンドはGTOの計算範囲外でした。';})()}</span>}</div>}
   {reviews.length>0&&<div className={styles.result}><p className={styles.street}>振り返り</p>

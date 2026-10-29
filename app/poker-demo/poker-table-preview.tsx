@@ -36,6 +36,8 @@ import { carriedDemoStacks, startForcedHand, tournamentHandTerms, ringTerms, typ
 import { tournamentClock, type PokerTournament } from "@/lib/poker/tournament";
 import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
+import { GtoRangeDialog } from "@/app/poker-ui/gto-range-grid";
+import chartStyles from "@/app/poker-ui/gto-chart.module.css";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 // First think time 10s, each time bank +20s (owner 2026/10/28).
@@ -310,6 +312,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   };
   // ハンド後の「GTOで振り返る」(2026/10/27): 練習卓だけ。保存はせず、この画面の中で見る。
   const myDecisions = useRef<LiveDecision[]>([]);
+  const [liveRangeAt, setLiveRangeAt] = useState<number | null>(null);
   const [liveReview, setLiveReview] = useState<{status:"running"}|{status:"done";reviews:LiveReview[]}|{status:"error"}|null>(null);
   const startLiveReview = () => {
     const worker = gtoWorker.current, items = [...myDecisions.current];
@@ -511,7 +514,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setPayouts(null);setCpuShows({});setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);setCpuShows({});
-      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setTurnRemaining(DEMO_TURN_SECONDS);setHandFinished(false);
+      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setLiveRangeAt(null);setTurnRemaining(DEMO_TURN_SECONDS);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(DEMO_TURN_SECONDS);if(!tournament)setTimeBanksUsed(0);setRunning(true);
@@ -651,7 +654,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
         {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
           <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
-          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}</small></>}
+          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeDialog range={r.range} who="あなた" title={`${({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}：${r.played}のときのレンジ表`} onClose={() => setLiveRangeAt(null)} />}</>}
         </li>)}</ol>}
       </div>}
       <details className={styles.demoTools}><summary>デモ検証操作</summary>

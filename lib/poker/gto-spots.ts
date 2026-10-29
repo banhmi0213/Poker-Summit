@@ -17,7 +17,8 @@ export const GTO_SPOTS=[
  {id:'btn-bb-4bet',group:'4ベットポット',label:'BTN対BB 4ベット',detail:'BBが3ベット → BTNが4ベット → BBコール（ポット50.5BB）'},
 ] as const;
 export type GtoSpotId=typeof GTO_SPOTS[number]['id'];
-/** The 95 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs). */
+/** The 200 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs; the first 95 are the
+ * original set, 2026/10/29 extended to 200). Only those in public/poker-gto/flops/index.json are computed. */
 export const GTO_FLOPS:string[]=flops as string[];
 
 /** classes: per starting-hand class [reach, action shares…]. suits (version 2): the same keyed "AKs|21" (how many board
