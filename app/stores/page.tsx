@@ -53,7 +53,7 @@ export async function generateMetadata({ searchParams }: { searchParams: StoreLi
   const title = pageTitle(page > 1 ? `${base}（${page}ページ目）` : base);
   const description = stats
     ? areaDescription(place, pref, stats, !!city)
-    : `${place}の${kind}を探すなら${SITE_NAME}。営業時間・アクセス・最寄り駅、開催中のトーナメントやイベント、求人・クーポン情報まで店舗ごとにまとめてチェックできます。`;
+    : `${place}の${kind}を探すなら${SITE_NAME}。住所や営業時間など、店舗ごとの情報をまとめて掲載しています。`;
 
   const qs = new URLSearchParams();
   if (pref) qs.set("pref", pref);
@@ -409,7 +409,7 @@ export default async function StoresPage({
         {(pref || city) && !q && !hasOrigin && displayStores.length > 0 && (
           <p className="sl-intro" style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 18px", color: "var(--muted, #666)" }}>
             {heroPlace}には、{SITE_NAME}に掲載中の{category ? CATEGORY_LABEL[category] ?? "ポーカースポット" : "アミューズメントポーカー店・ポーカーバー"}が{displayStores.length}店舗あります。
-            営業時間や最寄り駅、開催予定のトーナメント・イベント、クーポン情報を店舗ごとにチェックして、近くのポーカースポットを見つけてください。
+            住所や営業時間などの店舗情報をチェックして、近くのポーカースポットを見つけてください。
           </p>
         )}
 
