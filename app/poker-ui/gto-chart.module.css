@@ -15,7 +15,7 @@
 @media(max-width:900px){.pair{grid-template-columns:1fr}.grid{font-size:9px}}
 .grid td[data-hero]{outline:2px solid #f3d38a;outline-offset:-2px;opacity:1!important}
 .rangeToggle{margin-left:6px;background:none;border:1px solid #3a5366;color:#d9b368;border-radius:6px;padding:1px 8px;font:inherit;font-size:10px;cursor:pointer}
-.overlay{position:fixed;inset:0;z-index:2147483000;background:#030b12cc;display:flex;align-items:center;justify-content:center;padding:16px}
+.overlay{position:fixed;inset:0;z-index:2147483000;background:#030b12f0;display:flex;align-items:center;justify-content:center;padding:16px}
 .dialog{--gto-on:#d9b368;--gto-off:#1b3448;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#0d1d2b;border:1px solid #3a5366;border-radius:12px;padding:14px 14px 10px;color:#e9eff5;font-size:12px}
 .dialogHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:13px;color:#e6bd70}.dialogHead button{background:#24435a;color:#e9eff5;border:0;border-radius:8px;padding:6px 12px;font:inherit;font-size:12px;cursor:pointer}
 
