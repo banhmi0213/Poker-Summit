@@ -39,3 +39,18 @@ test('practice tab retains join/watch confirmation and does not show member ring
  const dialog=r.root.findByProps({role:'dialog'});assert.ok(dialog.findAllByType('a').some(a=>a.props.href==='/poker-demo'));
  await act(async()=>r.unmount());
 });
+test('account theme switches the selected detail without leaking other pane content',async()=>{
+ const Workspace=require('../app/poker-ui/workspace.tsx').PokerWorkspace;let r;
+ await act(async()=>{r=create(React.createElement(Workspace,{kind:'account',panes:[{id:'ring',label:'チップ残高・順位',eyebrow:'BALANCE',description:'残高',content:React.createElement('p',null,'balance detail')},{id:'hands',label:'ハンド履歴',eyebrow:'HISTORY',description:'再生',content:React.createElement('p',null,'history detail')}]}));});
+ assert.equal(r.root.findAllByProps({'data-poker-account':'champagne'}).length,1);
+ assert.match(JSON.stringify(r.toJSON()),/balance detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('history detail'));
+ await act(async()=>r.root.findAllByType('button').find(b=>b.props['aria-pressed']===false&&b.findAllByType('span').some(n=>n.children.join('')==='ハンド履歴')).props.onClick());
+ assert.match(JSON.stringify(r.toJSON()),/history detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('balance detail'));
+ assert.ok(r.root.findAllByType('a').some(a=>a.props.href==='/mypage/poker/hands'));
+ await act(async()=>r.unmount());
+});
+test('single hand replay uses the same account theme and preserves the supplied controls',()=>{
+ const Workspace=require('../app/poker-ui/workspace.tsx').PokerWorkspace;
+ const html=renderToStaticMarkup(React.createElement(Workspace,{kind:'account',panes:[{id:'replay',label:'ハンドを再生',eyebrow:'HAND REPLAY',description:'公開された手札のみ',content:React.createElement('button',{type:'button'},'次へ')}]}));
+ assert.match(html,/data-poker-account="champagne"/);assert.match(html,/ハンドを再生/);assert.match(html,/次へ/);assert.match(html,/href="\/mypage\/poker"/);
+});
