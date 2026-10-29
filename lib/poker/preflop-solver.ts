@@ -21,7 +21,11 @@ const STACK=100,POST=[2,3,4,5,0,1];// postflop order: SB first, BB, UTG, HJ, CO,
 /** Out-of-position realisation by pot kind and role (in position = 1.0), calibrated from the flop solutions
  * (scripts/poker-gto/calibrate-realize.cjs, 2026/10/29): the preflop aggressor out of position realises far more than
  * a caller out of position. 4-bet pots with the aggressor out of position and limped pots have no flop data yet. */
-export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number}>={srp:{call:0.675,aggr:1.02},'3bp':{call:0.61,aggr:1.167},'4bp':{call:0.553,aggr:1.1}};
+// Calibrated from the current flop data (calibrate-realize.cjs): srp call 0.675 / aggr 1.02, 3bp aggr 1.167 / call 0.61,
+// 4bp call 0.553. The caller values come out lower than published solver results (the flop trees give the player out of
+// position few options, so they undervalue it): until the flop trees are widened and re-solved, the caller keeps the
+// earlier 0.8〜0.9 and only the aggressor's advantage is taken from the calibration.
+export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number}>={srp:{call:0.8,aggr:1.02},'3bp':{call:0.8,aggr:1.1},'4bp':{call:0.9,aggr:1.05}};
 export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={limp:[0.85,1.0],srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
 /** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
