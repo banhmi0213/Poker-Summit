@@ -161,7 +161,12 @@ function solverIndex(node:ActNode,a:LoggedAction,bb:number):number{
 /** One option at the decision point; `to` is the street total in chips (null: from the label). */
 export type GtoOption={kind:string;label:string;to:number|null};
 /** The model's mixed strategy for the hero's hand at this decision. `indexOf` maps a played action onto an option (-1: none). */
-export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number}|{source:'fallback';reason:string};
+/** The whole range at the hero's decision (2026/10/29: 振り返りでレンジ表全体を表示): per hand class, how often the hero
+ * arrives here with it (0〜1, relative) and the action shares. */
+export type GtoGrid=Record<string,{reach:number;freqs:number[]}>;
+export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number;grid?:GtoGrid;
+ /** Set when the flop data is for a nearby precomputed flop, not the real one. */
+ nearFlop?:string}|{source:'fallback';reason:string};
 export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,budgetMs=5000):GtoDecision{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {action:fallback(v,random),source:'fallback',reason:s.reason};
@@ -191,7 +196,8 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
    if(!node||node.player!==pair.indexOf(v.hero))return fb('flop-off-tree');
    const row=flopRow(node,code(v.hole[0]),code(v.hole[1]),v.board.slice(0,3).map(code));if(!row)return fb('flop-class-missing');
    const at=node;
-   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a)};
+   const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
+   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a),grid:normalizeGrid(grid),nearFlop:canonicalFlop(file.flop)===canonicalFlop(flopText)?undefined:file.flop};
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
   if(file)trackFlop(file,flopActs,ranges,pair,v.board.slice(0,3).map(code));
@@ -213,7 +219,11 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
   const player=at.node.player,side=s.solver.sides[player],h=side.keyIndex.get(key2(code(v.hole[0]),code(v.hole[1])));
   if(pair[player]!==v.hero||h===undefined)return fb('solver-hero-missing');
   const st=s.solver.strategy(at.node,true,at.ctx),k=at.node.actions.length,node=at.node,bb=s.bb;
-  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb)};
+  // Per class: average over the combos still in the solve, weighted by the range at the start of the solve.
+  const acc:Record<string,{w:number;f:number[]}>={};
+  for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
+  const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
+  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid)};
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
@@ -239,7 +249,20 @@ function preflopStrategy(v:GtoView,data:GtoData,toks:Tok[]):GtoStrategy|null{
  const row=found.noCall?row0.map((p,i)=>node.actions[i].kind==='call'?0:node.actions[i].kind==='fold'?p+(row0[node.actions.findIndex(a=>a.kind==='call')]??0):p):row0;
  const pos=v.positions[v.hero];
  return {source:'preflop',options:node.actions.map(a=>({kind:a.kind,label:'',to:a.kind==='allin'?Infinity:(a.to??0)*v.bb})),freqs:[...row],
-  indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb})};
+  indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb}),
+  grid:preflopGrid(data.preflop,node,found.noCall)};
+}
+/** Combos per hand class before card removal (reach is per combo, so pairs and offsuit hands compare fairly). */
+const combosOf=(cls:string)=>cls.length===2?6:cls[2]==='s'?4:12;
+/** Reach scaled so the most frequent class is 1 (cells are dimmed by it). */
+function normalizeGrid(g:GtoGrid):GtoGrid{const m=Math.max(0,...Object.values(g).map(x=>x.reach));if(!(m>0))return g;for(const x of Object.values(g))x.reach/=m;return g;}
+function preflopGrid(data:PreflopData,node:PreflopNode,noCall:boolean):GtoGrid{
+ const reach=preflopReach(data,node),call=node.actions.findIndex(a=>a.kind==='call'),fold=node.actions.findIndex(a=>a.kind==='fold'),grid:GtoGrid={};
+ for(const [cls,row] of Object.entries(node.strategy)){
+  const freqs=noCall&&call>=0&&fold>=0?row.map((p,i)=>i===call?0:i===fold?p+row[call]:p):[...row];
+  grid[cls]={reach:reach[cls]??1,freqs};
+ }
+ return normalizeGrid(grid);
 }
 /** Each player's range after their preflop actions (null when the hand left the chart). */
 function trackPreflop(v:GtoView,data:GtoData,toks:Tok[]):Ranges|null{

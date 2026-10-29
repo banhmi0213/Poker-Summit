@@ -3,16 +3,19 @@
  * Opponent ranges come from the model (preflop chart, flop solutions), never from their real cards. */
 import type {Card} from './engine';
 import type {HistoryAction} from './hand-history';
-import {gtoStrategy,positionsFor,type GtoData,type GtoView,type LoggedAction,type Pos} from './gto-bot';
+import {gtoStrategy,positionsFor,type GtoData,type GtoGrid,type GtoView,type LoggedAction,type Pos} from './gto-bot';
+import {classOf} from './solver-view';
 
 export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
  players:{seatId:string;seat:number;startStack:number;you:boolean;hole:Card[]|null}[]};
 export type GtoVerdict='gto'|'mixed'|'rare';
+/** The whole range at a reviewed decision, for the 13×13 chart (options in model order). */
+export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string};
 export type GtoReview={index:number;street:HistoryAction['street'];
  /** Options with model frequency (0〜1), best first is NOT guaranteed: kept in model order. */
- options:{text:string;freq:number}[];
+ options:{text:string;freq:number;kind:string}[];
  /** Frequency of what was actually played; null when the action did not map onto an option. */
- played:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver'}
+ played:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange}
  |{index:number;street:HistoryAction['street'];source:'none';reason:string};
 
 const boardCount={preflop:0,flop:3,turn:4,river:5} as const;
@@ -24,6 +27,7 @@ export const reasonText=(reason:string)=>reason==='stack-depth'?'スタックが
 
 function optionText(kind:string,label:string,to:number|null,bb:number){
  if(kind==='fold')return 'フォールド';if(kind==='check')return 'チェック';if(kind==='call')return 'コール';if(kind==='allin')return 'オールイン';
+ if(label&&/^(ベット|レイズ)/.test(label))return label;
  if(label&&/%|倍/.test(label))return `${kind==='bet'?'ベット':'レイズ'} ${label}`;
  return `${kind==='bet'?'ベット':'レイズ'}${to!==null&&Number.isFinite(to)?` ${Math.round(to/bb*10)/10}BB`:''}`;
 }
@@ -55,6 +59,11 @@ export function viewAt(hand:GtoReviewHand,index:number):GtoView|null{
   startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
 }
 
+function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:string}[],hole:Card[]):GtoRange|undefined{
+ if(!s.grid)return undefined;
+ const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
+ return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:classOf(code(hole[0]),code(hole[1])),nearFlop:s.nearFlop};
+}
 export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
  const out:GtoReview[]=[];
@@ -67,7 +76,8 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500):GtoRevi
   const played:LoggedAction={street:a.street,id:a.seatId,type:a.type as LoggedAction['type'],to:a.to,allIn:a.allIn,potBefore:i>0?hand.actions[i-1].pot:0,
    currentBetBefore:Math.max(0,...v.players.map(p=>p.committed)),committedBefore:v.players.find(p=>p.id===a.seatId)!.committed};
   const j=s.indexOf(played),freq=j>=0?freqs[j]:null;
-  out.push({index:i,street:a.street,source:s.source,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k]})),played:freq,verdict:freq===null?null:gtoVerdict(freq)});
+  const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k],kind:o.kind}));
+  out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole)});
  });
  return out;
 }
@@ -84,7 +94,7 @@ export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
 /** Review of decisions captured live (practice table, 2026/10/27: ハンド後にその場で「GTOで振り返る」): each item is the
  * decision point as it was when the hero acted, plus what was played. */
 export type LiveDecision={view:GtoView;played:LoggedAction};
-export type LiveReview={street:LoggedAction['street'];played:string;options:{text:string;freq:number}[];freq:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver'}
+export type LiveReview={street:LoggedAction['street'];played:string;options:{text:string;freq:number}[];freq:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange}
  |{street:LoggedAction['street'];played:string;source:'none';reason:string};
 const playedText=(a:LoggedAction,bb:number)=>a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/bb*10)/10}BB${a.allIn?'（オールイン）':''}`;
 export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1500):LiveReview[]{
@@ -92,7 +102,8 @@ export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1
   const text=playedText(played,view.bb),s=gtoStrategy(view,data,budgetMs);
   if(s.source==='fallback')return {street:played.street,played:text,source:'none',reason:s.reason};
   const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:null;
-  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),
-   options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k]})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
+  const all=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k],kind:o.kind}));
+  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole),
+   options:all.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(({text,freq})=>({text,freq}))};
  });
 }
