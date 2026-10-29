@@ -48,7 +48,7 @@ jobs:
       - name: Solve
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0.01' }} --max-iters 400 --max-minutes 320 --threads $(nproc) --out out
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target 0 --max-iters 30 --max-minutes 320 --threads $(nproc) --out out
       - uses: actions/upload-artifact@v4
         with:
           name: flop-${{ needs.plan.outputs.spot }}-${{ matrix.flop }}
