@@ -27,6 +27,7 @@ export const reasonText=(reason:string)=>reason==='stack-depth'?'スタックが
 
 function optionText(kind:string,label:string,to:number|null,bb:number){
  if(kind==='fold')return 'フォールド';if(kind==='check')return 'チェック';if(kind==='call')return 'コール';if(kind==='allin')return 'オールイン';
+ if(label&&/^(ベット|レイズ)/.test(label))return label;
  if(label&&/%|倍/.test(label))return `${kind==='bet'?'ベット':'レイズ'} ${label}`;
  return `${kind==='bet'?'ベット':'レイズ'}${to!==null&&Number.isFinite(to)?` ${Math.round(to/bb*10)/10}BB`:''}`;
 }
