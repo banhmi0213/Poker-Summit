@@ -4,7 +4,7 @@ import {GTO_FLOPS,GTO_SPOTS,loadFlop,loadFlopIndex,type FlopData} from '@/lib/po
 import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 
-/** Precomputed flop solutions for four spots × 95 representative flops (public/poker-gto/flops/<spot>/<flop>.json). */
+/** Precomputed flop solutions for 13 spots × 95 representative flops (public/poker-gto/flops/<spot>/<flop>.json). */
 export const FLOPS=GTO_FLOPS;
 const R='AKQJT98765432',SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
