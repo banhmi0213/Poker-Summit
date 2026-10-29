@@ -15,6 +15,8 @@ type Options={
  roomIds?:readonly string[];
  ringRuntime?:{start():Promise<void>;close():Promise<void>};
  ringHandler?:(request:Request)=>Promise<Response>;
+ /** Ring table pushes on the same listener (ring-events.ts). */
+ ringEvents?:(server:import('node:http').Server)=>{close():Promise<void>};
  onDiagnostic?:NonNullable<ConstructorParameters<typeof RoomRuntime>[1]>['onDiagnostic'];
  host?:string;port?:number;
 };
@@ -34,7 +36,7 @@ export function createPokerRoomService(options:Options){
  function tracked(task:()=>Promise<Response>){if(closing||!started)return Promise.resolve(unavailable());const promise=Promise.resolve().then(task);accepted.add(promise);void promise.finally(()=>accepted.delete(promise)).catch(()=>{});return promise;}
  const player=(request:Request,id:string)=>tracked(()=>runtime.isActive(id)?rawPlayer(request,id):Promise.resolve(unavailable()));
  const server=createPokerRoomHTTPServer(player,{health:()=>({ready:started&&!closing&&!runtime.health.closed&&runtime.health.pending===0&&runtime.health.failed===0}),lobbyHandler:request=>tracked(()=>rawLobby(request)),managerHandler:request=>tracked(()=>rawManager(request)),ringHandler:options.ringHandler?request=>tracked(()=>options.ringHandler!(request)):undefined});
- let sockets:ReturnType<typeof attachPokerRoomWebSocket>|null=null;
+ let sockets:ReturnType<typeof attachPokerRoomWebSocket>|null=null,ringSockets:{close():Promise<void>}|null=null;
  const close=()=>{
   if(closeTask)return closeTask;closing=true;started=false;
   closeTask=(async()=>{
@@ -44,7 +46,7 @@ export function createPokerRoomService(options:Options){
    // durable commit, but cannot admit further traffic or restart the runtime.
    const stopping=runtime.close();
    const listening=server.listening?new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve())):Promise.resolve();
-   const socketClose=sockets?.close();server.closeIdleConnections();
+   const socketClose=Promise.allSettled([sockets?.close(),ringSockets?.close()]);server.closeIdleConnections();
    await Promise.allSettled([stopping,listening,socketClose]);
    await Promise.allSettled([...accepted]);await registry.drain();
   })();return closeTask;
@@ -59,6 +61,7 @@ export function createPokerRoomService(options:Options){
     // Attach only after restoration. Failed rooms remain unavailable while
     // healthy rooms and manager/lobby routes can operate.
     sockets=attachPokerRoomWebSocket(server,{origins,handler:player,owner:id=>registry.owner(id)});
+    ringSockets=options.ringEvents?.(server)??null;
     listenerTask=new Promise<AddressInfo>((resolve,reject)=>{
      const cleanup=()=>{server.off('error',error);server.off('listening',listening);listenAbort.signal.removeEventListener('abort',aborted);};
      const error=()=>{cleanup();reject(new Error('Listener unavailable'));};
