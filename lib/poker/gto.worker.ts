@@ -4,9 +4,10 @@
 import {decideGto,type GtoData,type GtoView,type GtoDecision,type PreflopData} from './gto-bot';
 import {adviseGto,reviewGto,reviewLive,reviewRanges,summarizeDeviation,type GtoRange,type DeviationSummary,type LiveDecision,type LiveReview,type GtoAdvice,type GtoReview,type GtoReviewHand} from './gto-review';
 import type {FlopData} from './gto-spots';
+import {exploreTurn,type ExploreResult} from './gto-explore';
 
-export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number}|{type:'deviation';id:number;hands:GtoReviewHand[]};
-export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'advice';id:number;advice:GtoAdvice}|{type:'liveReview';id:number;reviews:LiveReview[]}|{type:'review';id:number;reviews:GtoReview[];others?:{index:number;range:GtoRange}[]}|{type:'deviation';id:number;summary:DeviationSummary}|{type:'error';id:number;message:string};
+export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number}|{type:'deviation';id:number;hands:GtoReviewHand[]}|{type:'explore';id:number;spot:string;flop:string;path:number[];turn:string;steps:number[];budgetMs:number};
+export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'advice';id:number;advice:GtoAdvice}|{type:'liveReview';id:number;reviews:LiveReview[]}|{type:'review';id:number;reviews:GtoReview[];others?:{index:number;range:GtoRange}[]}|{type:'deviation';id:number;summary:DeviationSummary}|{type:'explore';id:number;result:ExploreResult}|{type:'error';id:number;message:string};
 
 const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:MessageEvent<GtoRequest>)=>void)|null};
 const flops=new Map<string,FlopData|null>(),missing=new Set<string>();
@@ -17,7 +18,12 @@ function load(){
  return base;
 }
 scope.onmessage=async e=>{
- const m=e.data;if(m.type!=='decide'&&m.type!=='review'&&m.type!=='advise'&&m.type!=='reviewLive'&&m.type!=='deviation')return;
+ const m=e.data;
+ // Turn and river from the flop page (2026/10/30).
+ if(m.type==='explore'){try{const k=m.spot+'/'+m.flop;if(!flops.has(k))flops.set(k,await json<FlopData>(`/poker-gto/flops/${k}.json`));const file=flops.get(k);
+  scope.postMessage({type:'explore',id:m.id,result:file?exploreTurn(file,m.path,m.turn,m.steps,m.budgetMs):{error:'フロップのデータが読み込めませんでした。'}});}
+  catch(error){scope.postMessage({type:'error',id:m.id,message:error instanceof Error?error.message:String(error)});}return;}
+ if(m.type!=='decide'&&m.type!=='review'&&m.type!=='advise'&&m.type!=='reviewLive'&&m.type!=='deviation')return;
  try{
   const b=await load();
   const data:GtoData={...b,flop(spot,flop){const k=spot+'/'+flop;if(flops.has(k))return flops.get(k)!;missing.add(k);return null;}};

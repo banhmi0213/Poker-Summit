@@ -6,6 +6,7 @@ import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
 import {FlopAggregate} from './flop-aggregate';
+import {TurnExplorer} from './turn-explorer';
 
 /** Precomputed flop solutions for 13 spots × up to 200 representative flops (2026/10/29: 95 → 200; the list shows only computed ones) (public/poker-gto/flops/<spot>/<flop>.json). */
 export const FLOPS=GTO_FLOPS;
@@ -18,15 +19,16 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
  const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
- const [index,setIndex]=useState<Record<string,string[]>|null>(null),[mode,setMode]=useState<'flop'|'summary'>('flop');
+ const [index,setIndex]=useState<Record<string,string[]>|null>(null),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
  const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
- useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);
+ useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);setExplore(null);
   void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');});
   return ()=>{live=false;};},[spot,flop]);
  const lookup=()=>{const t=typed.replace(/\s+/g,'').replace(/(.)(.)/g,(_,r:string,su:string)=>r.toUpperCase()+su.toLowerCase());const c=canonicalFlop(t);if(!c){setNearNote('「Kh7d2c」のように3枚を入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}
   const n=nearestFlop(t,ready.length?ready:flops);if(!n)return;setFlop(n.flop);setNearNote(n.exact?(n.flop===t?`${flopText(t)} は計算済みです。`:`${flopText(t)} はスートの入れ替えだけ違う ${flopText(n.flop)} と同じ形なので、その計算結果を表示しています（手札の表は同じになります）。`):`${flopText(t)} にいちばん近い計算済みのフロップ ${flopText(n.flop)} を表示しています（スートの並びと高いカードが近いもの）。`);};
  const node=data?data.nodes[trail[trail.length-1]]:null;
+ const flopPath=data?trail.slice(1).map((n,i)=>data.nodes[trail[i]].children.indexOf(n)):[];
  const who=(p:number)=>data!.spot.order?`${seatOf(data!,p)}（${p+1}番目に打つ人）`:p===0?`${data!.spot.oop}（先に打つ人）`:`${data!.spot.ip}（後に打つ人）`;
  const current=GTO_SPOTS.find(s=>s.id===spot)!;
  // Per-hand EV (version 3) is the value from the start of the flop: shown on the first decision of each player only.
@@ -59,11 +61,13 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
     {trail.slice(1).map((n,i)=>{const parent=data.nodes[trail[i]],a=parent.children.indexOf(n);return <span key={i}>{seatOf(data,parent.player)} {parent.actions[a].label}</span>;})}
    </nav>
    <p><b>{who(node.player)}の番</b>：全体では {node.actions.map((a,i)=>`${a.label} ${pct(node.total[i])}`).join('・')}</p>
-   <div className={styles.path}>{node.actions.map((a,i)=>node.children[i]!==null?<button key={i} type="button" onClick={()=>setTrail(t=>[...t,node.children[i]!])}>「{a.label}」の後を見る</button>:null)}</div>
+   <div className={styles.path}>{node.actions.map((a,i)=>node.children[i]!==null?<button key={i} type="button" onClick={()=>setTrail(t=>[...t,node.children[i]!])}>「{a.label}」の後を見る</button>
+    :!data.spot.order&&data.spot.sizes&&(a.kind==='check'||a.kind==='call')?<button key={i} type="button" onClick={()=>setExplore([...flopPath,i])}>「{a.label}」のあとのターン・リバーを見る</button>:null)}</div>
    <StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
     let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
     return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table>
    
+   {explore&&<TurnExplorer spot={spot} data={data} path={explore} lineText={(()=>{let n=0;return explore.map(i=>{const x=data.nodes[n],t=`${seatOf(data,x.player)} ${x.actions[i].label}`;n=x.children[i]??0;return t;}).join('、');})()}/>}
   </>}
   </>}
  </div>;
