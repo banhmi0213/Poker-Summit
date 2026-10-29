@@ -126,3 +126,8 @@
 :global(.navy-preview) .mobileGroup[open] summary{color:#deccaa}
 
 :global(.navy-preview) .header :global(.portal-nav-inner),:global(.navy-preview) .header .megaNav{width:var(--home-content-width);max-width:none}
+
+/* Keep the compact spacing scoped to the homepage design preview. */
+:global(.navy-preview) .header .megaNav{padding-bottom:8px}
+:global(.navy-preview) .title{min-height:44px;padding-block:9px}
+:global(.navy-preview) .megaPanel{top:calc(100% - 8px)}

@@ -133,3 +133,10 @@
 .navy-preview .cta-banner{border-bottom:1px solid #c7ac75}
 .navy-preview .portal-footer{border-top:0}
 @media(max-width:767px){.navy-preview .home-section-eyebrow{font-size:9px;letter-spacing:.11em}.navy-preview .home-section-title{flex:1 1 55%}.navy-preview .home-feed.home-feed .home-section-head{align-items:center}}
+
+/* Compact masthead with a shared horizontal colour field at the banner seam. */
+.navy-preview{--masthead-navy:linear-gradient(90deg,#09172b 0%,#152e47 65%,#304962 100%)}
+.navy-preview .portal-nav{background:var(--masthead-navy)}
+.navy-preview .portal-nav .portal-nav-inner{padding-block:7px}
+.navy-preview .home-top-banner-stage{padding-top:12px;background:linear-gradient(to bottom,transparent 0%,transparent calc(50% - 6px),#f7f2e6 calc(50% - 6px),#f7f2e6 100%),var(--masthead-navy)}
+@media(max-width:767px){.navy-preview .portal-nav .portal-nav-inner{padding-block:6px}.navy-preview .home-top-banner-stage{padding-top:10px;background:linear-gradient(to bottom,transparent 0%,transparent calc(50% - 4px),#f7f2e6 calc(50% - 4px),#f7f2e6 100%),var(--masthead-navy)}}
