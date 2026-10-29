@@ -43,8 +43,8 @@ function stacks(c:BaseAudioContext,t:number,count:number){
 }
 
 /** Tonal voice for the all-in orchestra hit. */
-function voice(c:BaseAudioContext,t:number,{f,type='sawtooth',vol=.05,att=.01,dur=.5,detune=0,lp=0,pan=0}:{f:number;type?:OscillatorType;vol?:number;att?:number;dur?:number;detune?:number;lp?:number;pan?:number}){
- const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.value=f;o.detune.value=detune;let last:AudioNode=o;
+function voice(c:BaseAudioContext,t:number,{f,type='sawtooth',vol=.05,att=.01,dur=.5,detune=0,lp=0,pan=0,glide=0}:{f:number;type?:OscillatorType;vol?:number;att?:number;dur?:number;detune?:number;lp?:number;pan?:number;/** Slide to this pitch over the note. */glide?:number}){
+ const o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(glide)o.frequency.exponentialRampToValueAtTime(glide,t+att+dur);o.detune.value=detune;let last:AudioNode=o;
  if(lp){const l=c.createBiquadFilter();l.type='lowpass';l.frequency.setValueAtTime(lp,t);l.frequency.exponentialRampToValueAtTime(Math.max(300,lp*.3),t+dur);o.connect(l);last=l;}
  envelope(g,t,vol,att,dur);last.connect(g);const p=out(c,pan);g.connect(p);o.start(t);o.stop(t+att+dur+.05);o.onended=()=>{o.disconnect();last.disconnect();g.disconnect();p.disconnect();};
 }
@@ -67,9 +67,8 @@ export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
     thump(c,at+.1,{f:150,f1:95,dur:.05,vol:.13,pan});hiss(c,at+.1,{dur:.025,f0:500,q:.7,vol:.06,att:.002,pan,lp:1200});}
    return kind==='flop'?520:200;
   case 'stamp':
-   // Owner 2026/10/29 (スタンプだした時も音出したい): a light two-note pop.
-   voice(c,t,{f:784,type:'triangle',vol:.07,att:.004,dur:.09});voice(c,t+.07,{f:1175,type:'triangle',vol:.06,att:.004,dur:.14});
-   thump(c,t,{f:420,f1:220,dur:.04,vol:.08});return 260;
+   // Owner pick 2026/10/29: C「ぷにっ」, a soft bouncy two-step.
+   voice(c,t,{f:300,type:'sine',vol:.13,att:.005,dur:.07,glide:620});voice(c,t+.08,{f:520,type:'sine',vol:.07,att:.004,dur:.08,glide:440});return 220;
   case 'deal':for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
   case 'fold':hiss(c,t,{dur:.12,f0:2400,f1:4000,q:.7,vol:.14,att:.03,lp:5000});return 200;
   case 'check':
