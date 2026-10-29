@@ -16,8 +16,8 @@ export function preloadTableSamples(c:BaseAudioContext){
  }
 }
 /** Plays a recorded sound now and returns its length in ms, or null when it is not ready (play the synth instead). */
-export function playTableSample(c:BaseAudioContext,name:SampleName,at:number):number|null{
+export function playTableSample(c:BaseAudioContext,name:SampleName,at:number,volume=1):number|null{
  preloadTableSamples(c);const buf=loaded.get(c)?.[name];
  if(!buf||typeof buf==='string')return null;
- try{const s=c.createBufferSource(),g=c.createGain();s.buffer=buf;g.gain.value=1;s.connect(g);g.connect(seOutput(c));s.start(at);s.onended=()=>{s.disconnect();g.disconnect();};return Math.round(buf.duration*1000);}catch{return null;}
+ try{const s=c.createBufferSource(),g=c.createGain();s.buffer=buf;g.gain.value=volume;s.connect(g);g.connect(seOutput(c));s.start(at);s.onended=()=>{s.disconnect();g.disconnect();};return Math.round(buf.duration*1000);}catch{return null;}
 }

@@ -28,7 +28,8 @@ export class PokerSounds {
    };
    if(kind==='turnCard')return playTableEffect(c,'turn');
    if(['fold','check','call','bet','raise','allin','deal','flop','river','win','stamp'].includes(kind))return playTableEffect(c,kind as ActionKind|'deal'|'flop'|'river'|'win'|'stamp');
-   if(kind==='turn'){tone(880,0,.13,.12);tone(1174.66,.045,.15,.065);}
+   // Owner 2026/10/29 (カードが出る前のピコンみたいな音いらん): the your-turn ping is silent.
+   if(kind==='turn')return 0;
    else if(kind==='action')tone(310,0,.085,.085,'triangle');
    else if(kind==='enter'){tone(523.25,0,.15,.08);tone(783.99,.11,.20,.09);}
    else{tone(659.25,0,.13,.08);tone(440,.10,.20,.08);}

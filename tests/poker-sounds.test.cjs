@@ -7,7 +7,7 @@ test('audio requires gesture unlock, obeys mute, supports every cue and closes w
  const node=()=>({connect(){},disconnect(){},start(){started++;},stop(){},frequency:{...param,value:0},detune:{value:0},Q:{value:0},gain:param});
  const context={state:'suspended',currentTime:0,sampleRate:8000,destination:{},resume:async()=>{resumed++;context.state='running';},close:async()=>{closed++;},createOscillator:node,createGain:node,createBiquadFilter:node,createBufferSource:node,createDynamicsCompressor:()=>({...node(),threshold:{value:0},ratio:{value:0}}),createBuffer:()=>({getChannelData:()=>new Float32Array(1200)})};
  const sound=new PokerSounds(()=>{made++;return context;});assert.equal(sound.play('enter'),0);assert.equal(made,0);await sound.unlock();assert.equal(made,1);assert.equal(resumed,1);
- for(const kind of ['turn','action','deal','flop','turnCard','river','win','enter','exit','fold','check','call','bet','raise','allin']){const before=started;assert.ok(sound.play(kind)>0,kind);assert.ok(started>before,kind);}
+ assert.equal(sound.play('turn'),0,'your-turn ping is silent (owner 2026/10/29)');for(const kind of ['action','deal','flop','turnCard','river','win','enter','exit','fold','check','call','bet','raise','allin']){const before=started;assert.ok(sound.play(kind)>0,kind);assert.ok(started>before,kind);}
  const total=started;sound.setEnabled(false);assert.equal(sound.play('win'),0);assert.equal(started,total);await sound.unlock();assert.equal(made,1);sound.close();assert.equal(closed,1);assert.equal(sound.play('exit'),0);await sound.unlock();assert.equal(made,1);
  const broken=new PokerSounds(()=>{throw Error('Audio unavailable');});await broken.unlock();assert.equal(broken.play('enter'),0);broken.close();
 });
