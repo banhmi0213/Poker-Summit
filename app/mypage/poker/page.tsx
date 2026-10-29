@@ -3,6 +3,7 @@ import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
+import {GtoDeviationView} from '@/app/poker-ui/gto-deviation-view';
 import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
@@ -18,7 +19,7 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
  {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加卓を確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},
  {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
- {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<HandStatsView stats={tendencies.ring}/>:unavailable},
+ {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<><HandStatsView stats={tendencies.ring}/><GtoDeviationView/></>:unavailable},
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。',content:<PushFoldChart/>},
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。',content:<PreflopChartPanel/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'13の場面（シングルレイズ・3ベット・4ベット）×95のフロップを前もって計算した、手札ごとの正解の打ち方。好きなフロップは近いものを表示。',content:<FlopStrategyPanel/>},
