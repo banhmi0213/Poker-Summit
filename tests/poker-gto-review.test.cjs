@@ -67,3 +67,19 @@ test('practice table: decisions captured live are reviewed like the hand history
  }
  assert.ok(n>0);
 });
+
+test('each reviewed decision carries the whole range: 169-class grid, shares sum to 1, viewer\'s class marked',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100),seen={preflop:0,flop:0,solver:0};
+ for(let i=0;i<Number(process.env.GTO_REVIEW_HANDS||10);i++){const r=t.play(seeded(300+i));const h=r.history;if(!h)continue;
+  for(const p of h.players){const view=asViewer(h,p.seatId);
+   for(const rv of reviewGto(view,data,300)){if(rv.source==='none'||!rv.range)continue;seen[rv.source]++;
+    const g=rv.range.grid,cls=Object.keys(g);assert.ok(cls.length>5&&cls.length<=169,`${rv.source} grid has classes`);
+    assert.equal(rv.range.options.length,rv.options.length);
+    for(const c of cls){const e=g[c];assert.ok(e.reach>=0&&e.reach<=1+1e-9);if(e.reach>0.01){const s=e.freqs.reduce((a,b)=>a+b,0);assert.ok(Math.abs(s-1)<0.02,`${rv.source} ${c} shares sum ${s}`);}}
+    assert.ok(/^[AKQJT2-9]{2}[so]?$/.test(rv.range.hero));
+    if(rv.source==='preflop'&&g[rv.range.hero])assert.ok(g[rv.range.hero].reach>0,'the viewer reached this spot with their class');
+   }}
+ }
+ console.log('ranges by source',JSON.stringify(seen));assert.ok(seen.preflop>0);assert.ok(seen.flop+seen.solver>0);
+});

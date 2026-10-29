@@ -13,3 +13,5 @@
 .path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:#c9d6e0}.path span{background:#1b3448;border-radius:6px;padding:4px 8px}.path button{padding:6px 10px;font-size:12px;background:#24435a;color:#e9eff5}
 .key{display:inline-flex;align-items:center;gap:4px;font-style:normal;margin-right:8px}.key i{display:inline-block;width:12px;height:12px;border-radius:3px}
 @media(max-width:900px){.pair{grid-template-columns:1fr}.grid{font-size:9px}}
+.grid td[data-hero]{outline:2px solid #f3d38a;outline-offset:-2px;opacity:1!important}
+.rangeToggle{margin-left:6px;background:none;border:1px solid #3a5366;color:#d9b368;border-radius:6px;padding:1px 8px;font:inherit;font-size:10px;cursor:pointer}
