@@ -72,7 +72,8 @@ export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
   case 'stamp':
    // Owner pick 2026/10/29: C「ぷにっ」, a soft bouncy two-step.
    voice(c,t,{f:300,type:'sine',vol:.13,att:.005,dur:.07,glide:620});voice(c,t+.08,{f:520,type:'sine',vol:.07,att:.004,dur:.08,glide:440});return 220;
-  case 'deal':{const recorded=playTableSample(c,'three',t);if(recorded!==null)return recorded;}
+  // Owner 2026/10/30 (カード配る音もちょい下げて): dealing plays the three-card recording a little quieter than the flop.
+  case 'deal':{const recorded=playTableSample(c,'three',t,.6);if(recorded!==null)return recorded;}
  for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
   case 'fold':hiss(c,t,{dur:.12,f0:2400,f1:4000,q:.7,vol:.14,att:.03,lp:5000});return 200;
   case 'check':
