@@ -36,7 +36,7 @@ import { carriedDemoStacks, startForcedHand, tournamentHandTerms, ringTerms, typ
 import { tournamentClock, type PokerTournament } from "@/lib/poker/tournament";
 import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
-import { GtoRangeGrid } from "@/app/poker-ui/gto-range-grid";
+import { GtoRangeDialog } from "@/app/poker-ui/gto-range-grid";
 import chartStyles from "@/app/poker-ui/gto-chart.module.css";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
@@ -654,7 +654,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
         {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
           <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
-          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeGrid range={r.range} who="あなた" />}</>}
+          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeDialog range={r.range} who="あなた" title={`${({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}：${r.played}のときのレンジ表`} onClose={() => setLiveRangeAt(null)} />}</>}
         </li>)}</ol>}
       </div>}
       <details className={styles.demoTools}><summary>デモ検証操作</summary>

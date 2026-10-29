@@ -1,4 +1,5 @@
 'use client';
+import {useEffect} from 'react';
 import styles from './gto-chart.module.css';
 import type {GtoRange} from '@/lib/poker/gto-review';
 
@@ -13,6 +14,17 @@ const pct=(n:number)=>`${Math.round(n*100)}%`;
 export function rangeColors(options:readonly {kind:string}[]){
  let sized=0;
  return options.map(o=>o.kind==='fold'?'#5a6b78':o.kind==='check'||o.kind==='call'?'#4f8f74':o.kind==='allin'?'#9e3f46':SIZED[Math.min(SIZED.length-1,sized++)]);
+}
+
+/** As a dialog over the table (practice table, where the side panel is narrow). */
+export function GtoRangeDialog({range,who,title,onClose}:{range:GtoRange;who:string;title:string;onClose:()=>void}){
+ useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose();};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[onClose]);
+ return <div className={styles.overlay} role="presentation" onClick={onClose}>
+  <div className={styles.dialog} role="dialog" aria-modal="true" aria-label={title} onClick={e=>e.stopPropagation()}>
+   <div className={styles.dialogHead}><strong>{title}</strong><button type="button" onClick={onClose}>閉じる</button></div>
+   <GtoRangeGrid range={range} who={who}/>
+  </div>
+ </div>;
 }
 
 export function GtoRangeGrid({range,who}:{range:GtoRange;who:string}){
