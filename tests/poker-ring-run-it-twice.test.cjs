@@ -42,7 +42,7 @@ test('both players answering 2 settles twice without the runner',async()=>{
  const w=world(),owner=await allIn(w),s=owner.snapshot(null);
  for(const p of w.seats){const v=owner.snapshot(p.memberId);w.store.actorReservation=p.reservationId;await owner.act(p.memberId,{handId:v.handId,revision:v.revision,actionId:randomUUID(),action:{type:'runs',count:2}});}
  const done=owner.snapshot(null);assert.equal(done.result.boards.length,2);
- assert.equal(done.players.reduce((a,p)=>a+p.stack,0),2000);
+ assert.equal(done.players.reduce((a,p)=>a+p.stack,0)+(done.result.rake??0),2000);
 });
 
 test('ring free time bank is used automatically when the turn runs out (at 0), once per hand',async()=>{
