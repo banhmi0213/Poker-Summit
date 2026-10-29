@@ -10,6 +10,7 @@ import type {Card} from './engine';
 import type {BettingAction} from './betting';
 import {decideCpuAction,type CpuStyle} from './cpu-strategy';
 import {PostflopSolver,NO_CARDS,dealCard,type ActNode,type Node,type Combo} from './postflop-solver';
+import {MultiwaySolver,type MActNode,type MNode} from './multiway-solver';
 import {classOf} from './solver-view';
 import {canonicalFlop,nearestFlop} from './flop-subset';
 import type {FlopData,FlopNode} from './gto-spots';
@@ -113,11 +114,13 @@ function huSpotFor(toks:Tok[]):string{
  if(raises===2&&!limped)return 'hu-3bet';
  return limped&&raises===2?'hu-3bet':'hu-4bet';
 }
+const MW_SPOTS=new Set(['co-btn-bb','utg-btn-bb','btn-sb-bb']);
 const POT_TYPE:Record<string,string[]>={srp:['btn-bb','co-bb','hj-bb','utg-bb','sb-bb','co-btn','utg-btn'],'3bet':['btn-bb-3bet','co-bb-3bet','utg-bb-3bet','btn-sb-3bet','co-btn-3bet'],'4bet':['btn-bb-4bet'],
+ 'co-btn-bb':['co-btn-bb','utg-btn-bb','btn-sb-bb'],'utg-btn-bb':['utg-btn-bb','co-btn-bb','btn-sb-bb'],'btn-sb-bb':['btn-sb-bb','co-btn-bb','utg-btn-bb'],
  'sb-limp':['sb-limp'],'sb-iso':['sb-iso'],'sb-limp-3bet':['sb-limp-3bet'],
  'hu-srp':['hu-srp','btn-bb'],'hu-limp':['hu-limp'],'hu-3bet':['hu-3bet','btn-bb-3bet'],'hu-4bet':['hu-4bet','btn-bb-4bet']};
 function flopFile(data:GtoData,spot:string,flop:string):FlopData|null{
- const type=spot.startsWith('hu-')||spot.startsWith('sb-limp')||spot==='sb-iso'?spot:Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
+ const type=spot.startsWith('hu-')||spot.startsWith('sb-limp')||spot==='sb-iso'||MW_SPOTS.has(spot)?spot:Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
  for(const s of [spot,...POT_TYPE[type].filter(x=>x!==spot)]){
   const list=data.flopIndex[s];if(!list?.length)continue;
   const canon=canonicalFlop(flop),exact=list.find(f=>canonicalFlop(f)===canon);
@@ -203,12 +206,24 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   const hu=Object.keys(v.positions).length===2&&!!data.preflopHu;if(hu)data={...data,preflop:data.preflopHu!};
   const toks=preflopToks(v,hu),ranges=trackPreflop(v,data,toks);
   if(v.board.length===0)return preflopStrategy(v,data,toks,noHole)??fb('preflop-off-chart');
-  const live=v.players.filter(p=>!p.folded);if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
+  const live=v.players.filter(p=>!p.folded);
+  // Three players saw the flop (2026/10/29): three-way flop data, then a live three-way solve or, after a fold, heads-up.
+  const foldedPre=new Set(v.log.filter(a=>a.street==='preflop'&&a.type==='fold').map(a=>a.id)),preLive=v.players.filter(p=>!foldedPre.has(p.id));
+  let multi:{spot:string;order:string[];file:FlopData|null}|null=null;
+  if(!hu&&preLive.length===3){
+   if(!ranges)return fb('preflop-off-chart');
+   const order=[...preLive].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id);
+   const spot3=multiSpotFor(v,toks),flopText3=v.board.slice(0,3).map(c=>'23456789TJQKA'[c.rank-2]+c.suit).join('');
+   multi={spot:spot3,order,file:flopFile(data,spot3,flopText3)};
+   const r=multiwayStrategy(v,multi,ranges,noHole,budgetMs,flopText3);if(r)return r;
+  }
+  if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
   const order=hu?HU_POST_ORDER:POST_ORDER,pair=[...live].sort((a,b)=>order.indexOf(v.positions[a.id])-order.indexOf(v.positions[b.id])).map(p=>p.id) as [string,string];
-  const spot=hu?huSpotFor(toks):spotFor(v,toks,pair);if(!spot)return fb('no-spot');
+  const spot=multi?multi.spot:hu?huSpotFor(toks):spotFor(v,toks,pair);if(!spot)return fb('no-spot');
   const flopActs=v.log.filter(a=>a.street==='flop');
   const flopText=v.board.slice(0,3).map(c=>'23456789TJQKA'[c.rank-2]+c.suit).join('');
-  const file=flopFile(data,spot,flopText);
+  const file=multi?null:flopFile(data,spot,flopText);
+  if(v.board.length===3&&multi)return fb('flop-off-tree');
   if(v.board.length===3){
    if(!file)return fb('no-flop-data');
    let node:FlopNode|undefined=file.nodes[0];
@@ -221,6 +236,7 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
   if(file)trackFlop(file,flopActs,ranges,pair,v.board.slice(0,3).map(code));
+  if(multi?.file)trackMultiFlop(multi.file,flopActs,ranges,multi.order);
   const board=v.board.map(code),turnKey=`${v.handKey}|${noHole?'':v.hero}|${board.slice(0,4).join(',')}`;
   let s=solves.get(turnKey);
   const turnActs=v.log.filter(a=>a.street==='turn'),riverActs=v.log.filter(a=>a.street==='river');
@@ -247,6 +263,67 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
+// ---------- three-way pots (2026/10/29) ----------
+/** Open, a call and the big blind's call: the computed three-way spot closest to this line. */
+function multiSpotFor(v:GtoView,toks:Tok[]):string{
+ const open=toks.find(t=>t.kind==='R')?.pos,caller=toks.find(t=>t.kind==='C'&&t.pos!=='BB')?.pos;
+ if(caller==='SB')return 'btn-sb-bb';
+ if(open==='UTG'||open==='HJ')return 'utg-btn-bb';
+ void v;return 'co-btn-bb';
+}
+function multiIndexOf(node:{actions:{kind:string;label:string;to?:number}[]},a:LoggedAction,bb?:number):number{
+ const kinds=node.actions.map(x=>x.kind);
+ if(a.type==='fold')return kinds.indexOf('fold');if(a.type==='check')return kinds.indexOf('check');if(a.type==='call')return kinds.indexOf('call');
+ if(a.allIn&&kinds.includes('allin'))return kinds.indexOf('allin');
+ if(bb!==undefined){const to=a.to/bb;let best=-1,d=Infinity;node.actions.forEach((x,i)=>{if(x.kind!=='bet'&&x.kind!=='raise'&&x.kind!=='allin')return;const y=Math.abs((x.to??0)-to);if(y<d){d=y;best=i;}});return best;}
+ return flopIndexOf(node as FlopNode,a);
+}
+function trackMultiFlop(file:FlopData,acts:readonly LoggedAction[],ranges:Ranges,order:string[]){
+ let node:FlopNode|undefined=file.nodes[0];
+ for(const a of acts){if(!node)return;const i=multiIndexOf(node,a);if(i<0)return;const w=ranges.get(order[node.player]),cur=node;
+  if(w)scale(w,(x,y)=>{const row=cur.classes[classOf(x,y)];return row?row[1+i]:0;});
+  const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
+}
+const multiSolves=new Map<string,{solver:MultiwaySolver;order:string[];bb:number}>();
+function multiwayStrategy(v:GtoView,multi:{spot:string;order:string[];file:FlopData|null},ranges:Ranges,noHole:boolean,budgetMs:number,flopText:string):GtoStrategy|null{
+ const fb=(reason:string):GtoStrategy=>({source:'fallback',reason}),hi=multi.order.indexOf(v.hero);
+ const flopActs=v.log.filter(a=>a.street==='flop');
+ if(v.board.length===3){
+  if(!multi.file)return fb('no-flop-data');
+  let node:FlopNode|undefined=multi.file.nodes[0];
+  for(const a of flopActs){if(!node)break;const i=multiIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:multi.file.nodes[next];}
+  if(!node||node.player!==hi)return fb('flop-off-tree');
+  const at=node,row=noHole?[0,...at.actions.map(()=>0)]:at.classes[classOf(code(v.hole[0]),code(v.hole[1]))];if(!row)return fb('flop-class-missing');
+  const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
+  return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>multiIndexOf(at,a),grid:normalizeGrid(grid),
+   nearFlop:canonicalFlop(multi.file.flop)===canonicalFlop(flopText)?undefined:multi.file.flop,proxySpot:multi.file.spot.id&&multi.file.spot.id!==multi.spot?multi.file.spot.id:undefined};
+ }
+ // Later streets: only while all three are still in (after a fold the heads-up path takes over).
+ if(v.players.filter(p=>!p.folded).length!==3)return null;
+ if(multi.file)trackMultiFlop(multi.file,flopActs,ranges,multi.order);
+ const street:Street=v.board.length===4?'turn':'river',board=v.board.map(code),acts=v.log.filter(a=>a.street===street);
+ const key=`${v.handKey}|mw|${noHole?'':v.hero}|${board.join(',')}`;let s=multiSolves.get(key);
+ if(!s){
+  const first=v.log.find(a=>a.street===street),pot=(first?first.potBefore:potNow(v))/v.bb;
+  const combosOf3=(id:string)=>{const w=ranges.get(id)!,out:Combo[]=[];for(let a=0;a<52;a++)for(let b=a+1;b<52;b++){const x=w[a*52+b];if(x>1e-6&&!board.includes(a)&&!board.includes(b))out.push({c1:a,c2:b,weight:x});}return out;};
+  const rs=multi.order.map(combosOf3) as [Combo[],Combo[],Combo[]];
+  if(!noHole&&hi>=0){const hk=key2(code(v.hole[0]),code(v.hole[1]));if(!rs[hi].some(c=>key2(c.c1,c.c2)===hk))rs[hi].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});}
+  const stacks=multi.order.map(id=>{const p=v.players.find(x=>x.id===id)!;return (v.startStacks[id]-p.totalCommitted+p.committed)/v.bb;});
+  const solver=new MultiwaySolver({board,pot,stack:Math.max(0.5,Math.min(...stacks)),ranges:rs,betSizes:[0.5],raiseSizes:[3],maxRaises:1,allinMaxPot:1.5,depthLimit:true});
+  const t=Date.now();while(Date.now()-t<budgetMs&&solver.iterations<200)solver.run(1);
+  s={solver,order:multi.order,bb:v.bb};multiSolves.set(key,s);while(multiSolves.size>2)multiSolves.delete(multiSolves.keys().next().value as string);
+ }
+ let node:MNode=s.solver.tree;
+ for(const a of acts){if(node.kind!=='act')return fb('solver-off-tree');const i=multiIndexOf(node,a,1);if(i<0)return fb('solver-off-tree');node=node.children[i];}
+ if(node.kind!=='act'||node.player!==hi)return fb('solver-off-tree');
+ const at:MActNode=node,side=s.solver.sides[hi],k=at.actions.length,st=s.solver.strategy(at,true);
+ let h=-1;if(!noHole){const a=code(v.hole[0]),b=code(v.hole[1]);for(let i=0;i<side.n;i++)if((side.c1[i]===a&&side.c2[i]===b)||(side.c1[i]===b&&side.c2[i]===a)){h=i;break;}if(h<0)return fb('solver-hero-missing');}
+ const acc:Record<string,{w:number;f:number[]}>={};
+ for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
+ const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
+ const bb=v.bb;
+ return {source:'solver',options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>multiIndexOf(at,a,bb),grid:normalizeGrid(grid)};
+}
 function potNow(v:GtoView){return v.players.reduce((s,p)=>s+p.totalCommitted,0);}
 function sample(p:number[],random:()=>number){const t=p.reduce((s,x)=>s+Math.max(0,x),0);if(!(t>0))return 0;let r=random()*t;for(let i=0;i<p.length;i++){r-=Math.max(0,p[i]);if(r<=0)return i;}return p.length-1;}
 

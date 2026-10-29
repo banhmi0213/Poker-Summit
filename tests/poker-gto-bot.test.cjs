@@ -22,3 +22,24 @@ test('UTG opens only chart hands: 72o folds, AA raises to 2.5BB',()=>{
  const fold=decideGto(view([{rank:7,suit:'h'},{rank:2,suit:'c'}]),data,()=>0.5);assert.equal(fold.action.type,'fold');assert.equal(fold.source,'preflop');
  const raise=decideGto(view([{rank:14,suit:'h'},{rank:14,suit:'c'}]),data,()=>0.5);assert.deepEqual(raise.action,{type:'raise',amount:250});
 });
+test('three-way pots: flop answers come from the three-way file, the turn from a live three-way solve, and a flop fold hands over to heads-up',()=>{
+ const {gtoStrategy}=require('../lib/poker/gto-bot.ts');
+ const base=loadGtoData(path.join(__dirname,'..','public','poker-gto')),mw=JSON.parse(fs.readFileSync(path.join(__dirname,'fixtures','poker-gto-mw-co-btn-bb-Kh7d2c.json'),'utf8'));
+ const data={...base,flopIndex:{...base.flopIndex,'co-btn-bb':['Kh7d2c']},flop:(s,f)=>s==='co-btn-bb'&&f==='Kh7d2c'?mw:base.flop(s,f)};
+ const C=s=>({rank:'23456789TJQKA'.indexOf(s[0])+2,suit:s[1]}),positions={u:'UTG',h:'HJ',c:'CO',b:'BTN',s:'SB',g:'BB'};
+ const L=(street,id,type,to,potBefore,cb=0)=>({street,id,type,to,allIn:false,potBefore,currentBetBefore:cb,committedBefore:0});
+ const view=(hero,hole,board,acts,folded=[])=>{const committed={u:0,h:0,c:250,b:250,s:50,g:250};
+  const log=[L('preflop','u','fold',0,150,100),L('preflop','h','fold',0,150,100),L('preflop','c','raise',250,150,100),L('preflop','b','call',250,400,250),L('preflop','s','fold',0,650,250),L('preflop','g','call',250,650,250),...acts];
+  return {handKey:'mw-'+acts.length+hero+board.length,bb:100,hero,hole:hole.map(C),board:board.map(C),positions,log,
+   players:Object.keys(positions).map(id=>({id,stack:10000-committed[id],committed:0,totalCommitted:committed[id],folded:['u','h','s',...folded].includes(id),allIn:false})),
+   legal:{check:true,call:false,callAmount:0,raise:true,minRaiseTo:100,maxRaiseTo:9750},startStacks:Object.fromEntries(Object.keys(positions).map(id=>[id,10000]))};};
+ const F=['Kh','7d','2c'],sum=a=>a.reduce((x,y)=>x+y,0);
+ const bb=gtoStrategy(view('g',['Ks','Qd'],F,[]),data,500);
+ assert.equal(bb.source,'flop');assert.ok(Math.abs(sum(bb.freqs)-1)<1e-6);assert.ok(bb.grid&&bb.grid.KQo,'range grid for the first to act');
+ const co=gtoStrategy(view('c',['As','Ad'],F,[L('flop','g','check',0,800)]),data,500);
+ assert.equal(co.source,'flop');assert.ok(co.freqs[0]<0.5,'AA mostly bets the flop when checked to');
+ const turn=gtoStrategy(view('g',['Ks','Qd'],[...F,'5s'],['g','c','b'].map(id=>L('flop',id,'check',0,800))),data,500);
+ assert.equal(turn.source,'solver');assert.ok(Math.abs(sum(turn.freqs)-1)<1e-6);
+ const hu=gtoStrategy(view('g',['Ks','Qd'],[...F,'5s'],[L('flop','g','check',0,800),L('flop','c','bet',264,800),L('flop','b','fold',0,1064,264),L('flop','g','call',264,1064,264)],['b']),data,500);
+ assert.equal(hu.source,'solver');assert.ok(Math.abs(sum(hu.freqs)-1)<1e-6);
+});

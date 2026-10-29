@@ -79,6 +79,18 @@ Object.assign(module.exports,{
   note:'SBがリンプ、BBが4BBにレイズ、SBがコール（ポット8BB）。SBが先に打つ。',oopRange:'プリフロップ表のSBのコール',ipRange:'プリフロップ表のBBのレイズ'},
 });
 
+// ---- Three-way pots (2026/10/29): open, a call and the big blind's call. Solved on the flop only (scripts/poker-gto/
+// multiway-solve.cjs); after the flop the pot is shared by equity over the runouts. `order` = postflop order. ----
+const MW={betSizes:[0.33,0.75],raiseSizes:[3],maxRaises:1,allinMaxPot:1.5};
+Object.assign(module.exports,{
+ 'co-btn-bb':{name:'3人・COオープン→BTNコール→BBコール・100BB',short:'CO・BTN・BBの3人',players:3,order:['BB','CO','BTN'],sizes:MW,line:'UTGF HJF CO2.5 BTNC SBF BBC',
+  note:'COが2.5BBでオープン、BTNとBBがコール（ポット8BB）。BB→CO→BTNの順に打つ。'},
+ 'btn-sb-bb':{name:'3人・BTNオープン→SBコール→BBコール・100BB',short:'BTN・SB・BBの3人',players:3,order:['SB','BB','BTN'],sizes:MW,line:'UTGF HJF COF BTN2.5 SBC BBC',
+  note:'BTNが2.5BBでオープン、SBとBBがコール（ポット7.5BB）。SB→BB→BTNの順に打つ。'},
+ 'utg-btn-bb':{name:'3人・UTGオープン→BTNコール→BBコール・100BB',short:'UTG・BTN・BBの3人',players:3,order:['BB','UTG','BTN'],sizes:MW,line:'UTG2.5 HJF COF BTNC SBF BBC',
+  note:'UTGが2.5BBでオープン、BTNとBBがコール（ポット8BB）。BB→UTG→BTNの順に打つ。'},
+});
+
 // ---- Heads-up (2026/10/29): two players dealt in, the button is the SB and acts last after the flop. Ranges from
 // preflop-hu.json along each line; the reference ranges are only for the page text. ----
 const HU_LIMP={betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
