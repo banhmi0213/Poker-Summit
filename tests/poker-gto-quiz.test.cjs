@@ -21,8 +21,9 @@ test('preflop questions: valid cards, options, normalised frequencies, and the h
   assert.equal(q.cards.length,2);assert.notEqual(q.cards[0],q.cards[1]);
   assert.equal(q.options.length,q.freqs.length);assert.equal(q.options.length,q.rangeFreqs.length);
   assert.ok(Math.abs(sum(q.freqs)-1)<1e-9);assert.ok(Math.abs(sum(q.rangeFreqs)-1)<1e-9);
-  const node=preflop.nodes.find(n=>n.player===q.hero&&n.actions.map(a=>a.label).join()===q.options.join()&&q.freqs.every((f,k)=>Math.abs(f-n.strategy[q.handClass][k]/sum(n.strategy[q.handClass]))<1e-9));
-  assert.ok(node,'question matches a chart node');assert.ok(preflopReach(preflop,node)[q.handClass]>0.02,'hero reaches this node with the hand');
+  // Several nodes can share labels and an identical row (e.g. always fold); one of them must be the question's.
+  const nodes=preflop.nodes.filter(n=>n.player===q.hero&&n.actions.map(a=>a.label).join()===q.options.join()&&q.freqs.every((f,k)=>Math.abs(f-n.strategy[q.handClass][k]/sum(n.strategy[q.handClass]))<1e-9));
+  assert.ok(nodes.length,'question matches a chart node');assert.ok(nodes.some(node=>preflopReach(preflop,node)[q.handClass]>0.02),'hero reaches this node with the hand');
   for(let c=0;c<q.options.length;c++){const g=gradeQuiz(q,c),lines=explainQuiz(q,g);assert.ok(lines.length>=3);assert.ok(lines.every(l=>!/undefined|NaN/.test(l)),lines.join('\n'));}
  }
 });

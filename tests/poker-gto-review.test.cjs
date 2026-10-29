@@ -146,3 +146,17 @@ test('6-max: folded to the small blind, a limp and the big blind\'s check are on
  assert.equal(pre.source,'preflop');assert.ok(pre.options.some(o=>o.kind==='call'),'limp is an option');assert.notEqual(pre.played,null);
  const bb=reviewRanges(hand,data,300).find(o=>o.index===4);assert.ok(bb,'the BB check has a range');assert.ok(bb.range.options.some(o=>o.kind==='check'));
 });
+
+test('6-max: a squeeze after an open and a call is on the chart, for the squeezer and the opener',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const c=(rank,suit)=>({rank,suit});
+ const P=(id,seat,you,hole)=>({seatId:id,seat,startStack:200,you,hole});
+ const A=(seatId,type,amount,to,pot)=>({street:'preflop',seatId,type,amount,to,allIn:false,pot});
+ // Six seats: s1 button. Order clockwise s2 SB, s3 BB, s4 UTG, s5 HJ, s6 CO.
+ const base={terms:{bb:2},buttonSeatId:'s1',board:[c(14,'h'),c(7,'d'),c(2,'c')],
+  actions:[A('s2','sb',1,1,3),A('s3','bb',2,2,3),A('s4','fold',0,0,3),A('s5','fold',0,0,3),A('s6','raise',5,5,8),A('s1','call',5,5,13),A('s2','fold',0,1,13),A('s3','raise',22,24,35),A('s6','call',19,24,54),A('s1','fold',0,5,54)]};
+ const sq={...base,handId:'sq1',players:[P('s1',1,false,null),P('s2',2,false,null),P('s3',3,true,[c(14,'s'),c(13,'s')]),P('s4',4,false,null),P('s5',5,false,null),P('s6',6,false,null)]};
+ const pre=reviewGto(sq,data,300).find(r=>r.street==='preflop');assert.equal(pre.source,'preflop',`squeeze judged (${pre.reason??''})`);assert.ok(pre.options.some(o=>/スクイーズ|レイズ/.test(o.text)||o.kind==='raise'));
+ const op={...base,handId:'sq2',players:[P('s1',1,false,null),P('s2',2,false,null),P('s3',3,false,null),P('s4',4,false,null),P('s5',5,false,null),P('s6',6,true,[c(12,'s'),c(12,'h')])]};
+ const rs=reviewGto(op,data,300).filter(r=>r.street==='preflop');assert.equal(rs.length,2);assert.ok(rs.every(r=>r.source==='preflop'),'opener judged facing the squeeze');
+});
