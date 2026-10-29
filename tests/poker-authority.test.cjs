@@ -31,7 +31,11 @@ test('a second competing command for one version fails; receipts are scoped per 
 });
 test('street transitions expose 0/3/4/5 board cards, then reveal only non-folded hands',()=>{
  const h=make();const first=h.snapshot(null);h.act(first.toAct,command(first,{type:'fold'},'fold'));const folded=first.toAct,seen=new Set();
- for(let i=0;i<50;i++){const s=h.snapshot(null);seen.add(s.street);if(s.result){assert.equal(s.result.showdown,true);assert.equal(s.players.find(p=>p.id===folded).hole,null);assert.equal(h.snapshot(folded).players.find(p=>p.id===folded).hole.length,2);assert.ok(s.players.filter(p=>!p.folded).every(p=>p.hole.length===2));break;}
+ for(let i=0;i<50;i++){const s=h.snapshot(null);seen.add(s.street);if(s.result){assert.equal(s.result.showdown,true);assert.equal(s.players.find(p=>p.id===folded).hole,null);assert.equal(h.snapshot(folded).players.find(p=>p.id===folded).hole.length,2);// Only the winner and the second-best hand (or only the players who chop) are turned face up; the rest muck.
+ const live=s.players.filter(p=>!p.folded),win=s.result.winners;assert.ok(win.every(id=>s.players.find(p=>p.id===id).hole.length===2));
+ if(!live.some(p=>p.allIn)){const shown=live.filter(p=>p.hole!==null).map(p=>p.id);if(win.length>1)assert.deepEqual(shown.sort(),[...win].sort());else assert.ok(shown.length>=Math.min(2,live.length)&&shown.length<=live.length);
+  for(const p of live.filter(p=>p.hole===null))assert.equal(h.snapshot(p.id).players.find(x=>x.id===p.id).hole.length,2,'a mucked player still sees their own cards');}
+ break;}
  assert.equal(s.board.length,{preflop:0,flop:3,turn:4,river:5}[s.street]);assert.ok(s.players.every(p=>p.hole===null));const v=h.snapshot(s.toAct);h.act(s.toAct,command(s,passive(v),'p'+i));conserved(h.snapshot(null),6000);}
  assert.deepEqual([...seen],['preflop','flop','turn','river','showdown']);
 });

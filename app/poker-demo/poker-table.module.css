@@ -1202,3 +1202,11 @@
 .bankCards.clockButton.clockButton{appearance:none;margin-left:4px;padding:0 6px;border:1px solid #f3c66399;border-radius:999px;background:#f3c66324;color:#f3c663;font:inherit;font-size:11px;font-weight:800;line-height:16px;min-height:0;min-width:0;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:clockPulse 1.2s ease-in-out infinite}
 .bankCards.clockButton.clockButton:active{transform:scale(.94)}
 @keyframes clockPulse{0%,100%{box-shadow:0 0 0 0 #f3c66300}50%{box-shadow:0 0 0 3px #f3c66355}}
+/* Owner 2026/10/29: an empty seat shows only its ＋ button, no name-plate frame. */
+.demoShell .table .seat[data-empty-seat]>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){background:none;border:0;box-shadow:none}
+.demoShell .table .seat[data-empty-seat]>small{visibility:hidden}
+/* Owner 2026/10/29: a stamp is drawn in front of every card on the table. */
+.demoShell .table [data-has-stamp]{z-index:40}
+/* Only the seat group is raised: inside your own seat the avatar stays under your cards (owner 2026/10/29: 一瞬アイコンが上になって戻る). */
+/* Owner 2026/10/29 (設定枠小さ過ぎる): bet-size boxes are text inputs now; give them the same size as before. */
+.menuFields input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;padding:6px 10px;border:1px solid #a1854c;border-radius:6px;color:#f5deac;background:#292116;font:inherit;font-size:16px;text-align:center}

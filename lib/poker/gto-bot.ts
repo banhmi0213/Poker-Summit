@@ -10,6 +10,7 @@ import type {Card} from './engine';
 import type {BettingAction} from './betting';
 import {decideCpuAction,type CpuStyle} from './cpu-strategy';
 import {PostflopSolver,NO_CARDS,dealCard,type ActNode,type Node,type Combo} from './postflop-solver';
+import {MultiwaySolver,type MActNode,type MNode} from './multiway-solver';
 import {classOf} from './solver-view';
 import {canonicalFlop,nearestFlop} from './flop-subset';
 import type {FlopData,FlopNode} from './gto-spots';
@@ -20,7 +21,8 @@ export type Street='preflop'|'flop'|'turn'|'river';
 export type LoggedAction={street:Street;id:string;type:'fold'|'check'|'call'|'bet'|'raise';to:number;allIn:boolean;potBefore:number;currentBetBefore:number;committedBefore:number};
 export type PreflopNode={id:number;player:Pos;history:string;kind:string;actions:{kind:string;to?:number}[];strategy:Record<string,number[]>};
 export type PreflopData={nodes:PreflopNode[]};
-export type GtoData={preflop:PreflopData;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null};
+/** preflopHu (2026/10/29): the heads-up chart (public/poker-gto/preflop-hu.json), used when only two players are dealt in. */
+export type GtoData={preflop:PreflopData;preflopHu?:PreflopData;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null};
 export type GtoView={
  handKey:string;bb:number;hero:string;hole:readonly Card[];board:readonly Card[];
  /** Position label of every player dealt in (BTN/SB/BB/UTG/HJ/CO; heads-up: button = SB). */
@@ -39,7 +41,7 @@ export type GtoDecision={action:BettingAction;source:'preflop'|'flop'|'solver'|'
 const SUITS='cdhs';
 const code=(c:Card)=>(c.rank-2)*4+SUITS.indexOf(c.suit);
 const key2=(a:number,b:number)=>a<b?a*52+b:b*52+a;
-const POST_ORDER:Pos[]=['SB','BB','UTG','HJ','CO','BTN'];
+const POST_ORDER:Pos[]=['SB','BB','UTG','HJ','CO','BTN'],HU_POST_ORDER:Pos[]=['BB','SB'];
 /** The fallback CPU: strong regular, rarely bluffs. */
 const EXPERT:CpuStyle={name:'GTO補助',looseness:0.95,aggression:1.2,bluff:0.1};
 
@@ -51,15 +53,16 @@ function parseHistory(h:string):Tok[]{return h.split(' ').filter(Boolean).map(t=
 function keyOf(toks:readonly Tok[],next:Pos){let raises=0;const out:string[]=[];for(const t of toks){if(t.kind==='F'&&raises>=2)continue;if(t.kind==='R')raises++;out.push(t.pos+t.kind);}return out.join(' ')+'>'+next;}
 const chartCache=new WeakMap<PreflopData,Map<string,PreflopNode>>();
 function chart(data:PreflopData){let m=chartCache.get(data);if(!m){m=new Map();for(const n of data.nodes)m.set(keyOf(parseHistory(n.history),n.player),n);chartCache.set(data,m);}return m;}
-function preflopToks(v:GtoView):Tok[]{
- // Seats missing at a short-handed table count as folds in front of the action, as the 6-max chart expects.
- const present=new Set(Object.values(v.positions)),missing=(['UTG','HJ','CO','BTN'] as Pos[]).filter(p=>!present.has(p)).map(pos=>({pos,kind:'F' as const,to:0}));
+function preflopToks(v:GtoView,hu=false):Tok[]{
+ // Seats missing at a short-handed table count as folds in front of the action, as the 6-max chart expects
+ // (not heads-up: that chart has only SB and BB).
+ const present=new Set(Object.values(v.positions)),missing=hu?[]:(['UTG','HJ','CO','BTN'] as Pos[]).filter(p=>!present.has(p)).map(pos=>({pos,kind:'F' as const,to:0}));
  return [...missing,...v.log.filter(a=>a.street==='preflop').map(a=>({pos:v.positions[a.id],kind:(a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R') as Tok['kind'],to:a.to/v.bb}))];
 }
 /** Index of the chart action that best matches what was done. */
 function chartIndex(node:PreflopNode,t:Tok):number{
  if(t.kind==='F')return node.actions.findIndex(a=>a.kind==='fold');
- if(t.kind==='C')return node.actions.findIndex(a=>a.kind==='call');
+ if(t.kind==='C')return node.actions.findIndex(a=>a.kind==='call'||a.kind==='check');
  let best=-1,d=Infinity;node.actions.forEach((a,i)=>{if(a.kind!=='raise'&&a.kind!=='allin')return;const x=Math.abs((a.to??100)-t.to);if(x<d){d=x;best=i;}});return best;
 }
 
@@ -87,6 +90,8 @@ function scale(w:Float64Array,f:(a:number,b:number)=>number){for(let a=0;a<52;a+
 // ---------- spots ----------
 function spotFor(v:GtoView,toks:Tok[],pair:[string,string]):string|null{
  const raises=toks.filter(t=>t.kind==='R'),open=raises[0]?.pos,low=(p:string)=>p.toLowerCase();
+ // Small blind limped (2026/10/29): limped pot, or the BB raised and the SB called.
+ if(toks.some(t=>t.pos==='SB'&&t.kind==='C')&&(!open||open==='BB'))return raises.length===0?'sb-limp':raises.length===1?'sb-iso':'sb-limp-3bet';
  const p=pair.map(id=>v.positions[id]);if(!open)return null;
  const other=p.find(x=>x!==open);if(!other)return null;
  if(raises.length===1){
@@ -100,9 +105,22 @@ function spotFor(v:GtoView,toks:Tok[],pair:[string,string]):string|null{
  }
  return 'btn-bb-4bet';
 }
-const POT_TYPE:Record<string,string[]>={srp:['btn-bb','co-bb','hj-bb','utg-bb','sb-bb','co-btn','utg-btn'],'3bet':['btn-bb-3bet','co-bb-3bet','utg-bb-3bet','btn-sb-3bet','co-btn-3bet'],'4bet':['btn-bb-4bet']};
+/** Heads-up spots (2026/10/29). BB acts first after the flop, as in BTN vs BB, so until a heads-up flop is computed the
+ * BTN-vs-BB data of the same pot type stands in (the review says so). Limped pots have no stand-in. */
+function huSpotFor(toks:Tok[]):string{
+ const raises=toks.filter(t=>t.kind==='R').length,limped=toks[0]?.kind==='C';
+ if(raises===0)return 'hu-limp';
+ if(raises===1)return 'hu-srp';// open-call, or limp then the BB's raise called
+ if(raises===2&&!limped)return 'hu-3bet';
+ return limped&&raises===2?'hu-3bet':'hu-4bet';
+}
+const MW_SPOTS=new Set(['co-btn-bb','utg-btn-bb','btn-sb-bb']);
+const POT_TYPE:Record<string,string[]>={srp:['btn-bb','co-bb','hj-bb','utg-bb','sb-bb','co-btn','utg-btn'],'3bet':['btn-bb-3bet','co-bb-3bet','utg-bb-3bet','btn-sb-3bet','co-btn-3bet'],'4bet':['btn-bb-4bet'],
+ 'co-btn-bb':['co-btn-bb','utg-btn-bb','btn-sb-bb'],'utg-btn-bb':['utg-btn-bb','co-btn-bb','btn-sb-bb'],'btn-sb-bb':['btn-sb-bb','co-btn-bb','utg-btn-bb'],
+ 'sb-limp':['sb-limp'],'sb-iso':['sb-iso'],'sb-limp-3bet':['sb-limp-3bet'],
+ 'hu-srp':['hu-srp','btn-bb'],'hu-limp':['hu-limp'],'hu-3bet':['hu-3bet','btn-bb-3bet'],'hu-4bet':['hu-4bet','btn-bb-4bet']};
 function flopFile(data:GtoData,spot:string,flop:string):FlopData|null{
- const type=Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
+ const type=spot.startsWith('hu-')||spot.startsWith('sb-limp')||spot==='sb-iso'||MW_SPOTS.has(spot)?spot:Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
  for(const s of [spot,...POT_TYPE[type].filter(x=>x!==spot)]){
   const list=data.flopIndex[s];if(!list?.length)continue;
   const canon=canonicalFlop(flop),exact=list.find(f=>canonicalFlop(f)===canon);
@@ -161,41 +179,65 @@ function solverIndex(node:ActNode,a:LoggedAction,bb:number):number{
 /** One option at the decision point; `to` is the street total in chips (null: from the label). */
 export type GtoOption={kind:string;label:string;to:number|null};
 /** The model's mixed strategy for the hero's hand at this decision. `indexOf` maps a played action onto an option (-1: none). */
-export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number}|{source:'fallback';reason:string};
+/** The whole range at the hero's decision (2026/10/29: 振り返りでレンジ表全体を表示): per hand class, how often the hero
+ * arrives here with it (0〜1, relative) and the action shares. */
+export type GtoGrid=Record<string,{reach:number;freqs:number[]}>;
+export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number;grid?:GtoGrid;
+ /** Set when the flop data is for a nearby precomputed flop, not the real one. */
+ nearFlop?:string;
+ /** Set when another spot's flop data stands in (heads-up spots not computed yet). */
+ proxySpot?:string}|{source:'fallback';reason:string};
 export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,budgetMs=5000):GtoDecision{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {action:fallback(v,random),source:'fallback',reason:s.reason};
  try{const o=s.options[sample(s.freqs,random)];return {action:toTable(v,o.kind,o.label,o.to),source:s.source};}
  catch(e){return {action:fallback(v,random),source:'fallback',reason:'error:'+(e instanceof Error?e.message:String(e)).slice(0,60)};}
 }
-export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
+/** rangeOnly (2026/10/29: 相手のアクションのレンジ表): no hole cards needed; freqs are zeros and only the grid is meaningful. */
+export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false):GtoStrategy{
  const fb=(reason='other'):GtoStrategy=>({source:'fallback',reason});
  try{
-  if(v.hole.length!==2)return fb('no-cards');
+  const noHole=v.hole.length!==2;if(noHole&&!rangeOnly)return fb('no-cards');
   const me=v.players.find(p=>p.id===v.hero);if(!me)return fb('no-hero');
   const effective=Math.min(...Object.values(v.startStacks))/v.bb;
   // The chart is solved for 100BB; very short or very deep tables use the equity CPU (push/fold when short).
   if(effective<40||effective>250)return fb('stack-depth');
-  const toks=preflopToks(v),ranges=trackPreflop(v,data,toks);
-  if(v.board.length===0)return preflopStrategy(v,data,toks)??fb('preflop-off-chart');
-  const live=v.players.filter(p=>!p.folded);if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
-  const pair=[...live].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id) as [string,string];
-  const spot=spotFor(v,toks,pair);if(!spot)return fb('no-spot');
+  // Heads-up (only two dealt in): the heads-up chart and spots; the button (SB) acts last after the flop.
+  const hu=Object.keys(v.positions).length===2&&!!data.preflopHu;if(hu)data={...data,preflop:data.preflopHu!};
+  const toks=preflopToks(v,hu),ranges=trackPreflop(v,data,toks);
+  if(v.board.length===0)return preflopStrategy(v,data,toks,noHole)??fb('preflop-off-chart');
+  const live=v.players.filter(p=>!p.folded);
+  // Three players saw the flop (2026/10/29): three-way flop data, then a live three-way solve or, after a fold, heads-up.
+  const foldedPre=new Set(v.log.filter(a=>a.street==='preflop'&&a.type==='fold').map(a=>a.id)),preLive=v.players.filter(p=>!foldedPre.has(p.id));
+  let multi:{spot:string;order:string[];file:FlopData|null}|null=null;
+  if(!hu&&preLive.length===3){
+   if(!ranges)return fb('preflop-off-chart');
+   const order=[...preLive].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id);
+   const spot3=multiSpotFor(v,toks),flopText3=v.board.slice(0,3).map(c=>'23456789TJQKA'[c.rank-2]+c.suit).join('');
+   multi={spot:spot3,order,file:flopFile(data,spot3,flopText3)};
+   const r=multiwayStrategy(v,multi,ranges,noHole,budgetMs,flopText3);if(r)return r;
+  }
+  if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
+  const order=hu?HU_POST_ORDER:POST_ORDER,pair=[...live].sort((a,b)=>order.indexOf(v.positions[a.id])-order.indexOf(v.positions[b.id])).map(p=>p.id) as [string,string];
+  const spot=multi?multi.spot:hu?huSpotFor(toks):spotFor(v,toks,pair);if(!spot)return fb('no-spot');
   const flopActs=v.log.filter(a=>a.street==='flop');
   const flopText=v.board.slice(0,3).map(c=>'23456789TJQKA'[c.rank-2]+c.suit).join('');
-  const file=flopFile(data,spot,flopText);
+  const file=multi?null:flopFile(data,spot,flopText);
+  if(v.board.length===3&&multi)return fb('flop-off-tree');
   if(v.board.length===3){
    if(!file)return fb('no-flop-data');
    let node:FlopNode|undefined=file.nodes[0];
    for(const a of flopActs){if(!node)break;const i=flopIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
    if(!node||node.player!==pair.indexOf(v.hero))return fb('flop-off-tree');
-   const row=flopRow(node,code(v.hole[0]),code(v.hole[1]),v.board.slice(0,3).map(code));if(!row)return fb('flop-class-missing');
+   const row=noHole?[0,...node.actions.map(()=>0)]:flopRow(node,code(v.hole[0]),code(v.hole[1]),v.board.slice(0,3).map(code));if(!row)return fb('flop-class-missing');
    const at=node;
-   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a)};
+   const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
+   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a),grid:normalizeGrid(grid),nearFlop:canonicalFlop(file.flop)===canonicalFlop(flopText)?undefined:file.flop,proxySpot:file.spot.id&&file.spot.id!==spot?file.spot.id:undefined};
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
   if(file)trackFlop(file,flopActs,ranges,pair,v.board.slice(0,3).map(code));
-  const board=v.board.map(code),turnKey=`${v.handKey}|${board.slice(0,4).join(',')}`;
+  if(multi?.file)trackMultiFlop(multi.file,flopActs,ranges,multi.order);
+  const board=v.board.map(code),turnKey=`${v.handKey}|${noHole?'':v.hero}|${board.slice(0,4).join(',')}`;
   let s=solves.get(turnKey);
   const turnActs=v.log.filter(a=>a.street==='turn'),riverActs=v.log.filter(a=>a.street==='river');
   const potAt=(street:Street)=>{const first=v.log.find(a=>a.street===street);return first?first.potBefore:potNow(v);};
@@ -205,18 +247,83 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000):GtoStrategy{
   let at=s&&walk(s,v.board.length===4?turnActs:[...turnActs,...riverActs],v.board.length===5?board[4]:null,'turn');
   if(!at&&v.board.length===5){
    // Off the turn tree (or no turn solve): narrow by the turn solve when possible, then solve the river alone.
-   const riverKey=`${v.handKey}|${board.join(',')}`;let r=solves.get(riverKey);
+   const riverKey=`${v.handKey}|${noHole?'':v.hero}|${board.join(',')}`;let r=solves.get(riverKey);
    if(!r){if(s)trackSolver(s,turnActs,null,ranges);r=solve(v,board,ranges,pair,potAt('river'),spot,Math.min(budgetMs,2000));remember(riverKey,r);}
    at=walk(r,riverActs,null,'river');s=r;
   }
   if(!at||!s)return fb('solver-off-tree');
-  const player=at.node.player,side=s.solver.sides[player],h=side.keyIndex.get(key2(code(v.hole[0]),code(v.hole[1])));
-  if(pair[player]!==v.hero||h===undefined)return fb('solver-hero-missing');
+  const player=at.node.player,side=s.solver.sides[player],h=noHole?undefined:side.keyIndex.get(key2(code(v.hole[0]),code(v.hole[1])));
+  if(pair[player]!==v.hero||(!noHole&&h===undefined))return fb('solver-hero-missing');
   const st=s.solver.strategy(at.node,true,at.ctx),k=at.node.actions.length,node=at.node,bb=s.bb;
-  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb)};
+  // Per class: average over the combos still in the solve, weighted by the range at the start of the solve.
+  const acc:Record<string,{w:number;f:number[]}>={};
+  for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
+  const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
+  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:h===undefined?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid)};
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
+// ---------- three-way pots (2026/10/29) ----------
+/** Open, a call and the big blind's call: the computed three-way spot closest to this line. */
+function multiSpotFor(v:GtoView,toks:Tok[]):string{
+ const open=toks.find(t=>t.kind==='R')?.pos,caller=toks.find(t=>t.kind==='C'&&t.pos!=='BB')?.pos;
+ if(caller==='SB')return 'btn-sb-bb';
+ if(open==='UTG'||open==='HJ')return 'utg-btn-bb';
+ void v;return 'co-btn-bb';
+}
+function multiIndexOf(node:{actions:{kind:string;label:string;to?:number}[]},a:LoggedAction,bb?:number):number{
+ const kinds=node.actions.map(x=>x.kind);
+ if(a.type==='fold')return kinds.indexOf('fold');if(a.type==='check')return kinds.indexOf('check');if(a.type==='call')return kinds.indexOf('call');
+ if(a.allIn&&kinds.includes('allin'))return kinds.indexOf('allin');
+ if(bb!==undefined){const to=a.to/bb;let best=-1,d=Infinity;node.actions.forEach((x,i)=>{if(x.kind!=='bet'&&x.kind!=='raise'&&x.kind!=='allin')return;const y=Math.abs((x.to??0)-to);if(y<d){d=y;best=i;}});return best;}
+ return flopIndexOf(node as FlopNode,a);
+}
+function trackMultiFlop(file:FlopData,acts:readonly LoggedAction[],ranges:Ranges,order:string[]){
+ let node:FlopNode|undefined=file.nodes[0];
+ for(const a of acts){if(!node)return;const i=multiIndexOf(node,a);if(i<0)return;const w=ranges.get(order[node.player]),cur=node;
+  if(w)scale(w,(x,y)=>{const row=cur.classes[classOf(x,y)];return row?row[1+i]:0;});
+  const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
+}
+const multiSolves=new Map<string,{solver:MultiwaySolver;order:string[];bb:number}>();
+function multiwayStrategy(v:GtoView,multi:{spot:string;order:string[];file:FlopData|null},ranges:Ranges,noHole:boolean,budgetMs:number,flopText:string):GtoStrategy|null{
+ const fb=(reason:string):GtoStrategy=>({source:'fallback',reason}),hi=multi.order.indexOf(v.hero);
+ const flopActs=v.log.filter(a=>a.street==='flop');
+ if(v.board.length===3){
+  if(!multi.file)return fb('no-flop-data');
+  let node:FlopNode|undefined=multi.file.nodes[0];
+  for(const a of flopActs){if(!node)break;const i=multiIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:multi.file.nodes[next];}
+  if(!node||node.player!==hi)return fb('flop-off-tree');
+  const at=node,row=noHole?[0,...at.actions.map(()=>0)]:at.classes[classOf(code(v.hole[0]),code(v.hole[1]))];if(!row)return fb('flop-class-missing');
+  const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
+  return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>multiIndexOf(at,a),grid:normalizeGrid(grid),
+   nearFlop:canonicalFlop(multi.file.flop)===canonicalFlop(flopText)?undefined:multi.file.flop,proxySpot:multi.file.spot.id&&multi.file.spot.id!==multi.spot?multi.file.spot.id:undefined};
+ }
+ // Later streets: only while all three are still in (after a fold the heads-up path takes over).
+ if(v.players.filter(p=>!p.folded).length!==3)return null;
+ if(multi.file)trackMultiFlop(multi.file,flopActs,ranges,multi.order);
+ const street:Street=v.board.length===4?'turn':'river',board=v.board.map(code),acts=v.log.filter(a=>a.street===street);
+ const key=`${v.handKey}|mw|${noHole?'':v.hero}|${board.join(',')}`;let s=multiSolves.get(key);
+ if(!s){
+  const first=v.log.find(a=>a.street===street),pot=(first?first.potBefore:potNow(v))/v.bb;
+  const combosOf3=(id:string)=>{const w=ranges.get(id)!,out:Combo[]=[];for(let a=0;a<52;a++)for(let b=a+1;b<52;b++){const x=w[a*52+b];if(x>1e-6&&!board.includes(a)&&!board.includes(b))out.push({c1:a,c2:b,weight:x});}return out;};
+  const rs=multi.order.map(combosOf3) as [Combo[],Combo[],Combo[]];
+  if(!noHole&&hi>=0){const hk=key2(code(v.hole[0]),code(v.hole[1]));if(!rs[hi].some(c=>key2(c.c1,c.c2)===hk))rs[hi].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});}
+  const stacks=multi.order.map(id=>{const p=v.players.find(x=>x.id===id)!;return (v.startStacks[id]-p.totalCommitted+p.committed)/v.bb;});
+  const solver=new MultiwaySolver({board,pot,stack:Math.max(0.5,Math.min(...stacks)),ranges:rs,betSizes:[0.5],raiseSizes:[3],maxRaises:1,allinMaxPot:1.5,depthLimit:true});
+  const t=Date.now();while(Date.now()-t<budgetMs&&solver.iterations<200)solver.run(1);
+  s={solver,order:multi.order,bb:v.bb};multiSolves.set(key,s);while(multiSolves.size>2)multiSolves.delete(multiSolves.keys().next().value as string);
+ }
+ let node:MNode=s.solver.tree;
+ for(const a of acts){if(node.kind!=='act')return fb('solver-off-tree');const i=multiIndexOf(node,a,1);if(i<0)return fb('solver-off-tree');node=node.children[i];}
+ if(node.kind!=='act'||node.player!==hi)return fb('solver-off-tree');
+ const at:MActNode=node,side=s.solver.sides[hi],k=at.actions.length,st=s.solver.strategy(at,true);
+ let h=-1;if(!noHole){const a=code(v.hole[0]),b=code(v.hole[1]);for(let i=0;i<side.n;i++)if((side.c1[i]===a&&side.c2[i]===b)||(side.c1[i]===b&&side.c2[i]===a)){h=i;break;}if(h<0)return fb('solver-hero-missing');}
+ const acc:Record<string,{w:number;f:number[]}>={};
+ for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
+ const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
+ const bb=v.bb;
+ return {source:'solver',options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>multiIndexOf(at,a,bb),grid:normalizeGrid(grid)};
+}
 function potNow(v:GtoView){return v.players.reduce((s,p)=>s+p.totalCommitted,0);}
 function sample(p:number[],random:()=>number){const t=p.reduce((s,x)=>s+Math.max(0,x),0);if(!(t>0))return 0;let r=random()*t;for(let i=0;i<p.length;i++){r-=Math.max(0,p[i]);if(r<=0)return i;}return p.length-1;}
 
@@ -232,14 +339,27 @@ function nodeFor(data:GtoData,toks:readonly Tok[],pos:Pos):{node:PreflopNode;noC
  void mine;
  return null;
 }
-function preflopStrategy(v:GtoView,data:GtoData,toks:Tok[]):GtoStrategy|null{
+function preflopStrategy(v:GtoView,data:GtoData,toks:Tok[],noHole=false):GtoStrategy|null{
  const found=nodeFor(data,toks,v.positions[v.hero]);if(!found)return null;
  if(found==='fold')return {source:'preflop',options:[{kind:'fold',label:'',to:null}],freqs:[1],indexOf:a=>a.type==='fold'||a.type==='check'?0:-1};
- const node=found.node,cls=classOf(code(v.hole[0]),code(v.hole[1])),row0=node.strategy[cls];if(!row0)return null;
+ const node=found.node,row0=noHole?node.actions.map(()=>0):node.strategy[classOf(code(v.hole[0]),code(v.hole[1]))];if(!row0)return null;
  const row=found.noCall?row0.map((p,i)=>node.actions[i].kind==='call'?0:node.actions[i].kind==='fold'?p+(row0[node.actions.findIndex(a=>a.kind==='call')]??0):p):row0;
  const pos=v.positions[v.hero];
  return {source:'preflop',options:node.actions.map(a=>({kind:a.kind,label:'',to:a.kind==='allin'?Infinity:(a.to??0)*v.bb})),freqs:[...row],
-  indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb})};
+  indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb}),
+  grid:preflopGrid(data.preflop,node,found.noCall)};
+}
+/** Combos per hand class before card removal (reach is per combo, so pairs and offsuit hands compare fairly). */
+const combosOf=(cls:string)=>cls.length===2?6:cls[2]==='s'?4:12;
+/** Reach scaled so the most frequent class is 1 (cells are dimmed by it). */
+function normalizeGrid(g:GtoGrid):GtoGrid{const m=Math.max(0,...Object.values(g).map(x=>x.reach));if(!(m>0))return g;for(const x of Object.values(g))x.reach/=m;return g;}
+function preflopGrid(data:PreflopData,node:PreflopNode,noCall:boolean):GtoGrid{
+ const reach=preflopReach(data,node),call=node.actions.findIndex(a=>a.kind==='call'),fold=node.actions.findIndex(a=>a.kind==='fold'),grid:GtoGrid={};
+ for(const [cls,row] of Object.entries(node.strategy)){
+  const freqs=noCall&&call>=0&&fold>=0?row.map((p,i)=>i===call?0:i===fold?p+row[call]:p):[...row];
+  grid[cls]={reach:reach[cls]??1,freqs};
+ }
+ return normalizeGrid(grid);
 }
 /** Each player's range after their preflop actions (null when the hand left the chart). */
 function trackPreflop(v:GtoView,data:GtoData,toks:Tok[]):Ranges|null{
@@ -272,8 +392,8 @@ function trackSolver(s:Solve,acts:readonly LoggedAction[],river:number|null,rang
 function solve(v:GtoView,board:number[],ranges:Ranges,pair:[string,string],potChips:number,spot:string,budgetMs:number):Solve{
  const combos=(id:string)=>{const w=ranges.get(id)!,out:Combo[]=[];for(let a=0;a<52;a++)for(let b=a+1;b<52;b++){const x=w[a*52+b];if(x>1e-6&&!board.includes(a)&&!board.includes(b))out.push({c1:a,c2:b,weight:x});}return out;};
  // The hero's real combo must exist in its own range for the solver to give it a strategy.
- const heroIdx=pair.indexOf(v.hero),rs:[Combo[],Combo[]]=[combos(pair[0]),combos(pair[1])],hk=key2(code(v.hole[0]),code(v.hole[1]));
- if(heroIdx>=0&&!rs[heroIdx].some(c=>key2(c.c1,c.c2)===hk))rs[heroIdx].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});
+ const heroIdx=pair.indexOf(v.hero),rs:[Combo[],Combo[]]=[combos(pair[0]),combos(pair[1])],hk=v.hole.length===2?key2(code(v.hole[0]),code(v.hole[1])):-1;
+ if(heroIdx>=0&&hk>=0&&!rs[heroIdx].some(c=>key2(c.c1,c.c2)===hk))rs[heroIdx].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});
  const stacks=pair.map(id=>{const p=v.players.find(x=>x.id===id)!;return (v.startStacks[id]-p.totalCommitted+p.committed)/v.bb;});
  const deep=spot.endsWith('4bet')?{betSizes:[0.5],river:[0.75]}:{betSizes:[0.33,0.75],river:[0.5,1]};
  const solver=new PostflopSolver({board,pot:potChips/v.bb,stack:Math.max(0.5,Math.min(...stacks)),ranges:rs,

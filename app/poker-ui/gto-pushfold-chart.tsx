@@ -10,7 +10,7 @@ const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o'
 /** 13x13 starting-hand grid: suited above the diagonal, offsuit below, pairs on it. */
 function Grid({freq,caption}:{freq:Record<string,number>;caption:string}){
  return <table className={styles.grid} aria-label={caption}><caption>{caption}</caption><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),f=freq[l]??0;
-  return <td key={j} data-on={f>=0.99?'all':f>=0.01?'mix':'none'} style={f>=0.01&&f<0.99?{background:`linear-gradient(90deg,var(--gto-on) ${Math.round(f*100)}%,var(--gto-off) ${Math.round(f*100)}%)`}:undefined} title={`${l}：${Math.round(f*100)}%`}>{l}</td>;})}</tr>)}</tbody></table>;
+  return <td key={j} data-on={f>=0.99?'all':f>=0.01?'mix':'fold'} style={f>=0.01&&f<0.99?{background:`linear-gradient(90deg,var(--gto-on) ${Math.round(f*100)}%,var(--gto-fold) ${Math.round(f*100)}%)`}:undefined} title={`${l}：${Math.round(f*100)}%`}>{l}</td>;})}</tr>)}</tbody></table>;
 }
 export function PushFoldChart(){
  const stacks=data.stacks.map(String);

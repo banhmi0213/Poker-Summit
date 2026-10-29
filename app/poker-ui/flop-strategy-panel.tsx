@@ -3,13 +3,14 @@ import {useEffect,useState} from 'react';
 import {GTO_FLOPS,GTO_SPOTS,loadFlop,loadFlopIndex,type FlopData} from '@/lib/poker/gto-spots';
 import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
+import {strategyColor} from './strategy-colors';
+import {StrategyLegend} from './strategy-legend';
 
-/** Precomputed flop solutions for four spots × 95 representative flops (public/poker-gto/flops/<spot>/<flop>.json). */
+/** Precomputed flop solutions for 13 spots × up to 200 representative flops (2026/10/29: 95 → 200; the list shows only computed ones) (public/poker-gto/flops/<spot>/<flop>.json). */
 export const FLOPS=GTO_FLOPS;
 const R='AKQJT98765432',SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
 const flopText=(f:string)=>[0,2,4].map(i=>f[i]+SUIT[f[i+1]]).join(' ');
-const COLORS:Record<string,string>={check:'#4f8f74',call:'#4f8f74',fold:'#5a6b78',bet:'#d9b368',raise:'#d0784f',allin:'#b04a4a'};
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
@@ -32,7 +33,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
-   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
+   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.filter(f=>computed(f)||f===flop).map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
    <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
    <button type="button" onClick={lookup}>近いフロップを表示</button>
   </div>
@@ -49,10 +50,10 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
    </nav>
    <p><b>{who(node.player)}の番</b>：全体では {node.actions.map((a,i)=>`${a.label} ${pct(node.total[i])}`).join('・')}</p>
    <div className={styles.path}>{node.actions.map((a,i)=>node.children[i]!==null?<button key={i} type="button" onClick={()=>setTrail(t=>[...t,node.children[i]!])}>「{a.label}」の後を見る</button>:null)}</div>
-   <table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
-    let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${COLORS[a.kind]} ${from}% ${acc}%`;}).join(',');
+   <StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
+    let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
     return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}`}>{l}</td>;})}</tr>)}</tbody></table>
-   <p className={styles.legend}>{node.actions.map((a,i)=><em key={i} className={styles.key}><i style={{background:COLORS[a.kind]}}/>{a.label}</em>)} 色の割合＝その手でその打ち方をする割合。灰色の枠はこの場面に来ない手。</p>
+   
   </>}
  </div>;
 }

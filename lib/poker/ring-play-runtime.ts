@@ -46,6 +46,7 @@ export class SupabaseRingPlayStore extends SupabaseRingStore implements RingPlay
  override async begin(r:Parameters<RingStore['begin']>[0]){return Number(await this.playRPC('poker_ring_play_begin',{p_table:r.tableId,p_hand:r.handId,p_roster:r.roster,p_terms:r.terms,p_sealed:r.sealed,p_result:r.result}));}
  override async write(r:Parameters<RingStore['write']>[0]){this.#loads.clear();return Number(await this.playRPC(this.actorReservation?'poker_ring_play_write_v2':'poker_ring_play_write',{p_hand:r.handId,p_expected:r.expected,p_write:r.writeId,p_sealed:r.sealed,p_result:r.result,p_timeout:this.timeout,p_from:this.from,...(this.actorReservation?{p_actor:this.actorReservation}:{})}));}
 }
+export type RingTableChange={table:string;meta:RingPlayMeta;owner:RingHandOwner|null};
 export function ringPresentation(hand:ReturnType<RingHandOwner['snapshot']>,meta:RingPlayMeta):RingPlayView['hand']{
  const state=structuredClone(hand);if(!state.result)return state;
  const elapsed=Math.max(0,time(meta.now)-time(meta.completedAt)),from=meta.runoutFrom??0;
@@ -64,6 +65,8 @@ export class RingPlayRuntime {
  #reads=new Map<string,Promise<{meta:RingPlayMeta;owner:RingHandOwner|null}>>();
  #pings=new Map<string,{at:number;pending:Promise<void>|null}>();
  #timer:ReturnType<typeof setInterval>|null=null;#scan:Promise<void>|null=null;#closed=false;#started=false;
+ /** Live pushes (owner 2026/10/29: 相手の動きを早く映す): the last committed table state and who listens to it. */
+ #listeners=new Map<string,Set<(change:RingTableChange)=>void>>();#published=new Map<string,{fingerprint:string;metaPrint:string;change:RingTableChange}>();
  constructor(private options:{store:()=>RingPlayStore;keys:KeyRing;turnMs?:number;maxTables?:number;diagnostic?:(event:{type:string})=>void;metric?:RingMetricSink}){}
  private get limit(){return this.options.maxTables??128;}
  private get turnMs(){return this.options.turnMs??RING_TURN_MS;}
@@ -114,7 +117,32 @@ export class RingPlayRuntime {
   }
   return meta;
  }
- async tick(table:string){this.#reads.delete(table);return this.serial(table,()=>this.advance(table,this.options.store()),'tick');}
+ /** Listen to one table. Called with every committed change (moves, timeouts, new hands, time banks). */
+ subscribe(table:string,listener:(change:RingTableChange)=>void){let set=this.#listeners.get(table);if(!set){set=new Set();this.#listeners.set(table,set);}set.add(listener);
+  return ()=>{const now=this.#listeners.get(table);if(!now)return;now.delete(listener);if(!now.size){this.#listeners.delete(table);this.#published.delete(table);}};}
+ /** The last change already sent for a table (for a socket that has just subscribed). */
+ latest(table:string){return this.#published.get(table)?.change??null;}
+ private async publish(table:string,store:RingPlayStore,meta:RingPlayMeta,owner?:RingHandOwner|null){
+  const listeners=this.#listeners.get(table);if(!listeners?.size)return;
+  const {now:_now,...stable}=meta,metaPrint=JSON.stringify(stable),prior=this.#published.get(table);
+  // A periodic read with nothing new costs nothing; anything else is compared with the hand's own version too.
+  if(owner===undefined&&prior?.metaPrint===metaPrint)return;
+  try{if(owner===undefined||(owner&&meta.lastHandId!==null&&owner.snapshot(null).handId!==meta.lastHandId))owner=meta.lastHandId?await RingHandOwner.restore(store,meta.lastHandId,this.options.keys):null;}catch{return;}
+  const fingerprint=metaPrint+'|'+(owner?owner.snapshot(null).handId+':'+owner.version:'');if(prior?.fingerprint===fingerprint){prior.metaPrint=metaPrint;return;}
+  const change:RingTableChange={table,meta,owner:owner??null};this.#published.set(table,{fingerprint,metaPrint,change});
+  for(const listener of [...listeners]){try{listener(change);}catch{/* a broken socket never blocks the table */}}
+ }
+ /** The private view one member gets, from a published change (no database call). */
+ viewFor(change:RingTableChange,member:string,playEnabled:boolean):RingPlayView|null{
+  const seat=change.meta.context.seats.find(p=>p.memberId===member);
+  if(seat&&(playEnabled||change.owner?.ownsReservation(member,seat.reservationId)))return this.present(change.meta,change.owner,member);
+  return this.watchView(change.meta,change.owner);
+ }
+ private watchView(meta:RingPlayMeta,owner:RingHandOwner|null):RingPlayView|null{
+  if(!owner||!meta.context.published||!meta.lastHandId||(!meta.context.activeHandId&&(!meta.completedAt||time(meta.now)-time(meta.completedAt)>15000)))return null;
+  const hand=owner.snapshot(null);return {turnDurationMs:this.turnMs+(meta.bankRevision===owner.version?20000:0)+ticketMs(meta,owner.version),spectating:true,viewerSeat:hand.players[0].id,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+this.turnMs+(meta.bankRevision===owner.version?20000:0)+ticketMs(meta,owner.version),hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};
+ }
+ async tick(table:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store);await this.publish(table,store,meta);return meta;},'tick');}
  private async ping(table:string,member:string){
   if(this.#closed)throw Error('Ring runtime closed');if(!this.#tables.has(table)){if(this.#tables.size>=this.limit)throw Error('Ring capacity reached');this.#tables.add(table);}
   const id=table+':'+member,now=Date.now(),prior=this.#pings.get(id);
@@ -137,13 +165,13 @@ export class RingPlayRuntime {
  async view(table:string,member:string):Promise<RingPlayView|null>{await this.ping(table,member);
   // Share only an in-flight committed read. Each viewer gets a separate private
   // snapshot; mutations invalidate the batch before joining the table queue.
-  let read=this.#reads.get(table);if(!read){read=this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store);return {meta,owner:meta.lastHandId?await RingHandOwner.restore(store,meta.lastHandId,this.options.keys):null};});this.#reads.set(table,read);}
+  let read=this.#reads.get(table);if(!read){read=this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store),owner=meta.lastHandId?await RingHandOwner.restore(store,meta.lastHandId,this.options.keys):null;await this.publish(table,store,meta,owner);return {meta,owner};});this.#reads.set(table,read);}
   try{const {meta,owner}=await read;return this.present(meta,owner,member);}finally{if(this.#reads.get(table)===read)this.#reads.delete(table);}
  }
- async watch(table:string):Promise<RingPlayView|null>{return this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store);if(!meta.context.published||!meta.lastHandId||(!meta.context.activeHandId&&(!meta.completedAt||time(meta.now)-time(meta.completedAt)>15000)))return null;const owner=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys),hand=owner.snapshot(null);return {turnDurationMs:this.turnMs+(meta.bankRevision===owner.version?20000:0)+ticketMs(meta,owner.version),spectating:true,viewerSeat:hand.players[0].id,serverNow:time(meta.now),deadline:hand.result?null:time(meta.changedAt)+this.turnMs+(meta.bankRevision===owner.version?20000:0)+ticketMs(meta,owner.version),hand:ringPresentation(hand,meta),...(hand.result?.showdown?{runout:{from:meta.runoutFrom??0,startedAt:time(meta.completedAt),final:hand}}:{})};},'watch');}
- async ready(member:string,reservation:string,table:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store();await store.ready(member,reservation);await this.advance(table,store);},'ready');}
- async bank(member:string,table:string,reservation:string,hand:string,revision:number,request:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store(),meta=await store.meta(table),owner=await RingHandOwner.restore(store,hand,this.options.keys);if(meta.penalties?.[reservation]?.since)throw new RingAdmissionConflict();if(meta.context.activeHandId!==hand||!meta.context.seats.some(p=>p.memberId===member&&p.reservationId===reservation))throw new RingAdmissionConflict();const prior=meta.bankUsed?.[reservation];if(prior!==request&&(owner.snapshot(member).toAct!=='seat-'+meta.context.seats.find(p=>p.memberId===member)!.seat||owner.snapshot(member).revision!==revision))throw new RingAdmissionConflict();if(!store.bank)throw Error('Timebank unavailable');await store.bank(member,reservation,hand,revision,request);return this.present(await store.meta(table),owner,member);},'bank');}
- async ticketBank(member:string,table:string,reservation:string,hand:string,revision:number,request:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store(),meta=await store.meta(table),owner=await RingHandOwner.restore(store,hand,this.options.keys);if(meta.penalties?.[reservation]?.since)throw new RingAdmissionConflict();if(meta.context.activeHandId!==hand||!meta.context.seats.some(p=>p.memberId===member&&p.reservationId===reservation))throw new RingAdmissionConflict();if((owner.snapshot(member).toAct!=='seat-'+meta.context.seats.find(p=>p.memberId===member)!.seat||owner.snapshot(member).revision!==revision))throw new RingAdmissionConflict();if(!store.ticketBank)throw Error('Timebank unavailable');await store.ticketBank(member,reservation,hand,revision,request);return this.present(await store.meta(table),owner,member);},'ticket-bank');}
+ async watch(table:string):Promise<RingPlayView|null>{return this.serial(table,async()=>{const store=this.options.store(),meta=await this.advance(table,store);if(!meta.context.published||!meta.lastHandId||(!meta.context.activeHandId&&(!meta.completedAt||time(meta.now)-time(meta.completedAt)>15000)))return null;const owner=await RingHandOwner.restore(store,meta.lastHandId,this.options.keys);await this.publish(table,store,meta,owner);return this.watchView(meta,owner);},'watch');}
+ async ready(member:string,reservation:string,table:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store();await store.ready(member,reservation);const meta=await this.advance(table,store);await this.publish(table,store,meta);},'ready');}
+ async bank(member:string,table:string,reservation:string,hand:string,revision:number,request:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store(),meta=await store.meta(table),owner=await RingHandOwner.restore(store,hand,this.options.keys);if(meta.penalties?.[reservation]?.since)throw new RingAdmissionConflict();if(meta.context.activeHandId!==hand||!meta.context.seats.some(p=>p.memberId===member&&p.reservationId===reservation))throw new RingAdmissionConflict();const prior=meta.bankUsed?.[reservation];if(prior!==request&&(owner.snapshot(member).toAct!=='seat-'+meta.context.seats.find(p=>p.memberId===member)!.seat||owner.snapshot(member).revision!==revision))throw new RingAdmissionConflict();if(!store.bank)throw Error('Timebank unavailable');await store.bank(member,reservation,hand,revision,request);const after=await store.meta(table);await this.publish(table,store,after,owner);return this.present(after,owner,member);},'bank');}
+ async ticketBank(member:string,table:string,reservation:string,hand:string,revision:number,request:string){this.#reads.delete(table);return this.serial(table,async()=>{const store=this.options.store(),meta=await store.meta(table),owner=await RingHandOwner.restore(store,hand,this.options.keys);if(meta.penalties?.[reservation]?.since)throw new RingAdmissionConflict();if(meta.context.activeHandId!==hand||!meta.context.seats.some(p=>p.memberId===member&&p.reservationId===reservation))throw new RingAdmissionConflict();if((owner.snapshot(member).toAct!=='seat-'+meta.context.seats.find(p=>p.memberId===member)!.seat||owner.snapshot(member).revision!==revision))throw new RingAdmissionConflict();if(!store.ticketBank)throw Error('Timebank unavailable');await store.ticketBank(member,reservation,hand,revision,request);const after=await store.meta(table);await this.publish(table,store,after,owner);return this.present(after,owner,member);},'ticket-bank');}
  /** Rabbit hunt (ring only): the requester sees the undealt board of the table's last finished hand for one ticket. */
  /** Own hole cards of the table's last finished hand, for showing them (no ticket needed). */
  async ownHole(member:string,table:string,hand:string){return this.serial(table,async()=>{const store=this.options.store(),[meta,saved]=await Promise.all([store.meta(table),store.load(hand)]);if(!saved||saved.tableId!==table||meta.lastHandId!==hand||!saved.seats.some(p=>p.memberId===member))throw new RingAdmissionConflict();const owner=await RingHandOwner.restore(store,hand,this.options.keys),cards=owner.ownHole(member);if(!cards)throw new RingAdmissionConflict();return cards;},'show');}
@@ -156,15 +184,21 @@ export class RingPlayRuntime {
    try{await owner.act(member,command);}catch(error){if(error instanceof RingCommandError)throw new RingAdmissionConflict();throw error;}
    // Reuse the owner reloaded and validated after the durable write; do not
    // rejoin the queue behind other viewers merely to read the same hand again.
-   const [after]=await Promise.all([store.meta(table),this.ping(table,member)]);return this.present(after,after.lastHandId===command.handId?owner:null,member);
+   const [after]=await Promise.all([store.meta(table),this.ping(table,member)]);await this.publish(table,store,after,after.lastHandId===command.handId?owner:undefined);return this.present(after,after.lastHandId===command.handId?owner:null,member);
   },'act');}
  private scan(){if(this.#closed||this.#scan)return this.#scan;this.#scan=(async()=>{const tables=await this.options.store().tables(this.limit);if(!Array.isArray(tables)||tables.length>this.limit||tables.some(t=>typeof t!=='string'||!/^[-a-f0-9]{36}$/i.test(t))||new Set(tables).size!==tables.length)throw Error('Invalid ring discovery');for(const table of this.#tables){if(!tables.includes(table)&&!this.#queues.has(table)){this.#tables.delete(table);this.#prepared.delete(table);this.#preparedContext.delete(table);}}for(const table of tables){if(this.#tables.size<this.limit||this.#tables.has(table))this.#tables.add(table);}await Promise.allSettled([...this.#tables].map(table=>this.tick(table).catch(()=>{this.options.diagnostic?.({type:'ring_tick_retry'});})));})().finally(()=>{this.#scan=null;});return this.#scan;}
  async start(){if(this.#closed)throw Error('Ring runtime closed');if(this.#started)return;await this.scan();if(this.#closed)return;this.#started=true;this.#timer=setInterval(()=>{void this.scan()?.catch(()=>this.options.diagnostic?.({type:'ring_scan_retry'}));},1000);}
- async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();this.#reads.clear();await Promise.allSettled([...this.#pings.values()].flatMap(v=>v.pending?[v.pending]:[]));this.#pings.clear();}
+ async close(){this.#closed=true;if(this.#timer)clearInterval(this.#timer);await this.#scan;await Promise.allSettled([...this.#queues.values()]);this.#prepared.clear();this.#reads.clear();this.#listeners.clear();this.#published.clear();await Promise.allSettled([...this.#pings.values()].flatMap(v=>v.pending?[v.pending]:[]));this.#pings.clear();}
 }
 /** Auth has already resolved the member; all money changes still use SQL. */
 export class PlayingRingAdmissionStore implements RingAdmissionStore{
  constructor(private base:RingAdmissionStore,private runtime:RingPlayRuntime,private stampBoard=new StampBoard(),private showBoard=new ShowBoard()){}
+ /** Told when a stamp or shown card is posted, so table sockets can send it at once. */
+ onExtras:((table:string)=>void)|null=null;
+ /** Stamps and shown cards at a table now (for the table sockets). */
+ extras(table:string){return this.#stamps(table);}
+ /** Lobby membership only (SQL): whether this member's reservation at the table plays. */
+ async playEnabled(member:string,table:string){const state=await this.base.state(member,table);return Boolean(state.membership?.tableId===table&&state.membership.playEnabled);}
  #stamps(table:string){const list=this.stampBoard.recent(table),shows=this.showBoard.recent(table);return {...(list.length?{stamps:list.map(({seat,stamp,age})=>({seat,stamp,age}))}:{}),...(shows.length?{shows}:{})};}
  private async projected(member:string,table:string,confirmed?:RingPlayView|null,known?:RingLobbyState){const play=confirmed===undefined?await this.runtime.view(table,member):confirmed,state=known&&known.table?.id===table?known:await this.base.state(member,table);return {...state,play:state.membership?.tableId===table&&state.membership.playEnabled?play:state.table?.id===table?await this.runtime.watch(table):null,...this.#stamps(table)};}
  async state(member:string,table:string|null){let state=await this.base.state(member,table);if(table&&state.membership?.tableId===table&&state.membership.playEnabled){return this.projected(member,table);}if(table&&state.table?.id===table&&state.membership?.tableId!==table)return {...state,play:await this.runtime.watch(table),...this.#stamps(table)};return state;}
@@ -172,9 +206,9 @@ export class PlayingRingAdmissionStore implements RingAdmissionStore{
   if(command.type==='ready'||command.type==='act'||command.type==='bank'||command.type==='ticket-bank'||command.type==='rabbit'||command.type==='stamp'||command.type==='show'){const state=await this.base.state(member,null),own=state.membership;
    if(!own||own.status!=='seated'||own.reservationId!==command.reservationId)throw new RingAdmissionConflict();
    // Stamps: seated players only, one every few seconds (extra ones are dropped).
-   if(command.type==='stamp'){if(own.seat!==null)this.stampBoard.post(own.tableId,member,own.seat,command.stamp);return this.projected(member,own.tableId,undefined,state);}
+   if(command.type==='stamp'){if(own.seat!==null){this.stampBoard.post(own.tableId,member,own.seat,command.stamp);this.onExtras?.(own.tableId);}return this.projected(member,own.tableId,undefined,state);}
    // 「見せる」 after a hand: one or both of your own cards, to everyone at the table until the next hand.
-   if(command.type==='show'){const hole=await this.runtime.ownHole(member,own.tableId,command.handId);if(own.seat!==null)this.showBoard.post(own.tableId,command.handId,own.seat,command.cards==='both'?hole:[hole[command.cards==='first'?0:1]]);return this.projected(member,own.tableId);}
+   if(command.type==='show'){const hole=await this.runtime.ownHole(member,own.tableId,command.handId);if(own.seat!==null){this.showBoard.post(own.tableId,command.handId,own.seat,command.cards==='both'?hole:[hole[command.cards==='first'?0:1]]);this.onExtras?.(own.tableId);}return this.projected(member,own.tableId);}
    if(command.type==='rabbit'){const cards=await this.runtime.rabbit(member,own.tableId,command.handId);return {...await this.projected(member,own.tableId),rabbit:{handId:command.handId,cards}};}
    if(command.type==='ticket-bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.ticketBank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}
    if(command.type==='bank'){if(!own.playEnabled)throw new RingAdmissionConflict();const play=await this.runtime.bank(member,own.tableId,own.reservationId,command.handId,command.revision,command.requestId);return this.projected(member,own.tableId,play);}

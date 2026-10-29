@@ -42,12 +42,14 @@ function arg(name,def){const i=process.argv.indexOf('--'+name);return i>=0?proce
 const flop=arg('flop');if(!flop||!/^([2-9TJQKA][cdhs]){3}$/i.test(flop))throw new Error('--flop like Kh7d2c is required');
 const target=Number(arg('target',0.01)),maxIters=Number(arg('max-iters',300)),maxMinutes=Number(arg('max-minutes',300));
 const spotId=arg('spot','btn-bb'),SPOT=SPOTS[spotId];if(!SPOT)throw new Error('--spot must be one of '+Object.keys(SPOTS).join(', '));
+// Three-way spots have their own solver (2026/10/29).
+if(SPOT.players===3){require('./multiway-solve.cjs');return;}
 const outDir=path.join(arg('out',path.resolve(__dirname,'../../public/poker-gto/flops')),spotId);
 const board=[0,2,4].map(i=>code(flop.slice(i,i+2)));
 const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(exclude):[])l.delete(x);return l;};
 // --oop / --ip override the ranges (used by the quick self-check).
 // Chart spots (version 2): weighted ranges, pot and stack from the preflop chart along SPOT.line.
-const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line):null;
+const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line,SPOT.chart):null;
 if(fromChart&&(fromChart.oop!==SPOT.oop||fromChart.ip!==SPOT.ip))throw new Error(`chart line positions ${fromChart.oop}/${fromChart.ip} differ from the spot ${SPOT.oop}/${SPOT.ip}`);
 const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));
 const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}

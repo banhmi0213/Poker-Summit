@@ -15,9 +15,15 @@ export const GTO_SPOTS=[
  {id:'btn-sb-3bet',group:'3ベットポット',label:'BTN対SB 3ベット',detail:'BTNオープン → SBが3ベット → BTNコール（ポット23BB、SBが先に打つ）'},
  {id:'co-btn-3bet',group:'3ベットポット',label:'CO対BTN 3ベット',detail:'COオープン → BTNが3ベット → COコール（ポット23.5BB、COが先に打つ）'},
  {id:'btn-bb-4bet',group:'4ベットポット',label:'BTN対BB 4ベット',detail:'BBが3ベット → BTNが4ベット → BBコール（ポット50.5BB）'},
+ {id:'sb-limp',group:'SB対BB（リンプ）',label:'SBリンプ対BB',detail:'SBまで全員降りてSBがリンプ → BBチェック（ポット2BB、SBが先に打つ）'},
+ {id:'sb-iso',group:'SB対BB（リンプ）',label:'SBリンプ→BBレイズ',detail:'SBリンプ → BBが4BBにレイズ → SBコール（ポット8BB、SBが先に打つ）'},
+ {id:'hu-srp',group:'2人（ヘッズアップ）',label:'2人 SBオープン対BB',detail:'SB（ボタン）が2.5BBオープン → BBコール（ポット5BB、BBが先に打つ）'},
+ {id:'hu-limp',group:'2人（ヘッズアップ）',label:'2人 リンプポット',detail:'SB（ボタン）がリンプ → BBチェック（ポット2BB、BBが先に打つ）'},
+ {id:'hu-3bet',group:'2人（ヘッズアップ）',label:'2人 3ベットポット',detail:'SBオープン → BBが10BBに3ベット → SBコール（ポット20BB）'},
 ] as const;
 export type GtoSpotId=typeof GTO_SPOTS[number]['id'];
-/** The 95 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs). */
+/** The 200 representative flops (picked from all 1,755 kinds by scripts/poker-gto/flop-set.cjs; the first 95 are the
+ * original set, 2026/10/29 extended to 200). Only those in public/poker-gto/flops/index.json are computed. */
 export const GTO_FLOPS:string[]=flops as string[];
 
 /** classes: per starting-hand class [reach, action shares…]. suits (version 2): the same keyed "AKs|21" (how many board

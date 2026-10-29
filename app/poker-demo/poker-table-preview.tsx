@@ -1,6 +1,7 @@
 "use client";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
+import {preloadTableSamples} from "@/lib/poker/table-samples";
 import {useSoundSettings} from "@/lib/poker/sound-settings";
 import {TableBgmPlayer} from "@/app/poker-ui/table-bgm";
 import {MobileWagerEditor} from '@/app/poker-ui/mobile-wager-editor';
@@ -36,6 +37,8 @@ import { carriedDemoStacks, startForcedHand, tournamentHandTerms, ringTerms, typ
 import { tournamentClock, type PokerTournament } from "@/lib/poker/tournament";
 import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
+import { GtoRangeDialog } from "@/app/poker-ui/gto-range-grid";
+import chartStyles from "@/app/poker-ui/gto-chart.module.css";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
 // First think time 10s, each time bank +20s (owner 2026/10/28).
@@ -81,6 +84,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [lastHandResult,setLastHandResult]=useState<{winners:string[];rows:{id:string;name:string;delta:number}[]}|null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const soundEnabledRef = useRef(true);
+  // Stamp pop (owner 2026/10/29: スタンプだした時も音出したい); set once playSound exists below.
+  const stampSoundRef = useRef<(() => void) | null>(null);
   const [handStartingStacks, setHandStartingStacks] = useState<Record<string,number>>(initialHand.stacks);
   const [handFinished, setHandFinished] = useState(false);
   /** 「見せる」 after a hand (owner 2026/10/28): which of your two cards you showed this hand. */
@@ -92,7 +97,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
   // スタンプ(2026/10/27): 練習卓でも見えるように。自分のスタンプと、ハンド後のCPUのひとこと。この画面の中だけ。
   const [demoStamps, setDemoStamps] = useState<Record<string, { stamp: StampId; key: number }>>({});
-  const showStamp = (seat: string, stamp: StampId) => setDemoStamps(prev => ({ ...prev, [seat]: { stamp, key: Date.now() + Math.random() } }));
+  const showStamp = (seat: string, stamp: StampId) => { setDemoStamps(prev => ({ ...prev, [seat]: { stamp, key: Date.now() + Math.random() } })); stampSoundRef.current?.(); };
   // GTO CPUs (2026/10/27): every voluntary action of the hand, for the CPUs' range reading.
   const [actionLog, setActionLog] = useState<LoggedAction[]>([]);
   const gtoWorker = useRef<Worker | null>(null), gtoRequest = useRef(0);
@@ -163,11 +168,11 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const unlockAudio = () => {
     if (typeof window === "undefined") return;
     try {
-      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
-  type SoundKind = "turn" | "action" | "deal" | "flop" | "turnCard" | "river" | "win" | ActionKind;
+  type SoundKind = "turn" | "action" | "deal" | "flop" | "turnCard" | "river" | "win" | "stamp" | ActionKind;
   const playSound = (kind: SoundKind) => {
     if (!soundEnabledRef.current) return;
     const context = audioContextRef.current;
@@ -187,19 +192,20 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       };
       if (kind === "turnCard") {
         playTableEffect(context, "turn");
-      } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win"].includes(kind)) {
-        playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win");
+      } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win","stamp"].includes(kind)) {
+        playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win" | "stamp");
       } else if (kind === "turn") {
-        tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
+        // Owner 2026/10/29: no your-turn ping.
       } else if (kind === "action") {
         tone(310, 0, 0.085, 0.085, "triangle");
       }
     } catch { /* Audio must never interrupt the game. */ }
   };
+  stampSoundRef.current = () => playSound("stamp");
   useEffect(() => {
     const activate = () => {
       try {
-        if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+        if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
         if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
       } catch { /* Audio is optional. */ }
     };
@@ -310,6 +316,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   };
   // ハンド後の「GTOで振り返る」(2026/10/27): 練習卓だけ。保存はせず、この画面の中で見る。
   const myDecisions = useRef<LiveDecision[]>([]);
+  const [liveRangeAt, setLiveRangeAt] = useState<number | null>(null);
   const [liveReview, setLiveReview] = useState<{status:"running"}|{status:"done";reviews:LiveReview[]}|{status:"error"}|null>(null);
   const startLiveReview = () => {
     const worker = gtoWorker.current, items = [...myDecisions.current];
@@ -511,7 +518,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       setPayouts(null);setCpuShows({});setShowdown(false);setAllInReveal(false);setStreetStep(0);
       setHandStartingStacks(Object.fromEntries(live.map(id=>[id,startingStacks[id]])));setHandTerms(terms);setHandActive(true);setHandPositions(nextPos);
       setDeal(nextDeal);setMotionHand(v=>v+1);setButtonIndex(nextButton);setBetting(nextRound);setPayouts(null);setCpuShows({});
-      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setTurnRemaining(DEMO_TURN_SECONDS);setHandFinished(false);
+      setLastActions({});setActionLog([]);setDemoStamps({});setShownMine([]);myDecisions.current=[];setLiveReview(null);setLiveRangeAt(null);setTurnRemaining(DEMO_TURN_SECONDS);setHandFinished(false);
       setBettingMessage(`新しいカードを配布。${tournament?`残り${live.length}人・LV${terms.level}・`:""}SB ${terms.sb} / BB ${terms.bb}・Ante ${terms.ante}を徴収しました。${nextPos.sb===null?"SBは不在のため未徴収。":""}${refilled.length?`${refilled.map(id=>id==="you"?"あなた":`PLAYER ${id.slice(1)}`).join("・")}の残高が0になったため補充しました。`:""}`);
       setFoldedSeats([]);setStreetStep(0);setShowdown(false);setAllInReveal(false);setAction(null);
       setAutoChoice(null);setRaise(terms.bb*2);setRemaining(DEMO_TURN_SECONDS);if(!tournament)setTimeBanksUsed(0);setRunning(true);
@@ -648,10 +655,11 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {!tournament && handFinished && myDecisions.current.length > 0 && <div className={styles.gtoReview} aria-label="GTOで振り返る">
         {!liveReview && <button type="button" onClick={startLiveReview}>GTOで振り返る</button>}
         {liveReview?.status === "running" && <p role="status">GTOを計算中…（数秒かかります）</p>}
+        {liveReview?.status === "done" && <small>GTOの判定は改良中です（SBのリンプ・スクイーズ・3人以上のポットは今後対応）。</small>}
         {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
         {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
           <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
-          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}</small></>}
+          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeDialog range={r.range} who="あなた" title={`${({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}：${r.played}のときのレンジ表`} onClose={() => setLiveRangeAt(null)} />}</>}
         </li>)}</ol>}
       </div>}
       <details className={styles.demoTools}><summary>デモ検証操作</summary>
