@@ -7,7 +7,7 @@ import {StrategyLegend} from './strategy-legend';
 /** 6-max 100BB preflop charts from the simplified preflop solve (scripts/poker-gto/preflop-solve.cjs → public/poker-gto/preflop.json). */
 type Node={id:number;player:string;history:string;kind:string;title:string;actions:{label:string;kind:string}[];strategy:Record<string,number[]>};
 type Data={iterations:number;averageRegret:number;assumptions:string[];nodes:Node[]};
-const KINDS6=[['open','オープン（誰も参加していない）'],['vsOpen','オープンされた'],['overcall','オープンとコールが入った（BB）'],['vs3bet','3ベットされた'],['vs4bet','4ベットされた'],['vs5bet','オールインされた']] as const;
+const KINDS6=[['open','オープン（誰も参加していない）'],['vsLimp','SBにリンプされた（BB）'],['vsIso','リンプ後にBBにレイズされた（SB）'],['vsOpen','オープンされた'],['overcall','オープンとコールが入った（BB）'],['vs3bet','3ベットされた'],['vs4bet','4ベットされた'],['vs5bet','オールインされた']] as const;
 // Heads-up chart (2026/10/29): the button is the SB, limps are allowed.
 const KINDSHU=[['open','SB（ボタン）の最初の行動'],['vsLimp','リンプされた（BB）'],['vsIso','リンプ後にレイズされた（SB）'],['vsOpen','オープンされた（BB）'],['vs3bet','3ベットされた'],['vs4bet','4ベットされた'],['vs5bet','オールインされた']] as const;
 const R='AKQJT98765432';

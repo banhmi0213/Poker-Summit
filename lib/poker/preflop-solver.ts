@@ -1,7 +1,8 @@
 /** 6-max preflop solver (100BB, no ante, no rake) — simplified model (2026/10/27).
  *
  * Model (stated on the page too):
- * - Action tree: fold / open (2.5BB, SB 3BB) / call / 3-bet / 4-bet / 5-bet all-in. Limps are not modelled.
+ * - Action tree: fold / open (2.5BB, SB 3BB) / call / 3-bet / 4-bet / 5-bet all-in. Only the small blind may limp (folded
+ *   to it, 2026/10/29); the big blind then checks or raises to 4BB, the SB folds, calls or 3-bets to 12BB, then all-in.
  * - Once an open is called, or a 3-bet / 4-bet is called, the pot goes heads-up to the flop (no multiway pots,
  *   no cold 4-bets, no squeezes). Players still to act after a call are treated as folding.
  * - Postflop is not played out: a called pot is worth (pot × share). The share is the preflop all-in equity of the two
@@ -12,11 +13,11 @@
  */
 export type PreflopAction={label:string;kind:'fold'|'call'|'raise'|'allin'|'check';to?:number};
 export type PreflopDecision={type:'decision';id:number;player:number;history:string;facing:number;actions:PreflopAction[];children:PreflopNode[]};
-export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'srp'|'3bp'|'4bp'|'allin'};threeWay?:[number,number,number]};
+export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'limp'|'srp'|'3bp'|'4bp'|'allin'};threeWay?:[number,number,number]};
 export type PreflopNode=PreflopDecision|PreflopTerminal;
 export const POSITIONS=['UTG','HJ','CO','BTN','SB','BB'] as const;
 const STACK=100,POST=[2,3,4,5,0,1];// postflop order: SB first, BB, UTG, HJ, CO, BTN last
-export const REALIZE:Record<'srp'|'3bp'|'4bp'|'allin',[number,number]>={srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
+export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={limp:[0.85,1.0],srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
 /** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
 export function playability(label:string){
@@ -36,7 +37,25 @@ export function buildPreflopTree(){
   if(p===5)return {type:'terminal',invested:inv,winner:5};// folded to the big blind
   const open=p===4?3:2.5,next=unopened(p+1,inv,history+`${name(p)}F `);
   const opened=[...inv];opened[p]=open;
+  // Folded to the small blind (2026/10/29): it may also limp; the big blind then checks or raises.
+  if(p===4){const limped=[...inv];limped[4]=1;
+   return dec(p,history,0,[{label:'フォールド',kind:'fold'},{label:'リンプ（コール）',kind:'call'},{label:`オープン ${open}BB`,kind:'raise',to:open}],[next,bbVsLimp(limped,history+'SBC '),facingOpen(p,p+1,opened,history+`${name(p)}${open} `)]);}
   return dec(p,history,0,[{label:'フォールド',kind:'fold'},{label:`オープン ${open}BB`,kind:'raise',to:open}],[next,facingOpen(p,p+1,opened,history+`${name(p)}${open} `)]);
+ }
+ // Small blind limped: the big blind checks (a limped pot, SB first after the flop) or raises to 4BB.
+ function bbVsLimp(inv:number[],history:string):PreflopNode{
+  const raised=[...inv];raised[5]=4;
+  return dec(5,history,1,[{label:'チェック',kind:'check'},{label:'レイズ 4BB',kind:'raise',to:4}],[{type:'terminal',invested:inv,showdown:{a:4,b:5,kind:'limp'}},sbVsIso(raised,history+'BB4 ')]);
+ }
+ function sbVsIso(inv:number[],history:string):PreflopNode{
+  const called=[...inv];called[4]=4;const raised=[...inv];raised[4]=12;
+  return dec(4,history,4,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'3ベット 12BB',kind:'raise',to:12}],
+   [{type:'terminal',invested:inv,winner:5},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'srp'}},bbVsLimp3bet(raised,history+'SB12 ')]);
+ }
+ function bbVsLimp3bet(inv:number[],history:string):PreflopNode{
+  const called=[...inv];called[5]=12;const jam=[...inv];jam[5]=STACK;
+  return dec(5,history,12,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
+   [{type:'terminal',invested:inv,winner:4},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'3bp'}},facing5bet(4,5,jam,history+'BBAI ')]);
  }
  // Players after the opener answer one by one: fold, call (heads-up to the flop) or 3-bet.
  function facingOpen(o:number,p:number,inv:number[],history:string):PreflopNode{

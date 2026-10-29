@@ -133,3 +133,16 @@ test('heads-up hands use the heads-up chart: limps are judged, the button acts l
  const turn=rs.find(r=>r.street==='turn');assert.equal(turn.source,'solver',`turn judged (${turn.reason??''})`);
  const others=reviewRanges(hand,data,300);assert.ok(others.some(o=>hand.actions[o.index].type==='check'&&hand.actions[o.index].street==='preflop'),'the BB check after the limp has a range');
 });
+
+test('6-max: folded to the small blind, a limp and the big blind\'s check are on the chart',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const c=(rank,suit)=>({rank,suit});
+ const hand={handId:'bvb1',terms:{bb:2},buttonSeatId:'s1',board:[c(14,'h'),c(7,'d'),c(2,'c'),c(9,'s'),c(4,'h')],
+  players:[{seatId:'s1',seat:1,startStack:200,you:false,hole:null},{seatId:'s2',seat:2,startStack:200,you:true,hole:[c(9,'h'),c(8,'h')]},{seatId:'s3',seat:3,startStack:200,you:false,hole:null}],
+  actions:[{street:'preflop',seatId:'s2',type:'sb',amount:1,to:1,allIn:false,pot:3},{street:'preflop',seatId:'s3',type:'bb',amount:2,to:2,allIn:false,pot:3},
+   {street:'preflop',seatId:'s1',type:'fold',amount:0,to:0,allIn:false,pot:3},{street:'preflop',seatId:'s2',type:'call',amount:1,to:2,allIn:false,pot:4},
+   {street:'preflop',seatId:'s3',type:'check',amount:0,to:2,allIn:false,pot:4}]};
+ const rs=reviewGto(hand,data,300);const pre=rs.find(r=>r.street==='preflop');
+ assert.equal(pre.source,'preflop');assert.ok(pre.options.some(o=>o.kind==='call'),'limp is an option');assert.notEqual(pre.played,null);
+ const bb=reviewRanges(hand,data,300).find(o=>o.index===4);assert.ok(bb,'the BB check has a range');assert.ok(bb.range.options.some(o=>o.kind==='check'));
+});

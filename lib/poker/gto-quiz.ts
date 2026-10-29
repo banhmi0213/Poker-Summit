@@ -55,22 +55,22 @@ function handWeight(reach:number,combos:number,freqs:number[],foldIndex:number){
 }
 
 // ---------- preflop ----------
-const KIND_WEIGHT:Record<string,number>={open:30,vsOpen:35,vs3bet:22,overcall:5,vs4bet:6,vs5bet:2};
+const KIND_WEIGHT:Record<string,number>={open:30,vsOpen:35,vs3bet:22,overcall:5,vs4bet:6,vs5bet:2,vsLimp:6,vsIso:4};
 function sceneText(node:PreflopNode){
- const toks=preflopHistory(node);let raises=0;const parts:string[]=[];let folds:string[]=[];
+ const toks=preflopHistory(node);let raises=0,limped=false;const parts:string[]=[];let folds:string[]=[];
  const flush=()=>{if(folds.length){parts.push(`${folds.join('・')}がフォールド`);folds=[];}};
  for(const t of toks){
   if(t.kind==='F'){folds.push(t.pos);continue;}
   flush();
-  if(t.kind==='C')parts.push(`${t.pos}がコール`);
+  if(t.kind==='C'){parts.push(raises>0?`${t.pos}がコール`:limped?`${t.pos}がチェック`:`${t.pos}がリンプ`);if(!raises)limped=true;}
   else{raises++;const size=t.to>=100?'オールイン':`${t.to}BB`;
-   parts.push(raises===1?`${t.pos}が${size}でオープン`:`${t.pos}が${size === 'オールイン'?'オールイン':`${size}に${raises===2?'3ベット':raises===3?'4ベット':'5ベット'}`}`);}
+   parts.push(raises===1&&limped?`${t.pos}が${size}にレイズ`:raises===1?`${t.pos}が${size}でオープン`:`${t.pos}が${size === 'オールイン'?'オールイン':`${size}に${raises===2?'3ベット':raises===3?'4ベット':'5ベット'}`}`);}
  }
  flush();
  return parts.length?`${parts.join('、')}。`:'';
 }
 /** Category names shown to members. */
-export const PREFLOP_CATEGORY:Record<string,string>={'preflop-open':'プリフロップ：オープン','preflop-vsopen':'プリフロップ：オープンを受けて','preflop-vs3bet':'プリフロップ：3ベットを受けて','preflop-vs4bet':'プリフロップ：4ベットを受けて','preflop-vs5bet':'プリフロップ：5ベットを受けて','preflop-overcall':'プリフロップ：オーバーコール'};
+export const PREFLOP_CATEGORY:Record<string,string>={'preflop-open':'プリフロップ：オープン','preflop-vsopen':'プリフロップ：オープンを受けて','preflop-vs3bet':'プリフロップ：3ベットを受けて','preflop-vs4bet':'プリフロップ：4ベットを受けて','preflop-vs5bet':'プリフロップ：5ベットを受けて','preflop-vslimp':'プリフロップ：リンプを受けて','preflop-vsiso':'プリフロップ：リンプ後にレイズされて','preflop-overcall':'プリフロップ：オーバーコール'};
 /** `kind`: only that chart kind (open, vsOpen, …), e.g. to practise a weak category. */
 export function preflopQuestion(data:PreflopData,random:()=>number=Math.random,kind?:string):QuizQuestion|null{
  for(let attempt=0;attempt<8;attempt++){

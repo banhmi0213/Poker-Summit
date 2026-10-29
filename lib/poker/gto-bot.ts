@@ -89,6 +89,8 @@ function scale(w:Float64Array,f:(a:number,b:number)=>number){for(let a=0;a<52;a+
 // ---------- spots ----------
 function spotFor(v:GtoView,toks:Tok[],pair:[string,string]):string|null{
  const raises=toks.filter(t=>t.kind==='R'),open=raises[0]?.pos,low=(p:string)=>p.toLowerCase();
+ // Small blind limped (2026/10/29): limped pot, or the BB raised and the SB called.
+ if(toks.some(t=>t.pos==='SB'&&t.kind==='C')&&(!open||open==='BB'))return raises.length===0?'sb-limp':raises.length===1?'sb-iso':'sb-limp-3bet';
  const p=pair.map(id=>v.positions[id]);if(!open)return null;
  const other=p.find(x=>x!==open);if(!other)return null;
  if(raises.length===1){
@@ -112,9 +114,10 @@ function huSpotFor(toks:Tok[]):string{
  return limped&&raises===2?'hu-3bet':'hu-4bet';
 }
 const POT_TYPE:Record<string,string[]>={srp:['btn-bb','co-bb','hj-bb','utg-bb','sb-bb','co-btn','utg-btn'],'3bet':['btn-bb-3bet','co-bb-3bet','utg-bb-3bet','btn-sb-3bet','co-btn-3bet'],'4bet':['btn-bb-4bet'],
+ 'sb-limp':['sb-limp'],'sb-iso':['sb-iso'],'sb-limp-3bet':['sb-limp-3bet'],
  'hu-srp':['hu-srp','btn-bb'],'hu-limp':['hu-limp'],'hu-3bet':['hu-3bet','btn-bb-3bet'],'hu-4bet':['hu-4bet','btn-bb-4bet']};
 function flopFile(data:GtoData,spot:string,flop:string):FlopData|null{
- const type=spot.startsWith('hu-')?spot:Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
+ const type=spot.startsWith('hu-')||spot.startsWith('sb-limp')||spot==='sb-iso'?spot:Object.entries(POT_TYPE).find(([,l])=>l.includes(spot))?.[0]??'srp';
  for(const s of [spot,...POT_TYPE[type].filter(x=>x!==spot)]){
   const list=data.flopIndex[s];if(!list?.length)continue;
   const canon=canonicalFlop(flop),exact=list.find(f=>canonicalFlop(f)===canon);
