@@ -122,13 +122,17 @@ export default async function ApplyCompletePage({
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="container" style={{ maxWidth: 480, paddingTop: 40 }}>
-      <div className="brand wordmark" style={{ marginBottom: 20 }}>
+      <a href="/" className="brand wordmark" style={{ marginBottom: 20, display: "inline-block" }}>
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-      </div>
+      </a>
       <div className="card">
         <h1 style={{ fontSize: 18, marginBottom: 8 }}>{title}</h1>
         {children}
       </div>
+      {/* どの表示からもサイトに戻れるように(オーナー 2026/10/29) */}
+      <p style={{ marginTop: 16, textAlign: "center", fontSize: 14 }}>
+        <a href="/">トップページに戻る</a>
+      </p>
     </div>
   );
 }
