@@ -9,7 +9,7 @@ import { settleCompletedHand } from "./hand-settlement";
 import { settleShowdownRuns } from "./settlement";
 import { startForcedHand, type HandTerms } from "./tournament-hand";
 import type { BlindPositions } from "./settlement";
-import type { Card } from "./engine";
+import { bestOfSeven, compareScores, type Card } from "./engine";
 import { finishTournamentHand, type Elimination } from "./tournament-table";
 
 import {parseHandCommand as parseCommand,type Command} from './hand-command';
@@ -98,20 +98,38 @@ export class AuthoritativeHand {
       this.#round=beginNextBettingStreet(this.#round,first);
     }
   }
+  /** Who turns their cards face up at a finished showdown (null before one). All-in: every live hand.
+   * Otherwise: a chop shows only the players who chop; one winner shows with the second-best hand (ties for second all show). */
+  #shownCache:{result:object;shown:Set<string>}|null=null;
+  #shownAtShowdown():Set<string>|null{
+    const r=this.#result;if(!r?.showdown)return null;
+    if(this.#shownCache?.result===r)return this.#shownCache.shown;
+    const shown=this.#computeShown(r);this.#shownCache={result:r,shown};return shown;
+  }
+  #computeShown(r:Result):Set<string>{
+    const live=this.#round.players.filter(p=>!p.folded);
+    if(this.#runs||r.boards||live.some(p=>p.allIn))return new Set(live.map(p=>p.id));
+    if(r.winners.length>=2)return new Set(r.winners);
+    const board=this.#deal.board,rest=live.filter(p=>!r.winners.includes(p.id)).map(p=>({id:p.id,score:bestOfSeven([...this.#deal.holes[p.id],...board])}));
+    if(!rest.length)return new Set(r.winners);
+    const top=rest.reduce((a,b)=>compareScores(b.score,a.score)>0?b:a);
+    return new Set([...r.winners,...rest.filter(x=>compareScores(x.score,top.score)===0).map(x=>x.id)]);
+  }
   /** Only this allow-listed projection may cross the transport boundary.
    * null = spectator; member IDs must be resolved from auth + server seating.
    * Returning fresh objects prevents consumers from mutating internal state.
    */
   snapshot(viewerId:string|null) {
     if(viewerId!==null&&!this.#round.players.some(p=>p.id===viewerId))throw new Error("Unknown viewer seat");
-    const count=this.#street===0?0:this.#street===1?3:this.#street===2?4:5;
+    const count=this.#street===0?0:this.#street===1?3:this.#street===2?4:5,shown=this.#shownAtShowdown();
     return {
       handId:this.#id,revision:this.#revision,street:["preflop","flop","turn","river","showdown"][this.#street],
       board:copyCards(this.#deal.board.slice(0,count)),positions:{...this.#positions},terms:{...this.#terms},
       pot:this.#result?0:potTotal(this.#round),toAct:this.#round.toAct,
       players:this.#round.players.map(p=>({id:p.id,stack:p.stack+(this.#result?.payouts[p.id]??0),committed:p.committed,totalCommitted:p.totalCommitted,folded:p.folded,allIn:p.allIn,
-        // Live hands are turned face up at showdown and as soon as an all-in runout is reached.
-        hole:p.id===viewerId||((this.#result?.showdown||this.#runs)&&!p.folded)?copyCards(this.#deal.holes[p.id]):null})),
+        // All-in hands are turned face up as soon as the runout is reached. At a showdown without an all-in only the
+        // winner and the second-best hand are shown, or only the players who chop; the rest muck (owner 2026/10/29).
+        hole:p.id===viewerId||(!p.folded&&(shown?shown.has(p.id):Boolean(this.#runs)))?copyCards(this.#deal.holes[p.id]):null})),
       legal:viewerId?legalBettingActions(this.#round,viewerId):null,
       result:this.#result?{showdown:this.#result.showdown,payouts:{...this.#result.payouts},winners:[...this.#result.winners],
         ...(this.#result.boards?{boards:this.#result.boards.map(copyCards),runWinners:this.#result.runWinners!.map(w=>[...w])}:{})}:null,
