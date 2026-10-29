@@ -3,7 +3,7 @@ import {useEffect} from 'react';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
-import type {GtoRange} from '@/lib/poker/gto-review';
+import {categoryBreakdown,type GtoRange} from '@/lib/poker/gto-review';
 
 /** The whole range at one reviewed decision (2026/10/29): 13×13 hand classes, each cell split by the action shares,
  * dimmed by how often the player arrives here with that hand. The viewer's own hand is outlined. */
@@ -41,5 +41,11 @@ export function GtoRangeGrid({range,who}:{range:GtoRange;who:string}){
    return <td key={j} data-on="mix" data-hero={mine||undefined} style={{background:`linear-gradient(90deg,${stops})`,opacity:0.85+0.15*Math.min(1,e.reach)}}
     title={`${l}：${range.options.map((o,a)=>`${o.text} ${pct(e.freqs[a]??0)}`).join('・')}`}>{l}</td>;})}</tr>)}</tbody></table>
   <p className={styles.note}>薄いマスはこの場面にあまり来ない手です。金の枠があなたの手です。</p>
+  {range.board&&(()=>{const rows=categoryBreakdown(range);return rows.length>0&&<div className={styles.cats} role="table" aria-label="役の強さごとの打ち方">
+   <p className={styles.note}>役の強さごとの打ち方（左の数字はレンジの中の割合）</p>
+   {rows.map(r=>{let acc=0;const stops=range.options.map((_,a)=>{const from=acc;acc+=r.freqs[a]*100;return `${colors[a]} ${from}% ${acc}%`;}).join(',');
+    return <div key={r.category} className={styles.catRow} role="row"><span role="cell">{r.category}</span><small role="cell">{pct(r.share)}</small>
+     <i role="cell" style={{background:`linear-gradient(90deg,${stops})`}} title={range.options.map((o,a)=>`${o.text} ${pct(r.freqs[a])}`).join('・')}/></div>;})}
+  </div>;})()}
  </div>;
 }

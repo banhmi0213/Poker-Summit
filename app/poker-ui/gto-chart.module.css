@@ -24,3 +24,5 @@
 @media(max-width:900px){.grid{font-size:11px;border-spacing:2px}.pair .grid{font-size:11px}.grid td{padding:7px 0}}
 @media(max-width:650px){.grid,.pair .grid{font-size:10px;border-spacing:1px}.grid td,.pair .grid td{padding:7px 0}.strategyLegend{padding:12px}.actionKey{font-size:11px}.legendItems{gap:9px 13px}}
 .legend span[data-on=mix]{background:linear-gradient(90deg,var(--gto-on) 50%,var(--gto-fold) 50%)}
+.cats{display:flex;flex-direction:column;gap:4px}
+.catRow{display:grid;grid-template-columns:8.5em 3em 1fr;align-items:center;gap:8px;font-size:11px;color:#c9d6e0}.catRow small{text-align:right;color:#91a8ba;font-variant-numeric:tabular-nums}.catRow i{display:block;height:12px;border-radius:3px}
