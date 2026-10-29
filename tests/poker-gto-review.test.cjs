@@ -100,9 +100,9 @@ test('deviation summary counts only preflop and flop, and a GTO CPU is almost ne
 test('hand categories on the board',()=>{
  const {handCategory,combosOfClass}=require('../lib/poker/hand-category.ts');
  const R='23456789TJQKA',c=s=>(R.indexOf(s[0]))*4+'cdhs'.indexOf(s[1]),h=(a,b)=>[c(a),c(b)],bd=s=>s.match(/../g).map(c);
- const cases=[['As','Ks','8h4s4d','ノーペア'],['Ah','Kh','8h4h2c','ドロー'],['8c','8d','8h4s4d','フルハウス以上'],['Kc','Kd','8h4s2d','オーバーペア'],['8c','Ad','8h4s2d','トップペア'],
+ const cases=[['As','Ks','8h4s4d','ノーペア'],['Ah','Kh','8h4h2c','フラッシュドロー'],['9c','8d','7h6s2d','両面ストレートドロー'],['9c','5d','8h7s2d','ガットショット'],['Ac','2d','3h4s9d','ガットショット'],['8c','8d','8h4s4d','フルハウス以上'],['Kc','Kd','8h4s2d','オーバーペア'],['8c','Ad','8h4s2d','トップペア'],
   ['4c','Ad','8h4s2d','ミドルペア'],['2c','Ad','8h4s2d','ロウペア'],['5c','5d','8h4s2d','ミドルペア'],['3c','3d','8h4s2d','ロウペア'],['8c','4d','8h4s2d','ツーペア'],['4c','4d','8h4s2d','セット・スリーカード'],
-  ['5c','6d','8h4s7d','ストレート'],['Ah','2h','8h4h7h','フラッシュ'],['7c','7d','7h7s2d','フルハウス以上'],['Ac','Kd','QhJs2d','ドロー'],['9c','9d','QhJsTd','ロウペア'],['9c','8d','QhJs2d','ドロー']];
+  ['5c','6d','8h4s7d','ストレート'],['Ah','2h','8h4h7h','フラッシュ'],['7c','7d','7h7s2d','フルハウス以上'],['Ac','Kd','QhJs2d','ガットショット'],['9c','9d','QhJsTd','ロウペア'],['9c','8d','QhJs2d','ガットショット'],['Tc','9d','QhJs2d','両面ストレートドロー']];
  for(const [a,b,board,want] of cases)assert.equal(handCategory(h(a,b),bd(board)),want,`${a}${b} on ${board}`);
  assert.equal(combosOfClass('AKs',bd('AhKs2d')).length,2);assert.equal(combosOfClass('88',bd('8h4s2d')).length,3);assert.equal(combosOfClass('AKo',[]).length,12);
 });
