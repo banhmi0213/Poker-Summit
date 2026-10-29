@@ -651,6 +651,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       {!tournament && handFinished && myDecisions.current.length > 0 && <div className={styles.gtoReview} aria-label="GTOで振り返る">
         {!liveReview && <button type="button" onClick={startLiveReview}>GTOで振り返る</button>}
         {liveReview?.status === "running" && <p role="status">GTOを計算中…（数秒かかります）</p>}
+        {liveReview?.status === "done" && <small>GTOの判定は改良中です（SBのリンプ・スクイーズ・3人以上のポットは今後対応）。</small>}
         {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
         {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
           <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
