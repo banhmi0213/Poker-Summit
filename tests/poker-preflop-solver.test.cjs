@@ -14,3 +14,12 @@ test('a short solve gives valid strategies: AA always opens UTG, 72o never does'
  const at=l=>s.labels.indexOf(l);for(let h=0;h<s.n;h++){let sum=0;for(let a=0;a<k;a++)sum+=st[h*k+a];assert.ok(Math.abs(sum-1)<1e-9);}
  assert.ok(st[at('AA')*k+1]>0.99);assert.ok(st[at('72o')*k+1]<0.01);
 });
+test('tournament depths: 20BB opens 2BB or all in, big raises become all in; 100BB tree unchanged',()=>{
+ const {buildPreflopTree}=require('../lib/poker/preflop-solver.ts');
+ const deep=buildPreflopTree(),short=buildPreflopTree({stack:20,ante:1});
+ assert.equal(deep.decisions.length,169);
+ const utg=short.decisions.find(d=>d.history===''),labels=utg.actions.map(a=>a.label);
+ assert.deepEqual(labels,['フォールド','オープン 2BB','オールイン']);
+ for(const d of short.decisions)for(const a of d.actions)if(a.to!==undefined&&a.kind==='raise')assert.ok(a.to<20*0.45,`${d.history} ${a.label} stays under 45% of the stack`);
+ const jamCall=short.decisions.find(d=>d.history==='UTGAI ');assert.deepEqual(jamCall.actions.map(a=>a.kind),['fold','call']);
+});

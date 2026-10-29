@@ -2,7 +2,9 @@ name: Poker flop solutions
 
 # Precomputes the flop browser data (scripts/poker-gto/flop-solve.cjs), one job per flop of one spot.
 # Push a gto-flop-solve/<spot>/<anything> branch (spot = a key of scripts/poker-gto/spots.cjs).
-# Flops come from data/poker-gto/flops.json; flops already solved in version 2 (chart ranges, suit rows) are skipped.
+# Flops come from data/poker-gto/flops.json; flops already solved in version 3 (wider bet menu, per-hand EV) are skipped.
+# Each solve runs a fixed number of iterations (the river keeps no averages, so the measured exploitability reads high
+# and is not used to stop early). Each solve splits the turn cards over all the runner's cores (scripts/poker-gto/parallel-flop.cjs).
 # Results are uploaded as artifacts and gathered by the "collect" workflow.
 on:
   push:
@@ -23,7 +25,7 @@ jobs:
         run: |
           spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
           node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
-          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=2;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
+          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=3;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
@@ -33,8 +35,8 @@ jobs:
     timeout-minutes: 345
     strategy:
       fail-fast: false
-      # Keep runners free for the regular test CI (all spots share the account limit of 20 jobs).
-      max-parallel: 4
+      # Keep runners free for the regular test CI (all spots share the account limit of 20 jobs: at most 3 runs × 5).
+      max-parallel: 5
       matrix:
         flop: ${{ fromJSON(needs.plan.outputs.flops) }}
     steps:
@@ -47,7 +49,7 @@ jobs:
       - name: Solve
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target 0.005 --max-iters 300 --max-minutes 300 --out out
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0' }} --max-iters ${{ vars.GTO_FLOP_ITERS || '250' }} --check-every 50 --max-minutes 320 --threads $(nproc) --out out
       - uses: actions/upload-artifact@v4
         with:
           name: flop-${{ needs.plan.outputs.spot }}-${{ matrix.flop }}

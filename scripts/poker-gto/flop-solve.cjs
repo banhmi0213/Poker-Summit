@@ -52,15 +52,17 @@ const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(
 const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line,SPOT.chart):null;
 if(fromChart&&(fromChart.oop!==SPOT.oop||fromChart.ip!==SPOT.ip))throw new Error(`chart line positions ${fromChart.oop}/${fromChart.ip} differ from the spot ${SPOT.oop}/${SPOT.ip}`);
 const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));
-const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}
+const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,riverCurrentOnly:true,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}
  :{board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
 const solver=new PostflopSolver(spot);
+// --threads N (2026/10/29): split the turn cards over N worker threads (same result, N times the speed).
+const threads=Number(arg('threads',1)),stopThreads=threads>1&&board.length===3?require('./parallel-flop.cjs').parallelize(solver,spot,threads):null;
 const t0=Date.now(),log=m=>console.log(`[${flop} ${((Date.now()-t0)/60000).toFixed(1)}min] ${m}`);
 log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${solver.sides[1].n}`);
 let expl=Infinity,checks=[];
 while(solver.iterations<maxIters){
  solver.run(1);
- const it=solver.iterations,every=it<40?20:10;
+ const it=solver.iterations,every=Number(arg('check-every',0))||(it<40?20:10);
  if(it%every===0||it>=maxIters){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log(`iter ${it} exploitability ${(expl*100).toFixed(2)}% of pot · tables ${solver.tableCount()} · rss ${(process.memoryUsage().rss/1e9).toFixed(1)}GB`);
   if(expl<=target)break;}
  if((Date.now()-t0)/60000>maxMinutes){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log('time limit');break;}
@@ -89,8 +91,15 @@ function visit(steps){
 }
 visit([]);
 const [ev0,ev1]=solver.values();
-const out={version:fromChart?2:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
- iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+// Per starting-hand class (version 3): what the hand is worth from the flop, in BB with the pot counted as won
+// (weighted over the combos in the range). Calibrates the preflop model's equity realisation hand by hand.
+function handEv(p){const v=solver.handValues(p),side=solver.sides[p],acc={};
+ for(let h=0;h<side.n;h++){const e=acc[classOf(side.c1[h],side.c2[h])]??=[0,0];e[0]+=side.w[h]*v[h];e[1]+=side.w[h];}
+ return Object.fromEntries(Object.entries(acc).map(([l,[s,w]])=>[l,Math.round(s/w*100)/100]));}
+const out={version:fromChart?3:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
+ iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},...(fromChart?{handEv:{oop:handEv(0),ip:handEv(1)},
+ riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),threads,peakGB:+(process.resourceUsage().maxRSS/1048576).toFixed(2),nodes};
+if(stopThreads)stopThreads();
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
 log(`saved ${path.join(outDir,flop+'.json')} · ${nodes.length} flop decisions · exploitability ${out.exploitability}%`);

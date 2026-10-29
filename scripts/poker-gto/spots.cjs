@@ -1,8 +1,10 @@
 // Postflop spots precomputed for the flop browser (2026/10/27). Ranges are standard reference ranges for 100BB
 // 6-max (not a preflop solve); they are written into every result so the page can show them.
 // oop = first to act after the flop.
-const SRP={betSizes:[0.33,0.75],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
-const THREE_BET={betSizes:[0.33,0.66],raiseSizes:[2.5],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
+// Bet menus (version 3, 2026/10/29): three flop sizes, and a raise on every street (before, the turn and river had none,
+// which let bets go unpunished). The river keeps no average strategy (riverCurrentOnly) so the trees fit in memory.
+const SRP={betSizes:[0.33,0.66,1.25],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[3],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[3],riverMaxRaises:1,allinMaxPot:1.5};
+const THREE_BET={betSizes:[0.33,0.66,1],raiseSizes:[2.5],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[2.5],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[2.5],riverMaxRaises:1,allinMaxPot:1.5};
 module.exports={
  'btn-bb':{name:'BTN対BB・シングルレイズ・100BB',short:'BTNオープン→BBコール',pot:5.5,stack:97.5,oop:'BB',ip:'BTN',sizes:SRP,
   note:'BTNが2.5BBでオープン、BBがコール（ポット5.5BB）。',
@@ -57,7 +59,7 @@ module.exports={
   oopRange:'JJ+,AQs+,KQs,A5s,A4s,AKo',
   ipRange:'22+,ATs+,KJs+,QJs,JTs,T9s,98s,87s,AQo+',ipExclude:'KK+,AKs'},
  // ---- 4-bet pot ----
- 'btn-bb-4bet':{name:'BTN対BB・4ベットポット・100BB',short:'BBが3ベット→BTNが4ベット→BBコール',pot:50.5,stack:75,oop:'BB',ip:'BTN',sizes:{betSizes:[0.33],raiseSizes:[],maxRaises:1,turnBetSizes:[0.5],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5},
+ 'btn-bb-4bet':{name:'BTN対BB・4ベットポット・100BB',short:'BBが3ベット→BTNが4ベット→BBコール',pot:50.5,stack:75,oop:'BB',ip:'BTN',sizes:{betSizes:[0.25,0.5],raiseSizes:[],maxRaises:1,turnBetSizes:[0.5],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5},
   note:'BTNが2.5BBでオープン、BBが11BBに3ベット、BTNが25BBに4ベット、BBがコール（ポット50.5BB）。',
   oopRange:'TT-QQ,AQs,AKo,AJs,KQs,A5s',
   ipRange:'QQ+,AKs,AKo,A5s,A4s,KJs'},
@@ -73,7 +75,7 @@ for(const [id,line] of Object.entries(LINES))if(module.exports[id])module.export
 
 // ---- Small blind limps (2026/10/29): folded to the SB, it limps; SB acts first after the flop. ----
 Object.assign(module.exports,{
- 'sb-limp':{name:'SB対BB・リンプポット・100BB',short:'SBリンプ→BBチェック',pot:2,stack:99,oop:'SB',ip:'BB',sizes:{betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5},line:'UTGF HJF COF BTNF SBC BBC',
+ 'sb-limp':{name:'SB対BB・リンプポット・100BB',short:'SBリンプ→BBチェック',pot:2,stack:99,oop:'SB',ip:'BB',sizes:SRP,line:'UTGF HJF COF BTNF SBC BBC',
   note:'SBまで全員降りて、SBがリンプ、BBがチェック（ポット2BB）。SBが先に打つ。',oopRange:'プリフロップ表のSBのリンプ',ipRange:'プリフロップ表のBBのチェック'},
  'sb-iso':{name:'SB対BB・リンプ後のレイズ・100BB',short:'SBリンプ→BBレイズ→SBコール',pot:8,stack:96,oop:'SB',ip:'BB',sizes:SRP,line:'UTGF HJF COF BTNF SBC BB4 SBC',
   note:'SBがリンプ、BBが4BBにレイズ、SBがコール（ポット8BB）。SBが先に打つ。',oopRange:'プリフロップ表のSBのコール',ipRange:'プリフロップ表のBBのレイズ'},
@@ -81,7 +83,7 @@ Object.assign(module.exports,{
 
 // ---- Three-way pots (2026/10/29): open, a call and the big blind's call. Solved on the flop only (scripts/poker-gto/
 // multiway-solve.cjs); after the flop the pot is shared by equity over the runouts. `order` = postflop order. ----
-const MW={betSizes:[0.33,0.75],raiseSizes:[3],maxRaises:1,allinMaxPot:1.5};
+const MW={betSizes:[0.33,0.66,1.25],raiseSizes:[3],maxRaises:1,allinMaxPot:1.5};
 Object.assign(module.exports,{
  'co-btn-bb':{name:'3人・COオープン→BTNコール→BBコール・100BB',short:'CO・BTN・BBの3人',players:3,order:['BB','CO','BTN'],sizes:MW,line:'UTGF HJF CO2.5 BTNC SBF BBC',
   note:'COが2.5BBでオープン、BTNとBBがコール（ポット8BB）。BB→CO→BTNの順に打つ。'},
@@ -93,7 +95,7 @@ Object.assign(module.exports,{
 
 // ---- Heads-up (2026/10/29): two players dealt in, the button is the SB and acts last after the flop. Ranges from
 // preflop-hu.json along each line; the reference ranges are only for the page text. ----
-const HU_LIMP={betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
+const HU_LIMP=SRP;
 Object.assign(module.exports,{
  'hu-srp':{name:'2人・SB（ボタン）オープン対BB・100BB',short:'SBオープン→BBコール（2人）',pot:5,stack:97.5,oop:'BB',ip:'SB',sizes:SRP,chart:'hu',line:'SB2.5 BBC',
   note:'2人のとき。SB（ボタン）が2.5BBでオープン、BBがコール（ポット5BB）。BBが先に打つ。',oopRange:'2人用プリフロップ表のBBのコール',ipRange:'2人用プリフロップ表のSBのオープン'},
