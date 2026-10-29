@@ -130,7 +130,9 @@ jobs:
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
-        run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs tests/poker-lobby-lifecycle.cjs
+        run: |
+          set -o pipefail
+          node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs tests/poker-lobby-lifecycle.cjs 2>&1 | tee ui-out.txt || { grep -nE "not ok|Error|rror:|expected|actual|at .*tests/" ui-out.txt | head -40 | while IFS= read -r l; do echo "::error::${l:0:400}"; done; exit 1; }
       - name: Verify ring seating and chip return in real browsers
         timeout-minutes: 4
         env:
