@@ -132,7 +132,8 @@ function storeArea(store: Pick<SeoStore, "pref" | "city">) {
 function storeSeoDescription(store: SeoStore) {
   const area = storeArea(store);
   const station = store.nearest_station ? `（最寄り：${store.nearest_station}）` : "";
-  const lead = `${store.name}は${area || "日本"}${station}の${storeCategoryLabel(store)}。営業時間・アクセス・イベント・求人・クーポン情報を${SITE_NAME}でチェック。`;
+  // 事実だけ（2026/10/30）：登録されていない情報（イベント・求人・クーポンなど）があるとは書かない
+  const lead = `${store.name}は${area || "日本"}${station}にある${storeCategoryLabel(store)}です。所在地などの店舗情報を${SITE_NAME}に掲載しています。`;
   const own = clip(store.description, 200);
   return clip(own ? `${lead}${own}` : lead, 160);
 }
