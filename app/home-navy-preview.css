@@ -140,3 +140,8 @@
 .navy-preview .portal-nav .portal-nav-inner{padding-block:7px}
 .navy-preview .home-top-banner-stage{padding-top:12px;background:linear-gradient(to bottom,transparent 0%,transparent calc(50% - 6px),#f7f2e6 calc(50% - 6px),#f7f2e6 100%),var(--masthead-navy)}
 @media(max-width:767px){.navy-preview .portal-nav .portal-nav-inner{padding-block:6px}.navy-preview .home-top-banner-stage{padding-top:10px;background:linear-gradient(to bottom,transparent 0%,transparent calc(50% - 4px),#f7f2e6 calc(50% - 4px),#f7f2e6 100%),var(--masthead-navy)}}
+
+/* Reference blue-grey navy: one shared field for masthead, hero and footer. */
+.navy-preview{--masthead-navy:linear-gradient(90deg,#203a4c 0%,#2a4657 55%,#395462 100%)}
+.navy-preview .portal-nav,.navy-preview .cta-banner,.navy-preview .portal-footer{background:var(--masthead-navy)}
+.navy-preview .portal-nav .mobile-nav-drawer{background:linear-gradient(135deg,#203a4c,#395462)}
