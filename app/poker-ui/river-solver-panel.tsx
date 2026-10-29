@@ -5,6 +5,8 @@ import type {Combo,SolverSpot} from '@/lib/poker/postflop-solver';
 import {cardText,classOf,type SolverView} from '@/lib/poker/solver-view';
 import type {SolverReply,SolverRequest} from '@/lib/poker/solver.worker';
 import styles from './gto-chart.module.css';
+import {strategyColor} from './strategy-colors';
+import {StrategyLegend} from './strategy-legend';
 
 const R='AKQJT98765432',SUITS='cdhs';
 const code=(s:string)=>{const r='23456789TJQKA'.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;};
@@ -17,7 +19,6 @@ function rangeCombos(top:number,board:number[]):Combo[]{
  const out:Combo[]=[];for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)if(!board.includes(a)&&!board.includes(b)&&keep.has(classOf(a,b)))out.push({c1:a,c2:b,weight:1});
  return out;
 }
-const COLORS:Record<string,string>={check:'#4f8f74',call:'#4f8f74',fold:'#5a6b78',bet:'#d9b368',raise:'#d0784f',allin:'#b04a4a'};
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 // Turn: 33% / 75% / all-in, raise = all-in. River after the turn: 75% / all-in. River-only spots get the fuller menu.
 const SIZES={turn:{betSizes:[0.33,0.75],raiseSizes:[],maxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1},river:{betSizes:[0.33,0.75],raiseSizes:[3],maxRaises:1}};
@@ -77,10 +78,10 @@ export function RiverSolverPanel(){
    {view.kind==='act'&&<>
     <p><b>{view.street==='turn'?'ターン':'リバー'}・{view.player===0?'OOP（先に打つ人）':'IP（後に打つ人）'}の番</b>：全体では {view.actions!.map((a,i)=>`${a.label} ${pct(view.total![i])}`).join('・')}</p>
     <div className={styles.path}>{view.actions!.map((a,i)=>a.next?<button key={i} type="button" onClick={()=>requestView([...steps,i])}>「{a.label}」の後を見る</button>:null)}</div>
-    <table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=view.classes![l];if(!e)return <td key={j} data-on="none">{l}</td>;
-     let acc=0;const stops=view.actions!.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${COLORS[a.kind]} ${from}% ${acc}%`;}).join(',');
+    <StrategyLegend actions={view.actions!}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=view.classes![l];if(!e)return <td key={j} data-on="none">{l}</td>;
+     let acc=0;const stops=view.actions!.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,view.actions!)} ${from}% ${acc}%`;}).join(',');
      return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${view.actions!.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}`}>{l}</td>;})}</tr>)}</tbody></table>
-    <p className={styles.legend}>{view.actions!.map((a,i)=><em key={i} className={styles.key}><i style={{background:COLORS[a.kind]}}/>{a.label}</em>)} 色の割合＝その手でその打ち方をする割合。灰色の枠はこの場面に来ない手。</p>
+    
    </>}
   </>}
  </div>;
