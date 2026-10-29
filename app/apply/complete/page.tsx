@@ -21,7 +21,7 @@ export default async function ApplyCompletePage({
   const { data: application } = await supabase
     .from("listing_applications")
     .select(
-      "id, company_name, payment_status, issued_login_id, issued_password, issued_line_code, credentials_retrieved_at"
+      "id, company_name, payment_status, payment_note, issued_login_id, issued_password, issued_line_code, credentials_retrieved_at"
     )
     .eq("id", applicationId)
     .maybeSingle();
@@ -42,6 +42,24 @@ export default async function ApplyCompletePage({
         <p className="muted">
           決済は完了しました。現在、店舗情報の登録処理を確認しております。担当者より改めてログイン情報をご連絡いたしますので、今しばらくお待ちください。
         </p>
+      </Card>
+    );
+  }
+
+  // 支払い画面で払わずに戻ってきた(KOMOJUのセッションがまだ支払い待ち)。料金は発生していないので、そのまま続けられるようにする(2026/10/29)
+  if (application.payment_status === "charge_unknown" && String(application.payment_note ?? "").includes("支払い画面で操作中")) {
+    return (
+      <Card title="お支払いがまだ完了していません">
+        <p className="muted">
+          カードのお支払いはまだ行われていません（料金は発生していません）。お支払いを続ける場合は、下のボタンからお支払い画面にお進みください。
+        </p>
+        <a
+          href={`/apply/complete/resume?application=${application.id}`}
+          className="btn primary"
+          style={{ marginTop: 16, display: "inline-flex" }}
+        >
+          お支払い画面に進む
+        </a>
       </Card>
     );
   }

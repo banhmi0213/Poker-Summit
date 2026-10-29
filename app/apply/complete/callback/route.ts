@@ -43,7 +43,8 @@ async function handle(req: NextRequest): Promise<NextResponse> {
 
   // すでに処理済み(二重POST・戻るボタンでの再送信など)なら再処理せず
   // そのまま表示ページへ。
-  if (application.payment_status === "active" || application.payment_status === "charged_pending_manual" || application.payment_status === "charge_unknown") {
+  // charge_unknown(確認待ち)は、あとから支払い画面で支払って戻ってきたときにすぐ確かめられるよう、もう一度確認する(2026/10/29)
+  if (application.payment_status === "active" || application.payment_status === "charged_pending_manual") {
     return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, {
       status: 303,
     });
@@ -100,7 +101,7 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     .from("listing_applications")
     .update({ payment_status: "processing" })
     .eq("id", applicationId)
-    .not("payment_status", "in", "(processing,active,charged_pending_manual,charge_unknown)")
+    .not("payment_status", "in", "(processing,active,charged_pending_manual)")
     .select("id");
   if (!claimed?.length) {
     return NextResponse.redirect(`${siteOrigin}/apply/complete?application=${applicationId}`, { status: 303 });
