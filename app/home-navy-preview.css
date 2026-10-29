@@ -145,3 +145,8 @@
 .navy-preview{--masthead-navy:linear-gradient(90deg,#203a4c 0%,#2a4657 55%,#395462 100%)}
 .navy-preview .portal-nav,.navy-preview .cta-banner,.navy-preview .portal-footer{background:var(--masthead-navy)}
 .navy-preview .portal-nav .mobile-nav-drawer{background:linear-gradient(135deg,#203a4c,#395462)}
+
+/* Fine champagne divider follows the navy/cream boundary behind the banner. */
+.navy-preview .home-top-banner-stage::before{content:"";position:absolute;inset-inline:0;top:calc(50% - 6px);height:1px;background:#c7ac75;pointer-events:none}
+.navy-preview .home-top-banner-inner{z-index:1}
+@media(max-width:767px){.navy-preview .home-top-banner-stage::before{top:calc(50% - 4px)}}
