@@ -1,4 +1,5 @@
 import {seOutput} from './se-output';
+import {playTableSample} from './table-samples';
 /** Table sound effects chosen by the owner (2026/10/26): deal F, board D, fold E, check D, call/bet/raise E, pot win = shove + fanfare, all-in = big shove + orchestra hit.
  * Synthesized in the browser (no audio files, no network). Every function only schedules nodes on the given context. */
 /** flop/turn/river = community cards appearing on the board (flop plays three). */
@@ -60,7 +61,9 @@ function orchestraHit(c:BaseAudioContext,t:number){
 export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
  const t=c.currentTime+.01;
  switch(kind){
-  case 'flop':case 'turn':case 'river':
+  case 'flop':case 'turn':case 'river':{
+   // Owner 2026/10/29: recorded sounds - three cards for the flop, one card for the turn and the river.
+   const recorded=playTableSample(c,kind==='flop'?'three':'one',t);if(recorded!==null)return recorded;}
    // Owner 2026/10/29 (カチャカチャ機械音がださい): a card laid on the felt - a soft paper slide and a gentle tap, one per card.
    for(let i=0;i<(kind==='flop'?3:1);i++){const at=t+i*.17,pan=-.2+i*.2;
     hiss(c,at,{dur:.11,f0:700,f1:1500,q:.6,vol:.1,att:.035,pan,lp:2400});
@@ -69,7 +72,8 @@ export function playTableEffect(c:BaseAudioContext,kind:EffectKind):number{
   case 'stamp':
    // Owner pick 2026/10/29: C「ぷにっ」, a soft bouncy two-step.
    voice(c,t,{f:300,type:'sine',vol:.13,att:.005,dur:.07,glide:620});voice(c,t+.08,{f:520,type:'sine',vol:.07,att:.004,dur:.08,glide:440});return 220;
-  case 'deal':for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
+  case 'deal':{const recorded=playTableSample(c,'three',t);if(recorded!==null)return recorded;}
+ for(let i=0;i<3;i++)hiss(c,t+i*.15,{dur:.1,f0:1200,f1:2600,q:.9,vol:.32,att:.008,pan:-.2+i*.2,lp:4000});return 450;
   case 'fold':hiss(c,t,{dur:.12,f0:2400,f1:4000,q:.7,vol:.14,att:.03,lp:5000});return 200;
   case 'check':
    thump(c,t,{f:180,f1:95,dur:.09,vol:.45});hiss(c,t,{dur:.04,f0:400,q:.8,vol:.2,att:.002,lp:900});

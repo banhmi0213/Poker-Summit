@@ -1,6 +1,7 @@
 "use client";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
+import {preloadTableSamples} from "@/lib/poker/table-samples";
 import {useSoundSettings} from "@/lib/poker/sound-settings";
 import {TableBgmPlayer} from "@/app/poker-ui/table-bgm";
 import {MobileWagerEditor} from '@/app/poker-ui/mobile-wager-editor';
@@ -167,7 +168,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const unlockAudio = () => {
     if (typeof window === "undefined") return;
     try {
-      if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+      if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
       if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
     } catch { /* Audio is optional. */ }
   };
@@ -204,7 +205,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   useEffect(() => {
     const activate = () => {
       try {
-        if (!audioContextRef.current) audioContextRef.current = new AudioContext();
+        if (!audioContextRef.current) { audioContextRef.current = new AudioContext(); preloadTableSamples(audioContextRef.current); }
         if (audioContextRef.current.state === "suspended") void audioContextRef.current.resume();
       } catch { /* Audio is optional. */ }
     };

@@ -1,6 +1,7 @@
 import {seOutput} from './se-output';
 import {type ActionKind} from './action-feedback';
 import {playTableEffect} from './table-effects';
+import {preloadTableSamples} from './table-samples';
 /** Browser-only synthesized effects, matching the existing demo. No audio files or network I/O. */
 /** 'turn' = it is your turn; 'turnCard' = the turn card appears on the board. */
 export type PokerSound='turn'|'action'|'deal'|'flop'|'turnCard'|'river'|'win'|'enter'|'exit'|'stamp'|ActionKind;
@@ -12,7 +13,7 @@ export class PokerSounds {
  setEnabled(enabled:boolean){this.#enabled=enabled;}
  async unlock(){
   if(this.#closed)return;
-  try{this.#context??=this.factory();if(this.#context.state==='suspended')await this.#context.resume();}catch{/* Optional audio cannot block a game. */}
+  try{this.#context??=this.factory();preloadTableSamples(this.#context);if(this.#context.state==='suspended')await this.#context.resume();}catch{/* Optional audio cannot block a game. */}
  }
  play(kind:PokerSound):number {
   const c=this.#context;if(this.#closed||!this.#enabled||!c||c.state!=='running')return 0;
