@@ -71,6 +71,14 @@ const LINES={'btn-bb':'UTGF HJF COF BTN2.5 SBF BBC','co-bb':'UTGF HJF CO2.5 BTNF
  'btn-sb-3bet':'UTGF HJF COF BTN2.5 SB11 BTNC','co-btn-3bet':'UTGF HJF CO2.5 BTN7.5 COC','btn-bb-4bet':'UTGF HJF COF BTN2.5 SBF BB11 BTN24.2 BBC'};
 for(const [id,line] of Object.entries(LINES))if(module.exports[id])module.exports[id].line=line;
 
+// ---- Small blind limps (2026/10/29): folded to the SB, it limps; SB acts first after the flop. ----
+Object.assign(module.exports,{
+ 'sb-limp':{name:'SB対BB・リンプポット・100BB',short:'SBリンプ→BBチェック',pot:2,stack:99,oop:'SB',ip:'BB',sizes:{betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5},line:'UTGF HJF COF BTNF SBC BBC',
+  note:'SBまで全員降りて、SBがリンプ、BBがチェック（ポット2BB）。SBが先に打つ。',oopRange:'プリフロップ表のSBのリンプ',ipRange:'プリフロップ表のBBのチェック'},
+ 'sb-iso':{name:'SB対BB・リンプ後のレイズ・100BB',short:'SBリンプ→BBレイズ→SBコール',pot:8,stack:96,oop:'SB',ip:'BB',sizes:SRP,line:'UTGF HJF COF BTNF SBC BB4 SBC',
+  note:'SBがリンプ、BBが4BBにレイズ、SBがコール（ポット8BB）。SBが先に打つ。',oopRange:'プリフロップ表のSBのコール',ipRange:'プリフロップ表のBBのレイズ'},
+});
+
 // ---- Heads-up (2026/10/29): two players dealt in, the button is the SB and acts last after the flop. Ranges from
 // preflop-hu.json along each line; the reference ranges are only for the page text. ----
 const HU_LIMP={betSizes:[0.5,1],raiseSizes:[3],maxRaises:1,turnBetSizes:[0.66],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
