@@ -16,19 +16,20 @@ const combos=(l:string)=>l.length===2?6:l[2]==='s'?4:12;
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function PreflopChartPanel(){
- const [table,setTable]=useState<'6max'|'hu'>('6max'),[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
+ const [table,setTable]=useState<'6max'|'hu'>('6max'),[depth,setDepth]=useState<number>(100),[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const KINDS=table==='hu'?KINDSHU:KINDS6;
- useEffect(()=>{let live=true;setData(null);fetch(table==='hu'?'/poker-gto/preflop-hu.json':'/poker-gto/preflop.json').then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live)setError('プリフロップ表を読み込めませんでした。');});return()=>{live=false;};},[table]);
+ useEffect(()=>{let live=true;setData(null);fetch(table==='hu'?'/poker-gto/preflop-hu.json':depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live)setError('プリフロップ表を読み込めませんでした。');});return()=>{live=false;};},[table,depth]);
  const options=useMemo(()=>data?.nodes.filter(n=>n.kind===kind)??[],[data,kind]);
  const node=options.find(n=>n.id===id)??options[0]??null;
  const totals=useMemo(()=>{if(!node)return [];const k=node.actions.length,t=new Array(k).fill(0);let all=0;for(const [l,v] of Object.entries(node.strategy)){const c=combos(l);all+=c;for(let a=0;a<k;a++)t[a]+=c*v[a];}return t.map(x=>x/all);},[node]);
  return <div className={styles.wrap}>
-  <p>100BBのプリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
+  <p>プリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人卓は100BBのほか、大会向けに60・40・20BB（BBアンティあり）の表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}
   {data&&<>
    <div className={styles.form}>
     <label>人数<select value={table} onChange={e=>{setTable(e.target.value as '6max'|'hu');setKind('open');setId(null);}}><option value="6max">6人卓</option><option value="hu">2人（ヘッズアップ）</option></select></label>
+    {table==='6max'&&<label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB（アンティなし）</option><option value={60}>60BB（大会・BBアンティ）</option><option value={40}>40BB（大会・BBアンティ）</option><option value={20}>20BB（大会・BBアンティ）</option></select></label>}
     <label>状況<select value={kind} onChange={e=>{setKind(e.target.value);setId(null);}}>{KINDS.map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>
     <label>立場<select value={node?.id??''} onChange={e=>setId(Number(e.target.value))}>{options.map(n=><option key={n.id} value={n.id}>{n.title}</option>)}</select></label>
    </div>
