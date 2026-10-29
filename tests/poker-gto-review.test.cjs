@@ -5,7 +5,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {BotTable}=require('../lib/poker/bot-hands.ts');
 const {ringTerms}=require('../lib/poker/tournament-hand.ts');
 const {loadGtoData}=require('../lib/poker/gto-data-node.ts');
-const {reviewGto,gtoVerdict,viewAt,summarizeDeviation}=require('../lib/poker/gto-review.ts');
+const {reviewGto,gtoVerdict,viewAt,summarizeDeviation,reviewRanges}=require('../lib/poker/gto-review.ts');
 const seeded=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
 const asViewer=(h,seatId)=>({handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.seatId===seatId,hole:p.seatId===seatId?p.hole:null}))});
 
@@ -105,4 +105,16 @@ test('hand categories on the board',()=>{
   ['5c','6d','8h4s7d','ストレート'],['Ah','2h','8h4h7h','フラッシュ'],['7c','7d','7h7s2d','フルハウス以上'],['Ac','Kd','QhJs2d','ガットショット'],['9c','9d','QhJsTd','ロウペア'],['9c','8d','QhJs2d','ガットショット'],['Tc','9d','QhJs2d','両面ストレートドロー']];
  for(const [a,b,board,want] of cases)assert.equal(handCategory(h(a,b),bd(board)),want,`${a}${b} on ${board}`);
  assert.equal(combosOfClass('AKs',bd('AhKs2d')).length,2);assert.equal(combosOfClass('88',bd('8h4s2d')).length,3);assert.equal(combosOfClass('AKo',[]).length,12);
+});
+
+test('ranges at other players\' decisions use only the public record',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100);let n=0,post=0;
+ for(let i=0;i<Number(process.env.GTO_REVIEW_HANDS||10);i++){const r=t.play(seeded(700+i));const h=r.history;if(!h)continue;
+  const seat=h.players[0].seatId,view=asViewer(h,seat),leaky={...view,players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.seatId===seat,hole:p.hole}))};
+  const a=reviewRanges(view,data,300),b=reviewRanges(leaky,data,300);
+  assert.deepEqual(JSON.stringify(a.map(x=>[x.index,x.range.options])),JSON.stringify(b.map(x=>[x.index,x.range.options])),'opponents\' cards change nothing');
+  for(const x of a){n++;if(x.range.board)post++;assert.notEqual(view.actions[x.index].seatId,seat);assert.equal(x.range.hero,'');assert.ok(Object.keys(x.range.grid).length>0);}
+ }
+ console.log('other ranges',n,'postflop',post);assert.ok(n>0);
 });

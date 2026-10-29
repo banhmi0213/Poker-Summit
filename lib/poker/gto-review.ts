@@ -36,8 +36,10 @@ function optionText(kind:string,label:string,to:number|null,bb:number){
 }
 
 /** Rebuild the decision point before action `index` from the public record. */
-export function viewAt(hand:GtoReviewHand,index:number):GtoView|null{
- const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return null;
+export function viewAt(hand:GtoReviewHand,index:number,seatId?:string):GtoView|null{
+ // seatId: build the decision for another player (range only, 2026/10/29); their cards are never used.
+ const me=seatId?hand.players.find(p=>p.seatId===seatId):hand.players.find(p=>p.you);if(!me)return null;
+ const hole=seatId&&!me.you?[]:me.hole;if(!seatId&&(!hole||hole.length!==2))return null;
  const a=hand.actions[index],before=hand.actions.slice(0,index),bb=hand.terms.bb;
  const board=hand.board.slice(0,boardCount[a.street]);if(board.length!==boardCount[a.street])return null;
  const order=[...hand.players].sort((x,y)=>x.seat-y.seat).map(p=>p.seatId);
@@ -57,7 +59,7 @@ export function viewAt(hand:GtoReviewHand,index:number):GtoView|null{
  for(const b of before)if(b.street===a.street&&b.type!=='ante')street.set(b.seatId,b.to);
  const players=hand.players.map(p=>{const spent=paid.get(p.seatId)??0;return {id:p.seatId,stack:p.startStack-spent,committed:street.get(p.seatId)??0,totalCommitted:spent,folded:folded.has(p.seatId),allIn:allIn.has(p.seatId)};});
  const self=players.find(p=>p.id===me.seatId)!,currentBet=Math.max(0,...street.values()),toCall=Math.max(0,Math.min(currentBet-self.committed,self.stack));
- return {handKey:'review:'+hand.handId,bb,hero:me.seatId,hole:me.hole,board,positions,players,
+ return {handKey:'review:'+hand.handId,bb,hero:me.seatId,hole:hole??[],board,positions,players,
   legal:{check:toCall===0,call:toCall>0,callAmount:toCall,raise:self.stack>toCall,minRaiseTo:null,maxRaiseTo:null},log,
   startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
 }
@@ -65,7 +67,7 @@ export function viewAt(hand:GtoReviewHand,index:number):GtoView|null{
 function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
  if(!s.grid)return undefined;
  const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
- return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:classOf(code(hole[0]),code(hole[1])),nearFlop:s.nearFlop,board:board.length>=3?board.map(code):undefined};
+ return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:hole.length===2?classOf(code(hole[0]),code(hole[1])):'',nearFlop:s.nearFlop,board:board.length>=3?board.map(code):undefined};
 }
 export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
@@ -143,4 +145,19 @@ export function categoryBreakdown(range:GtoRange):{category:HandCategory;share:n
   for(const c of combosOfClass(cls,range.board)){const cat=handCategory(c,range.board),x=acc.get(cat)??{w:0,f:new Array(k).fill(0)};
    x.w+=e.reach;for(let a=0;a<k;a++)x.f[a]+=e.reach*(e.freqs[a]??0);acc.set(cat,x);total+=e.reach;}}
  return HAND_CATEGORIES.filter(c=>acc.has(c)).map(c=>{const x=acc.get(c)!;return {category:c,share:total>0?x.w/total:0,freqs:x.f.map(v=>x.w>0?v/x.w:0)};});
+}
+
+/** The GTO range at every other player's decision (2026/10/29: 相手のアクションでもレンジ表). Uses only the public record:
+ * opponents' cards are never read, even when the history has them (shown at showdown). */
+export function reviewRanges(hand:GtoReviewHand,data:GtoData,budgetMs=800):{index:number;range:GtoRange}[]{
+ const out:{index:number;range:GtoRange}[]=[];
+ const pub:GtoReviewHand={...hand,players:hand.players.map(p=>p.you?p:{...p,hole:null})};
+ pub.actions.forEach((a,i)=>{
+  const who=pub.players.find(p=>p.seatId===a.seatId);if(!who||who.you||forced.has(a.type))return;
+  const v=viewAt(pub,i,a.seatId);if(!v)return;
+  const s=gtoStrategy(v,data,budgetMs,true);if(s.source==='fallback'||!s.grid)return;
+  const options=s.options.map(o=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),kind:o.kind}));
+  const r=rangeOf(s,options,[],v.board);if(r)out.push({index:i,range:r});
+ });
+ return out;
 }
