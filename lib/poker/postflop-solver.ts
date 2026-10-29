@@ -14,7 +14,11 @@ export type SolverSpot={board:number[];pot:number;stack:number;ranges:[Combo[],C
  /** River sizes when solving from an earlier street (default: the first street's). */
  riverBetSizes?:number[];riverRaiseSizes?:number[];riverMaxRaises?:number;
  /** Offer all-in only when it is at most this many times the pot (after calling). Default: always. Keeps deep-stack trees small. */
- allinMaxPot?:number};
+ allinMaxPot?:number;
+ /** Flop solves (2026/10/29): keep no average strategy on the river. Regret matching needs only the regrets, and only
+  * the flop averages are exported, so this halves the river memory (the bulk of a flop tree). Values and the
+  * exploitability check then read the river's current strategy, which converges with the rest. */
+ riverCurrentOnly?:boolean};
 export type Street='flop'|'turn'|'river';
 export type Action={label:string;kind:'check'|'bet'|'call'|'fold'|'raise'|'allin';to:number};
 export type ActNode={kind:'act';street:Street;player:0|1;actions:Action[];children:Node[];id:number;path:string;contrib:[number,number]};
@@ -115,7 +119,9 @@ export class PostflopSolver{
  }
  #table(map:(Float32Array|undefined)[],node:ActNode,ctx:number){const key=node.id*2809+ctx;let t=map[key];if(!t){t=map[key]=new Float32Array(this.sides[node.player].n*node.actions.length);this.#tables++;}return t;}
  /** Current (regret-matching) or average strategy for one node: [combo*k + action]. `ctx` = the cards dealt on the way (see dealCard). */
+ #lite(node:ActNode){return this.spot.riverCurrentOnly===true&&node.street==='river'&&this.street!=='river';}
  strategy(node:ActNode,average=false,ctx=NO_CARDS){
+  if(average&&this.#lite(node))average=false;
   const k=node.actions.length,n=this.sides[node.player].n,src=this.#table(average?this.#avg:this.#regret,node,ctx),out=new Float64Array(n*k);
   for(let h=0;h<n;h++){let sum=0;for(let a=0;a<k;a++)sum+=Math.max(0,src[h*k+a]);for(let a=0;a<k;a++)out[h*k+a]=sum>0?Math.max(0,src[h*k+a])/sum:1/k;}
   return out;
@@ -126,6 +132,7 @@ export class PostflopSolver{
  #alloc(){let b=this.#buf[this.#top];if(!b){b=this.#buf[this.#top]=new Float64Array(this.#width);}this.#top++;return b;}
  /** Current strategy into a scratch buffer: [combo*k + action]. */
  #strat(node:ActNode,average:boolean,ctx:number){
+  if(average&&this.#lite(node))average=false;
   const k=node.actions.length,n=this.sides[node.player].n,src=this.#table(average?this.#avg:this.#regret,node,ctx),out=this.#alloc();
   for(let h=0;h<n;h++){let sum=0;const o=h*k;for(let a=0;a<k;a++){const x=src[o+a];if(x>0)sum+=x;}
    if(sum>0)for(let a=0;a<k;a++){const x=src[o+a];out[o+a]=x>0?x/sum:0;}else for(let a=0;a<k;a++)out[o+a]=1/k;}
@@ -171,7 +178,7 @@ export class PostflopSolver{
     for(let h=0;h<hn;h++){const o=h*k,v=out[h];for(let a=0;a<k;a++){const x=r[o+a];r[o+a]=(x>0?x*pos:x*neg)+vals[a][h]-v;}}}
    this.#top=mark+1;return out;
   }
-  if(mode==='train'){const avg=this.#table(this.#avg,node,ctx),w=this.#w;for(let o=0;o<on;o++){const r=opp[o]*w;if(r===0)continue;for(let a=0;a<k;a++)avg[o*k+a]+=r*s[o*k+a];}}
+  if(mode==='train'&&!this.#lite(node)){const avg=this.#table(this.#avg,node,ctx),w=this.#w;for(let o=0;o<on;o++){const r=opp[o]*w;if(r===0)continue;for(let a=0;a<k;a++)avg[o*k+a]+=r*s[o*k+a];}}
   out.fill(0,0,hn);const reach=this.#alloc();
   for(let a=0;a<k;a++){
    let any=false;for(let o=0;o<on;o++){const r=opp[o]*s[o*k+a];reach[o]=r;if(r!==0)any=true;}
@@ -189,6 +196,14 @@ export class PostflopSolver{
  /** Exploitability as a share of the pot: average gain of a best response over the equilibrium value. */
  exploitability(){const br0=this.#value(0,'br'),br1=this.#value(1,'br');return (br0+br1-this.pot)/2/this.pot;}
  values(){return [this.#value(0,'avg'),this.#value(1,'avg')];}
+ /** Per combo of `hero` (2026/10/29): average-strategy value per opponent hand it can face (chips, the pot counted as
+  * won), i.e. what each hand is worth from here. Used to calibrate the preflop model's equity realisation per hand. */
+ handValues(hero:0|1){
+  this.#top=0;const O=this.sides[1-hero],H=this.sides[hero],opp=Float64Array.from(O.w),v=this.#cfr(this.tree,hero,opp,'avg',NO_CARDS).slice(0,H.n);
+  const all=new Float64Array(52);let total=0;for(let o=0;o<O.n;o++){total+=opp[o];all[O.c1[o]]+=opp[o];all[O.c2[o]]+=opp[o];}
+  const same=this.#same[hero];for(let h=0;h<H.n;h++){const x=same[h],r=total-all[H.c1[h]]-all[H.c2[h]]+(x>=0?opp[x]:0);v[h]=r>0?v[h]/r:0;}
+  return v;
+ }
  nodes(){return this.#nodes;}
  /** Number of strategy tables in use (memory gauge). */
  tableCount(){return this.#tables;}

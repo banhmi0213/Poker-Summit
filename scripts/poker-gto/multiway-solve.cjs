@@ -39,7 +39,7 @@ function visit(node,reach,steps){
 }
 visit(solver.tree,solver.sides.map(s=>Float64Array.from(s.w)),[]);
 const ev=solver.values();
-const out={version:2,multiway:true,flop,board,spot:{id:spotId,name:SPOT.name,pot:chart.pot,stack:chart.stack,order:SPOT.order,note:SPOT.note,line:SPOT.line,chartRanges:chart.ranges,sizes:SPOT.sizes,
+const out={version:3,multiway:true,flop,board,spot:{id:spotId,name:SPOT.name,pot:chart.pot,stack:chart.stack,order:SPOT.order,note:SPOT.note,line:SPOT.line,chartRanges:chart.ranges,sizes:SPOT.sizes,
  model:'3人のポット：フロップの打ち合いを計算し、そのあとは残りのカードを全部配ったときの勝率で分配。相手2人どうしのカードのかぶりは無視。'},
  iterations:solver.iterations,exploitability:+(Math.max(...expl)*100).toFixed(3),checks,ev:Object.fromEntries(SPOT.order.map((p,i)=>[p,round(ev[i])])),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
 fs.mkdirSync(outDir,{recursive:true});fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));

@@ -47,3 +47,14 @@ test('flop with no betting = pot x equity over every turn and river (two dealt c
  const v=describe(s,[0,0]);assert.equal(v.kind,'chance');assert.equal(v.deal,'turn');assert.equal(v.cards.length,49);
  const r=describe(s,[0,0,code('As'),0,0]);assert.equal(r.kind,'chance');assert.equal(r.deal,'river');assert.equal(r.cards.length,48);
 });
+test('river-current-only solves train identically, and hand values add up to the pot',()=>{
+ const {PostflopSolver}=require('../lib/poker/postflop-solver.ts');
+ const R='23456789TJQKA',S='cdhs',code=s=>R.indexOf(s[0])*4+S.indexOf(s[1]);
+ const board=['Kh','7d','2c','5s'].map(code),hands=l=>l.map(h=>({c1:code(h.slice(0,2)),c2:code(h.slice(2)),weight:1}));
+ const base={board,pot:10,stack:40,betSizes:[0.66],raiseSizes:[3],maxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[3],riverMaxRaises:1,allinMaxPot:1.5,
+  ranges:[hands(['AsKs','QsQd','9h8h','6c4c','AdQc','JcTc']),hands(['KdQd','AhJh','8s8c','Td9d','7h6h','AcKc'])]};
+ const full=new PostflopSolver(base).run(40),lite=new PostflopSolver({...base,riverCurrentOnly:true}).run(40);
+ assert.deepEqual(Array.from(lite.strategy(lite.tree,true)),Array.from(full.strategy(full.tree,true)));
+ const [a,b]=full.values();assert.ok(Math.abs(a+b-10)<1e-6,'values share the pot');
+ const v=full.handValues(0);assert.equal(v.length,6);assert.ok(v.every(x=>x>=-40&&x<=50));
+});
