@@ -6,7 +6,7 @@ import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
 
-/** Precomputed flop solutions for 13 spots × 95 representative flops (public/poker-gto/flops/<spot>/<flop>.json). */
+/** Precomputed flop solutions for 13 spots × up to 200 representative flops (2026/10/29: 95 → 200; the list shows only computed ones) (public/poker-gto/flops/<spot>/<flop>.json). */
 export const FLOPS=GTO_FLOPS;
 const R='AKQJT98765432',SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
@@ -33,7 +33,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   <p className={styles.note}>ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジは100BB・6人卓の標準的な目安レンジです。</p>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
-   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
+   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.filter(f=>computed(f)||f===flop).map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
    <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
    <button type="button" onClick={lookup}>近いフロップを表示</button>
   </div>
