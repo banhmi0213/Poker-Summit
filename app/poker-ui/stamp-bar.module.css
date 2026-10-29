@@ -94,3 +94,7 @@
 .bubble{transform:translate(-50%,-68%)}
 @keyframes popHigh{0%{transform:translate(-50%,-68%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translate(-50%,-68%) scale(1) rotate(0);opacity:1}}
 .bubble{animation-name:popHigh}
+
+/* Owner 2026/10/29: a ticket button with no ticket left is grey; tapping it explains where to exchange. */
+.quickExtra button[data-empty]{background:#3a3f44;border-color:#6b7076;color:#a9adb2;cursor:pointer}
+.quickExtra p[role=status]{white-space:normal;max-width:220px;line-height:1.4}
