@@ -1,0 +1,7 @@
+'use client';
+import styles from './mobile-wager-editor.module.css';
+import {AmountInput} from './amount-input';
+export function MobileWagerEditor({amount,min,max,step,presets,format,label,onChange,onConfirm,onClose}:{amount:number;min:number;max:number;step:number;presets:{label:string;amount:number}[];format:(n:number)=>string;label:string;onChange:(n:number)=>void;onConfirm:()=>void;onClose:()=>void}){
+ const change=(n:number)=>onChange(Math.min(max,Math.max(min,Math.round(n))));
+ return <section className={styles.editor} role="dialog" aria-label="ベット額を選択"><div className={styles.heading}><strong>{format(amount)}</strong><button type="button" aria-label="金額選択を閉じる" onClick={onClose}>×</button></div><div className={styles.body}><div className={styles.presets}>{presets.map((p,i)=><button type="button" key={i} onClick={()=>change(p.amount)}><span>{p.label}</span><strong>{format(p.amount)}</strong></button>)}</div><div className={styles.adjust}><button type="button" aria-label="ベット額を増やす" onClick={()=>change(amount+step)}>＋</button><input type="range" aria-label="縦のベット額調整" min={min} max={max} step={1} value={amount} onChange={e=>change(Number(e.target.value))}/><button type="button" aria-label="ベット額を減らす" onClick={()=>change(amount-step)}>−</button></div></div><label className={styles.exact}>金額入力<AmountInput ariaLabel="ベット額の直接入力" value={amount} min={min} max={max} onChange={change}/></label><button type="button" className={styles.confirm} onClick={onConfirm}>{label} {format(amount)}</button></section>;
+}

@@ -32,17 +32,17 @@ finally {
 require('node:test').test('controls render legal amounts and actions across five betting states', () => {
     let r = createBettingRound([{ id: 'you', stack: 1000, committed: 50 }, { id: 'p5', stack: 1000, committed: 100 }, { id: 'p3', stack: 1000 }, { id: 'p2', stack: 1000 }, { id: 'p4', stack: 1000 }, { id: 'p6', stack: 1000 }], 100, 'you');
     let v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, true, false, false]);
-    assert.match(v.buttons[2].text, /50/);
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, false]);
+    assert.match(v.buttons[1].text, /50/);
     assert.match(v.html, /min="200" max="1050" step="1"/);
     r = createBettingRound([{ id: 'you', stack: 30, committed: 50 }, { id: 'p5', stack: 1000, committed: 100 }, { id: 'p3', stack: 0, folded: true }, { id: 'p2', stack: 0, folded: true }, { id: 'p4', stack: 0, folded: true }, { id: 'p6', stack: 0, folded: true }], 100, 'you');
     v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, true, false, true]);
-    assert.match(v.buttons[2].text, /オールインコール.*30/);
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, true]);
+    assert.match(v.buttons[1].text, /オールインコール.*30/);
     r = createBettingRound([{ id: 'you', stack: 1000 }, { id: 'p5', stack: 1000 }, { id: 'p3', stack: 1000 }, { id: 'p2', stack: 1000 }, { id: 'p4', stack: 1000 }, { id: 'p6', stack: 1000 }], 100, 'you');
     v = render(r);
-    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, true, false]);
-    assert.equal(v.buttons[3].text, 'ベット');
+    assert.deepEqual(v.buttons.map(b => b.disabled), [false, false, false]);
+    assert.equal(v.buttons[2].text, 'ベット');
     assert.match(v.html, /min="100" max="1000"/);
     r = applyBettingAction(r, 'you', { type: 'check' });
     v = render(r);
@@ -52,7 +52,7 @@ require('node:test').test('controls render legal amounts and actions across five
     for (const id of ['p3', 'p2', 'p4', 'p6'])
         r = applyBettingAction(r, id, { type: 'call' });
     v = render(r);
-    assert.equal(v.buttons[3].text, 'オールイン');
+    assert.equal(v.buttons[2].text, 'オールイン');
     assert.match(v.html, /min="150" max="150"/);
     assert.match(v.html, /オールインのみ/);
     React.useState = original;
@@ -65,8 +65,8 @@ require('node:test').test('blind chip markers show posted amounts and clear on t
     const posted = postBlinds(ids.map(id => ({ id, stack: 1000 })), 5, 50, 100);
     let r = createBettingRound(posted.players, 100, posted.positions.preflopFirst);
     let view = render(r);
-    assert.match(view.html, /aria-label="あなた：SB ベット 50 chips"/);
-    assert.match(view.html, /aria-label="PLAYER 5：BB ベット 100 chips"/);
+    assert.match(view.html, /aria-label="あなた：SB ベット 50"/);
+    assert.match(view.html, /aria-label="PLAYER 5：BB ベット 100"/);
     assert.equal((view.html.match(/class="betChip"/g) || []).length, 2);
     assert.equal(potTotal(r), 150); // Markers are a view of existing chips, not extra contributions.
     for (const id of ['p3', 'p2', 'p4', 'p6', 'you']) r = applyBettingAction(r, id, { type: 'call' });
@@ -84,8 +84,9 @@ require('node:test').test('preflop renders the supplied hand, ten opponent card 
     const html = render(r).html;
     const { cardLabel } = req(root + '/lib/poker/card-display.ts');
     const hand = html.match(/<div class="hole"[^>]*>([\s\S]*?)<\/div>/)[1];
-    for (const card of fixtureDeal.holes.you) assert.ok(hand.includes(cardLabel(card)));
+    for (const card of fixtureDeal.holes.you) assert.ok(hand.replace(/<[^>]+>/g,'').includes(cardLabel(card)));
     assert.equal((html.match(/class="cardBack"/g) || []).length, 10);
+    assert.equal((html.match(/src="\/images\/summit-finger-clean.webp"/g)||[]).length,10);
     assert.match(html, /aria-label="共通カード"[^>]*><\/div>/);
 });
 
@@ -94,7 +95,7 @@ require('node:test').test('tournament sample renders top clock, structure menu a
  const ids=['you','p5','p3','p2','p4','p6'],r=createBettingRound(ids.map(id=>({id,stack:1000})),100,'you');
  const tournament={id:'sample',title:'TEST CUP',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  const html=render(r,{tournament,serverNow:Date.parse(tournament.starts_at)}).html;
- assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>ストラクチャー<\/button>/);assert.match(html,/大会設定連動デモ/);
+ assert.match(html,/トーナメント・ブラインドタイマー/);assert.match(html,/LEVEL 1/);assert.match(html,/20:00/);assert.match(html,/>テーブル情報<\/button>/);assert.match(html,/大会設定連動デモ/);
 });
 require('node:test').test('structure table renders all levels, break and late registration details',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
@@ -136,14 +137,14 @@ require('node:test').test('real tournament initial render applies starting stack
  const structure={...structuredClone(defaultStructure),startingStack:20000};structure.periods[0]={...structure.periods[0],sb:200,bb:400,ante:400};structure.periods=structure.periods.slice(0,1);structure.lateRegLevel=1;
  const tournament={id:'sample',title:'LIVE SETTINGS',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure,image_url:null};
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)}));
- assert.match(html,/SB 200 \/ BB 400/);assert.match(html,/19,800 chips/);assert.match(html,/PLAYER 5<\/span><small>19,200/);assert.match(html,/POT <strong>1,000/);assert.match(html,/アンティ合計：400/);assert.match(html,/BBアンティ・BB優先/);assert.doesNotMatch(html,/50\/100・アンティなし/);
+ assert.match(html,/SB 200 \/ BB 400/);assert.match(html,/19,800/);assert.doesNotMatch(html,/19,800 chips/);assert.match(html,/PLAYER 5<\/span><small>19,200/);assert.match(html,/POT <strong>1,000/);assert.match(html,/アンティ合計：400/);assert.match(html,/BBアンティ・BB優先/);assert.doesNotMatch(html,/50\/100・アンティなし/);
 });
 require('node:test').test('scheduled and break pages keep full stacks, no forced pot, no cards and disabled actions',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');
  const tournament={id:'sample',title:'WAIT',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  for(const offset of [-1,80*60000]){
   const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)+offset}));
-  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000 chips/);assert.match(html,/POT <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
+  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000/);assert.match(html,/POT <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
  }
 });
 require('node:test').test('heads-up render combines BTN/SB, deals only two live hands and marks unused seats empty',()=>{
@@ -152,13 +153,13 @@ require('node:test').test('heads-up render combines BTN/SB, deals only two live 
  const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
  const initialDeal=dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],['you','p2'],'you');
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal,tournament,initialSeatIds:['you','p2'],serverNow:Date.parse(tournament.starts_at)}));
- assert.match(html,/残り 2人 ／ 開始 2人・ヘッズアップ/);assert.match(html,/>BTN\/SB</);assert.equal((html.match(/class="cardBack"/g)||[]).length,2);assert.equal((html.match(/class="eliminatedTag">空席/g)||[]).length,4);assert.match(html,/POT <strong>150/);assert.doesNotMatch(html,/相手のフォールド確認/);
+ assert.match(html,/残り 2人 ／ 開始 2人・ヘッズアップ/);assert.match(html,/<b>SB <\/b>/,'SB is shown on the chip');assert.doesNotMatch(html,/positionBadge/,'no position badge on players');assert.match(html,/aria-label="ディーラーボタン"/);assert.doesNotMatch(html,/>BTN/);assert.equal((html.match(/class="cardBack"/g)||[]).length,2);assert.equal((html.match(/class="eliminatedTag">空席/g)||[]).length,4);assert.match(html,/POT <strong>150/);assert.doesNotMatch(html,/相手のフォールド確認/);
 });
 require('node:test').test('when your seat is outside the current hand, cards and action controls stay inactive',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');const {dealDemoHandAtTable}=req(root+'/lib/poker/demo-deal.ts');
  const tournament={id:'sample',title:'FOLLOW',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null},ids=['p2','p4'];
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],ids,'p2'),tournament,initialSeatIds:ids,serverNow:Date.parse(tournament.starts_at)}));
  assert.doesNotMatch(html,/class="hole"/);assert.match(html,/脱落・進行確認中/);
- const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,4);
+ const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,3);
  assert.match(html,/<button class="reset" type="button">デモをリセット<\/button>/);
 });

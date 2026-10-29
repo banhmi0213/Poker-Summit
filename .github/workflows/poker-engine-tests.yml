@@ -5,39 +5,35 @@ on:
     paths:
       - ".github/workflows/poker-engine-tests.yml"
       - "lib/poker/**"
-      - "app/poker-ui/table-action-motion*"
-      - "app/poker-ui/use-pot-flight*"
       - "supabase/migrations/*poker*.sql"
       - "db/tests/poker*"
       - "app/poker-demo/**"
+      - "app/poker-online/**"
+      - "app/api/poker/**"
       - "app/poker-tournaments/**"
       - "app/admin/poker-tournaments/**"
       - "app/store/(authenticated)/profile/poker-tournaments/**"
       - "app/store/(authenticated)/store-sidebar.tsx"
       - "app/store/(authenticated)/layout.tsx"
       - "app/poker-lobby/**"
+      - "app/poker-ring/**"
+      - "app/poker-ui/ring-admission*"
+      - "app/poker-ui/ring-live*"
+      - "app/poker-ui/use-ring-runout*"
+      - "app/poker-ui/use-auto-action*"
+      - "app/poker-ui/table-action-motion*"
       - "tests/poker-*.cjs"
+      - "tests/sql/poker*.sql"
+      - "app/mypage/chips/**"
+      - "app/poker-ui/chip-balance*"
+      - "tests/helpers/poker*"
+      - "config/poker-staging.env.example"
+      - "scripts/build-poker-server.cjs"
+      - "tsconfig.json"
       - "package.json"
       - "package-lock.json"
   push:
-    branches: [main]
-    paths:
-      - ".github/workflows/poker-engine-tests.yml"
-      - "lib/poker/**"
-      - "app/poker-ui/table-action-motion*"
-      - "app/poker-ui/use-pot-flight*"
-      - "supabase/migrations/*poker*.sql"
-      - "db/tests/poker*"
-      - "app/poker-demo/**"
-      - "app/poker-tournaments/**"
-      - "app/admin/poker-tournaments/**"
-      - "app/store/(authenticated)/profile/poker-tournaments/**"
-      - "app/store/(authenticated)/store-sidebar.tsx"
-      - "app/store/(authenticated)/layout.tsx"
-      - "app/poker-lobby/**"
-      - "tests/poker-*.cjs"
-      - "package.json"
-      - "package-lock.json"
+    branches: [main, chatgpt/poker-authoritative-hand]
   workflow_dispatch:
 
 permissions:
@@ -58,9 +54,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
       - name: Install dependencies
         run: npm install --no-audit --no-fund
+      - name: Build poker server
+        run: npm run build:poker-server
       - name: Run poker regression tests
         run: npm run test:poker
       - name: Install isolated test runtimes
@@ -69,14 +67,161 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_tournaments_isolated.cjs
+      - name: Verify encrypted persistence and backend permissions
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_persistence_isolated.cjs
+      - name: Verify room admission and registry integration
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_admission_isolated.cjs
+      - name: Verify free tournament registration and capacity
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_registration_isolated.cjs
+      - name: Verify management permissions and frozen room handoff
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_management_isolated.cjs
+      - name: Verify tournament result archive and statistics permissions
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_statistics_isolated.cjs
+      - name: Verify ring wallet, seating and atomic hand settlement
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_accounting_isolated.cjs
+      - name: Verify live ring readiness, recovery and durable turn deadlines
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_live_isolated.cjs
+      - name: Verify ring release gate (4 players, mid-hand leave, restart/reconnect, side pots, settlement)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_release_gate_isolated.cjs
+      - name: Verify the production upgrade SQL (production-shaped DB, upgraded twice, then the release gate)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_DB_MODE: production-upgrade
+        run: node scripts/poker-release/build-production-sql.cjs | diff - scripts/poker-release/production-upgrade.sql && node db/tests/poker_ring_release_gate_isolated.cjs
+      - name: Verify free chip refill
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_refill_isolated.cjs
+      - name: Verify hand history privacy and idempotent saves
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_hand_history_isolated.cjs
+      - name: Verify ring player HUD stats and private notes
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_player_hud_isolated.cjs
+      - name: Verify skin exchange (once per member, never spent)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_skin_shop_isolated.cjs
+      - name: Verify hand shares for the board (frozen, anonymised)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_hand_share_isolated.cjs
+      - name: Verify anti-abuse (confirmed e-mail, throttles, reports, bans)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_abuse_isolated.cjs
       - name: Verify tournament UI lifecycle
         env:
           POKER_REACT_RENDERER_MODULE: ${{ runner.temp }}/poker-sql/node_modules/react-test-renderer
-        run: node --test tests/poker-lifecycle.cjs
+        run: node --test tests/poker-lifecycle.cjs tests/poker-online-lifecycle.cjs
+      - name: Verify ring seating and chip return in real browsers
+        timeout-minutes: 4
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-ring-browser-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify full ring table UI with real seating and settlement
+        timeout-minutes: 4
+        env:
+          POKER_TABLE_UI: '1'
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-full-ring-browser-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify selected seats and per-hand timebank in browsers
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-selected-seat-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify deferred spectator departure during a live hand
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "watch"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-watch-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify deferred lobby exit during a live hand
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "lobby"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-lobby-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify all-in board and winner before deferred lobby exit
+        env:
+          POKER_TABLE_UI: "1"
+          POKER_SEAT_FLOW: "1"
+          POKER_DEFERRED_EXIT: "lobby"
+          POKER_DEFERRED_ALLIN: "1"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-deferred-allin-e2e
+        run: |
+          set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Verify six-browser tournament end to end
+        timeout-minutes: 4
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-browser-e2e
+        run: node tests/poker-browser-e2e.cjs
 
-      - name: Verify every payout coin reaches every avatar
+      - name: Verify table card and chip animations in real browsers
         env:
           POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
           POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
-        run: node tests/poker-payout-browser.cjs
+        run: |
+          node tests/poker-motion-browser.cjs
+          node tests/poker-demo-browser.cjs

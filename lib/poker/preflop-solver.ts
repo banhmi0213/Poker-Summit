@@ -1,0 +1,149 @@
+/** 6-max preflop solver (100BB, no ante, no rake) — simplified model (2026/10/27).
+ *
+ * Model (stated on the page too):
+ * - Action tree: fold / open (2.5BB, SB 3BB) / call / 3-bet / 4-bet / 5-bet all-in. Limps are not modelled.
+ * - Once an open is called, or a 3-bet / 4-bet is called, the pot goes heads-up to the flop (no multiway pots,
+ *   no cold 4-bets, no squeezes). Players still to act after a call are treated as folding.
+ * - Postflop is not played out: a called pot is worth (pot × share). The share is the preflop all-in equity of the two
+ *   hand classes, adjusted for how well each side realises it (in position realises more; deeper pots differ more).
+ * - Hands are the 169 starting-hand classes. Card removal is counted between the two players who reach a showdown;
+ *   other players' ranges are treated as independent.
+ * Solved with Discounted CFR (alpha 1.5, beta 0, gamma 2), all six players updated each iteration.
+ */
+export type PreflopAction={label:string;kind:'fold'|'call'|'raise'|'allin'|'check';to?:number};
+export type PreflopDecision={type:'decision';id:number;player:number;history:string;facing:number;actions:PreflopAction[];children:PreflopNode[]};
+export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'srp'|'3bp'|'4bp'|'allin'};threeWay?:[number,number,number]};
+export type PreflopNode=PreflopDecision|PreflopTerminal;
+export const POSITIONS=['UTG','HJ','CO','BTN','SB','BB'] as const;
+const STACK=100,POST=[2,3,4,5,0,1];// postflop order: SB first, BB, UTG, HJ, CO, BTN last
+export const REALIZE:Record<'srp'|'3bp'|'4bp'|'allin',[number,number]>={srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
+/** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
+export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
+export function playability(label:string){
+ const r='23456789TJQKA',a=r.indexOf(label[0]),b=r.indexOf(label[1]);if(a===b)return 1+PLAYABILITY.pair;
+ const gap=Math.min(4,a-b-1),wheel=label[0]==='A'?0.5:1;
+ return 1+(label[2]==='s'?PLAYABILITY.suited:PLAYABILITY.offsuit)-PLAYABILITY.gapStep*gap*wheel;
+}
+const r1=(v:number)=>Math.round(v*10)/10;
+
+/** Build the simplified preflop tree. */
+export function buildPreflopTree(){
+ let id=0;const decisions:PreflopDecision[]=[];
+ const dec=(player:number,history:string,facing:number,actions:PreflopAction[],children:PreflopNode[]):PreflopDecision=>{const d:PreflopDecision={type:'decision',id:id++,player,history,facing,actions,children};decisions.push(d);return d;};
+ const name=(p:number)=>POSITIONS[p];
+ // Unopened pot: players fold in turn until someone opens.
+ function unopened(p:number,inv:number[],history:string):PreflopNode{
+  if(p===5)return {type:'terminal',invested:inv,winner:5};// folded to the big blind
+  const open=p===4?3:2.5,next=unopened(p+1,inv,history+`${name(p)}F `);
+  const opened=[...inv];opened[p]=open;
+  return dec(p,history,0,[{label:'フォールド',kind:'fold'},{label:`オープン ${open}BB`,kind:'raise',to:open}],[next,facingOpen(p,p+1,opened,history+`${name(p)}${open} `)]);
+ }
+ // Players after the opener answer one by one: fold, call (heads-up to the flop) or 3-bet.
+ function facingOpen(o:number,p:number,inv:number[],history:string):PreflopNode{
+  if(p>5)return {type:'terminal',invested:inv,winner:o};
+  const open=inv[o],three=p>=4?(o===4?9:11):r1(open*3),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
+  return dec(p,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:`3ベット ${three}BB`,kind:'raise',to:three}],
+   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?bbOvercall(o,p,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp'}},facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
+ }
+ // After an open and a call, the big blind may also call (a three-way pot); everyone else in between folds.
+ function bbOvercall(o:number,c:number,inv:number[],history:string):PreflopNode{
+  const open=inv[o],called=[...inv];called[5]=open;
+  return dec(5,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],[{type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp'}},{type:'terminal',invested:called,threeWay:[o,c,5]}]);
+ }
+ function facing3bet(o:number,t:number,inv:number[],history:string):PreflopNode{
+  const three=inv[t],ip=POST[o]>POST[t],four=r1(three*(ip?2.2:2.5)),called=[...inv];called[o]=three;const raised=[...inv];raised[o]=four;
+  return dec(o,history,three,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:`4ベット ${four}BB`,kind:'raise',to:four}],
+   [{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'3bp'}},facing4bet(o,t,raised,history+`${name(o)}${four} `)]);
+ }
+ function facing4bet(o:number,t:number,inv:number[],history:string):PreflopNode{
+  const four=inv[o],called=[...inv];called[t]=four;const jam=[...inv];jam[t]=STACK;
+  return dec(t,history,four,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
+   [{type:'terminal',invested:inv,winner:o},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'4bp'}},facing5bet(o,t,jam,history+`${name(t)}AI `)]);
+ }
+ function facing5bet(o:number,t:number,inv:number[],history:string):PreflopNode{
+  const called=[...inv];called[o]=STACK;
+  return dec(o,history,STACK,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],[{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'allin'}}]);
+ }
+ const root=unopened(0,[0,0,0,0,0.5,1],'');
+ return {root,decisions};
+}
+
+type Equity={labels:string[];eq:number[][]};
+export class PreflopSolver{
+ readonly n:number;readonly labels:string[];readonly combos:Float64Array;readonly prior:Float64Array;
+ /** pair[i*n+j] = P(opponent holds class j | I hold class i), counting card removal. */
+ readonly pair:Float64Array;readonly eq:Float64Array;readonly play:Float64Array;
+ readonly root:PreflopNode;readonly decisions:PreflopDecision[];
+ readonly regret:Float64Array[];readonly avg:Float64Array[];iterations=0;
+ constructor(equity:Equity){
+  const n=equity.labels.length;this.n=n;this.labels=equity.labels;
+  this.combos=Float64Array.from(equity.labels,l=>l.length===2?6:l[2]==='s'?4:12);this.prior=Float64Array.from(this.combos,c=>c/1326);
+  const ranks='23456789TJQKA',cards=equity.labels.map(l=>{const a=ranks.indexOf(l[0]),b=ranks.indexOf(l[1]),out:[number,number][]=[];
+   for(let x=0;x<4;x++)for(let y=0;y<4;y++){if(a===b&&y<=x)continue;if(l[2]==='s'&&x!==y)continue;if(l[2]==='o'&&x===y)continue;if(a!==b&&!l[2])continue;out.push([a*4+x,b*4+y]);}return out;});
+  this.pair=new Float64Array(n*n);this.eq=new Float64Array(n*n);this.play=Float64Array.from(equity.labels,playability);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){let ok=0;for(const [p,q] of cards[i])for(const [r,s] of cards[j])if(p!==r&&p!==s&&q!==r&&q!==s)ok++;this.pair[i*n+j]=ok/(this.combos[i]*1225);this.eq[i*n+j]=equity.eq[i][j]/10000;}
+  const {root,decisions}=buildPreflopTree();this.root=root;this.decisions=decisions;
+  this.regret=decisions.map(d=>new Float64Array(n*d.actions.length));this.avg=decisions.map(d=>new Float64Array(n*d.actions.length));
+ }
+ strategy(d:PreflopDecision,average=false){
+  const k=d.actions.length,n=this.n,src=average?this.avg[d.id]:this.regret[d.id],out=new Float64Array(n*k);
+  for(let h=0;h<n;h++){let sum=0;for(let a=0;a<k;a++){const v=Math.max(0,src[h*k+a]);out[h*k+a]=v;sum+=v;}for(let a=0;a<k;a++)out[h*k+a]=sum>0?out[h*k+a]/sum:1/k;}
+  return out;
+ }
+ /** Probability mass a player's range still has (prior × reach). */
+ #mass(reach:Float64Array){let m=0;for(let h=0;h<this.n;h++)m+=this.prior[h]*reach[h];return m;}
+ /** Counterfactual values: values[p][h] = expected chips for player p holding h, weighted by the others' reach. */
+ #walk(node:PreflopNode,reach:Float64Array[]):Float64Array[]{
+  const n=this.n,P=6;
+  if(node.type==='terminal'){
+   const mass=reach.map(r=>this.#mass(r)),values=Array.from({length:P},()=>new Float64Array(n));
+   const pot=node.invested.reduce((s,v)=>s+v,0);
+   if(node.winner!==undefined){
+    for(let p=0;p<P;p++){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];const pay=(p===node.winner?pot:0)-node.invested[p];values[p].fill(pay*others);}
+    return values;
+   }
+   if(node.threeWay)return this.#threeWay(node,reach,mass,pot);
+   const {a,b,kind}=node.showdown!,ip=POST[a]>POST[b]?a:b,[rOop,rIp]=REALIZE[kind];
+   let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
+   for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
+   for(const [me,op] of [[a,b],[b,a]] as const){
+    const rMe=me===ip?rIp:rOop,rOp=me===ip?rOop:rIp,ro=reach[op],v=values[me];
+    const deep=kind!=='allin';for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*pot-node.invested[me]);}v[h]=s*rest;}
+   }
+   return values;
+  }
+  const k=node.actions.length,p=node.player,sigma=this.strategy(node),values=Array.from({length:P},()=>new Float64Array(n)),actionValues:Float64Array[]=[];
+  for(let a=0;a<k;a++){
+   const next=reach.map((r,q)=>{if(q!==p)return r;const out=new Float64Array(n);for(let h=0;h<n;h++)out[h]=r[h]*sigma[h*k+a];return out;});
+   const child=this.#walk(node.children[a],next);actionValues.push(child[p]);
+   for(let q=0;q<P;q++){const v=values[q],c=child[q];if(q===p){for(let h=0;h<n;h++)v[h]+=sigma[h*k+a]*c[h];}else for(let h=0;h<n;h++)v[h]+=c[h];}
+  }
+  const regret=this.regret[node.id],avg=this.avg[node.id],t=this.iterations+1,pos=Math.pow(t,1.5)/(Math.pow(t,1.5)+1),wAvg=Math.pow(t/(t+1),2),r=reach[p];
+  for(let h=0;h<n;h++)for(let a=0;a<k;a++){
+   const i=h*k+a,g=actionValues[a][h]-values[p][h];regret[i]=(regret[i]>0?regret[i]*pos:0)+g;
+   avg[i]=avg[i]*wAvg+r[h]*sigma[i];
+  }
+  return values;
+ }
+ /** Three-way pot after open, call and big blind call. Equity is approximated from the pairwise all-in equities and
+  * scaled by position (first to act postflop realises least) and playability. */
+ #threeWay(node:PreflopTerminal,reach:Float64Array[],mass:number[],pot:number){
+  const n=this.n,P=6,[x,y,z]=node.threeWay!,values=Array.from({length:P},()=>new Float64Array(n));
+  const order=[x,y,z].sort((u,v)=>POST[u]-POST[v]),R=new Map([[order[0],0.72],[order[1],0.85],[order[2],1.0]]);
+  for(let p=0;p<P;p++)if(p!==x&&p!==y&&p!==z){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
+  let rest=1;for(let q=0;q<P;q++)if(q!==x&&q!==y&&q!==z)rest*=mass[q];
+  const eq=this.eq,pair=this.pair,play=this.play;
+  for(const [me,b,c] of [[x,y,z],[y,x,z],[z,x,y]] as const){
+   const rb=reach[b],rc=reach[c],Rm=R.get(me)!,Rb=R.get(b)!,Rc=R.get(c)!,inv=node.invested[me],v=values[me];
+   for(let h=0;h<n;h++){let s=0;
+    for(let i=0;i<n;i++){const wb=pair[h*n+i]*rb[i];if(!wb)continue;const ehb=eq[h*n+i],ebh=1-ehb;
+     for(let j=0;j<n;j++){const wc=pair[h*n+j]*rc[j];if(!wc)continue;const ehc=eq[h*n+j],ebc=eq[i*n+j],ech=1-ehc,ecb=1-ebc;
+      const em=ehb*ehc*Rm*play[h],eb=ebh*ebc*Rb*play[i],ec=ech*ecb*Rc*play[j];s+=wb*wc*(em/(em+eb+ec)*pot-inv);}}
+    v[h]=s*rest;}
+  }
+  return values;
+ }
+ run(iterations:number){for(let i=0;i<iterations;i++){this.#walk(this.root,Array.from({length:6},()=>new Float64Array(this.n).fill(1)));this.iterations++;}}
+ /** Average positive regret per decision and hand, in big blinds (smaller = closer to equilibrium). */
+ averageRegret(){let s=0,c=0;for(const d of this.decisions){const k=d.actions.length,r=this.regret[d.id];for(let h=0;h<this.n;h++){let m=0;for(let a=0;a<k;a++)m=Math.max(m,r[h*k+a]);s+=m;c++;}}return s/c/Math.max(1,this.iterations);}
+}
