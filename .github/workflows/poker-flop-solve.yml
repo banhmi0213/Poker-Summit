@@ -3,8 +3,7 @@ name: Poker flop solutions
 # Precomputes the flop browser data (scripts/poker-gto/flop-solve.cjs), one job per flop of one spot.
 # Push a gto-flop-solve/<spot>/<anything> branch (spot = a key of scripts/poker-gto/spots.cjs).
 # Flops come from data/poker-gto/flops.json; flops already solved in version 3 (wider bet menu, per-hand EV) are skipped.
-# Two flops per job (three in 3-bet, 4-bet and three-way pots), solved side by side: the runners have 4 cores and 16 GB;
-# one single-raised solve uses one core and up to ~6 GB.
+# Each solve splits the turn cards over all the runner's cores (scripts/poker-gto/parallel-flop.cjs).
 # Results are uploaded as artifacts and gathered by the "collect" workflow.
 on:
   push:
@@ -25,20 +24,20 @@ jobs:
         run: |
           spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
           node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
-          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=3;}catch{return false;}};const sp=require('./scripts/poker-gto/spots.cjs')['$spot'],n=sp.players===3||/3bet|4bet/.test('$spot')?3:2;const todo=all.filter(f=>!done(f)),pairs=[];for(let i=0;i<todo.length;i+=n)pairs.push(todo.slice(i,i+n).join(' '));console.log(JSON.stringify(pairs))")
+          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=3;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
-    name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flops }}
+    name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
     needs: plan
     if: needs.plan.outputs.flops != '[]'
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 345
     strategy:
       fail-fast: false
       # Keep runners free for the regular test CI (all spots share the account limit of 20 jobs).
       max-parallel: 4
       matrix:
-        flops: ${{ fromJSON(needs.plan.outputs.flops) }}
+        flop: ${{ fromJSON(needs.plan.outputs.flops) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,19 +48,9 @@ jobs:
       - name: Solve
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: |
-          pids=(); set -- ${{ matrix.flops }}; heap=$(( $# > 2 ? 4800 : 7200 ))
-          for f in "$@"; do
-            node --max-old-space-size=$heap scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop $f --target ${{ vars.GTO_FLOP_TARGET || '0.01' }} --max-iters 400 --max-minutes 320 --out out > "log-$f.txt" 2>&1 &
-            pids+=($!)
-          done
-          status=0; for p in "${pids[@]}"; do wait $p || status=1; done
-          tail -n 4 log-*.txt; exit $status
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0.01' }} --max-iters 400 --max-minutes 320 --threads $(nproc) --out out
       - uses: actions/upload-artifact@v4
-        # Keep the flop that finished even when its partner failed.
-        if: always()
         with:
-          if-no-files-found: warn
-          name: flop-${{ needs.plan.outputs.spot }}-${{ strategy.job-index }}
+          name: flop-${{ needs.plan.outputs.spot }}-${{ matrix.flop }}
           path: out/
           retention-days: 14

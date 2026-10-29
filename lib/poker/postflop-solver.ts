@@ -93,6 +93,11 @@ export class PostflopSolver{
  readonly riverCards:number[];
  #same:[Int32Array,Int32Array];#cards=new Float64Array(52);#reach:Float64Array;#showdowns:(Showdown|undefined)[]=new Array(2809);#dealable:(number[]|undefined)[]=new Array(2809);
  #regret:(Float32Array|undefined)[]=[];#avg:(Float32Array|undefined)[]=[];#tables=0;#nodes:ActNode[]=[];
+ /** Turn chance nodes of a flop solve, in tree order (the same in every copy of the tree). */
+ readonly turnChances:ChanceNode[]=[];
+ /** Parallel flop solves (2026/10/29): when set, each turn chance node is handed to this hook, which returns the summed
+  * values over all turn cards (computed by worker copies that each own a share of the turn cards and their tables). */
+ turnHook?:(index:number,hero:0|1,opp:Float64Array,mode:'train'|'br'|'avg',iteration:number)=>Float64Array;
  iterations=0;
  constructor(readonly spot:SolverSpot){
   if(spot.board.length<3||spot.board.length>5)throw new Error('board must have 3 to 5 cards');
@@ -103,7 +108,7 @@ export class PostflopSolver{
   this.sides=[prepare(spot.board,spot.ranges[0]),prepare(spot.board,spot.ranges[1])];
   const sameOf=(H:Side,O:Side)=>{const r=new Int32Array(H.n);for(let h=0;h<H.n;h++)r[h]=O.keyIndex.get(Math.min(H.c1[h],H.c2[h])*52+Math.max(H.c1[h],H.c2[h]))??-1;return r;};
   this.#same=[sameOf(this.sides[0],this.sides[1]),sameOf(this.sides[1],this.sides[0])];this.#reach=new Float64Array(Math.max(this.sides[0].n,this.sides[1].n));
-  const walk=(n:Node)=>{if(n.kind==='act'){this.#nodes.push(n);n.children.forEach(walk);}else if(n.kind==='chance')walk(n.child);};walk(this.tree);
+  const walk=(n:Node)=>{if(n.kind==='act'){this.#nodes.push(n);n.children.forEach(walk);}else if(n.kind==='chance'){if(n.street==='turn'&&this.street==='flop')this.turnChances.push(n);walk(n.child);}};walk(this.tree);
   this.#width=Math.max(1,this.sides[0].n,this.sides[1].n)*Math.max(1,...this.#nodes.map(x=>x.actions.length));
  }
  /** Cards that can be dealt next in a dealt-card context. */
@@ -160,7 +165,10 @@ export class PostflopSolver{
   if(node.kind==='fold'||node.kind==='showdown'){this.#terminal(node,hero,opp,ctx,out);return out;}
   if(node.kind==='chance'){
    // Every valid (hero, opponent) pair leaves exactly (cards left - 4) possible cards, so each card weighs 1/(cards left - 4).
-   const cards=this.dealable(ctx),div=cards.length-4,o2=this.#alloc();out.fill(0,0,hn);
+   const cards=this.dealable(ctx),div=cards.length-4;
+   if(this.turnHook&&node.street==='turn'&&this.street==='flop'){
+    const sum=this.turnHook(this.turnChances.indexOf(node),hero,opp.subarray(0,on),mode,this.iterations);for(let h=0;h<hn;h++)out[h]=sum[h]/div;return out;}
+   const o2=this.#alloc();out.fill(0,0,hn);
    for(const c of cards){
     o2.set(opp.subarray(0,on));for(const o of O.byCard[c])o2[o]=0;
     const inner=this.#top,v=this.#cfr(node.child,hero,o2,mode,dealCard(ctx,c));for(const h of H.byCard[c])v[h]=0;
@@ -189,13 +197,27 @@ export class PostflopSolver{
  }
  // Discounted CFR (alpha 1.5, beta 0, gamma 2): measured to converge 2-3x faster than CFR+ on turn and river spots.
  #disc=[1,1];#w=1;
- run(iterations:number){for(let i=0;i<iterations;i++){const t=++this.iterations,p=t-1;this.#w=t*t;this.#disc=[p>0?p**1.5/(p**1.5+1):0,p>0?0.5:0];for(const hero of [0,1] as const){this.#top=0;this.#cfr(this.tree,hero,Float64Array.from(this.sides[1-hero].w),'train',NO_CARDS);}}return this;}
+ #setIteration(t:number){const p=t-1;this.#w=t*t;this.#disc=[p>0?p**1.5/(p**1.5+1):0,p>0?0.5:0];}
+ run(iterations:number){for(let i=0;i<iterations;i++){const t=++this.iterations;this.#setIteration(t);for(const hero of [0,1] as const){this.#top=0;this.#cfr(this.tree,hero,Float64Array.from(this.sides[1-hero].w),'train',NO_CARDS);}}return this;}
  /** Average value per hand pair for player `hero` under: the average strategies, or a best response. */
  #value(hero:0|1,mode:'avg'|'br'){this.#top=0;const v=this.#cfr(this.tree,hero,Float64Array.from(this.sides[1-hero].w),mode,NO_CARDS),H=this.sides[hero];let num=0;for(let h=0;h<H.n;h++)num+=H.w[h]*v[h];return num/this.#pairWeight();}
  #pw=-1;#pairWeight(){if(this.#pw>=0)return this.#pw;const [A,B]=this.sides;let s=0;for(let a=0;a<A.n;a++)for(let b=0;b<B.n;b++)if(A.c1[a]!==B.c1[b]&&A.c1[a]!==B.c2[b]&&A.c2[a]!==B.c1[b]&&A.c2[a]!==B.c2[b])s+=A.w[a]*B.w[b];return this.#pw=s;}
  /** Exploitability as a share of the pot: average gain of a best response over the equilibrium value. */
  exploitability(){const br0=this.#value(0,'br'),br1=this.#value(1,'br');return (br0+br1-this.pot)/2/this.pot;}
  values(){return [this.#value(0,'avg'),this.#value(1,'avg')];}
+ /** Worker side of a parallel flop solve: the summed (not averaged) values of turn chance node `index` over `cards` only.
+  * `iteration` is the main solver's iteration (sets the discounting of the regrets updated here). */
+ turnShare(index:number,hero:0|1,opp:Float64Array,mode:'train'|'br'|'avg',iteration:number,cards:readonly number[]):Float64Array{
+  if(mode==='train')this.#setIteration(iteration);this.iterations=iteration;
+  const node=this.turnChances[index],H=this.sides[hero],O=this.sides[1-hero],hn=H.n,on=O.n;this.#top=0;
+  const out=this.#alloc(),o2=this.#alloc();out.fill(0,0,hn);
+  for(const c of cards){
+   o2.fill(0);o2.set(opp.subarray(0,on));for(const o of O.byCard[c])o2[o]=0;
+   const inner=this.#top,v=this.#cfr(node.child,hero,o2,mode,dealCard(NO_CARDS,c));for(const h of H.byCard[c])v[h]=0;
+   for(let h=0;h<hn;h++)out[h]+=v[h];this.#top=inner;
+  }
+  return out.subarray(0,hn);
+ }
  /** Per combo of `hero` (2026/10/29): average-strategy value per opponent hand it can face (chips, the pot counted as
   * won), i.e. what each hand is worth from here. Used to calibrate the preflop model's equity realisation per hand. */
  handValues(hero:0|1){

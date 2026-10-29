@@ -55,6 +55,8 @@ const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w
 const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,riverCurrentOnly:true,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}
  :{board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
 const solver=new PostflopSolver(spot);
+// --threads N (2026/10/29): split the turn cards over N worker threads (same result, N times the speed).
+const threads=Number(arg('threads',1)),stopThreads=threads>1&&board.length===3?require('./parallel-flop.cjs').parallelize(solver,spot,threads):null;
 const t0=Date.now(),log=m=>console.log(`[${flop} ${((Date.now()-t0)/60000).toFixed(1)}min] ${m}`);
 log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${solver.sides[1].n}`);
 let expl=Infinity,checks=[];
@@ -97,6 +99,7 @@ function handEv(p){const v=solver.handValues(p),side=solver.sides[p],acc={};
 const out={version:fromChart?3:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
  iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},...(fromChart?{handEv:{oop:handEv(0),ip:handEv(1)},
  riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+if(stopThreads)stopThreads();
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
 log(`saved ${path.join(outDir,flop+'.json')} · ${nodes.length} flop decisions · exploitability ${out.exploitability}%`);
