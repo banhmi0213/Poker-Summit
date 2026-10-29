@@ -14,10 +14,14 @@
  */
 export type PreflopAction={label:string;kind:'fold'|'call'|'raise'|'allin'|'check';to?:number};
 export type PreflopDecision={type:'decision';id:number;player:number;history:string;facing:number;actions:PreflopAction[];children:PreflopNode[]};
-export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'limp'|'srp'|'3bp'|'4bp'|'allin'};threeWay?:[number,number,number]};
+export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'limp'|'srp'|'3bp'|'4bp'|'allin';aggr?:number};threeWay?:[number,number,number]};
 export type PreflopNode=PreflopDecision|PreflopTerminal;
 export const POSITIONS=['UTG','HJ','CO','BTN','SB','BB'] as const;
 const STACK=100,POST=[2,3,4,5,0,1];// postflop order: SB first, BB, UTG, HJ, CO, BTN last
+/** Out-of-position realisation by pot kind and role (in position = 1.0), calibrated from the flop solutions
+ * (scripts/poker-gto/calibrate-realize.cjs, 2026/10/29): the preflop aggressor out of position realises far more than
+ * a caller out of position. 4-bet pots with the aggressor out of position and limped pots have no flop data yet. */
+export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number}>={srp:{call:0.675,aggr:1.02},'3bp':{call:0.61,aggr:1.167},'4bp':{call:0.553,aggr:1.1}};
 export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={limp:[0.85,1.0],srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
 /** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
@@ -51,24 +55,24 @@ export function buildPreflopTree(){
  function sbVsIso(inv:number[],history:string):PreflopNode{
   const called=[...inv];called[4]=4;const raised=[...inv];raised[4]=12;
   return dec(4,history,4,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'3ベット 12BB',kind:'raise',to:12}],
-   [{type:'terminal',invested:inv,winner:5},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'srp'}},bbVsLimp3bet(raised,history+'SB12 ')]);
+   [{type:'terminal',invested:inv,winner:5},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'srp',aggr:5}},bbVsLimp3bet(raised,history+'SB12 ')]);
  }
  function bbVsLimp3bet(inv:number[],history:string):PreflopNode{
   const called=[...inv];called[5]=12;const jam=[...inv];jam[5]=STACK;
   return dec(5,history,12,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
-   [{type:'terminal',invested:inv,winner:4},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'3bp'}},facing5bet(4,5,jam,history+'BBAI ')]);
+   [{type:'terminal',invested:inv,winner:4},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'3bp',aggr:4}},facing5bet(4,5,jam,history+'BBAI ')]);
  }
  // Players after the opener answer one by one: fold, call (heads-up to the flop) or 3-bet.
  function facingOpen(o:number,p:number,inv:number[],history:string):PreflopNode{
   if(p>5)return {type:'terminal',invested:inv,winner:o};
   const open=inv[o],three=p>=4?(o===4?9:11):r1(open*3),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
   return dec(p,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:`3ベット ${three}BB`,kind:'raise',to:three}],
-   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp'}},facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
+   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp',aggr:o}},facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
  }
  // After an open and a call, each later player may squeeze (2026/10/29); only the big blind may also call (a three-way
  // pot, at most three players).
  function afterCall(o:number,c:number,q:number,inv:number[],history:string):PreflopNode{
-  if(q>5)return {type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp'}};
+  if(q>5)return {type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp',aggr:o}};
   const open=inv[o],sq=q>=4?12:10,raised=[...inv];raised[q]=sq;
   const acts:PreflopAction[]=[{label:'フォールド',kind:'fold'}],kids:PreflopNode[]=[afterCall(o,c,q+1,inv,history+`${name(q)}F `)];
   if(q===5){const called=[...inv];called[5]=open;acts.push({label:'コール',kind:'call'});kids.push({type:'terminal',invested:called,threeWay:[o,c,5]});}
@@ -84,18 +88,18 @@ export function buildPreflopTree(){
  function callerVsSqueeze(o:number,c:number,q:number,inv:number[],openerFolded:boolean,history:string):PreflopNode{
   const sq=inv[q],called=[...inv];called[c]=sq;
   return dec(c,history,sq,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],
-   [openerFolded?{type:'terminal',invested:inv,winner:q}:{type:'terminal',invested:inv,showdown:{a:o,b:q,kind:'3bp'}},
-    openerFolded?{type:'terminal',invested:called,showdown:{a:c,b:q,kind:'3bp'}}:{type:'terminal',invested:called,threeWay:[o,c,q]}]);
+   [openerFolded?{type:'terminal',invested:inv,winner:q}:{type:'terminal',invested:inv,showdown:{a:o,b:q,kind:'3bp',aggr:q}},
+    openerFolded?{type:'terminal',invested:called,showdown:{a:c,b:q,kind:'3bp',aggr:q}}:{type:'terminal',invested:called,threeWay:[o,c,q]}]);
  }
  function facing3bet(o:number,t:number,inv:number[],history:string):PreflopNode{
   const three=inv[t],ip=POST[o]>POST[t],four=r1(three*(ip?2.2:2.5)),called=[...inv];called[o]=three;const raised=[...inv];raised[o]=four;
   return dec(o,history,three,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:`4ベット ${four}BB`,kind:'raise',to:four}],
-   [{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'3bp'}},facing4bet(o,t,raised,history+`${name(o)}${four} `)]);
+   [{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'3bp',aggr:t}},facing4bet(o,t,raised,history+`${name(o)}${four} `)]);
  }
  function facing4bet(o:number,t:number,inv:number[],history:string):PreflopNode{
   const four=inv[o],called=[...inv];called[t]=four;const jam=[...inv];jam[t]=STACK;
   return dec(t,history,four,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
-   [{type:'terminal',invested:inv,winner:o},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'4bp'}},facing5bet(o,t,jam,history+`${name(t)}AI `)]);
+   [{type:'terminal',invested:inv,winner:o},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'4bp',aggr:o}},facing5bet(o,t,jam,history+`${name(t)}AI `)]);
  }
  function facing5bet(o:number,t:number,inv:number[],history:string):PreflopNode{
   const called=[...inv];called[o]=STACK;
@@ -140,7 +144,8 @@ export class PreflopSolver{
     return values;
    }
    if(node.threeWay)return this.#threeWay(node,reach,mass,pot);
-   const {a,b,kind}=node.showdown!,ip=POST[a]>POST[b]?a:b,[rOop,rIp]=REALIZE[kind];
+   const {a,b,kind,aggr}=node.showdown!,ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?REALIZE_ROLE[kind]:null;
+   const rOop=role?(oop===aggr?role.aggr:role.call):REALIZE[kind][0],rIp=role?1:REALIZE[kind][1];
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
    for(const [me,op] of [[a,b],[b,a]] as const){
