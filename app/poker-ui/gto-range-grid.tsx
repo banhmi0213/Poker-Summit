@@ -1,5 +1,6 @@
 'use client';
 import {useEffect} from 'react';
+import {createPortal} from 'react-dom';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
@@ -20,12 +21,13 @@ export function rangeColors(options:readonly {kind:string;text?:string}[]){
 /** As a dialog over the table (practice table, where the side panel is narrow). */
 export function GtoRangeDialog({range,who,title,onClose}:{range:GtoRange;who:string;title:string;onClose:()=>void}){
  useEffect(()=>{const k=(e:KeyboardEvent)=>{if(e.key==='Escape')onClose();};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[onClose]);
- return <div className={styles.overlay} role="presentation" onClick={onClose}>
+ // Rendered on <body> so cards and chips on the table (their own stacking layers) never show through.
+ return createPortal(<div className={styles.overlay} role="presentation" onClick={onClose}>
   <div className={styles.dialog} role="dialog" aria-modal="true" aria-label={title} onClick={e=>e.stopPropagation()}>
    <div className={styles.dialogHead}><strong>{title}</strong><button type="button" onClick={onClose}>閉じる</button></div>
    <GtoRangeGrid range={range} who={who}/>
   </div>
- </div>;
+ </div>,document.body);
 }
 
 export function GtoRangeGrid({range,who}:{range:GtoRange;who:string}){
