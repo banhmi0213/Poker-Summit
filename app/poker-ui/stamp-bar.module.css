@@ -89,3 +89,8 @@
 .quickExtra button{white-space:nowrap;font-size:12px;font-weight:700;min-height:32px;padding:5px 10px;border-radius:8px;border:1px solid #d9b15d;background:#29495c;color:#ffdc8c;cursor:pointer}
 .quickExtra p{font-size:12px;color:#f3d9a7;white-space:nowrap;background:#1d2a33e6;border:1px solid #bda15d;border-radius:8px;padding:4px 8px}
 @media(min-width:900px){.quickExtra{left:auto;right:0;align-items:flex-end}}
+
+/* Owner 2026/10/29 (もうちょい上): the stamp sits higher over the seat so the name and chips stay readable. */
+.bubble{transform:translate(-50%,-68%)}
+@keyframes popHigh{0%{transform:translate(-50%,-68%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translate(-50%,-68%) scale(1) rotate(0);opacity:1}}
+.bubble{animation-name:popHigh}

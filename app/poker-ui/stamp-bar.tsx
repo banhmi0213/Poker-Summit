@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {STAMPS,STAMP_GAP_MS,STAMP_SHOW_MS,stampOf,type Stamp,type StampId} from '@/lib/poker/stamps';
 import styles from './stamp-bar.module.css';
@@ -12,9 +12,17 @@ function Sticker({s,size}:{s:Stamp;size:'bubble'|'pick'}){
 }
 /** A big stamp over the sender's avatar and cards for 3 seconds (owner 2026/10/27). `age`: ms since it was sent.
  * `hand`: the current hand; when a new hand starts while it is shown, it goes away at once so the new cards are seen. */
-export function StampBubble({stamp,age=0,hand}:{stamp:string;age?:number;hand?:string|null}){
- const s=stampOf(stamp),[shown,setShown]=useState(true),[startHand]=useState(hand);
- useEffect(()=>{setShown(true);const t=window.setTimeout(()=>setShown(false),Math.max(0,STAMP_SHOW_MS-age));return()=>window.clearTimeout(t);},[stamp,age]);
+/** Each posted stamp is shown once (owner 2026/10/29: スタンプ１回押したら２回出る). A stamp is the same post when it is
+ * the same picture at the same seat and its post time (now − age) is within 2 s; a later read of it never shows it again. */
+const shownPosts=new Map<string,number>();
+export function StampBubble({stamp,age=0,hand,seat}:{stamp:string;age?:number;hand?:string|null;seat?:number}){
+ const s=stampOf(stamp),[shown,setShown]=useState(false),[startHand]=useState(hand),post=useRef<number|null>(null);
+ useEffect(()=>{const key=`${hand??''}:${seat??''}:${stamp}`,postedAt=Date.now()-age,known=shownPosts.get(key);
+  const same=known!==undefined&&Math.abs(known-postedAt)<2000;const at=same?known!:postedAt;if(!same)shownPosts.set(key,postedAt);
+  if(shownPosts.size>200)for(const [k,v] of shownPosts)if(Date.now()-v>60000)shownPosts.delete(k);
+  if(post.current===at)return;post.current=at;
+  const left=STAMP_SHOW_MS-(Date.now()-at);if(left<=0){setShown(false);return;}
+  setShown(true);const t=window.setTimeout(()=>setShown(false),left);return()=>window.clearTimeout(t);},[stamp,age,hand,seat]);
  return s&&shown&&hand===startHand?<span className={styles.bubble} data-stamp-bubble role="status" aria-label={`スタンプ：${s.label}`}><Sticker s={s} size="bubble"/></span>:null;
 }
 /** Fixed stamps for seated players (no free text). */
