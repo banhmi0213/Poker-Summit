@@ -15,6 +15,8 @@ create table if not exists poker_private.ring_rake(
 );
 alter table poker_private.ring_rake enable row level security;
 revoke all on table poker_private.ring_rake from public,anon,authenticated,service_role;
+-- The operators read the house total with the service role (like ring_hands); nobody else sees it.
+grant select on poker_private.ring_rake to service_role;
 
 create or replace function poker_private.ring_apply_result(p_hand uuid, p_write uuid, p_result jsonb)
  returns void language plpgsql set search_path to '' as $function$
