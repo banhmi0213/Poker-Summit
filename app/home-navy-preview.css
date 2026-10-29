@@ -114,3 +114,22 @@
 
 /* Reference balance: advertising banner is 85% of the content grid. */
 @media(min-width:768px){.navy-preview .home-top-banner-inner{width:calc(var(--home-content-width) * .85)}}
+
+/* Continuous section bands: no white flex gaps between a section and its banner. */
+.navy-preview{background:#f7f2e6;--bg:#f7f2e6}
+.navy-preview .home-feed.home-feed{gap:0;margin-bottom:0}
+.navy-preview .home-feed.home-feed .home-section[data-tone="champagne"]{--section-tone:#eee2c7}
+.navy-preview .home-feed.home-feed .home-section[data-tone="ivory"]{--section-tone:#f7f2e6;border-color:#e5dccb}
+.navy-preview .home-feed.home-feed .home-section[data-tone-banner]::before{top:0}
+.navy-preview .home-feed.home-feed .home-section:not([data-tone]){padding-block:24px}
+.navy-preview .home-feed.home-feed .home-section[data-tone]{border-top:0;border-bottom:0}
+.navy-preview .home-feed.home-feed .ps-region-stats{margin-bottom:24px!important}
+.navy-preview .home-academy-preview{margin-block:28px!important}
+.navy-preview .home-feed.home-feed section[aria-label="おすすめコンテンツ"]{padding-block:24px}
+.navy-preview .home-section-title{min-width:0}
+.navy-preview .home-section-eyebrow{display:block;margin:0 0 7px;font-size:10px;line-height:1.5;letter-spacing:.15em;font-weight:700;color:#93713a}
+.navy-preview .home-feed.home-feed [data-tone="navy"] .home-section-eyebrow{color:#dcc18c}
+.navy-preview .home-feed.home-feed .home-section-head{align-items:flex-end}
+.navy-preview .cta-banner{border-bottom:1px solid #c7ac75}
+.navy-preview .portal-footer{border-top:0}
+@media(max-width:767px){.navy-preview .home-section-eyebrow{font-size:9px;letter-spacing:.11em}.navy-preview .home-section-title{flex:1 1 55%}.navy-preview .home-feed.home-feed .home-section-head{align-items:center}}

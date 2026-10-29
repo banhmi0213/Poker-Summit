@@ -333,13 +333,13 @@ export default async function HomePage({
           summitPostCount: threadCount ?? 0,
         }} />
         <section className="home-section" data-tone="light-navy">
-          <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">PICK UP STORES</span><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2></div><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         {pickupBanners.length > 0 && <div className="home-section" data-tone="light-navy" data-tone-banner><HomeSectionBanners banners={pickupBanners} layout="wide" pickup /></div>}
         <section className="home-section" data-tone="navy">
-          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">TOURNAMENTS & EVENTS</span><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2></div><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
             const status = getEventStatus(ev, now);
@@ -354,7 +354,7 @@ export default async function HomePage({
         </section>
         {couponBanners.length > 0 && <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
         <section className="home-section" data-tone="soft">
-          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">SPECIAL COUPONS</span><h2><span>🎟️</span> お得なクーポン</h2></div><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
           {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
           {popularCoupons.length > 0 && <div className="home-grid home-new-grid">{popularCoupons.map((c: any) => <Link href={`/coupons/${c.id}`} className="home-coupon-card home-coupon-card--vertical" key={c.id}>
@@ -365,20 +365,20 @@ export default async function HomePage({
 
         <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
         {communityBanners.length > 0 && <div className="home-section" data-tone="ivory" aria-label="サイト内のご案内"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
-        <section className="home-section home-summit" data-tone="ivory">
-          <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
+        <section className="home-section home-summit" data-tone="light-navy">
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">SUMMIT COMMUNITY</span><h2><span>💬</span> サミット｜情報交換</h2></div><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
-        {rankingBanners.length > 0 && <div className="home-section" data-tone="soft" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
-        <section className="home-section" data-tone="soft">
-          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
+        {rankingBanners.length > 0 && <div className="home-section" data-tone="light-navy" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
+        <section className="home-section" data-tone="champagne">
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">STORE RANKING</span><h2><span>🏅</span> 店舗ランキング</h2></div><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
-        <div className="home-section" data-tone="soft" data-tone-banner><HomeRankingBanner stores={rankedStores} /></div>
+        <div className="home-section" data-tone="champagne" data-tone-banner><HomeRankingBanner stores={rankedStores} /></div>
         <section className="home-section" data-tone="navy">
-          <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
+          <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">POKER JOBS</span><h2><span>💼</span> 求人・スポット求人</h2></div><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
           {/* 新着求人(職種画像と求人バナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
           {latestJobs.length > 0 && <div className="home-grid home-new-grid">{latestJobs.map((j: any) => <Link href={`/jobs/${j.id}`} className="home-job-card" key={j.id}>
