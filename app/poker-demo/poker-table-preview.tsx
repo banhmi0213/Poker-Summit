@@ -195,7 +195,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       } else if (["fold","check","call","bet","raise","allin","deal","flop","river","win","stamp"].includes(kind)) {
         playTableEffect(context, kind as ActionKind | "deal" | "flop" | "river" | "win" | "stamp");
       } else if (kind === "turn") {
-        tone(880, 0, 0.13, 0.12); tone(1174.66, 0.045, 0.15, 0.065);
+        // Owner 2026/10/29: no your-turn ping.
       } else if (kind === "action") {
         tone(310, 0, 0.085, 0.085, "triangle");
       }
