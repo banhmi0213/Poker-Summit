@@ -5,12 +5,15 @@ import type {Card} from './engine';
 import type {HistoryAction} from './hand-history';
 import {gtoStrategy,positionsFor,type GtoData,type GtoGrid,type GtoView,type LoggedAction,type Pos} from './gto-bot';
 import {classOf} from './solver-view';
+import {HAND_CATEGORIES,combosOfClass,handCategory,type HandCategory} from './hand-category';
 
 export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
  players:{seatId:string;seat:number;startStack:number;you:boolean;hole:Card[]|null}[]};
 export type GtoVerdict='gto'|'mixed'|'rare';
 /** The whole range at a reviewed decision, for the 13×13 chart (options in model order). */
-export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string};
+export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string;
+ /** Board card codes after the flop (for the hand-strength breakdown); absent preflop. */
+ board?:number[]};
 export type GtoReview={index:number;street:HistoryAction['street'];
  /** Options with model frequency (0〜1), best first is NOT guaranteed: kept in model order. */
  options:{text:string;freq:number;kind:string}[];
@@ -59,10 +62,10 @@ export function viewAt(hand:GtoReviewHand,index:number):GtoView|null{
   startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
 }
 
-function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:string}[],hole:Card[]):GtoRange|undefined{
+function rangeOf(s:{grid?:GtoGrid;nearFlop?:string},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
  if(!s.grid)return undefined;
  const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
- return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:classOf(code(hole[0]),code(hole[1])),nearFlop:s.nearFlop};
+ return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:classOf(code(hole[0]),code(hole[1])),nearFlop:s.nearFlop,board:board.length>=3?board.map(code):undefined};
 }
 export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
@@ -77,7 +80,7 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?
    currentBetBefore:Math.max(0,...v.players.map(p=>p.committed)),committedBefore:v.players.find(p=>p.id===a.seatId)!.committed};
   const j=s.indexOf(played),freq=j>=0?freqs[j]:null;
   const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k],kind:o.kind}));
-  out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole)});
+  out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole,v.board)});
  });
  return out;
 }
@@ -103,7 +106,7 @@ export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1
   if(s.source==='fallback')return {street:played.street,played:text,source:'none',reason:s.reason};
   const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:null;
   const all=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k],kind:o.kind}));
-  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole),
+  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole,view.board),
    options:all.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(({text,freq})=>({text,freq}))};
  });
 }
@@ -131,3 +134,13 @@ export function summarizeDeviation(hands:readonly GtoReviewHand[],data:GtoData):
  return out;
 }
 function playedOf(h:GtoReviewHand,i:number){const a=h.actions[i];return a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/h.terms.bb*10)/10}BB${a.allIn?'（オールイン）':''}`;}
+
+/** Action shares per hand-strength category over the whole range (2026/10/29: 役の強さごとの打ち方). Weight = combos × reach. */
+export function categoryBreakdown(range:GtoRange):{category:HandCategory;share:number;freqs:number[]}[]{
+ if(!range.board)return [];
+ const k=range.options.length,acc=new Map<HandCategory,{w:number;f:number[]}>();let total=0;
+ for(const [cls,e] of Object.entries(range.grid)){if(!(e.reach>0))continue;
+  for(const c of combosOfClass(cls,range.board)){const cat=handCategory(c,range.board),x=acc.get(cat)??{w:0,f:new Array(k).fill(0)};
+   x.w+=e.reach;for(let a=0;a<k;a++)x.f[a]+=e.reach*(e.freqs[a]??0);acc.set(cat,x);total+=e.reach;}}
+ return HAND_CATEGORIES.filter(c=>acc.has(c)).map(c=>{const x=acc.get(c)!;return {category:c,share:total>0?x.w/total:0,freqs:x.f.map(v=>x.w>0?v/x.w:0)};});
+}
