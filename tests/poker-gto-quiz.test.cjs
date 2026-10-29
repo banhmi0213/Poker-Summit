@@ -17,7 +17,7 @@ test('preflop reach: first decisions are 1, a 3-bet decision only holds hands th
 
 test('preflop questions: valid cards, options, normalised frequencies, and the hero holds the hand in this spot',()=>{
  const rand=seeded(7),kinds={};
- for(let i=0;i<300;i++){const q=preflopQuestion(preflop,rand);assert.ok(q);assert.match(q.category,/^preflop-(open|vsopen|vs3bet|vs4bet|vs5bet|overcall|vslimp|vsiso)$/);kinds[q.scene.split('、').length]=1;
+ for(let i=0;i<300;i++){const q=preflopQuestion(preflop,rand);assert.ok(q);assert.match(q.category,/^preflop-(open|vsopen|vs3bet|vs4bet|vs5bet|overcall|vslimp|vsiso|vssqueeze)$/);kinds[q.scene.split('、').length]=1;
   assert.equal(q.cards.length,2);assert.notEqual(q.cards[0],q.cards[1]);
   assert.equal(q.options.length,q.freqs.length);assert.equal(q.options.length,q.rangeFreqs.length);
   assert.ok(Math.abs(sum(q.freqs)-1)<1e-9);assert.ok(Math.abs(sum(q.rangeFreqs)-1)<1e-9);

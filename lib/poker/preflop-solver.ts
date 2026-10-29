@@ -3,8 +3,9 @@
  * Model (stated on the page too):
  * - Action tree: fold / open (2.5BB, SB 3BB) / call / 3-bet / 4-bet / 5-bet all-in. Only the small blind may limp (folded
  *   to it, 2026/10/29); the big blind then checks or raises to 4BB, the SB folds, calls or 3-bets to 12BB, then all-in.
- * - Once an open is called, or a 3-bet / 4-bet is called, the pot goes heads-up to the flop (no multiway pots,
- *   no cold 4-bets, no squeezes). Players still to act after a call are treated as folding.
+ * - After an open and a call, later players may squeeze (10BB, 12BB from the blinds; 2026/10/29); the opener folds, calls
+ *   or moves all in, then the caller folds or calls. Only the big blind may call an open and a call (three-way).
+ *   No cold 4-bets.
  * - Postflop is not played out: a called pot is worth (pot × share). The share is the preflop all-in equity of the two
  *   hand classes, adjusted for how well each side realises it (in position realises more; deeper pots differ more).
  * - Hands are the 169 starting-hand classes. Card removal is counted between the two players who reach a showdown;
@@ -62,12 +63,29 @@ export function buildPreflopTree(){
   if(p>5)return {type:'terminal',invested:inv,winner:o};
   const open=inv[o],three=p>=4?(o===4?9:11):r1(open*3),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
   return dec(p,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:`3ベット ${three}BB`,kind:'raise',to:three}],
-   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?bbOvercall(o,p,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp'}},facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
+   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp'}},facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
  }
- // After an open and a call, the big blind may also call (a three-way pot); everyone else in between folds.
- function bbOvercall(o:number,c:number,inv:number[],history:string):PreflopNode{
-  const open=inv[o],called=[...inv];called[5]=open;
-  return dec(5,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],[{type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp'}},{type:'terminal',invested:called,threeWay:[o,c,5]}]);
+ // After an open and a call, each later player may squeeze (2026/10/29); only the big blind may also call (a three-way
+ // pot, at most three players).
+ function afterCall(o:number,c:number,q:number,inv:number[],history:string):PreflopNode{
+  if(q>5)return {type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp'}};
+  const open=inv[o],sq=q>=4?12:10,raised=[...inv];raised[q]=sq;
+  const acts:PreflopAction[]=[{label:'フォールド',kind:'fold'}],kids:PreflopNode[]=[afterCall(o,c,q+1,inv,history+`${name(q)}F `)];
+  if(q===5){const called=[...inv];called[5]=open;acts.push({label:'コール',kind:'call'});kids.push({type:'terminal',invested:called,threeWay:[o,c,5]});}
+  acts.push({label:`スクイーズ ${sq}BB`,kind:'raise',to:sq});kids.push(openerVsSqueeze(o,c,q,raised,history+`${name(q)}${sq} `));
+  return dec(q,history,open,acts,kids);
+ }
+ // Squeezed: the opener folds, calls or moves all in; then the caller folds or calls (all in: the caller folds).
+ function openerVsSqueeze(o:number,c:number,q:number,inv:number[],history:string):PreflopNode{
+  const sq=inv[q],called=[...inv];called[o]=sq;const jam=[...inv];jam[o]=STACK;
+  return dec(o,history,sq,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
+   [callerVsSqueeze(o,c,q,inv,true,history+`${name(o)}F `),callerVsSqueeze(o,c,q,called,false,history+`${name(o)}C `),facing5bet(q,o,jam,history+`${name(o)}AI `)]);
+ }
+ function callerVsSqueeze(o:number,c:number,q:number,inv:number[],openerFolded:boolean,history:string):PreflopNode{
+  const sq=inv[q],called=[...inv];called[c]=sq;
+  return dec(c,history,sq,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],
+   [openerFolded?{type:'terminal',invested:inv,winner:q}:{type:'terminal',invested:inv,showdown:{a:o,b:q,kind:'3bp'}},
+    openerFolded?{type:'terminal',invested:called,showdown:{a:c,b:q,kind:'3bp'}}:{type:'terminal',invested:called,threeWay:[o,c,q]}]);
  }
  function facing3bet(o:number,t:number,inv:number[],history:string):PreflopNode{
   const three=inv[t],ip=POST[o]>POST[t],four=r1(three*(ip?2.2:2.5)),called=[...inv];called[o]=three;const raised=[...inv];raised[o]=four;

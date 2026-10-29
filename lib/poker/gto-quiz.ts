@@ -55,7 +55,7 @@ function handWeight(reach:number,combos:number,freqs:number[],foldIndex:number){
 }
 
 // ---------- preflop ----------
-const KIND_WEIGHT:Record<string,number>={open:30,vsOpen:35,vs3bet:22,overcall:5,vs4bet:6,vs5bet:2,vsLimp:6,vsIso:4};
+const KIND_WEIGHT:Record<string,number>={open:30,vsOpen:35,vs3bet:22,overcall:5,vs4bet:6,vs5bet:2,vsLimp:6,vsIso:4,vsSqueeze:3};
 function sceneText(node:PreflopNode){
  const toks=preflopHistory(node);let raises=0,limped=false;const parts:string[]=[];let folds:string[]=[];
  const flush=()=>{if(folds.length){parts.push(`${folds.join('・')}がフォールド`);folds=[];}};
@@ -70,7 +70,7 @@ function sceneText(node:PreflopNode){
  return parts.length?`${parts.join('、')}。`:'';
 }
 /** Category names shown to members. */
-export const PREFLOP_CATEGORY:Record<string,string>={'preflop-open':'プリフロップ：オープン','preflop-vsopen':'プリフロップ：オープンを受けて','preflop-vs3bet':'プリフロップ：3ベットを受けて','preflop-vs4bet':'プリフロップ：4ベットを受けて','preflop-vs5bet':'プリフロップ：5ベットを受けて','preflop-vslimp':'プリフロップ：リンプを受けて','preflop-vsiso':'プリフロップ：リンプ後にレイズされて','preflop-overcall':'プリフロップ：オーバーコール'};
+export const PREFLOP_CATEGORY:Record<string,string>={'preflop-open':'プリフロップ：オープン','preflop-vsopen':'プリフロップ：オープンを受けて','preflop-vs3bet':'プリフロップ：3ベットを受けて','preflop-vs4bet':'プリフロップ：4ベットを受けて','preflop-vs5bet':'プリフロップ：5ベットを受けて','preflop-vslimp':'プリフロップ：リンプを受けて','preflop-vsiso':'プリフロップ：リンプ後にレイズされて','preflop-vssqueeze':'プリフロップ：スクイーズを受けて','preflop-overcall':'プリフロップ：オーバーコール'};
 /** `kind`: only that chart kind (open, vsOpen, …), e.g. to practise a weak category. */
 export function preflopQuestion(data:PreflopData,random:()=>number=Math.random,kind?:string):QuizQuestion|null{
  for(let attempt=0;attempt<8;attempt++){
