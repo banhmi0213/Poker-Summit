@@ -38,3 +38,12 @@
  .panel.panel .actions button{min-height:54px;font-size:16px;white-space:normal}.panel.panel .actions small{font-size:12px}
  .panel .auto>span{display:none}.panel.panel .auto button{min-height:25px;padding:3px;font-size:9px}
 }
+
+/* Owner 2026/10/29: the action buttons glow while your turn runs; the bar above them shows the time left. */
+.actions[data-turn]{position:relative;border-radius:9px;box-shadow:0 0 0 2px #f3c663,0 0 14px 2px #f3c66380;animation:turnGlow 1.6s ease-in-out infinite}
+.actions[data-turn]::before{content:"";position:absolute;left:0;top:-7px;height:4px;width:calc(var(--turn-left,1)*100%);border-radius:3px;background:#f3c663;box-shadow:0 0 8px #f3c663;transition:width 1s linear}
+.actions[data-turn=urgent]{box-shadow:0 0 0 3px #f05b58,0 0 18px 3px #f05b5899;animation:turnUrgent .55s ease-in-out infinite}
+.actions[data-turn=urgent]::before{background:#f05b58;box-shadow:0 0 8px #f05b58}
+@keyframes turnGlow{50%{box-shadow:0 0 0 2px #f3c663,0 0 22px 5px #f3c663a6}}
+@keyframes turnUrgent{50%{box-shadow:0 0 0 3px #f05b58,0 0 26px 7px #f05b58b3}}
+@media(prefers-reduced-motion:reduce){.actions[data-turn]{animation:none}}
