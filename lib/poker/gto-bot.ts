@@ -22,11 +22,11 @@ export type LoggedAction={street:Street;id:string;type:'fold'|'check'|'call'|'be
 export type PreflopNode={id:number;player:Pos;history:string;kind:string;actions:{kind:string;to?:number}[];strategy:Record<string,number[]>};
 export type PreflopData={nodes:PreflopNode[]};
 /** preflopHu (2026/10/29): the heads-up chart (public/poker-gto/preflop-hu.json), used when only two players are dealt in. */
-/** preflopDepths (2026/10/30): 6-max tournament charts by stack (60, 40, 20BB with a big blind ante). */
+/** preflopDepths (2026/10/30): 6-max tournament charts by stack (60, 40, 20, 10BB with a big blind ante). */
 export type GtoData={preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null};
-export const CHART_DEPTHS=[60,40,20];
-/** The tournament chart for an effective stack: 100BB above 80BB, then the nearest of 60/40/20. */
-export function depthChart(effective:number):number{return effective>=80?100:effective>=50?60:effective>=30?40:20;}
+export const CHART_DEPTHS=[60,40,20,10];
+/** The tournament chart for an effective stack: 100BB above 80BB, then the nearest of 60/40/20/10. */
+export function depthChart(effective:number):number{return effective>=80?100:effective>=50?60:effective>=30?40:effective>=15?20:10;}
 export type GtoView={
  handKey:string;bb:number;hero:string;hole:readonly Card[];board:readonly Card[];
  /** Position label of every player dealt in (BTN/SB/BB/UTG/HJ/CO; heads-up: button = SB). */
@@ -207,7 +207,7 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   // Charts: 100BB, and for 6-max 60/40/20BB (tournaments). Very short or very deep tables use the equity CPU.
   const hu=Object.keys(v.positions).length===2&&!!data.preflopHu;
   const depth=hu?100:depthChart(effective),depthData=depth===100?null:data.preflopDepths?.[depth];
-  if(effective>250||(hu||!depthData)&&effective<40||effective<12)return fb('stack-depth');
+  if(effective>250||(hu||!depthData)&&effective<40||effective<5)return fb('stack-depth');
   // Heads-up (only two dealt in): the heads-up chart and spots; the button (SB) acts last after the flop.
   if(hu)data={...data,preflop:data.preflopHu!};
   // Shorter stacks: that depth's chart. The flop files are 100BB: still used at 60BB (similar spots), not at 40/20BB.
