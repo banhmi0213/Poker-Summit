@@ -80,7 +80,8 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?
   const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total);
   const played:LoggedAction={street:a.street,id:a.seatId,type:a.type as LoggedAction['type'],to:a.to,allIn:a.allIn,potBefore:i>0?hand.actions[i-1].pot:0,
    currentBetBefore:Math.max(0,...v.players.map(p=>p.committed)),committedBefore:v.players.find(p=>p.id===a.seatId)!.committed};
-  const j=s.indexOf(played),freq=j>=0?freqs[j]:null;
+  // Before the flop the chart lists every action GTO takes: a play outside it (e.g. a limp from the button) is 0%.
+  const j=s.indexOf(played),freq=j>=0?freqs[j]:s.source==='preflop'?0:null;
   const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k],kind:o.kind}));
   out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole,v.board)});
  });
@@ -106,7 +107,7 @@ export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1
  return items.map(({view,played})=>{
   const text=playedText(played,view.bb),s=gtoStrategy(view,data,budgetMs);
   if(s.source==='fallback')return {street:played.street,played:text,source:'none',reason:s.reason};
-  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:null;
+  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:s.source==='preflop'?0:null;
   const all=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k],kind:o.kind}));
   return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole,view.board),
    options:all.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(({text,freq})=>({text,freq}))};
