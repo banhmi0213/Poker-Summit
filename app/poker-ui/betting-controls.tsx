@@ -2,7 +2,7 @@
 import {MobileWagerEditor} from './mobile-wager-editor';
 import {AmountInput} from './amount-input';
 import {quickBetKind,quickBetLabel,quickBetTo,quickBetValues} from '@/lib/poker/bet-presets';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import type {BettingAction} from '@/lib/poker/betting';
 import type {RingPlayView} from '@/lib/poker/ring-play-state';
 import {ringWagerAction} from '@/lib/poker/ring-wager-action';
@@ -18,7 +18,11 @@ export function BettingControls({hand,blocked,seconds,turnMs,bank,onTimeBank,onA
  const manual=(a:BettingAction)=>{setMobileRaiseOpen(false);auto.cancel();onAction(a);};
  // Owner 2026/10/29: no "あなたの番 · N秒" line; instead a light runs round the panel's outer frame while it is your turn (red and faster for the last 5 s).
  const myTurn=Boolean(legal)&&!hand?.result&&seconds!==null;void turnMs;
- return <section className={styles.panel} aria-label="操作パネル" data-turn={myTurn?(seconds!<=5?'urgent':'on'):undefined} >{myTurn&&<span className={styles.orbit} role="timer" aria-label={`残り${seconds}秒`}/>}{mobileRaiseOpen&&canRaise&&<MobileWagerEditor amount={amount} min={min} max={max} step={bb} format={fmt} label={legal?.shortAllInOnly?'オールイン':hand?.players.some(p=>p.committed>0)?'レイズ':'ベット'} onChange={setAmount} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>hand&&valid&&manual(ringWagerAction(hand,amount))} presets={[...sizes.map(m=>({label:quickBetLabel(kind,m),amount:sizeTo(m)})),{label:'ALL-IN額',amount:max}]}/>}
+ // The time was extended when the countdown jumps up during the same turn.
+ const turnKey=myTurn&&hand?`${hand.handId}:${hand.revision}`:'',firstSeconds=useRef<{key:string;s:number}|null>(null);
+ if(turnKey&&firstSeconds.current?.key!==turnKey)firstSeconds.current={key:turnKey,s:seconds!};
+ const extended=Boolean(turnKey)&&seconds!==null&&firstSeconds.current!==null&&seconds>firstSeconds.current.s+1;
+ return <section className={styles.panel} aria-label="操作パネル" data-turn={myTurn?(seconds!<=5?'urgent':'on'):undefined} data-extended={extended||undefined}>{myTurn&&<span className={styles.orbit} role="timer" aria-label={`残り${seconds}秒`}/>}{mobileRaiseOpen&&canRaise&&<MobileWagerEditor amount={amount} min={min} max={max} step={bb} format={fmt} label={legal?.shortAllInOnly?'オールイン':hand?.players.some(p=>p.committed>0)?'レイズ':'ベット'} onChange={setAmount} onClose={()=>setMobileRaiseOpen(false)} onConfirm={()=>hand&&valid&&manual(ringWagerAction(hand,amount))} presets={[...sizes.map(m=>({label:quickBetLabel(kind,m),amount:sizeTo(m)})),{label:'ALL-IN額',amount:max}]}/>}
  <label className={styles.amount}>ベット後の合計額 <strong>{legal?.raise?fmt(amount):'—'}</strong><AmountInput raw ariaLabel="ベット後の合計" value={amount} min={min} max={max} disabled={!canRaise} onChange={setAmount}/></label>
  <input className={styles.slider} aria-label="ベット額スライダー" type="range" min={min} max={Math.max(min,max)} step={1} value={amount} disabled={!canRaise} onChange={e=>setAmount(Number(e.target.value))}/>
  <div className={styles.quick}>{sizes.map((m,i)=><button type="button" key={i} disabled={!canRaise} onClick={()=>setAmount(sizeTo(m))}>{quickBetLabel(kind,m)}</button>)}<button type="button" disabled={!canRaise} onClick={()=>setAmount(max)}>ALL-IN額</button></div>

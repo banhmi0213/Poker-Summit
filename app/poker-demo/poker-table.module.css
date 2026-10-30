@@ -874,7 +874,7 @@
  .table .bet_p4{left:78%;top:30%;bottom:auto}
  .table .bet_p5{left:24%;top:56%;bottom:auto}
  .table .bet_p6{left:76%;top:56%;bottom:auto}
- .table .bet_you{left:50%;bottom:30%;top:auto}
+ .table .bet_you{left:50%;bottom:35%;top:auto}
  .table .topSeats .bet_p2{top:calc(100% + 42px)}
  .table>.streetBets>.bet_p2{top:24%;left:50%;bottom:auto}
 }
@@ -935,9 +935,8 @@
 .gtoReview small{display:block;color:#9fb3c3}
 /* スタンプ(2026/10/27): アイコンに被せる。出ている間はアイコンを暗くし、カードは常にスタンプより上に出す。 */
 .seatAvatarRow{position:relative}
-.seatAvatarRow:has([data-stamp-bubble]) .seatTimerRing{filter:brightness(.45)}
+.seatAvatarRow:has([data-stamp-anchor]) .seatTimerRing,.activeAvatar:has([data-stamp-anchor]){filter:brightness(.45)}
 /* The seat showing a stamp comes in front of the cards for those 3 seconds. */
-.topSeats:has([data-stamp-bubble]),.edgeSeatThree:has([data-stamp-bubble]),.edgeSeatFour:has([data-stamp-bubble]),.edgeSeatFive:has([data-stamp-bubble]),.edgeSeatSix:has([data-stamp-bubble]),.self:has([data-stamp-bubble]){z-index:12}
 
 /* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
 .activeAvatar{position:relative}
@@ -949,7 +948,6 @@
 .pot strong{font-size:1.15em}
 @media(min-width:900px){.blindsInfo{font-size:14px}}
 /* Your own stamp: your avatar box is its own layer (transform), so lift it above your hole cards while a stamp shows. */
-.activeAvatar:has([data-stamp-bubble]),.seatAvatarRow:has([data-stamp-bubble]){z-index:30}
 
 /* PC: a little larger portraits and cards (owner 2026/10/28: ＰＣだけアイコンとカードもうちょい大きく). Grows with the window
    height so short PC screens keep their current layout. */
@@ -1016,7 +1014,19 @@
 .seatTimerRing[data-turn=urgent]{animation:seatUrgent .55s ease-in-out infinite}
 @keyframes seatTurn{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66355}50%{box-shadow:0 0 0 3px #f3c663,0 0 24px #f3c663aa}}
 @keyframes seatUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5877,0 0 10px #f05b5855}50%{box-shadow:0 0 0 4px #f05b58,0 0 28px #f05b58cc}}
-@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
+/* Owner 2026/10/30 (相手アイコンも同じ): no fast pulse; a light runs round the acting player's ring once every 10 s,
+   every 20 s once extended, like the action panel. */
+.seatTimerRing[data-turn]{position:relative;animation:none;box-shadow:0 0 0 2px #f3c66388,0 0 14px #f3c66366}
+.seatTimerRing[data-turn=urgent]{animation:none;box-shadow:0 0 0 3px #f05b58aa,0 0 18px #f05b5888}
+@property --seat-orbit{syntax:'<angle>';inherits:false;initial-value:0deg}
+.seatTimerRing[data-turn]::before{content:"";position:absolute;inset:-3px;border-radius:50%;padding:3px;pointer-events:none;z-index:4;
+ background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 250deg,#f3c66355 285deg,#ffe6a1 340deg,#fff6d8 352deg,transparent 360deg);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+ filter:drop-shadow(0 0 5px #f3c663);animation:seatOrbit 10s linear infinite}
+.seatTimerRing[data-turn=urgent]::before{background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 230deg,#f05b5866 280deg,#ff8a86 340deg,#ffd9d7 352deg,transparent 360deg);filter:drop-shadow(0 0 6px #f05b58)}
+.seatTimerRing[data-turn][data-extended]::before{animation-duration:20s}
+@keyframes seatOrbit{to{--seat-orbit:360deg}}
+@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]::before{animation:none;display:none}.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
 /* Phones (owner 2026/10/28: これもいらん): no 「PLAYER 6・フォールド」 banner in the middle of the felt; each seat already
    shows its action. */
 @media(max-width:899px){.actionToast{display:none!important}}
@@ -1206,7 +1216,6 @@
 .demoShell .table .seat[data-empty-seat]>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){background:none;border:0;box-shadow:none}
 .demoShell .table .seat[data-empty-seat]>small{visibility:hidden}
 /* Owner 2026/10/29: a stamp is drawn in front of every card on the table. */
-.demoShell .table [data-has-stamp]{z-index:40}
 /* Only the seat group is raised: inside your own seat the avatar stays under your cards (owner 2026/10/29: 一瞬アイコンが上になって戻る). */
 /* Owner 2026/10/29 (設定枠小さ過ぎる): bet-size boxes are text inputs now; give them the same size as before. */
 .menuFields input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;padding:6px 10px;border:1px solid #a1854c;border-radius:6px;color:#f5deac;background:#292116;font:inherit;font-size:16px;text-align:center}
@@ -1231,3 +1240,5 @@
 .clockMark b{font-weight:800}
 /* Your chip count sits in the middle of your plate, like everyone else's (owner 2026/10/30: チップ表示左に寄ってるから真ん中に). */
 .table .selfInfo small{text-align:center}
+/* Owner 2026/10/30: the stamp floats on its own top layer, so seats are no longer lifted over the cards while it shows
+   (avatar under the cards, stamp over them). */
