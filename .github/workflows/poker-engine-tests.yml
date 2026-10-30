@@ -47,7 +47,7 @@ jobs:
   poker-engine-tests:
     name: Poker engine regression tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -215,6 +215,17 @@ jobs:
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-browser-e2e
         run: node tests/poker-browser-e2e.cjs
+      - name: Verify a 24-player multi-table tournament end to end
+        timeout-minutes: 10
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-field-e2e
+        run: |
+          set +e; node tests/poker-field-e2e.cjs 2>&1 | tee field.log; code=${PIPESTATUS[0]}; set -e
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timed out|waiting for|expected|actual|PASS" field.log | grep -v node_modules | head -20 | while IFS= read -r l; do echo "::error::${l:0:500}"; done; exit "$code"; fi
 
       - name: Verify table card and chip animations in real browsers
         env:
