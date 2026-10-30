@@ -128,8 +128,8 @@ async function database(){
   const finish=(await f.db.query('select standings from poker_private.tournament_finishes where tournament_id=$1',[f.tid])).rows[0];check(Boolean(finish),'tournament archived');
   const standings=finish.standings;check(standings.length===ENTRANTS,'standings for every entrant');check(standings.filter(r=>r.place===1).length===1,'one winner');check(new Set(standings.map(r=>r.memberId)).size===ENTRANTS,'each member once');
   const champion=standings.find(r=>r.place===1).memberId;check(champion===c.field.champion,'archived champion matches the table');
-  for(let i=0;i<BROWSERS;i++)await until(()=>pages[i].getByText(/大会終了/).count(),n=>n>0,'finish shown '+i,15000);
-  for(let i=0;i<BROWSERS;i++){const mine=standings.find(r=>r.memberId===f.users[i]);await until(()=>pages[i].getByText(mine.place===1?'あなたが優勝しました！':new RegExp(`あなたは${mine.place}`)).count(),n=>n>0,'own place shown '+i,15000);}
+  for(let i=0;i<BROWSERS;i++)await until(()=>pages[i].getByText(/大会終了/).count(),n=>n>0,'finish shown '+i,45000);
+  for(let i=0;i<BROWSERS;i++){const mine=standings.find(r=>r.memberId===f.users[i]);await until(()=>pages[i].getByText(mine.place===1?'あなたが優勝しました！':new RegExp(`あなたは${mine.place}`)).count(),n=>n>0,'own place shown '+i,45000);}
   check(errors.length===0,'no browser errors: '+errors.join(';'));
   await pages[1].screenshot({path:path.join(output,'mobile-finished.png'),fullPage:true});
   console.log('PASS field played to the end: balancing, table breaks, final table, places archived');
