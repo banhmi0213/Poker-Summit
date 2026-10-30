@@ -13,7 +13,7 @@ import {RangeTrainer} from '@/app/poker-ui/range-trainer';
 import {GtoTrainer} from '@/app/poker-ui/gto-trainer';
 import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
-import {HandHistoryList} from '@/app/poker-ui/hand-history-list';
+import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
 export const dynamic='force-dynamic';
 export default async function Page(){const [data,hands,tendencies]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats()]);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
@@ -26,12 +26,12 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PushFoldChart/>},
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
- {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。',content:<GtoTrainer/>},
+ {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、賞金の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
- {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryList hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
+ {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
  return <PokerWorkspace kind="account" panes={POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id))}/>;

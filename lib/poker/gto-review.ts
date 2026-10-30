@@ -156,6 +156,20 @@ export function summarizeDeviation(hands:readonly GtoReviewHand[],data:GtoData):
  out.worst.sort((a,b)=>a.freq-b.freq);out.worst=out.worst.slice(0,8);
  return out;
 }
+/** Per-hand GTO flags (2026/10/30: Olympia のように全ハンドを自動で判定し、一覧に「!」と絞り込み). Off = GTO plays it
+ * under 5% with this hand (ほぼやらない). streets: preflop/flop are instant (precomputed); turn/river solve live. */
+export type HandFlags={handId:string;pre:{judged:number;off:number};post:{judged:number;off:number};
+ offs:{index:number;street:HistoryAction['street'];played:string;freq:number;best:string}[]};
+export function flagHand(h:GtoReviewHand,data:GtoData,streets:readonly HistoryAction['street'][]=['preflop','flop'],budgetMs=0):HandFlags{
+ const out:HandFlags={handId:h.handId,pre:{judged:0,off:0},post:{judged:0,off:0},offs:[]};
+ for(const r of reviewGto(h,data,budgetMs,streets)){
+  if(r.source==='none'||!r.verdict||r.played===null)continue;
+  const st=r.street==='preflop'?out.pre:out.post;st.judged++;
+  if(r.verdict==='rare'){st.off++;const best=[...r.options].sort((a,b)=>b.freq-a.freq)[0];
+   out.offs.push({index:r.index,street:r.street,played:playedOf(h,r.index),freq:r.played,best:best?`${best.text} ${Math.round(best.freq*100)}%`:''});}
+ }
+ return out;
+}
 function playedOf(h:GtoReviewHand,i:number){const a=h.actions[i];return a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/h.terms.bb*10)/10}BB${a.allIn?'（オールイン）':''}`;}
 
 /** Action shares per hand-strength category over the whole range (2026/10/29: 役の強さごとの打ち方). Weight = combos × reach. */
