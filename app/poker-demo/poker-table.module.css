@@ -1225,3 +1225,7 @@
 .demoShell .table .seat>small:is([data-len="12"],[data-len="13"],[data-len="14"],[data-len="15"]),.demoShell .table .selfInfo small:is([data-len="12"],[data-len="13"],[data-len="14"],[data-len="15"]){font-size:16px}
 }
 .seatName{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;font-weight:inherit}
+
+/* ⏰ next to your name when the table has no stamp bar (2026/10/30); above the stamp button it is styled by the stamp bar. */
+.clockMark{flex:0 0 auto;margin-left:6px;padding:0;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap}
+.clockMark b{font-weight:800}
