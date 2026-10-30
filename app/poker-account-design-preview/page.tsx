@@ -7,6 +7,7 @@ import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
 import {FlopStrategyPanel} from '@/app/poker-ui/flop-strategy-panel';
 import {RangeTrainer} from '@/app/poker-ui/range-trainer';
+import {GtoTrainer} from '@/app/poker-ui/gto-trainer';
 import {IcmPanel} from '@/app/poker-ui/icm-panel';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
@@ -29,6 +30,7 @@ export default function Page(){
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算済みの表を使ってデザインを確認できます。',content:<PushFoldChart/>},
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'状況・立場ごとに手札の割合を確認。',content:<PreflopChartPanel/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'場面ごとのフロップ戦略を確認。',content:<FlopStrategyPanel/>},
+ {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOのCPU5人と対戦して1手ごとに採点。',content:<GtoTrainer/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。',content:<><p>デザイン確認用画面では、会員のクイズ成績を読み書きしません。</p><a href="/mypage/poker">マイページでクイズを開く</a></>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'自分でレンジを塗って採点。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'ボード・ポット・レンジを指定。',content:<RiverSolverPanel/>},
