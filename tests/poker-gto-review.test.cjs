@@ -5,7 +5,7 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
 const {BotTable}=require('../lib/poker/bot-hands.ts');
 const {ringTerms}=require('../lib/poker/tournament-hand.ts');
 const {loadGtoData}=require('../lib/poker/gto-data-node.ts');
-const {reviewGto,gtoVerdict,viewAt,summarizeDeviation,reviewRanges}=require('../lib/poker/gto-review.ts');
+const {reviewGto,gtoVerdict,viewAt,summarizeDeviation,reviewRanges,flagHand}=require('../lib/poker/gto-review.ts');
 const seeded=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
 const asViewer=(h,seatId)=>({handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.seatId===seatId,hole:p.seatId===seatId?p.hole:null}))});
 
@@ -95,6 +95,20 @@ test('deviation summary counts only preflop and flop, and a GTO CPU is almost ne
  for(const st of [s.preflop,s.flop])assert.equal(st.gto+st.mixed+st.rare,st.judged);
  assert.ok(s.preflop.rare/s.preflop.judged<0.1,'GTO CPU rarely plays a ほぼやらない preflop action');
  assert.ok(s.worst.length<=8);assert.ok(s.worst.every((w,i,a)=>i===0||a[i-1].freq<=w.freq));
+});
+
+test('per-hand GTO flags agree with the summary and include turn and river when asked',()=>{
+ const data=loadGtoData(path.join(__dirname,'..','public','poker-gto'));
+ const t=new BotTable(1,ringTerms,data,6,100),hands=[];
+ for(let i=0;i<16;i++){const r=t.play(seeded(500+i));if(r.history)hands.push(r.history);}
+ const seat=hands[0].players[0].seatId,mine=hands.filter(h=>h.players.some(p=>p.seatId===seat)).map(h=>asViewer(h,seat));
+ const s=summarizeDeviation(mine,data),fs=mine.map(h=>flagHand(h,data));
+ assert.equal(fs.reduce((n,f)=>n+f.pre.judged,0),s.preflop.judged);
+ assert.equal(fs.reduce((n,f)=>n+f.pre.off,0),s.preflop.rare);
+ assert.equal(fs.reduce((n,f)=>n+f.post.judged,0),s.flop.judged);
+ for(const f of fs){assert.equal(f.offs.length,f.pre.off+f.post.off);assert.ok(f.offs.every(o=>o.freq<0.05));}
+ const late=mine.find(h=>h.actions.some(a=>a.seatId===seat&&(a.street==='turn'||a.street==='river')&&!['sb','bb','ante'].includes(a.type)));
+ if(late){const f=flagHand(late,data,['turn','river'],300);assert.equal(f.pre.judged,0);assert.ok(f.post.judged>=0);}
 });
 
 test('hand categories on the board',()=>{

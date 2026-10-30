@@ -14,7 +14,9 @@ export function HistoryCards({cards,count=2}:{cards:Card[]|null;count?:number}){
 export function handTitle(h:HandHistoryView){return h.title??(h.kind==='ring'?'リングゲーム':'トーナメント');}
 
 /** Member list: your position, your cards and your result per hand. Operators get every player instead. */
-export function HandHistoryList({hands,base,admin=false,moreHref}:{hands:HandHistoryView[];base:string;admin?:boolean;moreHref?:string|null}){
+/** GTO marks per hand (2026/10/30): off = decisions GTO makes under 5% with that hand; judged = decisions compared. */
+export type HandGtoMark={judged:number;off:number;title:string};
+export function HandHistoryList({hands,base,admin=false,moreHref,marks}:{hands:HandHistoryView[];base:string;admin?:boolean;moreHref?:string|null;marks?:Record<string,HandGtoMark>}){
  if(!hands.length)return <p>{admin?'ハンド履歴はまだありません。':'まだ記録されたハンドはありません。リングゲームや大会でプレイすると、ここに1ハンドずつ残ります。'}</p>;
  return <>
   <div className={styles.list}>{hands.map(h=>{const me=h.players.find(p=>p.you);const label=`${handTitle(h)} ${handDate(h.playedAt)}`;
@@ -22,7 +24,7 @@ export function HandHistoryList({hands,base,admin=false,moreHref}:{hands:HandHis
     <span className={styles.meta}><strong>{handTitle(h)}{h.handNumber?` #${h.handNumber}`:''}</strong><small>{handDate(h.playedAt)} · {h.terms.sb.toLocaleString()}/{h.terms.bb.toLocaleString()}{admin?` · ${h.players.map(p=>p.name).join('・')}`:''}</small></span>
     {admin||!me?<span className={styles.badge}>{h.players.length}人</span>:<span className={styles.badge}>{me.position}</span>}
     {admin||!me?<HistoryCards cards={h.board.slice(0,5)} count={0}/>:<HistoryCards cards={me.hole}/>}
-    {admin||!me?<span className={styles.net}>{(h.players.find(p=>h.result.winners.includes(p.seatId))?.name)??''}</span>:<span className={styles.net} data-sign={me.net>0?'plus':me.net<0?'minus':undefined}>{chips(me.net)}</span>}
+    {admin||!me?<span className={styles.net}>{(h.players.find(p=>h.result.winners.includes(p.seatId))?.name)??''}</span>:<span className={styles.net} data-sign={me.net>0?'plus':me.net<0?'minus':undefined}>{marks?.[h.handId]?.off?<span className={styles.gtoBadge} data-verdict="rare" title={marks[h.handId].title} aria-label={marks[h.handId].title}>!</span>:null}{chips(me.net)}</span>}
    </Link>;})}</div>
   {moreHref&&<p className={styles.more}><Link href={moreHref}>さらに前のハンドを見る</Link></p>}
  </>;
