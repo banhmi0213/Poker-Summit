@@ -8,6 +8,7 @@ import {reasonText,type TrainerSpot} from '@/lib/poker/gto-review';
 import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
+import {StoreInvite} from './store-invite';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
@@ -175,6 +176,7 @@ export function GtoTrainer(){
    <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
    <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
   </section>
-  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。3人以上のポットや計算していない場面は採点なしです。成績はこのブラウザに保存されます。</p>
+  {stats.hands>=3&&<StoreInvite/>}
+  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。4人以上のポットや計算待ちの場面は、その場の簡易計算による近似値（採点なし）です。成績はこのブラウザに保存されます。</p>
  </div>;
 }
