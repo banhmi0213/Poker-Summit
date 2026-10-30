@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),Module=require('module');
 let ts;try{ts=require('typescript');}catch{ts=require('/opt/npm-tools/node_modules/typescript');}
 const resolve=Module._resolveFilename;Module._resolveFilename=function(r,...a){return resolve.call(this,r.startsWith('@/')?path.resolve(__dirname,'..',r.slice(2)):r,...a);};
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,resolveJsonModule:true,esModuleInterop:true}}).outputText,f);
-const {HERO,TRAINER_STACK,TRAINER_SEATS,buttonIndexFor,startTrainerHand,trainerAct,trainerView,visibleBoard,netBB,gradeChoice}=require('../lib/poker/gto-trainer.ts');
+const {HERO,TRAINER_STACK,TRAINER_SEATS,MODE_POSITIONS,buttonIndexFor,reachSpot,startTrainerHand,trainerAct,trainerView,visibleBoard,netBB,gradeChoice}=require('../lib/poker/gto-trainer.ts');
 const {legalBettingActions}=require('../lib/poker/betting.ts');
 const {decideGto}=require('../lib/poker/gto-bot.ts');
 const {trainerSpot}=require('../lib/poker/gto-review.ts');
@@ -58,4 +58,22 @@ test('GTO CPUs play full trainer hands and the hero menu covers the preflop deci
   assert.ok(h.result,'hand finished');
  }
  assert.ok(graded>=8,'most first preflop decisions are on the chart: '+graded);
+});
+
+test('practice spots: the hero reaches the chosen spot with GTO play before it',()=>{
+ const data=loadGtoData();const decide=(h,id)=>decideGto(trainerView(h,id),data,Math.random,0).action;
+ const raises=h=>h.log.filter(a=>a.street==='preflop'&&(a.type==='raise'||a.type==='bet')).length;
+ for(const mode of ['rfi','vsOpen','vs3bet','flop']){
+  let found=0;
+  for(let b=0;b<6;b++){const pos=startTrainerHand(1,b).heroPos;if(!MODE_POSITIONS[mode].includes(pos))continue;
+   let h=null;for(let k=0;k<60&&!h;k++)h=reachSpot(9000+b*100+k,b,mode,decide);
+   if(!h)continue;found++;
+   assert.equal(h.round.toAct,HERO);assert.ok(!h.result);
+   if(mode==='rfi')assert.equal(raises(h),0);
+   if(mode==='vsOpen'){assert.equal(raises(h),1);assert.ok(!h.log.some(a=>a.id===HERO));}
+   if(mode==='vs3bet'){assert.equal(raises(h),2);assert.ok(h.log.some(a=>a.id===HERO&&a.type==='raise'));}
+   if(mode==='flop')assert.ok(h.street>=1);
+  }
+  assert.ok(found>=3,mode+' found in '+found+' seats');
+ }
 });
