@@ -1229,3 +1229,5 @@
 /* ⏰ next to your name when the table has no stamp bar (2026/10/30); above the stamp button it is styled by the stamp bar. */
 .clockMark{flex:0 0 auto;margin-left:6px;padding:0;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap}
 .clockMark b{font-weight:800}
+/* Your chip count sits in the middle of your plate, like everyone else's (owner 2026/10/30: チップ表示左に寄ってるから真ん中に). */
+.table .selfInfo small{text-align:center}
