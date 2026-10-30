@@ -52,3 +52,8 @@ export function SeatQuickBar({onStamp,disabled,extra,clock}:{onStamp:(stamp:Stam
   {sheet}
  </div>;
 }
+
+/** A table without stamps (tournaments) still shows your ⏰ where it sits at the ring table: above the stamp button's place (owner 2026/10/30). */
+export function SeatClockOnly({clock}:{clock:import('react').ReactNode}){
+ return <div className={styles.quick} role="group" aria-label="タイムバンク"><div className={styles.stampSlot}><div className={styles.quickClock}>{clock}</div><span className={styles.quickBtn} aria-hidden="true" style={{visibility:'hidden'}}><span className={styles.quickIcon}/></span></div></div>;
+}
