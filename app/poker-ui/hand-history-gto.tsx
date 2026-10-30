@@ -40,13 +40,17 @@ export function markOf(f:HandFlags):HandGtoMark{
  return {judged:f.pre.judged+f.post.judged,off:n,title:n?`GTOではほぼやらない打ち方 ${n}回：${f.offs.map(o=>`${STREET[o.street]}の${o.played}（${Math.round(o.freq*1000)/10}%）`).join('・')}`:''};
 }
 
+/** Owner 2026/10/31: ハンド履歴は10件ずつページ送り。 */
+const PER_PAGE=10;
 export function HandHistoryGto({hands,base,moreHref}:{hands:HandHistoryView[];base:string;moreHref?:string|null}){
- const [flags,setFlags]=useState<Record<string,HandFlags>|null>(null),[progress,setProgress]=useState<[number,number]|null>(null),[filter,setFilter]=useState<'all'|'pre'|'post'>('all');
+ const [flags,setFlags]=useState<Record<string,HandFlags>|null>(null),[progress,setProgress]=useState<[number,number]|null>(null),[filter,setFilter]=useState<'all'|'pre'|'post'>('all'),[page,setPage]=useState(0);
+ useEffect(()=>setPage(0),[hands,filter]);
  useEffect(()=>{let live=true;setFlags(null);
   void flagHands(hands,(f,done,total)=>{if(!live)return;setFlags(f);setProgress(done<total?[done,total]:null);},()=>live).catch(()=>{if(live)setProgress(null);});
   return ()=>{live=false;};},[hands]);
  const marks=useMemo(()=>flags?Object.fromEntries(Object.entries(flags as Record<string,HandFlags>).map(([k,f])=>[k,markOf(f)])):undefined,[flags]);
  const shown=filter==='all'||!flags?hands:hands.filter(h=>{const f=flags[h.handId];return f&&(filter==='pre'?f.pre.off>0:f.post.off>0);});
+ const pages=Math.max(1,Math.ceil(shown.length/PER_PAGE));
  const count=(k:'pre'|'post')=>flags?Object.values(flags as Record<string,HandFlags>).filter(f=>f[k].off>0).length:0;
  return <>
   <div className={styles.gtoBar} role="group" aria-label="GTOで絞り込み">
@@ -55,6 +59,11 @@ export function HandHistoryGto({hands,base,moreHref}:{hands:HandHistoryView[];ba
    <button type="button" aria-pressed={filter==='post'} disabled={!flags} onClick={()=>setFilter('post')}>フロップ以降でGTOとズレ（{count('post')}）</button>
    <small>{!flags?'GTOで判定中…':progress?`ターン・リバーを判定中 ${progress[0]}/${progress[1]}`:'「!」はGTOならほぼやらない（5%未満）打ち方があったハンド'}</small>
   </div>
-  {shown.length?<HandHistoryList hands={shown} base={base} moreHref={moreHref} marks={marks}/>:<p>この条件のハンドはありません。</p>}
+  {shown.length?<HandHistoryList hands={shown.slice(page*PER_PAGE,(page+1)*PER_PAGE)} base={base} marks={marks}/>:<p>この条件のハンドはありません。</p>}
+  {(pages>1||moreHref)&&<nav className={styles.pager} aria-label="ハンド履歴のページ">
+   <button type="button" disabled={page===0} onClick={()=>setPage(p=>p-1)}>前の{PER_PAGE}件</button>
+   <span>{Math.min(page+1,pages)} / {pages}{moreHref?'+':''}</span>
+   {page<pages-1?<button type="button" onClick={()=>setPage(p=>p+1)}>次の{PER_PAGE}件</button>:moreHref?<a href={moreHref}>次の{PER_PAGE}件</a>:<button type="button" disabled>次の{PER_PAGE}件</button>}
+  </nav>}
  </>;
 }
