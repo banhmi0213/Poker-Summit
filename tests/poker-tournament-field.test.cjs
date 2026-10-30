@@ -144,3 +144,10 @@ test('through the durable owner: every save is committed, each settled hand is r
  assert.ok(results.size>=8,'every settled hand recorded');assert.ok(histories.length>=results.size-1,'hand histories written');
  assert.equal((await owner.publicSnapshot()).phase,'finished');
 });
+test('room config keeps turn time and time bank cards (a tournament using them must still bind its room)',()=>{
+ const {roomConfig}=require('../lib/poker/room-directory.ts');
+ const c=roomConfig({tournamentId:'20000000-0000-4000-8000-000000000002',starts_at:start,structure:structure({turnSeconds:30,timeBankCards:2,finalTableCards:1})});
+ assert.equal(c.structure.turnSeconds,30);assert.equal(c.structure.timeBankCards,2);assert.equal(c.structure.finalTableCards,1);
+ const plain=roomConfig({tournamentId:'20000000-0000-4000-8000-000000000002',starts_at:start,structure:{...structure(),timeBankCards:undefined,finalTableCards:undefined}});
+ assert.equal('timeBankCards' in plain.structure,false);
+});
