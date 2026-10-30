@@ -193,8 +193,8 @@ export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];fr
  nearFlop?:string;
  /** Set when another spot's flop data stands in (heads-up spots not computed yet). */
  proxySpot?:string;
- /** 近似値 (2026/10/30): four or more players saw the flop — a quick many-player solve with estimated ranges. A guide,
-  * not graded. */
+ /** 近似値 (2026/10/30): a quick live solve instead of computed data — four or more players saw the flop, or this flop
+  * spot is not computed yet. A guide, not graded. */
  approx?:boolean}|{source:'fallback';reason:string};
 export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,budgetMs=5000):GtoDecision{
  const s=gtoStrategy(v,data,budgetMs);
@@ -226,10 +226,12 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   // Four or more saw the flop (2026/10/30): no computed spots exist; a quick many-player solve gives a 近似値.
   if(!hu&&preLive.length>=4)return opts.noApprox?fb('multiway-4'):manyWayStrategy(v,toks,ranges,noHole,budgetMs);
   if(!hu&&preLive.length===3){
-   if(!ranges)return fb('preflop-off-chart');
+   // Off the chart (e.g. a limp, a complete and a check) or no computed three-way flop: the quick live solve (近似値).
+   if(!ranges)return opts.noApprox?fb('preflop-off-chart'):manyWayStrategy(v,toks,null,noHole,budgetMs);
    const order=[...preLive].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id);
    const spot3=multiSpotFor(v,toks),flopText3=v.board.slice(0,3).map(c=>'23456789TJQKA'[c.rank-2]+c.suit).join('');
    multi={spot:spot3,order,file:flopFile(data,spot3,flopText3)};
+   if(!multi.file&&v.board.length===3&&!opts.noApprox)return manyWayStrategy(v,toks,ranges,noHole,budgetMs);
    const r=multiwayStrategy(v,multi,ranges,noHole,budgetMs,flopText3);if(r)return r;
   }
   if(live.length!==2)return fb('multiway');if(!ranges)return fb('preflop-off-chart');
@@ -240,7 +242,8 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   const file=multi?null:flopFile(data,spot,flopText);
   if(v.board.length===3&&multi)return fb('flop-off-tree');
   if(v.board.length===3){
-   if(!file)return fb('no-flop-data');
+   // No computed flop yet (2026/10/30): a quick live solve on the flop instead, shown as 近似値 and not graded.
+   if(!file)return opts.noApprox?fb('no-flop-data'):manyWayStrategy(v,toks,ranges,noHole,budgetMs,hu?HU_POST_ORDER:POST_ORDER);
    let node:FlopNode|undefined=file.nodes[0];
    for(const a of flopActs){if(!node)break;const i=flopIndexOf(node,a);if(i<0)return fb('flop-off-tree');const next:number|null=node.children[i];node=next===null?undefined:file.nodes[next];}
    if(!node||node.player!==pair.indexOf(v.hero))return fb('flop-off-tree');
@@ -365,10 +368,10 @@ function nIndexOf(node:{actions:{kind:string;to:number}[]},a:LoggedAction,bb:num
  if(a.allIn&&kinds.includes('allin'))return kinds.indexOf('allin');
  const to=a.to/bb;let best=-1,d=Infinity;node.actions.forEach((x,i)=>{if(x.kind!=='bet'&&x.kind!=='raise'&&x.kind!=='allin')return;const y=Math.abs(x.to-to);if(y<d){d=y;best=i;}});return best;
 }
-function manyWayStrategy(v:GtoView,toks:Tok[],chartRanges:Ranges|null,noHole:boolean,budgetMs:number):GtoStrategy{
+function manyWayStrategy(v:GtoView,toks:Tok[],chartRanges:Ranges|null,noHole:boolean,budgetMs:number,postOrder:Pos[]=POST_ORDER):GtoStrategy{
  const fb=(reason:string):GtoStrategy=>({source:'fallback',reason});
  const live=v.players.filter(p=>!p.folded);if(live.length<2)return fb('multiway-4');
- const order=[...live].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id),hi=order.indexOf(v.hero);
+ const order=[...live].sort((a,b)=>postOrder.indexOf(v.positions[a.id])-postOrder.indexOf(v.positions[b.id])).map(p=>p.id),hi=order.indexOf(v.hero);
  if(hi<0)return fb('no-hero');
  const ranges=chartRanges??estimatedRanges(v,toks);
  const street:Street=v.board.length===3?'flop':v.board.length===4?'turn':'river',board=v.board.map(code),acts=v.log.filter(a=>a.street===street);
