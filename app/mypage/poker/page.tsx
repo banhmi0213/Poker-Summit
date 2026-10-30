@@ -7,6 +7,7 @@ import {GtoDeviationView} from '@/app/poker-ui/gto-deviation-view';
 import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
+import {IcmPanel} from '@/app/poker-ui/icm-panel';
 import {FlopStrategyPanel} from '@/app/poker-ui/flop-strategy-panel';
 import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
@@ -25,6 +26,7 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
+ {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、賞金の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryList hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
