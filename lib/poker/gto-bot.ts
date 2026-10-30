@@ -11,6 +11,8 @@ import type {BettingAction} from './betting';
 import {decideCpuAction,type CpuStyle} from './cpu-strategy';
 import {PostflopSolver,NO_CARDS,dealCard,type ActNode,type Node,type Combo} from './postflop-solver';
 import {MultiwaySolver,type MActNode,type MNode} from './multiway-solver';
+import {NWaySolver,type NActNode,type NNode} from './multiway-n-solver';
+import rankData from '@/data/poker-gto/preflop-rank.json';
 import {classOf} from './solver-view';
 import {canonicalFlop,nearestFlop} from './flop-subset';
 import type {FlopData,FlopNode} from './gto-spots';
@@ -190,7 +192,10 @@ export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];fr
  /** Set when the flop data is for a nearby precomputed flop, not the real one. */
  nearFlop?:string;
  /** Set when another spot's flop data stands in (heads-up spots not computed yet). */
- proxySpot?:string}|{source:'fallback';reason:string};
+ proxySpot?:string;
+ /** 近似値 (2026/10/30): four or more players saw the flop — a quick many-player solve with estimated ranges. A guide,
+  * not graded. */
+ approx?:boolean}|{source:'fallback';reason:string};
 export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,budgetMs=5000):GtoDecision{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {action:fallback(v,random),source:'fallback',reason:s.reason};
@@ -198,7 +203,7 @@ export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,b
  catch(e){return {action:fallback(v,random),source:'fallback',reason:'error:'+(e instanceof Error?e.message:String(e)).slice(0,60)};}
 }
 /** rangeOnly (2026/10/29: 相手のアクションのレンジ表): no hole cards needed; freqs are zeros and only the grid is meaningful. */
-export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false):GtoStrategy{
+export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false,opts:{noApprox?:boolean}={}):GtoStrategy{
  const fb=(reason='other'):GtoStrategy=>({source:'fallback',reason});
  try{
   const noHole=v.hole.length!==2;if(noHole&&!rangeOnly)return fb('no-cards');
@@ -218,6 +223,8 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   // Three players saw the flop (2026/10/29): three-way flop data, then a live three-way solve or, after a fold, heads-up.
   const foldedPre=new Set(v.log.filter(a=>a.street==='preflop'&&a.type==='fold').map(a=>a.id)),preLive=v.players.filter(p=>!foldedPre.has(p.id));
   let multi:{spot:string;order:string[];file:FlopData|null}|null=null;
+  // Four or more saw the flop (2026/10/30): no computed spots exist; a quick many-player solve gives a 近似値.
+  if(!hu&&preLive.length>=4)return opts.noApprox?fb('multiway-4'):manyWayStrategy(v,toks,ranges,noHole,budgetMs);
   if(!hu&&preLive.length===3){
    if(!ranges)return fb('preflop-off-chart');
    const order=[...preLive].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id);
@@ -331,6 +338,63 @@ function multiwayStrategy(v:GtoView,multi:{spot:string;order:string[];file:FlopD
  const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
  const bb=v.bb;
  return {source:'solver',options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>multiIndexOf(at,a,bb),grid:normalizeGrid(grid)};
+}
+// ---------- four or more players (2026/10/30, 近似値) ----------
+/** Hand classes strongest first (equity against a random hand), for estimated ranges. */
+const RANK_ORDER:string[]=(rankData as {order:string[]}).order;
+/** Top `share` of all combos by class order, as a 52×52 weight table. */
+function topRange(share:number):Float64Array{
+ const w=new Float64Array(2704),keep=new Set<string>();let n=0;
+ for(const cls of RANK_ORDER){if(n>=share*1326)break;keep.add(cls);n+=combosOf(cls);}
+ for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)if(keep.has(classOf(a,b)))w[a*52+b]=1;
+ return w;
+}
+/** Each player's range from their own preflop actions when the chart has no answer: raisers tight, callers wider,
+ * limpers wide, the big blind's check any two cards. A rough guide (shown as 近似値). */
+function estimatedRanges(v:GtoView,toks:Tok[]):Ranges{
+ const out:Ranges=new Map();let raises=0;const role=new Map<Pos,string>();
+ for(const t of toks){if(t.kind==='R'){raises++;role.set(t.pos,raises>=2?'reraise':'open');}else if(t.kind==='C'&&role.get(t.pos)!=='open'&&role.get(t.pos)!=='reraise')role.set(t.pos,raises===0?(t.pos==='SB'?'complete':t.pos==='BB'?'check':'limp'):'call');}
+ const share:Record<string,number>={reraise:0.05,open:0.15,call:0.22,limp:0.45,complete:0.6,check:1};
+ for(const [id,pos] of Object.entries(v.positions)){const r=role.get(pos)??(pos==='BB'?'check':'limp');out.set(id,topRange(share[r]));}
+ return out;
+}
+const nSolves=new Map<string,{solver:NWaySolver;order:string[]}>();
+function nIndexOf(node:{actions:{kind:string;to:number}[]},a:LoggedAction,bb:number):number{
+ const kinds=node.actions.map(x=>x.kind);
+ if(a.type==='fold')return kinds.indexOf('fold');if(a.type==='check')return kinds.indexOf('check');if(a.type==='call')return kinds.indexOf('call');
+ if(a.allIn&&kinds.includes('allin'))return kinds.indexOf('allin');
+ const to=a.to/bb;let best=-1,d=Infinity;node.actions.forEach((x,i)=>{if(x.kind!=='bet'&&x.kind!=='raise'&&x.kind!=='allin')return;const y=Math.abs(x.to-to);if(y<d){d=y;best=i;}});return best;
+}
+function manyWayStrategy(v:GtoView,toks:Tok[],chartRanges:Ranges|null,noHole:boolean,budgetMs:number):GtoStrategy{
+ const fb=(reason:string):GtoStrategy=>({source:'fallback',reason});
+ const live=v.players.filter(p=>!p.folded);if(live.length<2)return fb('multiway-4');
+ const order=[...live].sort((a,b)=>POST_ORDER.indexOf(v.positions[a.id])-POST_ORDER.indexOf(v.positions[b.id])).map(p=>p.id),hi=order.indexOf(v.hero);
+ if(hi<0)return fb('no-hero');
+ const ranges=chartRanges??estimatedRanges(v,toks);
+ const street:Street=v.board.length===3?'flop':v.board.length===4?'turn':'river',board=v.board.map(code),acts=v.log.filter(a=>a.street===street);
+ const key=`${v.handKey}|nw|${noHole?'':v.hero}|${board.join(',')}|${order.join(',')}`;let s=nSolves.get(key);
+ if(!s){
+  const first=v.log.find(a=>a.street===street),pot=(first?first.potBefore:potNow(v))/v.bb;
+  const combos=(id:string)=>{const w=ranges.get(id)??fullRange(),out:Combo[]=[];for(let a=0;a<52;a++)for(let b=a+1;b<52;b++){const x=w[a*52+b];if(x>1e-6&&!board.includes(a)&&!board.includes(b))out.push({c1:a,c2:b,weight:x});}return out;};
+  const rs=order.map(combos);
+  if(!noHole){const hk=key2(code(v.hole[0]),code(v.hole[1]));if(!rs[hi].some(c=>key2(c.c1,c.c2)===hk))rs[hi].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});
+   // keep the hero's own combo even when the range is trimmed to its heaviest combos
+   const mine=rs[hi].find(c=>key2(c.c1,c.c2)===hk)!;mine.weight=Math.max(...rs[hi].map(c=>c.weight))*1.000001;}
+  const stacks=order.map(id=>{const p=v.players.find(x=>x.id===id)!;return (v.startStacks[id]-p.totalCommitted+p.committed)/v.bb;});
+  const solver=new NWaySolver({board,pot,stack:Math.max(0.5,Math.min(...stacks)),ranges:rs,betSizes:[0.5],raiseSizes:[3],maxRaises:order.length>=5?0:1,allinMaxPot:1.5});
+  const t=Date.now();while(Date.now()-t<budgetMs&&solver.iterations<300)solver.run(1);if(!solver.iterations)solver.run(1);
+  s={solver,order};nSolves.set(key,s);while(nSolves.size>2)nSolves.delete(nSolves.keys().next().value as string);
+ }
+ let node:NNode=s.solver.tree;
+ for(const a of acts){if(node.kind!=='act')return fb('solver-off-tree');const i=nIndexOf(node,a,v.bb);if(i<0)return fb('solver-off-tree');node=node.children[i];}
+ if(node.kind!=='act'||node.player!==hi)return fb('solver-off-tree');
+ const at:NActNode=node,side=s.solver.sides[hi],k=at.actions.length,st=s.solver.strategy(at,true);
+ let h=-1;if(!noHole){const a=code(v.hole[0]),b=code(v.hole[1]);for(let i=0;i<side.n;i++)if((side.c1[i]===a&&side.c2[i]===b)||(side.c1[i]===b&&side.c2[i]===a)){h=i;break;}if(h<0)return fb('solver-hero-missing');}
+ const acc:Record<string,{w:number;f:number[]}>={};
+ for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
+ const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
+ const bb=v.bb;
+ return {source:'solver',approx:true,options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>nIndexOf(at,a,bb),grid:normalizeGrid(grid)};
 }
 function potNow(v:GtoView){return v.players.reduce((s,p)=>s+p.totalCommitted,0);}
 function sample(p:number[],random:()=>number){const t=p.reduce((s,x)=>s+Math.max(0,x),0);if(!(t>0))return 0;let r=random()*t;for(let i=0;i<p.length;i++){r-=Math.max(0,p[i]);if(r<=0)return i;}return p.length-1;}

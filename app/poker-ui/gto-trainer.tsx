@@ -113,14 +113,15 @@ export function GtoTrainer(){
  const choose=(i:number)=>{
   if(!hand||!spot||spot==='loading')return;
   const view=trainerView(hand,HERO);if(!view)return;
-  const graded=spot.source!=='none';
-  const menu=graded?spot.options:basicMenu(hand),o=menu[i];if(!o)return;
+  // 4人以上のポットは近似値: GTO's menu and shares are shown, but not graded.
+  const known=spot.source!=='none',graded=known&&!spot.approx;
+  const menu=known?spot.options:basicMenu(hand),o=menu[i];if(!o)return;
   const action=toTable(view,o.kind,o.label,o.to);
   let next:TrainerHand;try{next=trainerAct(hand,HERO,action);}catch{return;}
   const played=next.log[next.log.length-1];
   const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,
-   options:graded?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],
-   note:graded?(spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined):`採点なし：${reasonText(spot.reason)}`};
+   options:known?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],
+   note:!known?`採点なし：${reasonText(spot.reason)}`:spot.approx?'近似値：4人以上のポットのため、GTOの割合は目安です（採点なし）':spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined};
   if(graded){const g=gradeChoice(menu.map(x=>x.freq),i);fb.level=g.level;fb.score=g.score;fb.freq=g.freq;
    setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1}};writeStats(n);return n;});}
   setFeedback(f=>[...f,fb]);setSpot(null);setHand(next);
