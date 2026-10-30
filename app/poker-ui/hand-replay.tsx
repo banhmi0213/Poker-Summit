@@ -8,6 +8,7 @@ import {reviewDecisions,type DecisionReview} from '@/lib/poker/hand-review';
 import {reasonText,verdictText,type GtoRange,type GtoReview} from '@/lib/poker/gto-review';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import {GtoRangeGrid} from './gto-range-grid';
+import {StoreInvite} from './store-invite';
 import chartStyles from './gto-chart.module.css';
 
 const verbs:Record<HistoryAction['type'],string>={ante:'アンティ',sb:'スモールブラインド',bb:'ビッグブラインド',fold:'フォールド',check:'チェック',call:'コール',bet:'ベット',raise:'レイズ'};
@@ -101,5 +102,6 @@ export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boo
    {reviews.some(r=>r.note==='fold-strong'||r.note==='call-thin')?<ul className={styles.log}>{reviews.filter(r=>r.note==='fold-strong'||r.note==='call-thin').map(r=><li key={r.index}><em>{streetNames[r.street]}</em><span>{actionText(hand.actions[r.index])}：{reviewText(r)}</span></li>)}</ul>:<p>このハンドで目立って損な判断は見つかりませんでした。</p>}
    <p>※推定勝率は、残っている相手の手札をランダムと仮定した目安です。相手がレイズしている場面では、実際の勝率はこれより低くなることがあります。</p></div>}
   {finished&&<div className={styles.result}><p>{hand.result.showdown?'ショーダウン':'ショーダウンなし'} · 勝者：{hand.result.winners.map(name).join('・')}（{hand.result.winners.map(w=>(hand.result.payouts[w]??0).toLocaleString()).join('・')}）</p>{hand.result.runs&&<ul className={styles.log} aria-label="ラン・イット・トゥワイス">{hand.result.runs.map((r,i)=><li key={i}><em>{i+1}回目</em><span><HistoryCards cards={r.board} count={0}/> 勝者：{r.winners.map(name).join('・')}（ポットの半分）</span></li>)}</ul>}</div>}
+  {!shared&&gto.status==='done'&&<StoreInvite/>}
  </div>;
 }
