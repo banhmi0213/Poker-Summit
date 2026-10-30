@@ -47,6 +47,10 @@ function basicMenu(h:TrainerHand){
  return out;
 }
 
+/** The hero folded: the rest of the hand doesn't matter for practice, so it ends here (as in GTO Wizard). */
+const heroOut=(h:TrainerHand)=>!h.result&&Boolean(h.round.players.find(p=>p.id===HERO)?.folded);
+const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p=>p.id===HERO)!.totalCommitted);
+
 export function GtoTrainer(){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
@@ -66,7 +70,7 @@ export function GtoTrainer(){
 
  // CPU turns: the GTO bot decides in the worker; a short pause so the action can be followed.
  useEffect(()=>{
-  if(!hand||hand.result||hand.round.toAct===HERO||!hand.round.toAct)return;
+  if(!hand||hand.result||heroOut(hand)||hand.round.toAct===HERO||!hand.round.toAct)return;
   const id=hand.round.toAct,view=trainerView(hand,id);if(!view)return;
   let live=true;
   const timer=window.setTimeout(async()=>{
@@ -91,8 +95,8 @@ export function GtoTrainer(){
 
  // Hand over: add to the session record once.
  useEffect(()=>{
-  if(!hand?.result||counted.current===hand.seed)return;counted.current=hand.seed;
-  setStats(s=>{const n={...s,hands:s.hands+1,net:Math.round((s.net+netBB(hand,HERO))*10)/10};writeStats(n);return n;});
+  if(!hand||!(hand.result||heroOut(hand))||counted.current===hand.seed)return;counted.current=hand.seed;
+  setStats(s=>{const n={...s,hands:s.hands+1,net:Math.round((s.net+heroNet(hand))*10)/10};writeStats(n);return n;});
  },[hand]);
 
  const choose=(i:number)=>{
@@ -114,7 +118,7 @@ export function GtoTrainer(){
  const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
- const last=feedback[feedback.length-1];
+ const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}>
   <p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>
   <div className={chart.form}>
@@ -122,21 +126,21 @@ export function GtoTrainer(){
    {!hand&&<button type="button" onClick={nextHand}>対戦を始める</button>}
   </div>
   {hand&&<>
-   <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!hand.result&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
+   <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
    <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
-     <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{hand.result&&<strong className={styles.result}>{netBB(hand,HERO)>0?`+${netBB(hand,HERO)}`:netBB(hand,HERO)}BB</strong>}</div>
+     <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
     </div>
-    {TRAINER_SEATS.map((id,k)=>{const p=hand.round.players.find(x=>x.id===id)!,spotXY=SPOTS[(k-heroIdx+6)%6],me=id===HERO,show=me||Boolean(hand.result);
+    {TRAINER_SEATS.map((id,k)=>{const p=hand.round.players.find(x=>x.id===id)!,spotXY=SPOTS[(k-heroIdx+6)%6],me=id===HERO,show=me||done;
      const won=hand.result?.winners.includes(id);
-     return <div key={id} className={styles.seat} style={{left:`${spotXY.x}%`,top:`${spotXY.y}%`}} data-hero={me||undefined} data-folded={p.folded||undefined} data-turn={!hand.result&&hand.round.toAct===id||undefined} data-won={won||undefined}>
+     return <div key={id} className={styles.seat} style={{left:`${spotXY.x}%`,top:`${spotXY.y}%`}} data-hero={me||undefined} data-folded={p.folded||undefined} data-turn={!done&&hand.round.toAct===id||undefined} data-won={won||undefined}>
       <div className={styles.cards}><CardChip card={hand.holes[id][0]} hidden={!show}/><CardChip card={hand.holes[id][1]} hidden={!show}/></div>
       <span className={styles.badge}>{hand.positions[id]}{hand.button===id&&<i aria-label="ボタン">D</i>}</span>
       <span className={styles.stack}>{me?'あなた':'GTO'} {bb(p.stack)}BB</span>
-      {p.committed>0&&!hand.result&&<span className={styles.bet}>{bb(p.committed)}</span>}
+      {p.committed>0&&!done&&<span className={styles.bet}>{bb(p.committed)}</span>}
      </div>;})}
    </div>
-   {!hand.result&&hand.round.toAct===HERO&&<div className={styles.actions}>
+   {!done&&hand.round.toAct===HERO&&<div className={styles.actions}>
     {spot==='loading'&&<p role="status">GTOを計算中…</p>}
     {menu.map((o,i)=><button key={i} type="button" data-kind={o.kind} onClick={()=>choose(i)}>{o.text}</button>)}
    </div>}
@@ -146,11 +150,11 @@ export function GtoTrainer(){
     {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
    </section>}
-   {hand.result&&<div className={chart.form}>
+   {done&&<div className={chart.form}>
     <button type="button" onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div>}
-   {hand.result&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
+   {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
   </>}
   <section className={styles.stats} aria-label="練習の成績">
    <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span></p>

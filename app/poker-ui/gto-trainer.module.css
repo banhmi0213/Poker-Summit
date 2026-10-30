@@ -30,10 +30,10 @@
 .seat[data-won] .stack{background:#2f6a4c}
 
 .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-.actions button{flex:1 1 120px;max-width:200px;border:0;border-radius:8px;padding:12px 10px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff;background:#b8433f}
-.actions button[data-kind=fold]{background:#3d6a96}
-.actions button[data-kind=check],.actions button[data-kind=call]{background:#3f8a5a}
-.actions button[data-kind=allin]{background:#7a2a2a}
+.actions button{flex:1 1 120px;max-width:200px;border:0!important;border-radius:8px;padding:12px 10px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff!important;background:#b8433f!important;opacity:1!important}
+.actions button[data-kind=fold]{background:#3d6a96!important}
+.actions button[data-kind=check],.actions button[data-kind=call]{background:#3f8a5a!important}
+.actions button[data-kind=allin]{background:#7a2a2a!important}
 .actions p{width:100%;text-align:center;font-size:12px;color:#c9d6e0;margin:0}
 
 .feedback{border-radius:10px;padding:10px 12px;background:#193a4c;border-left:5px solid #91a8ba}
