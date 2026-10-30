@@ -3,3 +3,18 @@
 @media(max-width:1250px){.contentGrid{grid-template-columns:minmax(0,1fr)}.guide{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}.guideHeading,.guide>p,.guide .returnLink{grid-column:1/-1}.guide section{margin:0}.guide .returnLink{margin:0}.summaryCard{gap:9px;padding:15px}.chips{width:52px}.summaryIcon{flex-basis:34px}.summaryIcon svg{width:31px;height:31px}.summaryCard h2{font-size:13px}.summaryCard :is(a,button){font-size:10px;padding-inline:10px}}
 @media(max-width:900px){.header{padding:7px 18px;min-height:67px}.brand img{width:205px;height:52px}.header nav{gap:16px;font-size:11px}.avatar{width:34px;height:34px}.layout{grid-template-columns:1fr}.sidebar{display:block;padding:0 18px}.sidebarTitle,.sidebarIntro,.sidebarFoot{display:none}.menuToggle{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:none;color:#fff2d1;min-height:45px;font-weight:700;text-align:left}.panes{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-bottom:15px}.panes[data-open=true]{display:grid}.panes button{min-height:44px}.main{padding:22px 18px}.heading{gap:10px}.heading h1{font-size:28px}.summaryCard{min-height:139px}.contentGrid{gap:16px}.panel{min-height:260px}.summaryIcon{display:none}.chips{width:48px}}
 @media(max-width:650px){.header{padding-inline:14px;gap:10px}.brand img{width:162px;height:48px}.header nav{gap:12px;font-size:10px}.header nav>a[aria-current=page],.avatar{display:none}.main{padding:19px 12px}.heading h1{font-size:25px}.heading p{flex-basis:100%;font-size:11px}.summaryGrid{grid-template-columns:1fr;gap:10px}.summaryCard{min-height:107px;padding:14px 18px;gap:18px}.summaryCard h2{font-size:15px}.summaryCard p{font-size:11px;margin-bottom:9px}.summaryCard :is(a,button){font-size:11px;min-height:33px}.chips{width:64px;height:66px}.summaryIcon{display:grid;flex-basis:64px}.summaryIcon svg{width:36px;height:36px}.panes{grid-template-columns:repeat(2,minmax(0,1fr))}.panes button{font-size:12px;padding:10px 8px;gap:8px}.panes svg{width:20px;height:20px}.panelHeading{padding:19px 17px}.panelHeading h2{font-size:21px}.panelHeading p:last-child{font-size:11px}.panelIcon{display:none}.panel{padding:18px 15px}.guide{grid-template-columns:1fr;padding:18px}.guideHeading,.guide>p,.guide .returnLink{grid-column:1}.panel :global(.table){font-size:11px}.panel :global(.table) :is(td,th){padding:10px 7px}.footer{font-size:8px}.panel input,.panel select,.panel textarea{font-size:16px}}
+
+/* Owner 2026/10/31 (GTO表・プリフロップ表・フロップ戦略・GTOと対戦・レンジ練習はスクロールせんでいいように): on PC these
+   tools take the whole width and the shortcut cards, the hint column and the footer step aside; FitToScreen shrinks
+   what is left to the window height. */
+@media(min-width:900px){
+ .main[data-fit]{padding-top:14px;padding-bottom:12px}
+ .main[data-fit] .heading{margin-bottom:10px}
+ .main[data-fit] .summaryGrid,.main[data-fit] .guide,.main[data-fit] .footer{display:none}
+ .main[data-fit] .contentGrid{grid-template-columns:minmax(0,1fr)}
+ .main[data-fit] .panelHeading{padding:10px 20px}
+ .main[data-fit] .panelHeading h2{font-size:19px;margin:0 0 2px}
+ .main[data-fit] .panelHeading p:last-child{font-size:11px;line-height:1.6}
+ .main[data-fit] .panelIcon{width:38px;height:38px}
+ .main[data-fit] .panel{padding:12px 18px;min-height:0}
+}
