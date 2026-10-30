@@ -44,7 +44,7 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
  useEffect(()=>{if(!member||!seatedNow)return;let live=true;void auth.rpc('poker_shop').then(({data,error})=>{if(!live||error)return;const t=(data as {tickets?:unknown})?.tickets;if(t&&typeof t==='object'&&!Array.isArray(t))setTickets(Object.fromEntries(Object.entries(t as Record<string,unknown>).map(([k,v])=>[k,Number(v)||0])));});return()=>{live=false;};},[auth,member,seatedNow,handNow,view.pending]);
  useEffect(()=>{if(!ticketNote)return;const id=setTimeout(()=>setTicketNote(''),4000);return()=>clearTimeout(id);},[ticketNote]);
  const noTicket=(item:'rabbit'|'time_bank')=>tickets!==null&&!(tickets[item]>0);
- const ticketMissing='チケットがありません。マイページの「チップ交換所」で交換できます。';
+ const ticketMissing='チケットがありません。プレイヤーページの「チップ交換所」で交換できます。';
  // 「補充して座り直す」 (owner 2026/10/27): remember the seat at this table so a player who busts there can top back up
  // to 3,000 and sit in the same seat without going back to the lobby.
  const ownSeatHere=tableId&&view.state?.membership?.tableId===tableId?view.state.membership.seat:null;

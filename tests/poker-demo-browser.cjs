@@ -16,7 +16,7 @@ const root=path.resolve(__dirname,'..'),output=process.env.POKER_DEMO_OUTPUT||'/
  await desktop.getByLabel('ゲームメニュー',{exact:true}).getByRole('button',{name:'サミット',exact:true}).click();await desktop.getByRole('heading',{name:'サミット連携',exact:true}).waitFor();
  assert.equal(await desktop.evaluate(()=>document.documentElement.scrollHeight>innerHeight+1),false,'PC table and menu fit one screen');
  await desktop.screenshot({path:path.join(output,'pc-summit-tab.png'),fullPage:true});
- await desktop.getByRole('button',{name:'サイト',exact:true}).click();await desktop.getByRole('link',{name:'Poker Summit トップ ↗',exact:true}).waitFor();
+ await desktop.getByRole('button',{name:'サイト',exact:true}).click();await desktop.getByRole('link',{name:'Poker Summit トップ',exact:true}).waitFor();
  await desktop.screenshot({path:path.join(output,'pc-site-tab.png'),fullPage:true});
  await desktop.getByRole('button',{name:'メニューを閉じる',exact:true}).click();const dock=await desktop.getByRole('region',{name:'操作パネル',exact:true}).boundingBox();assert.ok(dock.x+dock.width<=1440-80,'PC controls move inward from the right edge');await desktop.screenshot({path:path.join(output,'pc-controls-inward.png'),fullPage:true});await desktop.close();
  for(const [width,height,mode] of [[390,844,'ring'],[360,740,'ring'],[375,667,'ring'],[390,844,'tournament'],[375,667,'tournament']]){
