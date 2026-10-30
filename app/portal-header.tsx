@@ -58,6 +58,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
       <input type="checkbox" id="mobile-nav-toggle" className="nav-toggle" />
       <div className="portal-nav-inner">
         <Link href="/" className="portal-logo"><img className="logo-img" src="/images/logo.webp" alt="Poker Summit" /></Link>
+        <p className={styles.tagline}><span className={styles.taglineCopy}>GTOで<strong>学び</strong>、オンラインで<strong>磨き</strong>、リアルで<strong>勝つ</strong></span></p>
         <div className="portal-auth-actions">
           {regionSelector && <div className={styles.desktop}>{regionSelector}</div>}
           {memberLinks}
