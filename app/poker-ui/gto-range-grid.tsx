@@ -34,7 +34,11 @@ export function GtoRangeGrid({range,who}:{range:GtoRange;who:string}){
  const colors=rangeColors(range.options),k=range.options.length;
  const totals=new Array(k).fill(0);let all=0;
  for(const [cls,e] of Object.entries(range.grid)){const w=combos(cls)*e.reach;all+=w;for(let a=0;a<k;a++)totals[a]+=w*(e.freqs[a]??0);}
+ const own=range.hero?range.grid[range.hero]:undefined;
  return <div className={styles.wrap}>
+  {own&&own.reach>0&&(()=>{let acc=0;const stops=range.options.map((_,a)=>{const from=acc;acc+=(own.freqs[a]??0)*100;return `${colors[a]} ${from}% ${acc}%`;}).join(',');
+   // The viewer's own hand first (Olympia の「ホールカード頻度」): its action shares as one bar.
+   return <div className={styles.ownHand} role="group" aria-label={`${who}の手 ${range.hero} のGTOの打ち方`}><b>{who}の手 {range.hero}</b><i style={{background:`linear-gradient(90deg,${stops})`}}/><small>{range.options.map((o,a)=>`${o.text} ${pct(own.freqs[a]??0)}`).join('・')}</small></div>;})()}
   <p className={styles.note}>{who}のレンジ全体：{range.options.map((o,i)=>`${o.text} ${pct(all>0?totals[i]/all:0)}`).join('・')}{range.nearFlop?`（計算済みの近いフロップ ${range.nearFlop} の答え）`:''}{range.proxySpot?(/^[a-z]+-[a-z]+-bb$/.test(range.proxySpot)?`（この3人の場面はまだ計算中のため、近い3人の場面 ${range.proxySpot.toUpperCase()} の答えで代用）`:`（2人用のこの場面はまだ計算中のため、6人卓の${range.proxySpot.toUpperCase()}の答えで代用）`):''}</p>
   <StrategyLegend actions={range.options.map(o=>({kind:o.kind,label:o.text}))}/><table className={styles.grid} aria-label="手札ごとのGTOの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{
    const l=label(i,j),e=range.grid[l],mine=l===range.hero;
