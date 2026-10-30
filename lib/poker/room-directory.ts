@@ -46,7 +46,10 @@ export function roomConfig(value:RoomConfig):RoomConfig {
  if(typeof value.starts_at!=='string'||!Number.isSafeInteger(start)||start<0)throw new Error('Invalid stored room schedule');
  const s=validateStructure(value.structure);
  return {tournamentId,starts_at:new Date(start).toISOString(),structure:{startingStack:s.startingStack,anteType:s.anteType,lateRegLevel:s.lateRegLevel,reentry:s.reentry,
-  periods:s.periods.map(p=>({kind:p.kind,minutes:p.minutes,sb:p.sb,bb:p.bb,ante:p.ante,note:p.note}))}};
+  periods:s.periods.map(p=>({kind:p.kind,minutes:p.minutes,sb:p.sb,bb:p.bb,ante:p.ante,note:p.note})),
+  // Turn time and time bank cards travel with the structure (2026/10/30: they were dropped here, so a tournament
+  // using them could not bind its room — the frozen structure in the database no longer matched).
+  ...(s.turnSeconds!==undefined?{turnSeconds:s.turnSeconds}:{}),...(s.timeBankCards!==undefined?{timeBankCards:s.timeBankCards}:{}),...(s.finalTableCards!==undefined?{finalTableCards:s.finalTableCards}:{})}};
 }
 export function roomBinding(value:RoomBinding):RoomBinding {
  const c=roomConfig(value);
