@@ -137,7 +137,7 @@ require('node:test').test('real tournament initial render applies starting stack
  const structure={...structuredClone(defaultStructure),startingStack:20000};structure.periods[0]={...structure.periods[0],sb:200,bb:400,ante:400};structure.periods=structure.periods.slice(0,1);structure.lateRegLevel=1;
  const tournament={id:'sample',title:'LIVE SETTINGS',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure,image_url:null};
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)}));
- assert.match(html,/SB 200 \/ BB 400/);assert.match(html,/19,800/);assert.doesNotMatch(html,/19,800 chips/);assert.match(html,/PLAYER 5<\/span><small>19,200/);assert.match(html,/ポット <strong>1,000/);assert.match(html,/アンティ合計：400/);assert.match(html,/BBアンティ・BB優先/);assert.doesNotMatch(html,/50\/100・アンティなし/);
+ assert.match(html,/SB 200 \/ BB 400/);assert.match(html,/19,800/);assert.doesNotMatch(html,/19,800 chips/);assert.match(html,/PLAYER 5<\/span><small[^>]*>19,200/);assert.match(html,/ポット <strong>1,000/);assert.match(html,/アンティ合計：400/);assert.match(html,/BBアンティ・BB優先/);assert.doesNotMatch(html,/50\/100・アンティなし/);
 });
 require('node:test').test('scheduled and break pages keep full stacks, no forced pot, no cards and disabled actions',()=>{
  const {defaultStructure}=req(root+'/lib/poker/tournament.ts');

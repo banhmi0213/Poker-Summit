@@ -98,3 +98,12 @@
 /* Owner 2026/10/29: a ticket button with no ticket left is grey; tapping it explains where to exchange. */
 .quickExtra button[data-empty]{background:#3a3f44;border-color:#6b7076;color:#a9adb2;cursor:pointer}
 .quickExtra p[role=status]{white-space:normal;max-width:220px;line-height:1.4}
+
+/* Your ⏰ sits right above the stamp button, without a frame, a little smaller than the stamp circle (owner 2026/10/30). */
+.stampSlot{position:relative;display:flex}
+.quickClock{position:absolute;left:50%;bottom:calc(100% + 5px);transform:translateX(-50%);pointer-events:auto;display:flex;justify-content:center}
+.quickClock>*{position:relative;display:inline-flex;align-items:center;justify-content:center;margin:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;font-size:28px!important;line-height:1;color:#ffd987;filter:drop-shadow(0 2px 3px #000c)}
+.quickClock button{cursor:pointer;min-height:0}
+.quickClock button:focus-visible{outline:2px solid #f3c663;outline-offset:2px;border-radius:8px}
+.quickClock b{position:absolute;right:-6px;bottom:-4px;font-size:15px;font-weight:900;line-height:1;color:#ffd987;text-shadow:0 1px 2px #000,0 0 3px #000}
+@media(min-width:900px){.quickClock>*{font-size:38px!important}.quickClock b{font-size:18px;right:-8px}}
