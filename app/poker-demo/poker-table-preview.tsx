@@ -346,7 +346,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hintsOn, tournament, isYourTurn, betting, deal, actionLog, motionHand, handPositions, handStartingStacks, streetStep]);
   const gtoHintText = !gtoHint ? null : gtoHint.status === "running" ? "GTO：計算中…" : gtoHint.status === "error" ? "GTO：計算できませんでした" :
-    gtoHint.advice.source === "none" ? `GTO：${reasonText(gtoHint.advice.reason)}` : `GTO：${gtoHint.advice.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}`;
+    gtoHint.advice.source === "none" ? `GTO：${reasonText(gtoHint.advice.reason)}` : `GTO：${gtoHint.advice.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}${gtoHint.advice.approx ? "（近似値）" : ""}`;
   // Auto actions never spend chips without explicit consent.
   useEffect(() => {
     if (!isYourTurn || !running || handFinished || showdown || spectating) return;
@@ -661,7 +661,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         {liveReview?.status === "error" && <><p role="alert">GTOの計算に失敗しました。</p><button type="button" onClick={startLiveReview}>もう一度</button></>}
         {liveReview?.status === "done" && <ol>{liveReview.reviews.map((r, i) => <li key={i}>
           <em>{({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}</em> あなた：{r.played}
-          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeDialog range={r.range} who="あなた" title={`${({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}：${r.played}のときのレンジ表`} onClose={() => setLiveRangeAt(null)} />}</>}
+          {r.source === "none" ? <small>GTO：{reasonText(r.reason)}</small> : <>{r.verdict && <b data-verdict={r.verdict}>{verdictText[r.verdict]}{r.freq !== null ? ` ${Math.round(r.freq * 100)}%` : ""}</b>}<small>GTO：{r.options.map(o => `${o.text} ${Math.round(o.freq * 100)}%`).join("・")}{r.approx ? "（近似値：4人以上のポット・採点なし）" : r.freq === null ? "（この打ち方は表にありません）" : ""}{r.range && <button type="button" className={chartStyles.rangeToggle} aria-expanded={liveRangeAt === i} onClick={() => setLiveRangeAt(liveRangeAt === i ? null : i)}>{liveRangeAt === i ? "レンジ表を閉じる" : "レンジ表"}</button>}</small>{liveRangeAt === i && r.range && <GtoRangeDialog range={r.range} who="あなた" title={`${({ preflop: "プリフロップ", flop: "フロップ", turn: "ターン", river: "リバー" } as const)[r.street]}：${r.played}のときのレンジ表`} onClose={() => setLiveRangeAt(null)} />}</>}
         </li>)}</ol>}
       </div>}
       <details className={styles.demoTools}><summary>デモ検証操作</summary>

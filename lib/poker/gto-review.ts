@@ -12,13 +12,17 @@ export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;b
 export type GtoVerdict='gto'|'mixed'|'rare';
 /** The whole range at a reviewed decision, for the 13×13 chart (options in model order). */
 export type GtoRange={options:{text:string;kind:string}[];grid:GtoGrid;hero:string;nearFlop?:string;proxySpot?:string;
+ /** 近似値: four or more players (2026/10/30). */
+ approx?:boolean;
  /** Board card codes after the flop (for the hand-strength breakdown); absent preflop. */
  board?:number[]};
 export type GtoReview={index:number;street:HistoryAction['street'];
  /** Options with model frequency (0〜1), best first is NOT guaranteed: kept in model order. */
  options:{text:string;freq:number;kind:string}[];
  /** Frequency of what was actually played; null when the action did not map onto an option. */
- played:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange}
+ played:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange;
+ /** 近似値 (four or more players): shown as a guide, never graded (verdict null). */
+ approx?:boolean}
  |{index:number;street:HistoryAction['street'];source:'none';reason:string};
 
 const boardCount={preflop:0,flop:3,turn:4,river:5} as const;
@@ -26,7 +30,7 @@ const forced=new Set(['ante','sb','bb']);
 /** Played ≥30%: GTO通り, 5〜30%: ときどき, under 5%: ほぼやらない. */
 export function gtoVerdict(freq:number):GtoVerdict{return freq>=0.3?'gto':freq>=0.05?'mixed':'rare';}
 export const verdictText:Record<GtoVerdict,string>={gto:'GTO通り',mixed:'ときどき',rare:'ほぼやらない'};
-export const reasonText=(reason:string)=>reason==='stack-depth'?'スタックが浅すぎる・深すぎるため対象外':reason==='multiway'?'3人以上のポットは対象外':reason==='no-flop-data'?'この場面のフロップはまだ計算中':reason.startsWith('preflop-off')?'GTOの表にない進行のため対象外':reason==='no-flop-data'?'このフロップは計算中':'GTOの計算範囲外';
+export const reasonText=(reason:string)=>reason==='multiway-4'?'4人以上のポットは近似値のみ（集計・採点の対象外）':reason==='stack-depth'?'スタックが浅すぎる・深すぎるため対象外':reason==='multiway'?'3人以上のポットは対象外':reason==='no-flop-data'?'この場面のフロップはまだ計算中':reason.startsWith('preflop-off')?'GTOの表にない進行のため対象外':reason==='no-flop-data'?'このフロップは計算中':'GTOの計算範囲外';
 
 function optionText(kind:string,label:string,to:number|null,bb:number){
  if(kind==='fold')return 'フォールド';if(kind==='check')return 'チェック';if(kind==='call')return 'コール';if(kind==='allin')return 'オールイン';
@@ -64,18 +68,18 @@ export function viewAt(hand:GtoReviewHand,index:number,seatId?:string):GtoView|n
   startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
 }
 
-function rangeOf(s:{grid?:GtoGrid;nearFlop?:string;proxySpot?:string},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
+function rangeOf(s:{grid?:GtoGrid;nearFlop?:string;proxySpot?:string;approx?:boolean},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
  if(!s.grid)return undefined;
  const code=(c:Card)=>(c.rank-2)*4+'cdhs'.indexOf(c.suit);
- return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:hole.length===2?classOf(code(hole[0]),code(hole[1])):'',nearFlop:s.nearFlop,proxySpot:s.proxySpot,board:board.length>=3?board.map(code):undefined};
+ return {options:options.map(o=>({text:o.text,kind:o.kind})),grid:s.grid,hero:hole.length===2?classOf(code(hole[0]),code(hole[1])):'',nearFlop:s.nearFlop,proxySpot:s.proxySpot,approx:s.approx,board:board.length>=3?board.map(code):undefined};
 }
-export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoReview[]{
+export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?:readonly HistoryAction['street'][],opts:{noApprox?:boolean}={}):GtoReview[]{
  const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
  const out:GtoReview[]=[];
  hand.actions.forEach((a,i)=>{
   if(a.seatId!==me.seatId||forced.has(a.type)||(streets&&!streets.includes(a.street)))return;
   const v=viewAt(hand,i);if(!v)return;
-  const s=gtoStrategy(v,data,budgetMs);
+  const s=gtoStrategy(v,data,budgetMs,false,opts);
   if(s.source==='fallback'){out.push({index:i,street:a.street,source:'none',reason:s.reason});return;}
   const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total);
   const played:LoggedAction={street:a.street,id:a.seatId,type:a.type as LoggedAction['type'],to:a.to,allIn:a.allIn,potBefore:i>0?hand.actions[i-1].pot:0,
@@ -83,24 +87,24 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?
   // Before the flop the chart lists every action GTO takes: a play outside it (e.g. a limp from the button) is 0%.
   const j=s.indexOf(played),freq=j>=0?freqs[j]:s.source==='preflop'?0:null;
   const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k],kind:o.kind}));
-  out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole,v.board)});
+  out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null||s.approx?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole,v.board),approx:s.approx});
  });
  return out;
 }
 
 /** GTO advice for a live decision (practice table hint, 2026/10/27): the hero's options with frequencies, most frequent first. */
-export type GtoAdvice={source:'preflop'|'flop'|'solver';options:{text:string;freq:number}[]}|{source:'none';reason:string};
+export type GtoAdvice={source:'preflop'|'flop'|'solver';options:{text:string;freq:number}[];approx?:boolean}|{source:'none';reason:string};
 export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {source:'none',reason:s.reason};
  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
- return {source:s.source,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),freq:Math.max(0,s.freqs[k])/total})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
+ return {source:s.source,approx:s.approx,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),freq:Math.max(0,s.freqs[k])/total})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
 }
 
 /** The hero's GTO menu at a live decision (「GTOと対戦」2026/10/30): every option with its table action text, its
  * frequency for the hero's hand, and what to send to the table (kind/label/to for toTable). The buttons are this menu,
  * so whatever the hero picks can be graded. */
-export type TrainerSpot={source:'preflop'|'flop'|'solver';options:{text:string;kind:string;label:string;to:number|null;freq:number}[];nearFlop?:string;proxySpot?:string}|{source:'none';reason:string};
+export type TrainerSpot={source:'preflop'|'flop'|'solver';options:{text:string;kind:string;label:string;to:number|null;freq:number}[];nearFlop?:string;proxySpot?:string;approx?:boolean}|{source:'none';reason:string};
 export function trainerSpot(v:GtoView,data:GtoData,budgetMs=2500):TrainerSpot{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {source:'none',reason:s.reason};
@@ -109,18 +113,18 @@ export function trainerSpot(v:GtoView,data:GtoData,budgetMs=2500):TrainerSpot{
  // The buttons are GTO's own menu (as in GTO Wizard), so the hand stays on the computed tree. Only when the chart has a
  // single line here (e.g. fold only) are the other legal lines offered too, at 0%, so the hero still has a choice.
  const has=(...k:string[])=>options.some(o=>k.includes(o.kind)),add=(kind:string)=>options.push({text:optionText(kind,'',null,v.bb),kind,label:'',to:null,freq:0});
- if(options.length>=2)return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,options};
+ if(options.length>=2)return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,approx:s.approx,options};
  if(v.legal.check&&!has('check','call'))add('check');
  if(v.legal.call&&v.legal.callAmount>0&&!has('call'))add('call');
  if(!v.legal.check&&!has('fold'))add('fold');
  if(v.legal.raise&&!has('raise','bet','allin'))add('allin');
- return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,options};
+ return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,approx:s.approx,options};
 }
 
 /** Review of decisions captured live (practice table, 2026/10/27: ハンド後にその場で「GTOで振り返る」): each item is the
  * decision point as it was when the hero acted, plus what was played. */
 export type LiveDecision={view:GtoView;played:LoggedAction};
-export type LiveReview={street:LoggedAction['street'];played:string;options:{text:string;freq:number}[];freq:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange}
+export type LiveReview={street:LoggedAction['street'];played:string;options:{text:string;freq:number}[];freq:number|null;verdict:GtoVerdict|null;source:'preflop'|'flop'|'solver';range?:GtoRange;approx?:boolean}
  |{street:LoggedAction['street'];played:string;source:'none';reason:string};
 const playedText=(a:LoggedAction,bb:number)=>a.type==='fold'?'フォールド':a.type==='check'?'チェック':a.type==='call'?'コール':`${a.type==='bet'?'ベット':'レイズ'} ${Math.round(a.to/bb*10)/10}BB${a.allIn?'（オールイン）':''}`;
 export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1500):LiveReview[]{
@@ -129,7 +133,7 @@ export function reviewLive(items:readonly LiveDecision[],data:GtoData,budgetMs=1
   if(s.source==='fallback')return {street:played.street,played:text,source:'none',reason:s.reason};
   const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played),freq=j>=0?freqs[j]:s.source==='preflop'?0:null;
   const all=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,view.bb),freq:freqs[k],kind:o.kind}));
-  return {street:played.street,played:text,source:s.source,freq,verdict:freq===null?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole,view.board),
+  return {street:played.street,played:text,source:s.source,freq,approx:s.approx,verdict:freq===null||s.approx?null:gtoVerdict(freq),range:rangeOf(s,all,view.hole,view.board),
    options:all.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(({text,freq})=>({text,freq}))};
  });
 }
@@ -145,7 +149,7 @@ export function summarizeDeviation(hands:readonly GtoReviewHand[],data:GtoData):
  const zero=():DeviationStreet=>({judged:0,gto:0,mixed:0,rare:0});
  const out:DeviationSummary={hands:0,preflop:zero(),flop:zero(),worst:[]};
  for(const h of hands){
-  const rs=reviewGto(h,data,0,['preflop','flop']);let counted=false;
+  const rs=reviewGto(h,data,0,['preflop','flop'],{noApprox:true});let counted=false;
   for(const r of rs){if(r.source==='none'||!r.verdict||r.played===null||(r.street!=='preflop'&&r.street!=='flop'))continue;
    const st=out[r.street];st.judged++;st[r.verdict]++;counted=true;
    if(r.verdict==='rare'){const best=[...r.options].sort((a,b)=>b.freq-a.freq)[0];
@@ -162,7 +166,7 @@ export type HandFlags={handId:string;pre:{judged:number;off:number};post:{judged
  offs:{index:number;street:HistoryAction['street'];played:string;freq:number;best:string}[]};
 export function flagHand(h:GtoReviewHand,data:GtoData,streets:readonly HistoryAction['street'][]=['preflop','flop'],budgetMs=0):HandFlags{
  const out:HandFlags={handId:h.handId,pre:{judged:0,off:0},post:{judged:0,off:0},offs:[]};
- for(const r of reviewGto(h,data,budgetMs,streets)){
+ for(const r of reviewGto(h,data,budgetMs,streets,{noApprox:true})){
   if(r.source==='none'||!r.verdict||r.played===null)continue;
   const st=r.street==='preflop'?out.pre:out.post;st.judged++;
   if(r.verdict==='rare'){st.off++;const best=[...r.options].sort((a,b)=>b.freq-a.freq)[0];
