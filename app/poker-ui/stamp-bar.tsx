@@ -30,8 +30,8 @@ export function StampBubble({stamp,age=0,hand,seat}:{stamp:string;age?:number;ha
  * above everything, on a fixed layer that follows the avatar's centre while it shows. */
 function StampFloat({label,children}:{label:string;children:import('react').ReactNode}){
  const anchor=useRef<HTMLSpanElement>(null),[at,setAt]=useState<{x:number;y:number}|null>(null);
- useEffect(()=>{let raf=0;const tick=()=>{const r=anchor.current?.getBoundingClientRect();if(r)setAt(p=>p&&Math.abs(p.x-r.left)<.5&&Math.abs(p.y-r.top)<.5?p:{x:r.left,y:r.top});raf=requestAnimationFrame(tick);};tick();return()=>cancelAnimationFrame(raf);},[]);
- return <><span ref={anchor} className={styles.bubbleAnchor} data-stamp-anchor aria-hidden="true"/>{at&&createPortal(<span className={styles.bubble} data-stamp-bubble style={{position:'fixed',left:at.x,top:at.y,zIndex:1000}} role="status" aria-label={`スタンプ：${label}`}>{children}</span>,document.body)}</>;
+ useEffect(()=>{let raf=0;const tick=()=>{const r=typeof anchor.current?.getBoundingClientRect==='function'?anchor.current.getBoundingClientRect():null;if(r)setAt(p=>p&&Math.abs(p.x-r.left)<.5&&Math.abs(p.y-r.top)<.5?p:{x:r.left,y:r.top});if(typeof anchor.current?.getBoundingClientRect==='function'&&typeof requestAnimationFrame==='function')raf=requestAnimationFrame(tick);};tick();return()=>{if(raf)cancelAnimationFrame(raf);};},[]);
+ return <><span ref={anchor} className={styles.bubbleAnchor} data-stamp-anchor aria-hidden="true"/>{at&&typeof document!=='undefined'&&document.body&&createPortal(<span className={styles.bubble} data-stamp-bubble style={{position:'fixed',left:at.x,top:at.y,zIndex:1000}} role="status" aria-label={`スタンプ：${label}`}>{children}</span>,document.body)}</>;
 }
 /** Fixed stamps for seated players (no free text). */
 export function StampBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;disabled?:boolean}){
