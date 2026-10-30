@@ -1210,3 +1210,19 @@
 /* Only the seat group is raised: inside your own seat the avatar stays under your cards (owner 2026/10/29: 一瞬アイコンが上になって戻る). */
 /* Owner 2026/10/29 (設定枠小さ過ぎる): bet-size boxes are text inputs now; give them the same size as before. */
 .menuFields input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;padding:6px 10px;border:1px solid #a1854c;border-radius:6px;color:#f5deac;background:#292116;font:inherit;font-size:16px;text-align:center}
+/* The name on a ring / tournament plate ends in "…" by itself, so your ⏰ next to it always stays visible (2026/10/30). */
+.seatName{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;font-weight:inherit}
+.seatName:has(~.bankCards){max-width:calc(100% - 2em)}
+/* Owner 2026/10/30 (小さいから大きく、先ずはPC): seat plates on PC read bigger — name 18px, ⏰ 16px, chips 24px.
+   Side padding is 4px and the plates are a little wider, so a 7-character name (漢字・かな) fits; longer names end in "…". Phones unchanged. */
+@media(min-width:900px){
+.demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){font-size:18px;width:144px;max-width:144px;padding-left:4px;padding-right:4px}
+.demoShell .table .seat>small{font-size:24px;width:144px;max-width:144px;padding-left:4px;padding-right:4px}
+.demoShell .table .self .selfInfo{min-width:176px;padding-left:4px;padding-right:4px}
+.demoShell .table .selfInfo .nameRow{justify-content:center;gap:4px}
+.demoShell .table .selfInfo .memberName{font-size:18px;max-width:128px}
+.demoShell .table .selfInfo small{font-size:24px}
+.demoShell .table .bankCards,.demoShell .table .bankCards.clockButton.clockButton{font-size:16px}
+/* Your own plate at the ring / tournament table also carries ⏰: as wide as the practice table's own plate. */
+.demoShell .table [data-slot=you] .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag),.demoShell .table [data-slot=you] .seat>small{width:176px;max-width:176px}
+}
