@@ -93,10 +93,11 @@ export function netBB(h:TrainerHand,id:string){
 
 // ---------- grading ----------
 export type TrainerLevel='best'|'correct'|'inaccurate'|'mistake'|'blunder';
-export const LEVEL_TEXT:Record<TrainerLevel,string>={best:'ベスト',correct:'正解',inaccurate:'不正確',mistake:'ミス',blunder:'大きなミス'};
+/** Our own grade names (owner 2026/10/30). */
+export const LEVEL_TEXT:Record<TrainerLevel,string>={best:'◎完璧',correct:'○良い',inaccurate:'△惜しい',mistake:'×ミス',blunder:'××大きなミス'};
 export const TRAINER_LEVELS:TrainerLevel[]=['best','correct','inaccurate','mistake','blunder'];
 /** Graded by how often GTO takes the chosen action with this hand here (frequencies, not EV):
- * the most frequent choice is ベスト, 25% or more 正解, 8% or more 不正確, 2% or more ミス, below that 大きなミス.
+ * the most frequent choice is ◎完璧, 25% or more ○良い, 8% or more △惜しい, 2% or more ×ミス, below that ××大きなミス.
  * The score is the chosen frequency relative to the most frequent one (0〜100). */
 export function gradeChoice(freqs:readonly number[],chosen:number):{level:TrainerLevel;score:number;freq:number}{
  const total=freqs.reduce((s,x)=>s+Math.max(0,x),0)||1,f=freqs.map(x=>Math.max(0,x)/total),top=Math.max(...f),freq=f[chosen]??0;

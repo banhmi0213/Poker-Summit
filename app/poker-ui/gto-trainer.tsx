@@ -174,6 +174,6 @@ export function GtoTrainer(){
    <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
    <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
   </section>
-  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝ベスト、25%以上＝正解、8%以上＝不正確、2%以上＝ミス、それ未満＝大きなミス）。ターン・リバーはその場で計算するため数秒かかります。3人以上のポットや計算していない場面は採点なしです。成績はこのブラウザに保存されます。</p>
+  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。3人以上のポットや計算していない場面は採点なしです。成績はこのブラウザに保存されます。</p>
  </div>;
 }
