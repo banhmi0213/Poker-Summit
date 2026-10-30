@@ -21,7 +21,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
  },[roomId]);
  useEffect(()=>{audio.current?.setEnabled(soundEnabled);},[soundEnabled,roomId]);
  const client=useRef<PokerPlayerClient|null>(null),busyRef=useRef(false),refreshing=useRef(false),readEpoch=useRef(0),retryAt=useRef(0),readFailures=useRef(0),pollMode=useRef<'spectator'|'player'|null>(null),socketLive=useRef(false),lastRead=useRef(0);
- const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('参加ボタンから接続してください。'),[connectionEpoch,setConnectionEpoch]=useState(0),[exitOpen,setExitOpen]=useState(false),[exitDeadline,setExitDeadline]=useState<number|null>(null);
+ const [state,setState]=useState<PlayerSnapshot|null>(null),[busy,setBusy]=useState(false),[pending,setPending]=useState(false),[message,setMessage]=useState('参加ボタンから接続してください。'),[connectionEpoch,setConnectionEpoch]=useState(0),[,setTick]=useState(0),[exitOpen,setExitOpen]=useState(false),[exitDeadline,setExitDeadline]=useState<number|null>(null);
  async function run(operation:(c:PokerPlayerClient)=>Promise<unknown>){
   void audio.current?.unlock();const c=client.current;if(!c||busyRef.current)return;busyRef.current=true;readEpoch.current++;setBusy(true);
   try{await operation(c);if(client.current===c){setState(c.state);setMessage(c.pending?'前の操作の結果確認が必要です。':'接続中');}}
@@ -55,7 +55,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   let userId:string|undefined;
   const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||userId!==undefined&&userId!==(session?.user.id??'')){c.close();client.current=null;pollMode.current=null;setExitDeadline(null);setState(null);setPending(false);setBusy(false);busyRef.current=false;setConnectionEpoch(0);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
   // With the live push channel open, the 1-second read is only a 5-second safety net (owner 2026/10/30: 60-player tournaments).
-  const timer=setInterval(()=>{if(pollMode.current&&!busyRef.current&&!c.pending&&(!socketLive.current||Date.now()-lastRead.current>=5000))void refresh();},1000);
+  const timer=setInterval(()=>{setTick(v=>v+1);if(pollMode.current&&!busyRef.current&&!c.pending&&(!socketLive.current||Date.now()-lastRead.current>=5000))void refresh();},1000);
   return()=>{clearInterval(timer);subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
  useEffect(()=>{if(state?.autoExitAt!=null)setExitDeadline(current=>current??Date.now()+Math.max(0,state.autoExitAt!-state.serverNow));},[state?.autoExitAt]);
@@ -71,8 +71,7 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   return()=>{cancelled=true;socketLive.current=false;stop?.();};
  },[eventsOrigin,connectionEpoch]);
  // The turn clock runs on locally between reads (reads slow to every 5s while the push channel is live).
- const receivedAt=useMemo(()=>Date.now(),[state]),[,setTick]=useState(0);
- useEffect(()=>{const timer=setInterval(()=>setTick(v=>v+1),1000);return()=>clearInterval(timer);},[]);
+ const receivedAt=useMemo(()=>Date.now(),[state]);
  const view=state?{...state,serverNow:state.serverNow+Math.max(0,Date.now()-receivedAt)}:null;
  return <><OnlineTableView state={view} onClock={((state?.timeBank as {cards?:number}|undefined)?.cards??0)>0?()=>void run(c=>c.timeBank()):undefined} onSpectate={()=>void run(async c=>{if(c.state?.youSeat!=null)await c.disconnect();await c.spectate();pollMode.current='spectator';setConnectionEpoch(0);})} onExit={()=>setExitOpen(true)} onSound={playSound} soundEnabled={soundEnabled} onSoundToggle={value=>{setSoundEnabled(value);audio.current?.setEnabled(value);if(value)void audio.current?.unlock().then(()=>playSound('turn'));}}>
   <OnlineControls state={view} busy={busy} pending={pending} enabled={enabled} message={message}
