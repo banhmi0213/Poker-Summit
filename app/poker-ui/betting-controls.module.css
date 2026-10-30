@@ -43,11 +43,14 @@
    red and faster for the last 5 seconds. No bar across the top. */
 @property --orbit{syntax:'<angle>';inherits:false;initial-value:0deg}
 .panel[data-turn]{position:relative;border-color:#8a7140}
-.orbit{position:absolute;inset:-2px;border-radius:inherit;padding:3px;pointer-events:none;z-index:1;
+.orbit{position:absolute;inset:-1px;border-radius:inherit;padding:3px;pointer-events:none;z-index:1;
  background:conic-gradient(from var(--orbit),transparent 0deg,transparent 250deg,#f3c66355 285deg,#ffe6a1 340deg,#fff6d8 352deg,transparent 360deg);
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
- filter:drop-shadow(0 0 6px #f3c663);animation:orbit 2.4s linear infinite}
+ filter:drop-shadow(0 0 6px #f3c663);animation:orbit 10s linear infinite}
 .panel[data-turn=urgent]{border-color:#9b3b39}
-.panel[data-turn=urgent] .orbit{background:conic-gradient(from var(--orbit),transparent 0deg,transparent 230deg,#f05b5866 280deg,#ff8a86 340deg,#ffd9d7 352deg,transparent 360deg);filter:drop-shadow(0 0 7px #f05b58);animation-duration:1s}
+.panel[data-turn=urgent] .orbit{background:conic-gradient(from var(--orbit),transparent 0deg,transparent 230deg,#f05b5866 280deg,#ff8a86 340deg,#ffd9d7 352deg,transparent 360deg);filter:drop-shadow(0 0 7px #f05b58)}
 @keyframes orbit{to{--orbit:360deg}}
+/* Owner 2026/10/30: one lap every 10 s, every 20 s once the time is extended. inset -1px keeps the light on the
+   panel's own border so the scrolling action column never gets scrollbars from it. */
+.panel[data-extended] .orbit{animation-duration:20s}
 @media(prefers-reduced-motion:reduce){.orbit{animation:none;background:linear-gradient(#f3c663,#f3c663)}}

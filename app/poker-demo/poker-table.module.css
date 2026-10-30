@@ -1016,7 +1016,19 @@
 .seatTimerRing[data-turn=urgent]{animation:seatUrgent .55s ease-in-out infinite}
 @keyframes seatTurn{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66355}50%{box-shadow:0 0 0 3px #f3c663,0 0 24px #f3c663aa}}
 @keyframes seatUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5877,0 0 10px #f05b5855}50%{box-shadow:0 0 0 4px #f05b58,0 0 28px #f05b58cc}}
-@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
+/* Owner 2026/10/30 (相手アイコンも同じ): no fast pulse; a light runs round the acting player's ring once every 10 s,
+   every 20 s once extended, like the action panel. */
+.seatTimerRing[data-turn]{position:relative;animation:none;box-shadow:0 0 0 2px #f3c66388,0 0 14px #f3c66366}
+.seatTimerRing[data-turn=urgent]{animation:none;box-shadow:0 0 0 3px #f05b58aa,0 0 18px #f05b5888}
+@property --seat-orbit{syntax:'<angle>';inherits:false;initial-value:0deg}
+.seatTimerRing[data-turn]::before{content:"";position:absolute;inset:-3px;border-radius:50%;padding:3px;pointer-events:none;z-index:4;
+ background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 250deg,#f3c66355 285deg,#ffe6a1 340deg,#fff6d8 352deg,transparent 360deg);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+ filter:drop-shadow(0 0 5px #f3c663);animation:seatOrbit 10s linear infinite}
+.seatTimerRing[data-turn=urgent]::before{background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 230deg,#f05b5866 280deg,#ff8a86 340deg,#ffd9d7 352deg,transparent 360deg);filter:drop-shadow(0 0 6px #f05b58)}
+.seatTimerRing[data-turn][data-extended]::before{animation-duration:20s}
+@keyframes seatOrbit{to{--seat-orbit:360deg}}
+@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]::before{animation:none;display:none}.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
 /* Phones (owner 2026/10/28: これもいらん): no 「PLAYER 6・フォールド」 banner in the middle of the felt; each seat already
    shows its action. */
 @media(max-width:899px){.actionToast{display:none!important}}
