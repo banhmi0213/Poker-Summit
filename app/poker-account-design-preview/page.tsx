@@ -34,7 +34,7 @@ export default function Page(){
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。',content:<><p>デザイン確認用画面では、会員のクイズ成績を読み書きしません。</p><a href="/mypage/poker">マイページでクイズを開く</a></>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'自分でレンジを塗って採点。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'ボード・ポット・レンジを指定。',content:<RiverSolverPanel/>},
- {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'賞金の取り分を考えたオールイン・コール。',content:<IcmPanel/>},
+ {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'順位ごとの配分の取り分を考えたオールイン・コール。',content:<IcmPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY · SAMPLE',description:'デザイン確認用のサンプルハンドです。',content:<HandHistoryList hands={[sampleHand]} base="/mypage/poker/hands"/>},
  {id:'replay',label:'ハンドを再生',eyebrow:'HAND REPLAY · SAMPLE',description:'デザイン確認用。相手の非公開手札は裏向きです。',content:<HandReplay hand={sampleHand}/>},
  ];
