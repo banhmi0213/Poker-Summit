@@ -1,6 +1,8 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-require('../scripts/poker-gto/common.cjs');
-const path=require('path'),Module=require('module'),resolve=Module._resolveFilename;Module._resolveFilename=function(r,...a){return resolve.call(this,r.startsWith('@/')?path.resolve(__dirname,'..',r.slice(2)):r,...a);};
+const fs=require('fs'),path=require('path'),Module=require('module');
+let ts;try{ts=require('typescript');}catch{ts=require('/opt/npm-tools/node_modules/typescript');}
+const resolve=Module._resolveFilename;Module._resolveFilename=function(r,...a){return resolve.call(this,r.startsWith('@/')?path.resolve(__dirname,'..',r.slice(2)):r,...a);};
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,resolveJsonModule:true,esModuleInterop:true}}).outputText,f);
 const {HERO,TRAINER_STACK,TRAINER_SEATS,buttonIndexFor,startTrainerHand,trainerAct,trainerView,visibleBoard,netBB,gradeChoice}=require('../lib/poker/gto-trainer.ts');
 const {legalBettingActions}=require('../lib/poker/betting.ts');
 const {decideGto}=require('../lib/poker/gto-bot.ts');
