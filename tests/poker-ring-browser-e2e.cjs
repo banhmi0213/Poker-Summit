@@ -49,7 +49,7 @@ const root=path.resolve(__dirname,'..'),{createPokerRoomHTTPServer}=require('../
   const me=await store.state(users[0],tid);await store.change(users[0],{type:'stamp',reservationId:me.membership.reservationId,requestId:randomUUID(),stamp:'nobluff'});
   for(const p of pages){const bubble=p.locator('[aria-label="スタンプ：ブラフじゃない"]');await bubble.waitFor({timeout:10000});
    // The stamp sits over the seat's avatar and cards (owner 2026/10/27); its box overlaps the sender's avatar.
-   const over=await p.evaluate(()=>{const b=document.querySelector('[data-stamp-bubble]').getBoundingClientRect(),row=document.querySelector('[data-stamp-bubble]').parentElement.getBoundingClientRect();return b.left<row.right&&b.right>row.left&&b.top<row.bottom&&b.bottom>row.top;});assert.equal(over,true,'the stamp is laid over the avatar');
+   const over=await p.evaluate(()=>{const b=document.querySelector('[data-stamp-bubble]').getBoundingClientRect(),row=document.querySelector('[data-stamp-anchor]').parentElement.getBoundingClientRect();return b.left<row.right&&b.right>row.left&&b.top<row.bottom&&b.bottom>row.top;});assert.equal(over,true,'the stamp is laid over the avatar');
    const box=await bubble.boundingBox(),line=await p.evaluate(()=>{const b=document.querySelector('[data-stamp-bubble] b');return b?b.getClientRects().length:0;});assert.ok(box&&box.width>0);assert.equal(line,1,'the phrase stays on one line');}
   await pages[1].screenshot({path:path.join(output,'stamp-over-avatar.png')});
   await pages[1].locator('[aria-label="スタンプ：ブラフじゃない"]').waitFor({state:'detached',timeout:6000});}

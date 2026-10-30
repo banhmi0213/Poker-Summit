@@ -107,3 +107,6 @@
 .quickClock button:focus-visible{outline:2px solid #f3c663;outline-offset:2px;border-radius:8px}
 .quickClock b{position:absolute;right:calc(100% + 2px);bottom:-2px;font-size:15px;font-weight:900;line-height:1;color:#ffd987;text-shadow:0 1px 2px #000,0 0 3px #000}
 @media(min-width:900px){.quickClock>*{font-size:38px!important}.quickClock b{font-size:18px;right:calc(100% + 3px)}}
+
+/* The point the floating stamp is centred on (the avatar's centre). */
+.bubbleAnchor{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}

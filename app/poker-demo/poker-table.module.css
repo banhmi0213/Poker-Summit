@@ -935,9 +935,8 @@
 .gtoReview small{display:block;color:#9fb3c3}
 /* スタンプ(2026/10/27): アイコンに被せる。出ている間はアイコンを暗くし、カードは常にスタンプより上に出す。 */
 .seatAvatarRow{position:relative}
-.seatAvatarRow:has([data-stamp-bubble]) .seatTimerRing{filter:brightness(.45)}
+.seatAvatarRow:has([data-stamp-anchor]) .seatTimerRing,.activeAvatar:has([data-stamp-anchor]){filter:brightness(.45)}
 /* The seat showing a stamp comes in front of the cards for those 3 seconds. */
-.topSeats:has([data-stamp-bubble]),.edgeSeatThree:has([data-stamp-bubble]),.edgeSeatFour:has([data-stamp-bubble]),.edgeSeatFive:has([data-stamp-bubble]),.edgeSeatSix:has([data-stamp-bubble]),.self:has([data-stamp-bubble]){z-index:12}
 
 /* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
 .activeAvatar{position:relative}
@@ -949,7 +948,6 @@
 .pot strong{font-size:1.15em}
 @media(min-width:900px){.blindsInfo{font-size:14px}}
 /* Your own stamp: your avatar box is its own layer (transform), so lift it above your hole cards while a stamp shows. */
-.activeAvatar:has([data-stamp-bubble]),.seatAvatarRow:has([data-stamp-bubble]){z-index:30}
 
 /* PC: a little larger portraits and cards (owner 2026/10/28: ＰＣだけアイコンとカードもうちょい大きく). Grows with the window
    height so short PC screens keep their current layout. */
@@ -1218,7 +1216,6 @@
 .demoShell .table .seat[data-empty-seat]>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){background:none;border:0;box-shadow:none}
 .demoShell .table .seat[data-empty-seat]>small{visibility:hidden}
 /* Owner 2026/10/29: a stamp is drawn in front of every card on the table. */
-.demoShell .table [data-has-stamp]{z-index:40}
 /* Only the seat group is raised: inside your own seat the avatar stays under your cards (owner 2026/10/29: 一瞬アイコンが上になって戻る). */
 /* Owner 2026/10/29 (設定枠小さ過ぎる): bet-size boxes are text inputs now; give them the same size as before. */
 .menuFields input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;padding:6px 10px;border:1px solid #a1854c;border-radius:6px;color:#f5deac;background:#292116;font:inherit;font-size:16px;text-align:center}
@@ -1243,3 +1240,5 @@
 .clockMark b{font-weight:800}
 /* Your chip count sits in the middle of your plate, like everyone else's (owner 2026/10/30: チップ表示左に寄ってるから真ん中に). */
 .table .selfInfo small{text-align:center}
+/* Owner 2026/10/30: the stamp floats on its own top layer, so seats are no longer lifted over the cards while it shows
+   (avatar under the cards, stamp over them). */

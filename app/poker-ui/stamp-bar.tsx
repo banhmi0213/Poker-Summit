@@ -23,7 +23,15 @@ export function StampBubble({stamp,age=0,hand,seat}:{stamp:string;age?:number;ha
   if(post.current===at)return;post.current=at;
   const left=STAMP_SHOW_MS-(Date.now()-at);if(left<=0){setShown(false);return;}
   setShown(true);const t=window.setTimeout(()=>setShown(false),left);return()=>window.clearTimeout(t);},[stamp,age,hand,seat]);
- return s&&shown&&hand===startHand?<span className={styles.bubble} data-stamp-bubble role="status" aria-label={`スタンプ：${s.label}`}><Sticker s={s} size="bubble"/></span>:null;
+ const visible=Boolean(s&&shown&&hand===startHand);
+ return visible?<StampFloat label={s!.label}><Sticker s={s!} size="bubble"/></StampFloat>:null;
+}
+/** Owner 2026/10/30 (アイコン・トランプ・スタンプの順): the seat keeps its place under the cards; only the stamp itself is drawn
+ * above everything, on a fixed layer that follows the avatar's centre while it shows. */
+function StampFloat({label,children}:{label:string;children:import('react').ReactNode}){
+ const anchor=useRef<HTMLSpanElement>(null),[at,setAt]=useState<{x:number;y:number}|null>(null);
+ useEffect(()=>{let raf=0;const tick=()=>{const r=anchor.current?.getBoundingClientRect();if(r)setAt(p=>p&&Math.abs(p.x-r.left)<.5&&Math.abs(p.y-r.top)<.5?p:{x:r.left,y:r.top});raf=requestAnimationFrame(tick);};tick();return()=>cancelAnimationFrame(raf);},[]);
+ return <><span ref={anchor} className={styles.bubbleAnchor} data-stamp-anchor aria-hidden="true"/>{at&&createPortal(<span className={styles.bubble} data-stamp-bubble style={{position:'fixed',left:at.x,top:at.y,zIndex:1000}} role="status" aria-label={`スタンプ：${label}`}>{children}</span>,document.body)}</>;
 }
 /** Fixed stamps for seated players (no free text). */
 export function StampBar({onStamp,disabled}:{onStamp:(stamp:StampId)=>void;disabled?:boolean}){
