@@ -52,7 +52,7 @@ test('GTO CPUs play full trainer hands and the hero menu covers the preflop deci
   let h=startTrainerHand(1000+k,buttonIndexFor(k));
   for(let guard=0;!h.result&&guard<60;guard++){
    const id=h.round.toAct,v=trainerView(h,id);
-   if(id===HERO&&h.street===0){const s=trainerSpot(v,data,300);if(s.source!=='none'){graded++;const sum=s.options.reduce((t,o)=>t+o.freq,0);assert.ok(Math.abs(sum-1)<1e-6);assert.ok(s.options.length>=2);}}
+   if(id===HERO&&h.street===0){const s=trainerSpot(v,data,300);if(s.source!=='none'){graded++;const sum=s.options.reduce((t,o)=>t+o.freq,0);assert.ok(Math.abs(sum-1)<1e-6);assert.ok(s.options.length>=2);assert.ok(s.options.every(o=>['fold','check','call','raise','bet','allin'].includes(o.kind)));}}
    const d=decideGto(v,data,Math.random,300);h=trainerAct(h,id,d.action);
   }
   assert.ok(h.result,'hand finished');

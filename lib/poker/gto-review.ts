@@ -106,8 +106,10 @@ export function trainerSpot(v:GtoView,data:GtoData,budgetMs=2500):TrainerSpot{
  if(s.source==='fallback')return {source:'none',reason:s.reason};
  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
  const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),kind:o.kind,label:o.label,to:o.to,freq:Math.max(0,s.freqs[k])/total}));
- // Lines GTO never takes here (e.g. only fold in the chart) are still legal at the table: offer them at 0%.
+ // The buttons are GTO's own menu (as in GTO Wizard), so the hand stays on the computed tree. Only when the chart has a
+ // single line here (e.g. fold only) are the other legal lines offered too, at 0%, so the hero still has a choice.
  const has=(...k:string[])=>options.some(o=>k.includes(o.kind)),add=(kind:string)=>options.push({text:optionText(kind,'',null,v.bb),kind,label:'',to:null,freq:0});
+ if(options.length>=2)return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,options};
  if(v.legal.check&&!has('check','call'))add('check');
  if(v.legal.call&&v.legal.callAmount>0&&!has('call'))add('call');
  if(!v.legal.check&&!has('fold'))add('fold');
