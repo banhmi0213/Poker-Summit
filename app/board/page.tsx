@@ -12,7 +12,7 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
-import { HANDLE_NAME_MAX } from "@/lib/handle-name";
+import { HANDLE_NAME_ASCII_MAX, HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { staticPageMetadata } from "@/lib/seo";
 
@@ -235,8 +235,8 @@ export default async function BoardPage({
                 </div>
               ) : (
                 <div className="field">
-                  <span className="muted">ハンドルネーム *（掲示板とマイページに表示されます。{HANDLE_NAME_MAX}文字まで）</span>
-                  <input type="text" name="authorName" required maxLength={HANDLE_NAME_MAX} autoComplete="nickname" placeholder="例）ポーカー太郎" />
+                  <span className="muted">ハンドルネーム *（掲示板とマイページに表示されます。{HANDLE_NAME_NOTICE}）</span>
+                  <input type="text" name="authorName" required maxLength={HANDLE_NAME_ASCII_MAX} autoComplete="nickname" placeholder="例）ポーカー太郎" />
                 </div>
               )}
               <div className="field">

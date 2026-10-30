@@ -12,6 +12,7 @@ import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 import { PRELAUNCH_TOURNAMENT, PRELAUNCH_LAUNCH_LABEL, PRELAUNCH_FEATURES, FREEROLL_ELIGIBILITY, freerollSignupOpen } from "@/lib/prelaunch";
 import { SignupFunnelTracker } from "./funnel-tracker";
 import { safeNext, cleanSource } from "@/lib/visit-source";
+import { HANDLE_NAME_ASCII_MAX, HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 
 export function RegistrationPage({ searchParams, early = false, memberPreview = false, priceLock = null }: { searchParams: { error?: string; done?: string; next?: string; src?: string }; early?: boolean; memberPreview?: boolean; priceLock?: { accepting: boolean; deadlineIso: string | null; deadlineLabel: string } | null }) {
   // 年内お申込み特典の受付中だけ、店舗向けリンクに一言(2026/10/20。OFF・締切後は自動で消える)
@@ -101,7 +102,8 @@ export function RegistrationPage({ searchParams, early = false, memberPreview = 
             {early && <SignupFunnelTracker formId="registration-form" />}
             <label className={styles.field}>
               <span>ハンドルネーム <b className={styles.optional}>任意</b></span>
-              <input type="text" name="name" autoComplete="nickname" placeholder="例）ポーカー太郎" />
+              <input type="text" name="name" autoComplete="nickname" placeholder="例）ポーカー太郎" maxLength={HANDLE_NAME_ASCII_MAX} aria-describedby="signup-name-note" />
+              <small id="signup-name-note">{HANDLE_NAME_NOTICE}です。</small>
             </label>
             {/* 都道府県は登録画面では聞かない(2026/10/20、入力を減らすため)。あとからマイページで入れられる。
                 集計用に、登録したときのだいたいの都道府県をサーバー側で記録する(signup/actions.ts) */}
