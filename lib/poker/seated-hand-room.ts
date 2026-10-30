@@ -8,7 +8,7 @@ import { initialTournamentPositions,nextTournamentPositions,type TournamentPosit
 
 export type TurnDeadline={handId:string;revision:number;actor:string;expiresAt:number};
 type Seat={memberId:string;stack:number;connectionId:string|null};
-export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null;timeBanks?:[string,number][];timeBankCards?:[string,number][];timeBankUses?:[string,{revision:number;ids:string[]}][];bankPolicy?:{cards:number;finalTableCards:number;finalTableSize:number;finalTableGiven:boolean}};
+export type RoomCheckpoint={version:1;seats:[number,{memberId:string;stack:number}][];hand:HandCheckpoint|null;revision:number;startingStack:number;terms:HandTerms;tournament:boolean;positions:TournamentPositions|null;outcome:TournamentOutcome|null;settledHandId:string|null;handNumber:number;turn:TurnDeadline|null;turnMs:number;lastNow:number;completedAt?:number|null;timeBanks?:[string,number][];timeBankCards?:[string,number][];timeBankUses?:[string,{revision:number;ids:string[]}][];bankPolicy?:{cards:number;finalTableCards:number;finalTableSize:number;finalTableGiven:boolean};field?:boolean};
 /** Ring/single-hand: one free +20s per hand. Tournament: time bank cards; one card adds one turn's worth of time. */
 export const BANK_USE_MS=20000;
 export class SeatedHandRoom {
@@ -20,8 +20,11 @@ export class SeatedHandRoom {
   /** Tournament only: each seat's saved time bank (ms) and the extension granted on the current turn. */
   #cards=new Map<string,number>(); #bankUses=new Map<string,{revision:number;ids:string[]}>(); #bank={cards:0,finalTableCards:0,finalTableSize:6,finalTableGiven:false};
   #order=Array.from({length:6},(_,i)=>`seat-${i+1}`);
+  /** One table of a multi-table tournament (2026/10/30): places and the champion are decided across tables by the owner,
+   * players can be moved in and out between hands, and a moved-in player waits for the next hand. */
+  #field=false;
   #turn:TurnDeadline|null=null; #now:()=>number; #turnMs:number; #lastNow=0;
-  constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean;bankCards?:number;finalTableCards?:number;finalTableSize?:number}={}) {
+  constructor(startingStack:number,terms:HandTerms,options:{now?:()=>number;turnMs?:number;tournament?:boolean;bankCards?:number;finalTableCards?:number;finalTableSize?:number;field?:boolean}={}) {
     if(!Number.isSafeInteger(startingStack)||startingStack<1||startingStack>Math.floor(Number.MAX_SAFE_INTEGER/6))throw new Error("Invalid starting stack");
     if(options.tournament!==undefined&&typeof options.tournament!=="boolean")throw new Error("Invalid tournament policy");
     this.#tournament=options.tournament??false;
@@ -31,16 +34,19 @@ export class SeatedHandRoom {
     const cards=options.bankCards??0,ft=options.finalTableCards??0,size=options.finalTableSize??6;
     if(!Number.isSafeInteger(cards)||cards<0||cards>5||!Number.isSafeInteger(ft)||ft<0||ft>5||![2,6].includes(size))throw new Error("Invalid time bank policy");
     this.#bank={cards,finalTableCards:ft,finalTableSize:size,finalTableGiven:false};
+    if(options.field!==undefined&&(typeof options.field!=='boolean'||options.field&&!this.#tournament))throw new Error("Invalid table policy");
+    this.#field=options.field??false;
   }
   /** Server-only checkpoint; connection capabilities are deliberately omitted. */
   checkpoint():RoomCheckpoint {
-    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt,timeBanks:[...this.#timeBanks],timeBankCards:[...this.#cards],timeBankUses:[...this.#bankUses].map(([id,u])=>[id,{revision:u.revision,ids:[...u.ids]}]),bankPolicy:{...this.#bank}});
+    return structuredClone({version:1,seats:[...this.#seats].map(([n,s])=>[n,{memberId:s.memberId,stack:s.stack}]),hand:this.#hand?.checkpoint()??null,revision:this.#revision,startingStack:this.#startingStack,terms:this.#terms,tournament:this.#tournament,positions:this.#positions,outcome:this.#outcome,settledHandId:this.#settledHandId,handNumber:this.#handNumber,turn:this.#turn,turnMs:this.#turnMs,lastNow:this.#lastNow,completedAt:this.#completedAt,timeBanks:[...this.#timeBanks],timeBankCards:[...this.#cards],timeBankUses:[...this.#bankUses].map(([id,u])=>[id,{revision:u.revision,ids:[...u.ids]}]),bankPolicy:{...this.#bank},...(this.#field?{field:true}:{})});
   }
   /** Only load an authenticated/decrypted server checkpoint. Restored sockets must reconnect. */
   static restore(input:RoomCheckpoint,now:()=>number=Date.now) {
     const s=structuredClone(input);
     if(s?.version!==1||!Array.isArray(s.seats)||s.seats.length>6||!Number.isSafeInteger(s.revision)||s.revision<0||!Number.isSafeInteger(s.lastNow)||s.lastNow<0)throw new Error("Invalid room checkpoint");
-    const room=new SeatedHandRoom(s.startingStack,s.terms,{now,turnMs:s.turnMs,tournament:s.tournament});
+    if(s.field!==undefined&&(s.field!==true||!s.tournament))throw new Error("Invalid room checkpoint");
+    const room=new SeatedHandRoom(s.startingStack,s.terms,{now,turnMs:s.turnMs,tournament:s.tournament,field:s.field===true});
     const members=new Set<string>();
     for(const [n,seat] of s.seats){room.seat(seat.memberId,n);if(members.has(seat.memberId)||!Number.isSafeInteger(seat.stack)||seat.stack<0)throw new Error("Invalid saved seat");members.add(seat.memberId);room.#seats.set(n,{...seat,connectionId:null});}
     room.#hand=s.hand?AuthoritativeHand.restore(s.hand):null;room.#revision=s.revision;room.#positions=s.positions;room.#outcome=s.outcome;room.#settledHandId=s.settledHandId;room.#handNumber=s.handNumber;room.#turn=s.turn;room.#lastNow=s.lastNow;
@@ -64,6 +70,13 @@ export class SeatedHandRoom {
   #syncSettlement() {
     const h=this.#hand?.snapshot(null);
     if(!this.#tournament||!h?.result||h.handId===this.#settledHandId)return;
+    if(this.#field){
+     // This hand's busts only (table-local places are replaced by the owner's field-wide places).
+     const outcome=this.#hand!.finishTournament([]);
+     for(const [n,s] of this.#seats){const id=`seat-${n}`;if(id in outcome.stacks)s.stack=outcome.stacks[id];}
+     const stacks=Object.fromEntries([...this.#seats].map(([n,s])=>[`seat-${n}`,s.stack]));
+     this.#outcome={stacks,liveIds:this.#order.filter(id=>(stacks[id]??0)>0),eliminated:outcome.eliminated,champion:null};this.#settledHandId=h.handId;return;
+    }
     const outcome=this.#hand!.finishTournament(this.#outcome?.eliminated??[]);
     this.#outcome=outcome;this.#settledHandId=h.handId;
     for(const [n,s] of this.#seats)s.stack=outcome.stacks[`seat-${n}`]??0;
@@ -90,7 +103,7 @@ export class SeatedHandRoom {
   }
   /** Final table extra cards: once, when the players left fit one final table. */
   #finalTable(live:readonly string[]){
-    if(!this.#tournament||this.#bank.finalTableGiven||this.#bank.finalTableCards<1||live.length>this.#bank.finalTableSize)return;
+    if(!this.#tournament||this.#field||this.#bank.finalTableGiven||this.#bank.finalTableCards<1||live.length>this.#bank.finalTableSize)return;
     this.#bank.finalTableGiven=true;for(const id of live)this.#cards.set(id,Math.min(10,(this.#cards.get(id)??0)+this.#bank.finalTableCards));
   }
   #snapshot(viewerSeat:number|null) {
@@ -170,7 +183,7 @@ export class SeatedHandRoom {
     const players=entries.map(([n,s])=>({id:`seat-${n}`,stack:s.stack}));
     const positions=this.#tournament?initialTournamentPositions(this.#order,players.map(p=>p.id),`seat-${buttonSeat}`):null;
     const hand=new AuthoritativeHand(players,entries.findIndex(([n])=>n===buttonSeat),terms,positions?{order:this.#order,positions}:undefined);
-    this.#hand=hand;this.#timeBanks.clear();this.#bankUses.clear();if(this.#tournament){this.#cards.clear();this.#bank.finalTableGiven=false;for(const p of players)this.#cards.set(p.id,this.#bank.cards);this.#finalTable(players.map(p=>p.id));}this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
+    this.#hand=hand;this.#timeBanks.clear();this.#bankUses.clear();if(this.#tournament){if(!this.#field)this.#cards.clear();this.#bank.finalTableGiven=false;for(const p of players)if(!this.#field||!this.#cards.has(p.id))this.#cards.set(p.id,this.#bank.cards);this.#finalTable(players.map(p=>p.id));}this.#completedAt=null;this.#positions=positions;this.#terms={...terms};this.#handNumber=1;this.#armTurn(now);this.#revision++;return this.publicSnapshot();
   }
   /** Trusted tournament scheduler only. A captured completed hand ID makes retries safe.
    * Survivors carry stacks; disconnected survivors remain in play with server deadlines.
@@ -180,9 +193,10 @@ export class SeatedHandRoom {
     const before=this.#hand.snapshot(null);
     if(before.handId!==expectedHandId||!before.result)throw new Error("Previous hand is not current and complete");
     if(this.#outcome.champion)throw new Error("Tournament already finished");
-    const live=this.#order.filter(id=>(this.#outcome!.stacks[id]??0)>0);
+    const stackOf=(id:string)=>this.#field?(this.#seats.get(Number(id.slice(5)))?.stack??0):(this.#outcome!.stacks[id]??0);
+    const live=this.#order.filter(id=>stackOf(id)>0);
     const positions=nextTournamentPositions(this.#order,live,this.#positions);
-    const players=live.map(id=>({id,stack:this.#outcome!.stacks[id]}));
+    const players=live.map(id=>({id,stack:stackOf(id)}));
     const now=this.#readNow();
     const hand=new AuthoritativeHand(players,0,terms,{order:this.#order,positions});
     // Everything above validates before replacing the previous hand/receipt owner.
@@ -245,6 +259,58 @@ export class SeatedHandRoom {
     this.#revision++;this.#armTurn(now);
     return {expired:true,action:action.type,state:this.publicSnapshot()};
   }
+  /** Field table (trusted owner only): who sits where, with stacks. Member IDs stay on the server. */
+  fieldSeats(){
+    if(!this.#field)throw new Error("Not a field table");
+    const h=this.#hand?.snapshot(null)??null;
+    return {seats:[...this.#seats].sort((a,b)=>a[0]-b[0]).map(([n,s])=>({seat:n,memberId:s.memberId,stack:s.stack,cards:this.#cards.get(`seat-${n}`)??0,connected:Boolean(s.connectionId),inHand:Boolean(h&&!h.result&&h.players.some(p=>p.id===`seat-${n}`))})),
+      handId:h?.handId??null,live:Boolean(h&&!h.result),settledHandId:this.#settledHandId,completedAt:this.#completedAt,started:this.#hand!==null,
+      busts:this.#field&&this.#outcome&&h?.result&&this.#settledHandId===h.handId?this.#outcome.eliminated.map(e=>({seat:Number(e.id.slice(5)),comparisonStack:e.comparisonStack})):[]};
+  }
+  /** Who is due the big blind next hand (the player a balancing move takes), or null before a first hand. */
+  nextBigBlindMember(){
+    if(!this.#field||!this.#positions)return null;
+    const live=this.#order.filter(id=>(this.#seats.get(Number(id.slice(5)))?.stack??0)>0);
+    if(live.length<2)return null;
+    const bb=nextTournamentPositions(this.#order,live,this.#positions).bb;
+    return this.#seats.get(Number(bb.slice(5)))?.memberId??null;
+  }
+  /** Take a player off this table between hands (a move, or a bust). Their connection moves with them. */
+  removeSeat(memberId:string){
+    if(!this.#field)throw new Error("Not a field table");
+    const entry=this.#member(memberId);if(!entry)throw new Error("Member is not seated");
+    const h=this.#hand?.snapshot(null);
+    if(h&&!h.result)throw new Error("Cannot move a player during a live hand");
+    if(h?.result&&this.#settledHandId!==h.handId)this.#syncSettlement();
+    const [n,seat]=entry,id=`seat-${n}`,cards=this.#cards.get(id)??0;
+    this.#seats.delete(n);this.#cards.delete(id);this.#timeBanks.delete(id);this.#bankUses.delete(id);
+    if(this.#outcome){delete this.#outcome.stacks[id];this.#outcome.liveIds=this.#outcome.liveIds.filter(x=>x!==id);}
+    this.#revision++;
+    return {seat:n,stack:seat.stack,cards,connectionId:seat.connectionId};
+  }
+  /** Seat a moved player on a free seat; during a live hand here they wait for the next one. */
+  addSeat(memberId:string,stack:number,cards:number,connectionId:string|null,seatNumber?:number){
+    if(!this.#field)throw new Error("Not a field table");
+    if(this.#member(memberId))throw new Error("Member already seated");
+    if(!Number.isSafeInteger(stack)||stack<1||!Number.isSafeInteger(cards)||cards<0||cards>10||(connectionId!==null&&typeof connectionId!=="string"))throw new Error("Invalid moved seat");
+    const free=this.#order.map((_,i)=>i+1).filter(n=>!this.#seats.has(n));
+    const n=seatNumber??free[randomInt(free.length||1)];
+    if(!free.length||!free.includes(n))throw new Error("Table full");
+    this.#seats.set(n,{memberId,stack,connectionId});this.#cards.set(`seat-${n}`,cards);
+    if(this.#outcome&&!this.#hand?.snapshot(null).players.some(p=>p.id===`seat-${n}`)){this.#outcome.stacks[`seat-${n}`]=stack;this.#outcome.liveIds=this.#order.filter(id=>(this.#outcome!.stacks[id]??0)>0);}
+    this.#revision++;
+    return n;
+  }
+  /** Final table: extra time bank cards for everyone still in (once, decided by the owner). */
+  grantCards(count:number){
+    if(!this.#field||!Number.isSafeInteger(count)||count<1||count>5)throw new Error("Invalid card grant");
+    for(const [n] of this.#seats){const id=`seat-${n}`;this.#cards.set(id,Math.min(10,(this.#cards.get(id)??0)+count));}
+    this.#revision++;
+  }
+  /** Who holds this connection (transport routing only). */
+  hasConnection(connectionId:string){return [...this.#seats.values()].some(s=>s.connectionId===connectionId);}
+  memberByConnection(connectionId:string){return [...this.#seats.values()].find(s=>s.connectionId===connectionId)?.memberId??null;}
+  memberSeat(memberId:string){return this.#member(memberId)?.[0]??null;}
   /** No mid-hand replacement/refund. A disconnect retains the seat and hand state;
    * the original deadline remains in force through disconnect/reconnect.
    */

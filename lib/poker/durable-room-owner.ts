@@ -9,6 +9,10 @@ import {buildHandHistory} from './hand-history';
 type Config=ConstructorParameters<typeof ScheduledTournamentRoom>[0];
 type Options={roomId:string;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxPending?:number;expectedConfig?:Config};
 const unavailable=()=>new Error('Room unavailable; durable recovery required');
+/** Checkpoint without monotonic clock floors, for "did a rejected command change anything" checks. */
+function stable(c:ReturnType<ScheduledTournamentRoom['checkpoint']>){
+ return {...c,lastNow:0,room:{...c.room,lastNow:0},...(c.field?{field:{...c.field,tables:c.field.tables.map(([n,t])=>[n,{...t,lastNow:0}])}}:{})};
+}
 function checkConfig(room:ScheduledTournamentRoom,config?:Config){
  if(!config)return;
  const expected=new ScheduledTournamentRoom(config).checkpoint(),actual=room.checkpoint();
@@ -44,6 +48,8 @@ export class DurableRoomOwner {
   }
   /** Wait for accepted operations without mutating or exposing the checkpoint. */
   async drain(){await this.#tail;}
+  /** In-memory hint for the push channel (never a substitute for an authorized read). */
+  revisionHint(connection:string){try{return this.#halted?null:this.#room.revisionHint(connection);}catch{return null;}}
   get health(){return {status:this.#halted?'halted' as const:'ready' as const,version:this.#version,pending:this.#pending};}
   /** Server-only commit invalidation. Observers never receive cards, capabilities or checkpoints. */
   subscribe(observer:()=>void){if(this.#observers.size>=1024)throw new Error('Observer limit reached');this.#observers.add(observer);return ()=>{this.#observers.delete(observer);};}
@@ -69,23 +75,21 @@ export class DurableRoomOwner {
   async #recordHistory(room:ScheduledTournamentRoom){
     if(!this.#store.history)return;
     try{
-      const c=room.checkpoint().room,hand=c.hand,snapshot=room.publicSnapshot();
-      if(!hand||!snapshot.hand?.result||this.#historyHand===hand.id)return;
-      this.#historyHand=hand.id;
-      const members=Object.fromEntries(c.seats.map(([n,p])=>[`seat-${n}`,p.memberId]));
-      await this.#store.history({kind:'tournament',sourceId:this.#roomId,handNumber:snapshot.handNumber??null,record:buildHandHistory(hand,members)});
+      // Single table: the current settled hand. Multi-table: the hand this operation settled, at its table.
+      const settled=room.settledHistory();
+      if(!settled||this.#historyHand===settled.hand.id)return;
+      this.#historyHand=settled.hand.id;
+      await this.#store.history({kind:'tournament',sourceId:this.#roomId,handNumber:settled.handNumber??null,record:buildHandHistory(settled.hand,settled.members)});
     }catch{/* best effort */}
   }
   #mutate<T>(operation:(room:ScheduledTournamentRoom)=>T,changed:(result:T)=>boolean=()=>true) {
     return this.#enqueue(async()=>{
-      const before=this.#room.checkpoint().room;
+      const before=this.#room.checkpoint();
       let result:T;
       try{result=operation(this.#room);}catch(error){
         // Known validation failures leave state unchanged. Unexpected partial changes fail closed.
-        const after=this.#room.checkpoint().room;
-        // A rejected command may still advance the monotonic clock floor.
-        before.lastNow=after.lastNow;
-        if(JSON.stringify(after)!==JSON.stringify(before)){this.#halted=true;throw unavailable();}
+        // A rejected command may still advance the monotonic clock floors (room, tables).
+        if(JSON.stringify(stable(this.#room.checkpoint()))!==JSON.stringify(stable(before))){this.#halted=true;throw unavailable();}
         throw error;
       }
       if(changed(result)){await this.#persist(this.#room,this.#version);this.#notify();}

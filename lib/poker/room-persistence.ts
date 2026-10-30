@@ -28,10 +28,7 @@ export function openCheckpoint(roomId:string,version:number,sealed:SealedCheckpo
  const value=JSON.parse(Buffer.concat([decipher.update(Buffer.from(sealed.data,'base64')),decipher.final()]).toString('utf8'));
  if(value?.version!==1)throw new Error('Unsupported room checkpoint');return value;
 }
-function terminalResult(room:ScheduledTournamentRoom) {
- const s=room.publicSnapshot(),h=s.hand;
- return h?.result?{handId:h.handId,handNumber:s.handNumber,...h.result,tournament:s.tournament,participants:room.checkpoint().room.seats.map(([seat,p])=>({seatId:`seat-${seat}`,memberId:p.memberId}))}:null;
-}
+function terminalResult(room:ScheduledTournamentRoom) {return room.terminalResult();}
 /** Prepare once; retry this EXACT request on ambiguous network failure (fresh encryption differs).
  * Do not acknowledge/broadcast a mutation until commit resolves. On conflict/failure stop the
  * owner and reload/reconnect; this primitive does not roll back live memory or run a scheduler.

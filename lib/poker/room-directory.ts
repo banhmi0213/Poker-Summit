@@ -4,22 +4,27 @@ import {registrationCatalog,registrationOutcome,type RegistrationSummary,type Re
 import type {TournamentControl} from './scheduled-tournament-room';
 import {pokerUUID} from './request-auth';
 import {validateStructure,type TournamentStructure} from './tournament';
+import {FIELD_MAX_PLAYERS} from './tournament-field';
+/** 2 (heads-up), 6 (one table) or 60 (multi-table field, 7+ players; 2026/10/30). */
+export type RoomCapacity=2|6|60;
+export const ROOM_CAPACITIES:readonly number[]=[2,6,FIELD_MAX_PLAYERS];
+export function capacityFor(players:number):RoomCapacity{return players===2?2:players<=6?6:60;}
 export type PlayerOperation='seat'|'connect'|'state'|'spectate'|'act'|'disconnect'|'leave';
 export type RoomAccess={memberId:string;roomId:string;operation:PlayerOperation};
 export type RoomConfig={tournamentId:string;starts_at:string;structure:TournamentStructure};
-export type RoomBinding=RoomConfig&{roomId:string;capacity:2|6;allowSpectators:boolean;enabled:boolean};
+export type RoomBinding=RoomConfig&{roomId:string;capacity:RoomCapacity;allowSpectators:boolean;enabled:boolean};
 export type RoomControl=TournamentControl&{roomId:string};
-export type RoomAssignment={roomId:string;tournamentId:string;title:string;starts_at:string;capacity:2|6;published:boolean};
+export type RoomAssignment={roomId:string;tournamentId:string;title:string;starts_at:string;capacity:RoomCapacity;published:boolean};
 export function roomAssignments(data:unknown):RoomAssignment[]{
  if(!Array.isArray(data)||data.length>64)throw new Error('Invalid room assignments');
  const rooms=new Set<string>(),tournaments=new Set<string>();
  return data.map(row=>{const roomId=roomUUID(row?.roomId),tournamentId=roomUUID(row?.tournamentId),start=Date.parse(row.starts_at);
-  if(rooms.has(roomId)||tournaments.has(tournamentId)||typeof row.title!=='string'||!row.title.trim()||[...row.title].length>200||typeof row.starts_at!=='string'||!Number.isSafeInteger(start)||start<0||![2,6].includes(row.capacity)||typeof row.published!=='boolean')throw new Error('Invalid room assignments');rooms.add(roomId);tournaments.add(tournamentId);
+  if(rooms.has(roomId)||tournaments.has(tournamentId)||typeof row.title!=='string'||!row.title.trim()||[...row.title].length>200||typeof row.starts_at!=='string'||!Number.isSafeInteger(start)||start<0||!ROOM_CAPACITIES.includes(row.capacity)||typeof row.published!=='boolean')throw new Error('Invalid room assignments');rooms.add(roomId);tournaments.add(tournamentId);
   return {roomId,tournamentId,title:row.title,starts_at:new Date(start).toISOString(),capacity:row.capacity,published:row.published};
  });
 }
 export type RegistrationPlan=RoomBinding&{members:string[]};
-export function registrationPlan(value:unknown,tournamentId:string):RegistrationPlan{const raw=value as RegistrationPlan,binding=roomBinding({...raw,enabled:true});if(binding.tournamentId!==roomUUID(tournamentId)||binding.allowSpectators||!Array.isArray(raw.members)||raw.members.length<2||raw.members.length>6||binding.capacity!==(raw.members.length===2?2:6))throw Error('Invalid registration plan');const members=raw.members.map(roomUUID);if(new Set(members).size!==members.length)throw Error('Duplicate frozen member');return {...binding,members};}
+export function registrationPlan(value:unknown,tournamentId:string):RegistrationPlan{const raw=value as RegistrationPlan,binding=roomBinding({...raw,enabled:true});if(binding.tournamentId!==roomUUID(tournamentId)||binding.allowSpectators||!Array.isArray(raw.members)||raw.members.length<2||raw.members.length>FIELD_MAX_PLAYERS||binding.capacity!==capacityFor(raw.members.length))throw Error('Invalid registration plan');const members=raw.members.map(roomUUID);if(new Set(members).size!==members.length)throw Error('Duplicate frozen member');return {...binding,members};}
 export interface RoomDirectory {
  pendingEntries?():Promise<{tournamentId:string;count:number}[]>;
  startupRooms(limit:number):Promise<string[]>;
@@ -45,7 +50,7 @@ export function roomConfig(value:RoomConfig):RoomConfig {
 }
 export function roomBinding(value:RoomBinding):RoomBinding {
  const c=roomConfig(value);
- if(![2,6].includes(value.capacity)||typeof value.allowSpectators!=='boolean'||typeof value.enabled!=='boolean')throw new Error('Invalid stored room policy');
+ if(!ROOM_CAPACITIES.includes(value.capacity)||typeof value.allowSpectators!=='boolean'||typeof value.enabled!=='boolean')throw new Error('Invalid stored room policy');
  return {...c,roomId:roomUUID(value.roomId),capacity:value.capacity,allowSpectators:value.allowSpectators,enabled:value.enabled};
 }
 type RpcClient={rpc(name:string,args:Record<string,unknown>):PromiseLike<{data:unknown;error:unknown}>};
@@ -54,7 +59,7 @@ export class RoomControlUnavailable extends Error {constructor(){super('Room con
 export class SupabaseRoomDirectory implements RoomDirectory {
  constructor(private client:RpcClient){}
  async #rpc(name:string,args:Record<string,unknown>){const {data,error}=await this.client.rpc(name,args);if(error)throw new Error('Room directory unavailable');return data;}
- async pendingEntries(){const data=await this.#rpc('poker_entry_due',{});if(!Array.isArray(data)||data.length>128)throw Error('Invalid entry discovery');const seen=new Set();return data.map(row=>{const tournamentId=roomUUID(row?.tournamentId);if(seen.has(tournamentId)||!Number.isSafeInteger(row.count)||row.count<2||row.count>6)throw Error('Invalid entry target count');seen.add(tournamentId);return {tournamentId,count:row.count};});}
+ async pendingEntries(){const data=await this.#rpc('poker_entry_due',{});if(!Array.isArray(data)||data.length>128)throw Error('Invalid entry discovery');const seen=new Set();return data.map(row=>{const tournamentId=roomUUID(row?.tournamentId);if(seen.has(tournamentId)||!Number.isSafeInteger(row.count)||row.count<2||row.count>FIELD_MAX_PLAYERS)throw Error('Invalid entry target count');seen.add(tournamentId);return {tournamentId,count:row.count};});}
  async startupRooms(limit:number){
   if(!Number.isSafeInteger(limit)||limit<1||limit>10000)throw Error('Invalid startup limit');
   const data=await this.#rpc('poker_room_startup_ids',{p_limit:limit});
@@ -62,8 +67,8 @@ export class SupabaseRoomDirectory implements RoomDirectory {
   const ids=data.map(roomUUID);if(new Set(ids).size!==ids.length)throw Error('Duplicate startup room');return ids;
  }
  async managementStatus(tournament:string){const id=roomUUID(tournament);return managementStatus(await this.#rpc('poker_registration_management_status',{p_tournament:id}),id);}
- async configureRegistration(tournament:string,capacity:number,enabled:boolean){const id=roomUUID(tournament);if(!Number.isSafeInteger(capacity)||capacity<2||capacity>600||typeof enabled!=='boolean')throw Error('Invalid registration policy');await this.#rpc('poker_registration_configure',{p_tournament:id,p_capacity:capacity,p_enabled:enabled});return this.managementStatus(id);}
- async freezeRegistration(tournament:string,expectedCount:number){const id=roomUUID(tournament);if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>6)throw Error('Invalid expected roster');const plan=registrationPlan(await this.#rpc('poker_registration_freeze',{p_tournament:id,p_expected:expectedCount}),id);if(plan.members.length!==expectedCount)throw Error('Frozen roster count mismatch');return plan;}
+ async configureRegistration(tournament:string,capacity:number,enabled:boolean){const id=roomUUID(tournament);if(!Number.isSafeInteger(capacity)||capacity<2||capacity>FIELD_MAX_PLAYERS||typeof enabled!=='boolean')throw Error('Invalid registration policy');await this.#rpc('poker_registration_configure',{p_tournament:id,p_capacity:capacity,p_enabled:enabled});return this.managementStatus(id);}
+ async freezeRegistration(tournament:string,expectedCount:number){const id=roomUUID(tournament);if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>FIELD_MAX_PLAYERS)throw Error('Invalid expected roster');const plan=registrationPlan(await this.#rpc('poker_registration_freeze',{p_tournament:id,p_expected:expectedCount}),id);if(plan.members.length!==expectedCount)throw Error('Frozen roster count mismatch');return plan;}
  async registrationCatalog(member:string){return registrationCatalog(await this.#rpc('poker_registration_catalog',{p_member:roomUUID(member)}));}
  async changeRegistration(member:string,tournament:string,action:'register'|'cancel'){const id=roomUUID(tournament);if(!['register','cancel'].includes(action))throw Error('Invalid registration action');return registrationOutcome(await this.#rpc('poker_registration_change',{p_member:roomUUID(member),p_tournament:id,p_action:action}),id);}
  async assignments(member:string){return roomAssignments(await this.#rpc('poker_room_assignments',{p_member:roomUUID(member)}));}
@@ -71,7 +76,7 @@ export class SupabaseRoomDirectory implements RoomDirectory {
  async binding(id:string){id=roomUUID(id);const data=await this.#rpc('poker_room_binding',{p_room:id});if(data===null)return null;const b=roomBinding(data as RoomBinding);if(b.roomId!==id)throw new Error('Room binding mismatch');return b;}
  async control(id:string):Promise<RoomControl|null>{
   id=roomUUID(id);let data:unknown;try{data=await this.#rpc('poker_room_control',{p_room:id});}catch{throw new RoomControlUnavailable();}if(data===null)return null;const c=data as RoomControl;
-  if(roomUUID(c.roomId)!==id||typeof c.enabled!=='boolean'||typeof c.published!=='boolean'||!Number.isSafeInteger(c.expectedCount)||c.expectedCount<2||c.expectedCount>6||!Array.isArray(c.members)||c.members.length>c.expectedCount)throw new Error('Invalid room control');
+  if(roomUUID(c.roomId)!==id||typeof c.enabled!=='boolean'||typeof c.published!=='boolean'||!Number.isSafeInteger(c.expectedCount)||c.expectedCount<2||c.expectedCount>FIELD_MAX_PLAYERS||!Array.isArray(c.members)||c.members.length>c.expectedCount)throw new Error('Invalid room control');
   const members=c.members.map(roomUUID);if(new Set(members).size!==members.length)throw new Error('Invalid room roster');
   return {roomId:id,enabled:c.enabled,published:c.published,expectedCount:c.expectedCount,members,...(c.seatedStart===true?{seatedStart:true}:{})};
  }
