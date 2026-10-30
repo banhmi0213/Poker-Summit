@@ -97,6 +97,24 @@ export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
  return {source:s.source,options:s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),freq:Math.max(0,s.freqs[k])/total})).filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq)};
 }
 
+/** The hero's GTO menu at a live decision (「GTOと対戦」2026/10/30): every option with its table action text, its
+ * frequency for the hero's hand, and what to send to the table (kind/label/to for toTable). The buttons are this menu,
+ * so whatever the hero picks can be graded. */
+export type TrainerSpot={source:'preflop'|'flop'|'solver';options:{text:string;kind:string;label:string;to:number|null;freq:number}[];nearFlop?:string;proxySpot?:string}|{source:'none';reason:string};
+export function trainerSpot(v:GtoView,data:GtoData,budgetMs=2500):TrainerSpot{
+ const s=gtoStrategy(v,data,budgetMs);
+ if(s.source==='fallback')return {source:'none',reason:s.reason};
+ const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
+ const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),kind:o.kind,label:o.label,to:o.to,freq:Math.max(0,s.freqs[k])/total}));
+ // Lines GTO never takes here (e.g. only fold in the chart) are still legal at the table: offer them at 0%.
+ const has=(...k:string[])=>options.some(o=>k.includes(o.kind)),add=(kind:string)=>options.push({text:optionText(kind,'',null,v.bb),kind,label:'',to:null,freq:0});
+ if(v.legal.check&&!has('check','call'))add('check');
+ if(v.legal.call&&v.legal.callAmount>0&&!has('call'))add('call');
+ if(!v.legal.check&&!has('fold'))add('fold');
+ if(v.legal.raise&&!has('raise','bet','allin'))add('allin');
+ return {source:s.source,nearFlop:s.nearFlop,proxySpot:s.proxySpot,options};
+}
+
 /** Review of decisions captured live (practice table, 2026/10/27: ハンド後にその場で「GTOで振り返る」): each item is the
  * decision point as it was when the hero acted, plus what was played. */
 export type LiveDecision={view:GtoView;played:LoggedAction};

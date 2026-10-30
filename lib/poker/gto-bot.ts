@@ -411,7 +411,7 @@ function solve(v:GtoView,board:number[],ranges:Ranges,pair:[string,string],potCh
 }
 
 /** Convert a chosen action to a legal table action. `to` is the street total in chips (null: from the label). */
-function toTable(v:GtoView,kind:string,label:string,to:number|null):BettingAction{
+export function toTable(v:GtoView,kind:string,label:string,to:number|null):BettingAction{
  const L=v.legal,me=v.players.find(p=>p.id===v.hero)!;
  if(kind==='fold')return L.check?{type:'check'}:{type:'fold'};
  if(kind==='check'||kind==='call')return L.callAmount>0&&L.call?{type:'call'}:L.check?{type:'check'}:{type:'call'};

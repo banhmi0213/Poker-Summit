@@ -1,0 +1,69 @@
+/* 「GTOと対戦」練習卓 (2026/10/30). Same navy and gold as the GTO chart panels. */
+.log{display:flex;flex-wrap:wrap;gap:4px;list-style:none;margin:0;padding:0;font-size:11px;color:#c9d6e0}
+.log li{background:#1b3448;border-radius:6px;padding:3px 7px;white-space:nowrap}
+.log li b{color:#e6bd70;margin-right:4px}
+.log li[data-hero]{box-shadow:inset 0 0 0 1px #d9b368}
+.log li[data-turn]{background:#24435a;color:#fff}
+
+.table{position:relative;width:100%;max-width:640px;margin:0 auto;aspect-ratio:16/11}
+.felt{position:absolute;inset:14% 12%;border-radius:999px;background:radial-gradient(ellipse at center,#1f5a4a 0,#163f37 70%,#0f2e29 100%);box-shadow:inset 0 0 0 6px #2a2118,inset 0 0 0 8px #6b5232,0 6px 18px #0007}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.pot{font-size:12px;font-weight:700;color:#f3e3bd;background:#0008;border-radius:999px;padding:3px 10px}
+.board{display:flex;gap:4px;min-height:44px}
+.result{font-size:15px;color:#ffe9a8}
+
+.card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:32px;height:44px;border-radius:5px;background:#f7f4ec;color:#1a2633;font-weight:800;font-size:16px;line-height:1;box-shadow:0 1px 3px #0006}
+.card small{font-size:13px}
+.card[data-red]{color:#c62f2f}
+.card[data-back]{background:repeating-linear-gradient(135deg,#2f5371 0 4px,#24435a 4px 8px);border:2px solid #f7f4ec}
+
+.seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;min-width:78px}
+.cards{display:flex;gap:2px}
+.seat .card{width:28px;height:38px;font-size:14px}
+.seat[data-hero] .card{width:34px;height:46px;font-size:17px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#14283a;background:#d9b368;border-radius:6px;padding:1px 7px}
+.badge i{font-style:normal;background:#fff;color:#14283a;border-radius:999px;width:15px;height:15px;font-size:9px;display:inline-flex;align-items:center;justify-content:center}
+.stack{font-size:11px;color:#e9eff5;background:#0b1c29d9;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.bet{font-size:11px;font-weight:700;color:#14283a;background:#f3e3bd;border-radius:999px;padding:0 6px}
+.seat[data-folded]{opacity:.45}
+.seat[data-turn] .badge{box-shadow:0 0 0 2px #fff}
+.seat[data-won] .stack{background:#2f6a4c}
+
+.actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.actions button{flex:1 1 120px;max-width:200px;border:0;border-radius:8px;padding:12px 10px;font:inherit;font-weight:800;font-size:14px;cursor:pointer;color:#fff;background:#b8433f}
+.actions button[data-kind=fold]{background:#3d6a96}
+.actions button[data-kind=check],.actions button[data-kind=call]{background:#3f8a5a}
+.actions button[data-kind=allin]{background:#7a2a2a}
+.actions p{width:100%;text-align:center;font-size:12px;color:#c9d6e0;margin:0}
+
+.feedback{border-radius:10px;padding:10px 12px;background:#193a4c;border-left:5px solid #91a8ba}
+.feedback p{margin:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-size:13px;color:#e9eff5}
+.feedback p+p{margin-top:4px}
+.feedback b{font-size:15px}
+.feedback small{color:#c9d6e0}
+.feedback[data-level=best],.history li[data-level=best]{border-color:#5fd08a}
+.feedback[data-level=correct],.history li[data-level=correct]{border-color:#9fd8a8}
+.feedback[data-level=inaccurate],.history li[data-level=inaccurate]{border-color:#e6bd70}
+.feedback[data-level=mistake],.history li[data-level=mistake]{border-color:#f08a5d}
+.feedback[data-level=blunder],.history li[data-level=blunder]{border-color:#f05b58}
+
+.history{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12px;color:#e9eff5}
+.history li{background:#152f40;border-left:4px solid #91a8ba;border-radius:6px;padding:6px 10px;display:flex;flex-wrap:wrap;gap:2px 8px}
+.history small{width:100%;color:#91a8ba}
+
+.stats{border:1px solid #adc5d448;border-radius:9px;background:#193a4c70;padding:10px 12px;font-size:12px;color:#e9eff5}
+.stats p{margin:0;display:flex;flex-wrap:wrap;gap:4px 12px}
+.stats ul{list-style:none;margin:8px 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.stats li{background:#152f40;border-radius:6px;padding:3px 8px;border-left:4px solid #91a8ba}
+.stats li b{margin-right:6px}
+.stats li[data-level=best]{border-color:#5fd08a}.stats li[data-level=correct]{border-color:#9fd8a8}.stats li[data-level=inaccurate]{border-color:#e6bd70}.stats li[data-level=mistake]{border-color:#f08a5d}.stats li[data-level=blunder]{border-color:#f05b58}
+.reset{background:#24435a;color:#e9eff5;border:0;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}
+
+@media (max-width:520px){
+ .table{aspect-ratio:4/5}
+ .felt{inset:16% 16%}
+ .seat{min-width:64px}
+ .seat .card{width:24px;height:33px;font-size:12px}
+ .seat[data-hero] .card{width:30px;height:41px;font-size:15px}
+ .card{width:28px;height:39px;font-size:14px}
+}

@@ -1,0 +1,162 @@
+'use client';
+import {useCallback,useEffect,useRef,useState} from 'react';
+import type {Card} from '@/lib/poker/engine';
+import type {BettingAction} from '@/lib/poker/betting';
+import {toTable} from '@/lib/poker/gto-bot';
+import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
+import {reasonText,type TrainerSpot} from '@/lib/poker/gto-review';
+import {HERO,LEVEL_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel} from '@/lib/poker/gto-trainer';
+import chart from './gto-chart.module.css';
+import styles from './gto-trainer.module.css';
+
+/** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
+ * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
+ * often GTO takes that action with that hand; the hand plays on to the end, then all cards are shown. */
+const SUIT:Record<Card['suit'],string>={s:'♠',h:'♥',d:'♦',c:'♣'};
+const RANK:Record<number,string>={10:'T',11:'J',12:'Q',13:'K',14:'A'};
+const bb=(chips:number)=>Math.round(chips/TRAINER_BB*10)/10;
+const STREET_TEXT=['プリフロップ','フロップ','ターン','リバー'];
+/** Seat spots around the oval, clockwise from the hero at the bottom. */
+const SPOTS=[{x:50,y:86},{x:11,y:68},{x:11,y:26},{x:50,y:9},{x:89,y:26},{x:89,y:68}];
+const STATS_KEY='poker-gto-trainer-stats';
+type Feedback={street:string;played:string;level:TrainerLevel|null;score:number|null;freq:number|null;options:{text:string;freq:number}[];note?:string};
+type Stats={hands:number;decisions:number;score:number;net:number;levels:Record<TrainerLevel,number>};
+const emptyStats=():Stats=>({hands:0,decisions:0,score:0,net:0,levels:{best:0,correct:0,inaccurate:0,mistake:0,blunder:0}});
+function readStats():Stats{try{const v=JSON.parse(window.localStorage.getItem(STATS_KEY)??'null');return v&&typeof v.hands==='number'&&v.levels?{...emptyStats(),...v,levels:{...emptyStats().levels,...v.levels}}:emptyStats();}catch{return emptyStats();}}
+function writeStats(s:Stats){try{window.localStorage.setItem(STATS_KEY,JSON.stringify(s));}catch{/* convenience only */}}
+
+function CardChip({card,hidden}:{card?:Card;hidden?:boolean}){
+ if(hidden||!card)return <span className={styles.card} data-back aria-label="伏せたカード"/>;
+ return <span className={styles.card} data-red={card.suit==='h'||card.suit==='d'||undefined}>{RANK[card.rank]??card.rank}<small>{SUIT[card.suit]}</small></span>;
+}
+const actText=(type:string,to:number,allIn:boolean)=>type==='fold'?'フォールド':type==='check'?'チェック':type==='call'?'コール':`${type==='bet'?'ベット':'レイズ'} ${bb(to)}${allIn?'（オールイン）':''}`;
+
+/** Basic buttons when GTO has no answer for this spot (graded as 採点なし). */
+function basicMenu(h:TrainerHand){
+ const v=trainerView(h,HERO);if(!v)return [];
+ const L=v.legal,out:{text:string;kind:string;label:string;to:number|null;freq:number}[]=[];
+ if(!L.check)out.push({text:'フォールド',kind:'fold',label:'',to:null,freq:0});
+ out.push(L.check?{text:'チェック',kind:'check',label:'',to:null,freq:0}:{text:'コール',kind:'call',label:'',to:null,freq:0});
+ if(L.raise&&L.minRaiseTo!==null&&L.maxRaiseTo!==null){
+  const pot=v.players.reduce((s,p)=>s+p.totalCommitted,0),me=v.players.find(p=>p.id===HERO)!,cur=Math.max(...v.players.map(p=>p.committed));
+  const potTo=Math.min(L.maxRaiseTo,Math.max(L.minRaiseTo,cur+pot+(cur-me.committed)));
+  const kind=cur===0?'bet':'raise';
+  if(potTo<L.maxRaiseTo)out.push({text:`${kind==='bet'?'ベット':'レイズ'} ${bb(potTo)}BB`,kind,label:'',to:potTo,freq:0});
+  out.push({text:'オールイン',kind:'allin',label:'',to:null,freq:0});
+ }
+ return out;
+}
+
+export function GtoTrainer(){
+ const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
+ const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
+ const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
+ const worker=useRef<Worker|null>(null),seq=useRef(0),counted=useRef<number|null>(null);
+ useEffect(()=>{setStats(readStats());return()=>worker.current?.terminate();},[]);
+ const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
+  if(!worker.current){const {createGtoWorker}=await import('@/app/poker-demo/gto-worker-client');worker.current=createGtoWorker();}
+  const w=worker.current,id=++seq.current;
+  return new Promise<GtoReply>(resolve=>{const guard=window.setTimeout(()=>{w.removeEventListener('message',on);resolve({type:'error',id,message:'timeout'});},30000);
+   const on=(e:MessageEvent<GtoReply>)=>{if(e.data.id!==id)return;window.clearTimeout(guard);w.removeEventListener('message',on);resolve(e.data);};
+   w.addEventListener('message',on);w.postMessage(build(id));});
+ },[]);
+ const deal=(n:number,seed:number)=>{setHand(startTrainerHand(seed,buttonIndexFor(n)));setFeedback([]);setSpot(null);setError('');counted.current=null;};
+ const nextHand=()=>{const n=hand?handNo+1:handNo;setHandNo(n);deal(n,Math.floor(Math.random()*2**31));};
+ const replay=()=>{if(hand)deal(handNo,hand.seed);};
+
+ // CPU turns: the GTO bot decides in the worker; a short pause so the action can be followed.
+ useEffect(()=>{
+  if(!hand||hand.result||hand.round.toAct===HERO||!hand.round.toAct)return;
+  const id=hand.round.toAct,view=trainerView(hand,id);if(!view)return;
+  let live=true;
+  const timer=window.setTimeout(async()=>{
+   const reply=await ask(rid=>({type:'decide',id:rid,view,budgetMs:2500}));
+   if(!live)return;
+   let action:BettingAction=reply.type==='decision'?reply.decision.action:view.legal.check?{type:'check'}:{type:'fold'};
+   try{setHand(h=>h===hand?trainerAct(hand,id,action):h);}
+   catch{action=view.legal.check?{type:'check'}:{type:'fold'};setHand(h=>h===hand?trainerAct(hand,id,action):h);}
+  },speed==='fast'?150:650);
+  return ()=>{live=false;window.clearTimeout(timer);};
+ },[hand,ask,speed]);
+
+ // Hero's turn: fetch the GTO menu for this hand (the buttons are its options).
+ useEffect(()=>{
+  if(!hand||hand.result||hand.round.toAct!==HERO){setSpot(null);return;}
+  const view=trainerView(hand,HERO);if(!view)return;
+  let live=true;setSpot('loading');
+  void ask(rid=>({type:'spot',id:rid,view,budgetMs:2500})).then(r=>{if(!live)return;
+   if(r.type==='spot')setSpot(r.spot);else{setSpot({source:'none',reason:'error'});setError('GTOの計算に失敗しました。基本のボタンで続けられます（採点なし）。');}});
+  return ()=>{live=false;};
+ },[hand,ask]);
+
+ // Hand over: add to the session record once.
+ useEffect(()=>{
+  if(!hand?.result||counted.current===hand.seed)return;counted.current=hand.seed;
+  setStats(s=>{const n={...s,hands:s.hands+1,net:Math.round((s.net+netBB(hand,HERO))*10)/10};writeStats(n);return n;});
+ },[hand]);
+
+ const choose=(i:number)=>{
+  if(!hand||!spot||spot==='loading')return;
+  const view=trainerView(hand,HERO);if(!view)return;
+  const graded=spot.source!=='none';
+  const menu=graded?spot.options:basicMenu(hand),o=menu[i];if(!o)return;
+  const action=toTable(view,o.kind,o.label,o.to);
+  let next:TrainerHand;try{next=trainerAct(hand,HERO,action);}catch{return;}
+  const played=next.log[next.log.length-1];
+  const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,
+   options:graded?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],
+   note:graded?(spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined):`採点なし：${reasonText(spot.reason)}`};
+  if(graded){const g=gradeChoice(menu.map(x=>x.freq),i);fb.level=g.level;fb.score=g.score;fb.freq=g.freq;
+   setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1}};writeStats(n);return n;});}
+  setFeedback(f=>[...f,fb]);setSpot(null);setHand(next);
+ };
+
+ const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
+ const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
+ const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
+ const last=feedback[feedback.length-1];
+ return <div className={chart.wrap}>
+  <p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>
+  <div className={chart.form}>
+   <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
+   {!hand&&<button type="button" onClick={nextHand}>対戦を始める</button>}
+  </div>
+  {hand&&<>
+   <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!hand.result&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
+   <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
+    <div className={styles.felt}>
+     <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{hand.result&&<strong className={styles.result}>{netBB(hand,HERO)>0?`+${netBB(hand,HERO)}`:netBB(hand,HERO)}BB</strong>}</div>
+    </div>
+    {TRAINER_SEATS.map((id,k)=>{const p=hand.round.players.find(x=>x.id===id)!,spotXY=SPOTS[(k-heroIdx+6)%6],me=id===HERO,show=me||Boolean(hand.result);
+     const won=hand.result?.winners.includes(id);
+     return <div key={id} className={styles.seat} style={{left:`${spotXY.x}%`,top:`${spotXY.y}%`}} data-hero={me||undefined} data-folded={p.folded||undefined} data-turn={!hand.result&&hand.round.toAct===id||undefined} data-won={won||undefined}>
+      <div className={styles.cards}><CardChip card={hand.holes[id][0]} hidden={!show}/><CardChip card={hand.holes[id][1]} hidden={!show}/></div>
+      <span className={styles.badge}>{hand.positions[id]}{hand.button===id&&<i aria-label="ボタン">D</i>}</span>
+      <span className={styles.stack}>{me?'あなた':'GTO'} {bb(p.stack)}BB</span>
+      {p.committed>0&&!hand.result&&<span className={styles.bet}>{bb(p.committed)}</span>}
+     </div>;})}
+   </div>
+   {!hand.result&&hand.round.toAct===HERO&&<div className={styles.actions}>
+    {spot==='loading'&&<p role="status">GTOを計算中…</p>}
+    {menu.map((o,i)=><button key={i} type="button" data-kind={o.kind} onClick={()=>choose(i)}>{o.text}</button>)}
+   </div>}
+   {error&&<p role="alert">{error}</p>}
+   {last&&<section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
+    <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
+    {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
+    {last.note&&<p className={chart.note}>{last.note}</p>}
+   </section>}
+   {hand.result&&<div className={chart.form}>
+    <button type="button" onClick={nextHand}>次のハンド</button>
+    <button type="button" onClick={replay}>同じハンドをやり直す</button>
+   </div>}
+   {hand.result&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
+  </>}
+  <section className={styles.stats} aria-label="練習の成績">
+   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span></p>
+   <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
+   <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
+  </section>
+  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝ベスト、25%以上＝正解、8%以上＝不正確、2%以上＝ミス、それ未満＝大きなミス）。ターン・リバーはその場で計算するため数秒かかります。3人以上のポットや計算していない場面は採点なしです。成績はこのブラウザに保存されます。</p>
+ </div>;
+}
