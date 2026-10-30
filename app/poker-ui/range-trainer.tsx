@@ -18,9 +18,12 @@ export function RangeTrainer(){
  const [depth,setDepth]=useState(100),[data,setData]=useState<Data|null>(null),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const [pick,setPick]=useState<Record<string,number>>({}),[shown,setShown]=useState(false),[brush,setBrush]=useState(1);
  useEffect(()=>{let live=true;setData(null);fetch(depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`).then(r=>r.ok?r.json():null).then(d=>{if(live)setData(d);}).catch(()=>{});return()=>{live=false;};},[depth]);
- const options=useMemo(()=>data?.nodes.filter(n=>n.kind===kind)??[],[data,kind]);
+ // Seats in table order (UTG first), as the preflop chart titles start with the seat.
+ const ORDER=['UTG','HJ','CO','BTN','SB','BB'],seatOf=(t:string)=>{const who=t.includes('→')?t.split('→').pop()!.trim():t;const i=ORDER.findIndex(p=>who.startsWith(p));return i<0?9:i;};
+ const options=useMemo(()=>(data?.nodes.filter(n=>n.kind===kind)??[]).slice().sort((x,y)=>seatOf(x.title)-seatOf(y.title)),[data,kind]);
  const node=options.find(n=>n.id===id)??options[0]??null;
- useEffect(()=>{setPick({});setShown(false);},[node?.id,depth]);
+ // New spot: clear the board and paint with its raise (open / 3-bet …) by default.
+ useEffect(()=>{setPick({});setShown(false);const r=node?node.actions.findIndex(a=>a.kind==='raise'||a.kind==='allin'):-1;setBrush(r>=0?r:1);},[node?.id,depth]);
  if(!data)return <p role="status">読み込み中…</p>;
  // Actions you can paint: everything except fold (the unpainted cells fold).
  const acts=node?node.actions.map((a,i)=>({...a,i})).filter(a=>a.kind!=='fold'&&a.kind!=='check'):[];
