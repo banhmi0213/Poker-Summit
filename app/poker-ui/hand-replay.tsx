@@ -40,6 +40,10 @@ function useGtoReview(hand:HandHistoryView){
     players:hand.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.you,hole:p.you?p.hole:null}))}} satisfies GtoRequest);
   }catch{setState({status:'error',reviews:[],others:[]});}
  };
+ // Judged automatically when the hand opens (2026/10/30: Olympia のように全ハンド自動で判定); the button stays for retries.
+ const auto=hand.players.some(p=>p.you&&p.hole?.length===2);
+ useEffect(()=>{if(auto)void start();// eslint-disable-next-line react-hooks/exhaustive-deps
+ },[hand.handId,auto]);
  return {...state,start};
 }
 export function gtoText(r:GtoReview){
@@ -56,6 +60,11 @@ export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boo
  const reviews=useMemo(()=>reviewDecisions(hand),[hand]);
  const reviewAt=new Map(reviews.map(r=>[r.index,r]));
  const gto=useGtoReview(hand),gtoAt=new Map(gto.reviews.map(r=>[r.index,r])),otherAt=new Map(gto.others.map(o=>[o.index,o.range])),canGto=hand.players.some(p=>p.you&&p.hole?.length===2)&&hand.actions.some(a=>!['ante','sb','bb'].includes(a.type)&&hand.players.find(p=>p.seatId===a.seatId)?.you);
+ // When the review arrives, open the range at the clearest miss (else the first judged decision), like Olympia's GTO panel.
+ useEffect(()=>{if(gto.status!=='done')return;const judged=gto.reviews.filter(r=>r.source!=='none'&&r.range);
+  const pick=[...judged].filter(r=>r.source!=='none'&&r.verdict==='rare').sort((a,b)=>(a.source!=='none'&&b.source!=='none'?(a.played??1)-(b.played??1):0))[0]??judged[0];
+  if(pick)setRangeAt(r=>r??pick.index);
+ },[gto.status,gto.reviews]);
  const done=hand.actions.slice(0,step),current=step>0?hand.actions[step-1]:null,finished=step===last;
  const street=finished?'river':(current?.street??'preflop');
  const shownBoard=finished?hand.board:hand.board.slice(0,boardCount[street]);
