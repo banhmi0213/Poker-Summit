@@ -26,7 +26,7 @@ export function IcmPanel(){
  const setN=(n:number)=>{setCount(n);setStacks(s=>Array.from({length:n},(_,i)=>s[i]??'15'));setRes(null);setWho(0);setVs(-1);};
  const run=async()=>{
   const st=stacks.map(Number);if(st.some(x=>!(x>0)))return setError('スタックは0より大きいBBの数で入れてください。');
-  const pay=nums(payouts);if(!pay.length)return setError('賞金を「50,30,20」のように入れてください（金額でも割合でも大丈夫です）。');
+  const pay=nums(payouts);if(!pay.length)return setError('順位ごとの配分を「50,30,20」のように入れてください（ポイントでも割合でも大丈夫です）。');
   setError('');setBusy(true);
   try{
    if(!worker.current){const {createGtoWorker}=await import('@/app/poker-demo/gto-worker-client');worker.current=createGtoWorker();}
@@ -40,11 +40,11 @@ export function IcmPanel(){
  const actions=vs<0?[{kind:'fold',label:'フォールド'},{kind:'allin',label:'オールイン'}]:[{kind:'fold',label:'フォールド'},{kind:'call',label:'コール'}];
  const idx=res?new Map(res.icm.labels.map((l,i)=>[l,i])):null;
  return <div className={styles.wrap}>
-  <p>大会の終盤（スタックが浅いとき）に、オールインするか・オールインにコールするかを、賞金の取り分（ICM）で計算します。チップの量だけで考えた答えと並べるので、入賞ライン前後でどれだけ慎重になるかが分かります。</p>
+  <p>大会の終盤（スタックが浅いとき）に、オールインするか・オールインにコールするかを、順位ごとの配分の取り分（ICM）で計算します。チップの量だけで考えた答えと並べるので、入賞ライン前後でどれだけ慎重になるかが分かります。</p>
   <div className={styles.form}>
    <label>人数<select value={count} onChange={e=>setN(Number(e.target.value))}>{[2,3,4,5,6,7,8,9].map(n=><option key={n} value={n}>{n}人</option>)}</select></label>
    <label>アンティ（BB）<input inputMode="decimal" value={ante} onChange={e=>setAnte(e.target.value)}/></label>
-   <label>賞金（上から順に）<input value={payouts} onChange={e=>setPayouts(e.target.value)} placeholder="50,30,20"/></label>
+   <label>順位ごとの配分（1位から順に）<input value={payouts} onChange={e=>setPayouts(e.target.value)} placeholder="50,30,20"/></label>
    <label>ほかの卓の人のスタック（BB、任意）<input value={others} onChange={e=>setOthers(e.target.value)} placeholder="例：30,12,45"/></label>
   </div>
   <div className={styles.form}>{seats.map((pos,i)=><label key={pos}>{pos}のスタック（BB）<input inputMode="decimal" value={stacks[i]} onChange={e=>setStacks(s=>s.map((x,j)=>j===i?e.target.value:x))}/></label>)}</div>
@@ -54,7 +54,7 @@ export function IcmPanel(){
   {error&&<p role="alert">{error}</p>}
   {res&&!busy&&<>
    <table className={styles.grid} aria-label="立場ごとのオールイン率"><tbody>
-    <tr>{['立場','スタック','賞金の取り分','オールイン（ICM）','オールイン（チップだけ）'].map(h=><td key={h}>{h}</td>)}</tr>
+    <tr>{['立場','スタック','配分の取り分','オールイン（ICM）','オールイン（チップだけ）'].map(h=><td key={h}>{h}</td>)}</tr>
     {seats.map((pos,i)=><tr key={pos}><td>{pos}</td><td>{stacks[i]}BB</td><td>{(res.icm.equityBefore[i]/(nums(payouts).reduce((a,b)=>a+b,0)||1)*100).toFixed(1)}%</td>
      <td>{pos==='BB'?'-':`${res.icm.jamPct[i]}%`}</td><td>{pos==='BB'?'-':`${res.chip.jamPct[i]}%`}</td></tr>)}
    </tbody></table>

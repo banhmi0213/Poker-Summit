@@ -1,0 +1,14 @@
+.page{max-width:1100px;margin:0 auto;padding:24px 20px 80px;color:#352818}
+.breadcrumb{font-size:12px;color:#8a7558;margin-bottom:16px}.breadcrumb a{color:#865e21}.breadcrumb span{margin:0 8px}
+.title{font-size:clamp(22px,3vw,30px);margin:0 0 8px}
+.lead{font-size:14px;line-height:1.9;color:#5c4a33;margin:0 0 18px}
+.tool{background:#132a3c;border-radius:16px;padding:clamp(14px,2.5vw,24px);color:#e9eff5}
+.join{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:18px 0 28px;padding:16px 18px;border:1px solid #e7d3a8;border-radius:14px;background:#fffdf8}
+.join p{flex:1 1 260px;margin:0;font-size:13px;line-height:1.8;color:#5c4a33}
+.join a{display:inline-block;border:1px solid #bd8c33;border-radius:9px;background:#e0b553;color:#35240f!important;padding:11px 16px;font-weight:800;font-size:13px;text-decoration:none!important;white-space:nowrap}
+.article{background:#fff;border:1px solid #ebdcc3;border-radius:14px;padding:clamp(18px,3vw,30px);font-size:14px;line-height:1.95}
+.article h2{font-size:19px;margin:26px 0 10px;padding-bottom:6px;border-bottom:2px solid #f0e4ce}.article h2:first-child{margin-top:0}
+.article h3{font-size:16px;margin:18px 0 6px}
+.article ul,.article ol{padding-left:1.4em}.article li{margin:4px 0}
+.article table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}.article th,.article td{border:1px solid #ebdcc3;padding:6px 8px;text-align:left}.article th{background:#fcf5e8}
+.article small{color:#846e4e}

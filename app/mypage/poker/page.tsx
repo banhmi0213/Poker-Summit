@@ -30,7 +30,7 @@ export default async function Page(){const [data,hands,tendencies]=await Promise
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
- {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、賞金の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
+ {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
