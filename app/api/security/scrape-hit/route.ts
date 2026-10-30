@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
   if (!CATEGORIES.includes(category)) return NextResponse.json({ ok: false }, { status: 400 });
   const hit = { p_ip: text(body.ip, 64), p_ua: text(body.ua, 400), p_path: text(body.path, 300), p_category: category, p_bot: text(body.bot, 80) };
   const svc = createServiceRoleClient();
+  // robots.txt を読みに来ただけ＝ルールを確かめている行儀のいい相手。一覧には残すが知らせない（オーナー 2026/10/31）。
+  if (hit.p_path.split("?")[0] === "/robots.txt") {
+    const { error } = await svc.from("scrape_hits").insert({ ip: hit.p_ip, ua: hit.p_ua, path: hit.p_path, category, bot: hit.p_bot });
+    return NextResponse.json({ ok: !error }, { status: error ? 503 : 200 });
+  }
   const { data, error } = await svc.rpc("record_scrape_hit", hit);
   if (error) return NextResponse.json({ ok: false }, { status: 503 });
   const result = data as { alert?: boolean; recent?: number } | null;

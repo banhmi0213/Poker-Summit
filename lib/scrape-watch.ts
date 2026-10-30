@@ -1,11 +1,16 @@
 // スクレイピング（自動収集）の見張り（オーナー指示 2026/10/30：スクレイピングされたら速攻わかるように。遮断はせず、記録して知らせる）。
 // middleware から呼ぶので、サーバー専用の物は読み込まない（Edge で動く）。
-/** AI の学習・回答用の収集ロボット。robots.txt でも全ページ禁止にしている（app/robots.ts）。 */
+/** AI の学習用に集める収集ロボット。robots.txt で全ページ禁止にしている（app/robots.ts）。 */
 export const AI_CRAWLERS = [
-  "GPTBot", "ChatGPT-User", "OAI-SearchBot", "ClaudeBot", "Claude-User", "Claude-SearchBot", "Claude-Web", "anthropic-ai",
-  "Google-Extended", "GoogleOther", "Applebot-Extended", "CCBot", "PerplexityBot", "Perplexity-User", "Bytespider", "Amazonbot",
+  "GPTBot", "ClaudeBot", "Claude-Web", "anthropic-ai",
+  "Google-Extended", "GoogleOther", "Applebot-Extended", "CCBot", "Bytespider", "Amazonbot",
   "meta-externalagent", "meta-externalfetcher", "FacebookBot", "cohere-ai", "cohere-training-data-crawler", "Diffbot", "Omgilibot",
-  "YouBot", "DuckAssistBot", "MistralAI-User", "AI2Bot", "Ai2Bot-Dolma", "ImagesiftBot", "Timpibot", "Kangaroo Bot", "PanguBot", "Webzio-Extended",
+  "YouBot", "AI2Bot", "Ai2Bot-Dolma", "ImagesiftBot", "Timpibot", "Kangaroo Bot", "PanguBot", "Webzio-Extended",
+];
+/** ChatGPT などで検索されたときに、このサイトを結果に出すためのロボット（オーナー 2026/10/31：GPTで探したりもするよな）。
+ * Google と同じ扱い：公開ページは見てよく、記録もしない。 */
+export const AI_SEARCH_BOTS = [
+  "OAI-SearchBot", "ChatGPT-User", "Claude-SearchBot", "Claude-User", "PerplexityBot", "Perplexity-User", "DuckAssistBot", "MistralAI-User",
 ];
 /** 検索エンジン・SNSのリンクプレビューなど、普通の巡回（記録しない）。 */
 const ALLOWED = [/googlebot/i, /adsbot-google/i, /mediapartners-google/i, /google-inspectiontool/i, /bingbot/i, /msnbot/i, /\bapplebot\b(?!-extended)/i, /duckduckbot/i, /yandex/i, /baiduspider/i,
@@ -27,6 +32,7 @@ export function classifyScrape(userAgent: string | null, headers: { acceptLangua
   const ua = (userAgent ?? "").trim();
   if (!ua) return { category: "no-ua", bot: "(なし)" };
   const lower = ua.toLowerCase();
+  if (AI_SEARCH_BOTS.some((name) => lower.includes(name.toLowerCase()))) return null;
   const ai = AI_CRAWLERS.find((name) => lower.includes(name.toLowerCase()));
   if (ai) return { category: "ai", bot: ai };
   if (ALLOWED.some((re) => re.test(ua))) return null;
