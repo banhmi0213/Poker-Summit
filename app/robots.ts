@@ -9,7 +9,8 @@ export default function robots(): MetadataRoute.Robots {
   rules:[
    // AI crawlers that collect pages for model training or AI answers: not allowed anywhere (owner 2026/10/30:
    // こっちの中身がAIに覗かれんように). Search engines (Googlebot, Bingbot …) keep the normal rule below.
-   // Crawlers that ignore this are recorded and reported to the owner (middleware → /api/security/scrape-hit).
+   // AI search bots (OAI-SearchBot …) are not listed: they follow the normal rule so the site shows in ChatGPT search
+   // (owner 2026/10/31). Crawlers that ignore this are recorded and reported to the owner (middleware → /api/security/scrape-hit).
    {userAgent:AI_CRAWLERS,disallow:"/"},
    {
     userAgent:"*",
