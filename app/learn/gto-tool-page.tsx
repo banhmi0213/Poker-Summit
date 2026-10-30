@@ -8,7 +8,8 @@ import styles from './gto-tool-page.module.css';
 
 /** Public GTO calculator pages (owner 2026/10/31: 計算機をログインなしで全部使えるように、説明文と会員登録の入口つき).
  * The tool runs in the visitor's browser; the explanation below it is plain text for readers and search. */
-export async function GtoToolPage({title,lead,tool,children}:{title:string;lead:string;tool:ReactNode;children:ReactNode}){
+export async function GtoToolPage({title,lead,tool,children,join}:{title:string;lead:string;tool:ReactNode;children:ReactNode;
+ /** Sign-up box wording for visitors (default: the calculator wording). */join?:{text:string;label:string}}){
  const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
@@ -18,7 +19,7 @@ export async function GtoToolPage({title,lead,tool,children}:{title:string;lead:
    <section className={styles.tool} aria-label={title}>{tool}</section>
    <div className={styles.join}>
     {user?<><p>マイページでは、GTOの表・フロップ戦略・GTOとの対戦など、ほかの練習道具も使えます。</p><Link href="/mypage/poker">マイページで練習する</Link></>
-     :<><p>計算結果を保存したり、GTOの表やGTOとの対戦で練習したりするには会員登録（無料）をしてください。</p><Link href="/signup">計算結果を保存するには会員登録</Link></>}
+     :<><p>{join?.text??'計算結果を保存したり、GTOの表やGTOとの対戦で練習したりするには会員登録（無料）をしてください。'}</p><Link href="/signup">{join?.label??'計算結果を保存するには会員登録'}</Link></>}
    </div>
    <article className={styles.article}>{children}</article>
   </main>

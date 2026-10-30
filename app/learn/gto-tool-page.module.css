@@ -12,3 +12,6 @@
 .article ul,.article ol{padding-left:1.4em}.article li{margin:4px 0}
 .article table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}.article th,.article td{border:1px solid #ebdcc3;padding:6px 8px;text-align:left}.article th{background:#fcf5e8}
 .article small{color:#846e4e}
+.posNav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}.posNav a,.posNav b{display:inline-block;border:1px solid #e1c89a;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;color:#865e21;background:#fffdf8;text-decoration:none}.posNav b{background:#e0b553;border-color:#bd8c33;color:#35240f}
+.chartHead{margin:0 0 10px;font-size:14px;line-height:1.8}
+.chartNote{margin:10px 0 0;font-size:12px;color:#9ab0c0;line-height:1.7}
