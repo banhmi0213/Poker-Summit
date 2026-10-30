@@ -27,3 +27,6 @@
 .report label{font-size:12px;color:#c9b48a}
 .report select,.report textarea{box-sizing:border-box;width:100%;background:#0f1820;color:#f6f1e7;border:1px solid #5d4c33;border-radius:8px;padding:8px;font:inherit;font-size:14px}
 .report textarea{min-height:56px;resize:vertical}
+
+/* Hands + VPIP PFR ATS 3BET CB: three across (owner 2026/10/30). */
+.grid{grid-template-columns:repeat(3,minmax(0,1fr))}

@@ -16,6 +16,7 @@ const folder=path.resolve(__dirname,'../../supabase/migrations'),load=suffix=>fs
  grant usage on schema public,auth to authenticated,anon,service_role;grant usage on schema poker_private to service_role;`);
  await db.exec(load('_poker_hand_histories.sql'));await db.exec(load('_poker_hand_stats.sql'));
  const hud=load('_poker_ring_player_hud.sql');await db.exec(hud);await db.exec(hud); // re-runnable
+ await db.exec(load('_poker_ring_hud_ats.sql'));await db.exec(load('_poker_ring_hud_ats.sql')); // ATS (2026/10/30), re-runnable
  const ids=[1,2,3].map(i=>`00000000-0000-4000-8000-${String(i).padStart(12,'0')}`),table='30000000-0000-4000-8000-000000000001',hidden='30000000-0000-4000-8000-000000000002';
  for(let i=0;i<3;i++){await db.query('insert into auth.users values($1,$2)',[ids[i],{display_name:'P'+(i+1)}]);await db.query('insert into public.profiles values($1,$2,null)',[ids[i],'P'+(i+1)]);}
  await db.query("insert into public.poker_ring_tables(id,title) values($1,'卓')",[table]);
@@ -47,7 +48,7 @@ const folder=path.resolve(__dirname,'../../supabase/migrations'),load=suffix=>fs
  // Stats for seat 3 are ring-only counts with denominators.
  const p2=await as(ids[0],'select public.poker_ring_member_hud($1,3) v',[table]);
  assert.equal(p2.you,false);assert.equal(p2.note,'');assert.equal(p2.color,null);
- assert.deepEqual(p2.stats,{hands:2,vpip:2,pfr:1,threeBet:1,threeBetOpp:1,cbet:0,cbetOpp:0,foldTo3Bet:0,foldTo3BetOpp:0,foldToCbet:0,foldToCbetOpp:1,sawFlop:1,wtsd:1,wsd:1});
+ assert.deepEqual(p2.stats,{hands:2,vpip:2,pfr:1,threeBet:1,threeBetOpp:1,cbet:0,cbetOpp:0,foldTo3Bet:0,foldTo3BetOpp:0,foldToCbet:0,foldToCbetOpp:1,sawFlop:1,wtsd:1,wsd:1,steal:0,stealOpp:0});
  assert.ok(!JSON.stringify(p2).includes(ids[1]));
  assert.equal(await as(ids[0],'select public.poker_ring_member_hud($1,2) v',[table]),null); // empty seat
  assert.equal(await as(ids[0],'select public.poker_ring_member_hud($1,1) v',[hidden]),null); // unpublished table
