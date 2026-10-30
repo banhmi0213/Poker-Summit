@@ -23,13 +23,13 @@ export function PreflopChartPanel(){
  const node=options.find(n=>n.id===id)??options[0]??null;
  const totals=useMemo(()=>{if(!node)return [];const k=node.actions.length,t=new Array(k).fill(0);let all=0;for(const [l,v] of Object.entries(node.strategy)){const c=combos(l);all+=c;for(let a=0;a<k;a++)t[a]+=c*v[a];}return t.map(x=>x/all);},[node]);
  return <div className={styles.wrap}>
-  <p>プリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人卓は100BBのほか、大会向けに60・40・20BB（BBアンティあり）の表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
+  <p>プリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人卓は100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}
   {data&&<>
    <div className={styles.form}>
     <label>人数<select value={table} onChange={e=>{setTable(e.target.value as '6max'|'hu');setKind('open');setId(null);}}><option value="6max">6人卓</option><option value="hu">2人（ヘッズアップ）</option></select></label>
-    {table==='6max'&&<label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB（アンティなし）</option><option value={60}>60BB（大会・BBアンティ）</option><option value={40}>40BB（大会・BBアンティ）</option><option value={20}>20BB（大会・BBアンティ）</option></select></label>}
+    {table==='6max'&&<label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB（アンティなし）</option><option value={60}>60BB（大会・BBアンティ）</option><option value={40}>40BB（大会・BBアンティ）</option><option value={20}>20BB（大会・BBアンティ）</option><option value={10}>10BB（大会・BBアンティ）</option></select></label>}
     <label>状況<select value={kind} onChange={e=>{setKind(e.target.value);setId(null);}}>{KINDS.map(([k,l])=><option key={k} value={k}>{l}</option>)}</select></label>
     <label>立場<select value={node?.id??''} onChange={e=>setId(Number(e.target.value))}>{options.map(n=><option key={n.id} value={n.id}>{n.title}</option>)}</select></label>
    </div>
