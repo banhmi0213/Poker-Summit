@@ -103,3 +103,36 @@ export function gradeChoice(freqs:readonly number[],chosen:number):{level:Traine
  const level:TrainerLevel=freq>=top-0.02&&freq>0?'best':freq>=0.25?'correct':freq>=0.08?'inaccurate':freq>=0.02?'mistake':'blunder';
  return {level,score:top>0?Math.round(Math.min(1,freq/top)*100):0,freq};
 }
+
+// ---------- practice spots (「練習の始め方」2026/10/30, GTO Wizard の Trainer に合わせて) ----------
+export type TrainerMode='all'|'rfi'|'vsOpen'|'vs3bet'|'flop';
+export const MODE_TEXT:Record<TrainerMode,string>={all:'最初から（すべての場面）',rfi:'オープンするか（誰も参加していない）',vsOpen:'オープンされた',vs3bet:'オープンして3ベットされた',flop:'フロップから'};
+/** Positions where the mode can happen for the hero. */
+export const MODE_POSITIONS:Record<TrainerMode,Pos[]>={all:['BTN','CO','HJ','UTG','BB','SB'],rfi:['UTG','HJ','CO','BTN','SB'],vsOpen:['HJ','CO','BTN','SB','BB'],vs3bet:['UTG','HJ','CO','BTN','SB'],flop:['BTN','CO','HJ','UTG','BB','SB']};
+const raisesBefore=(h:TrainerHand)=>h.log.filter(a=>a.street==='preflop'&&(a.type==='raise'||a.type==='bet')).length;
+/** Deal from `seed` and let everyone (the hero too, until the spot) play GTO until the hero reaches the chosen spot.
+ * `decide` is the GTO bot. Returns null when this deal never reaches the spot (try the next seed). */
+export function reachSpot(seed:number,buttonIndex:number,mode:TrainerMode,decide:(h:TrainerHand,id:string)=>BettingAction):TrainerHand|null{
+ let h=startTrainerHand(seed,buttonIndex);
+ if(mode==='all')return h;
+ let heroActs=0;
+ for(let guard=0;guard<60&&!h.result;guard++){
+  const id=h.round.toAct;if(!id)return null;
+  if(id===HERO){
+   const r=raisesBefore(h),limps=h.log.some(a=>a.street==='preflop'&&a.type==='call');
+   if(mode==='rfi')return heroActs===0&&r===0&&!limps?h:null;
+   if(mode==='vsOpen')return heroActs===0&&r===1?h:null;
+   if(mode==='vs3bet'){
+    if(heroActs===0){if(r!==0||limps)return null;const a=decide(h,id);if(a.type!=='raise'&&a.type!=='bet')return null;h=trainerAct(h,id,a);heroActs++;continue;}
+    return r===2&&h.street===0?h:null;
+   }
+   if(mode==='flop'&&h.street>=1)return h;
+   const a=decide(h,id);h=trainerAct(h,id,a);heroActs++;
+   if(h.round.players.find(p=>p.id===HERO)!.folded)return null;
+   continue;
+  }
+  h=trainerAct(h,id,decide(h,id));
+  if(mode==='vs3bet'&&heroActs>0&&h.round.players.find(p=>p.id===HERO)!.folded)return null;
+ }
+ return null;
+}

@@ -5,7 +5,7 @@ import type {BettingAction} from '@/lib/poker/betting';
 import {toTable} from '@/lib/poker/gto-bot';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import {reasonText,type TrainerSpot} from '@/lib/poker/gto-review';
-import {HERO,LEVEL_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel} from '@/lib/poker/gto-trainer';
+import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 
@@ -55,6 +55,7 @@ export function GtoTrainer(){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
+ const [mode,setMode]=useState<TrainerMode>('all'),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
  const worker=useRef<Worker|null>(null),seq=useRef(0),counted=useRef<number|null>(null);
  useEffect(()=>{setStats(readStats());return()=>worker.current?.terminate();},[]);
  const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
@@ -64,9 +65,19 @@ export function GtoTrainer(){
    const on=(e:MessageEvent<GtoReply>)=>{if(e.data.id!==id)return;window.clearTimeout(guard);w.removeEventListener('message',on);resolve(e.data);};
    w.addEventListener('message',on);w.postMessage(build(id));});
  },[]);
- const deal=(n:number,seed:number)=>{setHand(startTrainerHand(seed,buttonIndexFor(n)));setFeedback([]);setSpot(null);setError('');counted.current=null;};
- const nextHand=()=>{const n=hand?handNo+1:handNo;setHandNo(n);deal(n,Math.floor(Math.random()*2**31));};
- const replay=()=>{if(hand)deal(handNo,hand.seed);};
+ const begin=(h:TrainerHand)=>{startRef.current=h;setHand(h);setFeedback([]);setSpot(null);setError('');counted.current=null;};
+ // 練習の始め方: everyone (the hero too) plays GTO in the worker until the hero reaches the chosen spot; seats where the
+ // spot cannot happen (e.g. BB for an open) are skipped, so the seat still moves round the table.
+ const deal=async(n:number,seed:number)=>{
+  if(mode==='all'){setHandNo(n);begin(startTrainerHand(seed,buttonIndexFor(n)));return;}
+  let k=n;for(let i=0;i<6&&!MODE_POSITIONS[mode].includes(startTrainerHand(1,buttonIndexFor(k)).heroPos);i++)k++;
+  setHandNo(k);setSeeking(true);setError('');
+  const r=await ask(id=>({type:'trainerStart',id,mode,seed,buttonIndex:buttonIndexFor(k),tries:40}));
+  setSeeking(false);
+  if(r.type==='trainerStart'&&r.hand)begin(r.hand);else setError('この場面になる配牌が見つかりませんでした。もう一度押してください。');
+ };
+ const nextHand=()=>{void deal(hand?handNo+1:handNo,Math.floor(Math.random()*2**31));};
+ const replay=()=>{if(startRef.current)begin(startRef.current);};
 
  // CPU turns: the GTO bot decides in the worker; a short pause so the action can be followed.
  useEffect(()=>{
@@ -122,8 +133,10 @@ export function GtoTrainer(){
  return <div className={chart.wrap}>
   <p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>
   <div className={chart.form}>
+   <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
-   {!hand&&<button type="button" onClick={nextHand}>対戦を始める</button>}
+   {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
+   {seeking&&<p role="status">場面を探しています…</p>}
   </div>
   {hand&&<>
    <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
@@ -151,7 +164,7 @@ export function GtoTrainer(){
     {last.note&&<p className={chart.note}>{last.note}</p>}
    </section>}
    {done&&<div className={chart.form}>
-    <button type="button" onClick={nextHand}>次のハンド</button>
+    <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div>}
    {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
