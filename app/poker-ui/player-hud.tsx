@@ -18,8 +18,7 @@ export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:n
   <div className={styles.panel} role="dialog" aria-modal="true" aria-label={`${name}の成績`}>
    <div className={styles.top}><strong>{name}</strong><button type="button" aria-label="閉じる" onClick={onClose}>×</button></div>
    {error?<p className={styles.message} role="alert">{error}</p>:!player?<p className={styles.message} role="status">読み込み中…</p>:<>
-    <p className={styles.hands}>リング {player.stats.hands.toLocaleString()} ハンド</p>
-    <div className={styles.grid}>{hudRows(player.stats).map(([label,rate])=><div key={label} className={styles.stat}><span>{label}</span><b>{rate}</b></div>)}</div>
+    <div className={styles.grid}>{[['ハンド数',player.stats.hands.toLocaleString()] as [string,string],...hudRows(player.stats)].map(([label,rate])=><div key={label} className={styles.stat}><span>{label}</span><b>{rate}</b></div>)}</div>
     {!player.you&&<div className={styles.note}>
      <label htmlFor="player-hud-note">自分だけのメモ</label>
      <textarea id="player-hud-note" maxLength={500} value={note} onChange={e=>setNote(e.target.value)} placeholder="プレイの特徴など"/>

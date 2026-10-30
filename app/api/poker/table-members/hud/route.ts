@@ -1,5 +1,5 @@
 import {createClient} from '@/lib/supabase/server';
-import {parseHudNote} from '@/lib/poker/player-hud';
+import {freeHudStats,parseHudNote} from '@/lib/poker/player-hud';
 export const dynamic='force-dynamic';
 const reply=(status:number,data:unknown)=>Response.json(data,{status,headers:{'Cache-Control':'no-store, private'}});
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -9,7 +9,9 @@ export async function GET(request:Request){
  if(!table||!uuid.test(table)||!Number.isInteger(seat)||seat<1||seat>6)return reply(400,{error:'席を確認できません。'});
  const client=await createClient(),{data:{user},error}=await client.auth.getUser();if(error||!user)return reply(401,{error:'ログインしてください。'});
  const result=await client.rpc('poker_ring_member_hud',{p_table:table,p_seat:seat});
- if(result.error)return reply(503,{error:'成績を取得できません。'});return result.data?reply(200,{player:result.data}):reply(404,{error:'この席は空いています。'});
+ if(result.error)return reply(503,{error:'成績を取得できません。'});if(!result.data)return reply(404,{error:'この席は空いています。'});const player=result.data as {stats?:Record<string,number>};
+ // Only VPIP / PFR / 3ベット / CB reach the browser (owner 2026/10/30).
+ return reply(200,{player:{...player,stats:freeHudStats(player.stats??{})}});
 }
 // Private note and colour label; only the writer ever sees them.
 export async function POST(request:Request){

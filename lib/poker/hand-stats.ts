@@ -11,10 +11,13 @@ export type HandStats={
  cbetOpp:boolean;cbet:boolean;
  foldToCbetOpp:boolean;foldToCbet:boolean;
  sawFlop:boolean;wentToShowdown:boolean;wonAtShowdown:boolean;
+ /** ATS (2026/10/30): from CO, BTN or SB with everyone before folding, the first action was a raise. */
+ stealOpp?:boolean;steal?:boolean;
 };
-type Input={actions:readonly HistoryAction[];players:readonly {seatId:string;net:number}[];board:readonly unknown[];result:{showdown:boolean;winners:readonly string[]}};
+type Input={actions:readonly HistoryAction[];players:readonly {seatId:string;net:number;position?:string}[];board:readonly unknown[];result:{showdown:boolean;winners:readonly string[]}};
 const forced=new Set(['ante','sb','bb']);
 const aggressive=(a:HistoryAction)=>a.type==='bet'||a.type==='raise';
+const stealSeats=new Set(['CO','BTN','SB']);
 
 export function handStats(h:Input):Record<string,HandStats>{
  const pre=h.actions.filter(a=>a.street==='preflop'&&!forced.has(a.type));
@@ -27,7 +30,7 @@ export function handStats(h:Input):Record<string,HandStats>{
  const firstFlopBet=flop.findIndex(aggressive);
  const cbetIndex=firstFlopBet>=0&&flop[firstFlopBet].seatId===lastAggressor?firstFlopBet:-1;
  const out:Record<string,HandStats>={};
- for(const {seatId,net} of h.players){
+ for(const {seatId,net,position} of h.players){
   const mine=pre.filter(a=>a.seatId===seatId);
   const s:HandStats={vpip:mine.some(a=>a.type==='call'||aggressive(a)),pfr:mine.some(aggressive),
    threeBetOpp:false,threeBet:false,foldTo3BetOpp:false,foldTo3Bet:false,cbetOpp:false,cbet:false,foldToCbetOpp:false,foldToCbet:false,
@@ -41,6 +44,9 @@ export function handStats(h:Input):Record<string,HandStats>{
    }
    if(aggressive(a))raises++;
   }
+  // Steal chance: the player's first preflop decision from CO / BTN / SB, with only folds in front of it.
+  const firstMine=pre.findIndex(a=>a.seatId===seatId);
+  if(firstMine>=0&&position&&stealSeats.has(position)&&pre.slice(0,firstMine).every(a=>a.type==='fold')){s.stealOpp=true;s.steal=aggressive(pre[firstMine]);}else{s.stealOpp=false;s.steal=false;}
   if(s.sawFlop&&seatId===lastAggressor){
    // C-bet chance: the aggressor's first flop decision with no bet in front of it.
    const first=flop.findIndex(a=>a.seatId===seatId);

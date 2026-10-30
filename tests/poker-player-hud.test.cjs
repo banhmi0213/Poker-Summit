@@ -8,9 +8,9 @@ const hud=require('../lib/poker/player-hud.ts'),route=require('../app/api/poker/
 const table='30000000-0000-4000-8000-000000000001',base='https://www.pokersummit.jp/api/poker/table-members';
 const post=(body,origin='https://www.pokersummit.jp')=>new Request(base+'/hud',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
 test('rates show a dash until there is an opportunity and no counts',()=>{
- const rows=hud.hudRows({hands:10,vpip:3,pfr:2,threeBet:1,threeBetOpp:4,cbet:0,cbetOpp:0,foldTo3Bet:1,foldTo3BetOpp:2,foldToCbet:2,foldToCbetOpp:3,sawFlop:4,wtsd:2,wsd:1});
- assert.deepEqual(rows.map(r=>r[0]),['VPIP','PFR','3ベット','3ベットにフォールド','CB','CBにフォールド','WTSD','W$SD']);
- assert.deepEqual(rows.map(r=>r[1]),['30%','20%','25%','50%','—','67%','50%','50%']);assert.ok(rows.every(r=>r.length===2),'no sample counts, rates only');
+ const rows=hud.hudRows({hands:10,vpip:3,pfr:2,steal:1,stealOpp:4,threeBet:1,threeBetOpp:4,cbet:0,cbetOpp:0,foldTo3Bet:1,foldTo3BetOpp:2,foldToCbet:2,foldToCbetOpp:3,sawFlop:4,wtsd:2,wsd:1});
+ assert.deepEqual(rows.map(r=>r[0]),['VPIP','PFR','ATS','3BET','CB'],'VPIP PFR ATS 3BET CB (owner 2026/10/30)');
+ assert.deepEqual(rows.map(r=>r[1]),['30%','20%','25%','25%','—']);assert.ok(rows.every(r=>r.length===2),'no sample counts, rates only');
 });
 test('note payload validation',()=>{
  assert.deepEqual(hud.parseHudNote({table,seat:3,note:'  強め ',color:'red'}),{table,seat:3,note:'強め',color:'red'});
@@ -19,7 +19,8 @@ test('note payload validation',()=>{
 });
 test('HUD route reads by table + seat and saves notes from the same origin only',async()=>{
  rpcResult={data:{seat:3,you:false,stats:{hands:1},note:'',color:null},error:null};
- let r=await route.GET(new Request(base+`/hud?table=${table}&seat=3`));assert.equal(r.status,200);assert.deepEqual(calls.pop(),['poker_ring_member_hud',{p_table:table,p_seat:3}]);
+ rpcResult={data:{seat:3,you:false,stats:{hands:5,vpip:2,pfr:1,steal:1,stealOpp:2,threeBet:0,threeBetOpp:1,cbet:1,cbetOpp:2,foldTo3Bet:1,foldTo3BetOpp:1,foldToCbet:1,foldToCbetOpp:1,sawFlop:3,wtsd:2,wsd:1},note:'',color:null},error:null};
+ let r=await route.GET(new Request(base+`/hud?table=${table}&seat=3`));assert.equal(r.status,200);assert.deepEqual(Object.keys((await r.json()).player.stats).sort(),['cbet','cbetOpp','hands','pfr','steal','stealOpp','threeBet','threeBetOpp','vpip'],'the paid-later stats never leave the server');assert.deepEqual(calls.pop(),['poker_ring_member_hud',{p_table:table,p_seat:3}]);
  assert.equal((await route.GET(new Request(base+`/hud?table=${table}&seat=9`))).status,400);
  rpcResult={data:null,error:null};assert.equal((await route.GET(new Request(base+`/hud?table=${table}&seat=2`))).status,404);
  assert.equal((await route.POST(post({table,seat:3,note:'x',color:null},'https://evil.example'))).status,403);assert.equal(calls.length,1);
