@@ -23,7 +23,9 @@ export function attachPokerRoomWebSocket(server:Server,options:Options){
    if(p.closed)return;if(response.status!==200)throw Error();const body=await response.json();if(body.ok!==true||!Number.isSafeInteger(body.result?.revision))throw Error();
    if(!p.owner){const owner=await options.owner(p.roomId);if(!owner||p.closed)throw Error();p.owner=owner;
     // Subscribe before the second read; commits during the first read cannot be lost.
-    p.unsubscribe=owner.subscribe(()=>{void check(p);});p.key=p.roomId+':'+p.connection;
+    p.unsubscribe=owner.subscribe(()=>{
+     // Multi-table tournaments: skip the authorized re-read when this player's own table did not change.
+     const hint=p.owner?.revisionHint(p.connection);if(hint!==null&&hint!==undefined&&hint===p.revision)return;void check(p);});p.key=p.roomId+':'+p.connection;
     const old=current.get(p.key);current.set(p.key,p);if(old)end(old);p.again=true;
    }
    if(p.ws.bufferedAmount>16384)throw Error();

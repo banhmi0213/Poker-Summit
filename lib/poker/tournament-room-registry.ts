@@ -3,7 +3,8 @@ import {createSupabasePokerLobbyHandler} from './lobby-request-handler';
 /** One registry per trusted server process. No cross-process lease/election or listening server. */
 import {DurableRoomOwner} from './durable-room-owner';
 import {restoreRoom,type KeyRing,type RoomStore} from './room-persistence';
-import {roomUUID,roomConfig,roomBinding,type RoomDirectory,type RoomAccess} from './room-directory';
+import {roomUUID,roomConfig,roomBinding,ROOM_CAPACITIES,type RoomCapacity,type RoomDirectory,type RoomAccess} from './room-directory';
+import {FIELD_MAX_PLAYERS} from './tournament-field';
 import {createSupabasePokerPlayerHandler} from './player-request-handler';
 type Options={directory:RoomDirectory;store:RoomStore;keys:KeyRing;now?:()=>number;turnMs?:number;handPauseMs?:number;maxRooms?:number;onRoomBound?:(roomId:string)=>Promise<void>};
 export class TournamentRoomRegistry {
@@ -26,17 +27,17 @@ export class TournamentRoomRegistry {
   * Persist empty room first; bind immutable roster only if its config still matches published DB.
   * Failures never expose the new owner. Do not delete on uncertain outcome; inspect/reload binding.
   */
- provision(id:string,tournamentId:string,members:readonly string[],policy:{capacity:2|6;allowSpectators:boolean}){
+ provision(id:string,tournamentId:string,members:readonly string[],policy:{capacity:RoomCapacity;allowSpectators:boolean}){
   const roomId=roomUUID(id),tournament=roomUUID(tournamentId),ids=members.map(roomUUID),copied={capacity:policy.capacity,allowSpectators:policy.allowSpectators};
-  if(![2,6].includes(copied.capacity)||typeof copied.allowSpectators!=='boolean'||ids.length<2||ids.length>copied.capacity||new Set(ids).size!==ids.length)throw new Error('Invalid provision request');
+  if(!ROOM_CAPACITIES.includes(copied.capacity)||typeof copied.allowSpectators!=='boolean'||ids.length<2||ids.length>copied.capacity||new Set(ids).size!==ids.length)throw new Error('Invalid provision request');
   if(this.#owners.has(roomId))throw new Error('Room already managed');
   return this.#reserve(roomId,async()=>{const raw=await this.#options.directory.tournament(tournament);if(!raw)throw new Error('Published tournament not found');const config=roomConfig(raw);if(config.tournamentId!==tournament)throw new Error('Tournament identity mismatch');
    const owner=await DurableRoomOwner.create(config,{...this.#options,roomId,expectedConfig:config});
    await this.#options.directory.provision({...config,roomId,...copied,enabled:true},ids);return owner;});
  }
- /** Single-table handoff. Freeze once, retain the SAME plan/room on every retry. */
+ /** Roster handoff (one table for 2–6, a multi-table field for 7–60). Freeze once, retain the SAME plan/room on every retry. */
  finalizeRegistration(id:string,expectedCount:number,beforeBind:()=>Promise<void>=async()=>{}){
-  const tid=roomUUID(id),pending=this.#finalizing.get(tid);if(pending){if(pending.count!==expectedCount)return Promise.reject(new Error('Roster count changed'));return pending.task;}if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>6)return Promise.reject(new Error('Require 2-6 players'));if(this.#finalizing.size>=this.#limit)return Promise.reject(new Error('Finalization capacity reached'));
+  const tid=roomUUID(id),pending=this.#finalizing.get(tid);if(pending){if(pending.count!==expectedCount)return Promise.reject(new Error('Roster count changed'));return pending.task;}if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>FIELD_MAX_PLAYERS)return Promise.reject(new Error('Require 2-60 players'));if(this.#finalizing.size>=this.#limit)return Promise.reject(new Error('Finalization capacity reached'));
   const task=Promise.resolve().then(async()=>{
    const plan=await this.#options.directory.freezeRegistration(tid,expectedCount),roomId=plan.roomId;
    const binding=await this.#options.directory.binding(roomId);
