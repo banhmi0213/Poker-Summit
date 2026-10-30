@@ -1,4 +1,5 @@
 "use server";
+import { handleNameError } from "@/lib/handle-name";
 
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
@@ -24,6 +25,9 @@ export async function updateProfile(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "").trim();
+  const currentName = String(user.user_metadata?.display_name ?? "").trim();
+  const nameError = name === currentName ? null : handleNameError(name);
+  if (nameError) redirect(`/account/profile?error=${encodeURIComponent(nameError)}`);
   const mHoldemId = normalizeMHoldemId(formData.has("mHoldemId") ? formData.get("mHoldemId") : user.user_metadata?.m_holdem_id);
   const idError = mHoldemIdError(mHoldemId);
   if (idError) redirect(`/account/profile?error=${encodeURIComponent(idError)}`);

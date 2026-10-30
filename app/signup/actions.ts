@@ -1,4 +1,5 @@
 "use server";
+import { handleNameError } from "@/lib/handle-name";
 
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
@@ -21,6 +22,8 @@ async function register(formData: FormData, path: "/signup" | "/prelaunch") {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const name = String(formData.get("name") ?? "").trim();
+  const nameError = handleNameError(name);
+  if (nameError) redirect(`${path}?error=${encodeURIComponent(nameError)}`);
   const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
   const idError = mHoldemIdError(mHoldemId);
   if (idError) redirect(`${path}?error=${encodeURIComponent(idError)}`);

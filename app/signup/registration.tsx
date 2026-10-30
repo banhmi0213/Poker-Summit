@@ -1,3 +1,4 @@
+import { HANDLE_NAME_ASCII_MAX, HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 import Link from "next/link";
 import { signUp, prelaunchSignUp } from "./actions";
 import { PREF_OPTIONS } from "@/lib/constants";
@@ -52,7 +53,8 @@ export function RegistrationPage({ searchParams, early = false }: { searchParams
           <form action={early ? prelaunchSignUp : signUp}>
             <label className={styles.field}>
               <span>ハンドルネーム</span>
-              <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" />
+              <input type="text" name="name" autoComplete="nickname" placeholder="例）Poker Summit" maxLength={HANDLE_NAME_ASCII_MAX} aria-describedby="signup-name-note" />
+              <small id="signup-name-note">{HANDLE_NAME_NOTICE}です。</small>
             </label>
             <label className={styles.field}>
               <span>都道府県 <b className={styles.required}>必須</b></span>
