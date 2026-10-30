@@ -6,7 +6,7 @@ import { Avatar } from "@/app/avatar";
 import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { ReportForm } from "@/app/report-form";
-import { HANDLE_NAME_MAX } from "@/lib/handle-name";
+import { HANDLE_NAME_ASCII_MAX, HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 import { BOARD_REACTIONS, BoardReaction, BoardReply, MentionMember, ThreadPreference, encodeMentions, splitMentions } from "@/lib/board-community";
 import { createReply, reportReply } from "./actions";
 import { loadBoardChildren, searchMentionMembers, setBoardReaction, setThreadPreference, setThreadResolution } from "./community-actions";
@@ -104,7 +104,7 @@ export function ReplyComposer({ postId, parentId = null, authorName, recipient, 
     try { await createReply(fd); form.current?.reset(); setVersion(n => n + 1); onDone?.(); router.refresh(); }
     catch (e) { setError(message(e)); } finally { setPending(false); }
   }}><input name="postId" type="hidden" value={postId} /><input name="parentReplyId" type="hidden" value={parentId ?? ""} />
-    {authorName ? <p className={s.hint}>投稿者：{authorName}</p> : <label>ハンドルネーム *<input name="authorName" required maxLength={HANDLE_NAME_MAX} autoComplete="nickname" /></label>}
+    {authorName ? <p className={s.hint}>投稿者：{authorName}</p> : <label>ハンドルネーム *<input name="authorName" required maxLength={HANDLE_NAME_ASCII_MAX} autoComplete="nickname" /></label>}
     <MentionInput key={version} label={parentId ? "この会話への返信" : "スレッドへのコメント"} initialMember={recipient} rows={3} />
     <label>画像（任意・1枚）<input type="file" name="image" accept="image/*" /></label>
     <p className={s.hint}>画像は8MBまで。不適切なコメントは運営により非表示になる場合があります。</p>

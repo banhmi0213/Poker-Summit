@@ -41,7 +41,8 @@ export async function updateProfile(formData: FormData) {
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
 
   // 都道府県は任意(2026/10/20、登録画面から外したため)
-  if (name) {
+  // 今の名前のままなら確認しない(文字数を短くした 2026/10/30 より前の長い名前も、そのまま使える)
+  if (name && name !== String(user.user_metadata?.display_name ?? "").trim()) {
     // 「運営」バッジの運営アカウントだけは「運営」等を含む名前にできる
     const { data: official } = await supabase.rpc("official_board_user_ids", { p_ids: [user.id] });
     const isOfficial = ((official ?? []) as unknown[]).length > 0;
