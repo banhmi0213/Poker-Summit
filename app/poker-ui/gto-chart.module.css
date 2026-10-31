@@ -31,3 +31,23 @@
 .ownHand{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #d9b36866;border-radius:9px;background:#193a4c70;font-size:14px;color:#e9eff5}.ownHand i{display:block;height:16px;border-radius:4px}.ownHand small{color:#c9d6e0}
 /* From the GTO tools to the store search (2026/10/31). */
 .storeInvite{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 14px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;font-size:14px;color:#c9d6e0}.storeInvite b{color:#e6bd70;font-size:15px;width:100%}.storeInvite span{flex:1 1 220px}.storeInvite a{background:#d9b368;color:#14283a!important;border-radius:8px;padding:8px 14px;font-weight:700;text-decoration:none!important;white-space:nowrap}
+/* 文字を大きく (owner 2026/10/31): beats the mypage shell's .panel p 13px / .panel button 12px */
+.wrap{font-size:17px!important}
+.wrap p{font-size:17px!important;line-height:1.8!important}
+.form button,.wrap>div>button{font-size:16px!important;min-height:44px}
+.stack{font-size:17px!important}
+.grid caption{font-size:16px!important}
+.legend,.actionKey{font-size:16px!important}
+.wrap .note,.wrap .strategyLegend>p,.note,.strategyLegend>p{font-size:15px!important}
+.form,.form label{font-size:16px!important}
+.form input,.form select{font-size:17px!important;min-height:46px}
+.path,.path button{font-size:16px!important}
+.rangeToggle{font-size:15px!important;padding:3px 10px!important}
+.dialog{font-size:16px!important}
+.dialogHead{font-size:18px!important}
+.dialogHead button{font-size:16px!important}
+.catRow{font-size:16px!important}
+.ownHand{font-size:16px!important}
+.storeInvite{font-size:16px!important}
+.storeInvite b{font-size:18px!important}
+@media(min-width:900px){.grid{font-size:14px!important}.pair .grid{font-size:12px!important}}
