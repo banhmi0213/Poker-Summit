@@ -103,6 +103,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_refill_isolated.cjs
+      - name: Verify the monthly chip reset
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_chip_season_isolated.cjs
       - name: Verify hand history privacy and idempotent saves
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
