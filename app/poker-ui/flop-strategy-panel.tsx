@@ -33,7 +33,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const current=GTO_SPOTS.find(s=>s.id===spot)!;
  // Per-hand EV (version 3) is the value from the start of the flop: shown on the first decision of each player only.
  const evSide:'oop'|null=data&&node&&data.handEv&&!data.spot.order&&trail.length===1?'oop':null;
- return <div className={styles.wrap}>
+ return <div className={styles.wrap}><div className={styles.split} data-on={mode==='flop'&&data&&node?'':undefined}><div className={styles.splitSide}>
   <p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
   <p className={styles.note}>{(data&&sizeNote(data.spot.sizes,!!data.multiway))??'ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。'}お互いのレンジはプリフロップの表から出したレンジです。</p>
   <div className={styles.form}>
@@ -47,7 +47,6 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
    <button type="button" onClick={()=>setMode('flop')} disabled={mode==='flop'}>フロップごとの表</button>
    <button type="button" onClick={()=>setMode('summary')} disabled={mode==='summary'}>全体まとめ</button>
   </nav>
-  {mode==='summary'&&<FlopAggregate spot={spot} onPick={f=>{setFlop(f);setNearNote('');setMode('flop');}}/>}
   {mode==='flop'&&<>
   {nearNote&&<p role="status" className={styles.note}>{nearNote}</p>}
   {error&&<p role="alert">{error}</p>}
@@ -63,12 +62,16 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
    <p><b>{who(node.player)}の番</b>：全体では {node.actions.map((a,i)=>`${a.label} ${pct(node.total[i])}`).join('・')}</p>
    <div className={styles.path}>{node.actions.map((a,i)=>node.children[i]!==null?<button key={i} type="button" onClick={()=>setTrail(t=>[...t,node.children[i]!])}>「{a.label}」の後を見る</button>
     :!data.spot.order&&data.spot.sizes&&(a.kind==='check'||a.kind==='call')?<button key={i} type="button" onClick={()=>setExplore([...flopPath,i])}>「{a.label}」のあとのターン・リバーを見る</button>:null)}</div>
-   <StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
-    let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
-    return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table>
    
-   {explore&&<TurnExplorer spot={spot} data={data} path={explore} lineText={(()=>{let n=0;return explore.map(i=>{const x=data.nodes[n],t=`${seatOf(data,x.player)} ${x.actions[i].label}`;n=x.children[i]??0;return t;}).join('、');})()}/>}
+   
   </>}
   </>}
+ </div>
+ {mode==='flop'&&data&&node&&<div className={styles.splitMain}><StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
+    let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
+    return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table></div>}
+ </div>
+  {mode==='summary'&&<FlopAggregate spot={spot} onPick={f=>{setFlop(f);setNearNote('');setMode('flop');}}/>}
+ {mode==='flop'&&data&&node&&explore&&<TurnExplorer spot={spot} data={data} path={explore} lineText={(()=>{let n=0;return explore.map(i=>{const x=data.nodes[n],t=`${seatOf(data,x.player)} ${x.actions[i].label}`;n=x.children[i]??0;return t;}).join('、');})()}/>}
  </div>;
 }
