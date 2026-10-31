@@ -68,7 +68,7 @@ export class DurableRoomOwner {
       const version=await prepared.commit(this.#store);
       if(version!==expected+1)throw new Error('Invalid storage acknowledgement');
       this.#version=version;
-    }catch{this.#halted=true;throw unavailable();}
+    }catch(error){this.#halted=true;console.error(`[poker-room] ${this.#roomId} halted: save failed (${error instanceof Error?error.message.slice(0,200):'unknown'})`);throw unavailable();}
     await this.#recordHistory(room);
   }
   /** After a settled hand is durably committed, save its readable record once (best effort, never halts play). */
@@ -89,7 +89,7 @@ export class DurableRoomOwner {
       try{result=operation(this.#room);}catch(error){
         // Known validation failures leave state unchanged. Unexpected partial changes fail closed.
         // A rejected command may still advance the monotonic clock floors (room, tables).
-        if(JSON.stringify(stable(this.#room.checkpoint()))!==JSON.stringify(stable(before))){this.#halted=true;throw unavailable();}
+        if(JSON.stringify(stable(this.#room.checkpoint()))!==JSON.stringify(stable(before))){this.#halted=true;console.error(`[poker-room] ${this.#roomId} halted: a rejected command changed the room (${error instanceof Error?error.message.slice(0,200):'unknown'})`);throw unavailable();}
         throw error;
       }
       if(changed(result)){await this.#persist(this.#room,this.#version);this.#notify();}
