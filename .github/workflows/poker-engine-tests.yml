@@ -233,5 +233,5 @@ jobs:
           POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
         run: |
-          node tests/poker-motion-browser.cjs
-          node tests/poker-demo-browser.cjs
+          set +e; node tests/poker-motion-browser.cjs > m.log 2>&1; a=$?; node tests/poker-demo-browser.cjs > d.log 2>&1; b=$?; set -e
+          if [ "$a" -ne 0 ] || [ "$b" -ne 0 ]; then cat m.log d.log | grep -nE "Error|assert|\.cjs:[0-9]+|Timed out|waiting for|expected|actual" | grep -v node_modules | head -20 | while IFS= read -r l; do echo "::error::${l:0:500}"; done; exit 1; fi
