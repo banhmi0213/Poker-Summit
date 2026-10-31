@@ -57,7 +57,8 @@ async function database(){
  const auth={url:'https://isolated.supabase.co',publicKey:'sb_publishable_e2e',fetch:async(url,init)=>{const t=new Headers(init?.headers).get('authorization')?.replace('Bearer ',''),m=/^field-(\d+)$/.exec(t??''),i=m?Number(m[1]):-1;if(i<0||i>=f.users.length)return Response.json({message:'invalid'},{status:401});return Response.json(String(url).endsWith('/auth/v1/user')?{id:f.users[i],aud:'authenticated',role:'authenticated',is_anonymous:false}:String(url).endsWith('/rpc/is_suspended')?false:false);}};
  const options={registry:{directory:f.directory,store:f.store,keys:f.keys,now:()=>now,turnMs:15000,handPauseMs:1000},auth,origins:[origin]};
  async function start(port=0){service=createPokerRoomService({...options,port});const a=await service.start();backend='http://127.0.0.1:'+a.port;events='ws://127.0.0.1:'+a.port;return a.port;}
- const api=async(i,body,connection)=>{const r=await fetch(backend+'/api/poker/rooms/'+roomId,{method:'POST',headers:{origin,authorization:'Bearer '+token(i),'content-type':'application/json',...(connection?{'x-poker-connection':connection}:{})},body:JSON.stringify(body)});const b=await r.json().catch(()=>({}));return {status:r.status,result:b.result};};
+ let apiMs=0,apiN=0;const api=async(i,body,connection)=>{const t0=Date.now();try{return await api0(i,body,connection);}finally{apiMs+=Date.now()-t0;apiN++;}};
+ const api0=async(i,body,connection)=>{const r=await fetch(backend+'/api/poker/rooms/'+roomId,{method:'POST',headers:{origin,authorization:'Bearer '+token(i),'content-type':'application/json',...(connection?{'x-poker-connection':connection}:{})},body:JSON.stringify(body)});const b=await r.json().catch(()=>({}));return {status:r.status,result:b.result};};
  const saved=async()=>{const v=await restoreRoom(f.store,roomId,f.keys,{now:()=>now});assert.ok(v);return v.room.checkpoint();};
  const where=c=>{const map=new Map();for(const [t,room] of c.field?.tables??[])for(const [seat,s] of room.seats)map.set(s.memberId,{table:t,seat,stack:s.stack});return map;};
  const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
@@ -85,8 +86,10 @@ async function database(){
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
+  const began=Date.now();let lastLog=0,saveMs=0,saves=0;
   while(iterations++<Math.max(6000,ENTRANTS*400)){
-   c=await saved();const field=c.field;
+   {const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
+   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)}`);}const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
    maxTables=Math.max(maxTables,field.tables.length);if(field.tables.length===1&&[...where(c).values()].filter(s=>s.stack>0).length<=6)finalTable=true;

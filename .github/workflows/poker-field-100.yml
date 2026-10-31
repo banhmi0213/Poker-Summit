@@ -40,7 +40,7 @@ jobs:
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-field-e2e
         run: |
           start=$(date +%s)
-          set +e; node tests/poker-field-e2e.cjs 2>&1 | tee field.log; code=${PIPESTATUS[0]}; set -e
+          set +e; timeout 70m node tests/poker-field-e2e.cjs 2>&1 | tee field.log; code=${PIPESTATUS[0]}; set -e
           echo "::notice::100-player run took $(( $(date +%s) - start )) s"
-          grep -E "^PASS" field.log | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          grep -E "^(PASS|PROGRESS)" field.log | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timed out|waiting for|expected|actual" field.log | grep -v node_modules | head -20 | while IFS= read -r l; do echo "::error::${l:0:500}"; done; exit "$code"; fi
