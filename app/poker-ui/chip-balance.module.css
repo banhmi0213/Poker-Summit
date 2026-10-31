@@ -7,3 +7,5 @@
 
 .summary{color:#18364b;min-width:0}.summary>span{font-size:13px;font-weight:700;display:block}.summary>strong{display:block;font-size:clamp(25px,2.5vw,38px);line-height:1.25;letter-spacing:-.04em;margin:10px 0;font-variant-numeric:tabular-nums;white-space:nowrap}.summary strong small{font-size:14px;letter-spacing:0}.summary>p{margin:0;padding-top:9px;border-top:1px solid #aaa790;color:#284758;font-size:12px}.summary>p b{margin-left:8px;color:#71572d}.summary .refill{margin:8px 0 0;font-size:10px;background:#f5e4ba;color:#493a20}.summary>span[role=status]{font-size:11px;margin-top:6px}
 @media(max-width:650px){.summary>span{font-size:12px}.summary>strong{font-size:27px}.summary strong small{font-size:12px}.summary>p{font-size:11px}}
+/* Monthly reset notice (owner 2026/10/31). */
+.resetNote{display:block;grid-column:1/-1;margin-top:6px;font-size:11px;line-height:1.6;opacity:.85}
