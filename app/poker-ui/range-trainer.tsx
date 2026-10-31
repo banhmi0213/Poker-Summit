@@ -24,7 +24,7 @@ export function RangeTrainer(){
  const node=options.find(n=>n.id===id)??options[0]??null;
  // New spot: clear the board and paint with its raise (open / 3-bet …) by default.
  useEffect(()=>{setPick({});setShown(false);const r=node?node.actions.findIndex(a=>a.kind==='raise'||a.kind==='allin'):-1;setBrush(r>=0?r:1);},[node?.id,depth]);
- if(!data)return <p role="status">読み込み中…</p>;
+ if(!data)return <p role="status" data-loading>読み込み中…</p>;
  // Actions you can paint: everything except fold (the unpainted cells fold).
  const acts=node?node.actions.map((a,i)=>({...a,i})).filter(a=>a.kind!=='fold'&&a.kind!=='check'):[];
  const foldI=node?node.actions.findIndex(a=>a.kind==='fold'||a.kind==='check'):-1;

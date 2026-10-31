@@ -9,7 +9,7 @@ const icons:Record<string,LobbyIconName>={ring:'chart',summary:'trophy',upcoming
 const FIT_TO_SCREEN=new Set(['gto','preflop','flop','trainer','ranges']);
 /** Shrinks its content (never enlarges) so it ends above the bottom of the window on PC. Phones scroll as usual.
  * Owner 2026/10/31 (「半分開いてから全部開く」): measured before paint, and the pane stays hidden until its height has
- * settled (charts load after the first render), so it never shows at one size and then jumps to another. */
+ * settled and its chart has loaded (charts load after the first render), so it never shows at one size and then jumps to another. */
 function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
  const outer=useRef<HTMLDivElement>(null),inner=useRef<HTMLDivElement>(null),[fit,setFit]=useState<{s:number;h:number}|null>(null),[shown,setShown]=useState(!on);
  useLayoutEffect(()=>{
@@ -22,8 +22,10 @@ function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
    const s=natural>0?Math.min(1,room/natural):1,next=s>=.995||s<.5?null:{s,h:Math.ceil(natural*s)};
    setFit(f=>f&&next&&Math.abs(f.s-next.s)<.002&&f.h===next.h?f:next);
   };
-  const changed=()=>{measure();clearTimeout(settle);settle=setTimeout(()=>setShown(true),250);};
-  changed();const cap=setTimeout(()=>setShown(true),1500);
+  // Shown once the height has been still for 0.25s and no chart is still loading (a [data-loading] placeholder).
+  const check=()=>{if(inner.current?.querySelector('[data-loading]')){settle=setTimeout(check,80);return;}measure();setShown(true);};
+  const changed=()=>{measure();clearTimeout(settle);settle=setTimeout(check,250);};
+  changed();const cap=setTimeout(()=>{measure();setShown(true);},4000);
   const ro=new ResizeObserver(changed);if(inner.current)ro.observe(inner.current);window.addEventListener('resize',measure);
   return()=>{clearTimeout(settle);clearTimeout(cap);ro.disconnect();window.removeEventListener('resize',measure);};
  },[on]);

@@ -26,7 +26,7 @@ export function PreflopChartPanel(){
  return <div className={styles.wrap}><div className={styles.split} data-on={data&&node?'':undefined}><div className={styles.splitSide}>
   <p>プリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人卓は100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
   {error&&<p role="alert">{error}</p>}
-  {!data&&!error&&<p role="status">読み込み中…</p>}
+  {!data&&!error&&<p role="status" data-loading>読み込み中…</p>}
   {data&&<>
    <div className={styles.form}>
     <label>人数<select value={table} onChange={e=>{setTable(e.target.value as '6max'|'hu');setKind('open');setId(null);}}><option value="6max">6人卓</option><option value="hu">2人（ヘッズアップ）</option></select></label>
