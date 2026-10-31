@@ -61,6 +61,7 @@ const {SupabaseRoomDirectory}=require('../../lib/poker/room-directory.ts'),{Supa
  await db.exec(fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith('_poker_targeted_policy_guard.sql'))),'utf8'));
  await db.exec(fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith('_poker_multi_table_tournaments.sql'))),'utf8')); // 7–60 players (2026/10/30)
  await db.exec(fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith('_poker_field_100.sql'))),'utf8')); // 7–100 players (2026/10/31)
+ await db.exec(fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith('_poker_field_200.sql'))),'utf8')); // 7–200 players (2026/10/31)
  const targeted=randomUUID();await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,$3,clock_timestamp()+interval \'15 minutes\',true,$4)',[targeted,'Targeted',store1,JSON.stringify(structure)]);
  await db.exec('set role authenticated');await identity(users[2]);await reject(call('poker_entry_manage',[targeted,null]));await identity(users[0]);const targets=await call('poker_entry_manage',[targeted,['member2@example.test','member3@example.test']]);ok(targets.automatic,true);ok(targets.members.length,2);await reject(call('poker_entry_manage',[targeted,['member2@example.test','not-found@example.test']]));
  await db.exec('reset role;set role service_role');ok((await directory.registrationCatalog(users[4])).find(r=>r.tournamentId===targeted).eligible,false);ok((await directory.changeRegistration(users[4],targeted,'register')).ok,false);ok((await directory.changeRegistration(users[2],targeted,'register')).ok,true);ok(await directory.pendingEntries(),[]);await reject(directory.configureRegistration(targeted,6,false));await reject(directory.freezeRegistration(targeted,2));
@@ -74,7 +75,7 @@ const {SupabaseRoomDirectory}=require('../../lib/poker/room-directory.ts'),{Supa
   await db.exec('reset role');await db.query('update public.poker_tournaments set starts_at=clock_timestamp()+interval \'5 minutes\' where id=$1',[field]);await db.exec('set role service_role');
   ok((await directory.pendingEntries()).find(e=>e.tournamentId===field)?.count,8);
   const done=await registry.finalizeRegistration(field,8);ok(done.finalization.assigned,true);ok(done.finalization.participants,8);
-  const binding=await directory.binding(done.finalization.roomId);ok(binding.capacity,100);const control=await directory.control(done.finalization.roomId);ok(control.expectedCount,8);ok(control.members.length,8);
+  const binding=await directory.binding(done.finalization.roomId);ok(binding.capacity,200);const control=await directory.control(done.finalization.roomId);ok(control.expectedCount,8);ok(control.members.length,8);
   ok((await directory.pendingEntries()).some(e=>e.tournamentId===field),false,'bound rooms are not offered again');
   await db.exec('reset role');}
  console.log(`${checks} management PostgreSQL checks passed (manager rights, freeze, exact roster, encrypted handoff/retry, privacy, startup discovery/restore, ACL/RLS).`);
