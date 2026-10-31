@@ -47,7 +47,17 @@ const r1=(v:number)=>Math.round(v*10)/10;
 /** Stack depth and ante (2026/10/30, tournament charts): stack in BB for everyone, ante = dead money in the pot (a big
  * blind ante of 1BB is ante 1). Shorter stacks open smaller, may open all in at 25BB or less, and any raise that would
  * put in 45% of the stack or more becomes all in. */
-export type PreflopConfig={stack:number;ante:number};
+/** rake (2026/10/31, owner: レーキの率ごとの表 3%・3BB／5%・5BB／10%・10BB): taken only from pots that see a flop
+ * (no flop, no drop). bps = basis points (300 = 3%), capBb = the most taken from one pot, in big blinds. */
+export type PreflopRake={bps:number;capBb:number};
+export type PreflopConfig={stack:number;ante:number;rake?:PreflopRake};
+/** Pots keep growing after the flop, so the rake is worked out on the pot the hand usually ends with:
+ * the preflop pot times this (limped and single-raised pots grow the most; an all-in pot is already final). */
+export const RAKE_POT_GROWTH:Record<'limp'|'srp'|'3bp'|'4bp'|'allin'|'threeWay',number>={limp:2.5,srp:2.5,'3bp':1.6,'4bp':1.2,allin:1,threeWay:2.5};
+export function rakeTaken(rake:PreflopRake|undefined,pot:number,kind:keyof typeof RAKE_POT_GROWTH){
+ if(!rake||!(rake.bps>0))return 0;
+ return Math.min(rake.capBb,pot*RAKE_POT_GROWTH[kind]*rake.bps/10000,pot);
+}
 export const DEFAULT_PREFLOP:PreflopConfig={stack:100,ante:0};
 /** Build the simplified preflop tree. */
 export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
@@ -174,15 +184,15 @@ export class PreflopSolver{
     for(let p=0;p<P;p++){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];const pay=(p===node.winner?pot:0)-node.invested[p];values[p].fill(pay*others);}
     return values;
    }
-   if(node.threeWay)return this.#threeWay(node,reach,mass,pot);
-   const {a,b,kind,aggr}=node.showdown!,ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?REALIZE_ROLE[kind]:null;
+   if(node.threeWay)return this.#threeWay(node,reach,mass,pot-rakeTaken(this.cfg.rake,pot,'threeWay'));
+   const {a,b,kind,aggr}=node.showdown!,won=pot-rakeTaken(this.cfg.rake,pot,kind),ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?REALIZE_ROLE[kind]:null;
    // Shorter stacks leave less to play for after the flop: realisation moves towards 1 (by the square root of the depth).
    const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
    for(const [me,op] of [[a,b],[b,a]] as const){
     const rMe=me===ip?rIp:rOop,rOp=me===ip?rOop:rIp,ro=reach[op],v=values[me];
-    const deep=kind!=='allin';for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*pot-node.invested[me]);}v[h]=s*rest;}
+    const deep=kind!=='allin';for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*won-node.invested[me]);}v[h]=s*rest;}
    }
    return values;
   }

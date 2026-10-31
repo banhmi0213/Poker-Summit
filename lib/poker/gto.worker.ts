@@ -6,6 +6,7 @@ import {adviseGto,flagHand,trainerSpot,reviewGto,reviewLive,reviewRanges,summari
 import type {FlopData} from './gto-spots';
 import {reachSpot,trainerView,type TrainerHand,type TrainerMode} from './gto-trainer';
 import {exploreTurn,type ExploreResult} from './gto-explore';
+import {RAKE_CHARTS,rakeKey} from './ring-rake';
 import {icmPushFold,type IcmResult,type IcmSpot} from './icm';
 
 export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number}|{type:'deviation';id:number;hands:GtoReviewHand[]}|{type:'explore';id:number;spot:string;flop:string;path:number[];turn:string;steps:number[];budgetMs:number}|{type:'icm';id:number;spot:IcmSpot}|{type:'spot';id:number;view:GtoView;budgetMs:number}|{type:'trainerStart';id:number;mode:TrainerMode;seed:number;buttonIndex:number;tries:number}|{type:'flags';id:number;hands:GtoReviewHand[];streets:('preflop'|'flop'|'turn'|'river')[];budgetMs:number};
@@ -15,6 +16,13 @@ const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:Messa
 const flops=new Map<string,FlopData|null>(),missing=new Set<string>();
 let base:Promise<{preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;preflopEv?:GtoData['preflopEv']}>|null=null;
 const json=async<T,>(url:string):Promise<T|null>=>{try{const r=await fetch(url);return r.ok?await r.json() as T:null;}catch{return null;}};
+/** Raked charts (2026/10/31), only for judging members' ring hands: loaded on the first review. */
+let rakeCharts:Promise<Record<string,PreflopData>>|null=null;
+function loadRake(){
+ if(!rakeCharts)rakeCharts=Promise.all(RAKE_CHARTS.map(async r=>[rakeKey(r),await json<PreflopData>(`/poker-gto/preflop-rake${r.bps}-${r.capBb}.json`)] as const))
+  .then(list=>Object.fromEntries(list.filter(([,c])=>c)) as Record<string,PreflopData>);
+ return rakeCharts;
+}
 function load(){
  if(!base)base=(async()=>{const preflop=await json<PreflopData>('/poker-gto/preflop.json');if(!preflop)throw Error('GTO data unavailable');return {preflop,preflopHu:(await json<PreflopData>('/poker-gto/preflop-hu.json'))??undefined,preflopDepths:Object.fromEntries((await Promise.all([60,40,20,10].map(async d=>[d,await json<PreflopData>(`/poker-gto/preflop-${d}bb.json`)] as const))).filter(([,c])=>c)) as Record<number,PreflopData>,flopIndex:(await json<Record<string,string[]>>('/poker-gto/flops/index.json'))??{},preflopEv:preflopEvById(await json<PreflopEvFile>('/poker-gto/preflop-ev.json'))};})();
  return base;
@@ -36,8 +44,8 @@ scope.onmessage=async e=>{
   catch(error){scope.postMessage({type:'error',id:m.id,message:error instanceof Error?error.message:String(error)});}return;}
  if(m.type!=='decide'&&m.type!=='spot'&&m.type!=='trainerStart'&&m.type!=='flags'&&m.type!=='review'&&m.type!=='advise'&&m.type!=='reviewLive'&&m.type!=='deviation')return;
  try{
-  const b=await load();
-  const data:GtoData={...b,flop(spot,flop){const k=spot+'/'+flop;if(flops.has(k))return flops.get(k)!;missing.add(k);return null;}};
+  const b=await load(),preflopRake=m.type==='review'||m.type==='flags'||m.type==='deviation'||m.type==='reviewLive'?await loadRake():undefined;
+  const data:GtoData={...b,...(preflopRake?{preflopRake}:{}),flop(spot,flop){const k=spot+'/'+flop;if(flops.has(k))return flops.get(k)!;missing.add(k);return null;}};
   const run=()=>m.type==='decide'?decideGto(m.view,data,Math.random,m.budgetMs):m.type==='spot'?trainerSpot(m.view,data,m.budgetMs):m.type==='trainerStart'?findSpot(m.mode,m.seed,m.buttonIndex,m.tries,data):m.type==='flags'?m.hands.map(h=>flagHand(h,data,m.streets,m.budgetMs)):m.type==='advise'?adviseGto(m.view,data,m.budgetMs):m.type==='reviewLive'?reviewLive(m.items,data,m.budgetMs):m.type==='deviation'?summarizeDeviation(m.hands,data):{reviews:reviewGto(m.hand,data,m.budgetMs),others:reviewRanges(m.hand,data,Math.min(m.budgetMs,800))};
   let d=run();
   // A flop file was needed but not loaded yet: fetch it and decide again.

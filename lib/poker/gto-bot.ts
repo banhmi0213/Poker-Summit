@@ -27,7 +27,9 @@ export type PreflopData={nodes:PreflopNode[]};
 /** preflopDepths (2026/10/30): 6-max tournament charts by stack (60, 40, 20, 10BB with a big blind ante). */
 export type GtoData={preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null;
  /** EV of each action per hand at each 100BB chart decision, in big blinds (public/poker-gto/preflop-ev.json), by node id. */
- preflopEv?:Record<number,Record<string,number[]>>};
+ preflopEv?:Record<number,Record<string,number[]>>;
+ /** 100BB charts with rake, by `${bps}-${capBb}` (public/poker-gto/preflop-rake*.json). */
+ preflopRake?:Record<string,PreflopData>};
 export type PreflopEvFile={version:number;nodes:{id:number;history:string;ev:Record<string,number[]>}[]};
 export const preflopEvById=(f:PreflopEvFile|null|undefined)=>f?Object.fromEntries(f.nodes.map(n=>[n.id,n.ev])) as Record<number,Record<string,number[]>>:undefined;
 export const CHART_DEPTHS=[60,40,20,10];
@@ -43,6 +45,8 @@ export type GtoView={
  log:readonly LoggedAction[];
  /** Stacks (chips) when the hand started, before blinds. */
  startStacks:Readonly<Record<string,number>>;
+ /** Rake of the table (ring hands, 2026/10/31): the preflop chart for that rake is used when there is one. */
+ rake?:{bps:number;capBb:number};
 };
 export type GtoDecision={action:BettingAction;source:'preflop'|'flop'|'solver'|'fallback';
  /** Why the fallback CPU decided (for coverage stats). */
@@ -220,9 +224,13 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   const depth=hu?100:depthChart(effective),depthData=depth===100?null:data.preflopDepths?.[depth];
   if(effective>250||(hu||!depthData)&&effective<40||effective<5)return fb('stack-depth');
   // Heads-up (only two dealt in): the heads-up chart and spots; the button (SB) acts last after the flop.
-  if(hu)data={...data,preflop:data.preflopHu!};
+  // The EV file belongs to the 100BB no-rake chart only: drop it whenever another chart stands in.
+  if(hu)data={...data,preflop:data.preflopHu!,preflopEv:undefined};
   // Shorter stacks: that depth's chart. The flop files are 100BB: still used at 60BB (similar spots), not at 40/20BB.
-  if(depthData)data={...data,preflop:depthData,...(depth<=40?{flopIndex:{},flop:()=>null}:{})};
+  if(depthData)data={...data,preflop:depthData,preflopEv:undefined,...(depth<=40?{flopIndex:{},flop:()=>null}:{})};
+  // Raked ring tables at 100BB: that rake's chart (the flop files are still the no-rake ones).
+  const raked=!hu&&!depthData&&v.rake?data.preflopRake?.[`${v.rake.bps}-${v.rake.capBb}`]:undefined;
+  if(raked)data={...data,preflop:raked,preflopEv:undefined};
   const toks=preflopToks(v,hu),ranges=trackPreflop(v,data,toks);
   if(v.board.length===0)return preflopStrategy(v,data,toks,noHole)??fb('preflop-off-chart');
   const live=v.players.filter(p=>!p.folded);

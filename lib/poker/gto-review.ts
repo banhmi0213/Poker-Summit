@@ -8,6 +8,7 @@ import {classOf} from './solver-view';
 import {HAND_CATEGORIES,combosOfClass,handCategory,type HandCategory} from './hand-category';
 
 export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
+ /** Table rake (ring hands): judged with that rake's preflop chart. */rake?:{bps:number;capBb:number};
  players:{seatId:string;seat:number;startStack:number;you:boolean;hole:Card[]|null}[]};
 export type GtoVerdict='gto'|'mixed'|'rare';
 /** The whole range at a reviewed decision, for the 13×13 chart (options in model order). */
@@ -65,7 +66,7 @@ export function viewAt(hand:GtoReviewHand,index:number,seatId?:string):GtoView|n
  const self=players.find(p=>p.id===me.seatId)!,currentBet=Math.max(0,...street.values()),toCall=Math.max(0,Math.min(currentBet-self.committed,self.stack));
  return {handKey:'review:'+hand.handId,bb,hero:me.seatId,hole:hole??[],board,positions,players,
   legal:{check:toCall===0,call:toCall>0,callAmount:toCall,raise:self.stack>toCall,minRaiseTo:null,maxRaiseTo:null},log,
-  startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack]))};
+  startStacks:Object.fromEntries(hand.players.map(p=>[p.seatId,p.startStack])),...(hand.rake?{rake:hand.rake}:{})};
 }
 
 function rangeOf(s:{grid?:GtoGrid;nearFlop?:string;proxySpot?:string;approx?:boolean},options:{text:string;kind:string}[],hole:Card[],board:readonly Card[]=[]):GtoRange|undefined{
