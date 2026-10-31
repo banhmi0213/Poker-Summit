@@ -13,7 +13,8 @@ import type {HandTerms} from './tournament-hand';
 import {runoutDuration,PAYOUT_ANIMATION_MS} from './presentation-timing';
 
 export const FIELD_TABLE_SIZE=6;
-export const FIELD_MAX_PLAYERS=60;
+/** Owner 2026/10/31 (100人きたらええな): up to 100 players (17 tables of 6). */
+export const FIELD_MAX_PLAYERS=100;
 /** Rosters above this size use the field; 2–6 keep the single-table room. */
 export const FIELD_MIN_PLAYERS=7;
 export type FieldElimination={memberId:string;place:number;tiedThrough:number;comparisonStack:number;table:number;handId:string};

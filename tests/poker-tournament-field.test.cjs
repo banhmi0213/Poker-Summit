@@ -48,15 +48,15 @@ function play(f,{restoreEvery=0,check=()=>{},afterAct=()=>{}}={}){
  return {room,events};
 }
 
-test('7–60 players are drawn onto 6-max tables of nearly equal size, before the start',()=>{
- for(const n of [7,12,13,20,25,60]){
+test('7–100 players are drawn onto 6-max tables of nearly equal size, before the start',()=>{
+ for(const n of [7,12,13,20,25,60,100]){
   const f=setup(n),r=f.room.advance(f.control);assert.equal(r.event,'seated');assert.equal(r.changed,true);
   const c=f.room.checkpoint().field,sizes=c.tables.map(([,t])=>t.seats.length);
   assert.equal(sizes.length,Math.ceil(n/6));assert.equal(sizes.reduce((a,b)=>a+b,0),n);assert.ok(Math.max(...sizes)-Math.min(...sizes)<=1,`${n}: ${sizes}`);assert.ok(Math.max(...sizes)<=6);
   assert.deepEqual(new Set(allSeats(f.room).map(s=>s.memberId)),new Set(f.members));
   assert.equal(f.room.advance(f.control).event,'scheduled','no hand before the start');
  }
- const f=setup(61);assert.throws(()=>f.room.advance({...f.control,expectedCount:61}),/Invalid scheduler control/);
+ const f=setup(101);assert.throws(()=>f.room.advance({...f.control,expectedCount:101}),/Invalid scheduler control/);
 });
 test('a member sees only their own table, the table number and the field count; others get no cards',()=>{
  const f=setup(13);f.room.advance(f.control);f.setNow(T);
@@ -68,7 +68,7 @@ test('a member sees only their own table, the table number and the field count; 
  assert.ok(!JSON.stringify(v).includes(f.members[1]),'member ids never in a view');
  const pub=f.room.publicSnapshot();assert.equal(pub.youSeat,null);assert.ok(pub.hand.players.every(p=>p.hole===null));
 });
-for(const n of [7,13,20,26]){
+for(const n of [7,13,20,26,100]){
  test(`${n} players: chips conserved, tables balanced, broken down to a final table, every place decided once`,()=>{
   const f=setup(n);let maxTables=0,finalSeen=false;
   const {room}=play(f,{check:(room)=>{
