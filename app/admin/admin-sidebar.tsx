@@ -18,6 +18,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/jobs", label: "求人管理" },
   { href: "/admin/events", label: "イベント管理" },
   { href: "/admin/poker-statistics", label: "ポーカー成績・ランキング" },
+  { href: "/admin/poker-tournaments/results", label: "大会結果・入賞者" },
   { href: "/admin/poker-hands", label: "ポーカー ハンド履歴" },
   { href: "/admin/poker-bots", label: "CPU卓の集計" },
   { href: "/admin/poker-reports", label: "ポーカーの通報" },

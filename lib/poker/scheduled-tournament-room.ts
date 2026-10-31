@@ -5,7 +5,7 @@ import { SeatedHandRoom, type TurnDeadline, type RoomCheckpoint } from "./seated
 import { tournamentClock,tournamentTiming,validateStructure,type TournamentStructure } from "./tournament";
 import {runoutDuration,PAYOUT_ANIMATION_MS} from './presentation-timing';
 import { tournamentHandTerms } from "./tournament-hand";
-import { TournamentField,FIELD_MAX_PLAYERS,FIELD_MIN_PLAYERS,type FieldCheckpoint } from "./tournament-field";
+import { TournamentField,FIELD_MAX_PLAYERS,FIELD_MIN_PLAYERS,type FieldCheckpoint,type FieldStanding } from "./tournament-field";
 
 type RoomSnapshot=ReturnType<SeatedHandRoom["publicSnapshot"]>;
 export type TournamentControl={enabled:boolean;published:boolean;members:readonly string[];expectedCount:number;seatedStart?:boolean};
@@ -13,7 +13,9 @@ export type ScheduledCheckpoint={version:1;structure:TournamentStructure;startsA
  /** Multi-table tournaments (7+ players): every table lives here; `room` stays the unused empty single table. */
  field?:FieldCheckpoint};
 /** Multi-table extras on a projected state (absent for single-table rooms). */
-export type FieldView={tableNumber:number|null;tables:number;remaining:number;entrants:number;place:number|null;tiedThrough:number|null;champion:boolean;finalTable:boolean;moved:{from:number;to:number}|null;watching:boolean};
+export type FieldView={tableNumber:number|null;tables:number;remaining:number;entrants:number;place:number|null;tiedThrough:number|null;champion:boolean;finalTable:boolean;moved:{from:number;to:number}|null;watching:boolean;
+  /** Everyone in the field, best first (owner 2026/10/31). `you` marks the viewer's own row. */
+  standings:(FieldStanding&{you:boolean})[]};
 export class ScheduledTournamentRoom {
   #room:SeatedHandRoom; #structure:TournamentStructure; #startsAt:string;
   #clock:()=>number; #lastNow=0; #sample:number|null=null; #turnMs:number; #handPauseMs:number; #seatedStart=false;#runout:{handId:string;fromBoardCount:number}|undefined;
@@ -55,7 +57,8 @@ export class ScheduledTournamentRoom {
     const outcome=state.tournament,champ=f.champion;
     const championSeat=champ&&f.tableOf(champ)===table?`seat-${f.room(table).memberSeat(champ)}`:null;
     const field:FieldView={tableNumber:table,tables:f.tableCount,remaining:f.remaining(),entrants:f.entrants.length,place:place?.place??(member&&champ===member?1:null),tiedThrough:place?.tiedThrough??(member&&champ===member?1:null),
-      champion:Boolean(member&&champ===member),finalTable:f.tableCount===1,moved:member?f.movedRecently(member,now):null,watching};
+      champion:Boolean(member&&champ===member),finalTable:f.tableCount===1,moved:member?f.movedRecently(member,now):null,watching,
+      standings:f.standings().map(r=>({...r,you:Boolean(member&&!watching&&r.entry===`e-${f.entrants.indexOf(member)+1}`)}))};
     const runout=f.runout(table);
     return {...state,revision:f.revisionFor(watching?null:member),youSeat:watching?null:state.youSeat,phase:finished?'finished' as const:state.phase,
       tournament:outcome?{stacks:{...outcome.stacks},liveIds:[...outcome.liveIds],eliminated:[],champion:championSeat}:null,
