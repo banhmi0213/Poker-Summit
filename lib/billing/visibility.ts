@@ -6,6 +6,7 @@
  * NOT covered (stay visible): chip-exchange skins (卓・カード, bought with free chips) and the free starter pick.
  * /pricing itself stays reachable by direct URL only (for the KOMOJU review): noindex/nofollow, not in the sitemap, not linked.
  * GTO side: use paidFeaturesVisible() to hide the 「ちょい見せ＋料金ページへのボタン」 too. */
-// Literal process.env access so Next.js inlines it into client bundles.
-const PAID_FEATURES=process.env.NEXT_PUBLIC_PAID_FEATURES==='on';
+// Literal process.env access so Next.js inlines it into client bundles; guarded for bundles without `process` (tests' esbuild), which stay off.
+let PAID_FEATURES=false;
+try{PAID_FEATURES=process.env.NEXT_PUBLIC_PAID_FEATURES==='on';}catch{PAID_FEATURES=false;}
 export function paidFeaturesVisible():boolean{return PAID_FEATURES;}
