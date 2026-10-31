@@ -5,12 +5,13 @@ import {HandHistoryList,type HandGtoMark} from './hand-history-list';
 import type {HandHistoryView} from '@/lib/poker/hand-histories';
 import type {GtoReviewHand,HandFlags} from '@/lib/poker/gto-review';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
+import {RING_RAKE} from '@/lib/poker/ring-rake';
 
 /** Hand list with automatic GTO marks (2026/10/30, Olympia の「!」と「GTO乖離」絞り込みに合わせて): every listed hand is
  * judged in the GTO worker — preflop and flop at once, then turn and river one hand at a time — and hands with a
  * decision GTO makes under 5% get a 「!」. Filters: all / off before the flop / off after the flop. */
 export function toReviewHand(h:HandHistoryView):GtoReviewHand{
- return {handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,
+ return {handId:h.handId,terms:h.terms,buttonSeatId:h.buttonSeatId,board:h.board,actions:h.actions,...(h.kind==='ring'?{rake:RING_RAKE}:{}),
   players:h.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.you,hole:p.you?p.hole:null}))};
 }
 const STREET:Record<string,string>={preflop:'プリフロップ',flop:'フロップ',turn:'ターン',river:'リバー'};

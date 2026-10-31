@@ -10,6 +10,7 @@ import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import {GtoRangeGrid} from './gto-range-grid';
 import {StoreInvite} from './store-invite';
 import chartStyles from './gto-chart.module.css';
+import {RING_RAKE} from '@/lib/poker/ring-rake';
 
 const verbs:Record<HistoryAction['type'],string>={ante:'アンティ',sb:'スモールブラインド',bb:'ビッグブラインド',fold:'フォールド',check:'チェック',call:'コール',bet:'ベット',raise:'レイズ'};
 const streetNames={preflop:'プリフロップ',flop:'フロップ',turn:'ターン',river:'リバー'} as const;
@@ -37,7 +38,7 @@ function useGtoReview(hand:HandHistoryView){
    const guard=window.setTimeout(()=>{w.terminate();setState({status:'error',reviews:[],others:[]});},60000);
    w.onmessage=(e:MessageEvent<GtoReply>)=>{window.clearTimeout(guard);w.terminate();if(worker.current===w)worker.current=null;setState(e.data.type==='review'?{status:'done',reviews:e.data.reviews,others:e.data.others??[]}:{status:'error',reviews:[],others:[]});};
    w.onerror=()=>{window.clearTimeout(guard);setState({status:'error',reviews:[],others:[]});};
-   w.postMessage({type:'review',id:1,budgetMs:1500,hand:{handId:hand.handId,terms:hand.terms,buttonSeatId:hand.buttonSeatId,board:hand.board,actions:hand.actions,
+   w.postMessage({type:'review',id:1,budgetMs:1500,hand:{handId:hand.handId,terms:hand.terms,buttonSeatId:hand.buttonSeatId,board:hand.board,actions:hand.actions,...(hand.kind==='ring'?{rake:RING_RAKE}:{}),
     players:hand.players.map(p=>({seatId:p.seatId,seat:p.seat,startStack:p.startStack,you:p.you,hole:p.you?p.hole:null}))}} satisfies GtoRequest);
   }catch{setState({status:'error',reviews:[],others:[]});}
  };

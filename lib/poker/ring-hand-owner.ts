@@ -8,8 +8,8 @@ import type {KeyRing,SealedCheckpoint} from './room-persistence';
 import {buildHandHistory,type HandHistory} from './hand-history';
 export type RingSeat={reservationId:string;memberId:string;seat:number;stack:number};
 export type RingContext={tableId:string;capacity:2|6;terms:{sb:number;bb:number};seats:RingSeat[];published:boolean;activeHandId:string|null;buttonSeat:number|null};
-/** Ring rake (owner 2026/10/29): 3% of the contested pot, at most 3 big blinds, no flop no drop; the house keeps it. */
-export const RING_RAKE={bps:300,capBb:3};
+import {RING_RAKE} from './ring-rake';
+export {RING_RAKE};
 type Result={reservationId:string;stack:number;/** Chips this seat paid as rake in this hand (only when > 0). */rake?:number}[]|null;
 type Saved={handId:string;tableId:string;version:number;seats:RingSeat[];terms:{sb:number;bb:number};buttonSeat:number;sealed:SealedCheckpoint;status:'active'|'complete';result:Result};
 type Begin={tableId:string;handId:string;roster:RingSeat[];terms:{sb:number;bb:number;buttonSeat:number};sealed:SealedCheckpoint;result:Result};
