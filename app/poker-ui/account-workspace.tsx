@@ -1,5 +1,5 @@
 'use client';
-import {useEffect,useRef,useState,type ReactNode} from 'react';
+import {useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import Link from 'next/link';
 import type {PokerPane} from './workspace';
 import {LobbyIcon,type LobbyIconName} from '@/app/poker-lobby/lobby-icon';
@@ -7,23 +7,27 @@ import styles from './account-workspace.module.css';
 const icons:Record<string,LobbyIconName>={ring:'chart',summary:'trophy',upcoming:'people',history:'trophy',tendencies:'chart',gto:'cards',preflop:'cards',flop:'cards',quiz:'cards',river:'cards',hands:'cards',replay:'cards'};
 /** Owner 2026/10/31 (スクロールせんでいいように): on PC these tools are shown whole on one screen. */
 const FIT_TO_SCREEN=new Set(['gto','preflop','flop','trainer','ranges']);
-/** Shrinks its content (never enlarges) so it ends above the bottom of the window on PC. Phones scroll as usual. */
+/** Shrinks its content (never enlarges) so it ends above the bottom of the window on PC. Phones scroll as usual.
+ * Owner 2026/10/31 (「半分開いてから全部開く」): measured before paint, and the pane stays hidden until its height has
+ * settled (charts load after the first render), so it never shows at one size and then jumps to another. */
 function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
- const outer=useRef<HTMLDivElement>(null),inner=useRef<HTMLDivElement>(null),[fit,setFit]=useState<{s:number;h:number}|null>(null);
- useEffect(()=>{
-  if(!on||typeof window==='undefined'||typeof ResizeObserver==='undefined'){setFit(null);return;}
-  let raf=0;
-  const measure=()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{
+ const outer=useRef<HTMLDivElement>(null),inner=useRef<HTMLDivElement>(null),[fit,setFit]=useState<{s:number;h:number}|null>(null),[shown,setShown]=useState(!on);
+ useLayoutEffect(()=>{
+  if(!on||typeof window==='undefined'||typeof ResizeObserver==='undefined'){setFit(null);setShown(true);return;}
+  let settle:ReturnType<typeof setTimeout>|undefined;
+  const measure=()=>{
    const o=outer.current,i=inner.current;if(!o||!i)return;
    if(window.innerWidth<900){setFit(null);return;}
    const top=o.getBoundingClientRect().top+window.scrollY,natural=i.offsetHeight,room=window.innerHeight-top-16;
-   const s=natural>0?Math.min(1,room/natural):1;
-   setFit(s>=.995||s<.5?null:{s,h:Math.ceil(natural*s)});
-  });};
-  measure();const ro=new ResizeObserver(measure);if(inner.current)ro.observe(inner.current);window.addEventListener('resize',measure);
-  return()=>{cancelAnimationFrame(raf);ro.disconnect();window.removeEventListener('resize',measure);};
+   const s=natural>0?Math.min(1,room/natural):1,next=s>=.995||s<.5?null:{s,h:Math.ceil(natural*s)};
+   setFit(f=>f&&next&&Math.abs(f.s-next.s)<.002&&f.h===next.h?f:next);
+  };
+  const changed=()=>{measure();clearTimeout(settle);settle=setTimeout(()=>setShown(true),250);};
+  changed();const cap=setTimeout(()=>setShown(true),1500);
+  const ro=new ResizeObserver(changed);if(inner.current)ro.observe(inner.current);window.addEventListener('resize',measure);
+  return()=>{clearTimeout(settle);clearTimeout(cap);ro.disconnect();window.removeEventListener('resize',measure);};
  },[on]);
- return <div ref={outer} style={fit?{height:fit.h}:undefined}><div ref={inner} style={fit?{transform:`scale(${fit.s})`,transformOrigin:'top center'}:undefined}>{children}</div></div>;
+ return <div ref={outer} style={fit?{height:fit.h}:undefined}><div ref={inner} style={{...(fit?{transform:`scale(${fit.s})`,transformOrigin:'top center'}:{}),opacity:shown?1:0,transition:shown?'opacity .15s':undefined}}>{children}</div></div>;
 }
 export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
  const [active,setActive]=useState(panes[0]?.id),[menuOpen,setMenuOpen]=useState(false);
