@@ -4,8 +4,13 @@ export const RING_RAKE={bps:300,capBb:3} as const;
 /** Rake levels with their own preflop chart (owner 2026/10/31: 3%・3BB／5%・5BB／10%・10BB). Key = `${bps}-${capBb}`. */
 export const RAKE_CHARTS=[{bps:300,capBb:3,label:'3%・上限3BB'},{bps:500,capBb:5,label:'5%・上限5BB'},{bps:1000,capBb:10,label:'10%・上限10BB'}] as const;
 /** A table's own rule (owner 2026/10/31: レーキは卓ごと). Only the charted levels are accepted; anything else falls back. */
+/** Rules a ring table can have (owner 2026/10/31: 3%卓はなし). New tables default to the first. */
+export const TABLE_RAKES=[{bps:500,capBb:5,label:'低レーキ（5%・上限5BB）'},{bps:1000,capBb:10,label:'高レーキ（10%・上限10BB）'}] as const;
+/** Every rule a recorded hand can carry: the table rules plus 3%・3BB (RING_RAKE) for hands played before 2026/10/31. */
+const KNOWN_RAKES=[RING_RAKE,...TABLE_RAKES];
+export const knownRake=(r:{bps?:unknown;capBb?:unknown}|null|undefined)=>KNOWN_RAKES.some(c=>c.bps===r?.bps&&c.capBb===r?.capBb);
+/** A hand's or table's rule; anything missing or unknown is a hand from before per-table rake (3%・3BB). */
 export function tableRake(r:{bps?:unknown;capBb?:unknown}|null|undefined):{bps:number;capBb:number}{
- const hit=RAKE_CHARTS.find(c=>c.bps===r?.bps&&c.capBb===r?.capBb);return hit?{bps:hit.bps,capBb:hit.capBb}:{...RING_RAKE};
+ return knownRake(r)?{bps:Number(r!.bps),capBb:Number(r!.capBb)}:{...RING_RAKE};
 }
-export const rakeLabel=(r:{bps:number;capBb:number})=>`レーキ${r.bps/100}%（上限${r.capBb}BB）`;
 export const rakeKey=(r:{bps:number;capBb:number})=>`${r.bps}-${r.capBb}`;

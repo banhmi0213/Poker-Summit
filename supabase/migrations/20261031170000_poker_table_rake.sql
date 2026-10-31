@@ -1,10 +1,14 @@
--- リングのレーキを卓ごとに(オーナー 2026/10/31：レーキごとに1卓ずつ)。選べるのはGTOの表がある3種類だけ
--- (3%・上限3BB／5%・上限5BB／10%・上限10BB)。卓の決まりはハンドを始めるときにそのハンドの条件(terms)に記録し、
--- 精算のチェック(上限)とハンド履歴(GTOの判定で使う表)はそのハンドの記録を使う。それより前のハンドは3%・3BBとして扱う。
-alter table public.poker_ring_tables add column if not exists rake_bps integer not null default 300;
-alter table public.poker_ring_tables add column if not exists rake_cap_bb integer not null default 3;
+-- リングのレーキを卓ごとに(オーナー 2026/10/31)。卓に付けられるのは2種類だけ：
+-- 低レーキ(5%・上限5BB)と高レーキ(10%・上限10BB)。新しい卓は低レーキ。3%・上限3BBの卓はもう作らない。
+-- 卓の決まりはハンドを始めるときにそのハンドの条件(terms)に記録し、精算のチェック(上限)とハンド履歴(GTOの判定で使う表)は
+-- そのハンドの記録を使う。それより前のハンド(記録なし)は3%・3BBで遊ばれたものとして扱う。
+alter table public.poker_ring_tables add column if not exists rake_bps integer not null default 500;
+alter table public.poker_ring_tables add column if not exists rake_cap_bb integer not null default 5;
+alter table public.poker_ring_tables alter column rake_bps set default 500;
+alter table public.poker_ring_tables alter column rake_cap_bb set default 5;
+update public.poker_ring_tables set rake_bps=500,rake_cap_bb=5 where (rake_bps,rake_cap_bb) not in ((500,5),(1000,10));
 alter table public.poker_ring_tables drop constraint if exists poker_ring_tables_rake_check;
-alter table public.poker_ring_tables add constraint poker_ring_tables_rake_check check((rake_bps,rake_cap_bb) in ((300,3),(500,5),(1000,10)));
+alter table public.poker_ring_tables add constraint poker_ring_tables_rake_check check((rake_bps,rake_cap_bb) in ((500,5),(1000,10)));
 
 create or replace function poker_private.ring_context(p_table uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare t public.poker_ring_tables%rowtype; seats jsonb;
@@ -69,7 +73,7 @@ begin
  insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,note,published,sort_order,rake_bps,rake_cap_bb)
  values(v_id,btrim(p_settings->>'title'),(p_settings->>'capacity')::smallint,(p_settings->>'sb')::integer,(p_settings->>'bb')::integer,
  (p_settings->>'min_buy_in')::integer,(p_settings->>'max_buy_in')::integer,coalesce(p_settings->>'note',''),(p_settings->>'published')::boolean,(p_settings->>'sort_order')::integer,
- coalesce((p_settings->>'rake_bps')::integer,300),coalesce((p_settings->>'rake_cap_bb')::integer,3))
+ coalesce((p_settings->>'rake_bps')::integer,500),coalesce((p_settings->>'rake_cap_bb')::integer,5))
  on conflict(id) do update set title=excluded.title,capacity=excluded.capacity,sb=excluded.sb,bb=excluded.bb,min_buy_in=excluded.min_buy_in,max_buy_in=excluded.max_buy_in,note=excluded.note,published=excluded.published,sort_order=excluded.sort_order,rake_bps=excluded.rake_bps,rake_cap_bb=excluded.rake_cap_bb,revision=public.poker_ring_tables.revision+1,updated_at=now();
  select * into row from public.poker_ring_tables where id=v_id;
  return to_jsonb(row);

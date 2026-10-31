@@ -8,7 +8,7 @@ import type {KeyRing,SealedCheckpoint} from './room-persistence';
 import {buildHandHistory,type HandHistory} from './hand-history';
 export type RingSeat={reservationId:string;memberId:string;seat:number;stack:number};
 export type RingContext={tableId:string;capacity:2|6;/** rakeBps/rakeCapBb: the table's rake (2026/10/31); old servers' contexts may lack them (= RING_RAKE). */terms:{sb:number;bb:number;rakeBps?:number;rakeCapBb?:number};seats:RingSeat[];published:boolean;activeHandId:string|null;buttonSeat:number|null};
-import {RING_RAKE,RAKE_CHARTS,tableRake} from './ring-rake';
+import {RING_RAKE,knownRake,tableRake} from './ring-rake';
 export {RING_RAKE};
 type Result={reservationId:string;stack:number;/** Chips this seat paid as rake in this hand (only when > 0). */rake?:number}[]|null;
 type Saved={handId:string;tableId:string;version:number;seats:RingSeat[];terms:{sb:number;bb:number};buttonSeat:number;sealed:SealedCheckpoint;status:'active'|'complete';result:Result};
@@ -23,7 +23,7 @@ function id(v:unknown):asserts v is string{if(typeof v!=='string'||!uuid.test(v)
 function integer(v:unknown,min=0,limit=max):asserts v is number{if(!Number.isSafeInteger(v)||Number(v)<min||Number(v)>limit)throw Error('Invalid ring value');}
 function seats(value:RingSeat[]){if(!Array.isArray(value)||value.length>6)throw Error('Invalid ring seats');let prior=0;const members=new Set(),reservations=new Set();for(const s of value){id(s.memberId);id(s.reservationId);integer(s.seat,1,6);integer(s.stack);if(s.seat<=prior||members.has(s.memberId)||reservations.has(s.reservationId))throw Error('Invalid ring seats');prior=s.seat;members.add(s.memberId);reservations.add(s.reservationId);}}
 function terms(t:RingContext['terms']){if(!t)throw Error('Invalid ring terms');integer(t.sb,1,1000000000);integer(t.bb,t.sb+1,1000000000);
- if((t.rakeBps!==undefined||t.rakeCapBb!==undefined)&&!RAKE_CHARTS.some(c=>c.bps===t.rakeBps&&c.capBb===t.rakeCapBb))throw Error('Invalid ring rake');}
+ if((t.rakeBps!==undefined||t.rakeCapBb!==undefined)&&!knownRake({bps:t.rakeBps,capBb:t.rakeCapBb}))throw Error('Invalid ring rake');}
 function context(c:RingContext){if(!c)throw Error('Invalid ring context');id(c.tableId);terms(c.terms);seats(c.seats);if(![2,6].includes(c.capacity)||c.seats.some(s=>s.seat>c.capacity)||typeof c.published!=='boolean')throw Error('Invalid ring context');if(c.activeHandId!==null)id(c.activeHandId);if(c.buttonSeat!==null)integer(c.buttonSeat,1,c.capacity);}
 function key(keys:KeyRing,keyId:string){if(!/^[a-zA-Z0-9_-]{1,80}$/.test(keyId)||!Object.hasOwn(keys.keys,keyId)||keys.keys[keyId].byteLength!==32)throw Error('Ring checkpoint key unavailable');return keys.keys[keyId];}
 function aad(handId:string,version:number){id(handId);integer(version,1,10000);return Buffer.from(JSON.stringify(['poker-ring-hand',1,handId.toLowerCase(),version]));}

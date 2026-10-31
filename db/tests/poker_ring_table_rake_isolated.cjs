@@ -1,4 +1,4 @@
-// Per-table ring rake (owner 2026/10/31): each table has one of 3%・3BB／5%・5BB／10%・10BB; the hand records it and the
+// Per-table ring rake (owner 2026/10/31): each table is 低レーキ 5%・5BB or 高レーキ 10%・10BB; the hand records it and the
 // database checks the cap of that hand's own table. Real PostgreSQL functions + the real engine/coordinator.
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{randomUUID,randomBytes}=require('crypto'),ts=require('typescript');
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
@@ -10,7 +10,8 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
   create or replace function public.is_admin() returns boolean language sql as $$select exists(select 1 from public.admin_users where user_id=auth.uid())$$;`);
  const folder=path.resolve(__dirname,'../../supabase/migrations');
  await db.exec(fs.readFileSync(path.join(folder,fs.readdirSync(folder).find(f=>f.endsWith('_poker_table_rake.sql'))),'utf8'));
- await assert.rejects(db.query("insert into public.poker_ring_tables(title,capacity,sb,bb,min_buy_in,max_buy_in,rake_bps,rake_cap_bb) values('bad',2,50,100,1000,3000,1000,5)"),'only charted rake levels');
+ for(const [b,c] of [[1000,5],[300,3]])await assert.rejects(db.query("insert into public.poker_ring_tables(title,capacity,sb,bb,min_buy_in,max_buy_in,rake_bps,rake_cap_bb) values('bad',2,50,100,1000,3000,$1,$2)",[b,c]),'only 5%・5BB and 10%・10BB tables');
+ assert.equal(Number((await db.query("insert into public.poker_ring_tables(title,capacity,sb,bb,min_buy_in,max_buy_in) values('default',2,50,100,1000,3000) returning rake_bps")).rows[0].rake_bps),500,'new tables are 低レーキ');
  const {SupabaseRingStore,RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
  const names={poker_ring_context:['p_table'],poker_ring_hand_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_hand_write:['p_hand','p_expected','p_write','p_sealed','p_result'],poker_ring_hand_load:['p_hand'],poker_ring_reserve_funds:['p_member','p_table','p_amount','p_request'],poker_ring_seat_funds:['p_member','p_reservation','p_seat']};
  const client={rpc:async(name,args)=>{try{assert.ok(names[name]);const values=names[name].map(k=>args[k]!==null&&typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);const r=await db.query(`select public.${name}(${names[name].map((k,i)=>k+' => $'+(i+1)).join(',')}) value`,values);return {data:r.rows[0].value,error:null};}catch(e){return {data:null,error:e};}}};
@@ -36,7 +37,6 @@ require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f
   }finally{await db.exec('reset role');}
  }
  // Both all-in for 3,000 each: the contested pot is 6,000.
- const low=await playAllIn(300,3);assert.equal(low.rake,180,'3% of 6,000 = 180 (cap 300)');assert.equal(low.house,180);
  const mid=await playAllIn(500,5);assert.equal(mid.rake,300,'5% of 6,000 = 300 (cap 500)');assert.equal(mid.house,300);
  const high=await playAllIn(1000,10);assert.equal(high.rake,600,'10% of 6,000 = 600 (cap 1,000), above the old 3 BB limit');assert.equal(high.house,600);
  console.log('PASS per-table rake: each table charges its own rule, the hand records it, the database checks that cap.');
