@@ -5,11 +5,12 @@ import type {Combo,SolverSpot} from '@/lib/poker/postflop-solver';
 import {cardText,classOf,type SolverView} from '@/lib/poker/solver-view';
 import type {SolverReply,SolverRequest} from '@/lib/poker/solver.worker';
 import styles from './gto-chart.module.css';
+import picker from './card-picker.module.css';
+import {CardGrid,CardSlot,parseCards} from './card-picker';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
 
-const R='AKQJT98765432',SUITS='cdhs';
-const code=(s:string)=>{const r='23456789TJQKA'.indexOf(s[0].toUpperCase()),u=SUITS.indexOf(s[1].toLowerCase());return r<0||u<0?-1:r*4+u;};
+const R='AKQJT98765432';
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
 const PRESETS=[{id:'all',name:'全ハンド',top:1},{id:'50',name:'上位50%',top:0.5},{id:'30',name:'上位30%',top:0.3},{id:'15',name:'上位15%',top:0.15}];
 /** Range = the strongest starting hands covering `top` of all deals (preflop rank order). */
@@ -27,17 +28,20 @@ const LIMITS={turn:{target:0.01,maxIterations:150},river:{target:0.002,maxIterat
 type Status={state:'idle'}|{state:'running';iterations:number;exploitability:number|null}|{state:'done';iterations:number;exploitability:number};
 
 export function RiverSolverPanel(){
- const [boardText,setBoardText]=useState('Ah Td 7c 4s 2h');
+ const [cards,setCards]=useState<(number|null)[]>(()=>parseCards('Ah Td 7c 4s 2h')!),[active,setActive]=useState<number|null>(null);
  const [pot,setPot]=useState(10),[stack,setStack]=useState(50),[oop,setOop]=useState('50'),[ip,setIp]=useState('50');
  const [status,setStatus]=useState<Status>({state:'idle'}),[error,setError]=useState(''),[solvedBoard,setSolvedBoard]=useState<number[]>([]);
  const [steps,setSteps]=useState<number[]>([]),[view,setView]=useState<SolverView|null>(null);
  const worker=useRef<Worker|null>(null),viewId=useRef(0);
  useEffect(()=>()=>worker.current?.terminate(),[]);
- const board=useMemo(()=>{const parts=boardText.trim().split(/\s+/);const cs=parts.map(p=>p.length===2?code(p):-1);return (parts.length===4||parts.length===5)&&cs.every(c=>c>=0)&&new Set(cs).size===parts.length?cs:null;},[boardText]);
+ // Board = the first 4 (turn) or 5 (river) places, filled in order.
+ const board=useMemo(()=>{const n=cards.findIndex(c=>c===null),filled=n<0?5:n;return (filled===4||filled===5)&&cards.slice(filled).every(c=>c===null)?cards.slice(0,filled) as number[]:null;},[cards]);
+ const used=useMemo(()=>new Set(cards.filter((c):c is number=>c!==null)),[cards]);
+ const pick=(code:number)=>{if(active===null)return;const next=cards.slice();next[active]=code;setCards(next);const e=next.findIndex(c=>c===null);setActive(e>=0&&e!==active?e:null);};
  const send=(m:SolverRequest)=>worker.current?.postMessage(m);
  const requestView=(next:number[])=>{setSteps(next);send({type:'view',id:++viewId.current,steps:next});};
  const start=()=>{
-  if(!board){setError('ボードは「Ah Td 7c 4s」（ターン）か「Ah Td 7c 4s 2h」（リバー）のように4枚か5枚、半角スペース区切りで入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}
+  if(!board){setError('ボードはフロップ3枚とターンの4枚（ターンから解く）か、リバーまでの5枚（リバーから解く）を左から順に選んでください。');return;}
   if(!(pot>0)||!(stack>0)){setError('ポットと残りチップは0より大きい数にしてください。');return;}
   setError('');const top=(id:string)=>PRESETS.find(p=>p.id===id)!.top,street=board.length===4?'turn':'river';
   const spot:SolverSpot={board,pot,stack,...SIZES[street],ranges:[rangeCombos(top(oop),board),rangeCombos(top(ip),board)]};
@@ -55,8 +59,11 @@ export function RiverSolverPanel(){
  return <div className={styles.wrap}>
   <p>ターン（4枚目）かリバー（5枚目）からの2人勝負を、近似なしで解きます。ボード・ポット・残りチップ・お互いのレンジを決めると、手札ごとの正解の打ち方（チェック・ベット・コール・フォールドの割合）が出ます。</p>
   <p className={styles.note}>ベット額の前提：ターンはポットの33%・75%・オールイン、その後のリバーは75%・オールイン。リバーから解くときは33%・75%・3倍レイズ・オールイン。ターンからの計算はリバーのカードを全部解くので、20〜40秒ほどかかります。</p>
+  <div role="group" aria-label="ボード"><p className={styles.note}>ボード（4枚ならターンから、5枚ならリバーから解きます）</p>
+   <div className={picker.slots}>{cards.map((c,i)=><CardSlot key={i} card={c} name={`ボードの${i+1}枚目`} active={active===i} label={['','','フロップ','ターン','リバー'][i]} onClick={()=>setActive(a=>a===i?null:i)}/>)}</div>
+   {active!==null&&<CardGrid title={`${['フロップの1枚目','フロップの2枚目','フロップの3枚目','ターン','リバー'][active]}`} blocked={new Set([...used].filter(x=>x!==cards[active]))} onPick={pick} onDone={()=>setActive(null)} onClear={()=>{const next=cards.slice();next[active]=null;setCards(next);}} typedPlaceholder="Ah Td 7c 4s 2h" onTyped={cs=>{if(cs.length>=4&&cs.length<=5){setCards([...cs,...new Array(5-cs.length).fill(null)]);}}}/>}
+  </div>
   <div className={styles.form}>
-   <label>ボード<input value={boardText} onChange={e=>setBoardText(e.target.value)} placeholder="Ah Td 7c 4s 2h"/></label>
    <label>ポット（BB）<input type="number" min={1} value={pot} onChange={e=>setPot(Number(e.target.value))}/></label>
    <label>残りチップ（BB）<input type="number" min={1} value={stack} onChange={e=>setStack(Number(e.target.value))}/></label>
    <label>OOP（先に打つ人）のレンジ<select value={oop} onChange={e=>setOop(e.target.value)}>{PRESETS.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>

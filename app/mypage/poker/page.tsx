@@ -9,6 +9,7 @@ import {GtoDeviationView} from '@/app/poker-ui/gto-deviation-view';
 import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
+import {EquityCalculator} from '@/app/poker-ui/equity-calculator';
 import {IcmPanel} from '@/app/poker-ui/icm-panel';
 import {FlopStrategyPanel} from '@/app/poker-ui/flop-strategy-panel';
 import {RangeTrainer} from '@/app/poker-ui/range-trainer';
@@ -32,6 +33,7 @@ export default async function Page(){const [data,hands,tendencies,monthly]=await
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
+ {id:'equity',label:'勝率計算機',eyebrow:'EQUITY & POT ODDS',description:'ハンド同士の勝率と、リバーまでにできる役の確率。ポットオッズからコールが得かも確かめられます。',content:<EquityCalculator/>},
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ];
