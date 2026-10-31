@@ -8,6 +8,7 @@ import RingAdmissionPanel from '@/app/poker-ui/ring-admission-panel';
 import {SkinSettings} from '@/app/poker-ui/skin-settings';
 import {TablePreferences,useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {SKINS_FREE_FOR_NOW} from '@/lib/poker/skins';
+import {SkinStarter} from '@/app/poker-ui/skin-starter';
 import type {RingTable} from '@/lib/poker/ring-tables';
 import type {RingLobbyState} from '@/lib/poker/ring-admission';
 import {LobbyIcon,type LobbyIconName} from './lobby-icon';
@@ -22,7 +23,7 @@ type TournamentCard={id:string;title:string;starts_at:string;image_url:string|nu
 type Props={guest:boolean;admin:boolean;memberName:string;ringEnabled:boolean;tournamentsEnabled:boolean;rings:RingTable[];ringError:boolean;tournaments:TournamentCard[];assigned:ReactNode;registration:ReactNode;board:ReactNode};
 const formatDate=(value:string)=>new Date(value).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
-function SkinPicker(){const {save,status}=useTablePreferences();return <><p className={styles.lead}>{SKINS_FREE_FOR_NOW?'卓・カードの着せ替えは、現在すべて無料で選べます。':'交換済みの卓・カードの着せ替えを選べます。'}選んだデザインを保存すると、ゲーム画面に反映されます。</p><div className={styles.skinPicker}><SkinSettings/></div><div className={styles.paneActions}><button type="button" className={styles.goldButton} onClick={()=>void save()}>着せ替えを保存</button><Link href="/mypage/chips" className={styles.outlineButton}>チップ交換所</Link><span role="status">{status}</span></div></>;}
+function SkinPicker(){const {save,status}=useTablePreferences();return <><p className={styles.lead}>{SKINS_FREE_FOR_NOW?'卓・カードの着せ替えは、現在すべて無料で選べます。':'持っている卓・カードの着せ替えを選べます。ほかのデザインは、チップ交換所での交換やハンド数の特典で手に入ります。'}選んだデザインを保存すると、ゲーム画面に反映されます。</p><div className={styles.skinPicker}><SkinSettings/></div><div className={styles.paneActions}><button type="button" className={styles.goldButton} onClick={()=>void save()}>着せ替えを保存</button><Link href="/mypage/chips" className={styles.outlineButton}>チップ交換所</Link><span role="status">{status}</span></div></>;}
 
 function RecordPlaceholder({kind,expanded=false}:{kind:'ranking'|'champions';expanded?:boolean}){
  const ranking=kind==='ranking';
@@ -47,7 +48,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
   <div className={styles.layout}>
    <aside className={styles.sidebar}><div className={styles.sidebarTitle}><LobbyIcon name="finger"/><strong>ポーカーロビー</strong></div><button type="button" className={styles.menuToggle} aria-expanded={menuOpen} aria-controls="lobby-navigation" onClick={()=>setMenuOpen(v=>!v)}>ロビーメニュー<span aria-hidden="true">{menuOpen?'−':'＋'}</span></button><nav id="lobby-navigation" className={styles.navigation} data-open={menuOpen} aria-label="ロビー内のメニュー">{navigation.map(item=><button type="button" key={item.id} aria-pressed={active===item.id} onClick={()=>go(item.id)}><LobbyIcon name={item.icon}/><span>{item.label}</span></button>)}</nav><div className={styles.sidebarFoot}><Link href="/news"><LobbyIcon name="bell"/>お知らせ</Link><Link href="/mypage/poker"><LobbyIcon name="settings"/>プレイヤーページ・設定</Link>{guest&&<Link href="/login" className={styles.loginLink}>ログインする</Link>}</div></aside>
    <main className={styles.main}>
-    <div className={styles.pageHeading}><h1>{active==='lobby'?'ポーカーロビー':title}</h1><p>{active==='lobby'?'遊ぶ卓も、次の目標も、ここから。':'あなたのポーカーを、もっと楽しく。'}</p>{guest&&<span className={styles.guestBadge}>ゲストプレビュー</span>}</div>
+    <div className={styles.pageHeading}><h1>{active==='lobby'?'ポーカーロビー':title}</h1><p>{active==='lobby'?'遊ぶ卓も、次の目標も、ここから。':'あなたのポーカーを、もっと楽しく。'}</p>{guest&&<span className={styles.guestBadge}>ゲストプレビュー</span>}</div>{!guest&&<SkinStarter/>}
     <div className={styles.summaryGrid}>
      <div className={styles.summaryCard}><img className={styles.chipArt} src="/images/poker-lobby/chip-stacks-finger.webp" alt="" width="100" height="100"/>{guest?<div className={styles.guestBalance}><span>あなたの持ちチップ</span><strong>— <small>chip</small></strong><Link href="/login">ログインして残高を確認</Link></div>:<SummitChipBalance presentation="lobby"/>}</div>
      <div className={`${styles.summaryCard} ${styles.tableSummary}`}><LobbyIcon className={styles.peopleArt} name="people"/><div><h2>参加中の卓</h2><strong className={styles.tableCount}>{ringState?own?'1':'0':'—'}<small>卓</small></strong><button type="button" className={styles.goldButton} onClick={()=>go('assigned')}>参加卓を開く</button></div></div>
@@ -59,6 +60,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
        <section className={styles.gamePanel} aria-label="参加する卓を探す">
         <div className={styles.tabs} role="tablist" aria-label="ゲーム形式"><button type="button" id="lobby-ring-tab" role="tab" aria-selected={gameTab==='ring'} aria-controls="lobby-game-panel" onClick={()=>setGameTab('ring')}>リングゲーム</button>{tournamentsEnabled&&<button type="button" id="lobby-tournament-tab" role="tab" aria-selected={gameTab==='tournament'} aria-controls="lobby-game-panel" onClick={()=>setGameTab('tournament')}>トーナメント</button>}<button type="button" id="lobby-practice-tab" role="tab" aria-selected={gameTab==='practice'} aria-controls="lobby-game-panel" onClick={()=>setGameTab('practice')}>練習卓</button></div>
         <div id="lobby-game-panel" role="tabpanel" aria-labelledby={`lobby-${gameTab}-tab`} className={styles.gameContent}>
+         {gameTab==='ring'&&<p className={styles.lead}>レーキの違いで変わるGTOの打ち方を体験できます。</p>}
          {gameTab==='ring'?!guest&&ringEnabled?<RingAdmissionPanel enabled productionFlow lobbyLayout="list" onLobbyState={setRingState}/>:<><RingLobbyList rows={configured} unavailable={ringError} onRefresh={()=>router.refresh()} renderActions={()=>guest&&ringEnabled?<Link href="/login">参加する</Link>:<button type="button" disabled>準備中</button>}/><p className={styles.gameNote}>{guest?'人数・着席状況はログイン後に確認できます。':ringEnabled?'現在の着席状況を取得できません。時間をおいて更新してください。':'会員チップでの対戦は準備中です。練習卓は利用できます。'}</p></>:gameTab==='practice'?<div className={styles.practice}><PokerLobbyPreview isGuestPreview={guest} practiceOnly compact tournamentsEnabled={false}/></div>:<div className={styles.embedded}>{registration}</div>}
         </div>
        </section>

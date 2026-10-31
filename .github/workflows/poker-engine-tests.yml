@@ -123,6 +123,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_skin_shop_isolated.cjs
+      - name: Verify skin starter picks and hand-count unlocks
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_skin_unlocks_isolated.cjs
       - name: Verify hand shares for the board (frozen, anonymised)
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
