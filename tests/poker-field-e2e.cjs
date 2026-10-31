@@ -24,7 +24,7 @@ async function database(){
  create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;
  grant usage on schema public to anon,authenticated,service_role;`);
  const folder=path.resolve(__dirname,'../supabase/migrations');
- for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql']){
+ for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql','_poker_room_save_large_fields.sql']){
   const file=fs.readdirSync(folder).find(f=>f.endsWith(suffix));assert.ok(file,suffix);await db.exec(fs.readFileSync(path.join(folder,file),'utf8'));
  }
  const {SupabaseRoomDirectory}=require('../lib/poker/room-directory.ts'),{SupabaseRoomStore}=require('../lib/poker/room-persistence.ts');
