@@ -87,13 +87,14 @@ async function database(){
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
   const began=Date.now();let lastLog=0,saveMs=0,saves=0;
+  const browserMiss=[];let lastMiss='';
   let step='start',stepAt=Date.now();const mark=x=>{step=x;stepAt=Date.now();};
   const watchdog=setInterval(()=>{if(Date.now()-stepAt>45000)console.log(`PROGRESS STALLED ${Math.round((Date.now()-stepAt)/1000)}s at: ${step}`);},30000);watchdog.unref?.();
   while(iterations++<Math.max(6000,ENTRANTS*400)){
    mark('read checkpoint');{const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
    // The isolated database lives in memory: reclaim old checkpoint versions now and then so a long run does not grow it without bound.
    if(iterations%150===0){mark('vacuum');await f.db.exec('vacuum poker_private.room_checkpoints');}
-   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} rssMb=${Math.round(process.memoryUsage().rss/1048576)} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)}`);}const field=c.field;
+   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} rssMb=${Math.round(process.memoryUsage().rss/1048576)} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)} browserMiss=${JSON.stringify(browserMiss)} final=${c.field?.tables.length===1?JSON.stringify(c.field.tables[0][1].seats.map(([n,x])=>[n,x.stack,f.users.indexOf(x.memberId)<BROWSERS?'B':'']))+' turn='+(c.field.tables[0][1].turn?.actor??'-'):''} lastMiss=${lastMiss}`);}const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
    maxTables=Math.max(maxTables,field.tables.length);if(field.tables.length===1&&[...where(c).values()].filter(s=>s.stack>0).length<=6)finalTable=true;
@@ -108,7 +109,7 @@ async function database(){
     if(!t.turn)continue;const seatNo=Number(t.turn.actor.slice(5)),member=t.seats.find(([n])=>n===seatNo)?.[1].memberId,i=f.users.indexOf(member);if(i<0)continue;
     if(i<BROWSERS){
      mark('browser '+i+' turn wait');const p=pages[i];const s=await until(()=>latest.get(i),v=>v?.hand?.handId===t.turn.handId&&v.hand.revision===t.turn.revision&&v.hand.legal,'browser turn '+i,8000).catch(()=>null);
-     if(!s){await pages[i].getByRole('button',{name:'参加・接続・再接続',exact:true}).click().catch(()=>{});continue;}
+     if(!s){browserMiss[i]=(browserMiss[i]??0)+1;const v=latest.get(i);lastMiss=`b${i} view hand=${v?.hand?.handId?.slice(0,8)} rev=${v?.hand?.revision} legal=${Boolean(v?.hand?.legal)} viewRev=${v?.revision} | table turn hand=${t.turn.handId.slice(0,8)} rev=${t.turn.revision} errors=${errors.length}${errors.length?':'+errors.slice(-2).join(';').slice(0,200):''}`;await pages[i].getByRole('button',{name:'参加・接続・再接続',exact:true}).click().catch(()=>{});continue;}
      check(s.field.tableNumber===tableNo,'browser acts at its own table');
      const legal=s.hand.legal,ack=p.waitForResponse(r=>r.url().includes('/api/poker/rooms/')&&r.request().postDataJSON()?.type==='act',{timeout:8000}).catch(()=>null);
      mark('browser '+i+' act');const roll=Math.random(),panel=p.getByRole('region',{name:'操作パネル',exact:true});
