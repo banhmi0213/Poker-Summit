@@ -1,7 +1,7 @@
 /** Browser worker for the practice table's GTO CPUs and the hand-history GTO review: loads the GTO data on demand and
  * runs decideGto / reviewGto (turn/river solves take seconds) off the main thread.
  * Messages in: decide, advise, spot, flags, review. Messages out: decision, advice, spot, review. */
-import {decideGto,type GtoData,type GtoView,type GtoDecision,type PreflopData} from './gto-bot';
+import {decideGto,preflopEvById,type GtoData,type GtoView,type GtoDecision,type PreflopData,type PreflopEvFile} from './gto-bot';
 import {adviseGto,flagHand,trainerSpot,reviewGto,reviewLive,reviewRanges,summarizeDeviation,type GtoRange,type DeviationSummary,type LiveDecision,type LiveReview,type GtoAdvice,type TrainerSpot,type HandFlags,type GtoReview,type GtoReviewHand} from './gto-review';
 import type {FlopData} from './gto-spots';
 import {reachSpot,trainerView,type TrainerHand,type TrainerMode} from './gto-trainer';
@@ -13,10 +13,10 @@ export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'adv
 
 const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:MessageEvent<GtoRequest>)=>void)|null};
 const flops=new Map<string,FlopData|null>(),missing=new Set<string>();
-let base:Promise<{preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>}>|null=null;
+let base:Promise<{preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;preflopEv?:GtoData['preflopEv']}>|null=null;
 const json=async<T,>(url:string):Promise<T|null>=>{try{const r=await fetch(url);return r.ok?await r.json() as T:null;}catch{return null;}};
 function load(){
- if(!base)base=(async()=>{const preflop=await json<PreflopData>('/poker-gto/preflop.json');if(!preflop)throw Error('GTO data unavailable');return {preflop,preflopHu:(await json<PreflopData>('/poker-gto/preflop-hu.json'))??undefined,preflopDepths:Object.fromEntries((await Promise.all([60,40,20,10].map(async d=>[d,await json<PreflopData>(`/poker-gto/preflop-${d}bb.json`)] as const))).filter(([,c])=>c)) as Record<number,PreflopData>,flopIndex:(await json<Record<string,string[]>>('/poker-gto/flops/index.json'))??{}};})();
+ if(!base)base=(async()=>{const preflop=await json<PreflopData>('/poker-gto/preflop.json');if(!preflop)throw Error('GTO data unavailable');return {preflop,preflopHu:(await json<PreflopData>('/poker-gto/preflop-hu.json'))??undefined,preflopDepths:Object.fromEntries((await Promise.all([60,40,20,10].map(async d=>[d,await json<PreflopData>(`/poker-gto/preflop-${d}bb.json`)] as const))).filter(([,c])=>c)) as Record<number,PreflopData>,flopIndex:(await json<Record<string,string[]>>('/poker-gto/flops/index.json'))??{},preflopEv:preflopEvById(await json<PreflopEvFile>('/poker-gto/preflop-ev.json'))};})();
  return base;
 }
 /** 「GTOと対戦」の練習の始め方: try deals until the hero reaches the chosen spot (everyone plays GTO until then). */

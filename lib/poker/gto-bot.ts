@@ -25,7 +25,11 @@ export type PreflopNode={id:number;player:Pos;history:string;kind:string;actions
 export type PreflopData={nodes:PreflopNode[]};
 /** preflopHu (2026/10/29): the heads-up chart (public/poker-gto/preflop-hu.json), used when only two players are dealt in. */
 /** preflopDepths (2026/10/30): 6-max tournament charts by stack (60, 40, 20, 10BB with a big blind ante). */
-export type GtoData={preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null};
+export type GtoData={preflop:PreflopData;preflopHu?:PreflopData;preflopDepths?:Record<number,PreflopData>;flopIndex:Record<string,string[]>;flop(spot:string,flop:string):FlopData|null;
+ /** EV of each action per hand at each 100BB chart decision, in big blinds (public/poker-gto/preflop-ev.json), by node id. */
+ preflopEv?:Record<number,Record<string,number[]>>};
+export type PreflopEvFile={version:number;nodes:{id:number;history:string;ev:Record<string,number[]>}[]};
+export const preflopEvById=(f:PreflopEvFile|null|undefined)=>f?Object.fromEntries(f.nodes.map(n=>[n.id,n.ev])) as Record<number,Record<string,number[]>>:undefined;
 export const CHART_DEPTHS=[60,40,20,10];
 /** The tournament chart for an effective stack: 100BB above 80BB, then the nearest of 60/40/20/10. */
 export function depthChart(effective:number):number{return effective>=80?100:effective>=50?60:effective>=30?40:effective>=15?20:10;}
@@ -189,6 +193,8 @@ export type GtoOption={kind:string;label:string;to:number|null};
  * arrives here with it (0〜1, relative) and the action shares. */
 export type GtoGrid=Record<string,{reach:number;freqs:number[]}>;
 export type GtoStrategy={source:'preflop'|'flop'|'solver';options:GtoOption[];freqs:number[];indexOf(a:LoggedAction):number;grid?:GtoGrid;
+ /** EV of each option for the hero's hand, in big blinds (preflop chart decisions only, when the EV file is loaded). */
+ ev?:number[];
  /** Set when the flop data is for a nearby precomputed flop, not the real one. */
  nearFlop?:string;
  /** Set when another spot's flop data stands in (heads-up spots not computed yet). */
@@ -419,8 +425,8 @@ function preflopStrategy(v:GtoView,data:GtoData,toks:Tok[],noHole=false):GtoStra
  if(found==='fold')return {source:'preflop',options:[{kind:'fold',label:'',to:null}],freqs:[1],indexOf:a=>a.type==='fold'||a.type==='check'?0:-1};
  const node=found.node,row0=noHole?node.actions.map(()=>0):node.strategy[classOf(code(v.hole[0]),code(v.hole[1]))];if(!row0)return null;
  const row=found.noCall?row0.map((p,i)=>node.actions[i].kind==='call'?0:node.actions[i].kind==='fold'?p+(row0[node.actions.findIndex(a=>a.kind==='call')]??0):p):row0;
- const pos=v.positions[v.hero];
- return {source:'preflop',options:node.actions.map(a=>({kind:a.kind,label:'',to:a.kind==='allin'?Infinity:(a.to??0)*v.bb})),freqs:[...row],
+ const pos=v.positions[v.hero],evRow=!noHole&&!found.noCall?data.preflopEv?.[node.id]?.[classOf(code(v.hole[0]),code(v.hole[1]))]:undefined;
+ return {source:'preflop',options:node.actions.map(a=>({kind:a.kind,label:'',to:a.kind==='allin'?Infinity:(a.to??0)*v.bb})),freqs:[...row],...(evRow&&evRow.length===node.actions.length?{ev:[...evRow]}:{}),
   indexOf:a=>chartIndex(node,{pos,kind:a.type==='fold'?'F':a.type==='call'||a.type==='check'?'C':'R',to:a.allIn&&node.actions.some(x=>x.kind==='allin')?100:a.to/v.bb}),
   grid:preflopGrid(data.preflop,node,found.noCall)};
 }

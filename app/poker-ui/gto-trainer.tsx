@@ -5,7 +5,7 @@ import type {BettingAction} from '@/lib/poker/betting';
 import {toTable} from '@/lib/poker/gto-bot';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import {reasonText,type TrainerSpot} from '@/lib/poker/gto-review';
-import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
+import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,evLoss,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
@@ -20,9 +20,10 @@ const STREET_TEXT=['プリフロップ','フロップ','ターン','リバー'];
 /** Seat spots around the oval, clockwise from the hero at the bottom. */
 const SPOTS=[{x:50,y:86},{x:11,y:68},{x:11,y:26},{x:50,y:9},{x:89,y:26},{x:89,y:68}];
 const STATS_KEY='poker-gto-trainer-stats';
-type Feedback={street:string;played:string;level:TrainerLevel|null;score:number|null;freq:number|null;options:{text:string;freq:number}[];note?:string};
-type Stats={hands:number;decisions:number;score:number;net:number;levels:Record<TrainerLevel,number>};
-const emptyStats=():Stats=>({hands:0,decisions:0,score:0,net:0,levels:{best:0,correct:0,inaccurate:0,mistake:0,blunder:0}});
+type Feedback={street:string;played:string;level:TrainerLevel|null;score:number|null;freq:number|null;evLoss:number|null;options:{text:string;freq:number}[];note?:string};
+/** evLoss / evCount: EV lost on the decisions that have EVs (preflop chart), in big blinds. */
+type Stats={hands:number;decisions:number;score:number;net:number;evLoss:number;evCount:number;levels:Record<TrainerLevel,number>};
+const emptyStats=():Stats=>({hands:0,decisions:0,score:0,net:0,evLoss:0,evCount:0,levels:{best:0,correct:0,inaccurate:0,mistake:0,blunder:0}});
 function readStats():Stats{try{const v=JSON.parse(window.localStorage.getItem(STATS_KEY)??'null');return v&&typeof v.hands==='number'&&v.levels?{...emptyStats(),...v,levels:{...emptyStats().levels,...v.levels}}:emptyStats();}catch{return emptyStats();}}
 function writeStats(s:Stats){try{window.localStorage.setItem(STATS_KEY,JSON.stringify(s));}catch{/* convenience only */}}
 
@@ -120,11 +121,13 @@ export function GtoTrainer(){
   const action=toTable(view,o.kind,o.label,o.to);
   let next:TrainerHand;try{next=trainerAct(hand,HERO,action);}catch{return;}
   const played=next.log[next.log.length-1];
-  const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,
+  const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,evLoss:null,
    options:known?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],
    note:!known?`採点なし：${reasonText(spot.reason)}`:spot.approx?'近似値：4人以上のポットや計算待ちの場面のため、その場の簡易計算です。GTOの割合は目安です（採点なし）':spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined};
-  if(graded){const g=gradeChoice(menu.map(x=>x.freq),i);fb.level=g.level;fb.score=g.score;fb.freq=g.freq;
-   setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1}};writeStats(n);return n;});}
+  if(graded){// GTO's most frequent choice counts as no loss (the chart's EVs are within a few hundredths of a BB there, rarely more).
+   const g=gradeChoice(menu.map(x=>x.freq),i),raw=evLoss(menu,i),loss=raw===null?null:g.level==='best'?0:raw;fb.level=g.level;fb.score=g.score;fb.freq=g.freq;fb.evLoss=loss;
+   setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1},
+    ...(loss!==null?{evLoss:Math.round((s.evLoss+loss)*100)/100,evCount:s.evCount+1}:{})};writeStats(n);return n;});}
   setFeedback(f=>[...f,fb]);setSpot(null);setHand(next);
  };
 
@@ -161,7 +164,7 @@ export function GtoTrainer(){
    </div>}
    {error&&<p role="alert">{error}</p>}
    {last&&<section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
-    <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
+    <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
     {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
    </section>}
@@ -169,14 +172,14 @@ export function GtoTrainer(){
     <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div>}
-   {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
+   {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.evLoss!==null&&`（EV損失 ${f.evLoss.toFixed(2)}BB）`}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
   </>}
   <section className={styles.stats} aria-label="練習の成績">
-   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span></p>
+   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
    <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
    <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
   </section>
   {stats.hands>=3&&<StoreInvite/>}
-  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。4人以上のポットや計算待ちの場面は、その場の簡易計算による近似値（採点なし）です。成績はこのブラウザに保存されます。</p>
+  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。4人以上のポットや計算待ちの場面は、その場の簡易計算による近似値（採点なし）です。EV損失は、その手でいちばん得な打ち方と比べて失ったチップの見込み（BB）で、今はプリフロップの判断だけに出ます。成績はこのブラウザに保存されます。</p>
  </div>;
 }

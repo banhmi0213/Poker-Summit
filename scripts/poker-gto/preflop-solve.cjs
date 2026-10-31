@@ -40,4 +40,10 @@ const deep=stack>=100&&!ante;
 const sizeNote=deep?'オープン2.5BB（SB 3BB）、3ベットはIP 3倍・ブラインドから11BB（SB対BBは9BB）、4ベットは2.2〜2.5倍、5ベットはオールイン'
  :`オープン${stack>=50?2.5:stack>=30?2.2:2}BB（SB ${stack>=50?3:2.5}BB）${stack<=25?'・オープンオールインあり':''}、3ベット・4ベットはスタックの45%以上になるときはオールイン`;
 const out={version:1,model:`simplified-6max-${stack}bb${ante?`-ante${ante}`:''}`,stack,ante,assumptions:[`${stack}BB・6人卓・${ante?`BBアンティ${ante}BB`:'アンティなし'}・レーキなし`,sizeNote,'リンプはSBだけ（SBまで全員降りたとき）。BBはチェックか4BBにレイズ、SBはフォールド・コール・12BBに3ベット。オープンにコールが入ったら、後ろの人はスクイーズ（10BB、ブラインドから12BB）でき、BBだけはコールでも参加できる（3人まで）。スクイーズにはオープナーがフォールド・コール・オールイン、コーラーがフォールド・コール。それ以外は1対1','フロップ以降は打ち合わず、オールイン時の勝率をポジションと手の打ちやすさで補正した取り分で評価'+(deep?'':'（スタックが浅いほど、補正を小さくしています）')],iterations:s.iterations,averageRegret:+s.averageRegret().toFixed(5),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+// --ev file (2026/10/31): also write each action's EV per hand (big blinds) for the trainer's EV loss.
+const evFile=arg('ev');if(evFile){const ev=s.actionEvs(),r2=v=>Math.round(v*100)/100;
+ fs.writeFileSync(evFile,JSON.stringify({version:1,model:out.model,iterations:s.iterations,unit:'bb',
+  note:'EV of each action for each hand at each decision, against the chart (average strategy). Same order as actions in the chart file.',
+  nodes:s.decisions.map(d=>{const k=d.actions.length,e=ev[d.id];return {id:d.id,history:d.history.trim(),ev:Object.fromEntries(s.labels.map((l,h)=>[l,Array.from({length:k},(_,a)=>r2(e[h*k+a]))]))};})}));
+ console.log('saved',evFile);}
 const file=arg('out',path.resolve(__dirname,'../../public/poker-gto/'+(deep?'preflop.json':`preflop-${stack}bb.json`)));fs.writeFileSync(file,JSON.stringify(out));console.log('saved',file,nodes.length,'decisions');
