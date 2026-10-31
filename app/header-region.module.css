@@ -180,3 +180,7 @@
  .header.header :global(.portal-nav-inner){padding-block:6px}
  .header.header :global(.portal-logo) :global(.logo-img){width:210px;max-width:100%;height:auto}
 }
+
+/* Disabled game entrances show the product preview without exposing navigation. */
+.header .pokerArtwork{height:auto;aspect-ratio:16/9;filter:grayscale(.65);opacity:.76}
+.disabled.disabledCard{cursor:not-allowed}

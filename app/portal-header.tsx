@@ -14,7 +14,10 @@ const GROUPS: MenuGroup[] = [
     { label: "クーポン", href: "/coupons", image: "/images/navigation/coupons-v1.webp", description: "ポーカー店舗のお得な特典をチェック" },
     { label: "トーナメント・イベント", href: "/events", image: "/images/navigation/events-v1.webp", description: "開催中・開催予定の情報をチェック" },
   ] },
-  { label: "サミット", href: "/board", links: [] },
+  { label: "Summit Poker", links: [
+    { label: "ポーカーロビー", href: null, image: "/images/navigation/poker-lobby-v1.webp", description: "オンライン対戦・卓への参加（公開準備中）" },
+    { label: "プレイヤーページ／GTO", href: null, image: "/images/navigation/player-gto-v1.webp", description: "成績の確認・GTO表・GTOと対戦（公開準備中）" },
+  ] },
   { label: "求人", links: JOB_ENTRANCES.map(entry => ({ label: entry.label, href: jobEntranceHref(entry), image: "/images/job-categories-photo-v1.webp", description: entry.label + "の募集を見る" })) },
   { label: "国内外大型大会", links: [
     { label: "国内", href: "/major-tournaments?scope=" + encodeURIComponent("国内"), image: "/images/navigation/domestic-v1.webp", description: "日本で開催される大型大会を探す" },
@@ -24,7 +27,7 @@ const GROUPS: MenuGroup[] = [
     { label: "BLOG", href: "/blog", image: "/images/navigation/blog-v1.webp", description: "ポーカーの楽しみ方がもっと広がる" },
     { label: "学習コース", href: "/learn", image: "/images/navigation/learn-v1.webp", description: "遊びながら、ポーカーを学ぼう。" },
     { label: "お知らせ", href: "/news", image: "/images/navigation/notice-v1.webp", description: "Poker Summitからの最新情報" },
-    { label: "SummitPoker", href: null, image: "/images/navigation/summit-poker-v1.webp", description: "公開準備中" },
+    { label: "サミット", href: "/board", image: "/images/navigation/community-v1.webp", description: "ポーカー仲間との交流・質問・情報交換" },
   ] },
 ];
 
@@ -50,7 +53,7 @@ export function PortalHeader({ userEmail, regionSelector }: { userEmail?: string
           </span>}
           <span className={styles.menuCopy}><strong>{link.label}{link.href === "/news" && <NewsDot />}</strong>{!mobile && <small>{link.description}</small>}</span>
         </Link>
-      : <span key={link.label} className={`${styles.disabled} ${!mobile && link.image ? styles.disabledCard : ""}`} aria-disabled="true">{!mobile && link.image ? <><span className={`${styles.menuArtwork} ${styles.fittedArtwork}`}><img src={link.image} alt="" loading="lazy" decoding="async" width={1440} height={810}/></span><span className={styles.menuCopy}><strong>{link.label}</strong><small>{link.description}</small></span></> : <strong>{link.label}</strong>}</span>
+      : <span key={link.label} className={`${styles.disabled} ${!mobile && link.image ? styles.disabledCard : ""}`} aria-disabled="true">{!mobile && link.image ? <><span className={`${styles.menuArtwork} ${styles.fittedArtwork} ${index === 1 ? styles.pokerArtwork : ""}`}><img src={link.image} alt="" loading="lazy" decoding="async" width={1440} height={810}/></span><span className={styles.menuCopy}><strong>{link.label}</strong><small>{link.description}</small></span></> : <strong>{link.label}</strong>}</span>
   );
 
   return (
