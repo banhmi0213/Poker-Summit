@@ -7,7 +7,8 @@ type Row={place:number;displayName:string;avatarUrl:string|null;gain:number;you:
 /** 「◯月 チップ獲得ランキング」: this month's ring gains, positive only (owner 2026/10/31). */
 export function useMonthlyRanking(limit:number){
  const [data,setData]=useState<{month:string;rows:Row[]}|null|'error'>(null);
- useEffect(()=>{let live=true;createClient().rpc('poker_ring_monthly_ranking',{p_limit:limit}).then(({data:d,error})=>{if(!live)return;
+ useEffect(()=>{let live=true;let client;try{client=createClient();}catch{setData('error');return;}
+  client.rpc('poker_ring_monthly_ranking',{p_limit:limit}).then(({data:d,error})=>{if(!live)return;
   const v=d as {month?:unknown;rows?:unknown}|null;
   if(error||!v||typeof v.month!=='string'||!Array.isArray(v.rows)){setData('error');return;}
   setData({month:v.month,rows:(v.rows as Row[]).filter(r=>Number.isSafeInteger(r?.place)&&typeof r.displayName==='string'&&Number.isSafeInteger(r.gain)&&r.gain>0)});});
