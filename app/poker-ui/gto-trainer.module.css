@@ -85,48 +85,59 @@
 .trainer .formBig{font-size:14px}
 .trainer .formBig select,.trainer .formBig input{font-size:15px}
 .trainer .formBig button{font-size:15px;padding:11px 16px}
-/* 文字を大きく (owner 2026/10/31「ほぼ読まれへん」): the mypage shell sets .panel p 13px and .panel button 12px with higher specificity, so these win with !important */
-.trainer{font-size:17px!important;line-height:1.7}
-.trainer p{font-size:17px!important;line-height:1.8!important}
-.trainer .log{font-size:16px!important;gap:6px 8px}
-.trainer .table{max-width:860px}
-.trainer .pot{font-size:18px!important;padding:4px 14px}
-.trainer .board{min-height:76px;gap:7px}
-.trainer .card{width:54px;height:76px;font-size:27px!important;border-radius:8px}
-.trainer .card small{font-size:21px!important}
-.trainer .seat{min-width:110px;gap:4px}
-.trainer .seat .card{width:44px;height:62px;font-size:22px!important}
-.trainer .seat[data-hero] .card{width:56px;height:78px;font-size:28px!important}
-.trainer .badge{font-size:16px!important;padding:2px 9px}
-.trainer .badge i{width:21px;height:21px;font-size:13px!important}
-.trainer .stack,.trainer .bet{font-size:16px!important;padding:2px 8px}
-.trainer .result{font-size:22px!important}
-.trainer .actions button{font-size:21px!important;padding:17px 14px!important;min-height:60px!important;max-width:240px}
-.trainer .actions p{font-size:17px!important}
-.trainer .feedback p{font-size:18px!important}
-.trainer .feedback b{font-size:22px!important}
-.trainer .history{font-size:17px!important}
-.trainer .history small{font-size:16px!important}
-.trainer .stats{font-size:17px!important}
-.trainer .reset{font-size:16px!important;padding:10px 14px!important}
-.trainer .drillHead{font-size:19px!important}
-.trainer .drillHead b{font-size:27px!important}
-.trainer .drillTag{font-size:15px!important}
-.trainer .drillHand .card{width:80px;height:110px;font-size:38px!important;border-radius:10px}
-.trainer .drillHand .card small{font-size:30px!important}
-.trainer .kinds button{font-size:18px!important;padding:13px 14px!important;min-height:52px!important}
-.trainer .formBig,.trainer .formBig label{font-size:17px!important}
-.trainer .formBig select,.trainer .formBig input{font-size:17px!important;min-height:46px!important}
-.trainer .formBig button{font-size:17px!important;padding:12px 18px!important;min-height:48px!important}
-.trainer [role=tab]{font-size:18px!important;padding:12px 18px!important}
+/* 文字の大きさ (owner 2026/10/31「ほぼ読まれへん」→「大きすぎ、もうちょい小さく」): the mypage shell sets .panel p 13px and
+   .panel button 12px with higher specificity, so these win with !important. */
+.trainer{font-size:15px!important;line-height:1.7}
+.trainer p{font-size:15px!important;line-height:1.75!important}
+.trainer .log{font-size:15px!important;gap:5px 7px}
+.trainer .pot{font-size:16px!important;padding:3px 12px}
+.trainer .board{min-height:64px;gap:6px}
+.trainer .card{width:46px;height:64px;font-size:23px!important;border-radius:7px}
+.trainer .card small{font-size:18px!important}
+.trainer .seat{min-width:100px}
+.trainer .seat .card{width:38px;height:53px;font-size:19px!important}
+.trainer .seat[data-hero] .card{width:48px;height:67px;font-size:24px!important}
+.trainer .badge{font-size:14px!important;padding:1px 8px}
+.trainer .badge i{width:19px;height:19px;font-size:12px!important}
+.trainer .stack,.trainer .bet{font-size:14px!important;padding:1px 7px}
+.trainer .result{font-size:20px!important}
+.trainer .actions button{font-size:18px!important;padding:13px 12px!important;min-height:52px!important}
+.trainer .actions p{font-size:15px!important}
+.trainer .feedback p{font-size:16px!important}
+.trainer .feedback b{font-size:19px!important}
+.trainer .history{font-size:15px!important}
+.trainer .history small{font-size:14px!important}
+.trainer .stats{font-size:15px!important}
+.trainer .reset{font-size:14px!important;padding:8px 12px!important;min-height:38px!important}
+.trainer .drillHead{font-size:17px!important}
+.trainer .drillHead b{font-size:24px!important}
+.trainer .drillTag{font-size:14px!important}
+.trainer .drillHand .card{width:72px;height:99px;font-size:34px!important;border-radius:10px}
+.trainer .drillHand .card small{font-size:27px!important}
+.trainer .kinds button{font-size:16px!important;padding:10px 14px!important;min-height:46px!important}
+.trainer .formBig,.trainer .formBig label{font-size:14px!important}
+.trainer .formBig select,.trainer .formBig input{font-size:15px!important;min-height:42px!important}
+.trainer .formBig button{font-size:15px!important;padding:10px 16px!important;min-height:42px!important}
+.rules{margin-top:10px;color:#91a8ba}
+.rules summary{cursor:pointer;font-size:14px;color:#c9d6e0}
+.trainer .rules p{font-size:14px!important;color:#91a8ba!important}
+/* While a hand is on, PC shows the table and the side column (log, buttons, scoring, record) next to each other, so the
+   page fits one screen without shrinking the text. */
+.play{display:flex;flex-direction:column;gap:10px}
+.playSide{display:flex;flex-direction:column;gap:10px;min-width:0}
+@media (min-width:1100px){
+ .play{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);align-items:start;gap:16px}
+ .play .table{max-width:680px}
+ .play .actions button{flex-basis:30%}
+}
 @media (max-width:520px){
- .trainer,.trainer p{font-size:16px!important}
- .trainer .seat{min-width:76px}
- .trainer .card{width:40px;height:56px;font-size:20px!important}
- .trainer .card small{font-size:16px!important}
- .trainer .seat .card{width:32px;height:45px;font-size:16px!important}
- .trainer .seat[data-hero] .card{width:42px;height:58px;font-size:21px!important}
- .trainer .badge,.trainer .stack,.trainer .bet{font-size:14px!important}
- .trainer .actions button{font-size:18px!important;padding:14px 8px!important}
- .trainer .drillHand .card{width:64px;height:88px;font-size:31px!important}
+ .trainer,.trainer p{font-size:15px!important}
+ .trainer .seat{min-width:72px}
+ .trainer .card{width:36px;height:50px;font-size:18px!important}
+ .trainer .card small{font-size:14px!important}
+ .trainer .seat .card{width:30px;height:42px;font-size:15px!important}
+ .trainer .seat[data-hero] .card{width:40px;height:56px;font-size:20px!important}
+ .trainer .badge,.trainer .stack,.trainer .bet{font-size:13px!important}
+ .trainer .actions button{font-size:17px!important;padding:12px 8px!important}
+ .trainer .drillHand .card{width:62px;height:86px;font-size:29px!important}
 }

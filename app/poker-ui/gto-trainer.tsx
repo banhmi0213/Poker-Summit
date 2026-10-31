@@ -146,17 +146,23 @@ function GtoHandTrainer(){
  const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
+ const statsBox=<>
+  <section className={styles.stats} aria-label="練習の成績">
+   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
+   <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
+   <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
+  </section>
+ </>;
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}>
-  <p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>
+  {!hand&&<p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   <div className={`${chart.form} ${styles.formBig}`}>
    <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
    {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
    {seeking&&<p role="status">場面を探しています…</p>}
   </div>
-  {hand&&<>
-   <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
+  {hand&&<div className={styles.play}>
    <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
      <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
@@ -170,6 +176,8 @@ function GtoHandTrainer(){
       {p.committed>0&&!done&&<span className={styles.bet}>{bb(p.committed)}</span>}
      </div>;})}
    </div>
+   <div className={styles.playSide}>
+   <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
    {!done&&hand.round.toAct===HERO&&<div className={styles.actions}>
     {spot==='loading'&&<p role="status">GTOを計算中…</p>}
     {menu.map((o,i)=><button key={i} type="button" data-kind={o.kind} onClick={()=>choose(i)}>{o.text}</button>)}
@@ -185,13 +193,11 @@ function GtoHandTrainer(){
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div>}
    {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.evLoss!==null&&`（EV損失 ${f.evLoss.toFixed(2)}BB）`}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
-  </>}
-  <section className={styles.stats} aria-label="練習の成績">
-   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
-   <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
-   <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
-  </section>
-  {stats.hands>=3&&<StoreInvite/>}
-  <p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。4人以上のポットや計算待ちの場面は、その場の簡易計算による近似値（採点なし）です。EV損失は、その手でいちばん得な打ち方と比べて失ったチップの見込み（BB）です。プリフロップとターン・リバーの判断に出ます（フロップは計算データがそろってから。ターンはその場の計算が十分に詰められたときだけ）。成績はこのブラウザに保存されます。</p>
+   {statsBox}
+   </div>
+  </div>}
+  {!hand&&statsBox}
+  {(!hand||done)&&stats.hands>=3&&<StoreInvite/>}
+  <details className={styles.rules}><summary>採点の決め方</summary><p className={chart.note}>採点はGTOの頻度で判定します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。ターン・リバーはその場で計算するため数秒かかります。4人以上のポットや計算待ちの場面は、その場の簡易計算による近似値（採点なし）です。EV損失は、その手でいちばん得な打ち方と比べて失ったチップの見込み（BB）です。プリフロップとターン・リバーの判断に出ます（フロップは計算データがそろってから。ターンはその場の計算が十分に詰められたときだけ）。成績はこのブラウザに保存されます。</p></details>
  </div>;
 }
