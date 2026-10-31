@@ -10,7 +10,7 @@ import {handStats,type HandStats} from './hand-stats';
 export type HistoryStreet='preflop'|'flop'|'turn'|'river';
 export type HistoryAction={street:HistoryStreet;seatId:string;type:'ante'|'sb'|'bb'|'fold'|'check'|'call'|'bet'|'raise';amount:number;to:number;allIn:boolean;pot:number};
 export type HistoryPlayer={seatId:string;seat:number;memberId:string;position:string;startStack:number;endStack:number;net:number;hole:Card[];folded:boolean;shown:boolean;stats:HandStats};
-export type HandHistory={version:1;handId:string;terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;players:HistoryPlayer[];board:Card[];actions:HistoryAction[];result:{showdown:boolean;winners:string[];payouts:Record<string,number>;
+export type HandHistory={version:1;handId:string;/** Ring hands: the table's rake (2026/10/31); absent on older records. */rake?:{bps:number;capBb:number};terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;players:HistoryPlayer[];board:Card[];actions:HistoryAction[];result:{showdown:boolean;winners:string[];payouts:Record<string,number>;
  /** Ring all-in run twice: each run's board and winners (the first run's board is also `board`). */
  runs?:{board:Card[];winners:string[]}[]}};
 
@@ -63,5 +63,6 @@ export function buildHandHistory(checkpoint:HandCheckpoint,members:Readonly<Reco
  const result={showdown:final.result.showdown,winners:[...final.result.winners],payouts:{...final.result.payouts},...(runs?{runs}:{})};
  const stats=handStats({actions,players:base,board,result});
  const players=base.map(p=>({...p,stats:stats[p.seatId]}));
- return {version:1,handId:final.handId,terms:{sb:final.terms.sb,bb:final.terms.bb,ante:final.terms.ante,anteType:final.terms.anteType,level:final.terms.level},buttonSeatId:first.positions.button,players,board,actions,result};
+ const rake=checkpoint.initial.rake;
+ return {version:1,handId:final.handId,terms:{sb:final.terms.sb,bb:final.terms.bb,ante:final.terms.ante,anteType:final.terms.anteType,level:final.terms.level},buttonSeatId:first.positions.button,players,board,actions,result,...(rake?{rake:{bps:rake.bps,capBb:rake.capBb}}:{})};
 }
