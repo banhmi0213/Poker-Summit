@@ -157,7 +157,8 @@
 .navy-preview .home-feed.home-feed :is(.home-academy-band,.home-blog-band,.home-news-band)>section{margin:0;min-width:0}
 .navy-preview .home-feed.home-feed .home-promo-band{margin-block:0}
 .navy-preview .home-news-band #home-poker-news-heading,.navy-preview .home-blog-band #home-blog-heading{color:#152d48}
-.navy-preview .home-news-band article.home-news-feature h3{color:#eaf4fc}
+.navy-preview .home-feed.home-feed .home-news-band .home-news-feature h3{color:#eaf4fc}
+.navy-preview .home-feed.home-feed .home-news-band .home-news-feature p{color:#edf2f8}
 .navy-preview .portal-footer .footer-discovery{width:var(--home-content-width);max-width:none;gap:40px}
 .navy-preview .portal-footer .footer-discovery .footer-areas{width:100%;max-width:none;margin:0}
 .navy-preview .portal-footer .footer-social p{color:#e3d2ad}
