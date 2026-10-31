@@ -4,6 +4,7 @@
  * one catalog entry (+ its image under public/images/cosmetics/<kind>/<id>.png) and one shop_items row (kind 'cosmetic').
  * Ownership: a member_tickets row (count 1) for shopCode, like skins. Sales (KOMOJU) are not live: no prices are shown. */
 import type {CSSProperties} from 'react';
+import {paidFeaturesVisible} from '@/lib/billing/visibility';
 export type CosmeticKind='frame'|'plate'|'thread';
 type Base={id:string;name:string;free:boolean;shopCode?:string;/** Yen, once sales start. */price?:number};
 /** Avatar frame: an outline drawn outside the avatar ring, so the turn-timer ring inside keeps working. */
@@ -39,7 +40,8 @@ export const THREAD_ITEMS:readonly ThreadItem[]=[
 /** Everyone may equip every placeholder on staging until sales start (mirrors poker_private.cosmetics_free_for_now()). */
 export const COSMETICS_FREE_FOR_NOW=true;
 export const COSMETIC_ITEMS:Record<CosmeticKind,readonly Base[]>={frame:FRAME_ITEMS,plate:PLATE_ITEMS,thread:THREAD_ITEMS};
-const find=<T extends Base>(list:readonly T[],code:string|null|undefined)=>list.find(i=>i.shopCode===code)??list[0];
+// While paid features are hidden (lib/billing/visibility.ts), every equipped placeholder renders as 標準.
+const find=<T extends Base>(list:readonly T[],code:string|null|undefined)=>paidFeaturesVisible()?list.find(i=>i.shopCode===code)??list[0]:list[0];
 export const frameItem=(code?:string|null)=>find(FRAME_ITEMS,code);
 export const plateItem=(code?:string|null)=>find(PLATE_ITEMS,code);
 export const threadItem=(code?:string|null)=>find(THREAD_ITEMS,code);

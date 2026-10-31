@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { paidFeaturesVisible } from "@/lib/billing/visibility";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -224,7 +225,7 @@ export default async function TermsPage() {
           </section>
           <section id="gto-plans" style={{ scrollMarginTop: 100, marginTop: 32 }}>
             <h2 style={ARTICLE_STYLE}>第19条の2（GTOプランの利用・定期課金）</h2>
-            <p style={P_STYLE}>本条は、GTOの表・練習・ハンド判定等の学習ツールを月額または年額で利用できる有料プラン（以下「GTOプラン」といいます。）に関する個別規定です。販売開始後のお申込みに適用し、本規約への記載だけで販売開始を意味するものではありません。料金、支払時期、解約方法等は<a href="/pricing">料金ページ</a>および<a href="/tokushoho#gto-plans">特定商取引法に基づく表記</a>の表示に従います。</p>
+            <p style={P_STYLE}>本条は、GTOの表・練習・ハンド判定等の学習ツールを月額または年額で利用できる有料プラン（以下「GTOプラン」といいます。）に関する個別規定です。販売開始後のお申込みに適用し、本規約への記載だけで販売開始を意味するものではありません。料金、支払時期、解約方法等は{/* No link to /pricing while paid features are hidden (lib/billing/visibility.ts). */}{paidFeaturesVisible()?<a href="/pricing">料金ページ</a>:"料金ページ"}および<a href="/tokushoho#gto-plans">特定商取引法に基づく表記</a>の表示に従います。</p>
             <ol style={LIST_STYLE}>
               <li>GTOプランには、スタンダードおよびプロの種類があり、それぞれ月額または年額を選択できます。各プランで利用できる機能は、料金ページに表示します。</li>
               <li>GTOプランの契約は、ユーザーが料金ページに表示された内容を確認してお申し込みになり、決済代行会社の画面でクレジットカードの登録が完了した時点で成立します。</li>

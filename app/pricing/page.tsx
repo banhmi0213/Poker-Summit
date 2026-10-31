@@ -9,7 +9,9 @@ import {proRoadmapLine} from '@/lib/billing/pro-roadmap';
 import {GTO_FEATURES_FINAL,GTO_PLAN_FEATURES} from '@/lib/billing/plan-features';
 import {getGtoPlanStatus} from '@/lib/billing/plan';
 export const dynamic='force-dynamic';
-export const metadata=staticPageMetadata({title:'GTOプランの料金',description:'Poker SummitのGTOプラン（無料・スタンダード・プロ）の料金と内容。',path:'/pricing'});
+// DIRECT URL ONLY (owner 2026/11/01): kept reachable for the KOMOJU review, but noindex/nofollow, not in app/sitemap.ts,
+// and not linked from anywhere while paid features are hidden (lib/billing/visibility.ts paidFeaturesVisible()).
+export const metadata={...staticPageMetadata({title:'GTOプランの料金',description:'Poker SummitのGTOプラン（無料・スタンダード・プロ）の料金と内容。',path:'/pricing'}),robots:{index:false,follow:false}};
 // GTO有料プランの料金ページ(2026/11/01)。販売開始(NEXT_PUBLIC_GTO_BILLING=on)までは「準備中」で、申込みボタンは押せない。
 const TH:CSSProperties={padding:'10px 8px',textAlign:'center',borderBottom:'1px solid #ddd'};
 const TD:CSSProperties={padding:'9px 8px',textAlign:'center',borderBottom:'1px solid #eee',fontSize:14};
