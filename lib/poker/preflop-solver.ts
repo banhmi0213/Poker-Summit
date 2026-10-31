@@ -17,7 +17,14 @@ export type PreflopDecision={type:'decision';id:number;player:number;history:str
 export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'limp'|'srp'|'3bp'|'4bp'|'allin';aggr?:number};threeWay?:[number,number,number]};
 export type PreflopNode=PreflopDecision|PreflopTerminal;
 export const POSITIONS=['UTG','HJ','CO','BTN','SB','BB'] as const;
-const POST=[2,3,4,5,0,1];// postflop order: SB first, BB, UTG, HJ, CO, BTN last
+/** Seat names for 6, 8 and 9 players (owner 2026/11/1: 大会・リングは8〜9人卓が基本). */
+export function positionsFor(seats:number):readonly string[]{
+ if(seats===9)return ['UTG','UTG+1','UTG+2','LJ','HJ','CO','BTN','SB','BB'];
+ if(seats===8)return ['UTG','UTG+1','LJ','HJ','CO','BTN','SB','BB'];
+ return POSITIONS;
+}
+/** Postflop order (0 = first to act): SB, BB, then UTG … BTN last. */
+const postOrder=(seats:number)=>Array.from({length:seats},(_,p)=>p>=seats-2?p-(seats-2):p+2);
 /** Out-of-position realisation by pot kind and role (in position = 1.0), calibrated from the flop solutions
  * (scripts/poker-gto/calibrate-realize.cjs, 2026/10/29): the preflop aggressor out of position realises far more than
  * a caller out of position. 4-bet pots with the aggressor out of position and limped pots have no flop data yet. */
@@ -50,7 +57,7 @@ const r1=(v:number)=>Math.round(v*10)/10;
 /** rake (2026/10/31, owner: レーキの率ごとの表 3%・3BB／5%・5BB／10%・10BB): taken only from pots that see a flop
  * (no flop, no drop). bps = basis points (300 = 3%), capBb = the most taken from one pot, in big blinds. */
 export type PreflopRake={bps:number;capBb:number};
-export type PreflopConfig={stack:number;ante:number;rake?:PreflopRake};
+export type PreflopConfig={stack:number;ante:number;rake?:PreflopRake;/** players at the table, 6 (default), 8 or 9 */seats?:number};
 /** Pots keep growing after the flop, so the rake is worked out on the pot the hand usually ends with:
  * the preflop pot times this (limped and single-raised pots grow the most; an all-in pot is already final). */
 export const RAKE_POT_GROWTH:Record<'limp'|'srp'|'3bp'|'4bp'|'allin'|'threeWay',number>={limp:2.5,srp:2.5,'3bp':1.6,'4bp':1.2,allin:1,threeWay:2.5};
@@ -61,18 +68,18 @@ export function rakeTaken(rake:PreflopRake|undefined,pot:number,kind:keyof typeo
 export const DEFAULT_PREFLOP:PreflopConfig={stack:100,ante:0};
 /** Build the simplified preflop tree. */
 export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
- const STACK=cfg.stack,J=(x:number)=>x>=STACK*0.45?STACK:x,OPEN=STACK>=50?2.5:STACK>=30?2.2:2,SB_OPEN=STACK>=50?3:2.5;
+ const N=cfg.seats??6,SB=N-2,BB=N-1,NAMES=positionsFor(N),POST=postOrder(N),STACK=cfg.stack,J=(x:number)=>x>=STACK*0.45?STACK:x,OPEN=STACK>=50?2.5:STACK>=30?2.2:2,SB_OPEN=STACK>=50?3:2.5;
  const raiseAct=(to:number,label:string):PreflopAction=>to>=STACK?{label:'オールイン',kind:'allin',to:STACK}:{label,kind:'raise',to};
  let id=0;const decisions:PreflopDecision[]=[];
  const dec=(player:number,history:string,facing:number,actions:PreflopAction[],children:PreflopNode[]):PreflopDecision=>{const d:PreflopDecision={type:'decision',id:id++,player,history,facing,actions,children};decisions.push(d);return d;};
- const name=(p:number)=>POSITIONS[p];
+ const name=(p:number)=>NAMES[p];
  // Unopened pot: players fold in turn until someone opens.
  function unopened(p:number,inv:number[],history:string):PreflopNode{
-  if(p===5)return {type:'terminal',invested:inv,winner:5};// folded to the big blind
-  const open=p===4?SB_OPEN:OPEN,next=unopened(p+1,inv,history+`${name(p)}F `);
+  if(p===BB)return {type:'terminal',invested:inv,winner:BB};// folded to the big blind
+  const open=p===SB?SB_OPEN:OPEN,next=unopened(p+1,inv,history+`${name(p)}F `);
   const opened=[...inv];opened[p]=open;
   // Folded to the small blind (2026/10/29): it may also limp; the big blind then checks or raises.
-  if(p===4){const limped=[...inv];limped[4]=1;
+  if(p===SB){const limped=[...inv];limped[SB]=1;
    const acts:PreflopAction[]=[{label:'フォールド',kind:'fold'},{label:'リンプ（コール）',kind:'call'},{label:`オープン ${open}BB`,kind:'raise',to:open}],kids:PreflopNode[]=[next,bbVsLimp(limped,history+'SBC '),facingOpen(p,p+1,opened,history+`${name(p)}${open} `)];
    if(STACK<=25){const jam=[...inv];jam[p]=STACK;acts.push({label:'オールイン',kind:'allin',to:STACK});kids.push(facingOpenJam(p,p+1,jam,history+`${name(p)}AI `));}
    return dec(p,history,0,acts,kids);}
@@ -82,39 +89,39 @@ export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
  }
  // Opened all in (short stacks): each later player folds or calls; the first call goes to showdown heads-up.
  function facingOpenJam(o:number,p:number,inv:number[],history:string):PreflopNode{
-  if(p>5)return {type:'terminal',invested:inv,winner:o};
+  if(p>BB)return {type:'terminal',invested:inv,winner:o};
   const called=[...inv];called[p]=STACK;
   return dec(p,history,STACK,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],[facingOpenJam(o,p+1,inv,history+`${name(p)}F `),{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'allin'}}]);
  }
  // Small blind limped: the big blind checks (a limped pot, SB first after the flop) or raises to 4BB.
  function bbVsLimp(inv:number[],history:string):PreflopNode{
-  const raised=[...inv];raised[5]=4;
-  return dec(5,history,1,[{label:'チェック',kind:'check'},{label:'レイズ 4BB',kind:'raise',to:4}],[{type:'terminal',invested:inv,showdown:{a:4,b:5,kind:'limp'}},sbVsIso(raised,history+'BB4 ')]);
+  const raised=[...inv];raised[BB]=4;
+  return dec(BB,history,1,[{label:'チェック',kind:'check'},{label:'レイズ 4BB',kind:'raise',to:4}],[{type:'terminal',invested:inv,showdown:{a:SB,b:BB,kind:'limp'}},sbVsIso(raised,history+'BB4 ')]);
  }
  function sbVsIso(inv:number[],history:string):PreflopNode{
-  const three=J(12),called=[...inv];called[4]=4;const raised=[...inv];raised[4]=three;
-  return dec(4,history,4,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},raiseAct(three,`3ベット ${three}BB`)],
-   [{type:'terminal',invested:inv,winner:5},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'srp',aggr:5}},three>=STACK?facing5bet(5,4,raised,history+'SBAI '):bbVsLimp3bet(raised,history+'SB12 ')]);
+  const three=J(12),called=[...inv];called[SB]=4;const raised=[...inv];raised[SB]=three;
+  return dec(SB,history,4,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},raiseAct(three,`3ベット ${three}BB`)],
+   [{type:'terminal',invested:inv,winner:BB},{type:'terminal',invested:called,showdown:{a:SB,b:BB,kind:'srp',aggr:BB}},three>=STACK?facing5bet(BB,SB,raised,history+'SBAI '):bbVsLimp3bet(raised,history+'SB12 ')]);
  }
  function bbVsLimp3bet(inv:number[],history:string):PreflopNode{
-  const called=[...inv];called[5]=12;const jam=[...inv];jam[5]=STACK;
-  return dec(5,history,12,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
-   [{type:'terminal',invested:inv,winner:4},{type:'terminal',invested:called,showdown:{a:4,b:5,kind:'3bp',aggr:4}},facing5bet(4,5,jam,history+'BBAI ')]);
+  const called=[...inv];called[BB]=12;const jam=[...inv];jam[BB]=STACK;
+  return dec(BB,history,12,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},{label:'オールイン',kind:'allin',to:STACK}],
+   [{type:'terminal',invested:inv,winner:SB},{type:'terminal',invested:called,showdown:{a:SB,b:BB,kind:'3bp',aggr:SB}},facing5bet(SB,BB,jam,history+'BBAI ')]);
  }
  // Players after the opener answer one by one: fold, call (heads-up to the flop) or 3-bet.
  function facingOpen(o:number,p:number,inv:number[],history:string):PreflopNode{
-  if(p>5)return {type:'terminal',invested:inv,winner:o};
-  const open=inv[o],three=J(p>=4?(o===4?9:11):r1(open*3)),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
+  if(p>BB)return {type:'terminal',invested:inv,winner:o};
+  const open=inv[o],three=J(p>=SB?(o===SB?9:11):r1(open*3)),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
   return dec(p,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},raiseAct(three,`3ベット ${three}BB`)],
-   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<5&&o!==4?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp',aggr:o}},three>=STACK?facing5bet(o,p,raised,history+`${name(p)}AI `):facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
+   [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<BB&&o!==SB?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp',aggr:o}},three>=STACK?facing5bet(o,p,raised,history+`${name(p)}AI `):facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
  }
  // After an open and a call, each later player may squeeze (2026/10/29); only the big blind may also call (a three-way
  // pot, at most three players).
  function afterCall(o:number,c:number,q:number,inv:number[],history:string):PreflopNode{
-  if(q>5)return {type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp',aggr:o}};
-  const open=inv[o],sq=J(q>=4?12:10),raised=[...inv];raised[q]=sq;
+  if(q>BB)return {type:'terminal',invested:inv,showdown:{a:o,b:c,kind:'srp',aggr:o}};
+  const open=inv[o],sq=J(q>=SB?12:10),raised=[...inv];raised[q]=sq;
   const acts:PreflopAction[]=[{label:'フォールド',kind:'fold'}],kids:PreflopNode[]=[afterCall(o,c,q+1,inv,history+`${name(q)}F `)];
-  if(q===5){const called=[...inv];called[5]=open;acts.push({label:'コール',kind:'call'});kids.push({type:'terminal',invested:called,threeWay:[o,c,5]});}
+  if(q===BB){const called=[...inv];called[BB]=open;acts.push({label:'コール',kind:'call'});kids.push({type:'terminal',invested:called,threeWay:[o,c,BB]});}
   acts.push(raiseAct(sq,`スクイーズ ${sq}BB`));kids.push(sq>=STACK?facing5bet(o,q,raised,history+`${name(q)}AI `):openerVsSqueeze(o,c,q,raised,history+`${name(q)}${sq} `));
   return dec(q,history,open,acts,kids);
  }
@@ -144,7 +151,8 @@ export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
   const called=[...inv];called[o]=STACK;
   return dec(o,history,STACK,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'}],[{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'allin'}}]);
  }
- const root=unopened(0,[0,0,0,0,0.5,1],'');
+ const blinds=new Array(N).fill(0);blinds[SB]=0.5;blinds[BB]=1;
+ const root=unopened(0,blinds,'');
  return {root,decisions};
 }
 
@@ -155,9 +163,9 @@ export class PreflopSolver{
  readonly pair:Float64Array;readonly eq:Float64Array;readonly play:Float64Array;
  readonly root:PreflopNode;readonly decisions:PreflopDecision[];
  readonly regret:Float64Array[];readonly avg:Float64Array[];iterations=0;
- readonly cfg:PreflopConfig;readonly depth:number;
+ readonly cfg:PreflopConfig;readonly depth:number;readonly seats:number;readonly post:number[];
  constructor(equity:Equity,cfg:PreflopConfig=DEFAULT_PREFLOP){
-  this.cfg=cfg;this.depth=Math.sqrt(Math.min(1,cfg.stack/100));
+  this.cfg=cfg;this.seats=cfg.seats??6;this.post=postOrder(this.seats);this.depth=Math.sqrt(Math.min(1,cfg.stack/100));
   const n=equity.labels.length;this.n=n;this.labels=equity.labels;
   this.combos=Float64Array.from(equity.labels,l=>l.length===2?6:l[2]==='s'?4:12);this.prior=Float64Array.from(this.combos,c=>c/1326);
   const ranks='23456789TJQKA',cards=equity.labels.map(l=>{const a=ranks.indexOf(l[0]),b=ranks.indexOf(l[1]),out:[number,number][]=[];
@@ -176,7 +184,7 @@ export class PreflopSolver{
  #mass(reach:Float64Array){let m=0;for(let h=0;h<this.n;h++)m+=this.prior[h]*reach[h];return m;}
  /** Counterfactual values: values[p][h] = expected chips for player p holding h, weighted by the others' reach. */
  #walk(node:PreflopNode,reach:Float64Array[]):Float64Array[]{
-  const n=this.n,P=6;
+  const n=this.n,P=this.seats,POST=this.post;
   if(node.type==='terminal'){
    const mass=reach.map(r=>this.#mass(r)),values=Array.from({length:P},()=>new Float64Array(n));
    const pot=node.invested.reduce((s,v)=>s+v,0)+this.cfg.ante;
@@ -220,7 +228,7 @@ export class PreflopSolver{
  /** Three-way pot after open, call and big blind call. Equity is approximated from the pairwise all-in equities and
   * scaled by position (first to act postflop realises least) and playability. */
  #threeWay(node:PreflopTerminal,reach:Float64Array[],mass:number[],pot:number){
-  const n=this.n,P=6,[x,y,z]=node.threeWay!,values=Array.from({length:P},()=>new Float64Array(n));
+  const n=this.n,P=this.seats,POST=this.post,[x,y,z]=node.threeWay!,values=Array.from({length:P},()=>new Float64Array(n));
   const order=[x,y,z].sort((u,v)=>POST[u]-POST[v]),R=new Map([[order[0],1-0.28*this.depth],[order[1],1-0.15*this.depth],[order[2],1.0]]);
   for(let p=0;p<P;p++)if(p!==x&&p!==y&&p!==z){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
   let rest=1;for(let q=0;q<P;q++)if(q!==x&&q!==y&&q!==z)rest*=mass[q];
@@ -242,10 +250,10 @@ export class PreflopSolver{
   * evs[decision.id][hand*k+action]. Used for the trainer's EV loss. */
  actionEvs(){
   const out=this.decisions.map(d=>new Float64Array(this.n*d.actions.length));this.#evOut=out;
-  try{this.#walk(this.root,Array.from({length:6},()=>new Float64Array(this.n).fill(1)));}finally{this.#evOut=null;}
+  try{this.#walk(this.root,Array.from({length:this.seats},()=>new Float64Array(this.n).fill(1)));}finally{this.#evOut=null;}
   return out;
  }
- run(iterations:number){for(let i=0;i<iterations;i++){this.#walk(this.root,Array.from({length:6},()=>new Float64Array(this.n).fill(1)));this.iterations++;}}
+ run(iterations:number){for(let i=0;i<iterations;i++){this.#walk(this.root,Array.from({length:this.seats},()=>new Float64Array(this.n).fill(1)));this.iterations++;}}
  /** Average positive regret per decision and hand, in big blinds (smaller = closer to equilibrium). */
  averageRegret(){let s=0,c=0;for(const d of this.decisions){const k=d.actions.length,r=this.regret[d.id];for(let h=0;h<this.n;h++){let m=0;for(let a=0;a<k;a++)m=Math.max(m,r[h*k+a]);s+=m;c++;}}return s/c/Math.max(1,this.iterations);}
 }

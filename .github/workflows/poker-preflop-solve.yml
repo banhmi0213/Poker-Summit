@@ -1,0 +1,78 @@
+name: Poker preflop charts
+
+# Solves the 8- and 9-player preflop charts (scripts/poker-gto/preflop-solve.cjs --seats, owner 2026/11/1) one job per
+# variant, then pushes the files to a gto-preflop-out/<run id> branch to be reviewed and merged like any other change.
+# Trigger: push a gto-preflop-solve/<anything> branch.
+on:
+  push:
+    branches: ["gto-preflop-solve/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  solve:
+    name: Solve ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      # The flop solutions use 15 of the account's 20 jobs; keep some free for the regular CI.
+      max-parallel: 4
+      matrix:
+        include:
+          - {name: 9max-100bb, args: "--seats 9 --ev out/preflop-9max-ev.json"}
+          - {name: 8max-100bb, args: "--seats 8 --ev out/preflop-8max-ev.json"}
+          - {name: 9max-rake500-5, args: "--seats 9 --rake 500 --rake-cap 5"}
+          - {name: 9max-rake1000-10, args: "--seats 9 --rake 1000 --rake-cap 10"}
+          - {name: 8max-rake500-5, args: "--seats 8 --rake 500 --rake-cap 5"}
+          - {name: 8max-rake1000-10, args: "--seats 8 --rake 1000 --rake-cap 10"}
+          - {name: 9max-40bb, args: "--seats 9 --stack 40 --ante 1"}
+          - {name: 9max-20bb, args: "--seats 9 --stack 20 --ante 1"}
+          - {name: 8max-40bb, args: "--seats 8 --stack 40 --ante 1"}
+          - {name: 8max-20bb, args: "--seats 8 --stack 20 --ante 1"}
+          - {name: 9max-60bb, args: "--seats 9 --stack 60 --ante 1"}
+          - {name: 9max-10bb, args: "--seats 9 --stack 10 --ante 1"}
+          - {name: 8max-60bb, args: "--seats 8 --stack 60 --ante 1"}
+          - {name: 8max-10bb, args: "--seats 8 --stack 10 --ante 1"}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Solve
+        env:
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+        run: |
+          mkdir -p out
+          name="${{ matrix.name }}"; seats="${name%%max*}"; rest="${name#*max-}"
+          case "$rest" in 100bb) file="preflop-${seats}max.json";; rake*) file="preflop-${seats}max-${rest}.json";; *) file="preflop-${seats}max-${rest}.json";; esac
+          node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs ${{ matrix.args }} --iters ${{ vars.GTO_PREFLOP_ITERS || '2000' }} --out "out/$file"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: preflop-${{ matrix.name }}
+          path: out/
+          retention-days: 14
+  collect:
+    needs: solve
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: preflop-*
+          merge-multiple: true
+          path: public/poker-gto
+      - name: Push the charts to gto-preflop-out/<run id>
+        run: |
+          ls -la public/poker-gto | grep -E "max" || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "gto-preflop-out/${{ github.run_id }}"
+          git add public/poker-gto
+          git commit -m "8〜9人卓のプリフロップ表（run ${{ github.run_id }}）"
+          git push origin "gto-preflop-out/${{ github.run_id }}"
