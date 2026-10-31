@@ -124,10 +124,11 @@
 /* While a hand is on, PC shows the table and the side column (log, buttons, scoring, record) next to each other, so the
    page fits one screen without shrinking the text. */
 .play{display:flex;flex-direction:column;gap:10px}
+.play .table{margin:40px auto 44px}
 .playSide{display:flex;flex-direction:column;gap:10px;min-width:0}
 @media (min-width:1100px){
  .play{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);align-items:start;gap:16px}
- .play .table{max-width:680px}
+ .play .table{max-width:620px;width:100%}
  .play .actions button{flex-basis:30%}
 }
 @media (max-width:520px){

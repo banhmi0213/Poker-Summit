@@ -146,6 +146,14 @@ function GtoHandTrainer(){
  const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
+ const formBox=<>
+  <div className={`${chart.form} ${styles.formBig}`}>
+   <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
+   <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
+   {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
+   {seeking&&<p role="status">場面を探しています…</p>}
+  </div>
+ </>;
  const statsBox=<>
   <section className={styles.stats} aria-label="練習の成績">
    <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
@@ -156,12 +164,7 @@ function GtoHandTrainer(){
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}>
   {!hand&&<p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
-  <div className={`${chart.form} ${styles.formBig}`}>
-   <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
-   <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
-   {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
-   {seeking&&<p role="status">場面を探しています…</p>}
-  </div>
+  {!hand&&formBox}
   {hand&&<div className={styles.play}>
    <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
@@ -177,6 +180,7 @@ function GtoHandTrainer(){
      </div>;})}
    </div>
    <div className={styles.playSide}>
+   {formBox}
    <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
    {!done&&hand.round.toAct===HERO&&<div className={styles.actions}>
     {spot==='loading'&&<p role="status">GTOを計算中…</p>}
