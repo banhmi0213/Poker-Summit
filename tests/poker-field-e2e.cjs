@@ -38,7 +38,7 @@ async function database(){
  await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数卓テスト大会',startsAt,JSON.stringify(structure)]);
  await db.exec('set role service_role');
  const directory=new SupabaseRoomDirectory(client),store=new SupabaseRoomStore(client),keys={active:'test',keys:{test:randomBytes(32)}};
- await directory.configureRegistration(tid,60,true);
+ await directory.configureRegistration(tid,Math.max(ENTRANTS,24),true);
  return {db,directory,store,keys,users,tid,startsAt:Date.parse(startsAt)};
 }
 
