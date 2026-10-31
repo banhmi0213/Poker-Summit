@@ -1,7 +1,7 @@
 name: Poker preflop charts
 
-# Solves the 8- and 9-player preflop charts (scripts/poker-gto/preflop-solve.cjs --seats, owner 2026/11/1) one job per
-# variant, then pushes the files to a gto-preflop-out/<run id> branch to be reviewed and merged like any other change.
+# Solves the preflop charts (scripts/poker-gto/preflop-solve.cjs; 6-max and, with --seats, 8- and 9-max, owner 2026/11/1)
+# one job per variant, with the hand playability fitted to published solver ranges (data/poker-gto/preflop-play-fit.json), then pushes the files to a gto-preflop-out/<run id> branch to be reviewed and merged like any other change.
 # Trigger: push a gto-preflop-solve/<anything> branch.
 on:
   push:
@@ -21,6 +21,14 @@ jobs:
       max-parallel: 4
       matrix:
         include:
+          - {name: 6max-100bb, args: "--seats 6 --ev out/preflop-ev.json"}
+          - {name: 6max-rake300-3, args: "--seats 6 --rake 300 --rake-cap 3"}
+          - {name: 6max-rake500-5, args: "--seats 6 --rake 500 --rake-cap 5"}
+          - {name: 6max-rake1000-10, args: "--seats 6 --rake 1000 --rake-cap 10"}
+          - {name: 6max-60bb, args: "--seats 6 --stack 60 --ante 1"}
+          - {name: 6max-40bb, args: "--seats 6 --stack 40 --ante 1"}
+          - {name: 6max-20bb, args: "--seats 6 --stack 20 --ante 1"}
+          - {name: 6max-10bb, args: "--seats 6 --stack 10 --ante 1"}
           - {name: 9max-100bb, args: "--seats 9 --ev out/preflop-9max-ev.json"}
           - {name: 8max-100bb, args: "--seats 8 --ev out/preflop-8max-ev.json"}
           - {name: 9max-rake500-5, args: "--seats 9 --rake 500 --rake-cap 5"}
@@ -48,8 +56,10 @@ jobs:
         run: |
           mkdir -p out
           name="${{ matrix.name }}"; seats="${name%%max*}"; rest="${name#*max-}"
-          case "$rest" in 100bb) file="preflop-${seats}max.json";; rake*) file="preflop-${seats}max-${rest}.json";; *) file="preflop-${seats}max-${rest}.json";; esac
-          node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs ${{ matrix.args }} --iters ${{ vars.GTO_PREFLOP_ITERS || '2000' }} --out "out/$file"
+          if [ "$seats" = 6 ]; then base="preflop"; else base="preflop-${seats}max"; fi
+          if [ "$rest" = 100bb ]; then file="$base.json"; else file="$base-$rest.json"; fi
+          fit=""; [ -f data/poker-gto/preflop-play-fit.json ] && fit="--fit data/poker-gto/preflop-play-fit.json"
+          node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs ${{ matrix.args }} $fit --iters ${{ vars.GTO_PREFLOP_ITERS || '2000' }} --out "out/$file"
       - uses: actions/upload-artifact@v4
         with:
           name: preflop-${{ matrix.name }}
@@ -69,10 +79,10 @@ jobs:
           path: public/poker-gto
       - name: Push the charts to gto-preflop-out/<run id>
         run: |
-          ls -la public/poker-gto | grep -E "max" || true
+          ls -la public/poker-gto | grep -E "preflop" || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-out/${{ github.run_id }}"
           git add public/poker-gto
-          git commit -m "8〜9人卓のプリフロップ表（run ${{ github.run_id }}）"
+          git commit -m "プリフロップ表（run ${{ github.run_id }}）"
           git push origin "gto-preflop-out/${{ github.run_id }}"
