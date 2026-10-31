@@ -46,7 +46,7 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
  const noTicket=(item:'rabbit'|'time_bank')=>tickets!==null&&!(tickets[item]>0);
  const ticketMissing='チケットがありません。プレイヤーページの「チップ交換所」で交換できます。';
  // 「補充して座り直す」 (owner 2026/10/27): remember the seat at this table so a player who busts there can top back up
- // to 3,000 and sit in the same seat without going back to the lobby.
+ // to 1,000 and sit in the same seat without going back to the lobby.
  const ownSeatHere=tableId&&view.state?.membership?.tableId===tableId?view.state.membership.seat:null;
  const [lastSeat,setLastSeat]=useState<number|null>(null),[refilling,setRefilling]=useState(false),[refillNote,setRefillNote]=useState('');
  useEffect(()=>{if(ownSeatHere!==null)setLastSeat(ownSeatHere);},[ownSeatHere]);
@@ -54,7 +54,7 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
   try{const {error}=await auth.rpc('poker_ring_refill',{p_request:crypto.randomUUID(),p_table:t.id});if(error)throw Error(error.message);
    const buy=Math.min(t.maxBuyIn,Math.max(t.minBuyIn,t.bb*100));setAmount(String(buy));
    if(lastSeat!==null&&!t.seats.some(s=>s.seat===lastSeat))await transport.perform({type:'join',tableId:t.id,amount:buy,seat:lastSeat,requestId:crypto.randomUUID()});
-   else{setSelectSeat(true);setRefillNote('3,000 chipを補充しました。空いている席を選んでください。');}
+   else{setSelectSeat(true);setRefillNote('1,000 chipを補充しました。空いている席を選んでください。');}
    setLastSeat(null);
   }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだ補充できません（この卓に着ける分のchipが残っています）。':e instanceof Error&&e.message.includes('Refill limit')?'chipの補充は1日3回までです。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
   finally{setRefilling(false);}};
