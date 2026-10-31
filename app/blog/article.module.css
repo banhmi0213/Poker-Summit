@@ -13,3 +13,40 @@
 @supports (word-break:auto-phrase){.toc a{word-break:auto-phrase}}
 /* H3 keeps its indentation/link but does not advance the H2 list number. */
 .toc li.tocSub{list-style:none;position:relative;counter-increment:list-item 0}
+
+/* Reading column + recommendations: the sticky block stays inside the article area. */
+.page.page{max-width:1360px}
+.articleLayout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.articleMain{min-width:0}
+.sidebar{min-width:0;align-self:stretch}
+.sidebarSticky{position:sticky;top:calc(var(--blog-header-height,152px) + 16px);max-height:calc(100vh - var(--blog-header-height,152px) - 32px);max-height:calc(100dvh - var(--blog-header-height,152px) - 32px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#c7ac75 #f7f2e6;padding:20px 18px;border:1px solid #ded7c8;border-top:3px solid #c7ac75;border-radius:12px;background:#fff;box-shadow:0 6px 24px #10233c09}
+.sidebarSticky:focus-visible{outline:2px solid #a1844d;outline-offset:3px}
+.sidebarEyebrow{margin:0 0 7px;color:#92713d;font-size:10px;font-weight:700;letter-spacing:.16em}
+.sidebar h2{margin:0;color:#203a4c;font-size:19px;line-height:1.5}
+.sidebarLead{margin:5px 0 14px;color:#687787;font-size:12px}
+.sidebarList{list-style:none;margin:0;padding:0}
+.sidebarList li+li{border-top:1px solid #e7eaf0}
+.sidebarCard{display:grid;grid-template-columns:94px minmax(0,1fr);gap:11px;padding:14px 0;text-decoration:none;color:#203a4c;align-items:start}
+.sidebarCard img{display:block;width:94px;height:66px;object-fit:cover;border-radius:6px;background:#edf2f7}
+.sidebarCard small{display:block;margin-bottom:5px;color:#8a6d3c;font-size:10px;line-height:1.5}
+.sidebarCard strong{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.sidebarCard:hover strong{color:#8a6d3c;text-decoration:underline}
+.sidebarAll,.sidebarLearn{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none}
+.sidebarAll{margin-top:10px;background:#203a4c;color:#fff}
+.sidebarLearn{margin-top:8px;background:#f5efe2;color:#6c542e;border:1px solid #e5d8bd}
+.sidebarAll:hover{background:#315266}
+.sidebarLearn:hover{background:#eee2c7}
+.sidebarEmpty{font-size:13px;line-height:1.8;color:#687787;margin:16px 0}
+@media(max-width:1100px){
+ .page.page{max-width:1000px}
+ .articleLayout{grid-template-columns:minmax(0,1fr);gap:24px}
+ .sidebarSticky{position:static;max-height:none;overflow:visible}
+ .sidebarList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}
+}
+@media(max-width:599px){
+ .sidebarSticky{padding:20px 16px}
+ .sidebarList{grid-template-columns:minmax(0,1fr)}
+ .sidebarCard{grid-template-columns:104px minmax(0,1fr)}
+ .sidebarCard img{width:104px;height:70px}
+ .sidebarCard strong{font-size:13px}
+}
