@@ -51,3 +51,15 @@
 .storeInvite{font-size:15px!important}
 .storeInvite b{font-size:16px!important}
 @media(min-width:900px){.grid{font-size:13px!important}.pair .grid{font-size:12px!important}}
+/* フロップ戦略 on PC (owner 2026/10/31「余白あるし文字大きく」): settings and notes on the left, the 13×13 table on the
+   right, so the page fits one screen without the whole panel being shrunk. */
+.split{display:block}
+@media(min-width:1100px){
+ .split[data-on]{display:grid;grid-template-columns:minmax(340px,.8fr) minmax(0,1.5fr);gap:20px;align-items:start}
+ .split[data-on] .form{grid-template-columns:1fr 1fr}
+ .splitSide>p{margin:0 0 8px!important}
+ .splitSide>.form,.splitSide>nav,.splitSide>div{margin:0 0 10px}
+ .splitSide .path button{min-height:38px}
+ .splitMain .grid{font-size:15px!important;border-spacing:3px}
+ .splitMain .grid td{padding:6px 1px}
+}
