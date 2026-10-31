@@ -50,7 +50,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   {mode==='flop'&&<>
   {nearNote&&<p role="status" className={styles.note}>{nearNote}</p>}
   {error&&<p role="alert">{error}</p>}
-  {!data&&!error&&<p role="status">読み込み中…</p>}
+  {!data&&!error&&<p role="status" data-loading>読み込み中…</p>}
   {data&&node&&<>
    <p className={styles.note}>ボード {flopText(data.flop)} ・ {data.iterations}回計算 ・ 正解からのズレ：ポットの{data.exploitability.toFixed(2)}%{(data.version??0)>=3?'（リバーを計算途中の戦略で測るため、実際より大きめに出ます）':''}</p>
    {data.ev&&!data.spot.order&&<p className={styles.note}>フロップ開始時点の取り分：{data.spot.oop} {data.ev.oop.toFixed(1)}BB・{data.spot.ip} {data.ev.ip.toFixed(1)}BB（ポット{data.spot.pot}BB）{evSide!==null?'。マスにカーソルを当てると、その手の期待値も出ます。':''}</p>}
