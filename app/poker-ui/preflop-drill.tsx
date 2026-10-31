@@ -71,7 +71,7 @@ export function PreflopDrill(){
  const scene=cur?cur.hand.log.filter(a=>a.street==='preflop').map(a=>`${cur.hand.positions[a.id]} ${actText(a.type,a.to,a.allIn)}`):[];
  return <div className={chart.wrap}>
   <p>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。キーボードの1〜4でも選べます。</p>
-  <div className={chart.form}>
+  <div className={`${chart.form} ${styles.formBig}`}>
    <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}</select></label>
    <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>setAuto(e.target.value==='on')}><option value="on">する</option><option value="off">しない</option></select></label>
    {!cur&&<button type="button" disabled={loading} onClick={()=>start()}>連打を始める</button>}
