@@ -33,6 +33,6 @@ const folder=path.resolve(__dirname,'../../supabase/migrations'),load=s=>fs.read
  await db.query("insert into public.gto_member_plans(member_id,tier,period,status,price_ack_version,price_ack_at) values($1,'pro','month','pending','pro-open-202703',now())",[c]);
  await assert.rejects(db.query("insert into public.gto_member_plans(member_id,tier,period,status) values($1,'light','month','pending')",[randomUUID()]),'old tier names are not stored');
  // Logged out: free.
- await db.exec('set role anon');try{assert.equal((await db.query('select public.gto_plan_status() v')).rows[0].v.tier,'free');}finally{await db.exec('reset role');}
+ await db.exec("select set_config('request.jwt.claim.sub','',false);set role anon");try{assert.equal((await db.query('select public.gto_plan_status() v')).rows[0].v.tier,'free');}finally{await db.exec('reset role');}
  console.log('PASS GTO plans (スタンダード／プロ): own status only, trial/paid/cancelled/coupon rules, no self-granting, プロ needs the price confirmation.');
 }catch(e){console.error(e);process.exitCode=1;}finally{await db.close?.();}})();

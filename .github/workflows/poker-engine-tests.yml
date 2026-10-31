@@ -134,9 +134,7 @@ jobs:
       - name: Verify GTO plan status, trials, cancels and coupon grants
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
-        run: |
-          set +e; node db/tests/gto_billing_isolated.cjs > g.log 2>&1; c=$?; set -e
-          if [ "$c" -ne 0 ]; then grep -v "^\s*at " g.log | head -8 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit 1; fi
+        run: node db/tests/gto_billing_isolated.cjs
       - name: Verify hand shares for the board (frozen, anonymised)
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
