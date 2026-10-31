@@ -4,6 +4,7 @@
 import {useCallback,useEffect,useState,type ReactNode} from 'react';
 import {AvatarFrame} from '@/app/avatar-frame';
 import {COSMETIC_ITEMS,COSMETICS_FREE_FOR_NOW,cosmeticUnlocked,frameStyle,plateStyle,threadStyle,validCode,type CosmeticKind,type Equipped} from '@/lib/cosmetics';
+import {paidFeaturesVisible} from '@/lib/billing/visibility';
 export const COSMETICS_EVENT='poker-cosmetics-changed';
 type Status={equipped:Equipped;owned:string[];freeForNow:boolean};
 const EMPTY:Status={equipped:{frame:null,plate:null,thread:null},owned:[],freeForNow:COSMETICS_FREE_FOR_NOW};
@@ -35,6 +36,8 @@ function Preview({kind,code}:{kind:CosmeticKind;code:string|null}){
 /** アイコン枠・ネームプレート・スレッドデザインを選ぶ。kinds で出す種類を絞れる。 */
 export function CosmeticsSettings({kinds=['frame','plate','thread']}:{kinds?:CosmeticKind[]}){
  const {status,equip,busy,message}=useMyCosmetics();
+ // Paid looks are hidden entirely while paid features are off (lib/billing/visibility.ts).
+ if(!paidFeaturesVisible())return null;
  return <div aria-label="見た目の設定">
   {kinds.map(kind=><section key={kind}><h3>{TITLES[kind]}</h3>
    <div role="radiogroup" aria-label={TITLES[kind]} style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(104px,1fr))',gap:8}}>

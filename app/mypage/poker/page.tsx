@@ -20,6 +20,7 @@ import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
 import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
 import {CosmeticsSettings} from '@/app/poker-ui/my-cosmetics';
 import {GtoPlanPanel} from '@/app/poker-ui/gto-plan-panel';
+import {paidFeaturesVisible} from '@/lib/billing/visibility';
 import {getGtoPlanStatus} from '@/lib/billing/plan';
 import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
 export const dynamic='force-dynamic';
@@ -47,7 +48,9 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'plan',label:'GTOプラン',eyebrow:'GTO PLAN',description:'ご利用中のGTOプランと、お支払い・解約。',content:<GtoPlanPanel status={plan} message={searchParams?.billing}/>},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
- const shown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
+ const tourneyShown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
+ // Paid features hidden (lib/billing/visibility.ts): no 「GTOプラン」 pane, no 「アイコン枠・プレート」 pane.
+ const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
  return <PokerWorkspace kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;

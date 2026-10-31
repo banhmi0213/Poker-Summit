@@ -19,6 +19,7 @@ import { ProfileEditor } from "./profile-editor";
 import styles from "./profile-layout.module.css";
 import { Avatar } from "@/app/avatar";
 import { CosmeticsSettings, MyFrame } from "@/app/poker-ui/my-cosmetics";
+import { paidFeaturesVisible } from "@/lib/billing/visibility";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 
 function formatDate(value: string | null) {
@@ -230,10 +231,13 @@ export async function MyPageContent({
             </span>
           </div>
           {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーの卓で共通。 */}
+          {/* Hidden while paid features are off (lib/billing/visibility.ts). */}
+          {paidFeaturesVisible() && (
           <details style={{ padding: "10px 0", borderBottom: "1px solid var(--grid)" }}>
             <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>アイコン枠・ネームプレート・スレッドデザイン</summary>
             <CosmeticsSettings />
           </details>
+          )}
 
           <div className="muted small" style={{ marginTop: 10 }}>
             ✉️ {user.email} <span style={{ fontSize: 11, marginLeft: 8 }}>（{myProfile?.email_public === true ? "公開" : "非公開"}）</span>

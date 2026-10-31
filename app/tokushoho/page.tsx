@@ -1,10 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
+import { paidFeaturesVisible } from "@/lib/billing/visibility";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
-import { GTO_PRICES, GTO_TRIAL_DAYS } from "@/lib/billing/plans";
+import { GTO_TRIAL_DAYS, laterPrice, priceAt, yen } from "@/lib/billing/plans";
 
 export const metadata = staticPageMetadata({ title: "特定商取引法に基づく表記", description: "Poker Summitの特定商取引法に基づく表記。", path: "/tokushoho" });
 
@@ -72,9 +73,11 @@ const ITEMS: { label: string; body: ReactNode; id?: string }[] = [
   { label: "有料装飾の提供時期・利用期間", body: "決済完了を当社システムで確認後、原則として即時に購入アカウントへ利用権を付与します。反映されない場合は再購入せずお問い合わせください。別記がない買い切り商品は、本サービスが対象機能を提供し、購入アカウントが利用できる間使用できます。永久のサービス提供を保証するものではありません。" },
   { label: "有料装飾の返品・返金・キャンセル", body: <>デジタル機能の性質上、決済完了後のお客様都合による返品、返金、キャンセルおよび購入商品の変更は原則としてお受けしません。ただし、未提供、当社の責めに帰すべき不具合・契約不履行、重複・誤請求、未成年者取消し等の法令上対応が必要な場合および個別に合意した場合は別途対応します。注文番号、商品名、購入日時、状況を<a href="/contact">お問い合わせフォーム</a>からお知らせください。</> },
   { label: "有料装飾の未成年者購入・換金禁止", body: "18歳未満の方は、購入ごとに親権者等の法定代理人の同意を得てください。有料装飾は譲渡・転売・換金できず、金銭・金券・景品等に交換できません。装飾はゲームの勝利確率や勝敗に影響せず、本人確認や技能・信用の認定を示すものではありません。" },
-  { id: "gto-plans", label: "GTOプラン（月額・年額の定期課金）", body: <>以下は販売開始後のGTOプラン（GTOの表・練習・ハンド判定等の学習ツールの利用）に適用します。本表記だけで販売開始を意味するものではありません。内容は<a href="/pricing">料金ページ</a>および<a href="/terms#gto-plans">利用規約第19条の2</a>をご確認ください。</> },
-  { label: "GTOプランの販売価格", body: `ライト：月額${GTO_PRICES.light.month.toLocaleString("ja-JP")}円／年額${GTO_PRICES.light.year.toLocaleString("ja-JP")}円、フル：月額${GTO_PRICES.full.month.toLocaleString("ja-JP")}円／年額${GTO_PRICES.full.year.toLocaleString("ja-JP")}円（いずれも税込）。価格を改定する場合は、効力発生日の30日前までに本サービス上またはメールでお知らせし、改定後の価格は効力発生日以降に始まる更新期間から適用します。` },
-  { label: "GTOプランの無料お試し・支払時期", body: `お申込み時にクレジットカードを登録し、最初の${GTO_TRIAL_DAYS}日間は無料でご利用いただけます。お試し期間の終了時に最初の料金（月額または年額）を決済し、以後は解約されるまで、1か月または1年ごとに同じ料金を自動で決済します。お試し期間中に解約された場合、料金は一切発生しません。お試し期間の終了時刻から決済の処理までに最大1時間程度の差が生じることがありますが、その間の利用に追加の料金はかかりません。カード会社からの引落日は各カード会社の規約によります。` },
+  { id: "gto-plans", label: "GTOプラン（月額・年額の定期課金）", body: <>以下は販売開始後のGTOプラン（スタンダード・プロ。GTOの表・練習・ハンド判定等の学習ツールの利用）に適用します。本表記だけで販売開始を意味するものではありません。内容は{/* No link to /pricing while paid features are hidden (lib/billing/visibility.ts). */}{paidFeaturesVisible()?<a href="/pricing">料金ページ</a>:"料金ページ"}および<a href="/terms#gto-plans">利用規約第19条の2</a>をご確認ください。</> },
+  { label: "GTOプランの販売価格", body: `スタンダード：月額${yen(laterPrice("standard", "month"))}／年額${yen(laterPrice("standard", "year"))}（税込）。プロ：2027年2月28日までのスタート記念価格は月額${yen(priceAt("pro", "month", 0))}／年額${yen(priceAt("pro", "year", 0))}（税込）、2027年3月1日から月額${yen(laterPrice("pro", "month"))}／年額${yen(laterPrice("pro", "year"))}（税込）。上記のほかに価格を改定する場合は、効力発生日の30日前までに本サービス上またはメールでお知らせし、改定後の価格は効力発生日以降に始まる更新期間から適用します。` },
+  // ※料金改定・スタート記念価格まわりの文言は、最終的に詳しい人（弁護士等）の確認を受けること（2026/11/01 オーナー確認待ち）。
+  { label: "プロの料金改定（スタート記念価格の終了）", body: "プロのスタート記念価格は2027年2月末で終了し、2027年3月1日から上記の新料金となります。すでにご契約中の方にも新料金が適用されます。月額プランは2027年3月1日以降に行う最初の決済から、年額プランはお支払い済みの1年間はそのままで、2027年3月1日以降の次回更新から新料金で決済します。お申込み時に、改定の日と新料金をご確認いただきます。改定の前には、2027年2月1日と2月22日に、メールおよびプレイヤーページでお知らせします。新料金でのご利用を希望されない場合は、改定前にいつでも解約できます。スタンダードの料金に改定の予定はありません。" },
+  { label: "GTOプランの無料お試し・支払時期", body: `お申込み時にクレジットカードを登録し、最初の${GTO_TRIAL_DAYS}日間は無料でご利用いただけます。お試し期間の終了時に最初の料金（月額または年額）を決済し、以後は解約されるまで、1か月または1年ごとに自動で決済します（プロの料金改定は上記のとおりです）。お試し期間中に解約された場合、料金は一切発生しません。お試し期間の終了時刻から決済の処理までに最大1時間程度の差が生じることがありますが、その間の利用に追加の料金はかかりません。カード会社からの引落日は各カード会社の規約によります。` },
   { label: "GTOプランの支払方法", body: "クレジットカード（決済代行：KOMOJU）。カード情報は決済代行会社の画面で入力され、当社のサーバーには保存されません。" },
   { label: "GTOプランの提供時期", body: "カード登録の完了後、直ちにご利用いただけます。決済が完了しない場合や更新時の決済ができない場合は、有料の機能をご利用いただけなくなることがあります。" },
   { label: "GTOプランの解約方法", body: <>プレイヤーページの「GTOプラン」にある解約ボタンから、いつでも解約できます（<a href="/contact">お問い合わせフォーム</a>からのお申し出も受け付けます）。解約すると次回以降の自動決済を停止し、お支払い済みの期間の終了まではご利用いただけます。</> },

@@ -778,3 +778,50 @@ ${siteUrl}/contact
 Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: `【Poker Summit】お支払期限を過ぎています（請求書 ${params.invoiceNumber}）`, text });
 }
+
+// ---------------------------------------------------------------------------
+// GTOプラン(2026/11/01)。プロのスタート記念価格の終了(2027年3月1日から新料金)のお知らせ。
+// 2027年2月1日と2月22日に、プロの会員全員へ送る(送信済みは gto_plan_notices で管理)。
+// ※文面は最終的に詳しい人の確認を受けること(オーナー確認待ち)。
+// ---------------------------------------------------------------------------
+export async function sendGtoPriceNoticeEmail(params: {
+  to: string;
+  period: "month" | "year";
+  newPrice: number;
+  done: string[];
+  planned: string[];
+  yenText: (n: number) => string;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.period === "month"
+    ? `2027年3月1日以降の最初のお支払いから、月額${params.yenText(params.newPrice)}（税込）になります。`
+    : `2027年3月1日以降の次回の更新から、年額${params.yenText(params.newPrice)}（税込）になります。お支払い済みの1年間の料金はそのままです。`;
+  const list = (title: string, items: string[]) => items.length ? `${title}\n${items.map((i) => `・${i}`).join("\n")}\n\n` : "";
+  const text = `いつもPoker SummitのGTOプラン「プロ」をご利用いただき、ありがとうございます。
+
+プロのスタート記念価格（月額1,980円／年額19,800円）は2027年2月末で終了し、
+${when}
+
+${list("スタート記念価格のあいだに追加した内容：", params.done)}${list("これから追加する予定の内容：", params.planned)}新しい料金でのご利用を希望されない場合は、料金が変わる前に、プレイヤーページの「GTOプラン」からいつでも解約できます。解約後も、お支払い済みの期間の終わりまではご利用いただけます。
+${siteUrl}/mypage/poker?pane=plan
+
+料金と条件の詳細：
+${siteUrl}/pricing
+${siteUrl}/tokushoho#gto-plans
+
+このメールは送信専用です。ご不明な点はお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局`;
+  await sendEmail({
+    to: params.to,
+    subject: "【Poker Summit】GTOプラン「プロ」の料金改定のお知らせ（2027年3月1日から）",
+    text,
+    noreply: true,
+  });
+}
+
+/** GTO billing issues that need a person to check (to the operator). */
+export async function sendGtoBillingAlertEmail(subject: string, lines: string[]): Promise<void> {
+  await sendEmail({ to: "info@pokersummit.jp", subject: `【Poker Summit 要確認】${subject}`, text: lines.join("\n") });
+}
