@@ -45,3 +45,12 @@ test('a stored rake rule outside the allowed range is refused',()=>{
  assert.throws(()=>make([1000,1000],{bps:5000,capBb:3}));
  const cp=make([1000,1000]).checkpoint();cp.initial.rake={bps:-1,capBb:3};assert.throws(()=>AuthoritativeHand.restore(cp));
 });
+
+test('per-table rules (owner 2026/10/31): 10% capped at 10 BB, 5% at 5 BB; only charted levels are accepted',()=>{
+ const {tableRake,RING_RAKE}=require('../lib/poker/ring-rake.ts');
+ assert.deepEqual(tableRake({bps:1000,capBb:10}),{bps:1000,capBb:10});assert.deepEqual(tableRake({bps:1000,capBb:5}),{...RING_RAKE});assert.deepEqual(tableRake(undefined),{...RING_RAKE});
+ const h=make([5000,5000],{bps:1000,capBb:10});act(h,l=>({type:'raise',amount:l.maxRaiseTo}));act(h,()=>({type:'call'}));let g=0;while(!h.snapshot(null).result&&g++<10)act(h,check);
+ const s=h.snapshot(null);assert.equal(s.result.rake,1000,'10% of 10,000 is 1,000 = the 10 BB cap');assert.equal(total(s)+1000,10000);
+ const m=make([5000,5000],{bps:500,capBb:5});act(m,l=>({type:'raise',amount:l.maxRaiseTo}));act(m,()=>({type:'call'}));g=0;while(!m.snapshot(null).result&&g++<10)act(m,check);
+ assert.equal(m.snapshot(null).result.rake,500,'5% of 10,000 is 500 = the 5 BB cap');
+});

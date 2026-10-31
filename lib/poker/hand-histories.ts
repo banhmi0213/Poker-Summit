@@ -5,7 +5,7 @@ import type {HistoryAction} from './hand-history';
 
 /** Viewer-filtered hand (see public.poker_hand_history_detail): hole is null unless it is yours,
  * it was shown at showdown, or the caller is an operator. memberId is present only for operators. */
-export type HandHistoryView={handId:string;kind:'ring'|'tournament';title:string|null;handNumber:number|null;playedAt:string;
+export type HandHistoryView={handId:string;kind:'ring'|'tournament';/** Ring hands: that table's rake; null on records made before 2026/10/31 (= RING_RAKE). */rake?:{bps:number;capBb:number}|null;title:string|null;handNumber:number|null;playedAt:string;
  terms:{sb:number;bb:number;ante:number;anteType:string;level:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
  result:{showdown:boolean;winners:string[];payouts:Record<string,number>;runs?:{board:Card[];winners:string[]}[]};
  players:{seatId:string;seat:number;position:string;name:string;startStack:number;endStack:number;net:number;folded:boolean;shown:boolean;you:boolean;hole:Card[]|null;memberId?:string}[]};

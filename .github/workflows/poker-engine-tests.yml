@@ -91,6 +91,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_ring_accounting_isolated.cjs
+      - name: Verify per-table ring rake (3%・3BB／5%・5BB／10%・10BB)
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/poker_ring_table_rake_isolated.cjs
       - name: Verify live ring readiness, recovery and durable turn deadlines
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
