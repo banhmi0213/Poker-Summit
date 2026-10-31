@@ -35,7 +35,7 @@ export class TournamentRoomRegistry {
    const owner=await DurableRoomOwner.create(config,{...this.#options,roomId,expectedConfig:config});
    await this.#options.directory.provision({...config,roomId,...copied,enabled:true},ids);return owner;});
  }
- /** Roster handoff (one table for 2–6, a multi-table field for 7–60). Freeze once, retain the SAME plan/room on every retry. */
+ /** Roster handoff (one table for 2–6, a multi-table field for 7–100). Freeze once, retain the SAME plan/room on every retry. */
  finalizeRegistration(id:string,expectedCount:number,beforeBind:()=>Promise<void>=async()=>{}){
   const tid=roomUUID(id),pending=this.#finalizing.get(tid);if(pending){if(pending.count!==expectedCount)return Promise.reject(new Error('Roster count changed'));return pending.task;}if(!Number.isSafeInteger(expectedCount)||expectedCount<2||expectedCount>FIELD_MAX_PLAYERS)return Promise.reject(new Error('Require 2-60 players'));if(this.#finalizing.size>=this.#limit)return Promise.reject(new Error('Finalization capacity reached'));
   const task=Promise.resolve().then(async()=>{
