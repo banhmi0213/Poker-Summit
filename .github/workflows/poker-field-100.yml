@@ -4,6 +4,9 @@ name: Poker 100-player tournament
 # room service, run by hand before a big event (too long for every push).
 on:
   workflow_dispatch:
+  # Pushing any commit to this branch runs it (a new workflow cannot be dispatched until it is on main).
+  push:
+    branches: [ci/field-100]
 
 permissions:
   contents: read
