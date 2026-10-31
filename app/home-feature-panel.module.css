@@ -41,3 +41,8 @@
 .badge,.item .badge,.selected .badge{background:#ffffff08;border-color:#cbb99477;color:#ead7af}
 .playback{background:#3b5968;border-color:#cbb99477;color:#ead7af}
 @media(prefers-reduced-motion:reduce){.item::before{transition:none}}
+
+
+/* Dedicated 16:9 photography fills the monitor without letterboxing. */
+.visual img{object-fit:cover;object-position:center}
+.visual img[src$="/community-v1.webp"]{transform:scale(1.12)}
