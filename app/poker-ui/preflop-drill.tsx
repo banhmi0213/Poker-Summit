@@ -2,7 +2,8 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {GtoReply,GtoRequest,DrillMode} from '@/lib/poker/gto.worker';
 import type {TrainerSpot} from '@/lib/poker/gto-review';
-import {HERO,LEVEL_TEXT,evLoss,gradeChoice,type TrainerHand,type TrainerLevel} from '@/lib/poker/gto-trainer';
+import {HERO,LEVEL_TEXT,evLoss,gradeChoice,trainerView,type TrainerHand,type TrainerLevel} from '@/lib/poker/gto-trainer';
+import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import {CardChip,actText} from './gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
@@ -51,6 +52,7 @@ export function PreflopDrill(){
   if(!cur||result)return;const o=cur.spot.options;if(!o[i])return;
   const g=gradeChoice(o.map(x=>x.freq),i),raw=evLoss(o,i),loss=raw===null?null:g.level==='best'?0:raw;
   setResult({choice:i,level:g.level,score:g.score,loss});
+  {const v=trainerView(cur.hand,HERO);if(v)sendGtoRecords([recordRow(v,'drill',{freqs:o.map(x=>x.freq),chosen:i,action:o[i].text,evLoss:loss})]);}
   const ok=g.level==='best'||g.level==='correct';
   setStats(s=>{const n={...s,n:s.n+1,best:s.best+(g.level==='best'?1:0),good:s.good+(ok?1:0),score:s.score+g.score,
    ...(loss!==null?{evLoss:Math.round((s.evLoss+loss)*100)/100,evCount:s.evCount+1}:{})};write(n);return n;});

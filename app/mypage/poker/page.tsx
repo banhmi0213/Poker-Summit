@@ -10,6 +10,7 @@ import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
 import {EquityCalculator} from '@/app/poker-ui/equity-calculator';
+import {GtoWeakSpots} from '@/app/poker-ui/gto-weak-spots';
 import {IcmPanel} from '@/app/poker-ui/icm-panel';
 import {FlopStrategyPanel} from '@/app/poker-ui/flop-strategy-panel';
 import {RangeTrainer} from '@/app/poker-ui/range-trainer';
@@ -31,6 +32,7 @@ export default async function Page(){const [data,hands,tendencies,monthly]=await
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
  {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer/>},
+ {id:'weak',label:'あかんとこ一覧',eyebrow:'YOUR LEAKS',description:'リング・大会・練習卓・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。',content:<GtoWeakSpots/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},

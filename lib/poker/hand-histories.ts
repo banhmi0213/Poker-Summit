@@ -42,11 +42,13 @@ export async function loadAdminHandStats():Promise<{asOf:string;members:(HandSta
  return data;
 }
 /** The member's latest ring hands with their own cards, for the GTO deviation summary (2026/10/29). Up to `max`, newest first. */
-export async function loadRecentOwnRingHands(max=100):Promise<HandHistoryView[]|null>{
+export async function loadRecentOwnRingHands(max=100):Promise<HandHistoryView[]|null>{return loadRecentOwnHands(max,['ring']);}
+/** Same for any kinds (GTO records, 2026/11/1: ring and tournament hands both count). */
+export async function loadRecentOwnHands(max=100,kinds:readonly HandHistoryView['kind'][]=['ring']):Promise<HandHistoryView[]|null>{
  const out:HandHistoryView[]=[];let before:string|undefined;
  for(let page=0;page<Math.ceil(max/20);page++){
   const list=await loadHandHistories(false,before);if(!list)return page===0?null:out;
-  for(const h of list)if(h.kind==='ring'&&h.players.some(p=>p.you&&p.hole?.length===2))out.push(h);
+  for(const h of list)if(kinds.includes(h.kind)&&h.players.some(p=>p.you&&p.hole?.length===2))out.push(h);
   if(list.length<20)break;before=list[list.length-1].playedAt;
  }
  return out.slice(0,max);

@@ -6,6 +6,7 @@ import type {HistoryAction} from './hand-history';
 import {gtoStrategy,positionsFor,type GtoData,type GtoGrid,type GtoView,type LoggedAction,type Pos} from './gto-bot';
 import {classOf} from './solver-view';
 import {HAND_CATEGORIES,combosOfClass,handCategory,type HandCategory} from './hand-category';
+import {recordRow,type GtoRecordRow,type GtoRecordSource} from './gto-record';
 
 export type GtoReviewHand={handId:string;terms:{bb:number};buttonSeatId:string;board:Card[];actions:HistoryAction[];
  /** Table rake (ring hands): judged with that rake's preflop chart. */rake?:{bps:number;capBb:number};
@@ -89,6 +90,42 @@ export function reviewGto(hand:GtoReviewHand,data:GtoData,budgetMs=1500,streets?
   const j=s.indexOf(played),freq=j>=0?freqs[j]:s.source==='preflop'?0:null;
   const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,hand.terms.bb),freq:freqs[k],kind:o.kind}));
   out.push({index:i,street:a.street,source:s.source,options,played:freq,verdict:freq===null||s.approx?null:gtoVerdict(freq),range:rangeOf(s,options,me.hole,v.board),approx:s.approx});
+ });
+ return out;
+}
+
+/** GTO records for one finished hand (owner 2026/11/1「全部から収集」): one row per graded decision of the member, with
+ * ref = the hand id and step = the action's index, so a hand sent twice is kept once. A preflop play outside the chart
+ * counts as 0%. 4人以上のポット (approximate) and spots without data are left out. */
+export function recordRows(hand:GtoReviewHand,data:GtoData,source:GtoRecordSource,budgetMs=1500,streets?:readonly HistoryAction['street'][]):GtoRecordRow[]{
+ const me=hand.players.find(p=>p.you);if(!me?.hole||me.hole.length!==2)return [];
+ const out:GtoRecordRow[]=[];
+ hand.actions.forEach((a,i)=>{
+  if(a.seatId!==me.seatId||forced.has(a.type)||(streets&&!streets.includes(a.street)))return;
+  const v=viewAt(hand,i);if(!v)return;
+  const s=gtoStrategy(v,data,budgetMs,false,{noApprox:true,withEv:true});
+  if(s.source==='fallback'||s.approx)return;
+  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total);
+  const played:LoggedAction={street:a.street,id:a.seatId,type:a.type as LoggedAction['type'],to:a.to,allIn:a.allIn,potBefore:i>0?hand.actions[i-1].pot:0,
+   currentBetBefore:Math.max(0,...v.players.map(p=>p.committed)),committedBefore:v.players.find(p=>p.id===a.seatId)!.committed};
+  const j=s.indexOf(played);if(j<0&&s.source!=='preflop')return;
+  const best=freqs.indexOf(Math.max(...freqs)),ev=s.ev,loss=j<0||!ev||ev.some(x=>!Number.isFinite(x))?null:j===best?0:Math.max(0,Math.max(...ev)-ev[j]);
+  out.push(recordRow(v,source,{freqs:j<0?[...freqs,0]:freqs,chosen:j<0?freqs.length:j,action:playedOf(hand,i),evLoss:loss,seats:hand.players.length,ref:hand.handId,step:i}));
+ });
+ return out;
+}
+
+/** GTO records for the CPU practice table's decisions (owner 2026/11/1): the same rows as recordRows, from the live
+ * decisions kept during the hand; ref = the saved practice hand's id. */
+export function liveRecordRows(items:readonly LiveDecision[],data:GtoData,ref:string,budgetMs=1500):GtoRecordRow[]{
+ const out:GtoRecordRow[]=[];
+ items.forEach(({view,played},step)=>{
+  const s=gtoStrategy(view,data,budgetMs,false,{noApprox:true,withEv:true});
+  if(s.source==='fallback'||s.approx)return;
+  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1,freqs=s.freqs.map(x=>Math.max(0,x)/total),j=s.indexOf(played);
+  if(j<0&&s.source!=='preflop')return;
+  const best=freqs.indexOf(Math.max(...freqs)),ev=s.ev,loss=j<0||!ev||ev.some(x=>!Number.isFinite(x))?null:j===best?0:Math.max(0,Math.max(...ev)-ev[j]);
+  out.push(recordRow(view,'practice',{freqs:j<0?[...freqs,0]:freqs,chosen:j<0?freqs.length:j,action:playedText(played,view.bb),evLoss:loss,ref,step}));
  });
  return out;
 }

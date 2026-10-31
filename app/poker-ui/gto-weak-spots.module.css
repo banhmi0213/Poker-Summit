@@ -1,0 +1,37 @@
+/* あかんとこ一覧 (owner 2026/11/1). Text sizes as the other GTO panes. */
+.wrap{display:flex;flex-direction:column;gap:14px;font-size:15px;color:#e9eff5}
+.wrap p{margin:0;font-size:15px!important;line-height:1.75!important}
+.wrap .lead{color:#d2e0e7!important}
+.wrap .note{color:#a9bccb!important;font-size:14px!important}
+.wrap .warn{color:#ffd4bc!important}
+.filters{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{border:1px solid #adc5d466!important;background:#24435a!important;color:#e9eff5!important;border-radius:999px!important;padding:7px 15px!important;min-height:38px!important;font-size:14px!important;font-weight:700!important}
+.tabs button[aria-pressed=true]{background:#e6bd70!important;color:#14283a!important;border-color:#e6bd70!important}
+.days{display:flex;align-items:center;gap:8px;font-size:14px;color:#c9d6e0}
+.days select{background:#203e51;color:#f7f7ee;border:1px solid #93a9b6;border-radius:8px;padding:6px 10px;font:inherit;font-size:15px;min-height:38px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.cards>div{border:1px solid #adc5d448;border-radius:10px;background:#193a4c70;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.cards small{font-size:13px;color:#a9bccb}
+.cards b{font-size:26px;font-variant-numeric:tabular-nums}
+.cards span{font-size:13px;color:#c9d6e0;overflow-wrap:anywhere}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.item{border:1px solid #adc5d448;border-radius:10px;background:#193a4c55;overflow:hidden}
+.head{display:grid!important;grid-template-columns:34px minmax(0,1fr) 120px;align-items:center;gap:12px;width:100%;text-align:left;border:0!important;background:transparent!important;color:#e9eff5!important;padding:12px 14px!important;min-height:0!important;font-size:15px!important;font-weight:400!important;border-radius:0!important}
+.rank{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#e6bd70;color:#14283a;font-weight:800;font-size:14px}
+.title{display:flex;flex-direction:column;gap:2px;min-width:0}
+.title b{font-size:16px}
+.title small{font-size:13px;color:#a9bccb}
+.meter{height:8px;border-radius:99px;background:#d7726b88;overflow:hidden}
+.meter i{display:block;height:100%;background:#7cc79b}
+.body{padding:0 14px 12px 60px}
+.body ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.body li{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:baseline;font-size:15px}
+.body li small{grid-column:2;font-size:13px;color:#a9bccb}
+.body em{font-style:normal;margin:0 6px;color:#c9d6e0}
+.body a{color:#f2d38d}
+.badge{font-size:13px;font-weight:800;border-radius:6px;padding:1px 7px;background:#ffffff1a;white-space:nowrap}
+.badge[data-level=blunder]{background:#b8433f;color:#fff}
+.badge[data-level=mistake]{background:#d7726b;color:#fff}
+.badge[data-level=inaccurate]{background:#e0a35a;color:#14283a}
+@media(max-width:650px){.cards{grid-template-columns:1fr}.head{grid-template-columns:30px minmax(0,1fr)!important}.meter{grid-column:2}.body{padding-left:14px}}
