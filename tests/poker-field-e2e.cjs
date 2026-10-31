@@ -85,7 +85,7 @@ async function database(){
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
-  while(iterations++<6000){
+  while(iterations++<Math.max(6000,ENTRANTS*400)){
    c=await saved();const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
