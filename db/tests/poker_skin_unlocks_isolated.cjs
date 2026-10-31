@@ -27,6 +27,6 @@ const folder=path.resolve(__dirname,'../../supabase/migrations'),load=s=>fs.read
  assert.equal(s.picksUsed,1);assert.ok(s.owned.includes('card_front_royal'));
  s=await as('select public.poker_skin_milestone_claim($1,$2) v',['card_front_royal',req]);assert.equal(s.picksUsed,1,'a retried request takes one pick');
  await assert.rejects(as('select public.poker_skin_milestone_claim($1,$2) v',['table_navy',randomUUID()]),/No picks left/,'one pick per milestone');
- await assert.rejects(db.query('select * from poker_private.skin_grants'),'grants are private');
+ await assert.rejects(as('select count(*) v from poker_private.skin_grants'),'grants are private');
  console.log('PASS skin unlocks: one starter pick per category, hand-count picks, owned like exchanged skins.');
 }catch(e){console.error(e);process.exitCode=1;}finally{await db.close?.();}})();
