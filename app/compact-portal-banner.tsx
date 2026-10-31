@@ -1,6 +1,7 @@
 import styles from "./compact-portal-copy.module.css";
 import { ReadableName } from "@/app/readable-name";
 import Image from "next/image";
+import { WrapParts } from "@/app/wrap-parts";
 
 export function CompactPortalBanner({ image, eyebrow, title, titleParts, subtitle, detail, subtitleParts, detailParts, heading = "h1" }: {
   image: string; eyebrow: string; title: string; subtitle: string; detail?: string; subtitleParts?: string[]; detailParts?: string[];
@@ -21,9 +22,9 @@ export function CompactPortalBanner({ image, eyebrow, title, titleParts, subtitl
   return <section className="compact-portal-banner" aria-label={title}>
     <div className="compact-portal-banner__copy">
       <span className="compact-portal-banner__eyebrow">{eyebrow}</span>
-      <Heading>{titleParts ? titleParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : <ReadableName name={title} />}</Heading>
-      <p>{subtitleParts ? subtitleParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : subtitle}</p>
-      {detail && <small>{detailParts ? detailParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : detail}</small>}
+      <Heading>{titleParts ? <WrapParts parts={titleParts} className={styles.word} /> : <ReadableName name={title} />}</Heading>
+      <p>{subtitleParts ? <WrapParts parts={subtitleParts} className={styles.word} /> : subtitle}</p>
+      {detail && <small>{detailParts ? <WrapParts parts={detailParts} className={styles.word} /> : detail}</small>}
     </div>
     <div className="compact-portal-banner__photo">
       <picture>
@@ -33,3 +34,4 @@ export function CompactPortalBanner({ image, eyebrow, title, titleParts, subtitl
     </div>
   </section>;
 }
+

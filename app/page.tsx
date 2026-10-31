@@ -1,3 +1,7 @@
+import { Suspense } from "react";
+import { AcademyHero } from "./academy-hero";
+import { HomeBlogSection } from "./home-blog-section";
+import { HomePokerNews } from "./home-poker-news";
 import { freerollSignupOpen, PRELAUNCH_TOURNAMENT } from "@/lib/prelaunch";
 import { JobCategoryEntrances } from "./job-category-entrances";
 import { CouponCategoryEntrances } from "./coupon-category-entrances";
@@ -176,13 +180,18 @@ export default async function HomePage({
   // 本番ドメイン(pokersummit.jp / www付き)とpoker-summit.vercel.appは同じ
   // サイトとして扱う(lib/banners.ts の isExternalBannerLink)。
   const siteHost = headers().get("host") ?? "";
+  const homeBannerHref = (href: string | null) => {
+    if (!href || isExternalBannerLink(href, siteHost)) return href;
+    try { const url = new URL(href, `https://${siteHost || "pokersummit.jp"}`); return `${url.pathname}${url.search}${url.hash}`; }
+    catch { return href; }
+  };
   const topBanners: HomeBanner[] = topBannerRows.map((b) => {
     const external = isExternalBannerLink(b.link_url, siteHost);
-    return { device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url, external };
+    return { device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: homeBannerHref(b.link_url), external };
   });
 
   const sectionBanners = (rows: typeof couponBannerRows): HomeBanner[] => rows.map((b) => ({
-    device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: b.link_url,
+    device: b.device, id: b.id, title: b.title, image_url: b.image_url ?? "", link_url: homeBannerHref(b.link_url),
     external: isExternalBannerLink(b.link_url, siteHost),
   }));
   const pickupBanners = sectionBanners(pickupBannerRows);
@@ -203,9 +212,9 @@ export default async function HomePage({
       ? { id: "featured", category: "注目企画", title: freerollFeature.title,
           description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
           image: freerollFeature.image_url, href: freerollFeature.link_url || "/tournaments/first-freeroll", external: freerollFeature.external }
-      : { id: "featured", category: "注目企画", title: "Poker Summitの注目企画をチェック",
-          description: "キャンペーンやサイトからのお知らせをご紹介。",
-          image: "/images/poker-news-banner.webp", href: "/news" },
+      : { id: "featured", category: "ポーカーニュース", title: "国内外のポーカーニュースをチェック",
+          description: "日本人選手の活躍や大会情報、注目の話題をまとめてお届け。",
+          image: "/images/poker-news-navy-v1.webp", href: "/poker-news" },
     { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
       description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
       image: "/images/summit-banner-light-v2.webp", href: "/board" },
@@ -233,6 +242,7 @@ export default async function HomePage({
   return (
     <div className="navy-preview">
       <JsonLd data={HOME_JSON_LD} />
+      <h1 className="home-accessible-title">Poker Summit｜ポーカー店舗・大会・学習・ニュース</h1>
       <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
 
       {/* ログインしていない人にだけ、会員登録とフリーロールの案内を細い帯で出す(2026/10/21、一般公開・宣伝に合わせて)。
@@ -388,17 +398,16 @@ export default async function HomePage({
           </Link>)}</div>}
         </section>
         <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
-        <section className="home-academy-preview" aria-label="無料ポーカー学習コース">
-          <div><span>POKER SUMMIT ACADEMY</span><h2>遊びながら、ポーカーを学ぼう。</h2><p>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
-          <Link href="/learn">無料学習コースへ</Link>
-        </section>
+        <div className="home-section home-academy-band" data-tone="ivory"><AcademyHero /></div>
+        <div id="blog" className="home-section home-blog-band" data-tone="light-navy"><Suspense fallback={null}><HomeBlogSection /></Suspense></div>
+        <div className="home-section home-news-band" data-tone="ivory"><Suspense fallback={null}><HomePokerNews /></Suspense></div>
         {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
-        <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
+        <section key={device} className={`home-section home-promo-band ${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" data-tone="champagne" style={{ scrollMarginTop: 160 }}>
           {footerBanners.length > 0 ? footerBanners.map((b) => {
             const isMajorArtwork = b.image_url?.endsWith("/major-tournaments-square-v1.webp");
             const bannerClass = `${styles.promoBanner}${isMajorArtwork ? ` ${styles.majorPromo}` : ""}`;
             const image = <img src={b.image_url ?? ""} alt={b.title} loading="lazy" />;
-            return b.link_url ? <a key={b.id} href={b.link_url} className={bannerClass} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={bannerClass}>{image}</div>;
+            return b.link_url ? <a key={b.id} href={homeBannerHref(b.link_url)!} className={bannerClass} target={isExternalBannerLink(b.link_url, siteHost) ? "_blank" : undefined} rel={isExternalBannerLink(b.link_url, siteHost) ? "noopener noreferrer" : undefined}>{image}</a> : <div key={b.id} className={bannerClass}>{image}</div>;
           }) : <Link href="/blog" className={styles.promoBanner}><img src="/images/blog-promo-square.webp" alt="Poker Summit BLOG — ポーカーの楽しみ方がもっと広がる。ブログを読む" loading="lazy" /></Link>}
         </section>
         ); })}
@@ -428,4 +437,5 @@ export default async function HomePage({
     </div>
   );
 }
+
 

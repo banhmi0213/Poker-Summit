@@ -1,0 +1,19 @@
+.hero{position:relative;isolation:isolate;overflow:hidden;min-width:0;border:1px solid #d9c397;border-radius:20px;background:#fbf8f1;color:#112238;box-shadow:0 7px 24px #8766260c;scroll-margin-top:145px}
+.home{margin:26px 0;min-height:300px}.course{min-height:350px}
+.visual{position:absolute;inset:0;z-index:-1;pointer-events:none}.visual img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.copy{position:relative;width:55%;box-sizing:border-box;padding:30px 36px}
+.meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:10px;letter-spacing:.15em;color:#957338;font-weight:800}
+.badge{display:inline-block;border:1px solid #c5a465;border-radius:30px;color:#866525;font-size:11px;font-weight:700;padding:4px 9px;background:#fffdf8c9;white-space:nowrap}
+.hero .copy .headline{font-size:clamp(27px,3.1vw,36px);font-weight:800;line-height:1.4;letter-spacing:.015em;color:#102237;margin:17px 0 12px;text-align:left;text-wrap:initial}
+.headline>span{display:block;white-space:nowrap}
+.hero .copy .description{font-size:13px;line-height:1.9;color:#55442f;margin:0;max-width:440px;text-align:left}
+.hero .copy .cta{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 24px;box-sizing:border-box;margin-top:20px;border:1px solid #c19c4f;border-radius:9px;background:linear-gradient(120deg,#f0d58e,#d1ab53 62%,#b9903e);color:#172538;font-size:13px;font-weight:800;text-decoration:none;box-shadow:inset 0 1px 0 #fff9,0 4px 10px #85652c19;transition:transform .18s,box-shadow .18s}
+.cta:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 #fff9,0 6px 14px #85652c29}.cta:focus-visible{outline:3px solid #a77c27;outline-offset:4px}
+.pills{list-style:none;padding:0;margin:19px 0 0;display:flex;flex-wrap:wrap;gap:7px}
+.pills li{font-size:11px;color:#795f34;border:1px solid #dbc69e;border-radius:20px;padding:5px 9px;background:#fffaf0d9}
+.course .copy{padding:34px 38px}.course .copy .headline{font-size:clamp(30px,3.4vw,43px)}
+@media(min-width:701px) and (max-width:950px){.copy{width:59%;padding:26px 24px}.hero .copy .headline{font-size:29px}.course .copy .headline{font-size:32px}.course .copy{padding:30px 24px}.hero .copy .description{max-width:360px}.visual:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 25%,#fbf8f1b3 45%,transparent 66%)}}
+@media(max-width:700px){.hero{display:flex;flex-direction:column;border-radius:15px}.home,.course{min-height:0}.copy,.course .copy{width:100%;padding:24px 22px;order:0;background:#fbf8f1}.hero .copy .headline,.course .copy .headline{font-size:clamp(25px,6.6vw,34px);line-height:1.4;margin:15px 0 10px}.meta{gap:9px}.eyebrow{font-size:9px}.badge{font-size:10px}.hero .copy .description{font-size:12px;max-width:100%}.hero .copy .cta{margin-top:17px}.pills{margin-top:16px}.pills li{font-size:10px}.visual{position:relative;inset:auto;height:190px;order:1;z-index:0;overflow:hidden}.visual img{position:absolute;width:200%;max-width:none;height:100%;right:0;object-position:right center}.visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#fbf8f1,transparent 28%)}}
+@media(prefers-reduced-motion:reduce){.hero .copy .cta{transition:none}.cta:hover{transform:none}}
+
