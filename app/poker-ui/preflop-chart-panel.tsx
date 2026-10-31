@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
+import {cachedJson,loadJson} from '@/lib/poker/gto-spots';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
@@ -17,9 +18,10 @@ const combos=(l:string)=>l.length===2?6:l[2]==='s'?4:12;
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function PreflopChartPanel(){
- const [table,setTable]=useState<'6max'|'hu'>('6max'),[depth,setDepth]=useState<number>(100),[rake,setRake]=useState(''),[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
+ const [table,setTable]=useState<'6max'|'hu'>('6max'),[depth,setDepth]=useState<number>(100),[rake,setRake]=useState(''),[data,setData]=useState<Data|null>(()=>cachedJson<Data>('/poker-gto/preflop.json')??null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const KINDS=table==='hu'?KINDSHU:KINDS6;
- useEffect(()=>{let live=true;fetch(table==='hu'?'/poker-gto/preflop-hu.json':depth===100?(rake?`/poker-gto/preflop-rake${rake}.json`:'/poker-gto/preflop.json'):`/poker-gto/preflop-${depth}bb.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live){setData(null);setError('プリフロップ表を読み込めませんでした。');}});return()=>{live=false;};},[table,depth,rake]);
+ const url=table==='hu'?'/poker-gto/preflop-hu.json':depth===100?(rake?`/poker-gto/preflop-rake${rake}.json`:'/poker-gto/preflop.json'):`/poker-gto/preflop-${depth}bb.json`;
+ useEffect(()=>{let live=true;const c=cachedJson<Data>(url);if(c){setData(c);setError('');return;}void loadJson<Data>(url).then(d=>{if(!live)return;if(d){setData(d);setError('');}else{setData(null);setError('プリフロップ表を読み込めませんでした。');}});return()=>{live=false;};},[url]);
  const options=useMemo(()=>data?.nodes.filter(n=>n.kind===kind)??[],[data,kind]);
  const node=options.find(n=>n.id===id)??options[0]??null;
  const totals=useMemo(()=>{if(!node)return [];const k=node.actions.length,t=new Array(k).fill(0);let all=0;for(const [l,v] of Object.entries(node.strategy)){const c=combos(l);all+=c;for(let a=0;a<k;a++)t[a]+=c*v[a];}return t.map(x=>x/all);},[node]);

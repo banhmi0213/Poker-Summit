@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useMemo,useState} from 'react';
+import {cachedJson,loadJson} from '@/lib/poker/gto-spots';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
@@ -15,9 +16,10 @@ type Data={nodes:Node[]};
 const SPOT_KINDS=[['open','オープン（誰も参加していない）'],['vsOpen','オープンされた'],['vs3bet','3ベットされた']] as const;
 
 export function RangeTrainer(){
- const [depth,setDepth]=useState(100),[data,setData]=useState<Data|null>(null),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
+ const [depth,setDepth]=useState(100),[data,setData]=useState<Data|null>(()=>cachedJson<Data>('/poker-gto/preflop.json')??null),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const [pick,setPick]=useState<Record<string,number>>({}),[shown,setShown]=useState(false),[brush,setBrush]=useState(1);
- useEffect(()=>{let live=true;fetch(depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`).then(r=>r.ok?r.json():null).then(d=>{if(live)setData(d);}).catch(()=>{});return()=>{live=false;};},[depth]);
+ const url=depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`;
+ useEffect(()=>{let live=true;const c=cachedJson<Data>(url);if(c){setData(c);return;}void loadJson<Data>(url).then(d=>{if(live&&d)setData(d);});return()=>{live=false;};},[url]);
  // Seats in table order (UTG first), as the preflop chart titles start with the seat.
  const ORDER=['UTG','HJ','CO','BTN','SB','BB'],seatOf=(t:string)=>{const who=t.includes('→')?t.split('→').pop()!.trim():t;const i=ORDER.findIndex(p=>who.startsWith(p));return i<0?9:i;};
  const options=useMemo(()=>(data?.nodes.filter(n=>n.kind===kind)??[]).slice().sort((x,y)=>seatOf(x.title)-seatOf(y.title)),[data,kind]);

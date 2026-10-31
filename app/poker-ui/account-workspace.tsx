@@ -1,5 +1,5 @@
 'use client';
-import {useLayoutEffect,useRef,useState,type ReactNode} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import Link from 'next/link';
 import type {PokerPane} from './workspace';
 import {LobbyIcon,type LobbyIconName} from '@/app/poker-lobby/lobby-icon';
@@ -25,6 +25,8 @@ function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
   // Shown once the height has been still for 0.25s and no chart is still loading (a [data-loading] placeholder).
   const check=()=>{if(inner.current?.querySelector('[data-loading]')){settle=setTimeout(check,80);return;}measure();setShown(true);};
   const changed=()=>{measure();clearTimeout(settle);settle=setTimeout(check,250);};
+  // Nothing loading (the chart was cached or prefetched): measured above, shown on this very frame.
+  measure();if(!inner.current?.querySelector('[data-loading]'))setShown(true);
   changed();const cap=setTimeout(()=>{measure();setShown(true);},4000);
   const ro=new ResizeObserver(changed);if(inner.current)ro.observe(inner.current);window.addEventListener('resize',measure);
   return()=>{clearTimeout(settle);clearTimeout(cap);ro.disconnect();window.removeEventListener('resize',measure);};
@@ -35,6 +37,9 @@ export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
  const [active,setActive]=useState(panes[0]?.id),[menuOpen,setMenuOpen]=useState(false);
  const pane=panes.find(p=>p.id===active)??panes[0],fitting=FIT_TO_SCREEN.has(pane?.id??'');
  const choose=(id:string)=>{setActive(id);setMenuOpen(false);};
+ // Load the GTO charts in the background so those panes open with their chart already there (owner 2026/11/1).
+ const hasGto=panes.some(p=>FIT_TO_SCREEN.has(p.id));
+ useEffect(()=>{if(!hasGto)return;const go=()=>{void import('@/lib/poker/gto-spots').then(m=>m.prefetchGtoCharts());};const t=setTimeout(go,800);return()=>clearTimeout(t);},[hasGto]);
  const firstOf=(ids:string[])=>ids.find(id=>panes.some(p=>p.id===id));
  const record=firstOf(['ring','tendencies','summary']),learn=firstOf(['gto','preflop','quiz']);
  function shortcut(id:string|undefined,label:string):ReactNode{return id?<button type="button" onClick={()=>choose(id)}>{label}</button>:<Link href="/mypage/poker">プレイヤーページを開く</Link>;}
