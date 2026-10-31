@@ -91,7 +91,9 @@ async function database(){
   const watchdog=setInterval(()=>{if(Date.now()-stepAt>45000)console.log(`PROGRESS STALLED ${Math.round((Date.now()-stepAt)/1000)}s at: ${step}`);},30000);watchdog.unref?.();
   while(iterations++<Math.max(6000,ENTRANTS*400)){
    mark('read checkpoint');{const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
-   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)}`);}const field=c.field;
+   // The isolated database lives in memory: reclaim old checkpoint versions now and then so a long run does not grow it without bound.
+   if(iterations%150===0){mark('vacuum');await f.db.exec('vacuum poker_private.room_checkpoints');}
+   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} rssMb=${Math.round(process.memoryUsage().rss/1048576)} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)}`);}const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
    maxTables=Math.max(maxTables,field.tables.length);if(field.tables.length===1&&[...where(c).values()].filter(s=>s.stack>0).length<=6)finalTable=true;
