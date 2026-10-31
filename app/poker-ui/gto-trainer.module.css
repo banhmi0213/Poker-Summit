@@ -67,3 +67,13 @@
  .seat[data-hero] .card{width:30px;height:41px;font-size:15px}
  .card{width:28px;height:39px;font-size:14px}
 }
+/* プリフロップ連打 */
+.drillHead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 10px;font-size:14px;color:#d9e4ee}
+.drillHead b{font-size:18px;color:#e6bd70}
+.drillTag{font-size:11px;font-weight:700;background:#7a5a1e;color:#fff;border-radius:999px;padding:2px 8px}
+.drillHand{display:flex;justify-content:center;gap:8px;margin:6px 0 14px}
+.drillHand .card{width:54px;height:74px;font-size:26px;border-radius:8px}
+.drillHand .card small{font-size:20px}
+.kinds{display:flex;gap:6px;margin:0 0 10px}
+.kinds button{flex:1 1 0;border:1px solid #adc5d448!important;border-radius:9px;background:#193a4c!important;color:#d9e4ee!important;padding:9px 10px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.kinds button[aria-selected=true]{background:#e0b553!important;color:#35240f!important;border-color:#bd8c33!important}
