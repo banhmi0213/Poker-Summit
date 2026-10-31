@@ -6,7 +6,7 @@ export function parseRingWallet(value:unknown):RingWallet{
  if(v.rank!==null&&(!Number.isSafeInteger(v.rank)||Number(v.rank)<1))throw Error('Invalid rank');
  if(typeof v.welcomeGranted!=='boolean'||typeof v.asOf!=='string'||!Number.isFinite(Date.parse(v.asOf))||!Array.isArray(v.history)||v.history.length>20)throw Error('Invalid wallet metadata');
  const history=v.history.map((entry:unknown)=>{if(!entry||typeof entry!=='object')throw Error('Invalid history');const e=entry as Record<string,unknown>;if(!['welcome','reserve','refund','settlement','cashout'].includes(String(e.kind))||!Number.isSafeInteger(e.availableDelta)||!Number.isSafeInteger(e.inPlayDelta)||typeof e.createdAt!=='string'||!Number.isFinite(Date.parse(e.createdAt)))throw Error('Invalid history');
-  const a=Number(e.availableDelta),p=Number(e.inPlayDelta);if(e.kind==='welcome'?(a!==3000||p!==0):e.kind==='settlement'?a!==0:(a+p!==0||e.kind==='reserve'&&a>=0||e.kind==='refund'&&a<=0||e.kind==='cashout'&&a<0))throw Error('Invalid history amount');
+  const a=Number(e.availableDelta),p=Number(e.inPlayDelta);if(e.kind==='welcome'?((a!==1000&&a!==3000)||p!==0):e.kind==='settlement'?a!==0:(a+p!==0||e.kind==='reserve'&&a>=0||e.kind==='refund'&&a<=0||e.kind==='cashout'&&a<0))throw Error('Invalid history amount');
   return {kind:e.kind as 'welcome'|'reserve'|'refund'|'settlement'|'cashout',availableDelta:a,inPlayDelta:p,createdAt:e.createdAt};});
  return {available:Number(v.available),inPlay:Number(v.inPlay),total:Number(v.total),rank:v.rank===null?null:Number(v.rank),welcomeGranted:v.welcomeGranted,asOf:v.asOf,history};
 }
