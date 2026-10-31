@@ -9,6 +9,7 @@ import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAIN
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
+import {PreflopDrill} from './preflop-drill';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
@@ -27,11 +28,11 @@ const emptyStats=():Stats=>({hands:0,decisions:0,score:0,net:0,evLoss:0,evCount:
 function readStats():Stats{try{const v=JSON.parse(window.localStorage.getItem(STATS_KEY)??'null');return v&&typeof v.hands==='number'&&v.levels?{...emptyStats(),...v,levels:{...emptyStats().levels,...v.levels}}:emptyStats();}catch{return emptyStats();}}
 function writeStats(s:Stats){try{window.localStorage.setItem(STATS_KEY,JSON.stringify(s));}catch{/* convenience only */}}
 
-function CardChip({card,hidden}:{card?:Card;hidden?:boolean}){
+export function CardChip({card,hidden}:{card?:Card;hidden?:boolean}){
  if(hidden||!card)return <span className={styles.card} data-back aria-label="伏せたカード"/>;
  return <span className={styles.card} data-red={card.suit==='h'||card.suit==='d'||undefined}>{RANK[card.rank]??card.rank}<small>{SUIT[card.suit]}</small></span>;
 }
-const actText=(type:string,to:number,allIn:boolean)=>type==='fold'?'フォールド':type==='check'?'チェック':type==='call'?'コール':`${type==='bet'?'ベット':'レイズ'} ${bb(to)}${allIn?'（オールイン）':''}`;
+export const actText=(type:string,to:number,allIn:boolean)=>type==='fold'?'フォールド':type==='check'?'チェック':type==='call'?'コール':`${type==='bet'?'ベット':'レイズ'} ${bb(to)}${allIn?'（オールイン）':''}`;
 
 /** Basic buttons when GTO has no answer for this spot (graded as 採点なし). */
 function basicMenu(h:TrainerHand){
@@ -53,7 +54,18 @@ function basicMenu(h:TrainerHand){
 const heroOut=(h:TrainerHand)=>!h.result&&Boolean(h.round.players.find(p=>p.id===HERO)?.folded);
 const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p=>p.id===HERO)!.totalCommitted);
 
+/** Two ways to practise (2026/10/31): a whole hand against GTO, or プリフロップ連打 (preflop decisions one after another). */
 export function GtoTrainer(){
+ const [kind,setKind]=useState<'hand'|'drill'>('hand');
+ return <>
+  <div className={styles.kinds} role="tablist" aria-label="練習の形">
+   <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
+   <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
+  </div>
+  {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill/>}
+ </>;
+}
+function GtoHandTrainer(){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
