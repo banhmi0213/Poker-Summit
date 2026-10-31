@@ -17,7 +17,7 @@ const SPOT_KINDS=[['open','オープン（誰も参加していない）'],['vsO
 export function RangeTrainer(){
  const [depth,setDepth]=useState(100),[data,setData]=useState<Data|null>(null),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const [pick,setPick]=useState<Record<string,number>>({}),[shown,setShown]=useState(false),[brush,setBrush]=useState(1);
- useEffect(()=>{let live=true;setData(null);fetch(depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`).then(r=>r.ok?r.json():null).then(d=>{if(live)setData(d);}).catch(()=>{});return()=>{live=false;};},[depth]);
+ useEffect(()=>{let live=true;fetch(depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`).then(r=>r.ok?r.json():null).then(d=>{if(live)setData(d);}).catch(()=>{});return()=>{live=false;};},[depth]);
  // Seats in table order (UTG first), as the preflop chart titles start with the seat.
  const ORDER=['UTG','HJ','CO','BTN','SB','BB'],seatOf=(t:string)=>{const who=t.includes('→')?t.split('→').pop()!.trim():t;const i=ORDER.findIndex(p=>who.startsWith(p));return i<0?9:i;};
  const options=useMemo(()=>(data?.nodes.filter(n=>n.kind===kind)??[]).slice().sort((x,y)=>seatOf(x.title)-seatOf(y.title)),[data,kind]);
@@ -37,7 +37,7 @@ export function RangeTrainer(){
   return G+U>0?Math.max(0,Math.round(100*(1-2*err/(G+U)))):100;};
  const paint=(l:string)=>{if(shown)return;setPick(p=>{const n={...p};if(n[l]===brush)delete n[l];else n[l]=brush;return n;});};
  const all=node?.actions??[];
- return <div className={styles.wrap}>
+ return <div className={styles.wrap}><div className={styles.split} data-on={node?'':undefined}><div className={styles.splitSide}>
   <p>場面を選んで、自分ならプレイする手をマスを押して塗ってください。「答え合わせ」でGTOの表と比べて採点します（塗らなかった手はフォールド）。</p>
   <div className={styles.form}>
    <label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB</option><option value={60}>60BB（大会）</option><option value={40}>40BB（大会）</option><option value={20}>20BB（大会）</option><option value={10}>10BB（大会）</option></select></label>
@@ -49,12 +49,15 @@ export function RangeTrainer(){
     <button type="button" onClick={()=>{setPick({});setShown(false);}}>全部消す</button>
     <button type="button" onClick={()=>setShown(s=>!s)}>{shown?'自分の塗りに戻る':'答え合わせ'}</button></div>
    {shown&&<p><b>点数：{score()}点</b>（100点満点。GTOが混ぜる手は、多く選ぶほうに塗れていれば近い点になります）</p>}
-   <StrategyLegend actions={all}/><table className={styles.grid} aria-label={shown?'GTOの答え':'自分のレンジ'}><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j);
+   
+   {shown&&<p className={styles.note}>金の枠は、自分の塗りがGTOの一番多い選び方と違う手です。</p>}
+  </>}
+ </div>
+ {node&&<div className={styles.splitMain}><StrategyLegend actions={all}/><table className={styles.grid} aria-label={shown?'GTOの答え':'自分のレンジ'}><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j);
     if(shown){const row=node.strategy[l];if(!row)return <td key={j} data-on="none">{l}</td>;let acc=0;const stops=all.map((a,ai)=>{const from=acc;acc+=(row[ai]??0)*100;return `${strategyColor(a,all)} ${from}% ${acc}%`;}).join(',');
      const miss=pick[l]===undefined?row[foldI]<0.5:(row[pick[l]]??0)<0.5;
      return <td key={j} data-on="mix" data-hero={miss||undefined} style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${all.map((a,ai)=>`${a.label} ${Math.round((row[ai]??0)*100)}%`).join('・')}`}>{l}</td>;}
-    const p=pick[l];return <td key={j} data-on={p===undefined?'none':'mix'} style={p===undefined?undefined:{background:strategyColor(all[p],all),cursor:'pointer'}} onClick={()=>paint(l)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();paint(l);}}}>{l}</td>;})}</tr>)}</tbody></table>
-   {shown&&<p className={styles.note}>金の枠は、自分の塗りがGTOの一番多い選び方と違う手です。</p>}
-  </>}
+    const p=pick[l];return <td key={j} data-on={p===undefined?'none':'mix'} style={p===undefined?undefined:{background:strategyColor(all[p],all),cursor:'pointer'}} onClick={()=>paint(l)} role="button" tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();paint(l);}}}>{l}</td>;})}</tr>)}</tbody></table></div>}
+ </div>
  </div>;
 }

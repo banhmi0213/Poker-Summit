@@ -22,8 +22,8 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [index,setIndex]=useState<Record<string,string[]>|null>(null),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
  const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
- useEffect(()=>{let live=true;setData(null);setError('');setTrail([0]);setExplore(null);
-  void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');});
+ useEffect(()=>{let live=true;setError('');setTrail([0]);setExplore(null);
+  void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else{setData(null);setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');}});
   return ()=>{live=false;};},[spot,flop]);
  const lookup=()=>{const t=typed.replace(/\s+/g,'').replace(/(.)(.)/g,(_,r:string,su:string)=>r.toUpperCase()+su.toLowerCase());const c=canonicalFlop(t);if(!c){setNearNote('「Kh7d2c」のように3枚を入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}
   const n=nearestFlop(t,ready.length?ready:flops);if(!n)return;setFlop(n.flop);setNearNote(n.exact?(n.flop===t?`${flopText(t)} は計算済みです。`:`${flopText(t)} はスートの入れ替えだけ違う ${flopText(n.flop)} と同じ形なので、その計算結果を表示しています（手札の表は同じになります）。`):`${flopText(t)} にいちばん近い計算済みのフロップ ${flopText(n.flop)} を表示しています（スートの並びと高いカードが近いもの）。`);};

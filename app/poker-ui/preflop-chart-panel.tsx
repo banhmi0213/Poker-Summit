@@ -19,11 +19,11 @@ const pct=(v:number)=>`${Math.round(v*100)}%`;
 export function PreflopChartPanel(){
  const [table,setTable]=useState<'6max'|'hu'>('6max'),[depth,setDepth]=useState<number>(100),[rake,setRake]=useState(''),[data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null);
  const KINDS=table==='hu'?KINDSHU:KINDS6;
- useEffect(()=>{let live=true;setData(null);fetch(table==='hu'?'/poker-gto/preflop-hu.json':depth===100?(rake?`/poker-gto/preflop-rake${rake}.json`:'/poker-gto/preflop.json'):`/poker-gto/preflop-${depth}bb.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live)setError('プリフロップ表を読み込めませんでした。');});return()=>{live=false;};},[table,depth,rake]);
+ useEffect(()=>{let live=true;fetch(table==='hu'?'/poker-gto/preflop-hu.json':depth===100?(rake?`/poker-gto/preflop-rake${rake}.json`:'/poker-gto/preflop.json'):`/poker-gto/preflop-${depth}bb.json`).then(r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(live)setData(d);}).catch(()=>{if(live){setData(null);setError('プリフロップ表を読み込めませんでした。');}});return()=>{live=false;};},[table,depth,rake]);
  const options=useMemo(()=>data?.nodes.filter(n=>n.kind===kind)??[],[data,kind]);
  const node=options.find(n=>n.id===id)??options[0]??null;
  const totals=useMemo(()=>{if(!node)return [];const k=node.actions.length,t=new Array(k).fill(0);let all=0;for(const [l,v] of Object.entries(node.strategy)){const c=combos(l);all+=c;for(let a=0;a<k;a++)t[a]+=c*v[a];}return t.map(x=>x/all);},[node]);
- return <div className={styles.wrap}>
+ return <div className={styles.wrap}><div className={styles.split} data-on={data&&node?'':undefined}><div className={styles.splitSide}>
   <p>プリフロップの打ち方を、計算で求めた表です（6人卓と2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人卓は100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status">読み込み中…</p>}
@@ -37,12 +37,15 @@ export function PreflopChartPanel(){
    </div>
    {node&&<>
     <p><b>{node.title}</b>：全体では {node.actions.map((a,i)=>`${a.label} ${pct(totals[i]??0)}`).join('・')}</p>
-    <StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.strategy[l];if(!e)return <td key={j} data-on="none">{l}</td>;
-     let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
-     return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai])}`).join('・')}`}>{l}</td>;})}</tr>)}</tbody></table>
+    
     
    </>}
    <details className={styles.note}><summary>計算の前提</summary><ul>{data.assumptions.map((a,i)=><li key={i}>{a}</li>)}</ul><p>{data.iterations.toLocaleString()}回計算・平均の取り逃し {data.averageRegret.toFixed(4)}BB。6人分を厳密に解くのは計算が重すぎるため、上の前提で簡略化しています。フロップ以降の正解は「フロップ戦略」を見てください。</p></details>
   </>}
+ </div>
+ {data&&node&&<div className={styles.splitMain}><StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.strategy[l];if(!e)return <td key={j} data-on="none">{l}</td>;
+     let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
+     return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai])}`).join('・')}`}>{l}</td>;})}</tr>)}</tbody></table></div>}
+ </div>
  </div>;
 }
