@@ -43,7 +43,7 @@ export const cardSkin=(id:string|undefined,list=CARD_SKINS)=>list.find(s=>s.id==
 export const backSkin=(id:string|undefined,list=BACK_SKINS)=>list.find(s=>s.id===id)??list[0];
 /** 一旦すべて無料（owner 2026/10/27: トランプ・テーブルのデザインを変えたいから一旦無料で変えれるように）.
  * While true every skin can be chosen and the shop hides its skin items. Set false to go back to shop skins. */
-export const SKINS_FREE_FOR_NOW=true;
+export const SKINS_FREE_FOR_NOW=false; // 2026/10/31: starter picks, chip exchange and hand-count picks (skin-unlocks.ts)
 /** Free skins, or shop skins the member has exchanged for (everything while SKINS_FREE_FOR_NOW). */
 export function skinUnlocked(skin:{free:boolean;shopCode?:string},owned:Readonly<Record<string,number>>,allFree=SKINS_FREE_FOR_NOW){return allFree||skin.free||Boolean(skin.shopCode&&(owned[skin.shopCode]??0)>0);}
 /** Attributes and CSS variables for the felt element. The standard skins add nothing, so the stylesheet applies as is. */
