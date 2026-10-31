@@ -1,3 +1,4 @@
+import { threadCardStyle, threadStyle, validCode } from "@/lib/cosmetics";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -120,6 +121,17 @@ export default async function BoardPage({
     : { data: [] as { user_id: string; best_score: number }[] };
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
+  // アイコン枠・スレッドデザイン(2026/11/01)。投稿者ぶんを1回でまとめて引く。
+  const { data: cosmeticRows } = authorUserIds.length
+    ? await supabase.rpc("poker_cosmetics_for", { p_members: authorUserIds })
+    : { data: [] };
+  const frameByUserId: Record<string, string | null> = {};
+  const threadByUserId: Record<string, string | null> = {};
+  (Array.isArray(cosmeticRows) ? (cosmeticRows as { userId?: unknown; frame?: unknown; thread?: unknown }[]) : []).forEach((c) => {
+    if (typeof c?.userId !== "string") return;
+    frameByUserId[c.userId] = validCode(c.frame, "frame");
+    threadByUserId[c.userId] = validCode(c.thread, "thread");
+  });
   const avatarByUserId: Record<string, string | null> = {};
   // 投稿者の役職(2026/10、「サミットアイコン横の名前の上に役職を表示」
   // との指示)。profiles.roleをアイコンと同じく1回でまとめて引く。
@@ -281,7 +293,7 @@ export default async function BoardPage({
         {posts?.map((p) => {
           const role = p.author_user_id ? roleByUserId[p.author_user_id] : null;
           return (
-            <div className="card" key={p.id} style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <div className="card" key={p.id} style={{ display: "flex", gap: 10, alignItems: "center", ...(p.author_user_id ? threadCardStyle(threadByUserId[p.author_user_id]) : undefined) }}>
               {/* アイコンだけ投稿詳細ではなく投稿者のプロフィールへ
                   (2026/10、「サミットからアイコン押したらプロフィールが
                   見れるように」との指示)。Next.jsのLinkは入れ子にできない
@@ -289,13 +301,13 @@ export default async function BoardPage({
                   とタイトル/画像用でLinkを分けでいる。 */}
               {p.author_user_id ? (
                 <Link href={`/members/${p.author_user_id}`} style={{ flexShrink: 0 }}>
-                  <Avatar name={p.author_name} url={avatarByUserId[p.author_user_id]} />
+                  <Avatar name={p.author_name} url={avatarByUserId[p.author_user_id]} frame={frameByUserId[p.author_user_id]} />
                 </Link>
               ) : (
                 <Avatar name={p.author_name} url={null} />
               )}
               <Link href={`/board/${p.id}`} style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}{(() => { const b = p.author_user_id ? threadStyle(threadByUserId[p.author_user_id]).badge : undefined; return b && <span style={b.style}>{b.text}</span>; })()}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2, alignItems: "center" }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
                   {/* 投稿者名・日時のコントラスト向上(2026/10、「薄い文字を

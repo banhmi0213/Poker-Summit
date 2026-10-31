@@ -6,6 +6,7 @@ import {useRouter} from 'next/navigation';
 import {SummitChipBalance} from '@/app/poker-ui/chip-balance';
 import RingAdmissionPanel from '@/app/poker-ui/ring-admission-panel';
 import {SkinSettings} from '@/app/poker-ui/skin-settings';
+import {MyFrame} from '@/app/poker-ui/my-cosmetics';
 import {TablePreferences,useTablePreferences} from '@/app/poker-ui/table-preferences';
 import {SKINS_FREE_FOR_NOW} from '@/lib/poker/skins';
 import {SkinStarter} from '@/app/poker-ui/skin-starter';
@@ -44,7 +45,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
  const configured=rings.map(t=>({id:t.id,title:t.title,sb:t.sb,bb:t.bb,capacity:t.capacity,minBuyIn:t.min_buy_in,maxBuyIn:t.max_buy_in,occupied:null}));
  const own=ringState?.membership;
  return <div className={styles.shell}>
-  <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><img src="/images/logo.png" alt="Poker Summit" width="252" height="84"/></Link><nav aria-label="ポーカーナビゲーション"><Link href="/mypage/poker">プレイヤーページ</Link><Link href="/mypage">マイページ</Link><Link href="/">サイトトップ</Link>{admin&&<Link href="/admin/poker-statistics">総合管理</Link>}<span className={styles.memberAvatar} aria-label={guest?'ゲスト':memberName}><LobbyIcon name="people"/></span></nav></header>
+  <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><img src="/images/logo.png" alt="Poker Summit" width="252" height="84"/></Link><nav aria-label="ポーカーナビゲーション"><Link href="/mypage/poker">プレイヤーページ</Link><Link href="/mypage">マイページ</Link><Link href="/">サイトトップ</Link>{admin&&<Link href="/admin/poker-statistics">総合管理</Link>}{guest?<span className={styles.memberAvatar} aria-label={guest?'ゲスト':memberName}><LobbyIcon name="people"/></span>:<MyFrame><span className={styles.memberAvatar} aria-label={guest?'ゲスト':memberName}><LobbyIcon name="people"/></span></MyFrame>}</nav></header>
   <div className={styles.layout}>
    <aside className={styles.sidebar}><div className={styles.sidebarTitle}><LobbyIcon name="finger"/><strong>ポーカーロビー</strong></div><button type="button" className={styles.menuToggle} aria-expanded={menuOpen} aria-controls="lobby-navigation" onClick={()=>setMenuOpen(v=>!v)}>ロビーメニュー<span aria-hidden="true">{menuOpen?'−':'＋'}</span></button><nav id="lobby-navigation" className={styles.navigation} data-open={menuOpen} aria-label="ロビー内のメニュー">{navigation.map(item=><button type="button" key={item.id} aria-pressed={active===item.id} onClick={()=>go(item.id)}><LobbyIcon name={item.icon}/><span>{item.label}</span></button>)}</nav><div className={styles.sidebarFoot}><Link href="/news"><LobbyIcon name="bell"/>お知らせ</Link><Link href="/mypage/poker"><LobbyIcon name="settings"/>プレイヤーページ・設定</Link>{guest&&<Link href="/login" className={styles.loginLink}>ログインする</Link>}</div></aside>
    <main className={styles.main}>
