@@ -9,7 +9,7 @@ import styles from './gto-weak-spots.module.css';
  * play, grouped by spot, the costliest first. Ring and tournament hands are judged in the background on open. */
 type Example={source:GtoRecordSource;hand:string;board:string;action:string;freq:number|null;evLoss:number|null;level:TrainerLevel|null;at:string;ref:string|null};
 type Spot={spot:string;n:number;misses:number;close:number;good:number;evLoss:number;evN:number;last:string;examples:Example[]};
-type Data={days:number;total:{decisions:number;graded:number;misses:number;evLoss:number;evN:number};bySource:Partial<Record<GtoRecordSource,number>>;spots:Spot[]};
+type Data={days:number;total:{decisions:number;graded:number;misses:number;evLoss:number;evN:number};bySource:Partial<Record<GtoRecordSource,number>>;spots:Spot[];more?:number};
 const FILTERS:{id:string;label:string;sources:GtoRecordSource[]|null}[]=[
  {id:'all',label:'全部',sources:null},{id:'ring',label:'リング',sources:['ring']},{id:'tournament',label:'大会',sources:['tournament']},
  {id:'practice',label:'練習卓',sources:['practice']},{id:'training',label:'GTOと対戦・連打',sources:['trainer','drill']}];
@@ -18,7 +18,7 @@ const bb=(v:number)=>`${v.toFixed(2)}BB`;
 const SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const boardText=(b:string)=>b.match(/../g)?.map(c=>(c[0]==='T'?'10':c[0])+SUIT[c[1]]).join(' ')??'';
 
-export function GtoWeakSpots(){
+export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean}={}){
  const [days,setDays]=useState(90),[filter,setFilter]=useState('all'),[data,setData]=useState<Data|null>(null),[error,setError]=useState('');
  const [sync,setSync]=useState<'running'|'done'|null>(null),[open,setOpen]=useState<string|null>(null);
  const load=useCallback(async()=>{
@@ -46,7 +46,7 @@ export function GtoWeakSpots(){
     <div><small>EV損失の合計</small><b>{bb(data.total.evLoss)}</b><span>{data.total.evN?`1回あたり ${bb(data.total.evLoss/data.total.evN)}`:'計算できた判断がまだありません'}</span></div>
    </div>
    {data.spots.length===0?<p className={styles.note}>この期間の記録はまだありません。GTOと対戦やリングで打つと、ここに集まります。</p>:
-   <ol className={styles.list}>{data.spots.map((s,i)=>{const graded=s.misses+s.close+s.good||s.n;return <li key={s.spot} className={styles.item}>
+   <ol className={styles.list}>{data.spots.slice(0,limit??data.spots.length).map((s,i)=>{const graded=s.misses+s.close+s.good||s.n;return <li key={s.spot} className={styles.item}>
     <button type="button" className={styles.head} aria-expanded={open===s.spot} onClick={()=>setOpen(open===s.spot?null:s.spot)}>
      <span className={styles.rank}>{i+1}</span>
      <span className={styles.title}><b>{spotLabel(s.spot)}</b><small>{s.n}回・ミス {s.misses}回・惜しい {s.close}回・EV損失 {bb(s.evLoss)}{s.evN?`（1回あたり ${bb(s.evLoss/s.evN)}）`:''}</small></span>
@@ -58,6 +58,7 @@ export function GtoWeakSpots(){
      <small>{SOURCE_TEXT[e.source]}・{new Date(e.at).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'})}{(e.source==='ring'||e.source==='tournament')&&e.ref&&<> ・<a href={`/mypage/poker/hands/${e.ref}`}>ハンドを見る</a></>}</small>
     </li>)}</ul>}</div>}
    </li>;})}</ol>}
+   {upsell&&(data.more??0)>0&&<div className={styles.upsell}><p>ほかに{data.more}の場面があります。スタンダードプランで全部見られます。</p><a href="/pricing">プランを見る</a></div>}
    <p className={styles.note}>ミス＝GTOがその手で選ぶ割合が8%未満の打ち方。EV損失は、その場でいちばん得な打ち方と比べたチップの差（プリフロップと、計算が十分に詰められたターン・リバー）。4人以上のポットや計算していない場面は数えていません。</p>
   </>}
  </div>;

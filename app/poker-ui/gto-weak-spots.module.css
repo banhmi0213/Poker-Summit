@@ -35,3 +35,5 @@
 .badge[data-level=mistake]{background:#d7726b;color:#fff}
 .badge[data-level=inaccurate]{background:#e0a35a;color:#14283a}
 @media(max-width:650px){.cards{grid-template-columns:1fr}.head{grid-template-columns:30px minmax(0,1fr)!important}.meter{grid-column:2}.body{padding-left:14px}}
+.upsell{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e6bd7088;border-radius:10px;background:#e6bd7014;padding:12px 14px}
+.upsell a{display:inline-flex;align-items:center;min-height:40px;padding:8px 18px;border-radius:999px;background:#e6bd70;color:#14283a!important;font-weight:800;text-decoration:none}
