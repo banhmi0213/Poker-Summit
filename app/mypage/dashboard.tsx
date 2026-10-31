@@ -18,6 +18,7 @@ import { AccountIcon } from "./account-icon";
 import { ProfileEditor } from "./profile-editor";
 import styles from "./profile-layout.module.css";
 import { Avatar } from "@/app/avatar";
+import { CosmeticsSettings, MyFrame } from "@/app/poker-ui/my-cosmetics";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 
 function formatDate(value: string | null) {
@@ -162,7 +163,7 @@ export async function MyPageContent({
         {profileEdit ? (<div className={`card ${profileEdit ? styles.account : ""}`} style={profileEdit ? undefined : { maxWidth: 680, marginBottom: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-              <Avatar name={name} url={avatarUrl} size={profileEdit ? 72 : 56} />
+              <MyFrame><Avatar name={name} url={avatarUrl} size={profileEdit ? 72 : 56} /></MyFrame>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ fontWeight: 800, fontSize: 19 }}>{name}</div>
@@ -228,6 +229,11 @@ export async function MyPageContent({
               サミット（掲示板）の投稿一覧・詳細に表示されます（5MBまで）。
             </span>
           </div>
+          {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーの卓で共通。 */}
+          <details style={{ padding: "10px 0", borderBottom: "1px solid var(--grid)" }}>
+            <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 700 }}>アイコン枠・ネームプレート・スレッドデザイン</summary>
+            <CosmeticsSettings />
+          </details>
 
           <div className="muted small" style={{ marginTop: 10 }}>
             ✉️ {user.email} <span style={{ fontSize: 11, marginLeft: 8 }}>（{myProfile?.email_public === true ? "公開" : "非公開"}）</span>
@@ -235,7 +241,7 @@ export async function MyPageContent({
         </div>) : (
           <div className={styles.summary}>
             <div className={styles.identity}>
-              <div className={styles.identityTop}><Avatar name={name} url={avatarUrl} size={84} /><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
+              <div className={styles.identityTop}><MyFrame><Avatar name={name} url={avatarUrl} size={84} /></MyFrame><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
               {myProfile?.bio && <p className={styles.bio}>{myProfile.bio}</p>}
               <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:7}}>{myProfile?.role && <span className={styles.role}>♠ {myProfile.role}</span>}{graduationScore!==null&&<AcademyBadge score={graduationScore} compact/>}</div>
             </div>

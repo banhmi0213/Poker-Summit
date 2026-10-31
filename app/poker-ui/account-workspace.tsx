@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import Link from 'next/link';
+import {MyFrame} from './my-cosmetics';
 import type {PokerPane} from './workspace';
 import {LobbyIcon,type LobbyIconName} from '@/app/poker-lobby/lobby-icon';
 import styles from './account-workspace.module.css';
@@ -44,7 +45,7 @@ export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
  const record=firstOf(['ring','tendencies','summary']),learn=firstOf(['gto','preflop','quiz']);
  function shortcut(id:string|undefined,label:string):ReactNode{return id?<button type="button" onClick={()=>choose(id)}>{label}</button>:<Link href="/mypage/poker">プレイヤーページを開く</Link>;}
  return <div className={styles.shell} data-poker-account="champagne">
-  <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><img src="/images/logo.png" alt="Poker Summit" width="300" height="64"/></Link><nav aria-label="ポーカーナビゲーション"><Link href="/poker-lobby">ロビー</Link><Link href="/mypage">マイページ</Link><Link href="/">サイトトップ</Link><span className={styles.avatar} aria-hidden="true"><LobbyIcon name="people"/></span></nav></header>
+  <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><img src="/images/logo.png" alt="Poker Summit" width="300" height="64"/></Link><nav aria-label="ポーカーナビゲーション"><Link href="/poker-lobby">ロビー</Link><Link href="/mypage">マイページ</Link><Link href="/">サイトトップ</Link><MyFrame><span className={styles.avatar} aria-hidden="true"><LobbyIcon name="people"/></span></MyFrame></nav></header>
   <div className={styles.layout}>
    <aside className={styles.sidebar}><div className={styles.sidebarTitle}><LobbyIcon name="finger"/><strong>メニュー</strong></div><p className={styles.sidebarIntro}>見たい項目を選んでください。</p><button type="button" className={styles.menuToggle} onClick={()=>setMenuOpen(v=>!v)} aria-expanded={menuOpen} aria-controls="account-panes">表示する項目<span aria-hidden="true">{menuOpen?'−':'＋'}</span></button><nav id="account-panes" className={styles.panes} data-open={menuOpen} aria-label="表示内容">{panes.map(p=><button type="button" key={p.id} aria-pressed={pane?.id===p.id} onClick={()=>choose(p.id)}><LobbyIcon name={icons[p.id]??'cards'}/><span>{p.label}</span></button>)}</nav><div className={styles.sidebarFoot}><Link href="/poker-lobby"><LobbyIcon name="home"/>ロビーに戻る</Link><Link href="/mypage"><LobbyIcon name="settings"/>会員プロフィール・設定</Link></div></aside>
    <main className={styles.main} data-fit={fitting||undefined}><div className={styles.heading}><h1>プレイヤーページ</h1><p>記録を振り返って、次のプレイへ。</p></div>
