@@ -186,11 +186,19 @@ export class PreflopSolver{
    }
    return values;
   }
-  const k=node.actions.length,p=node.player,sigma=this.strategy(node),values=Array.from({length:P},()=>new Float64Array(n)),actionValues:Float64Array[]=[];
+  const ev=this.#evOut,k=node.actions.length,p=node.player,sigma=this.strategy(node,!!ev),values=Array.from({length:P},()=>new Float64Array(n)),actionValues:Float64Array[]=[];
   for(let a=0;a<k;a++){
    const next=reach.map((r,q)=>{if(q!==p)return r;const out=new Float64Array(n);for(let h=0;h<n;h++)out[h]=r[h]*sigma[h*k+a];return out;});
    const child=this.#walk(node.children[a],next);actionValues.push(child[p]);
    for(let q=0;q<P;q++){const v=values[q],c=child[q];if(q===p){for(let h=0;h<n;h++)v[h]+=sigma[h*k+a]*c[h];}else for(let h=0;h<n;h++)v[h]+=c[h];}
+  }
+  if(ev){
+   // Evaluation pass (actionEvs): per hand, what each action is worth in big blinds once the hand reaches this point.
+   // The values above are weighted by how often the other players' ranges get here; divide that out.
+   let others=1;for(let q=0;q<P;q++)if(q!==p)others*=this.#mass(reach[q]);
+   const out=ev[node.id];for(let h=0;h<n;h++)for(let a=0;a<k;a++)out[h*k+a]=others>0?actionValues[a][h]/others:0;
+   this.#evReach[node.id]=Float64Array.from(reach[p]);
+   return values;
   }
   const regret=this.regret[node.id],avg=this.avg[node.id],t=this.iterations+1,pos=Math.pow(t,1.5)/(Math.pow(t,1.5)+1),wAvg=Math.pow(t/(t+1),2),r=reach[p];
   for(let h=0;h<n;h++)for(let a=0;a<k;a++){
@@ -216,6 +224,16 @@ export class PreflopSolver{
     v[h]=s*rest;}
   }
   return values;
+ }
+ #evOut:Float64Array[]|null=null;#evReach:Float64Array[]=[];
+ /** After actionEvs(): how often each hand of the deciding player gets to each decision (1 = always). */
+ evReach(){return this.#evReach;}
+ /** EV of every action for every hand at every decision, in big blinds, against the average strategy (no training).
+  * evs[decision.id][hand*k+action]. Used for the trainer's EV loss. */
+ actionEvs(){
+  const out=this.decisions.map(d=>new Float64Array(this.n*d.actions.length));this.#evOut=out;
+  try{this.#walk(this.root,Array.from({length:6},()=>new Float64Array(this.n).fill(1)));}finally{this.#evOut=null;}
+  return out;
  }
  run(iterations:number){for(let i=0;i<iterations;i++){this.#walk(this.root,Array.from({length:6},()=>new Float64Array(this.n).fill(1)));this.iterations++;}}
  /** Average positive regret per decision and hand, in big blinds (smaller = closer to equilibrium). */

@@ -104,12 +104,13 @@ export function adviseGto(v:GtoView,data:GtoData,budgetMs=2500):GtoAdvice{
 /** The hero's GTO menu at a live decision (「GTOと対戦」2026/10/30): every option with its table action text, its
  * frequency for the hero's hand, and what to send to the table (kind/label/to for toTable). The buttons are this menu,
  * so whatever the hero picks can be graded. */
-export type TrainerSpot={source:'preflop'|'flop'|'solver';options:{text:string;kind:string;label:string;to:number|null;freq:number}[];nearFlop?:string;proxySpot?:string;approx?:boolean}|{source:'none';reason:string};
+export type TrainerSpot={source:'preflop'|'flop'|'solver';options:{text:string;kind:string;label:string;to:number|null;freq:number;
+ /** EV of this option for the hero's hand in big blinds, where known (preflop chart). */ev?:number}[];nearFlop?:string;proxySpot?:string;approx?:boolean}|{source:'none';reason:string};
 export function trainerSpot(v:GtoView,data:GtoData,budgetMs=2500):TrainerSpot{
  const s=gtoStrategy(v,data,budgetMs);
  if(s.source==='fallback')return {source:'none',reason:s.reason};
  const total=s.freqs.reduce((t,x)=>t+Math.max(0,x),0)||1;
- const options=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),kind:o.kind,label:o.label,to:o.to,freq:Math.max(0,s.freqs[k])/total}));
+ const options:{text:string;kind:string;label:string;to:number|null;freq:number;ev?:number}[]=s.options.map((o,k)=>({text:optionText(o.kind,o.label,o.to,v.bb),kind:o.kind,label:o.label,to:o.to,freq:Math.max(0,s.freqs[k])/total,...(s.ev?{ev:s.ev[k]}:{})}));
  // The buttons are GTO's own menu (as in GTO Wizard), so the hand stays on the computed tree. Only when the chart has a
  // single line here (e.g. fold only) are the other legal lines offered too, at 0%, so the hero still has a choice.
  const has=(...k:string[])=>options.some(o=>k.includes(o.kind)),add=(kind:string)=>options.push({text:optionText(kind,'',null,v.bb),kind,label:'',to:null,freq:0});

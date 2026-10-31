@@ -105,6 +105,14 @@ export function gradeChoice(freqs:readonly number[],chosen:number):{level:Traine
  return {level,score:top>0?Math.round(Math.min(1,freq/top)*100):0,freq};
 }
 
+/** EV loss of the chosen option in big blinds: the best option's EV minus the chosen one's (0 when it is the best).
+ * Null unless every option has an EV (only the preflop chart has them so far). */
+export function evLoss(options:readonly {ev?:number}[],chosen:number):number|null{
+ if(!options.length||options.some(o=>typeof o.ev!=='number'||!Number.isFinite(o.ev))||!options[chosen])return null;
+ const best=Math.max(...options.map(o=>o.ev as number));
+ return Math.max(0,Math.round((best-(options[chosen].ev as number))*100)/100);
+}
+
 // ---------- practice spots (「練習の始め方」2026/10/30, GTO Wizard の Trainer に合わせて) ----------
 export type TrainerMode='all'|'rfi'|'vsOpen'|'vs3bet'|'flop';
 export const MODE_TEXT:Record<TrainerMode,string>={all:'最初から（すべての場面）',rfi:'オープンするか（誰も参加していない）',vsOpen:'オープンされた',vs3bet:'オープンして3ベットされた',flop:'フロップから'};
