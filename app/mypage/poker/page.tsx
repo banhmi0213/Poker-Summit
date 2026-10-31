@@ -19,8 +19,10 @@ import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
 import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
 import {CosmeticsSettings} from '@/app/poker-ui/my-cosmetics';
+import {GtoPlanPanel} from '@/app/poker-ui/gto-plan-panel';
+import {getGtoPlanStatus} from '@/lib/billing/plan';
 export const dynamic='force-dynamic';
-export default async function Page(){const [data,hands,tendencies,monthly]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly()]);
+export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
  const panes=[
  {id:'ring',label:'チップ残高・順位',eyebrow:'RING CHIP BALANCE',description:'リング用チップの残高と自分のランキング。',content:data?<><StatisticsView data={data} section="ring"/><RingMonthlyView rows={monthly}/></>:unavailable},
@@ -40,7 +42,11 @@ export default async function Page(){const [data,hands,tendencies,monthly]=await
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'looks',label:'アイコン枠・プレート',eyebrow:'LOOKS',description:'卓で他の会員にも見える、アイコン枠とネームプレートを選びます（2026/11/01）。',content:<CosmeticsSettings kinds={['frame','plate']}/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
+ {id:'plan',label:'GTOプラン',eyebrow:'GTO PLAN',description:'ご利用中のGTOプランと、お支払い・解約。',content:<GtoPlanPanel status={plan} message={searchParams?.billing}/>},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
- return <PokerWorkspace kind="account" panes={POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id))}/>;
+ const shown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
+ // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
+ const first=shown.findIndex(p=>p.id===searchParams?.pane);
+ return <PokerWorkspace kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
 }

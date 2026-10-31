@@ -4,6 +4,7 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { staticPageMetadata } from "@/lib/seo";
+import { GTO_PRICES, GTO_TRIAL_DAYS } from "@/lib/billing/plans";
 
 export const metadata = staticPageMetadata({ title: "特定商取引法に基づく表記", description: "Poker Summitの特定商取引法に基づく表記。", path: "/tokushoho" });
 
@@ -13,7 +14,7 @@ export const metadata = staticPageMetadata({ title: "特定商取引法に基づ
 const LABEL_STYLE: CSSProperties = { fontSize: 15, fontWeight: 700, marginTop: 22, marginBottom: 6 };
 const P_STYLE: CSSProperties = { lineHeight: 1.8 };
 
-const ITEMS: { label: string; body: ReactNode }[] = [
+const ITEMS: { label: string; body: ReactNode; id?: string }[] = [
   { label: "販売業者", body: "株式会社Give Rise" },
   { label: "運営責任者", body: "増田 忍" },
   { label: "所在地", body: "〒107-0062 東京都港区南青山3丁目1番36号 青山丸竹ビル6F" },
@@ -31,7 +32,7 @@ const ITEMS: { label: string; body: ReactNode }[] = [
     label: "連絡先（お問い合わせフォーム）",
     body: <a href="/contact">https://pokersummit.jp/contact</a>,
   },
-  { label: "サービスの内容・決済対象", body: "アミューズメントポーカーの情報ポータルにおける店舗掲載プラン・広告・アドオン等、および販売開始後の会員向け有料装飾（バッジ、プロフィールの枠・背景、スレッドデザイン等）の提供です。本サービスでは金銭・物品を賭ける行為や換金サービスを提供しません。賭け金、換金可能なチップ・ポイント等の購入代金、賞金の原資および大会参加資金は、本サービスの決済対象ではありません。" },
+  { label: "サービスの内容・決済対象", body: "アミューズメントポーカーの情報ポータルにおける店舗掲載プラン・広告・アドオン等、および販売開始後の会員向け有料装飾（バッジ、プロフィールの枠・背景、スレッドデザイン等）、ならびに販売開始後のGTOプラン（学習ツールの月額・年額の利用）の提供です。本サービスでは金銭・物品を賭ける行為や換金サービスを提供しません。賭け金、換金可能なチップ・ポイント等の購入代金、賞金の原資および大会参加資金は、本サービスの決済対象ではありません。" },
   { label: "アミューズメント目的・換金不可", body: <>国内アミューズメント店舗の掲載条件として、リアルマネーの賭け、金銭・物品の賭博行為およびチップ・ポイント等の現金その他換金性のあるものへの交換・買取り・換金のあっせんを禁止します。詳細は<a href="/terms#amusement-policy">利用規約</a>をご確認ください。</> },
   { label: "販売価格（役務対価）", body: <>店舗向け月額プラン・広告・アドオン等の価格は、各プラン・サービスの申込画面に表示する税込価格によります。各プランとアドオンの税込価格は<a href="/apply">店舗掲載のお申込みページ</a>に掲載しています。月額プランは、表示されたプラン料金と選択したアドオン料金の合計額を継続して請求します。店舗への報酬・賃金の支払いとは別の料金です。</> },
   {
@@ -71,6 +72,14 @@ const ITEMS: { label: string; body: ReactNode }[] = [
   { label: "有料装飾の提供時期・利用期間", body: "決済完了を当社システムで確認後、原則として即時に購入アカウントへ利用権を付与します。反映されない場合は再購入せずお問い合わせください。別記がない買い切り商品は、本サービスが対象機能を提供し、購入アカウントが利用できる間使用できます。永久のサービス提供を保証するものではありません。" },
   { label: "有料装飾の返品・返金・キャンセル", body: <>デジタル機能の性質上、決済完了後のお客様都合による返品、返金、キャンセルおよび購入商品の変更は原則としてお受けしません。ただし、未提供、当社の責めに帰すべき不具合・契約不履行、重複・誤請求、未成年者取消し等の法令上対応が必要な場合および個別に合意した場合は別途対応します。注文番号、商品名、購入日時、状況を<a href="/contact">お問い合わせフォーム</a>からお知らせください。</> },
   { label: "有料装飾の未成年者購入・換金禁止", body: "18歳未満の方は、購入ごとに親権者等の法定代理人の同意を得てください。有料装飾は譲渡・転売・換金できず、金銭・金券・景品等に交換できません。装飾はゲームの勝利確率や勝敗に影響せず、本人確認や技能・信用の認定を示すものではありません。" },
+  { id: "gto-plans", label: "GTOプラン（月額・年額の定期課金）", body: <>以下は販売開始後のGTOプラン（GTOの表・練習・ハンド判定等の学習ツールの利用）に適用します。本表記だけで販売開始を意味するものではありません。内容は<a href="/pricing">料金ページ</a>および<a href="/terms#gto-plans">利用規約第19条の2</a>をご確認ください。</> },
+  { label: "GTOプランの販売価格", body: `ライト：月額${GTO_PRICES.light.month.toLocaleString("ja-JP")}円／年額${GTO_PRICES.light.year.toLocaleString("ja-JP")}円、フル：月額${GTO_PRICES.full.month.toLocaleString("ja-JP")}円／年額${GTO_PRICES.full.year.toLocaleString("ja-JP")}円（いずれも税込）。価格を改定する場合は、効力発生日の30日前までに本サービス上またはメールでお知らせし、改定後の価格は効力発生日以降に始まる更新期間から適用します。` },
+  { label: "GTOプランの無料お試し・支払時期", body: `お申込み時にクレジットカードを登録し、最初の${GTO_TRIAL_DAYS}日間は無料でご利用いただけます。お試し期間の終了時に最初の料金（月額または年額）を決済し、以後は解約されるまで、1か月または1年ごとに同じ料金を自動で決済します。お試し期間中に解約された場合、料金は一切発生しません。お試し期間の終了時刻から決済の処理までに最大1時間程度の差が生じることがありますが、その間の利用に追加の料金はかかりません。カード会社からの引落日は各カード会社の規約によります。` },
+  { label: "GTOプランの支払方法", body: "クレジットカード（決済代行：KOMOJU）。カード情報は決済代行会社の画面で入力され、当社のサーバーには保存されません。" },
+  { label: "GTOプランの提供時期", body: "カード登録の完了後、直ちにご利用いただけます。決済が完了しない場合や更新時の決済ができない場合は、有料の機能をご利用いただけなくなることがあります。" },
+  { label: "GTOプランの解約方法", body: <>プレイヤーページの「GTOプラン」にある解約ボタンから、いつでも解約できます（<a href="/contact">お問い合わせフォーム</a>からのお申し出も受け付けます）。解約すると次回以降の自動決済を停止し、お支払い済みの期間の終了まではご利用いただけます。</> },
+  { label: "GTOプランの返品・返金", body: <>デジタルサービスの性質上、決済完了後のお客様都合による返金、期間途中の解約による日割り・月割りの返金は原則として行いません。ただし、二重請求・誤請求、当社の責めに帰すべき不具合によりご利用いただけなかった場合、未成年者取消し等の法令上対応が必要な場合は、<a href="/contact">お問い合わせフォーム</a>からご連絡ください。個別に確認のうえ対応します。</> },
+  { label: "GTOプランの性質・換金禁止", body: "GTOプランは学習ツールの利用料金です。チップ・ポイント等の付与はなく、現金・金券・景品等との交換や換金もできません。ゲームの勝敗や賞品とは関係しません。18歳未満の方は、親権者等の法定代理人の同意を得てお申し込みください。" },
   { label: "動作環境", body: "本サービスは、最新版のGoogle Chrome、Safari、Microsoft Edge、Firefox（パソコン、iOS、Androidのブラウザ）でご利用いただけます。JavaScriptおよびCookieを有効にしてください。特定の端末・ブラウザ等の条件がある商品は購入画面に表示します。" },
   { label: "ディーラーマッチングとの区別", body: "本表記は当社が提供する有料プラン・広告・オプション等のサービス対価に関するものです。店舗とディーラー間の契約、報酬・賃金およびその支払いは当事者が行い、当社は代行しません。マッチングの利用条件は利用規約と利用ガイドをご確認ください。" },
 ];
@@ -85,11 +94,11 @@ export default async function TokushohoPage() {
       <PortalHeader />
       <div className="container" style={{ maxWidth: 640 }}>
         <h1 style={{ fontSize: 20, marginBottom: 16 }}>特定商取引法に基づく表記</h1>
-        <p style={{ fontSize: 12 }}>最終改定日：2026年10月16日</p>
+        <p style={{ fontSize: 12 }}>最終改定日：2026年11月1日</p>
         <div className="card">
           {items.map((item) => (
             <div key={item.label}>
-              <h2 style={LABEL_STYLE}>{item.label}</h2>
+              <h2 id={item.id} style={{ ...LABEL_STYLE, scrollMarginTop: 100 }}>{item.label}</h2>
               <p style={P_STYLE}>{item.body}</p>
             </div>
           ))}
