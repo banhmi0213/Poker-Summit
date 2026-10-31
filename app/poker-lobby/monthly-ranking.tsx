@@ -29,4 +29,4 @@ export function MonthlyRanking({limit,expanded=false}:{limit:number;expanded?:bo
   {expanded&&<p className={styles.lead}>毎月1日0時（日本時間）にチップは1,000にリセットされ、ランキングも新しい月から数え直します。</p>}
  </div>;
 }
-export function MonthlyRankingHeading(){return <h2><LobbyIcon name="chart"/>{monthLabel()} チップ獲得ランキング</h2>;}
+export function MonthlyRankingHeading(){return <h2><LobbyIcon name="chart"/>{`${monthLabel()} チップ獲得ランキング`}</h2>;}
