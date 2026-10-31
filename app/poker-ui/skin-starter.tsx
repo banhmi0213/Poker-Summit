@@ -14,7 +14,7 @@ export const SKIN_STARTER_EVENT='poker-skin-starter-done';
 export function SkinStarter({variant='card',onDone}:{variant?:'card'|'note';onDone?:(s:SkinStatus)=>void}){
  const {save}=useTablePreferences();
  const [status,setStatus]=useState<SkinStatus|null>(null),[pick,setPick]=useState({tableSkin:TABLE_SKINS[0].id,cardSkin:CARD_SKINS[0].id,backSkin:BACK_SKINS[0].id}),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[open,setOpen]=useState(false);
- useEffect(()=>{const done=()=>setStatus(v=>v?{...v,starterDone:true}:v);window.addEventListener(SKIN_STARTER_EVENT,done);return()=>window.removeEventListener(SKIN_STARTER_EVENT,done);},[]);
+ useEffect(()=>{const done=()=>setStatus(v=>v?{...v,starterDone:true}:v);const w=typeof window!=='undefined'&&typeof window.addEventListener==='function'?window:null;w?.addEventListener(SKIN_STARTER_EVENT,done);return()=>w?.removeEventListener(SKIN_STARTER_EVENT,done);},[]);
  useEffect(()=>{let live=true;void import('@/lib/supabase/client').then(m=>m.createClient().rpc('poker_skin_status')).then(({data,error})=>{if(!live||error)return;try{setStatus(parseSkinStatus(data));}catch{}}).catch(()=>{});return()=>{live=false;};},[]);
  if(!status||status.starterDone)return null;
  const code=(list:readonly Skin[],id:string)=>list.find(s=>s.id===id)?.shopCode??null;
