@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {GTO_FLOPS,GTO_SPOTS,loadFlop,loadFlopIndex,seatOf,sizeNote,type FlopData} from '@/lib/poker/gto-spots';
+import {GTO_FLOPS,GTO_SPOTS,cachedFlop,cachedFlopIndex,loadFlop,loadFlopIndex,seatOf,sizeNote,type FlopData} from '@/lib/poker/gto-spots';
 import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
@@ -17,12 +17,13 @@ const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
- const [data,setData]=useState<FlopData|null>(null),[error,setError]=useState('');
+ const [data,setData]=useState<FlopData|null>(()=>cachedFlop('btn-bb',flops[0])),[error,setError]=useState('');
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
- const [index,setIndex]=useState<Record<string,string[]>|null>(null),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
+ const [index,setIndex]=useState<Record<string,string[]>|null>(()=>cachedFlopIndex()),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
  const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
  useEffect(()=>{let live=true;setError('');setTrail([0]);setExplore(null);
+  const c=cachedFlop(spot,flop);if(c){setData(c);return;}
   void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else{setData(null);setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');}});
   return ()=>{live=false;};},[spot,flop]);
  const lookup=()=>{const t=typed.replace(/\s+/g,'').replace(/(.)(.)/g,(_,r:string,su:string)=>r.toUpperCase()+su.toLowerCase());const c=canonicalFlop(t);if(!c){setNearNote('「Kh7d2c」のように3枚を入力してください（T=10、c♣ d♦ h♥ s♠）。');return;}

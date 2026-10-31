@@ -46,10 +46,25 @@ export function sizeNote(sizes:FlopSizes|undefined,multiway=false):string|null{
  if(multiway)return `ベット額の前提：${flop}。ターン・リバーは打ち合わず、残りのカードを全部配ったときの勝率で分けます。`;
  return `ベット額の前提：${flop}、ターン ${p(sizes.turnBetSizes??sizes.betSizes)}${r(sizes.turnRaiseSizes??sizes.raiseSizes)}、リバー ${p(sizes.riverBetSizes??sizes.betSizes)}${r(sizes.riverRaiseSizes??sizes.raiseSizes)}（オールインはポットの${sizes.allinMaxPot??1.5}倍以内のときだけ）。`;
 }
-export async function loadFlop(spot:string,flop:string):Promise<FlopData|null>{
- try{const r=await fetch(`/poker-gto/flops/${spot}/${flop}.json`);if(!r.ok)return null;return await r.json() as FlopData;}catch{return null;}
+// Chart files are kept once loaded (owner 2026/11/1「一瞬なんも表示なし」): a pane opened again, or opened after
+// prefetchGtoCharts(), renders its chart on the first frame instead of loading it.
+const jsonCache=new Map<string,unknown>(),jsonPending=new Map<string,Promise<unknown>>();
+/** A chart file already loaded in this page, or undefined. */
+export function cachedJson<T>(url:string):T|undefined{return jsonCache.get(url) as T|undefined;}
+/** Loads a chart file once per page (null when missing). */
+export function loadJson<T>(url:string):Promise<T|null>{
+ if(jsonCache.has(url))return Promise.resolve(jsonCache.get(url) as T);
+ let p=jsonPending.get(url);
+ if(!p){p=fetch(url).then(r=>r.ok?r.json():null).then(d=>{if(d!==null)jsonCache.set(url,d);return d;}).catch(()=>null).finally(()=>jsonPending.delete(url));jsonPending.set(url,p);}
+ return p as Promise<T|null>;
 }
+const flopUrl=(spot:string,flop:string)=>`/poker-gto/flops/${spot}/${flop}.json`;
+export function cachedFlop(spot:string,flop:string){return cachedJson<FlopData>(flopUrl(spot,flop))??null;}
+export async function loadFlop(spot:string,flop:string):Promise<FlopData|null>{return loadJson<FlopData>(flopUrl(spot,flop));}
 /** Which flops are computed so far, per spot (public/poker-gto/flops/index.json). */
-export async function loadFlopIndex():Promise<Record<string,string[]>>{
- try{const r=await fetch('/poker-gto/flops/index.json');if(!r.ok)return {};return await r.json() as Record<string,string[]>;}catch{return {};}
+export async function loadFlopIndex():Promise<Record<string,string[]>>{return (await loadJson<Record<string,string[]>>('/poker-gto/flops/index.json'))??{};}
+export function cachedFlopIndex(){return cachedJson<Record<string,string[]>>('/poker-gto/flops/index.json')??null;}
+/** Loads the charts the GTO panes open with, in the background (mypage). */
+export function prefetchGtoCharts(){
+ void loadJson('/poker-gto/preflop.json');void loadFlopIndex();void loadFlop('btn-bb',GTO_FLOPS[0]);
 }
