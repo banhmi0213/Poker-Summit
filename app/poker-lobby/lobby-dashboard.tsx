@@ -14,6 +14,7 @@ import {LobbyIcon,type LobbyIconName} from './lobby-icon';
 import {RingLobbyList} from './ring-lobby-list';
 import PokerLobbyPreview from './poker-lobby-preview';
 import styles from './lobby-dashboard.module.css';
+import {MonthlyRanking,MonthlyRankingHeading} from './monthly-ranking';
 
 type PageId='lobby'|'assigned'|'tournaments'|'ranking'|'champions'|'skins';
 type GameTab='ring'|'tournament'|'practice';
@@ -36,7 +37,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
  const router=useRouter();
  const [active,setActive]=useState<PageId>('lobby'),[gameTab,setGameTab]=useState<GameTab>('ring'),[menuOpen,setMenuOpen]=useState(false),[ringState,setRingState]=useState<RingLobbyState|null>(null);
  const go=(id:PageId)=>{setActive(id);setMenuOpen(false);};
- const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中の卓',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'持ちチップランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'skins',label:'着せ替え交換',icon:'cards'}];
+ const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中の卓',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'チップ獲得ランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'skins',label:'着せ替え交換',icon:'cards'}];
  const title=navigation.find(item=>item.id===active)?.label??'ポーカーロビー';
  const upcoming=tournaments.filter(t=>Date.parse(t.starts_at)>Date.now()).slice(0,2);
  const configured=rings.map(t=>({id:t.id,title:t.title,sb:t.sb,bb:t.bb,capacity:t.capacity,minBuyIn:t.min_buy_in,maxBuyIn:t.max_buy_in,occupied:null}));
@@ -64,11 +65,11 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
        {tournamentsEnabled&&<section className={styles.upcoming} aria-labelledby="lobby-upcoming-title"><h2 id="lobby-upcoming-title"><LobbyIcon name="trophy"/>開催予定のトーナメント</h2>{upcoming.length?<div className={styles.upcomingGrid}>{upcoming.map(t=><article key={t.id} className={styles.eventCard}>{t.image_url?<img src={t.image_url} alt="" width="72" height="72"/>:<span className={styles.trophyArt}><LobbyIcon name="trophy"/></span>}<div><h3>{t.title}</h3><p>{formatDate(t.starts_at)}（日本時間）</p><button type="button" className={styles.outlineButton} onClick={()=>go('tournaments')}>詳細を見る</button></div></article>)}</div>:<p className={styles.emptyMessage}>現在、開催予定の大会はありません。受付が始まるとここに表示します。</p>}</section>}
        {board&&<div className={`${styles.panel} ${styles.board}`}>{board}</div>}
       </>:<section className={`${styles.panel} ${styles.detailPane}`} aria-label={title}><h2><LobbyIcon name={navigation.find(item=>item.id===active)?.icon??'home'}/>{title}</h2>
-       {active==='assigned'?<><h3>リングの参加卓</h3>{own?<div className={styles.ownTable}><strong>{own.title}</strong><p>{own.status==='seated'?`席 ${own.seat} に着席済み`:'持ち込み予約中'} · {own.stack.toLocaleString()} chip</p><Link className={styles.goldButton} href={`/poker-ring/${own.tableId}?view=table`}>着席中の卓へ</Link></div>:<p className={styles.lead}>リングゲームのタブで現在の着席状況を確認できます。</p>}<button type="button" className={styles.outlineButton} onClick={()=>{go('lobby');setGameTab('ring');}}>リング卓を確認する</button>{tournamentsEnabled&&<div className={styles.embedded}>{assigned}</div>}</>:active==='tournaments'?<div className={styles.embedded}>{registration}</div>:active==='skins'?<TablePreferences><SkinPicker/></TablePreferences>:<><RecordPlaceholder kind={active==='ranking'?'ranking':'champions'} expanded/>{active==='ranking'&&!guest&&<Link className={styles.outlineButton} href="/mypage/poker">自分の残高・順位を見る</Link>}</>}
+       {active==='assigned'?<><h3>リングの参加卓</h3>{own?<div className={styles.ownTable}><strong>{own.title}</strong><p>{own.status==='seated'?`席 ${own.seat} に着席済み`:'持ち込み予約中'} · {own.stack.toLocaleString()} chip</p><Link className={styles.goldButton} href={`/poker-ring/${own.tableId}?view=table`}>着席中の卓へ</Link></div>:<p className={styles.lead}>リングゲームのタブで現在の着席状況を確認できます。</p>}<button type="button" className={styles.outlineButton} onClick={()=>{go('lobby');setGameTab('ring');}}>リング卓を確認する</button>{tournamentsEnabled&&<div className={styles.embedded}>{assigned}</div>}</>:active==='tournaments'?<div className={styles.embedded}>{registration}</div>:active==='skins'?<TablePreferences><SkinPicker/></TablePreferences>:<>{active==='ranking'?<MonthlyRanking limit={50} expanded/>:<RecordPlaceholder kind="champions" expanded/>}{active==='ranking'&&!guest&&<Link className={styles.outlineButton} href="/mypage/poker">自分の残高・順位を見る</Link>}</>}
       </section>}
      </div>
      <aside className={styles.rightRail} aria-label="ランキングと優勝記録">
-      <section className={styles.recordPanel}><div className={styles.recordHeading}><h2><LobbyIcon name="chart"/>持ちチップランキング</h2><small>保有チップ順</small></div><RecordPlaceholder kind="ranking"/><button type="button" className={styles.railButton} onClick={()=>go('ranking')}>ランキングを見る</button></section>
+      <section className={styles.recordPanel}><div className={styles.recordHeading}><MonthlyRankingHeading/><small>今月の獲得順</small></div><MonthlyRanking limit={3}/><button type="button" className={styles.railButton} onClick={()=>go('ranking')}>ランキングを見る</button></section>
       <section className={styles.recordPanel}><div className={styles.recordHeading}><h2><LobbyIcon name="trophy"/>歴代大会優勝者</h2></div><RecordPlaceholder kind="champions"/><button type="button" className={styles.railButton} onClick={()=>go('champions')}>優勝者一覧を見る</button></section>
      </aside>
     </div>

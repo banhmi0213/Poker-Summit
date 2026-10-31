@@ -94,7 +94,7 @@ async function database(){
    if(field.champion)break;
    // A mid-tournament restart of the whole service must continue the same tournament.
    if(!restarted&&field.eliminated.length>=Math.floor(ENTRANTS/3)){restarted=true;await service.close();service=null;await start(port);conn.clear();
-    for(let i=0;i<BROWSERS;i++){if(!where(await saved()).has(f.users[i]))continue;latest.delete(i);await pages[i].getByRole('button',{name:'参加・接続・再接続',exact:true}).click().catch(()=>{});}
+    for(let i=0;i<BROWSERS;i++){latest.delete(i);await pages[i].getByRole('button',{name:'参加・接続・再接続',exact:true}).click().catch(()=>{});}
     console.log('PASS service restart mid-tournament');continue;}
    let acted=false;
    for(const [tableNo,t] of field.tables){
