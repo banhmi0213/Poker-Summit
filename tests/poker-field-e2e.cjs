@@ -58,7 +58,7 @@ async function database(){
  const options={registry:{directory:f.directory,store:f.store,keys:f.keys,now:()=>now,turnMs:15000,handPauseMs:1000},auth,origins:[origin]};
  async function start(port=0){service=createPokerRoomService({...options,port});const a=await service.start();backend='http://127.0.0.1:'+a.port;events='ws://127.0.0.1:'+a.port;return a.port;}
  let apiMs=0,apiN=0;const api=async(i,body,connection)=>{const t0=Date.now();try{return await api0(i,body,connection);}finally{apiMs+=Date.now()-t0;apiN++;}};
- const api0=async(i,body,connection)=>{const r=await fetch(backend+'/api/poker/rooms/'+roomId,{method:'POST',headers:{origin,authorization:'Bearer '+token(i),'content-type':'application/json',...(connection?{'x-poker-connection':connection}:{})},body:JSON.stringify(body)});const b=await r.json().catch(()=>({}));return {status:r.status,result:b.result};};
+ const api0=async(i,body,connection)=>{const r=await fetch(backend+'/api/poker/rooms/'+roomId,{signal:AbortSignal.timeout(20000),method:'POST',headers:{origin,authorization:'Bearer '+token(i),'content-type':'application/json',...(connection?{'x-poker-connection':connection}:{})},body:JSON.stringify(body)});const b=await r.json().catch(()=>({}));return {status:r.status,result:b.result};};
  const saved=async()=>{const v=await restoreRoom(f.store,roomId,f.keys,{now:()=>now});assert.ok(v);return v.room.checkpoint();};
  const where=c=>{const map=new Map();for(const [t,room] of c.field?.tables??[])for(const [seat,s] of room.seats)map.set(s.memberId,{table:t,seat,stack:s.stack});return map;};
  const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
@@ -87,8 +87,10 @@ async function database(){
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
   const began=Date.now();let lastLog=0,saveMs=0,saves=0;
+  let step='start',stepAt=Date.now();const mark=x=>{step=x;stepAt=Date.now();};
+  const watchdog=setInterval(()=>{if(Date.now()-stepAt>45000)console.log(`PROGRESS STALLED ${Math.round((Date.now()-stepAt)/1000)}s at: ${step}`);},30000);watchdog.unref?.();
   while(iterations++<Math.max(6000,ENTRANTS*400)){
-   {const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
+   mark('read checkpoint');{const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
    if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)}`);}const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
@@ -103,15 +105,15 @@ async function database(){
    for(const [tableNo,t] of field.tables){
     if(!t.turn)continue;const seatNo=Number(t.turn.actor.slice(5)),member=t.seats.find(([n])=>n===seatNo)?.[1].memberId,i=f.users.indexOf(member);if(i<0)continue;
     if(i<BROWSERS){
-     const p=pages[i];const s=await until(()=>latest.get(i),v=>v?.hand?.handId===t.turn.handId&&v.hand.revision===t.turn.revision&&v.hand.legal,'browser turn '+i,8000).catch(()=>null);
+     mark('browser '+i+' turn wait');const p=pages[i];const s=await until(()=>latest.get(i),v=>v?.hand?.handId===t.turn.handId&&v.hand.revision===t.turn.revision&&v.hand.legal,'browser turn '+i,8000).catch(()=>null);
      if(!s){await pages[i].getByRole('button',{name:'参加・接続・再接続',exact:true}).click().catch(()=>{});continue;}
      check(s.field.tableNumber===tableNo,'browser acts at its own table');
      const legal=s.hand.legal,ack=p.waitForResponse(r=>r.url().includes('/api/poker/rooms/')&&r.request().postDataJSON()?.type==='act',{timeout:8000}).catch(()=>null);
-     const roll=Math.random(),panel=p.getByRole('region',{name:'操作パネル',exact:true});
+     mark('browser '+i+' act');const roll=Math.random(),panel=p.getByRole('region',{name:'操作パネル',exact:true});
      if(legal.raise&&roll<0.5)await allIn(p,legal);else if(legal.call&&roll<0.75)await panel.getByRole('button',{name:/^(コール|オールイン)/}).first().click();else if(legal.check)await p.getByRole('button',{name:'チェック',exact:true}).click();else await p.getByRole('button',{name:'フォールド',exact:true}).click();
      await ack;acted=true;break;
     }
-    const connection=await bot(i);if(!connection)continue;let r=await api(i,{type:'state'},connection);
+    mark('bot '+i+' state');const connection=await bot(i);if(!connection)continue;let r=await api(i,{type:'state'},connection);
     if(r.status!==200){conn.delete(i);continue;}const s=r.result,legal=s.hand?.legal;if(!legal||s.hand.handId!==t.turn.handId)continue;
     check(s.field.tableNumber===tableNo,'scripted player sees its own table');
     const roll=Math.random();let action;
