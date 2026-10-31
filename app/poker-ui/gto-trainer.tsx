@@ -1,5 +1,6 @@
 'use client';
 import {useCallback,useEffect,useRef,useState} from 'react';
+import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import type {Card} from '@/lib/poker/engine';
 import type {BettingAction} from '@/lib/poker/betting';
 import {toTable} from '@/lib/poker/gto-bot';
@@ -138,6 +139,7 @@ function GtoHandTrainer(){
    note:!known?`採点なし：${reasonText(spot.reason)}`:spot.approx?'近似値：4人以上のポットや計算待ちの場面のため、その場の簡易計算です。GTOの割合は目安です（採点なし）':spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined};
   if(graded){// GTO's most frequent choice counts as no loss (the chart's EVs are within a few hundredths of a BB there, rarely more).
    const g=gradeChoice(menu.map(x=>x.freq),i),raw=evLoss(menu,i),loss=raw===null?null:g.level==='best'?0:raw;fb.level=g.level;fb.score=g.score;fb.freq=g.freq;fb.evLoss=loss;
+   sendGtoRecords([recordRow(view,'trainer',{freqs:menu.map(x=>x.freq),chosen:i,action:fb.played,evLoss:loss})]);
    setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1},
     ...(loss!==null?{evLoss:Math.round((s.evLoss+loss)*100)/100,evCount:s.evCount+1}:{})};writeStats(n);return n;});}
   setFeedback(f=>[...f,fb]);setSpot(null);setHand(next);

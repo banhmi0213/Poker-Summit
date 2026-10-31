@@ -1,5 +1,6 @@
 "use client";
 import {nameSize} from '@/app/poker-ui/name-size';
+import { recordPracticeHand } from "@/app/poker-ui/gto-practice-record";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
 import {playTableEffect} from "@/lib/poker/table-effects";
 import {preloadTableSamples} from "@/lib/poker/table-samples";
@@ -443,6 +444,8 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           setTournamentOutcome(outcome);
         }
         setLastHandResult({winners:result.winners.map(playerName),rows:betting.players.map(p=>({id:p.id,name:playerName(p.id),delta:p.stack+(result.payouts[p.id]??0)-handStartingStacks[p.id]}))});
+        // GTOの記録(2026/11/1): 練習卓のハンドと自分の判断をログイン中だけ保存（GTOチャット担当、卓の動きには影響しない）。
+        if (!tournament) { const me = betting.players.find(p => p.id === "you"); if (me) recordPracticeHand(gtoWorker.current, { decisions: [...myDecisions.current], seats: betting.players.length, net: (me.stack + (result.payouts.you ?? 0) - handStartingStacks.you) / betting.bigBlind, hand: { bb: betting.bigBlind, positions: handPositions, startStacks: handStartingStacks, hole: deal.holes.you ?? null, log: actionLog, payouts: result.payouts } }); }
         setPayouts(result.payouts);
         {
           const dealt = betting.players.filter(p => p.id !== "you" && !p.folded && !foldedSeats.includes(Number(p.id.slice(1))) && deal.holes[p.id]); // folded cards are mucked and cannot be shown
