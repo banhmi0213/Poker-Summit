@@ -57,13 +57,13 @@ const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p
 /** Two ways to practise (2026/10/31): a whole hand against GTO, or プリフロップ連打 (preflop decisions one after another). */
 export function GtoTrainer(){
  const [kind,setKind]=useState<'hand'|'drill'>('hand');
- return <>
+ return <div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
    <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
    <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
   </div>
   {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill/>}
- </>;
+ </div>;
 }
 function GtoHandTrainer(){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
@@ -149,7 +149,7 @@ function GtoHandTrainer(){
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}>
   <p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>
-  <div className={chart.form}>
+  <div className={`${chart.form} ${styles.formBig}`}>
    <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
    {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
@@ -180,7 +180,7 @@ function GtoHandTrainer(){
     {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
    </section>}
-   {done&&<div className={chart.form}>
+   {done&&<div className={`${chart.form} ${styles.formBig}`}>
     <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div>}
