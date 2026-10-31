@@ -1,10 +1,10 @@
 .desktop{display:flex;align-items:center}.mobile{display:none}
 .tagline{display:none}
 @media(min-width:1101px){
- :global(.navy-preview) .tagline{display:block;flex:1;min-width:0;container-type:inline-size;margin:0 16px;text-align:center;white-space:nowrap;color:#fff5e5;font-family:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:600;line-height:1.6;letter-spacing:.025em}
+ .tagline{display:block;flex:1;min-width:0;container-type:inline-size;margin:0 16px;text-align:center;white-space:nowrap;color:#fff5e5;font-family:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:600;line-height:1.6;letter-spacing:.025em}
  .taglineCopy{font-size:min(24px,4cqw)}
- :global(.navy-preview) .tagline strong{color:#d7b36b;font-weight:inherit}
- :global(.navy-preview) .header :global(.portal-logo){width:clamp(180px,17vw,260px);flex:0 0 clamp(180px,17vw,260px)}
+ .tagline strong{color:#d7b36b;font-weight:inherit}
+ .header :global(.portal-logo){width:clamp(180px,17vw,260px);flex:0 0 clamp(180px,17vw,260px)}
 }
 .header :global(.ps-pref-selector){margin:0;padding:4px 0 2px;border:1px solid var(--border-strong);border-radius:6px;background:#f8f5ee;flex-wrap:nowrap;flex-direction:column;gap:0}
 .header :global(.ps-pref-selector__label){display:block;color:#cf2525;font-size:10px;font-weight:700;line-height:1.3;padding:0 8px;align-self:flex-start}
@@ -120,24 +120,24 @@
 .mobileGroup summary>span{display:block;width:8px;height:8px;border-right:1.5px solid #92733b;border-bottom:1.5px solid #92733b;transform:rotate(45deg);margin-right:4px}
 .mobileGroup[open] summary>span{transform:rotate(225deg)}
 
-/* Homepage-only navy navigation; menu content stays on a light reading surface. */
-:global(.navy-preview) .title{background:#ffffff07;border-color:#ffffff20;color:#e6edf6;box-shadow:inset 0 1px #ffffff08}
-:global(.navy-preview) .title:hover,:global(.navy-preview) .activeTitle{background:#294567;border-color:#cbb99488;color:#eadcc1}
-:global(.navy-preview) .caret{color:#d7c6a5}
-:global(.navy-preview) .megaPanel{background:#fff;border-color:#dce4ed;border-top-color:#c7b18a;box-shadow:0 18px 40px #07132630}
-:global(.navy-preview) .menuLink{background:#f2f5f9;border-color:#dce4ed;color:#18304f}
-:global(.navy-preview) .menuLink:hover{background:#e8eef5;border-color:#b9c9dc}
-:global(.navy-preview) .panelHeading{color:#806a45}
-:global(.navy-preview) .mobileGroup{border-color:#ffffff20}
-:global(.navy-preview) .mobileGroup summary,:global(.navy-preview) .mobileDirect{color:#ecf1f8}
-:global(.navy-preview) .mobileGroup[open] summary{color:#deccaa}
+/* Shared navy navigation; menu content stays on a light reading surface. */
+.title{background:#ffffff07;border-color:#ffffff20;color:#e6edf6;box-shadow:inset 0 1px #ffffff08}
+.title:hover,.activeTitle{background:#294567;border-color:#cbb99488;color:#eadcc1}
+.caret{color:#d7c6a5}
+.megaPanel{background:#fff;border-color:#dce4ed;border-top-color:#c7b18a;box-shadow:0 18px 40px #07132630}
+.menuLink{background:#f2f5f9;border-color:#dce4ed;color:#18304f}
+.menuLink:hover{background:#e8eef5;border-color:#b9c9dc}
+.panelHeading{color:#806a45}
+.mobileGroup{border-color:#ffffff20}
+.mobileGroup summary,.mobileDirect{color:#ecf1f8}
+.mobileGroup[open] summary{color:#deccaa}
 
-:global(.navy-preview) .header :global(.portal-nav-inner),:global(.navy-preview) .header .megaNav{width:var(--home-content-width);max-width:none}
+.header :global(.portal-nav-inner),.header .megaNav{width:var(--header-content-width);max-width:none}
 
-/* Keep the compact spacing scoped to the homepage design preview. */
-:global(.navy-preview) .header .megaNav{padding-bottom:8px}
-:global(.navy-preview) .title{min-height:44px;padding-block:9px}
-:global(.navy-preview) .megaPanel{top:calc(100% - 8px)}
+/* Compact spacing shared by all public pages. */
+.header .megaNav{padding-bottom:8px}
+.title{min-height:44px;padding-block:9px}
+.megaPanel{top:calc(100% - 8px)}
 
 
 /* Purpose-made navigation photography: full-bleed crops, untouched job artwork. */
@@ -148,3 +148,35 @@
 .disabledCard .menuCopy strong{color:#536477}
 .disabledCard .menuCopy small{color:#68798c}
 @media(prefers-reduced-motion:reduce){.menuArtwork.fittedArtwork>img{transition:none}.menuLink:hover .fittedArtwork>img{transform:none}}
+
+/* Shared masthead: keep page body themes independent of navigation. */
+.header.header{
+ --header-content-width:min(1440px,77.4vw);
+ --accent-gradient:linear-gradient(130deg,#e4d9c2,#c9b38a);
+ background:linear-gradient(90deg,#203a4c 0%,#2a4657 55%,#395462 100%);
+ border-bottom:0;box-shadow:none;color:#f5f7fb;
+}
+.header.header :global(.portal-nav-inner){padding-block:7px}
+.header.header :global(.logo-img){filter:drop-shadow(0 2px 8px #0005)}
+.header.header :global(.portal-cta){background:transparent;color:#f4eee2;border:1px solid #a99b8277;box-shadow:none}
+.header.header :global(.portal-cta):first-of-type{background:var(--accent-gradient);color:#101e32;border-color:#e0cfac}
+.header.header :global(.ps-pref-selector){background:#ffffff0d;border-color:#ffffff30}
+.header.header :global(.ps-pref-selector__label){color:#d8c7a5}
+.header.header :global(.ps-pref-selector__select){color:#fff}
+.header.header :global(.ps-pref-selector__select) option{background:#fff;color:#13253d}
+.header.header :global(.nav-hamburger){color:#f5f7fb}
+.header.header :global(.mobile-nav-drawer){background:linear-gradient(135deg,#203a4c,#395462);color:#fff;border-color:#ffffff24}
+.header .mobileGroup[open] summary{background:#ffffff0d;color:#deccaa}
+@media(min-width:1101px){
+ .header.header :global(.portal-logo){width:260px;max-width:34%;flex:0 1 260px}
+ .header.header :global(.portal-logo) :global(.logo-img){width:260px;max-width:100%;height:auto;max-height:none}
+}
+@media(min-width:768px) and (max-width:1100px){
+ .header.header{--header-content-width:calc((100vw - 40px) * .9)}
+ .header.header :global(.portal-logo) :global(.logo-img){width:220px;max-width:100%;height:auto}
+}
+@media(max-width:767px){
+ .header.header{--header-content-width:calc(100vw - 24px)}
+ .header.header :global(.portal-nav-inner){padding-block:6px}
+ .header.header :global(.portal-logo) :global(.logo-img){width:210px;max-width:100%;height:auto}
+}
