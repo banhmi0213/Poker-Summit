@@ -17,6 +17,7 @@ import {GtoTrainer} from '@/app/poker-ui/gto-trainer';
 import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
 import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
+import {CosmeticsSettings} from '@/app/poker-ui/my-cosmetics';
 export const dynamic='force-dynamic';
 export default async function Page(){const [data,hands,tendencies,monthly]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly()]);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
@@ -35,6 +36,7 @@ export default async function Page(){const [data,hands,tendencies,monthly]=await
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
  {id:'equity',label:'勝率計算機',eyebrow:'EQUITY & POT ODDS',description:'ハンド同士の勝率と、リバーまでにできる役の確率。ポットオッズからコールが得かも確かめられます。',content:<EquityCalculator/>},
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
+ {id:'looks',label:'アイコン枠・プレート',eyebrow:'LOOKS',description:'卓で他の会員にも見える、アイコン枠とネームプレートを選びます（2026/11/01）。',content:<CosmeticsSettings kinds={['frame','plate']}/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.

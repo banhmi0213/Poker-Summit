@@ -5,6 +5,8 @@
 // avatarColor()とイニシャル表示のdivが重複していたので、ここに集約し、
 // avatar_url(profilesテーブルからuser_idで引いた値)があれば画像、なければ
 // 従来通り名前の頭文字+名前から決まる色のイニシャル表示にフォールバックする。
+import { AvatarFrame } from "./avatar-frame";
+
 const AVATAR_COLORS = [
   "#3987e5",
   "#d95926",
@@ -26,11 +28,15 @@ export function Avatar({
   name,
   url,
   size,
+  frame,
 }: {
   name: string;
   url?: string | null;
   size?: number;
+  /** アイコン枠(frame_*)。null・未指定は枠なし(2026/11/01)。 */
+  frame?: string | null;
 }) {
+  if (frame) return <AvatarFrame code={frame}><Avatar name={name} url={url} size={size} /></AvatarFrame>;
   const sizeStyle = size ? { width: size, height: size } : undefined;
 
   if (url) {
