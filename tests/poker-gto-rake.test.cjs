@@ -26,8 +26,10 @@ test('every rake level has a chart with the same decisions, and more rake plays 
   assert.equal(c.nodes.length,base.nodes.length);assert.deepEqual(c.rake,{bps:r.bps,capBb:r.capBb});
   assert.deepEqual(c.nodes.map(n=>n.history),base.nodes.map(n=>n.history));
   btn.push(share(c.nodes.find(n=>n.kind==='open'&&n.player==='BTN'),1));bbFold.push(share(c.nodes.find(n=>n.history===base.nodes.find(x=>x.id===12).history),0));}
- for(let i=1;i<btn.length;i++){assert.ok(btn[i]<=btn[i-1]+0.005,'BTN opens less with more rake '+btn);assert.ok(bbFold[i]>=bbFold[i-1]-0.005,'BB folds more with more rake '+bbFold);}
- assert.ok(btn[btn.length-1]<btn[0],'10% rake is clearly tighter than no rake');
+ // The big blind defends less as rake goes up; the button opens less than with no rake (at high rake the blinds fold
+ // so often that stealing pays again, so the button is not strictly tighter level by level).
+ for(let i=1;i<bbFold.length;i++)assert.ok(bbFold[i]>bbFold[i-1],'BB folds more with more rake '+bbFold);
+ for(let i=1;i<btn.length;i++)assert.ok(btn[i]<btn[0],'BTN opens less than with no rake '+btn);
 });
 
 test('ring hands (view.rake) are judged with that rake chart; others with the no-rake chart',()=>{
