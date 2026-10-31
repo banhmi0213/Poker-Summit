@@ -1242,3 +1242,11 @@
 .table .selfInfo small{text-align:center}
 /* Owner 2026/10/30: the stamp floats on its own top layer, so seats are no longer lifted over the cards while it shows
    (avatar under the cards, stamp over them). */
+
+/* Owner 2026/10/31: on PC (1) your own action ribbon sits on top of your plate like the other seats' — above the name,
+   not over it; (2) short names are drawn larger so every plate looks balanced (name-size.ts: s ≤6, m ≤10 half-width units). */
+@media(min-width:900px){
+ .demoShell .table .selfInfo .seatAct b{top:-26px}
+ .demoShell .table [data-name-size=s]{font-size:24px!important;line-height:1.2}
+ .demoShell .table [data-name-size=m]{font-size:21px!important;line-height:1.2}
+}
