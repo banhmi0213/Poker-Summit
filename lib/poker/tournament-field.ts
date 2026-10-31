@@ -17,6 +17,8 @@ export const FIELD_TABLE_SIZE=6;
 export const FIELD_MAX_PLAYERS=100;
 /** Rosters above this size use the field; 2–6 keep the single-table room. */
 export const FIELD_MIN_PLAYERS=7;
+/** One row of the field's standings (entry ids only). stack/table are null once out. */
+export type FieldStanding={entry:string;place:number|null;tiedThrough:number|null;stack:number|null;table:number|null};
 export type FieldElimination={memberId:string;place:number;tiedThrough:number;comparisonStack:number;table:number;handId:string};
 type Runout={handId:string;fromBoardCount:number};
 export type FieldCheckpoint={version:1;entrants:string[];tables:[number,RoomCheckpoint][];eliminated:FieldElimination[];champion:string|null;finalGiven:boolean;
@@ -78,6 +80,16 @@ export class TournamentField {
  get champion(){return this.#champion;}
  get entrants(){return [...this.#entrants];}
  eliminated(){return this.#eliminated.map(e=>({...e}));}
+ /** Owner 2026/10/31 (順位が一覧でわかるように): everyone in the field, best first. Players still in are ranked by their
+  * chips at the start of the current hand; busted players by their final place. Entry ids (e-1…) never member ids. */
+ standings():FieldStanding[]{
+  const id=(m:string)=>`e-${this.#entrants.indexOf(m)+1}`,live:FieldStanding[]=[];
+  for(const [n,t] of this.#tables)for(const s of t.fieldSeats().seats)if(s.stack>0)live.push({entry:id(s.memberId),place:null,tiedThrough:null,stack:s.stack,table:n});
+  live.sort((a,b)=>b.stack!-a.stack!||a.entry.localeCompare(b.entry,'en',{numeric:true}));
+  const ranked=live.map((s,i)=>({...s,place:this.#champion?1:i+1,tiedThrough:this.#champion?1:i+1}));
+  const out=[...this.#eliminated].sort((a,b)=>a.place-b.place).map(e=>({entry:id(e.memberId),place:e.place,tiedThrough:e.tiedThrough,stack:null,table:null}));
+  return [...ranked,...out];
+ }
  runout(table:number){const r=this.#runouts.get(table);return r?{...r}:null;}
  movedRecently(member:string,now:number){const m=this.#moved.get(member);return m&&now-m.at<15000?{from:m.from,to:m.to}:null;}
  /** A member's view only changes when their own table (or the field) changes. Always increases, also across a move. */

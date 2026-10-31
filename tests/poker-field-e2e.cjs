@@ -38,7 +38,7 @@ async function database(){
  await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数卓テスト大会',startsAt,JSON.stringify(structure)]);
  await db.exec('set role service_role');
  const directory=new SupabaseRoomDirectory(client),store=new SupabaseRoomStore(client),keys={active:'test',keys:{test:randomBytes(32)}};
- await directory.configureRegistration(tid,60,true);
+ await directory.configureRegistration(tid,Math.max(ENTRANTS,24),true);
  return {db,directory,store,keys,users,tid,startsAt:Date.parse(startsAt)};
 }
 
@@ -85,7 +85,7 @@ async function database(){
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
-  while(iterations++<6000){
+  while(iterations++<Math.max(6000,ENTRANTS*400)){
    c=await saved();const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
