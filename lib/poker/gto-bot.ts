@@ -9,7 +9,7 @@
 import type {Card} from './engine';
 import type {BettingAction} from './betting';
 import {decideCpuAction,type CpuStyle} from './cpu-strategy';
-import {PostflopSolver,NO_CARDS,dealCard,type ActNode,type Node,type Combo} from './postflop-solver';
+import {PostflopSolver,NO_CARDS,dealCard,type ActNode,type Node,type Combo,type SolverStep} from './postflop-solver';
 import {MultiwaySolver,type MActNode,type MNode} from './multiway-solver';
 import {NWaySolver,type NActNode,type NNode} from './multiway-n-solver';
 import rankData from '@/data/poker-gto/preflop-rank.json';
@@ -161,25 +161,28 @@ export function flopRow(node:FlopNode,a:number,b:number,board:readonly number[])
  return node.classes[cls];
 }
 // ---------- turn/river solver cache ----------
-type Solve={solver:PostflopSolver;board:number[];players:[string,string];bb:number;startPot:number};
+type Solve={solver:PostflopSolver;board:number[];players:[string,string];bb:number;startPot:number;
+ /** Exploitability (share of the pot), worked out once when an EV is first asked for. */expl?:number};
 const solves=new Map<string,Solve>();
 // Each solve holds large strategy tables (tens to hundreds of MB): keep only the current hand's turn and river solves.
 function remember(k:string,s:Solve){solves.set(k,s);while(solves.size>2)solves.delete(solves.keys().next().value as string);}
 /** Drop cached turn/river solves (call when a hand ends, so memory does not pile up across hands). */
 export function clearGtoSolves(){solves.clear();}
+/** EV loss after the flop is shown only from solves within this exploitability (share of the pot). */
+export const EV_MAX_EXPL=0.02;
 function runSolver(s:PostflopSolver,budgetMs:number){const t=Date.now(),step=budgetMs<1000?2:10;let n=0;while(Date.now()-t<budgetMs&&n<400){s.run(step);n+=step;if(n%80===0&&s.exploitability()<0.003)break;}}
 /** Walk a solver tree along the logged actions (bb units); returns the node, its card context, or null when off the tree. */
-function walk(s:Solve,acts:readonly LoggedAction[],river:number|null,startStreet:Street):{node:ActNode;ctx:number}|null{
- let node:Node=s.solver.tree,ctx=NO_CARDS;
+function walk(s:Solve,acts:readonly LoggedAction[],river:number|null,startStreet:Street):{node:ActNode;ctx:number;steps:SolverStep[]}|null{
+ let node:Node=s.solver.tree,ctx=NO_CARDS;const steps:SolverStep[]=[];
  const streetOf=(n:ActNode)=>n.street;
  for(const a of acts){
-  while(node.kind==='chance'){if(river===null)return null;ctx=dealCard(ctx,river);node=node.child;}
+  while(node.kind==='chance'){if(river===null)return null;ctx=dealCard(ctx,river);steps.push({kind:'card',card:river});node=node.child;}
   if(node.kind!=='act')return null;
   if(streetOf(node)!==a.street)return null;
-  const idx=solverIndex(node,a,s.bb);if(idx<0)return null;node=node.children[idx];
+  const idx=solverIndex(node,a,s.bb);if(idx<0)return null;steps.push({kind:'act',index:idx});node=node.children[idx];
  }
- while(node.kind==='chance'){if(river===null)return null;ctx=dealCard(ctx,river);node=node.child;}
- return node.kind==='act'?{node,ctx}:null;
+ while(node.kind==='chance'){if(river===null)return null;ctx=dealCard(ctx,river);steps.push({kind:'card',card:river});node=node.child;}
+ return node.kind==='act'?{node,ctx,steps}:null;
  void startStreet;
 }
 function solverIndex(node:ActNode,a:LoggedAction,bb:number):number{
@@ -213,7 +216,9 @@ export function decideGto(v:GtoView,data:GtoData,random:()=>number=Math.random,b
  catch(e){return {action:fallback(v,random),source:'fallback',reason:'error:'+(e instanceof Error?e.message:String(e)).slice(0,60)};}
 }
 /** rangeOnly (2026/10/29: 相手のアクションのレンジ表): no hole cards needed; freqs are zeros and only the grid is meaningful. */
-export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false,opts:{noApprox?:boolean}={}):GtoStrategy{
+/** opts.withEv (2026/10/31): also value each option for the hero's hand where the model allows it (preflop chart EV file;
+ * turn and river solves) — the trainer's EV loss. Off for the CPUs, which only need the frequencies. */
+export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false,opts:{noApprox?:boolean;withEv?:boolean}={}):GtoStrategy{
  const fb=(reason='other'):GtoStrategy=>({source:'fallback',reason});
  try{
   const noHole=v.hole.length!==2;if(noHole&&!rangeOnly)return fb('no-cards');
@@ -276,9 +281,12 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   if(!s){
    if(v.board.length===4){s=solve(v,board.slice(0,4),ranges,pair,potAt('turn'),spot,budgetMs);remember(turnKey,s);}
   }
-  let at=s&&walk(s,v.board.length===4?turnActs:[...turnActs,...riverActs],v.board.length===5?board[4]:null,'turn');
+  // River (2026/10/31): always a river solve of its own — ranges narrowed through the turn solve — rather than the turn
+  // tree's river. A turn tree gets only a few dozen iterations in the time a decision has (measured: 20〜30% of the pot
+  // exploitable), while a river alone converges in that time.
+  let at=s&&v.board.length===4?walk(s,turnActs,null,'turn'):null;
   if(!at&&v.board.length===5){
-   // Off the turn tree (or no turn solve): narrow by the turn solve when possible, then solve the river alone.
+   // Narrow by the turn solve when possible, then solve the river alone.
    const riverKey=`${v.handKey}|${noHole?'':v.hero}|${board.join(',')}`;let r=solves.get(riverKey);
    if(!r){if(s)trackSolver(s,turnActs,null,ranges);r=solve(v,board,ranges,pair,potAt('river'),spot,Math.min(budgetMs,2000));remember(riverKey,r);}
    at=walk(r,riverActs,null,'river');s=r;
@@ -291,7 +299,11 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   const acc:Record<string,{w:number;f:number[]}>={};
   for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
   const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
-  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:h===undefined?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid)};
+  // EV of each option for this hand (BB, like the solve's amounts), only when asked: it values every action's subtree.
+  // Only from a solve close enough to equilibrium (2% of the pot): a short solve's values can disagree with its own shares.
+  if(opts.withEv&&h!==undefined&&s.expl===undefined)s.expl=s.solver.exploitability();
+  const ev=opts.withEv&&h!==undefined&&(s.expl??1)<=EV_MAX_EXPL?s.solver.actionEvsAt(at.steps,player,h):null;
+  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:h===undefined?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid),...(ev&&ev.length===k&&ev.every(Number.isFinite)?{ev}:{})};
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
@@ -484,9 +496,13 @@ function solve(v:GtoView,board:number[],ranges:Ranges,pair:[string,string],potCh
  const heroIdx=pair.indexOf(v.hero),rs:[Combo[],Combo[]]=[combos(pair[0]),combos(pair[1])],hk=v.hole.length===2?key2(code(v.hole[0]),code(v.hole[1])):-1;
  if(heroIdx>=0&&hk>=0&&!rs[heroIdx].some(c=>key2(c.c1,c.c2)===hk))rs[heroIdx].push({c1:code(v.hole[0]),c2:code(v.hole[1]),weight:1e-3});
  const stacks=pair.map(id=>{const p=v.players.find(x=>x.id===id)!;return (v.startStacks[id]-p.totalCommitted+p.committed)/v.bb;});
- const deep=spot.endsWith('4bet')?{betSizes:[0.5],river:[0.75]}:{betSizes:[0.33,0.75],river:[0.5,1]};
+ // Turn trees (2026/10/31) use one size per street — 66% on the turn, 75% on the river, as the computed flop files do.
+ // With two sizes each a turn tree got 10〜20 iterations in a decision's time (20〜30% of the pot exploitable); with one
+ // it converges to about 1%. The river, solved on its own, keeps two sizes.
+ const deep=spot.endsWith('4bet')?{turn:[0.5],turnRiver:[0.75],river:[0.75]}:{turn:[0.66],turnRiver:[0.75],river:[0.5,1]};
+ const turn=board.length===4;
  const solver=new PostflopSolver({board,pot:potChips/v.bb,stack:Math.max(0.5,Math.min(...stacks)),ranges:rs,
-  betSizes:board.length===4?deep.betSizes:deep.river,raiseSizes:[3],maxRaises:1,riverBetSizes:deep.river,riverRaiseSizes:[3],riverMaxRaises:1,allinMaxPot:1.5});
+  betSizes:turn?deep.turn:deep.river,raiseSizes:[3],maxRaises:1,riverBetSizes:turn?deep.turnRiver:deep.river,riverRaiseSizes:[3],riverMaxRaises:1,allinMaxPot:1.5});
  runSolver(solver,budgetMs);
  return {solver,board,players:pair,bb:v.bb,startPot:potChips};
 }
