@@ -45,11 +45,11 @@ jobs:
           node --report-on-signal --report-signal=SIGUSR2 --report-directory="$RUNNER_TEMP/rep" tests/poker-field-e2e.cjs > field.log 2>&1 &
           pid=$!
           ( for i in $(seq 1 40); do sleep 30; ps -o rss=,pcpu=,etime= -p $pid >> ps.log 2>/dev/null || break; done ) &
-          ( sleep 450; kill -USR2 $pid 2>/dev/null; sleep 20; kill -USR2 $pid 2>/dev/null; sleep 10; kill -TERM $pid 2>/dev/null; sleep 20; kill -KILL $pid 2>/dev/null ) &
+          ( sleep 400; kill -USR2 $pid 2>/dev/null; sleep 20; kill -USR2 $pid 2>/dev/null; sleep 10; kill -TERM $pid 2>/dev/null; sleep 20; kill -KILL $pid 2>/dev/null ) &
           wait $pid; code=$?; set -e
           echo "::notice::PS (rss_kb cpu elapsed) $(tail -n 4 ps.log | tr '\n' '|')"
           for r in $(ls "$RUNNER_TEMP"/rep/*.json 2>/dev/null | head -1); do node -e 'const r=require(process.argv[1]);const s=r.javascriptStack||{};console.log("STACK "+(s.message||"")+" | "+(s.stack||[]).slice(0,25).join(" <- "));console.log("HEAP used_mb="+Math.round((r.javascriptHeap?.usedMemory||0)/1048576)+" total_mb="+Math.round((r.javascriptHeap?.totalMemory||0)/1048576));' "$r" | while IFS= read -r l; do echo "::notice::${l:0:3500}"; done; done
           echo "::notice::100-player run took $(( $(date +%s) - start )) s"
-          echo "::notice::LAST $(grep -E "^(PASS|PROGRESS)" field.log | tail -n 4 | tr '\n' '|' | cut -c1-900)"
+          echo "::notice::LAST $(grep -E "^(PASS|PROGRESS)" field.log | tail -n 4 | tr '\n' '|' | cut -c1-3000)"
           echo "::notice::TAIL $(tail -n 6 field.log | tr '\n' '|' | cut -c1-900)"
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timed out|waiting for|expected|actual" field.log | grep -v node_modules | head -20 | while IFS= read -r l; do echo "::error::${l:0:500}"; done; exit "$code"; fi

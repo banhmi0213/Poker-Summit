@@ -87,14 +87,14 @@ async function database(){
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
   now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
   const began=Date.now();let lastLog=0,saveMs=0,saves=0;
-  const browserMiss=[];let lastMiss='';
+  const browserMiss=[];let lastMiss='',botMiss='';
   let step='start',stepAt=Date.now();const mark=x=>{step=x;stepAt=Date.now();};
   const watchdog=setInterval(()=>{if(Date.now()-stepAt>45000)console.log(`PROGRESS STALLED ${Math.round((Date.now()-stepAt)/1000)}s at: ${step}`);},30000);watchdog.unref?.();
   while(iterations++<Math.max(6000,ENTRANTS*400)){
    mark('read checkpoint');{const t0=Date.now();c=await saved();saveMs+=Date.now()-t0;saves++;}
    // The isolated database lives in memory: reclaim old checkpoint versions now and then so a long run does not grow it without bound.
    if(iterations%150===0){mark('vacuum');await f.db.exec('vacuum poker_private.room_checkpoints');}
-   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} rssMb=${Math.round(process.memoryUsage().rss/1048576)} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)} browserMiss=${JSON.stringify(browserMiss)} final=${c.field?.tables.length===1?JSON.stringify(c.field.tables[0][1].seats.map(([n,x])=>[n,x.stack,f.users.indexOf(x.memberId)<BROWSERS?'B':'']))+' turn='+(c.field.tables[0][1].turn?.actor??'-'):''} lastMiss=${lastMiss}`);}const field=c.field;
+   if(Date.now()-lastLog>60000){lastLog=Date.now();console.log(`PROGRESS ${Math.round((Date.now()-began)/1000)}s iterations=${iterations} tables=${c.field?.tables.length} out=${c.field?.eliminated.length}/${ENTRANTS} rssMb=${Math.round(process.memoryUsage().rss/1048576)} readMs=${(saveMs/saves).toFixed(0)} apiMs=${(apiMs/Math.max(1,apiN)).toFixed(0)} browserMiss=${JSON.stringify(browserMiss)} final=${c.field?.tables.length===1?JSON.stringify(c.field.tables[0][1].seats.map(([n,x])=>[n,x.stack,f.users.indexOf(x.memberId)<BROWSERS?'B':'']))+' turn='+(c.field.tables[0][1].turn?.actor??'-'):''} lastMiss=${lastMiss} botMiss=${botMiss}`);}const field=c.field;
    const total=field.tables.reduce((n,[,t])=>n+t.seats.reduce((a,[,s])=>a+s.stack,0),0);check(total===ENTRANTS*STACK,'chips conserved across tables');
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
    maxTables=Math.max(maxTables,field.tables.length);if(field.tables.length===1&&[...where(c).values()].filter(s=>s.stack>0).length<=6)finalTable=true;
@@ -117,7 +117,7 @@ async function database(){
      await ack;acted=true;break;
     }
     mark('bot '+i+' state');const connection=await bot(i);if(!connection)continue;let r=await api(i,{type:'state'},connection);
-    if(r.status!==200){conn.delete(i);continue;}const s=r.result,legal=s.hand?.legal;if(!legal||s.hand.handId!==t.turn.handId)continue;
+    if(r.status!==200){botMiss=`status ${r.status}`;conn.delete(i);continue;}const s=r.result,legal=s.hand?.legal;if(!legal||s.hand.handId!==t.turn.handId){botMiss=JSON.stringify({turn:t.turn,view:{hand:s.hand?.handId?.slice(0,8),rev:s.hand?.revision,toAct:s.hand?.toAct,legal:Boolean(legal),youSeat:s.youSeat,table:s.field?.tableNumber,watching:s.field?.watching,phase:s.phase},tableHand:JSON.stringify(t.hand).slice(0,700)});continue;}
     check(s.field.tableNumber===tableNo,'scripted player sees its own table');
     const roll=Math.random();let action;
     if(legal.raise&&roll<0.35)action={type:legal.check?'bet':'raise',amount:legal.maxRaiseTo};else if(legal.call&&roll<0.75)action={type:'call'};else if(legal.check)action={type:'check'};else action={type:'fold'};
