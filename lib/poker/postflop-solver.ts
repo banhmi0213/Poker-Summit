@@ -24,6 +24,8 @@ export type Action={label:string;kind:'check'|'bet'|'call'|'fold'|'raise'|'allin
 export type ActNode={kind:'act';street:Street;player:0|1;actions:Action[];children:Node[];id:number;path:string;contrib:[number,number]};
 /** A card is dealt; `child` is solved once per possible card (strategies are stored per dealt card). */
 export type ChanceNode={kind:'chance';street:'turn'|'river';child:Node;contrib:[number,number]};
+/** A step from the root: an action (index into the node's actions) or a dealt card at a chance node. */
+export type SolverStep={kind:'act';index:number}|{kind:'card';card:number};
 export type Node=ActNode|ChanceNode|{kind:'fold';folder:0|1;contrib:[number,number]}|{kind:'showdown';contrib:[number,number]};
 type Sizes={bets:number[];raises:number[];maxRaises:number};
 const NEXT={flop:'turn',turn:'river'} as const;
@@ -225,6 +227,25 @@ export class PostflopSolver{
   const all=new Float64Array(52);let total=0;for(let o=0;o<O.n;o++){total+=opp[o];all[O.c1[o]]+=opp[o];all[O.c2[o]]+=opp[o];}
   const same=this.#same[hero];for(let h=0;h<H.n;h++){const x=same[h],r=total-all[H.c1[h]]-all[H.c2[h]]+(x>=0?opp[x]:0);v[h]=r>0?v[h]/r:0;}
   return v;
+ }
+/** EV of every action for one combo of `hero` at the action node reached by `steps` (2026/10/31, EV loss after the
+  * flop): the opponent's range is narrowed by its average strategy along the way, then each action's subtree is valued
+  * with both average strategies. Same units as the pot (chips won from here, the pot counted as won). Null if `steps`
+  * do not lead to one of `hero`'s decisions. */
+ actionEvsAt(steps:readonly SolverStep[],hero:0|1,combo:number):number[]|null{
+  let node:Node=this.tree,ctx=NO_CARDS;const O=this.sides[1-hero],H=this.sides[hero],opp=Float64Array.from(O.w);
+  for(const st of steps){
+   if(st.kind==='card'){if(node.kind!=='chance')return null;for(const o of O.byCard[st.card])opp[o]=0;ctx=dealCard(ctx,st.card);node=node.child;continue;}
+   if(node.kind!=='act')return null;
+   if(node.player!==hero){const k=node.actions.length,s=this.strategy(node,true,ctx);for(let o=0;o<O.n;o++)opp[o]*=s[o*k+st.index];}
+   node=node.children[st.index];if(!node)return null;
+  }
+  if(node.kind!=='act'||node.player!==hero||combo<0||combo>=H.n)return null;
+  let reach=0;for(let o=0;o<O.n;o++){const r=opp[o];if(r===0)continue;const a=O.c1[o],b=O.c2[o];if(a===H.c1[combo]||a===H.c2[combo]||b===H.c1[combo]||b===H.c2[combo])continue;reach+=r;}
+  if(!(reach>0))return null;
+  const out:number[]=[];
+  for(const child of node.children){this.#top=0;const v=this.#cfr(child,hero,opp,'avg',ctx);out.push(v[combo]/reach);}
+  return out;
  }
  nodes(){return this.#nodes;}
  /** Number of strategy tables in use (memory gauge). */
