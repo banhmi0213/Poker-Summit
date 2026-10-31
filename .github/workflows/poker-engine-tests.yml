@@ -131,6 +131,10 @@ jobs:
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
         run: node db/tests/poker_cosmetics_isolated.cjs
+      - name: Verify GTO plan status, trials, cancels and coupon grants
+        env:
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+        run: node db/tests/gto_billing_isolated.cjs
       - name: Verify hand shares for the board (frozen, anonymised)
         env:
           POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
