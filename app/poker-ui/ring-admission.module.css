@@ -13,3 +13,8 @@
 
 /* Rabbit hunt: the undealt board after a hand that ended early (ring only, one ticket). */
 .rabbit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.rabbit p{margin:0}.rabbit b{color:#f3c663;letter-spacing:.04em}
+
+/* Ring auto move (2026/11/01): a short notice over the table, then the move. */
+.autoMove{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:150;width:min(440px,calc(100% - 24px));display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;padding:10px 14px;border:1px solid #c7ac75;border-radius:12px;background:#10233ce8;color:#f3ead6;font-size:13px;line-height:1.6;box-shadow:0 8px 28px #0007}
+.autoMove p{margin:0}.autoMove button{padding:6px 12px;border:1px solid #c7ac75;border-radius:8px;background:#203a4c;color:#fff0ca;font:inherit;cursor:pointer}
+.dialog .actions button{padding:10px 14px;border:1px solid #a58a52;border-radius:8px;background:#234156;color:#fff0ca;font:inherit;cursor:pointer}.dialog .actions button:disabled{opacity:.45;cursor:default}
