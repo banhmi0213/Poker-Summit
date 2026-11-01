@@ -1,207 +1,340 @@
 {
-  "checkedAt": "2026-11-01T18:14:45.661105+00:00",
-  "event": "Local fits stopped without completed JSON; restarted on durable GitHub Actions",
-  "localLastReports": {
-    "40": {
-      "round": 1,
-      "perHandDiff": 3.45,
+  "checkedAt": "2026-11-01T23:08:03.976532+00:00",
+  "fitReports": {
+    "20": {
+      "round": 6,
+      "perHandDiff": 2.83,
       "rfi": {
-        "BTN": 62.3,
-        "CO": 38.3,
-        "HJ": 28.3,
-        "LJ": 24,
-        "UTG+1": 18.6,
-        "UTG": 15.4
+        "BTN": 41.4,
+        "CO": 32.9,
+        "HJ": 27.7,
+        "LJ": 23.5,
+        "UTG+1": 20.6,
+        "UTG": 18.1
       },
       "defend": {
-        "BTN": 0.959,
-        "CO": 0.763,
-        "HJ": 0.697,
-        "UTG": 0.599
+        "BTN": 0.837,
+        "CO": 0.786,
+        "HJ": 0.722,
+        "UTG": 0.56
       },
-      "call": 0.589,
+      "call": 0.477,
       "callBy": {
-        "BTN": 0.47958362437266017,
-        "CO": 0.574855254743254,
-        "HJ": 0.6267315369616012,
-        "UTG": 0.7160272881863539,
-        "UTG+1": 0.686,
-        "LJ": 0.656
+        "BTN": 0.4754768894742633,
+        "CO": 0.4664348148832559,
+        "HJ": 0.4553736443040984,
+        "UTG": 0.5115873168369853,
+        "UTG+1": 0.493,
+        "LJ": 0.474
+      }
+    },
+    "40": {
+      "round": 6,
+      "perHandDiff": 3.1,
+      "rfi": {
+        "BTN": 62.7,
+        "CO": 36.4,
+        "HJ": 28.5,
+        "LJ": 23.3,
+        "UTG+1": 19.1,
+        "UTG": 16.7
+      },
+      "defend": {
+        "BTN": 0.803,
+        "CO": 0.766,
+        "HJ": 0.69,
+        "UTG": 0.554
+      },
+      "call": 0.612,
+      "callBy": {
+        "BTN": 0.48304908716340356,
+        "CO": 0.6719058847278171,
+        "HJ": 0.6816513282606518,
+        "UTG": 0.705790377883847,
+        "UTG+1": 0.698,
+        "LJ": 0.69
       }
     },
     "60": {
-      "round": 1,
-      "perHandDiff": 1.99,
+      "round": 6,
+      "perHandDiff": 1.81,
       "rfi": {
-        "BTN": 55,
-        "CO": 36.6,
-        "HJ": 27.5,
-        "LJ": 21.6,
-        "UTG+1": 17.4,
-        "UTG": 15.1
+        "BTN": 53.2,
+        "CO": 35.9,
+        "HJ": 28.4,
+        "LJ": 22.7,
+        "UTG+1": 18.9,
+        "UTG": 15.2
       },
       "defend": {
-        "BTN": 0.847,
-        "CO": 0.786,
-        "HJ": 0.704,
-        "UTG": 0.608
+        "BTN": 0.837,
+        "CO": 0.787,
+        "HJ": 0.693,
+        "UTG": 0.568
       },
-      "call": 0.654,
+      "call": 0.656,
       "callBy": {
-        "BTN": 0.5948553568291934,
-        "CO": 0.6233563079820561,
-        "HJ": 0.6619025093349319,
-        "UTG": 0.7534919075739906,
-        "UTG+1": 0.723,
-        "LJ": 0.692
+        "BTN": 0.5870548626435201,
+        "CO": 0.6532228082676487,
+        "HJ": 0.6787943964384721,
+        "UTG": 0.7207686977285691,
+        "UTG+1": 0.707,
+        "LJ": 0.693
       }
     }
   },
-  "completed20": {
-    "round": 6,
-    "perHandDiff": 2.83,
-    "rfi": {
-      "BTN": 41.4,
-      "CO": 32.9,
-      "HJ": 27.7,
-      "LJ": 23.5,
-      "UTG+1": 20.6,
-      "UTG": 18.1
+  "fitGates": {
+    "20": {
+      "bb": "pass",
+      "rfi": "pass"
     },
-    "defend": {
-      "BTN": 0.837,
-      "CO": 0.786,
-      "HJ": 0.722,
-      "UTG": 0.56
+    "40": {
+      "bb": "pass",
+      "rfi": "fail",
+      "rfiDifference": 3.1
     },
-    "call": 0.477,
-    "callBy": {
-      "BTN": 0.4754768894742633,
-      "CO": 0.4664348148832559,
-      "HJ": 0.4553736443040984,
-      "UTG": 0.5115873168369853,
-      "UTG+1": 0.493,
-      "LJ": 0.474
+    "60": {
+      "bb": "pass",
+      "rfi": "pass"
     }
   },
-  "replacementRun": 41335511969,
-  "replacementBranch": "gto-preflop-fit/refine-mtt-20261102-b",
-  "replacementCommit": "f10df9fadf0ef2e55177e0a31644cf40d64d1709",
-  "sourceBranch": "chatgpt/gto-stack-fit-20261102-a",
+  "refinementRun": 41360125420,
+  "refinementBranch": "gto-preflop-fit/refine-40bb-20261102-c",
+  "refinementJob": 125008669127,
+  "refinementInit": "gto-preflop-fit-out/41335511969:data/poker-gto/fit-work/fit2-40.json",
+  "refinementState": "Fit in_progress verified; only 40BB rerun, preserve 20/60",
   "flops": {
-    "checkedAt": "2026-11-01T18:13:01.435651+00:00",
+    "checkedAt": "2026-11-01T23:02:17.778543+00:00",
+    "activeRuns": [
+      {
+        "id": 41279681140,
+        "name": "Poker flop solutions",
+        "status": "queued",
+        "head_branch": "gto-flop-solve/co-bb/v3b",
+        "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e"
+      },
+      {
+        "id": 41279680906,
+        "name": "Poker flop solutions",
+        "status": "queued",
+        "head_branch": "gto-flop-solve/sb-bb/v3b",
+        "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e"
+      },
+      {
+        "id": 40922261771,
+        "name": "Poker flop solutions",
+        "status": "queued",
+        "head_branch": "gto-flop-solve/hu-limp/v3b",
+        "head_sha": "400eae6c210b8771395aa59bfa19410de7ec7ec7"
+      },
+      {
+        "id": 40922255985,
+        "name": "Poker flop solutions",
+        "status": "queued",
+        "head_branch": "gto-flop-solve/hu-srp/v3b",
+        "head_sha": "400eae6c210b8771395aa59bfa19410de7ec7ec7"
+      }
+    ],
     "jobs": [
       {
+        "run": 41335511969,
+        "total": 4,
+        "running": 0,
+        "success": 0,
+        "solve": {},
+        "other": [
+          {
+            "id": 124934382443,
+            "name": "capacity",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 124934520122,
+            "name": "Fit 40BB",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 124934520144,
+            "name": "Fit 60BB",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 124945018865,
+            "name": "collect",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
         "run": 40922255985,
+        "total": 201,
+        "running": 3,
+        "success": 184,
         "solve": {
-          "completed": 181,
-          "queued": 19
+          "completed": 184,
+          "in_progress": 3,
+          "queued": 13
         },
-        "success": 181,
-        "running": 0,
-        "total": 201
-      },
-      {
-        "run": 40922261771,
-        "solve": {
-          "completed": 159,
-          "queued": 41
-        },
-        "success": 159,
-        "running": 0,
-        "total": 201
-      },
-      {
-        "run": 41279675288,
-        "solve": {
-          "completed": 178,
-          "in_progress": 7,
-          "queued": 15
-        },
-        "success": 178,
-        "running": 7,
-        "total": 201
-      },
-      {
-        "run": 41279680906,
-        "solve": {
-          "completed": 48,
-          "in_progress": 7,
-          "queued": 145
-        },
-        "success": 48,
-        "running": 7,
-        "total": 201
+        "other": [
+          {
+            "id": 123618340700,
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
       },
       {
         "run": 41279681140,
-        "solve": {
-          "completed": 69,
-          "in_progress": 7,
-          "queued": 124
-        },
-        "success": 69,
+        "total": 201,
         "running": 7,
-        "total": 201
+        "success": 98,
+        "solve": {
+          "completed": 98,
+          "in_progress": 7,
+          "queued": 95
+        },
+        "other": [
+          {
+            "id": 124768866845,
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "run": 41279675288,
+        "total": 201,
+        "running": 0,
+        "success": 200,
+        "solve": {
+          "completed": 200
+        },
+        "other": [
+          {
+            "id": 124768849103,
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "run": 41279680906,
+        "total": 201,
+        "running": 7,
+        "success": 67,
+        "solve": {
+          "completed": 67,
+          "in_progress": 7,
+          "queued": 126
+        },
+        "other": [
+          {
+            "id": 124768865985,
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "run": 40922261771,
+        "total": 201,
+        "running": 4,
+        "success": 164,
+        "solve": {
+          "completed": 164,
+          "in_progress": 4,
+          "queued": 32
+        },
+        "other": [
+          {
+            "id": 123618359929,
+            "name": "plan",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
       }
-    ]
+    ],
+    "runningJobs": 21
   },
   "eta": {
+    "checkedAt": "2026-11-01T23:02:17.778543+00:00",
+    "hours": 4.821206358888889,
+    "delta": 78,
+    "speed": 16.178523422087274,
+    "remaining": 3287,
+    "etaJst": "2026-11-10T19:12:31.869389+09:00",
     "rows": [
       {
         "spot": "hu-srp",
-        "done": 181,
-        "remaining": 19,
-        "delta": 0,
-        "rate": 0.0,
-        "etaJst": "2026-11-02T06:36:52.044713+09:00"
-      },
-      {
-        "spot": "hu-limp",
-        "done": 159,
-        "remaining": 41,
-        "delta": 0,
-        "rate": 0.0,
-        "etaJst": "2026-11-02T11:05:47.188909+09:00"
-      },
-      {
-        "spot": "hu-3bet",
-        "done": 178,
-        "remaining": 22,
-        "delta": 17,
-        "rate": 16.66194326439249,
-        "etaJst": "2026-11-02T04:32:14.782769+09:00"
-      },
-      {
-        "spot": "sb-bb",
-        "done": 48,
-        "remaining": 152,
-        "delta": 5,
-        "rate": 4.900571548350732,
-        "etaJst": "2026-11-03T10:14:01.880683+09:00"
+        "done": 184,
+        "remaining": 16,
+        "delta": 3,
+        "rate": 0.6222509008495105,
+        "running": 3,
+        "etaJst": "2026-11-03T09:45:04.940634+09:00"
       },
       {
         "spot": "co-bb",
-        "done": 69,
-        "remaining": 131,
-        "delta": 6,
-        "rate": 5.880685858020879,
-        "etaJst": "2026-11-03T01:29:36.163168+09:00"
+        "done": 98,
+        "remaining": 102,
+        "delta": 29,
+        "rate": 6.015092041545269,
+        "running": 7,
+        "etaJst": "2026-11-03T00:59:44.225956+09:00"
+      },
+      {
+        "spot": "hu-3bet",
+        "done": 200,
+        "remaining": 0,
+        "delta": 22,
+        "rate": 4.56317327289641,
+        "running": 0,
+        "etaJst": "completed"
+      },
+      {
+        "spot": "sb-bb",
+        "done": 67,
+        "remaining": 133,
+        "delta": 19,
+        "rate": 3.9409223720469,
+        "running": 7,
+        "etaJst": "2026-11-03T17:47:12.178787+09:00"
+      },
+      {
+        "spot": "hu-limp",
+        "done": 164,
+        "remaining": 36,
+        "delta": 5,
+        "rate": 1.0370848347491841,
+        "running": 4,
+        "etaJst": "2026-11-03T18:45:03.447365+09:00"
       }
-    ],
-    "summary": {
-      "checkedAt": "2026-11-01T18:13:01.435651+00:00",
-      "intervalMinutes": 61.21734924999999,
-      "throughput": 27.443200670764103,
-      "remaining": 3365,
-      "allEtaJst": "2026-11-07T05:50:02.250422+09:00"
-    }
+    ]
   },
-  "capacity": {
-    "otherRunning": 21,
-    "fitParallel": 2,
-    "expectedTotal": 23,
-    "guardJob": 124934382443
+  "flopPR": {
+    "number": 744,
+    "head": "chatgpt/gto-flop-hu-3bet-20261102-b",
+    "headSha": "261f090abbf4d525ba7ee162531617a5da45667f",
+    "localTests": {
+      "passed": 58,
+      "failed": 0
+    },
+    "validatedHu3bet": {
+      "count": 200,
+      "version": 3,
+      "iterations": 250,
+      "handEv": true
+    },
+    "state": "open, Vercel pending; do not merge until all checks succeed"
   },
-  "notes": "Do not restart old local fits. Fetch gto-preflop-fit-out/41335511969 when run completes. Both refined JSONs are archived under data/poker-gto/fit-work; gate them before merging byStack. Temporary workflow must not enter staging."
+  "notes": "No new spot started: 4 ongoing spots consume 21 jobs. Full latest rescan got transient HTTP403. Use recorded verified timestamps. No production changes."
 }
