@@ -5,6 +5,7 @@ import {nearestFlop,canonicalFlop} from '@/lib/poker/flop-subset';
 import styles from './gto-chart.module.css';
 import {strategyColor} from './strategy-colors';
 import {StrategyLegend} from './strategy-legend';
+import {HandDetail} from './hand-detail';
 import {FlopAggregate} from './flop-aggregate';
 import {TurnExplorer} from './turn-explorer';
 
@@ -17,7 +18,7 @@ const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [spot,setSpot]=useState<string>('btn-bb'),[flop,setFlop]=useState(flops[0]);
- const [data,setData]=useState<FlopData|null>(()=>cachedFlop('btn-bb',flops[0])),[error,setError]=useState('');
+ const [data,setData]=useState<FlopData|null>(()=>cachedFlop('btn-bb',flops[0])),[error,setError]=useState(''),[pick,setPick]=useState<string|null>(null);
  const [trail,setTrail]=useState<number[]>([0]),[typed,setTyped]=useState(''),[nearNote,setNearNote]=useState('');
  const [index,setIndex]=useState<Record<string,string[]>|null>(()=>cachedFlopIndex()),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
@@ -35,8 +36,9 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  // Per-hand EV (version 3) is the value from the start of the flop: shown on the first decision of each player only.
  const evSide:'oop'|null=data&&node&&data.handEv&&!data.spot.order&&trail.length===1?'oop':null;
  return <div className={styles.wrap}><div className={styles.split} data-on={mode==='flop'&&data&&node?'':undefined}><div className={styles.splitSide}>
-  <p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
-  <p className={styles.note}>{(data&&sizeNote(data.spot.sizes,!!data.multiway))??'ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。'}お互いのレンジはプリフロップの表から出したレンジです。</p>
+  <p className={styles.intro}>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
+  <p className={`${styles.note} ${styles.intro}`}>{(data&&sizeNote(data.spot.sizes,!!data.multiway))??'ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。'}お互いのレンジはプリフロップの表から出したレンジです。</p>
+  <details className={styles.aboutMobile}><summary>この表について</summary><p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。{(data&&sizeNote(data.spot.sizes,!!data.multiway))??''}お互いのレンジはプリフロップの表から出したレンジです。</p></details>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
    <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.filter(f=>computed(f)||f===flop).map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
@@ -68,9 +70,9 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   </>}
   </>}
  </div>
- {mode==='flop'&&data&&node&&<div className={styles.splitMain}><StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方"><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none">{l}</td>;
+ {mode==='flop'&&data&&node&&<div className={styles.splitMain}><StrategyLegend actions={node.actions}/><table className={styles.grid} aria-label="手札ごとの打ち方" data-hide-back-to-top><tbody>{[...R].map((_,i)=><tr key={i}>{[...R].map((_,j)=>{const l=label(i,j),e=node.classes[l];if(!e||e[0]<=0)return <td key={j} data-on="none" data-pick={pick===l?'':undefined} onClick={()=>setPick(l)}>{l}</td>;
     let acc=0;const stops=node.actions.map((a,ai)=>{const from=acc;acc+=e[ai+1]*100;return `${strategyColor(a,node.actions)} ${from}% ${acc}%`;}).join(',');
-    return <td key={j} data-on="mix" style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table></div>}
+    return <td key={j} data-on="mix" data-pick={pick===l?'':undefined} onClick={()=>setPick(l)} style={{background:`linear-gradient(90deg,${stops})`}} title={`${l}：${node.actions.map((a,ai)=>`${a.label} ${pct(e[ai+1])}`).join('・')}${evSide&&data.handEv?.[evSide]?.[l]!==undefined?`・期待値 ${data.handEv[evSide][l].toFixed(1)}BB`:''}`}>{l}</td>;})}</tr>)}</tbody></table><HandDetail hand={pick} actions={node.actions} freqs={pick&&node.classes[pick]&&node.classes[pick][0]>0?node.classes[pick].slice(1):null} note={pick&&evSide&&data.handEv?.[evSide]?.[pick]!==undefined?`期待値 ${data.handEv[evSide][pick].toFixed(1)}BB（フロップ開始時点）`:undefined}/></div>}
  </div>
   {mode==='summary'&&<FlopAggregate spot={spot} onPick={f=>{setFlop(f);setNearNote('');setMode('flop');}}/>}
  {mode==='flop'&&data&&node&&explore&&<TurnExplorer spot={spot} data={data} path={explore} lineText={(()=>{let n=0;return explore.map(i=>{const x=data.nodes[n],t=`${seatOf(data,x.player)} ${x.actions[i].label}`;n=x.children[i]??0;return t;}).join('、');})()}/>}
