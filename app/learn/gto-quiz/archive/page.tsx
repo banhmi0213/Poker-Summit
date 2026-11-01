@@ -25,7 +25,7 @@ export default async function Page({searchParams}:{searchParams?:{page?:string}}
  const page=Math.min(pages,Math.max(1,Number(searchParams?.page)||1)),shown=days.slice((page-1)*PER_PAGE,page*PER_PAGE);
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
-   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">学習コース</Link> <span>›</span> <Link href="/learn/gto-quiz">今日のGTOクイズ</Link> <span>›</span> 過去の問題</nav>
+   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">GTO・学習</Link> <span>›</span> <Link href="/learn/gto-quiz">今日のGTOクイズ</Link> <span>›</span> 過去の問題</nav>
    <h1 className={styles.title}>過去のGTOクイズ（答えと解説付き）</h1>
    <p className={styles.lead}>これまでに出題した「今日のGTOクイズ」の問題です。6人卓・100BBのキャッシュゲームの場面で、GTO（相手にどう打たれても大きく損をしない打ち方）がその手でそれぞれの打ち方を選ぶ割合と、その理由を載せています。今日の問題は<Link href="/learn/gto-quiz">今日のGTOクイズ</Link>で解けます。</p>
    {!shown.length&&<p>過去の問題はまだありません。</p>}

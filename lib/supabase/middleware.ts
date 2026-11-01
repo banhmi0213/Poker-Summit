@@ -109,7 +109,11 @@ export async function updateSession(request: NextRequest) {
 
   // ディーラー登録広告の受け口(/account/dealer)だけは、未ログインでもページ側で受ける
   // (閲覧を数えてから会員登録へ案内し、登録後にディーラー登録へ戻すため。2026/10/21、app/account/dealer/page.tsx)
-  if (!user && isProtectedPath && pathname !== "/account/dealer") {
+  // 検証環境(Vercel preview)だけ、プレイヤーページ(/mypage/poker)はURLを知っていれば
+  // ログインなしで見られる(オーナー 2026/11/01「URL知ってる人は中見れるようにして」)。
+  // 本番(production)は今まで通りログイン必須。
+  const previewGuest = process.env.VERCEL_ENV === "preview" && (pathname === "/mypage/poker" || pathname.startsWith("/mypage/poker/"));
+  if (!user && isProtectedPath && pathname !== "/account/dealer" && !previewGuest) {
     const url = request.nextUrl.clone();
     url.pathname = isStorePath ? "/store/login" : isAdminPath ? "/admin-login" : "/login";
     url.searchParams.set("next", pathname);

@@ -35,8 +35,8 @@ jobs:
     timeout-minutes: 345
     strategy:
       fail-fast: false
-      # Keep runners free for the regular test CI (all spots share the account limit of 20 jobs: at most 3 runs × 5).
-      max-parallel: 5
+      # GitHub Pro (2026/11/1): the account limit is 40 jobs. At most 5 runs × 7 = 35, leaving runners for the regular test CI.
+      max-parallel: 7
       matrix:
         flop: ${{ fromJSON(needs.plan.outputs.flops) }}
     steps:

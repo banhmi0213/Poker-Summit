@@ -153,7 +153,12 @@ export class TournamentField {
   // 2. Tables between hands: drop busted players, break / balance, final table cards, next hand.
   const counts=this.#counts(),live=[...counts.values()].reduce((a,b)=>a+b,0),target=Math.max(1,tableCountFor(live));
   const breaking=this.#tables.size>target?[...counts].sort((a,b)=>a[1]-b[1]||b[0]-a[0])[0][0]:null;
-  for(const t of order){
+  // Empty tables close before any other table deals, and the breaking table moves its players first,
+  // so the last tables really merge into one final table (200-player run 2026/11/01: two tables, one of them
+  // empty, stayed open to the end because the other table kept dealing first).
+  for(const t of order)if(!this.room(t).fieldSeats().seats.length){this.#tables.delete(t);this.#tableRevisions.delete(t);this.#settled.delete(t);this.#runouts.delete(t);this.#bump([],true);return {event:'table-closed',changed:true,nextWakeAt:now};}
+  const loop=breaking===null?order:[breaking,...order.filter(o=>o!==breaking)];
+  for(const t of loop){
    const room=this.room(t),info=room.fieldSeats();
    if(!info.seats.length){this.#tables.delete(t);this.#tableRevisions.delete(t);this.#settled.delete(t);this.#runouts.delete(t);this.#bump([],true);return {event:'table-closed',changed:true,nextWakeAt:now};}
    if(!info.started){

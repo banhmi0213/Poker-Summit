@@ -1,6 +1,7 @@
 import {loadPokerStatistics} from '@/lib/poker/statistics';
 import {loadRingMonthly} from '@/lib/poker/ring-monthly';
 import {RingMonthlyView} from '@/app/poker-ui/ring-monthly-view';
+import {RingBbCurve} from '@/app/poker-ui/ring-bb-curve';
 import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
@@ -29,6 +30,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
  const panes=[
  {id:'ring',label:'チップ残高・順位',eyebrow:'RING CHIP BALANCE',description:'リング用チップの残高と自分のランキング。',content:data?<><StatisticsView data={data} section="ring"/><RingMonthlyView rows={monthly}/></>:unavailable},
+ {id:'curve',label:'収支グラフ',eyebrow:'RING RESULTS',description:'リングの通算の勝ち負け（BB）の推移。',content:<RingBbCurve/>},
  {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
  {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加卓を確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},
  {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
@@ -37,7 +39,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
  {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell}/>},
- {id:'weak',label:'あかんとこ一覧',eyebrow:'YOUR LEAKS',description:'リング・大会・練習卓・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
+ {id:'weak',label:'弱点分析',eyebrow:'YOUR LEAKS',description:'リング・大会・練習卓・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},

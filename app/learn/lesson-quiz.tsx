@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { PracticeQuestion } from "./level-three-content";
 import styles from "./level-three.module.css";
+import { toQuizTop } from "@/lib/ui/quiz-top";
 
 export function LessonQuiz({ questions, exam = false, level = 3, examTitle = "実戦判断テスト", passScore = 10, onFinish }: {
  questions: readonly PracticeQuestion[]; exam?: boolean; level?: number; examTitle?: string; passScore?: number; onFinish: (score: number) => void;
@@ -29,7 +30,7 @@ export function LessonQuiz({ questions, exam = false, level = 3, examTitle = "�
   </div> : <>
    <p className={styles.topic}>{question.topic}</p><p className={styles.situation}>{question.situation}</p><h4 id={`level${level}-question-title`} tabIndex={-1}>{question.question}</h4>
    <div className={styles.choices}>{question.choices.map((choice, i) => <button key={choice} type="button" disabled={selected !== undefined} aria-pressed={selected === i} onClick={() => setAnswers(previous => previous.length === index ? [...previous, i] : previous)}>{choice}</button>)}</div>
-   {selected !== undefined && <div className={styles.feedback}><div role="status"><strong>{selected === question.answer ? "正解" : "復習ポイント"}：{question.choices[question.answer]}</strong><p>{question.explanation}</p></div><button type="button" onClick={next}>{index === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
+   {selected !== undefined && <div className={styles.feedback}><div role="status"><strong>{selected === question.answer ? "正解" : "復習ポイント"}：{question.choices[question.answer]}</strong><p>{question.explanation}</p></div><button type="button" onClick={e=>{next();toQuizTop(e.currentTarget);}}>{index === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
   </>}
  </section>;
 }

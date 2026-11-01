@@ -15,7 +15,12 @@ export function BackToTop() {
 
   useEffect(() => {
     const onScroll = () => {
-      setVisible(window.scrollY > SHOW_AFTER_PX);
+      // On phones the button sits over the GTO charts' 13×13 tables; hide it while one is on screen (2026/11/1).
+      const overChart = window.innerWidth <= 700 && [...document.querySelectorAll("[data-hide-back-to-top]")].some(el => {
+        const r = el.getBoundingClientRect();
+        return r.bottom > 0 && r.top < window.innerHeight;
+      });
+      setVisible(window.scrollY > SHOW_AFTER_PX && !overChart);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
