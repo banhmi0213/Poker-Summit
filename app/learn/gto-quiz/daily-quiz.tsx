@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {explainQuiz,gradeQuiz,type QuizGrade,type QuizQuestion} from '@/lib/poker/gto-quiz';
 import {quizCardRed,quizCardText} from '@/lib/poker/quiz-text';
 import styles from './daily-quiz.module.css';
@@ -15,7 +15,9 @@ function load(date:string):number[]{try{const v=JSON.parse(window.localStorage.g
 function save(date:string,answers:number[]){try{window.localStorage.setItem(KEY,JSON.stringify({date,answers}));}catch{/* convenience only */}}
 
 export function DailyQuiz({date,questions,member,url}:{date:string;questions:QuizQuestion[];member:boolean;url:string}){
- const [answers,setAnswers]=useState<number[]>([]),[at,setAt]=useState(0);
+ const [answers,setAnswers]=useState<number[]>([]),[at,setAt]=useState(0),top=useRef<HTMLOListElement>(null);
+ // Moving to another question starts it from its top (owner 2026/11/1「次の問題は上から」).
+ const go=(i:number)=>{setAt(i);requestAnimationFrame(()=>top.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
  useEffect(()=>{const a=load(date);setAnswers(a);setAt(Math.min(a.length,questions.length-1));},[date,questions.length]);
  const grades:QuizGrade[]=answers.map((c,i)=>gradeQuiz(questions[i],c));
  const done=answers.length>=questions.length,correct=grades.filter(g=>g.verdict==='正解').length;
@@ -24,8 +26,8 @@ export function DailyQuiz({date,questions,member,url}:{date:string;questions:Qui
  const shareText=`今日のGTOクイズ ${questions.length}問中${correct}問正解でした #PokerSummit`;
  const share=`https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
  return <div className={styles.quiz}>
-  <ol className={styles.steps} aria-label="問題の進み具合">{questions.map((_,i)=><li key={i} data-current={i===at||undefined} data-done={answers[i]!==undefined||undefined} data-verdict={grades[i]?.verdict}>
-   <button type="button" disabled={i>answers.length} onClick={()=>setAt(i)} aria-label={`${i+1}問目`}>{i+1}</button></li>)}</ol>
+  <ol ref={top} className={styles.steps} aria-label="問題の進み具合">{questions.map((_,i)=><li key={i} data-current={i===at||undefined} data-done={answers[i]!==undefined||undefined} data-verdict={grades[i]?.verdict}>
+   <button type="button" disabled={i>answers.length} onClick={()=>go(i)} aria-label={`${i+1}問目`}>{i+1}</button></li>)}</ol>
   <section className={styles.question} aria-live="polite">
    <p className={styles.title}>{at+1}問目　{q.title}</p>
    <p className={styles.hand}>{q.board.length>0&&<><span>ボード</span><Cards cards={q.board}/></>}<span>あなた（{q.hero}）</span><Cards cards={q.cards}/></p>
@@ -34,7 +36,7 @@ export function DailyQuiz({date,questions,member,url}:{date:string;questions:Qui
    {g&&<div className={styles.result} data-verdict={g.verdict}>
     <p><b>{g.verdict}</b>（{g.points}点）</p>
     <ul>{explainQuiz(q,g).map((line,i)=><li key={i}>{line}</li>)}</ul>
-    {at<questions.length-1&&<button type="button" onClick={()=>setAt(at+1)}>次の問題</button>}
+    {at<questions.length-1&&<button type="button" onClick={()=>go(at+1)}>次の問題</button>}
    </div>}
   </section>
   {done&&<section className={styles.summary}>

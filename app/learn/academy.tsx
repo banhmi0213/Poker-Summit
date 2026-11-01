@@ -11,6 +11,7 @@ import { PotOddsTrainer } from "./pot-odds-trainer";
 import { PreflopDecisionSimulator } from "./preflop-decision-simulator";
 import { GraduationTest } from "./graduation-test";
 import { advancedLevels, LevelCurriculum } from "./level-curriculum";
+import { LearnLessonsHeading, LearnTools } from "./learn-hub";
 import styles from "./learn.module.css";
 
 const LevelThreeCourse = dynamic(() => import("./level-three-course").then(module => module.LevelThreeCourse), { loading: () => <p role="status">Lv.3の教材を読み込んでいます。</p> });
@@ -55,6 +56,8 @@ export function Academy() {
  const percent = Math.round(completed.length / courseLessons.length * 100);
  return <div className={styles.academy}>
   <AcademyHero variant="course" courseLevel={course} />
+  <LearnTools />
+  <LearnLessonsHeading />
   <nav id="academy-course-selector" className={styles.courseSelector} aria-label="学習コースを選ぶ">
    <button type="button" aria-pressed={course === "beginner"} onClick={() => setCourse("beginner")}><strong>Lv.1・2 初心者コース</strong><span>基本の5レッスンと卒業テスト</span></button>
    <button type="button" aria-pressed={course === "level3"} onClick={() => setCourse("level3")}><strong>Lv.3 実戦チャレンジャー</strong><span>6レッスンと実戦判断テスト</span></button>
@@ -66,8 +69,9 @@ export function Academy() {
    <div className={styles.progressRight}><strong>{loaded ? percent : 0}<small>%</small></strong><div className={styles.track}><span style={{width: (loaded ? percent : 0) + "%"}}/></div></div>
   </section>
   <section className={styles.achievementGuide} aria-labelledby="achievement-guide-title">
+   <details className={styles.badgeDetails}><summary>卒業バッジについて</summary>
    <div className={styles.achievementIntro}>
-    <span className={styles.eyebrow}>ACADEMY ACHIEVEMENTS</span>
+    <span className={styles.eyebrow}>ACHIEVEMENTS</span>
     <h2 id="achievement-guide-title">学んだ証を、あなたのプロフィールに。</h2>
     <p>初心者卒業テストに合格すると、会員アカウントに学習バッジを記録できます。獲得したバッジは、マイページとサミット（情報交換）の投稿・返信で公開されます。</p>
    </div>
@@ -92,6 +96,7 @@ export function Academy() {
      <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る</Link><Link href="/board">サミットを見る</Link></div>
     </div>
    </div>
+   </details>
    <div className={styles.levelRoadmap}>
     <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>Lv.1・2の基本、Lv.3の実戦判断から、Lv.4のGTO・ソルバー読解へ。Lv.5では解析の活用と総合演習を計画しています。</p></div>
     <div className={styles.levelRows}>
