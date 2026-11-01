@@ -104,3 +104,11 @@
  .splitMain .grid{font-size:11.5px!important;border-spacing:2px}
  .splitMain .grid td{padding:0;height:31px;line-height:31px;font-weight:800;letter-spacing:-.03em;border-radius:5px}
 }
+/* レンジ練習 (owner 2026/11/1「スマホの部分もっと改善」): the brush shows its colour, and the one in use is gold. On phones
+   the brushes and the score sit right above the table. */
+.brushes button{display:inline-flex;align-items:center;gap:6px}.brushes button>i{width:12px;height:12px;border-radius:3px;border:1px solid #ffffff40}
+.brushes button[aria-pressed=true]{background:#d9b368!important;color:#14283a!important}
+@media (max-width:700px){
+ .splitSide>.brushes{order:3;gap:6px}.brushes button{min-height:40px;padding:6px 11px!important}
+ .splitSide>.score{order:3;margin:0!important}
+}
