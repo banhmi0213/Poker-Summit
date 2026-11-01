@@ -142,3 +142,18 @@
  .trainer .actions button{font-size:17px!important;padding:12px 8px!important}
  .trainer .drillHand .card{width:62px;height:86px;font-size:29px!important}
 }
+
+/* スマホ (owner 2026/11/1「スマホの部分もっと改善」): the buttons right under the table, then the result of the last
+   decision and the action log; the settings and the totals move to the bottom. PC is unchanged. */
+.introShort{display:none}
+@media (max-width:650px){
+ .introShort{display:block}
+ .intro{display:none}
+ .play .table{margin:26px auto 30px}
+ .playSide>*{order:5}
+ .playSide>.actions,.playSide>.formBig:not(.settings){order:1}
+ .playSide>.feedback{order:2}
+ .playSide>.log,.playSide>.history{order:3}
+ .playSide>.settings{order:6}
+ .playSide>.stats{order:7}
+}
