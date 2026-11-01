@@ -24,10 +24,10 @@ const GROUPS: MenuGroup[] = [
     { label: "海外", href: "/major-tournaments?scope=" + encodeURIComponent("海外"), image: "/images/navigation/overseas-v1.webp", description: "世界の大型大会・スケジュールを探す" },
   ] },
   { label: "オリジナルコンテンツ", links: [
+    { label: "サミット", href: "/board", image: "/images/navigation/community-v1.webp", description: "ポーカー仲間との交流・質問・情報交換" },
     { label: "BLOG", href: "/blog", image: "/images/navigation/blog-v1.webp", description: "ポーカーの楽しみ方がもっと広がる" },
     { label: "学習コース", href: "/learn", image: "/images/navigation/learn-v1.webp", description: "遊びながら、ポーカーを学ぼう。" },
     { label: "お知らせ", href: "/news", image: "/images/navigation/notice-v1.webp", description: "Poker Summitからの最新情報" },
-    { label: "サミット", href: "/board", image: "/images/navigation/community-v1.webp", description: "ポーカー仲間との交流・質問・情報交換" },
   ] },
 ];
 
