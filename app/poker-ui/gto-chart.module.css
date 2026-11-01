@@ -80,8 +80,8 @@
 .handDetail li>strong{text-align:right;font-variant-numeric:tabular-nums}
 .chipRow{display:flex;flex-direction:column;gap:5px}.chipRow>span{font-size:13px;color:#c9d6e0}
 .chipRow>div{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.chipRow>div::-webkit-scrollbar{display:none}
-.chipRow button{flex:0 0 auto;min-height:38px;padding:0 13px;border-radius:19px;border:1px solid #3a5366;background:#102334;color:#e9eff5;font:inherit;font-size:14px!important;font-weight:700;white-space:nowrap;cursor:pointer}
-.chipRow button[aria-pressed=true]{background:#d9b368;border-color:#d9b368;color:#14283a}
+.chipRow button{flex:0 0 auto;min-height:38px!important;padding:0 13px!important;border-radius:19px!important;border:1px solid #3a5366!important;background:#102334!important;color:#e9eff5!important;font:inherit;font-size:14px!important;font-weight:700!important;white-space:nowrap;cursor:pointer;box-shadow:none!important}
+.chipRow button[aria-pressed=true]{background:#d9b368!important;border-color:#d9b368!important;color:#14283a!important}
 .chipSelect{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#c9d6e0}.chipSelect select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-height:42px;width:100%}
 @media(max-width:700px){
  .split{display:flex!important;flex-direction:column;gap:10px}
@@ -93,7 +93,7 @@
  .chips{order:2;display:flex;flex-direction:column;gap:8px}
  .splitSide>.storeInvite{order:3}
  .totals{order:3;margin:0!important;font-size:13px!important;line-height:1.6!important}
- .splitMain{order:4;margin:0 -8px}
+ .splitMain{order:4;margin:0 -13px}
  .aboutMobile{order:5;display:block;font-size:14px;color:#c9d6e0}.aboutMobile summary{cursor:pointer;color:#91a8ba}
  .splitSide>.note{order:6}
  .splitSide>[role=status],.splitSide>[role=alert]{order:0}
