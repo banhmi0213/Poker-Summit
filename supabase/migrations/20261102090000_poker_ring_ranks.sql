@@ -202,4 +202,28 @@ end;$$;
 revoke all on function public.poker_ring_bb_curve() from public,anon;
 grant execute on function public.poker_ring_bb_curve() to authenticated;
 
+-- 管理画面で卓ごとの段位の条件を設定できるように。
+create or replace function poker_private.admin_ring_save(p_id uuid,p_expected bigint,p_settings jsonb) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare row public.poker_ring_tables%rowtype; v_id uuid;
+begin
+ if auth.uid() is null or not coalesce(public.is_admin(),false) or coalesce(public.is_suspended(),true) then raise exception 'Admin required'; end if;
+ if jsonb_typeof(p_settings) is distinct from 'object' then raise exception 'Invalid settings'; end if;
+ if p_id is not null then
+  select * into row from public.poker_ring_tables where id=p_id for update;
+  if not found or row.deleted_at is not null then raise exception 'Table not found'; end if;
+  if row.revision is distinct from p_expected then raise exception 'Settings changed; reload'; end if;
+ else
+  if p_expected is distinct from 0 then raise exception 'Invalid new table revision'; end if;
+ end if;
+ v_id:=coalesce(p_id,gen_random_uuid());
+ insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,note,published,sort_order,rake_bps,rake_cap_bb,min_tier,max_tier)
+ values(v_id,btrim(p_settings->>'title'),(p_settings->>'capacity')::smallint,(p_settings->>'sb')::integer,(p_settings->>'bb')::integer,
+ (p_settings->>'min_buy_in')::integer,(p_settings->>'max_buy_in')::integer,coalesce(p_settings->>'note',''),(p_settings->>'published')::boolean,(p_settings->>'sort_order')::integer,
+ coalesce((p_settings->>'rake_bps')::integer,500),coalesce((p_settings->>'rake_cap_bb')::integer,5),coalesce((p_settings->>'min_tier')::smallint,0),coalesce((p_settings->>'max_tier')::smallint,6))
+ on conflict(id) do update set title=excluded.title,capacity=excluded.capacity,sb=excluded.sb,bb=excluded.bb,min_buy_in=excluded.min_buy_in,max_buy_in=excluded.max_buy_in,note=excluded.note,published=excluded.published,sort_order=excluded.sort_order,rake_bps=excluded.rake_bps,rake_cap_bb=excluded.rake_cap_bb,min_tier=excluded.min_tier,max_tier=excluded.max_tier,revision=public.poker_ring_tables.revision+1,updated_at=now();
+ select * into row from public.poker_ring_tables where id=v_id;
+ return to_jsonb(row);
+end;$$;
+
 commit;
