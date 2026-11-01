@@ -72,6 +72,11 @@ async function database(){
   // 2. Seats are drawn before the start; nobody is dealt in.
   let c=await until(saved,c=>Boolean(c.field),'seat draw');const tables=c.field.tables.length;check(tables===Math.ceil(ENTRANTS/6),'tables drawn');
   for(const [,t] of c.field.tables)check(t.seats.length>=3&&t.seats.length<=6,'table size');check(c.field.tables.every(([,t])=>t.hand===null),'no hand before the start');
+  // The browsers play as two members of the table that breaks first (fewest players, then the highest number),
+  // so the run always covers a real browser being moved to another table (owner 2026/11/01: 200人トナメ).
+  {const at0=where(c),counts=c.field.tables.map(([n,t])=>[n,t.seats.length]).sort((a,b)=>a[1]-b[1]||b[0]-a[0]),first=counts[0][0];
+   const picks=f.users.filter(u=>at0.get(u)?.table===first).slice(0,BROWSERS);
+   picks.forEach((u,k)=>{const j=f.users.indexOf(u);[f.users[k],f.users[j]]=[f.users[j],f.users[k]];});}
   // 3. Two real browsers (desktop + phone) join through the table UI; the rest are scripted players over HTTP.
   browser=await pw.launch({executablePath:await chromium.executablePath(),args:chromium.args.filter(a=>!['--single-process','--disable-web-security','--allow-running-insecure-content'].includes(a)),headless:true});
   for(let i=0;i<BROWSERS;i++){const ctx=await browser.newContext({viewport:i===1?{width:390,height:844}:{width:1280,height:800}});contexts.push(ctx);await ctx.addInitScript(({t})=>{sessionStorage.setItem('poker-e2e-token',t);},{t:token(i)});
@@ -84,7 +89,7 @@ async function database(){
   for(let i=BROWSERS;i<ENTRANTS;i++)check(Boolean(await bot(i)),'scripted player joined '+i);
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
   // 4. Play to the end. Scripted players shove or call often to move the tournament along.
-  now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,restarted=false;const seenMoves=new Set();
+  now=f.startsAt;let iterations=0,moves=0,breaks=0,maxTables=tables,finalTable=false,browserMoveShown=false,browserMoved=false,restarted=false;const seenMoves=new Set(),pendingMove=new Map();
   const shapes=[];let lastShape='';
   while(iterations++<Math.max(6000,ENTRANTS*400)){
    c=await saved();const field=c.field;
@@ -92,7 +97,7 @@ async function database(){
    for(const [,t] of field.tables)check(t.seats.length<=6,'never more than 6 at a table');
    maxTables=Math.max(maxTables,field.tables.length);if(field.tables.length===1&&[...where(c).values()].filter(s=>s.stack>0).length<=6)finalTable=true;
    {const shape=field.tables.map(([n,t])=>`${n}:${t.seats.filter(([,x])=>x.stack>0).length}/${t.seats.length}${t.hand&&!t.hand.result?'*':''}`).join(' ');if(shape!==lastShape){shapes.push(`${field.eliminated.length}out ${shape}${field.champion?' CHAMP':''}`);if(shapes.length>12)shapes.shift();lastShape=shape;}}
-   for(const [m,mv] of field.moved){const key=m+mv.at;if(!seenMoves.has(key)){seenMoves.add(key);moves++;}}
+   for(const [m,mv] of field.moved){const key=m+mv.at;if(!seenMoves.has(key)){seenMoves.add(key);moves++;const b=f.users.indexOf(m);if(b>=0&&b<BROWSERS){browserMoved=true;pendingMove.set(b,mv.to);}}}
    if(field.champion)break;
    // A mid-tournament restart of the whole service must continue the same tournament.
    if(!restarted&&field.eliminated.length>=Math.floor(ENTRANTS/3)){restarted=true;await service.close();service=null;await start(port);conn.clear();
@@ -107,7 +112,8 @@ async function database(){
      check(s.field.tableNumber===tableNo,'browser acts at its own table');
      const legal=s.hand.legal,ack=p.waitForResponse(r=>r.url().includes('/api/poker/rooms/')&&r.request().postDataJSON()?.type==='act',{timeout:8000}).catch(()=>null);
      const roll=Math.random(),panel=p.getByRole('region',{name:'操作パネル',exact:true});
-     if(legal.raise&&roll<0.5)await allIn(p,legal);else if(legal.call&&roll<0.75)await panel.getByRole('button',{name:/^(コール|オールイン)/}).first().click();else if(legal.check)await p.getByRole('button',{name:'チェック',exact:true}).click();else await p.getByRole('button',{name:'フォールド',exact:true}).click();
+     // Browsers play tight (they sit at the table that breaks first and should live long enough to be moved).
+     if(legal.raise&&roll<0.1)await allIn(p,legal);else if(legal.call&&roll<0.3)await panel.getByRole('button',{name:/^(コール|オールイン)/}).first().click();else if(legal.check)await p.getByRole('button',{name:'チェック',exact:true}).click();else await p.getByRole('button',{name:'フォールド',exact:true}).click();
      await ack;acted=true;break;
     }
     const connection=await bot(i);if(!connection)continue;let r=await api(i,{type:'state'},connection);
@@ -121,10 +127,12 @@ async function database(){
    }
    // Browser view after a move: the notice appears and the new table is shown.
    for(let i=0;i<BROWSERS;i++){const s=latest.get(i);if(s?.field?.moved&&!browserMoveShown){if(await pages[i].getByText(/第\d+卓から第\d+卓へ移動しました/).count())browserMoveShown=true;}}
+   // A moved browser must end up showing its new table (the notice itself only lasts 15 seconds).
+   for(const [i,to] of pendingMove){const s=latest.get(i);if(s?.field?.tableNumber===to&&await pages[i].getByText(new RegExp(`第${to}卓（全\\d+卓）`)).count()){browserMoveShown=true;pendingMove.delete(i);}}
    if(!acted){now+=1500;await sleep(120);}else await sleep(5);
   }
   c=await saved();check(Boolean(c.field.champion),'tournament finished');check(c.field.eliminated.length===ENTRANTS-1,'every other player placed');
-  check(maxTables===Math.ceil(ENTRANTS/6),'started on all tables');check(finalTable,'merged down to one final table: '+shapes.join(' | '));check(moves>0,'players were moved between tables');
+  check(maxTables===Math.ceil(ENTRANTS/6),'started on all tables');check(finalTable,'merged down to one final table: '+shapes.join(' | '));check(moves>0,'players were moved between tables');check(!browserMoved||browserMoveShown,'the moved browser shows its new table');
   // 5. Results: one record per hand, final standings archived for all entrants.
   const logs=(await f.db.query('select count(*)::int n,count(distinct hand_id)::int u from poker_private.hand_results where room_id=$1',[roomId])).rows[0];check(logs.n===logs.u&&logs.n>0,'one result record per hand');
   const finish=(await f.db.query('select standings from poker_private.tournament_finishes where tournament_id=$1',[f.tid])).rows[0];check(Boolean(finish),'tournament archived');
@@ -135,7 +143,7 @@ async function database(){
   check(errors.length===0,'no browser errors: '+errors.join(';'));
   await pages[1].screenshot({path:path.join(output,'mobile-finished.png'),fullPage:true});
   console.log('PASS field played to the end: balancing, table breaks, final table, places archived');
-  console.log(JSON.stringify({entrants:ENTRANTS,tables,moves,browserMoveShown,hands:logs.n,iterations,checks,errors:errors.length,liveSupabase:false,productionChanged:false}));
+  console.log(JSON.stringify({entrants:ENTRANTS,tables,moves,browserMoved,browserMoveShown,hands:logs.n,iterations,checks,errors:errors.length,liveSupabase:false,productionChanged:false}));
  }catch(e){console.error('E2E browser errors:',errors);if(pages[0]){console.error('E2E page text:',(await pages[0].locator('body').innerText().catch(()=>'')).slice(0,600));await pages[0].screenshot({path:path.join(output,'failure.png'),fullPage:true}).catch(()=>{});}throw e;}
  finally{if(service)await service.close();if(browser)await browser.close();await new Promise(r=>gateway.close(r));await f.db.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});
