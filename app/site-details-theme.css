@@ -1,0 +1,24 @@
+/* Preview branch: shared public detail and member-page visual language.
+   The portal-header gate leaves admin, store management and game tables alone. */
+body:has(.portal-nav) .detail-readable{--text:#183247;--text-2:#4b5e6b;--muted:#63717a;--accent-text:#815f27;color:var(--text)}
+body:has(.portal-nav) .detail-readable :is(h1,h2,h3,h4){color:#183247}
+body:has(.portal-nav) .detail-readable :is(.muted,.info-row .k,.sd-empty,.sd-weekday,.sd-schedule p,.sd-calendar-days>span,.sd-see-all){color:#4b5e6b}
+body:has(.portal-nav) :is(.card,.sd-info,.sd-hero-surface,.mt-panel){border-color:#d8c8a7;background:linear-gradient(135deg,#fffefa,#faf5e9);box-shadow:0 5px 20px #20384a08}
+body:has(.portal-nav) :is(.sd-section,.detail-head){border-color:#dfd5c1}
+body:has(.portal-nav) .sd-section h2{color:#294657;border-left:3px solid #c7aa6b;padding-left:12px}
+body:has(.portal-nav) .sd-tabs{gap:4px;border-bottom-color:#c7aa6b}
+body:has(.portal-nav) .sd-tabs button{background:#ece4d3;border-radius:9px 9px 0 0;color:#294657}
+body:has(.portal-nav) .sd-tabs button[aria-selected="true"]{background:linear-gradient(135deg,#294657,#3e5b6b);color:#fff5e5;border-bottom-color:#d7b36b}
+body:has(.portal-nav) .sd-info-list dt{color:#4b5e6b}
+body:has(.portal-nav) :is(.card,.detail-readable) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=submit]),select,textarea){border-color:#cdbd9c;background-color:#fffdf7;color:#183247}
+body:has(.portal-nav) :is(.card,.detail-readable) :is(input,select,textarea):focus-visible{outline:2px solid #aa8644;outline-offset:2px}
+body:has(.portal-nav) .mt-facts>div{background:#fffaf0;border-color:#d8c8a7;color:#183247}
+body:has(.portal-nav) .mt-section-nav{background:#294657;border-color:#c7aa6b}
+body:has(.portal-nav) .mt-section-nav a{color:#fff5e5}
+body:has(.portal-nav) .mt-heading h2{color:#183247}
+body:has(.portal-nav) .mt-text{color:#294657}
+body:has(.portal-nav) .breadcrumb{color:#586b77}
+@media(max-width:767px){
+ body:has(.portal-nav) .sd-tabs{gap:2px}
+ body:has(.portal-nav) .sd-tabs button{font-size:12px;padding-inline:3px}
+}

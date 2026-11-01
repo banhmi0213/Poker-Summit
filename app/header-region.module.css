@@ -184,3 +184,9 @@
 /* Disabled game entrances show the product preview without exposing navigation. */
 .header .pokerArtwork{height:auto;aspect-ratio:16/9;filter:grayscale(.65);opacity:.76}
 .disabled.disabledCard{cursor:not-allowed}
+
+/* Carry the homepage masthead into public details and member pages. */
+:global(body:not(:has(.navy-preview))) .header{background:linear-gradient(110deg,#203a4c,#395462);border-bottom:1px solid #c7aa6b}
+:global(body:not(:has(.navy-preview))) .header .title{background:#ffffff07;border-color:#ffffff26;color:#fff5e5;box-shadow:none}
+:global(body:not(:has(.navy-preview))) .header .title:hover,:global(body:not(:has(.navy-preview))) .header .activeTitle{background:#466170;border-color:#d7b36b;color:#fff5e5}
+:global(body:not(:has(.navy-preview))) .header :global(.nav-hamburger){color:#fff5e5}
