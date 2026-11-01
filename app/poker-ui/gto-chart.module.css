@@ -87,9 +87,11 @@
  .split{display:flex!important;flex-direction:column;gap:10px}
  .splitSide{display:contents}
  .splitSide>*{order:1}
- .splitSide>.form{order:1;grid-template-columns:.85fr 1.3fr .85fr;gap:6px}
- .splitSide>.form label{font-size:12px!important;min-width:0}
- .splitSide>.form select{font-size:13px!important;padding:6px 4px;min-height:38px}
+ .splitSide>.form{order:1;grid-template-columns:1fr 1fr;gap:8px}
+ .splitSide>.form.compact{grid-template-columns:.85fr 1.3fr .85fr;gap:6px}
+ .splitSide>.form.compact label{font-size:12px!important;min-width:0}
+ .splitSide>.form.compact select{font-size:13px!important;padding:6px 4px;min-height:38px}
+ .splitSide>.form>button{align-self:end}
  .desktopOnly,.intro{display:none!important}
  .chips{order:2;display:flex;flex-direction:column;gap:8px}
  .splitSide>.storeInvite{order:3}

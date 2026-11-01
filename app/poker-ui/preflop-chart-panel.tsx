@@ -44,7 +44,7 @@ export function PreflopChartPanel({standard=false,pro=false,upsell=false}:{stand
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status" data-loading>読み込み中…</p>}
   {data&&<>
-   <div className={styles.form}>
+   <div className={`${styles.form} ${styles.compact}`}>
     <label>人数<select value={table} onChange={e=>{const t=e.target.value as Table;setTable(t);if(t==='hu')setDepth(100);setKind('open');setId(null);}}><option value="6max">6人卓</option>{(standard||upsell)&&<><option value="8max">8人卓{standard?'':'（スタンダード）'}</option><option value="9max">9人卓{standard?'':'（スタンダード）'}</option></>}<option value="hu">2人（ヘッズアップ）</option></select></label>
     {(table==='6max'||(many&&(pro||upsell||standard)))&&<label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB（アンティなし）</option><option value={60}>60BB（大会・BBアンティ）</option><option value={40}>40BB（大会・BBアンティ）</option><option value={20}>20BB（大会・BBアンティ）</option><option value={10}>10BB（大会・BBアンティ）</option></select></label>}
     {(table==='6max'||many)&&depth===100&&<label>レーキ<select value={rake} onChange={e=>{setRake(e.target.value);setId(null);}}><option value="">なし</option>{RAKE_CHARTS.filter(r=>r.menu).map(r=><option key={r.bps} value={`${r.bps}-${r.capBb}`}>{r.label}</option>)}</select></label>}
