@@ -56,7 +56,7 @@ jobs:
       fail-fast: false
       max-parallel: ${{ fromJSON(needs.capacity.outputs.parallel) }}
       matrix:
-        stack: [40, 60]
+        stack: [40]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,7 +67,7 @@ jobs:
       - name: Fit
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds 6 --iters 400 --init data/poker-gto/fit-work/fit-${{ matrix.stack }}.json --out out/fit2-${{ matrix.stack }}.json
+        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds 6 --iters 400 --init data/poker-gto/fit-work/fit2-${{ matrix.stack }}.json --out out/fit2-${{ matrix.stack }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: fit-${{ matrix.stack }}
@@ -88,13 +88,13 @@ jobs:
       - name: Preserve refinement results for acceptance review
         run: |
           set -euo pipefail
-          for stack in 40 60; do
+          for stack in 40; do
             test -s "out/fit2-$stack.json"
             cp "out/fit2-$stack.json" "data/poker-gto/fit-work/fit2-$stack.json"
           done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-fit-out/${{ github.run_id }}"
-          git add data/poker-gto/fit-work/fit2-40.json data/poker-gto/fit-work/fit2-60.json
+          git add data/poker-gto/fit-work/fit2-40.json
           git commit -m "Preserve 40BB and 60BB refinement results for review"
           git push origin "gto-preflop-fit-out/${{ github.run_id }}"
