@@ -1,6 +1,7 @@
 import {loadPokerStatistics} from '@/lib/poker/statistics';
 import {loadRingMonthly} from '@/lib/poker/ring-monthly';
 import {RingMonthlyView} from '@/app/poker-ui/ring-monthly-view';
+import {RingRankView} from '@/app/poker-ui/ring-rank-view';
 import {RingBbCurve} from '@/app/poker-ui/ring-bb-curve';
 import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
@@ -30,6 +31,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
  const panes=[
  {id:'ring',label:'チップ残高・順位',eyebrow:'RING CHIP BALANCE',description:'リング用チップの残高と自分のランキング。',content:data?<><StatisticsView data={data} section="ring"/><RingMonthlyView rows={monthly}/></>:unavailable},
+ {id:'rank',label:'段位',eyebrow:'RING RANK',description:'リングの通算BBで決まる段位と、全体の中の自分の位置。',content:<RingRankView/>},
  {id:'curve',label:'収支グラフ',eyebrow:'RING RESULTS',description:'リングの通算の勝ち負け（BB）の推移。',content:<RingBbCurve/>},
  {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
  {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加卓を確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},

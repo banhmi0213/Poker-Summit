@@ -24,11 +24,12 @@ const sameRake=(a:RingRake|undefined,b:RingRake|undefined)=>Boolean(a&&b&&a.bps=
  * @param rakes    rake per table id (a table without a known rake never counts as the same rate)
  * @param stack    the player's chips at the table now
  * @param available the player's chips in the wallet (not at a table)
+ * @param allowed  whether the player's rank may sit at a table (2026/11/01 ranks)
  */
-export function pickRingMove(current:RingListing,tables:readonly RingListing[],rakes:ReadonlyMap<string,RingRake>,stack:number,available:number):RingMove|null{
+export function pickRingMove(current:RingListing,tables:readonly RingListing[],rakes:ReadonlyMap<string,RingRake>,stack:number,available:number,allowed:(table:RingListing)=>boolean=()=>true):RingMove|null{
  if(current.occupied>RING_SHORT_TABLE)return null;
  const total=stack+available;
- const open=tables.filter(t=>t.id!==current.id&&t.capacity===current.capacity&&t.occupied>=2&&t.occupied<t.capacity&&(t.occupied>current.occupied||t.occupied===current.occupied&&t.id<current.id));
+ const open=tables.filter(t=>t.id!==current.id&&allowed(t)&&t.capacity===current.capacity&&t.occupied>=2&&t.occupied<t.capacity&&(t.occupied>current.occupied||t.occupied===current.occupied&&t.id<current.id));
  // Two equally short tables: only one side moves (the one with the larger id), so players never cross over.
  const busiest=(a:RingListing,b:RingListing)=>b.occupied-a.occupied||a.title.localeCompare(b.title,'ja');
  const same=open.filter(t=>t.sb===current.sb&&t.bb===current.bb&&sameRake(rakes.get(t.id),rakes.get(current.id))).sort(busiest)[0];
