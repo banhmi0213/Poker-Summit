@@ -8,7 +8,7 @@
 .legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px!important}.legend span{display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--gto-off)}.legend span[data-on=all]{background:var(--gto-on)}.legend span[data-on=mix]{background:linear-gradient(90deg,var(--gto-on) 50%,var(--gto-off) 50%)}
 .note{font-size:13px!important;color:#91a8ba!important}
 .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;font-size:14px;color:#c9d6e0}
-.form label{display:flex;flex-direction:column;gap:4px}.form input,.form select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-width:0}
+.form label{display:flex;flex-direction:column;gap:4px;min-width:0}.form input,.form select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-width:0}
 .form button,.path button{background:#d9b368;color:#14283a;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}.form button:disabled,.path button:disabled{opacity:.45;cursor:default}
 .path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:#c9d6e0}.path span{background:#1b3448;border-radius:6px;padding:4px 8px}.path button{padding:6px 10px;font-size:14px;background:#24435a;color:#e9eff5}
 .key{display:inline-flex;align-items:center;gap:4px;font-style:normal;margin-right:8px}.key i{display:inline-block;width:12px;height:12px;border-radius:3px}
@@ -62,4 +62,40 @@
  .splitSide .path button{min-height:38px}
  .splitMain .grid{font-size:15px!important;border-spacing:3px}
  .splitMain .grid td{padding:6px 1px}
+}
+/* スマホ (owner 2026/11/1「ほとんどの人がスマホで見る」): the table right under short controls, seats and situations as
+   buttons, the tapped hand's shares under the table, the long explanation folded away. PC is unchanged. */
+.chips,.aboutMobile{display:none}
+.grid td[data-pick]{outline:3px solid #f3d38a;outline-offset:-3px}
+.grid td{cursor:pointer}
+.handDetailHint{margin:8px 2px 0!important;font-size:13px!important;color:#91a8ba!important}
+.handDetail{margin-top:8px;padding:10px 12px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;color:#e9eff5;display:flex;flex-direction:column;gap:6px}
+.handDetail>b{font-size:18px;color:#f3d38a}.handDetail>span{font-size:14px;color:#c9d6e0}
+.handDetail ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.handDetail ul{display:grid!important;grid-template-columns:14px max-content 1fr 3em;column-gap:8px}.handDetail li{display:contents;align-items:center;gap:8px;font-size:14px}
+.handDetail li>i{width:14px;height:14px;border-radius:3px}
+.handDetail li>em{display:block;height:10px;border-radius:5px;background:#0d1d2b;overflow:hidden}.handDetail li>em>s{display:block;height:100%;text-decoration:none}
+.handDetail li>strong{text-align:right;font-variant-numeric:tabular-nums}
+.chipRow{display:flex;flex-direction:column;gap:5px}.chipRow>span{font-size:13px;color:#c9d6e0}
+.chipRow>div{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.chipRow>div::-webkit-scrollbar{display:none}
+.chipRow button{flex:0 0 auto;min-height:38px;padding:0 13px;border-radius:19px;border:1px solid #3a5366;background:#102334;color:#e9eff5;font:inherit;font-size:14px!important;font-weight:700;white-space:nowrap;cursor:pointer}
+.chipRow button[aria-pressed=true]{background:#d9b368;border-color:#d9b368;color:#14283a}
+.chipSelect{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#c9d6e0}.chipSelect select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-height:42px;width:100%}
+@media(max-width:700px){
+ .split{display:flex!important;flex-direction:column;gap:10px}
+ .splitSide{display:contents}
+ .splitSide>.form{order:1;grid-template-columns:.85fr 1.3fr .85fr;gap:6px}
+ .splitSide>.form label{font-size:12px!important;min-width:0}
+ .splitSide>.form select{font-size:13px!important;padding:6px 4px;min-height:38px}
+ .desktopOnly,.intro{display:none!important}
+ .chips{order:2;display:flex;flex-direction:column;gap:8px}
+ .splitSide>.storeInvite{order:3}
+ .totals{order:3;margin:0!important;font-size:13px!important;line-height:1.6!important}
+ .splitMain{order:4;margin:0 -8px}
+ .aboutMobile{order:5;display:block;font-size:14px;color:#c9d6e0}.aboutMobile summary{cursor:pointer;color:#91a8ba}
+ .splitSide>.note{order:6}
+ .splitSide>[role=status],.splitSide>[role=alert]{order:0}
+ .splitMain .strategyLegend{padding:8px 10px;margin-bottom:6px}.splitMain .strategyLegend>p{display:none}
+ .splitMain .grid{font-size:10.5px!important;border-spacing:2px}
+ .splitMain .grid td{padding:0;height:27px;line-height:27px;font-weight:700;letter-spacing:-.02em}
 }
