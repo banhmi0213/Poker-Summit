@@ -101,7 +101,7 @@ begin
 end;$$;
 revoke all on function poker_private.ensure_ring_season(uuid) from public,anon,authenticated,service_role;
 
--- おかわり(オーナー 2026/11/01): 1日1回、段位で打つレートの100BBまで戻す。
+-- 補充(オーナー 2026/11/01): 1日1回、段位で打つレートの100BBまで戻す。
 --   ルーキー〜シルバー 200(1/2) / ゴールド 500(2/5) / プラチナ 1,000(5/10) / ダイヤ・レジェンド 2,000(10/20)
 -- 卓に座っていない、かつ残高がその額より少ないときだけ。毎月1日の配布(1,000、プラチナ以上3,000)は別。
 create or replace function poker_private.ring_refill_amount(p_member uuid) returns bigint language sql security definer set search_path='' as $$
@@ -127,7 +127,7 @@ end;$$;
 revoke all on function public.poker_ring_refill(uuid,uuid) from public,anon,service_role;
 grant execute on function public.poker_ring_refill(uuid,uuid) to authenticated;
 
--- おかわりは1日1回(日本時間)。着席回数の上限は今まで通り。
+-- 補充は1日1回(日本時間)。着席回数の上限は今まで通り。
 create or replace function poker_private.ring_ledger_throttle() returns trigger language plpgsql set search_path='' as $$
 begin
  if new.kind='reserve' and (select count(*) from poker_private.ring_chip_ledger l where l.member_id=new.member_id and l.kind='reserve' and l.created_at>now()-interval '1 hour')>=30 then
@@ -135,7 +135,7 @@ begin
  end if;
  if new.kind='refill' and (select count(*) from poker_private.ring_chip_ledger l where l.member_id=new.member_id and l.kind='refill'
     and l.created_at>=(date_trunc('day',now() at time zone 'Asia/Tokyo') at time zone 'Asia/Tokyo'))>=1 then
-  raise exception 'Refill limit reached' using hint='おかわりは1日1回までです。';
+  raise exception 'Refill limit reached' using hint='補充は1日1回までです。';
  end if;
  return new;
 end; $$;
@@ -158,7 +158,9 @@ begin
   'next',case tier when 0 then null when 1 then 100 when 2 then 300 when 3 then 1000 when 4 then 3000 when 5 then 6000 else null end,
   'floor',case tier when 2 then 100 when 3 then 300 when 4 then 1000 when 5 then 3000 when 6 then 6000 else null end,
   'rookieHandsLeft',case when r.hands<100 then 100-r.hands else 0 end,
-  'baseChips',case when tier>=4 then 3000 else 1000 end);
+  'baseChips',case when tier>=4 then 3000 else 1000 end,
+  'refillAmount',case tier when 3 then 500 when 4 then 1000 when 5 then 2000 when 6 then 2000 else 200 end,
+  'refillUsedToday',exists(select 1 from poker_private.ring_chip_ledger l where l.member_id=who and l.kind='refill' and l.created_at>=(date_trunc('day',now() at time zone 'Asia/Tokyo') at time zone 'Asia/Tokyo')));
 end;$$;
 revoke all on function public.poker_ring_rank() from public,anon;
 grant execute on function public.poker_ring_rank() to authenticated;

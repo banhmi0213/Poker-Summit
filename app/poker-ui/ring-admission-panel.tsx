@@ -12,6 +12,7 @@ import {ringStandbyDisplay} from '@/lib/poker/ring-table-display';
 import RingLiveTable from './ring-live-table';
 import {RingAutoMove} from './ring-auto-move';
 import {useRingTiers} from './use-ring-tiers';
+import {RefillConfirm} from './refill-confirm';
 import {tierAllowed,tierCondition} from '@/lib/poker/ring-rank';
 import {optimisticRingPlay} from '@/lib/poker/ring-optimistic';
 import {SharePrompt} from './share-prompt';
@@ -57,10 +58,14 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
   try{const {error}=await auth.rpc('poker_ring_refill',{p_request:crypto.randomUUID(),p_table:t.id});if(error)throw Error(error.message);
    const buy=Math.min(t.maxBuyIn,Math.max(t.minBuyIn,t.bb*100));setAmount(String(buy));
    if(lastSeat!==null&&!t.seats.some(s=>s.seat===lastSeat))await transport.perform({type:'join',tableId:t.id,amount:buy,seat:lastSeat,requestId:crypto.randomUUID()});
-   else{setSelectSeat(true);setRefillNote('おかわりしました。空いている席を選んでください。');}
+   else{setSelectSeat(true);setRefillNote('補充しました。空いている席を選んでください。');}
    setLastSeat(null);
-  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだおかわりできません（chipが残っているか、卓に座っています）。':e instanceof Error&&e.message.includes('Refill limit')?'おかわりは1日1回です。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
+  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだ補充できません（chipが残っているか、卓に座っています）。':e instanceof Error&&e.message.includes('Refill limit')?'補充は1日1回です。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
   finally{setRefilling(false);}};
+ // 「補充しますか？」(2026/11/01): asked once when the chips run out at this table, and on every refill tap.
+ const [askRefill,setAskRefill]=useState(false),bustAsked=useRef(false);
+ useEffect(()=>{const d=view.state,t=d?.table;const busted=Boolean(member&&!d?.membership&&lastSeat!==null&&t&&d&&d.wallet.inPlay===0&&d.wallet.available<t.minBuyIn);
+  if(busted&&!bustAsked.current){bustAsked.current=true;setAskRefill(true);}if(!busted)bustAsked.current=false;},[member,view.state,lastSeat]);
  // Rank conditions (2026/11/01): 1/2 up to gold, 5/10 and 10/20 from platinum.
  const ringTiers=useRingTiers(auth,member,(view.state?.tables??[]).map(t=>t.id).join(','));
  const tierBlocked=(id:string)=>!tierAllowed(ringTiers.rank?.tier??null,ringTiers.limits.get(id));
@@ -75,7 +80,8 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
  if(!member)return <p>着席と残高の確認には<Link href="/login?next=%2Fpoker-lobby">ログイン</Link>してください。</p>;
  const data=view.state,shownPlay=data?.play&&view.pending?.type==='act'?optimisticRingPlay(data.play,view.pending.command):data?.play??null,own=data?.membership&&(!tableId||data.membership.tableId===tableId)?data.membership:null,table=data?.table,blocked=Boolean(view.problem)||view.working||Boolean(view.pending)||view.storageBlocked||Boolean(tableId&&data?.membership&&data.membership.tableId!==tableId),chosen=selected?data?.tables.find(t=>t.id===selected.id)??selected:null,max=chosen?Math.min(chosen.maxBuyIn,data?.wallet.available??0):0,valid=chosen&&Number.isSafeInteger(Number(amount))&&Number(amount)>=chosen.minBuyIn&&Number(amount)<=max;
  const canRefillHere=Boolean(!own&&lastSeat!==null&&table&&data&&data.wallet.inPlay===0&&data.wallet.available<table.minBuyIn);
- const refillControl=(canRefillHere||refillNote)&&<>{canRefillHere&&<button type="button" disabled={blocked||refilling} onClick={()=>void refillAndSit()}>{refilling?'おかわり中':'補充して座り直す'}</button>}{refillNote&&<p role="status">{refillNote}</p>}</>;
+ const refillDialog=<RefillConfirm open={askRefill} lead={canRefillHere?'チップがなくなりました。':undefined} onNo={()=>setAskRefill(false)} onYes={()=>{setAskRefill(false);void refillAndSit();}}/>;
+ const refillControl=(canRefillHere||refillNote)&&<>{canRefillHere&&<button type="button" disabled={blocked||refilling} onClick={()=>setAskRefill(true)}>{refilling?'補充中':'補充して座り直す'}</button>}{refillNote&&<p role="status">{refillNote}</p>}</>;
  const join=async()=>{if(!chosen||!valid)return;if(productionFlow){window.location.assign(`/poker-ring/${chosen.id}?view=table&buyin=${Number(amount)}`);return;}await transport.perform({type:'join',tableId:chosen.id,amount:Number(amount),requestId:crypto.randomUUID()});setSelected(null);};
  const leave=async()=>{if(!own)return;await transport.perform({type:'leave',reservationId:own.reservationId,requestId:crypto.randomUUID()});if(exitIntent==='lobby')setLobbyPending(true);setConfirmExit(false);};
  const action=(action:import('@/lib/poker/betting').BettingAction|import('@/lib/poker/hand-command').RunsChoice)=>{if(!own||!data?.play)return;void transport.perform({type:'act',reservationId:own.reservationId,requestId:crypto.randomUUID(),command:{handId:data.play.hand.handId,revision:data.play.hand.revision,actionId:crypto.randomUUID(),action}});};
@@ -85,13 +91,13 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
 
   {own&&<SharePrompt play={data.play}/>}
   {tableId&&productionFlow&&<RingAutoMove auth={auth} data={data} own={own??null} tableId={tableId} blocked={blocked} leave={async()=>{if(own)await transport.perform({type:'leave',reservationId:own.reservationId,requestId:crypto.randomUUID()});}}/>}
-  {exitDialog}
+  {exitDialog}{refillDialog}
  </div>;
  if(layout==='table'&&productionFlow&&table&&data&&(!own||own.tableId===table.id)){const buy=Number(amount),validBuy=Number.isSafeInteger(buy)&&buy>=table.minBuyIn&&buy<=Math.min(table.maxBuyIn,data.wallet.available);return <div className={styles.fullTable}><OnlineTableView onExit={()=>{if(!own){window.location.assign('/poker-lobby');return;}setExitIntent('lobby');setConfirmExit(true);}} onSpectate={own?()=>{setExitIntent('watch');setConfirmExit(true);}:undefined} state={ringStandbyDisplay(table,own?.seat??null)} ring ringSeatStacks={Object.fromEntries(table.seats.map(s=>[s.seat,s.stack]))} emptySeatsDisabled={blocked||!validBuy} onEmptySeat={!own&&selectSeat?seat=>void transport.perform({type:'join',tableId:table.id,amount:buy,seat,requestId:crypto.randomUUID()}):undefined} ringSummary={<><h3>{table.title}</h3><p>SB {table.sb} / BB {table.bb}</p><p>使用可能 {data.wallet.available.toLocaleString()} chip</p></>}>
  {refillControl}
  {!own?selectSeat?<><BuyInSelector value={amount} onChange={setAmount} min={table.minBuyIn} max={Math.min(table.maxBuyIn,data.wallet.available)} disabled={blocked}/><button type="button" disabled={blocked} onClick={()=>setSelectSeat(false)}>観戦に戻る</button></>:<><p role="status">観戦中 · 次のハンド開始を待っています。</p><button type="button" disabled={blocked} onClick={()=>{setAmount(String(table.minBuyIn));setSelectSeat(true);}}>着席する</button></>:<><p>席 {own.seat} · {own.stack.toLocaleString()} chip。{table.playing?'次のハンドから参加します。':'対戦相手の着席・接続待ちです。2名以上で自動開始します。'}</p><button type="button" disabled={blocked} onClick={()=>void leave()}>退出・chipを返却</button><button type="button" disabled={blocked||Boolean(own?.exitRequested)} onClick={()=>void transport.perform({type:'ready',reservationId:own.reservationId,requestId:crypto.randomUUID()})}>プレイに復帰・準備完了</button></>}
  {(view.problem||view.pending)&&<p role="status">{view.problem??'着席を確認しています…'}</p>}{view.pending&&<button type="button" disabled={view.working} onClick={()=>void transport.retry()}>同じ操作の結果を確認</button>}
- </OnlineTableView>{tableId&&<RingAutoMove auth={auth} data={data} own={own??null} tableId={tableId} blocked={blocked} leave={async()=>{if(own)await transport.perform({type:'leave',reservationId:own.reservationId,requestId:crypto.randomUUID()});}}/>}{exitDialog}</div>;}
+ </OnlineTableView>{tableId&&<RingAutoMove auth={auth} data={data} own={own??null} tableId={tableId} blocked={blocked} leave={async()=>{if(own)await transport.perform({type:'leave',reservationId:own.reservationId,requestId:crypto.randomUUID()});}}/>}{exitDialog}{refillDialog}</div>;}
  return <section className={`${styles.panel} ${layout==='table'?styles.standby:''}`} aria-label="会員chipのリング卓">{lobbyLayout!=='list'&&<><div className={styles.heading}><div><small>MEMBER RING TABLES</small><h2>{tableId?'リング卓・着席確認':'会員chipのリング卓'}</h2></div><button type="button" disabled={view.working} onClick={()=>void transport.refresh(tableId)}>更新</button></div><p className={styles.notice}>着席後、卓で全員が「準備完了」を押すと2人以上で対戦を開始します。手番は20秒、時間切れはチェックまたはフォールドになります。</p></>}
  {view.problem&&<p role="alert" className={styles.alert}>{view.problem}</p>}{view.pending&&<div className={styles.alert}><p>未確認の操作があります。確認が完了するまで新しい着席・退出は停止します。</p><button type="button" disabled={view.working} onClick={()=>void transport.retry()}>同じ操作の結果を確認</button></div>}
  {data?<>{lobbyLayout!=='list'&&<div className={styles.balance}><span>所持 <b>{data.wallet.total.toLocaleString()} chip</b></span><span>使用可能 {data.wallet.available.toLocaleString()} ／ 卓へ持込中 {data.wallet.inPlay.toLocaleString()}</span><Link href="/mypage/chips">残高・履歴</Link></div>}
