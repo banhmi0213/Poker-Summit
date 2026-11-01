@@ -112,7 +112,8 @@ async function database(){
      check(s.field.tableNumber===tableNo,'browser acts at its own table');
      const legal=s.hand.legal,ack=p.waitForResponse(r=>r.url().includes('/api/poker/rooms/')&&r.request().postDataJSON()?.type==='act',{timeout:8000}).catch(()=>null);
      const roll=Math.random(),panel=p.getByRole('region',{name:'操作パネル',exact:true});
-     if(legal.raise&&roll<0.5)await allIn(p,legal);else if(legal.call&&roll<0.75)await panel.getByRole('button',{name:/^(コール|オールイン)/}).first().click();else if(legal.check)await p.getByRole('button',{name:'チェック',exact:true}).click();else await p.getByRole('button',{name:'フォールド',exact:true}).click();
+     // Browsers play tight (they sit at the table that breaks first and should live long enough to be moved).
+     if(legal.raise&&roll<0.1)await allIn(p,legal);else if(legal.call&&roll<0.3)await panel.getByRole('button',{name:/^(コール|オールイン)/}).first().click();else if(legal.check)await p.getByRole('button',{name:'チェック',exact:true}).click();else await p.getByRole('button',{name:'フォールド',exact:true}).click();
      await ack;acted=true;break;
     }
     const connection=await bot(i);if(!connection)continue;let r=await api(i,{type:'state'},connection);
