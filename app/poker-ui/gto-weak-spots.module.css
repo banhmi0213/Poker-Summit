@@ -1,4 +1,4 @@
-/* あかんとこ一覧 (owner 2026/11/1). Text sizes as the other GTO panes. */
+/* 弱点分析 (owner 2026/11/1). Text sizes as the other GTO panes. */
 .wrap{display:flex;flex-direction:column;gap:14px;font-size:15px;color:#e9eff5}
 .wrap p{margin:0;font-size:15px!important;line-height:1.75!important}
 .wrap .lead{color:#d2e0e7!important}

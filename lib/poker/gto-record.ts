@@ -5,7 +5,7 @@ import {gradeChoice,type TrainerLevel} from './gto-trainer';
 /** GTO records (owner 2026/11/1「プレイヤーがプレイした全部から収集」): one row per graded decision, from every place the
  * member plays — ring, tournaments, the CPU practice table, GTOと対戦, プリフロップ連打 and the quizzes. Rows go to
  * public.poker_gto_decisions through public.poker_gto_record (supabase/migrations/*_poker_gto_records.sql), and the
- * あかんとこ一覧 groups them by `spot`. Pure functions here; the browser sender is sendGtoRecords below. */
+ * 弱点分析 groups them by `spot`. Pure functions here; the browser sender is sendGtoRecords below. */
 export const RECORD_SOURCES=['ring','tournament','practice','trainer','drill','quiz','daily'] as const;
 export type GtoRecordSource=typeof RECORD_SOURCES[number];
 export const SOURCE_TEXT:Record<GtoRecordSource,string>={ring:'リング',tournament:'大会',practice:'練習卓',trainer:'GTOと対戦',drill:'プリフロップ連打',quiz:'GTO練習クイズ',daily:'毎日のクイズ'};

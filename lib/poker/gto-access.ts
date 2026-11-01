@@ -10,5 +10,5 @@ export function gtoAccess(tier:string|null|undefined,visible=paidFeaturesVisible
  const standard=tier==='standard'||tier==='pro',pro=tier==='pro';
  return {standard,pro,upsell:!standard};
 }
-/** Free members see this many spots of あかんとこ一覧. */
+/** Free members see this many spots of 弱点分析. */
 export const FREE_WEAK_SPOTS=3;

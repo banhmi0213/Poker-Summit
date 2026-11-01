@@ -5,7 +5,7 @@ import {LEVEL_TEXT,type TrainerLevel} from '@/lib/poker/gto-trainer';
 import {syncHandRecords} from './gto-record-sync';
 import styles from './gto-weak-spots.module.css';
 
-/** あかんとこ一覧 (owner 2026/11/1「プレイヤーがプレイした全部から収集」): the member's GTO records from every place they
+/** 弱点分析 (owner 2026/11/1「プレイヤーがプレイした全部から収集」): the member's GTO records from every place they
  * play, grouped by spot, the costliest first. Ring and tournament hands are judged in the background on open. */
 type Example={source:GtoRecordSource;hand:string;board:string;action:string;freq:number|null;evLoss:number|null;level:TrainerLevel|null;at:string;ref:string|null};
 type Spot={spot:string;n:number;misses:number;close:number;good:number;evLoss:number;evN:number;last:string;examples:Example[]};
@@ -24,7 +24,7 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
  const load=useCallback(async()=>{
   const f=FILTERS.find(x=>x.id===filter)!;
   try{const r=await fetch(`/api/poker/gto-records?days=${days}${f.sources?`&sources=${f.sources.join(',')}`:''}`,{cache:'no-store'});
-   if(r.status===401){setError('ログインすると、打ったハンドから自分のあかんとこが集まります。');return;}
+   if(r.status===401){setError('ログインすると、打ったハンドから自分の弱点が集まります。');return;}
    if(!r.ok)throw Error();setData(await r.json());setError('');}catch{setError('読み込めませんでした。少しおいて開き直してください。');}
  },[days,filter]);
  useEffect(()=>{void load();},[load]);
