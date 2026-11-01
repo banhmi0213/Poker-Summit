@@ -33,7 +33,9 @@ const postOrder=(seats:number)=>Array.from({length:seats},(_,p)=>p>=seats-2?p-(s
 // opened the button too little against published solver results: the flop trees give the player out of position too few
 // options, so the caller's share comes out low. Until the flop trees are widened and re-solved (and the preflop values
 // come from per-hand flop EVs), both roles keep the earlier factors, so the chart is unchanged.
-export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number}>={srp:{call:0.8,aggr:0.8},'3bp':{call:0.88,aggr:0.88},'4bp':{call:0.95,aggr:0.95}};
+/** callBy (2026/11/2, tournament fit): the caller's realisation in a single-raised pot by the opener's seat, as one number
+ * could not make the big blind defend about as much as published against both the button and under the gun. */
+export const REALIZE_ROLE:Record<'srp'|'3bp'|'4bp',{call:number;aggr:number;callBy?:Record<string,number>}>={srp:{call:0.8,aggr:0.8},'3bp':{call:0.88,aggr:0.88},'4bp':{call:0.95,aggr:0.95}};
 export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={limp:[0.85,1.0],srp:[0.8,1.0],'3bp':[0.88,1.0],'4bp':[0.95,1.0],allin:[1,1]};// [out of position, in position]
 /** How well a class plays after the flop (suited and connected hands realise more equity, disconnected offsuit less). */
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
@@ -167,9 +169,9 @@ export class PreflopSolver{
  readonly pair:Float64Array;readonly eq:Float64Array;readonly play:Float64Array;
  readonly root:PreflopNode;readonly decisions:PreflopDecision[];
  readonly regret:Float64Array[];readonly avg:Float64Array[];iterations=0;
- readonly cfg:PreflopConfig;readonly depth:number;readonly role:typeof REALIZE_ROLE;readonly seats:number;readonly post:number[];
+ readonly cfg:PreflopConfig;readonly names:readonly string[];readonly depth:number;readonly role:typeof REALIZE_ROLE;readonly seats:number;readonly post:number[];
  constructor(equity:Equity,cfg:PreflopConfig=DEFAULT_PREFLOP){
-  this.cfg=cfg;this.seats=cfg.seats??6;this.post=postOrder(this.seats);const st=BY_STACK?.[String(cfg.stack)];this.depth=st?1:Math.sqrt(Math.min(1,cfg.stack/100));this.role={...REALIZE_ROLE,...(st?.role??{})} as typeof REALIZE_ROLE;
+  this.cfg=cfg;this.seats=cfg.seats??6;this.names=positionsFor(this.seats);this.post=postOrder(this.seats);const st=BY_STACK?.[String(cfg.stack)];this.depth=st?1:Math.sqrt(Math.min(1,cfg.stack/100));this.role={...REALIZE_ROLE,...(st?.role??{})} as typeof REALIZE_ROLE;
   const n=equity.labels.length;this.n=n;this.labels=equity.labels;
   this.combos=Float64Array.from(equity.labels,l=>l.length===2?6:l[2]==='s'?4:12);this.prior=Float64Array.from(this.combos,c=>c/1326);
   const ranks='23456789TJQKA',cards=equity.labels.map(l=>{const a=ranks.indexOf(l[0]),b=ranks.indexOf(l[1]),out:[number,number][]=[];
@@ -199,7 +201,7 @@ export class PreflopSolver{
    if(node.threeWay)return this.#threeWay(node,reach,mass,pot-rakeTaken(this.cfg.rake,pot,'threeWay'));
    const {a,b,kind,aggr}=node.showdown!,won=pot-rakeTaken(this.cfg.rake,pot,kind),ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?this.role[kind]:null;
    // Shorter stacks leave less to play for after the flop: realisation moves towards 1 (by the square root of the depth).
-   const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
+   const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:(aggr!==undefined?role.callBy?.[this.names[aggr]]:undefined)??role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
    for(const [me,op] of [[a,b],[b,a]] as const){

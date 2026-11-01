@@ -17,8 +17,14 @@ const ref={};for(const line of fs.readFileSync('data/poker-gto/reference/beyondg
  ref[n]=Object.fromEntries(vals.map((x,i)=>[L[i],[...Array(nk)].reduce((s,_,j)=>s+parseInt(x.slice(2*j,2*j+2),36)/100,0)]));}
 const POS={UTG:'utg','UTG+1':'mp',LJ:'lj',HJ:'hj',CO:'co',BTN:'btn'};
 const c=l=>l.length==2?6:l[2]=='s'?4:12;
-let play=Object.fromEntries(eq.labels.map(l=>[l,base.play?.[l]??S.playability(l)]));
-let call=Number(arg('call',0.55));const role=()=>({srp:{call,aggr:0.8}});
+// --init: start from an earlier fit of this depth (its play and realisation), so a re-run only refines it.
+const init=arg('init',null)?JSON.parse(fs.readFileSync(arg('init'),'utf8')):null;
+let play=Object.fromEntries(eq.labels.map(l=>[l,init?.play?.[l]??base.play?.[l]??S.playability(l)]));
+let call=Number(arg('call',init?.role?.srp?.call??0.55));
+// The caller's realisation per opener (2026/11/2): one number made the big blind defend far too much against the button
+// and too little against under the gun. Seats without a published figure sit between their neighbours.
+const by=Object.fromEntries(Object.keys(DEFEND).map(p=>[p,init?.role?.srp?.callBy?.[p]??call]));
+const role=()=>({srp:{call,aggr:0.8,callBy:{...by,'UTG+1':+(by.UTG*2/3+by.HJ/3).toFixed(3),LJ:+(by.UTG/3+by.HJ*2/3).toFixed(3)}}});
 let report=null;
 for(let r=0;r<=rounds;r++){
  S.setRealizeFit({...base,byStack:{[stack]:{play,role:role()}}});
@@ -36,11 +42,12 @@ for(let r=0;r<=rounds;r++){
    if(DEFEND[opener]!==undefined){let f=0,ww=0;s.labels.forEach((l,h)=>{f+=s.combos[h]*st[h*k+0];ww+=s.combos[h];});defend[opener]=+(1-f/ww).toFixed(3);}}}
  }
  const defErr=Object.keys(DEFEND).filter(p=>defend[p]!==undefined).map(p=>defend[p]-DEFEND[p]),meanErr=defErr.reduce((a,b)=>a+b,0)/Math.max(1,defErr.length);
- report={round:r,perHandDiff:+(abs/w*100).toFixed(2),rfi,defend,call:+call.toFixed(3)};console.log(JSON.stringify(report));
+ report={round:r,perHandDiff:+(abs/w*100).toFixed(2),rfi,defend,call:+call.toFixed(3),callBy:role().srp.callBy};console.log(JSON.stringify(report));
  if(r===rounds)break;
  for(const l of eq.labels)if(cnt[l])play[l]*=Math.exp(0.12*diff[l]/cnt[l]);
  // Defending too much: the caller realises too much; lower it (and the reverse).
  call=Math.min(0.95,Math.max(0.3,call*Math.exp(-0.8*meanErr)));
+ for(const p of Object.keys(DEFEND))if(defend[p]!==undefined)by[p]=Math.min(0.95,Math.max(0.25,by[p]*Math.exp(-1.2*(defend[p]-DEFEND[p]))));
 }
 fs.mkdirSync(path.dirname(path.resolve(out)),{recursive:true});
 fs.writeFileSync(out,JSON.stringify({stack,play:Object.fromEntries(Object.entries(play).map(([k,v])=>[k,Math.round(v*1000)/1000])),role:role(),report}));
