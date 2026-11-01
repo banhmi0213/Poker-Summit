@@ -15,8 +15,10 @@ export function RingAutoMove({auth,data,own,tableId,blocked,leave}:{auth:Supabas
  const [rakes,setRakes]=useState<Map<string,RingRake>>(new Map());
  const ids=data.tables.map(t=>t.id).join(',');
  useEffect(()=>{let live=true;const list=ids.split(',').filter(Boolean);if(!list.length)return;
-  void auth.from('poker_ring_tables').select('id,rake_bps,rake_cap_bb').in('id',list).then(({data:rows,error})=>{if(!live||error||!rows)return;
-   setRakes(new Map((rows as {id:string;rake_bps:number;rake_cap_bb:number}[]).map(r=>[r.id,{bps:r.rake_bps,capBb:r.rake_cap_bb}])));});
+  // Without the rakes nothing moves automatically (another rate always asks), so a failed read is safe.
+  let read:PromiseLike<{data:unknown;error:unknown}>;try{read=auth.from('poker_ring_tables').select('id,rake_bps,rake_cap_bb').in('id',list);}catch{return;}
+  void Promise.resolve(read).then(({data:rows,error})=>{if(!live||error||!Array.isArray(rows))return;
+   setRakes(new Map((rows as {id:string;rake_bps:number;rake_cap_bb:number}[]).map(r=>[r.id,{bps:r.rake_bps,capBb:r.rake_cap_bb}])));},()=>{});
   return()=>{live=false;};},[auth,ids]);
  const current=data.tables.find(t=>t.id===tableId)??null;
  const seated=Boolean(own&&own.tableId===tableId&&own.status==='seated'&&!own.exitRequested);
