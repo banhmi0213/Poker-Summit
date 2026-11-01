@@ -1,0 +1,63 @@
+name: Poker preflop fit
+
+# Fits the tournament depths (scripts/poker-gto/fit-stack.cjs, owner 2026/11/1): per-depth hand playability against
+# BeyondGTO's 8-handed big-blind-ante open ranges and the caller's realisation against published BB defence figures.
+# The results are merged into data/poker-gto/preflop-play-fit.json (byStack) and pushed to gto-preflop-fit-out/<run id>.
+# Trigger: push a gto-preflop-fit/<anything> branch. Then re-solve the charts with "Poker preflop charts".
+on:
+  push:
+    branches: ["gto-preflop-fit/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  fit:
+    name: Fit ${{ matrix.stack }}BB
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        stack: [60, 40, 20]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Fit
+        env:
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds ${{ vars.GTO_FIT_ROUNDS || '8' }} --iters ${{ vars.GTO_FIT_ITERS || '400' }} --out out/fit-${{ matrix.stack }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fit-${{ matrix.stack }}
+          path: out/
+          retention-days: 14
+  collect:
+    needs: fit
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fit-*
+          merge-multiple: true
+          path: out
+      - name: Merge into preflop-play-fit.json and push gto-preflop-fit-out/<run id>
+        run: |
+          node -e "
+          const fs=require('fs');const f='data/poker-gto/preflop-play-fit.json',fit=JSON.parse(fs.readFileSync(f,'utf8'));fit.byStack=fit.byStack||{};
+          for(const n of fs.readdirSync('out').filter(x=>/^fit-\d+\.json$/.test(x))){const r=JSON.parse(fs.readFileSync('out/'+n,'utf8'));fit.byStack[r.stack]={play:r.play,role:r.role,report:r.report};console.log(r.stack,JSON.stringify(r.report));}
+          fs.writeFileSync(f,JSON.stringify(fit));"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "gto-preflop-fit-out/${{ github.run_id }}"
+          git add data/poker-gto/preflop-play-fit.json
+          git commit -m "大会向けのプリフロップ当て直し（run ${{ github.run_id }}）"
+          git push origin "gto-preflop-fit-out/${{ github.run_id }}"
