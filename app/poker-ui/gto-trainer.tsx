@@ -149,7 +149,7 @@ function GtoHandTrainer(){
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
  const formBox=<>
-  <div className={`${chart.form} ${styles.formBig}`}>
+  <div className={`${chart.form} ${styles.formBig} ${styles.settings}`}>
    <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
    {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
@@ -165,9 +165,10 @@ function GtoHandTrainer(){
  </>;
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}>
-  {!hand&&<p>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
+  {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
+  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}
-  {hand&&<div className={styles.play}>
+  {hand&&<div className={styles.play} data-hide-back-to-top>
    <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
      <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
