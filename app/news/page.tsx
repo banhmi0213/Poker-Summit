@@ -7,15 +7,17 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { PrefSelector } from "@/app/pref-selector";
 import { PrefGeoDetector } from "@/app/pref-geo-detector";
-import { PREF_OPTIONS } from "@/lib/constants";
+import { PREF_OPTIONS, CATEGORY_LABEL } from "@/lib/constants";
 import { getCurrentPref } from "@/lib/current-pref";
 import { staticPageMetadata } from "@/lib/seo";
+import { MarkNewsSeen } from "@/app/news-dot";
 
 export const metadata = staticPageMetadata({ title: "お知らせ", description: "Poker Summitからのお知らせ・新着情報。", path: "/news" });
 
 function formatDateTime(value: string) {
   const d = new Date(value);
   return d.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -48,7 +50,16 @@ export default async function NewsPage() {
     .order("id", { ascending: false })
     .limit(50);
 
-  const { data: notices } = await noticesQuery;
+  const [{ data: notices }, { data: siteNotices }] = await Promise.all([
+    noticesQuery,
+    // 運営からのサイトのお知らせ(総合の「お知らせ(メール・LINE・サイト)」から掲載。都道府県に関係なく全員に出す、2026/10/20)
+    supabase
+      .from("site_notices")
+      .select("id, title, body, created_at")
+      .eq("published", true)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
 
   return (
     <div>
@@ -82,7 +93,27 @@ export default async function NewsPage() {
           📣 お知らせ{currentPref ? `（${currentPref}）` : "（全国）"}
         </h2>
 
-        {(!notices || notices.length === 0) && (
+        <MarkNewsSeen latest={siteNotices?.[0]?.created_at ?? null} />
+        {(siteNotices ?? []).length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 10 }}>
+            {(siteNotices ?? []).map((n) => (
+              <div key={n.id} className="card">
+                <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
+                  <span className="badge">運営からのお知らせ</span>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{n.title}</div>
+                <p className="muted" style={{ fontSize: 13.5, marginBottom: 6, whiteSpace: "pre-wrap" }}>
+                  {n.body}
+                </p>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  Poker Summit運営 ・ {formatDateTime(n.created_at)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(!notices || notices.length === 0) && (siteNotices ?? []).length === 0 && (
           <p className="muted">
             {currentPref ? `${currentPref}にはまだお知らせがありません。` : "まだお知らせがありません。"}
           </p>
@@ -92,7 +123,7 @@ export default async function NewsPage() {
           {notices?.map((n: any) => (
             <Link href={`/stores/${n.store_id}`} key={n.id} className="card" style={{ display: "block" }}>
               <div style={{ display: "flex", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                {n.stores?.category && <span className="badge">{n.stores.category}</span>}
+                {n.stores?.category && <span className="badge">{CATEGORY_LABEL[n.stores.category] ?? n.stores.category}</span>}
                 {n.pref && <span className="badge outline">{n.pref}</span>}
               </div>
               <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{n.title}</div>

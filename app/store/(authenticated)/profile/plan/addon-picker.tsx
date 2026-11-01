@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { purchaseAddonAction } from "../addon-purchase-actions";
 
@@ -28,6 +29,11 @@ export function AddonPicker({
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [qty, setQty] = useState<Record<string, number>>({});
   const [method, setMethod] = useState<"card" | "bank_transfer">(canUseCard ? "card" : "bank_transfer");
+  // この画面からの申込みの番号(連打・二重送信で2回決済しないように。lib/addon-orders.ts)
+  const [requestKey, setRequestKey] = useState("");
+  useEffect(() => {
+    setRequestKey(typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  }, []);
 
   const { monthlyTotal, oneTimeTotal } = useMemo(() => {
     let monthlyTotal = 0;
@@ -77,7 +83,7 @@ export function AddonPicker({
                   <strong style={{ fontSize: 14 }}>{a.name}</strong>
                   <strong>
                     {yen(a.fee)}
-                    {a.billingType === "monthly" ? "/月" : a.maxQuantity > 1 ? "/1件" : ""}
+                    {a.billingType === "monthly" ? "/月" : a.code === "dealer_scout" ? "/1回" : a.code === "spot_job_credit" ? "/1日分" : a.maxQuantity > 1 ? "/1件" : ""}
                   </strong>
                 </span>
                 {a.description && (
@@ -92,9 +98,10 @@ export function AddonPicker({
                 )}
                 {a.maxQuantity > 1 && selected[a.id] && (
                   <span style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, fontSize: 13 }}>
-                    件数
+                    {a.code === "dealer_scout" ? "回数" : a.code === "spot_job_credit" ? "日数" : "件数"}
                     <input
                       type="number"
+                      inputMode="numeric"
                       name={`quantity_${a.id}`}
                       min={1}
                       max={a.maxQuantity}
@@ -116,6 +123,7 @@ export function AddonPicker({
 
   return (
     <form action={purchaseAddonAction} style={{ display: "grid", gap: 10 }}>
+      <input type="hidden" name="requestKey" value={requestKey} />
       {group("monthly", "月額のアドオン")}
       {group("one_time", "都度払いのアドオン")}
 
@@ -128,6 +136,7 @@ export function AddonPicker({
               クレジットカード
             </label>
           )}
+          {canUseCard && CARD_BRANDS_NOTE && <span className="muted" style={{ fontSize: 12, flexBasis: "100%" }}>{CARD_BRANDS_NOTE}</span>}
           <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <input
               type="radio"

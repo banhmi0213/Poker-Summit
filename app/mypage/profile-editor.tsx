@@ -1,3 +1,4 @@
+import { HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 import { M_HOLDEM_ID_MAX_LENGTH, M_HOLDEM_PARTICIPATION_NOTICE } from "@/lib/m-holdem";
 import { updateProfile } from "@/app/account/profile/actions";
 import { PREF_OPTIONS, MEMBER_ROLE_OPTIONS } from "@/lib/constants";
@@ -12,13 +13,24 @@ export function ProfileEditor({ name, pref, mHoldemId = "", prefPublic, emailPub
     {error && <p className="err" role="alert">{error}</p>}
     {done && <p className={styles.success} role="status">プロフィールを変更しました。</p>}
     <form action={updateProfile}>
-      <label className={styles.field}><span>ハンドルネーム</span><input name="name" type="text" defaultValue={name} autoComplete="nickname" /></label>
-      <label className={styles.field}><span>都道府県</span><select name="pref" defaultValue={pref} required><option value="" disabled>選択してください</option>{PREF_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}</select></label>
+      <label className={styles.field}><span>ハンドルネーム</span><input name="name" type="text" defaultValue={name} autoComplete="nickname" aria-describedby="profile-name-note" /></label>
+      <p id="profile-name-note" className={styles.description}>ハンドルネームは{HANDLE_NAME_NOTICE}です。</p>
+      <label className={styles.field}><span>都道府県</span><select name="pref" defaultValue={pref}><option value="">未設定</option>{PREF_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}</select></label>
       <label className={styles.field}><span>都道府県の公開設定</span><select name="prefPublic" defaultValue={prefPublic ? "public" : "private"}><option value="public">公開（他の会員にも表示）</option><option value="private">非公開（自分だけに表示）</option></select></label>
       <label className={styles.field}><span>メールアドレスの公開設定</span><select name="emailPublic" defaultValue={emailPublic ? "public" : "private"}><option value="private">非公開（自分だけに表示）</option><option value="public">公開（プロフィールに表示）</option></select></label>
-      <label className={styles.field}><span>{dealerRegistration ? "ディーラー種別" : "役職"}</span><select name="role" defaultValue={role}>{!dealerRegistration && <option value="">未設定</option>}{(dealerRegistration ? MEMBER_ROLE_OPTIONS.filter(r => r === "ディーラー" || r === "フリーディーラー") : MEMBER_ROLE_OPTIONS).map(r => <option key={r} value={r}>{r}</option>)}</select></label>
-      <label className={styles.field}><span>m HOLD’EM ID（任意・非公開）</span><input name="mHoldemId" defaultValue={mHoldemId} maxLength={M_HOLDEM_ID_MAX_LENGTH} autoComplete="off" spellCheck={false} aria-describedby="profile-m-holdem-notice" /></label>
-      <p id="profile-m-holdem-notice" className={styles.description}>{M_HOLDEM_PARTICIPATION_NOTICE} IDは一般公開されません。</p>
+      <label className={styles.field}><span>{dealerRegistration ? "ディーラー種別" : "活動スタイル"}</span><select name="role" defaultValue={role}>{!dealerRegistration && <option value="">未設定</option>}{(dealerRegistration ? MEMBER_ROLE_OPTIONS.filter(r => r === "ディーラー" || r === "フリーディーラー") : MEMBER_ROLE_OPTIONS).map(r => <option key={r} value={r}>{r}</option>)}</select></label>
+      {mHoldemId ? (
+        // 一度登録したら変更できない(2026/10/19、複垢対策)
+        <>
+          <div className={styles.field}><span>m HOLD’EM ID（非公開）</span><input value={mHoldemId} readOnly disabled aria-describedby="profile-m-holdem-notice" /></div>
+          <p id="profile-m-holdem-notice" className={styles.description}>m HOLD’EM IDは登録後に変更できません。変更が必要な場合はお問い合わせください。</p>
+        </>
+      ) : (
+        <>
+          <label className={styles.field}><span>m HOLD’EM ID（任意・非公開）</span><input name="mHoldemId" autoCapitalize="none" autoCorrect="off" maxLength={M_HOLDEM_ID_MAX_LENGTH} autoComplete="off" spellCheck={false} aria-describedby="profile-m-holdem-notice" /></label>
+          <p id="profile-m-holdem-notice" className={styles.description}>{M_HOLDEM_PARTICIPATION_NOTICE} IDは一般公開されません。一度登録すると変更できませんので、お間違えのないようご入力ください。</p>
+        </>
+      )}
       <label className={styles.field}><span>フリーメッセージ</span><textarea name="bio" rows={4} maxLength={300} defaultValue={bio} placeholder="自己紹介やひとことをどうぞ" /></label>
       <button type="submit" className={`btn primary ${styles.save}`}>{dealerRegistration ? "ディーラーとして登録する" : "変更する"}</button>
     </form>

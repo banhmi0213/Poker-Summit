@@ -26,6 +26,9 @@ function tournamentJsonLd(e:any){
  const data:Record<string,unknown>={"@context":"https://schema.org","@type":"Event",name:e.title,url:absoluteUrl(`/major-tournaments/${e.id}`),startDate:e.start_date,eventStatus:"https://schema.org/EventScheduled",eventAttendanceMode:"https://schema.org/OfflineEventAttendanceMode",location:{"@type":"Place",name:e.venue||e.location||"会場未定",address:e.location||e.venue||""}};
  if(e.end_date)data.endDate=e.end_date;
  if(e.description)data.description=clip(e.description,500);
+ data.image=[absoluteUrl(DEFAULT_OG_IMAGE)];
+ // Organizer: the tournament's own official site (only a valid http(s) URL; the series name is the title).
+ try{const url=new URL(e.official_url);if(["https:","http:"].includes(url.protocol))data.organizer={"@type":"Organization",name:e.title,url:url.href};}catch{}
  return data;
 }
 export default async function Page({params}:{params:{id:string}}){
@@ -40,21 +43,21 @@ export default async function Page({params}:{params:{id:string}}){
  const period=date(e.start_date)+(e.end_date&&e.end_date!==e.start_date?" 〜 "+date(e.end_date):"");
  const mapQuery=[e.venue,e.location].filter(Boolean).join(" ");
  return <div>{e.start_date&&<JsonLd data={tournamentJsonLd(e)}/>}<PortalHeader userEmail={user?.email}/><main className="mt-sample">
- <Link href="/major-tournaments" className="mt-back">← 国内外大型大会に戻る</Link>
+ <Link href="/major-tournaments" className="mt-back">国内外大型大会に戻る</Link>
  <article><header className="mt-hero"><div className="mt-hero-photo" role="img" aria-label="ポーカー大会の会場"/>
  <div className="mt-hero-content"><div className="mt-eyebrow">POKER SUMMIT · MAJOR TOURNAMENTS</div><span className="mt-tag">{e.scope}大会</span><h1><ReadableName name={e.title} /></h1><div className="mt-hero-meta"><span>{period}</span>{mapQuery&&<span>{[e.location,e.venue].filter(Boolean).join(" / ")}</span>}</div></div></header>
  <div className="mt-facts"><div><small>開催期間</small><strong>{period}</strong></div><div><small>開催エリア</small><strong>{e.location||"未定"}</strong></div><div><small>会場</small><strong>{e.venue||"未定"}</strong></div><div><small>開催区分</small><strong>{e.scope}大会</strong></div></div>
  <nav className="mt-section-nav" aria-label="大会詳細のメニュー"><a href="#tournament-overview">大会概要</a><a href="#tournament-schedule">スケジュール</a><a href="#tournament-venue">会場・アクセス</a></nav>
  <div className="mt-columns"><div>
- <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p>{officialUrl&&<div className="mt-official-link"><strong>公式サイト</strong><a href={officialUrl} target="_blank" rel="noopener noreferrer">{officialUrl} ↗</a></div>}</section>
+ <section id="tournament-overview" className="mt-panel"><div className="mt-heading"><span>ABOUT THE TOURNAMENT</span><h2>大会概要</h2></div><p className="mt-text">{e.description||"大会の詳細は準備中です。"}</p>{officialUrl&&<div className="mt-official-link"><strong>公式サイト</strong><a href={officialUrl} target="_blank" rel="noopener noreferrer">{officialUrl}</a></div>}</section>
  <section id="tournament-schedule" className="mt-panel"><div className="mt-heading"><span>EVENT SCHEDULE</span><h2>大会スケジュール</h2></div><p className="mt-caption">時刻は開催地の現地時間です。</p><div className="mt-schedule-text">{e.schedule||"スケジュールは準備中です。"}</div></section>
  <section id="tournament-venue" className="mt-panel"><div className="mt-heading"><span>VENUE & ACCESS</span><h2>会場・アクセス</h2></div><div className="mt-venue"><div className="mt-venue-mark" aria-hidden="true">⌖</div><div><h3>{e.venue||"会場未定"}</h3>{e.location&&<p>{e.location}</p>}</div></div>
- {e.venue&&<a className="mt-map-link" href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery)} target="_blank" rel="noopener noreferrer">Googleマップで会場を探す ↗</a>}</section>
+ {e.venue&&<a className="mt-map-link" href={"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery)} target="_blank" rel="noopener noreferrer">Googleマップで会場を探す</a>}</section>
  </div><aside className="mt-side"><section className="mt-panel mt-summary"><span className="mt-eyebrow">TOURNAMENT INFORMATION</span><h2>大会情報</h2>
  <dl><div><dt>開催区分</dt><dd>{e.scope}</dd></div><div><dt>開催地</dt><dd>{e.location||"未定"}</dd></div><div><dt>開催期間</dt><dd>{period}</dd></div><div><dt>会場</dt><dd>{e.venue||"未定"}</dd></div></dl>
- <a href="#tournament-schedule" className="mt-button">スケジュールを見る ↓</a>{officialUrl&&<a href={officialUrl} className="mt-button mt-official" target="_blank" rel="noopener noreferrer">公式サイト・大会情報 ↗</a>}</section>
+ <a href="#tournament-schedule" className="mt-button">スケジュールを見る</a>{officialUrl&&<a href={officialUrl} className="mt-button mt-official" target="_blank" rel="noopener noreferrer">公式サイト・大会情報</a>}</section>
  <section className="mt-panel mt-travel"><span className="mt-eyebrow">PLAN YOUR VISIT</span><h3>参加前にチェック</h3><ul><li>エントリー方法・受付時間</li><li>参加費に含まれる内容</li><li>本人確認・参加条件</li><li>大会ルール・持ち物</li></ul><p>最新の開催情報は、主催者の公式案内をご確認ください。</p></section></aside></div>
- <div className="mt-bottom"><Link href="/major-tournaments">← 国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む →</Link></div></article>
+ <div className="mt-bottom"><Link href="/major-tournaments">国内外大型大会一覧へ</Link><Link href="/blog">大会レポート・BLOGを読む</Link></div></article>
  </main><PortalFooter/><BottomTabs/><style dangerouslySetInnerHTML={{ __html: `
 
 .mt-sample{max-width:1140px;width:calc(100% - 40px);margin:0 auto;padding:24px 0 48px;color:#382b1e}
@@ -68,7 +71,7 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-hero .mt-eyebrow{color:#e3c17c;margin-bottom:18px}
 .mt-tag{display:inline-block;font-size:11px;border:1px solid #bda16a;color:#f1dab0;border-radius:30px;padding:5px 12px}
 .mt-hero h1{font-size:42px;line-height:1.14;letter-spacing:.02em;margin:14px 0 10px;font-family:Georgia,serif;color:#fff;border:0;padding:0}
-.mt-hero h1 span{color:#e5c487}
+.mt-hero h1 span{color:inherit}
 .mt-hero-content>p{font-size:14px;color:#f1e7d3}
 .mt-hero-meta{display:flex;flex-wrap:wrap;gap:12px 24px;font-size:12px;color:#f0debb;margin-top:25px}
 .mt-facts{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #e7ddcc;border-radius:12px;background:#fff;margin:18px 0}
@@ -117,7 +120,7 @@ export default async function Page({params}:{params:{id:string}}){
 .mt-hero-content{width:50%;box-sizing:border-box;padding:26px 30px;color:#563814}
 .mt-hero .mt-eyebrow{color:#8b6427;font-size:9px;margin-bottom:10px}
 .mt-tag{color:#755321;border-color:#b59050;background:rgba(255,255,255,.25);font-size:10px;padding:4px 10px}
-.mt-hero h1{font-size:28px;line-height:1.35;margin:10px 0;color:#fff}
+.mt-hero h1{font-size:28px;line-height:1.35;margin:10px 0;color:#382714}
 .mt-hero-meta{color:#563814;font-size:11px;line-height:1.7;gap:5px 16px;margin-top:12px}
 @media(max-width:900px){.mt-hero h1{font-size:26px}}
 @media(max-width:600px){.mt-hero{min-height:200px}.mt-hero-content{padding:20px 16px}.mt-hero h1{font-size:22px}.mt-hero .mt-eyebrow{font-size:7px;line-height:1.6}.mt-hero-photo{background-size:auto 155%;background-position:99% 50%}.mt-hero-meta{font-size:10px;gap:4px}}

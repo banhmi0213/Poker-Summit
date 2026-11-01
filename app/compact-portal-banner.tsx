@@ -1,9 +1,12 @@
 import styles from "./compact-portal-copy.module.css";
 import { ReadableName } from "@/app/readable-name";
 import Image from "next/image";
+import { WrapParts } from "@/app/wrap-parts";
 
-export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail, subtitleParts, detailParts, heading = "h1" }: {
+export function CompactPortalBanner({ image, eyebrow, title, titleParts, subtitle, detail, subtitleParts, detailParts, heading = "h1" }: {
   image: string; eyebrow: string; title: string; subtitle: string; detail?: string; subtitleParts?: string[]; detailParts?: string[];
+  /** 見出しの改行位置(例: ["トーナメント・", "イベントを探す"])。1〜2文字だけ次の行に落ちるのを防ぐ */
+  titleParts?: string[];
   /** ページ内に別の h1 がある場合は "h2" にする(h1はページに1つだけ) */
   heading?: "h1" | "h2";
 }) {
@@ -19,9 +22,9 @@ export function CompactPortalBanner({ image, eyebrow, title, subtitle, detail, s
   return <section className="compact-portal-banner" aria-label={title}>
     <div className="compact-portal-banner__copy">
       <span className="compact-portal-banner__eyebrow">{eyebrow}</span>
-      <Heading><ReadableName name={title} /></Heading>
-      <p>{subtitleParts ? subtitleParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : subtitle}</p>
-      {detail && <small>{detailParts ? detailParts.map((part, i) => <span key={i} className={styles.word}>{part}</span>) : detail}</small>}
+      <Heading>{titleParts ? <WrapParts parts={titleParts} className={styles.word} /> : <ReadableName name={title} />}</Heading>
+      <p>{subtitleParts ? <WrapParts parts={subtitleParts} className={styles.word} /> : subtitle}</p>
+      {detail && <small>{detailParts ? <WrapParts parts={detailParts} className={styles.word} /> : detail}</small>}
     </div>
     <div className="compact-portal-banner__photo">
       <picture>

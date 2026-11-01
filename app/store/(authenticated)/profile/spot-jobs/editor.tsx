@@ -11,15 +11,18 @@ function SaveButtons() {
   const {pending}=useFormStatus();
   return <div className={styles.buttons}><button disabled={pending} name="published" value="true" className={`${styles.button} ${styles.primary}`}>{pending?'保存中…':'公開して保存'}</button><button disabled={pending} name="published" value="false" className={styles.button}>下書き保存</button></div>;
 }
-export default function SpotEditor({job,today,image}:{job:SpotJob|null;today:string;image:string|null}) {
+type Template={games:string[];duties:string;requirements:string;transport_type:string;transport_limit:number|null;dress:string;contract_type:string|null;payment_method:string|null;payment_date:string|null;contract_notes:string|null;start_time:string;end_time:string;hourly_wage:number|null;headcount:number};
+export default function SpotEditor({job,template,today,image}:{job:SpotJob|null;template?:Template|null;today:string;image:string|null}) {
+  // 新規のときは前回の内容(template)を最初から入れておく(2026/10/22)
+  const base=job??template??null;
   const [state,action]=useFormState(saveSpotJob,{error:''});
   const initial=job?.spot_job_shifts.map(s=>({...s,break_minutes:0,start_time:s.start_time.slice(0,5),end_time:s.end_time.slice(0,5)})).sort((a,b)=>a.work_date.localeCompare(b.work_date))||[];
   const [shifts,setShifts]=useState<SpotShift[]>(initial);
-  const [defaults,setDefaults]=useState<Defaults>(initial[0]||{start_time:'',end_time:'',break_minutes:0,hourly_wage:0,headcount:1});
+  const [defaults,setDefaults]=useState<Defaults>(initial[0]||(template?{start_time:template.start_time,end_time:template.end_time,break_minutes:0,hourly_wage:template.hourly_wage??0,headcount:template.headcount||1}:{start_time:'',end_time:'',break_minutes:0,hourly_wage:0,headcount:1}));
   const [month,setMonth]=useState(today.slice(0,7));
   const [from,setFrom]=useState(today),[to,setTo]=useState(today);
   const [dateError,setDateError]=useState('');
-  const [transport,setTransport]=useState(job?.transport_type||'none');
+  const [transport,setTransport]=useState(base?.transport_type||'none');
   function addDates(dates:string[]) {
     const all=new Set([...shifts.map(s=>s.work_date),...dates]);
     if (all.size>90) {setDateError('勤務日は90日まで選択できます。');return;}
@@ -28,6 +31,7 @@ export default function SpotEditor({job,today,image}:{job:SpotJob|null;today:str
   }
   function range() {
     if (!validDate(from)||!validDate(to)||from>to) {setDateError('開始日・終了日を確認してください。');return;}
+    if (from<today) {setDateError('今日以降の日を選んでください。');return;}
     const count=(Date.parse(to)-Date.parse(from))/86400000+1;
     if (count>90) {setDateError('一度に選択できる期間は90日までです。');return;}
     addDates(Array.from({length:count},(_,i)=>new Date(Date.parse(from)+i*86400000).toISOString().slice(0,10)));
@@ -40,8 +44,8 @@ export default function SpotEditor({job,today,image}:{job:SpotJob|null;today:str
   return <form action={action} className={styles.box}>
     <input type="hidden" name="id" value={job?.id||''}/><input type="hidden" name="shifts" value={JSON.stringify(shifts)}/>
     <h2>{job?'スポット求人を編集':'新しいスポット求人を登録'}</h2>
-    <div className={styles.section}><h3>1. 勤務日 *</h3><p className={styles.muted}>期間でまとめて選び、カレンダーで追加・解除できます。選択後に日ごとの時間・時給・人数を変更できます（最大90日）。</p>
-      <div className={styles.fields}><label className={styles.field}>開始日<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label className={styles.field}>終了日<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label></div>
+    <div className={styles.section}><h3>1. 勤務日 *</h3><p className={styles.muted}>期間でまとめて選び、カレンダーで追加・解除できます（最大90日）。公開すると、選んだ勤務日1日につき1回使います。先の日の分も設定できますが、ディーラーの一覧に表示・応募できるのは勤務日の当日（日付が変わった0時から勤務開始まで）だけです。</p>
+      <div className={styles.fields}><label className={styles.field}>開始日<input type="date" min={today} value={from} onChange={e=>setFrom(e.target.value)}/></label><label className={styles.field}>終了日<input type="date" min={today} value={to} onChange={e=>setTo(e.target.value)}/></label></div>
       <button type="button" onClick={range} className={styles.button} style={{marginTop:10}}>期間内を選択</button>
       <div className={styles.calendar}><div className={styles.calendarHead}><button type="button" className={styles.button} onClick={()=>move(-1)} aria-label="前の月">‹</button><strong>{month.replace('-','年 ')}月</strong><button type="button" className={styles.button} onClick={()=>move(1)} aria-label="次の月">›</button></div><div className={styles.days}>{['日','月','火','水','木','金','土'].map(d=><span key={d}>{d}</span>)}{Array.from({length:first.getUTCDay()},(_,i)=><span key={'empty'+i}/>)}{Array.from({length:dayCount},(_,i)=>{const d=month+'-'+String(i+1).padStart(2,'0');return <button type="button" key={d} aria-label={d} aria-pressed={shifts.some(s=>s.work_date===d)} disabled={d<today&&!shifts.some(s=>s.work_date===d)} onClick={()=>toggle(d)}>{i+1}</button>;})}</div></div>
       {dateError&&<p role="alert" className={styles.error}>{dateError}</p>}
@@ -49,15 +53,15 @@ export default function SpotEditor({job,today,image}:{job:SpotJob|null;today:str
     <div className={styles.section}><h3>2〜4. 共通の勤務時間・時給・募集人数</h3><p className={styles.muted}>新しく選ぶ日に適用されます。「選択した日に反映」で全日をまとめて変更できます。終了時間が開始時間より早い場合は翌日扱いです。</p><div className={styles.rowFields}>{[['開始時間','start_time','time'],['終了時間','end_time','time'],['時給（円）','hourly_wage','number'],['募集人数','headcount','number']].map(([label,key,type])=><label key={key}>{label}<input type={type} min={1} value={key==='hourly_wage'&&defaults.hourly_wage===0?'':defaults[key as keyof Defaults]} onChange={e=>setDefaults({...defaults,[key]:type==='number'?Number(e.target.value):e.target.value})}/></label>)}</div><button type="button" className={styles.button} style={{marginTop:10}} onClick={()=>setShifts(shifts.map(s=>({...defaults,work_date:s.work_date})))}>選択した日に反映</button>
       <div className={styles.rows}>{shifts.map(s=><div key={s.work_date} className={styles.row}><div className={styles.rowHead}><strong>{s.work_date} {['日','月','火','水','木','金','土'][new Date(s.work_date).getUTCDay()]}曜日</strong><button type="button" className={styles.button} onClick={()=>toggle(s.work_date)}>削除</button></div><div className={styles.rowFields}>{[['開始時間','start_time','time'],['終了時間','end_time','time'],['時給（円）','hourly_wage','number'],['募集人数','headcount','number']].map(([label,key,type])=><label key={key}>{label}<input required type={type} min={1} max={key==='hourly_wage'?100000:key==='headcount'?1000:undefined} value={key==='hourly_wage'&&s.hourly_wage===0?'':s[key as keyof SpotShift]} onChange={e=>setShifts(shifts.map(row=>row.work_date===s.work_date?{...row,[key]:type==='number'?Number(e.target.value):e.target.value}:row))}/></label>)}</div>{s.end_time&&s.start_time&&s.end_time<s.start_time&&<p className={styles.muted}>終了は翌日です。</p>}</div>)}</div><p className={styles.muted}>選択中：{shifts.length}日</p>
     </div>
-    <div className={styles.fields} style={{marginTop:22}}><div className={`${styles.field} ${styles.wide}`}>5. ゲーム種目 *<div className={styles.checks}>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={job?.games.includes(g)}/>{g}</label>)}</div></div>
-      {field('6. 業務内容 *','duties',job?.duties||'',true)}{field('7. 応募条件（経験・スキル）','requirements',job?.requirements||'')}
-      <label className={styles.field}>8. 交通費<select name="transport_type" value={transport} onChange={e=>setTransport(e.target.value)}><option value="none">支給なし</option><option value="full">全額支給</option><option value="limited">上限あり</option></select></label>{transport==='limited'&&<label className={styles.field}>交通費の上限（円）<input type="number" name="transport_limit" min="0" max="100000" required defaultValue={job?.transport_limit??''}/></label>}
-      {field('9. 服装・持ち物','dress',job?.dress||'')}
+    <div className={styles.fields} style={{marginTop:22}}><div className={`${styles.field} ${styles.wide}`}>5. ゲーム種目 *<div className={styles.checks}>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={base?.games.includes(g)}/>{g}</label>)}</div></div>
+      {field('6. 業務内容 *','duties',base?.duties||'',true)}{field('7. 応募条件（経験・スキル）','requirements',base?.requirements||'')}
+      <label className={styles.field}>8. 交通費<select name="transport_type" value={transport} onChange={e=>setTransport(e.target.value)}><option value="none">支給なし</option><option value="full">全額支給</option><option value="limited">上限あり</option></select></label>{transport==='limited'&&<label className={styles.field}>交通費の上限（円）<input type="number" inputMode="numeric" name="transport_limit" min="0" max="100000" required defaultValue={base?.transport_limit??''}/></label>}
+      {field('9. 服装・持ち物','dress',base?.dress||'')}
       <label className={styles.field}>10. 応募締切 *（日本時間）<input type="datetime-local" name="deadline" required defaultValue={job?new Date(Date.parse(job.deadline)+9*3600000).toISOString().slice(0,16):''}/><small className={styles.muted}>募集全体の締切を設定してください。各勤務日の募集は、その日の勤務開始時に終了します。</small></label>
-      <label className={styles.field}>11. 契約形態 *<select name="contract_type" required defaultValue={job?.contract_type||""}><option value="">選択してください</option><option value="employment">雇用（アルバイト等）</option><option value="contract">業務委託</option></select></label>
-      <label className={styles.field}>12. 支払方法 *<select name="payment_method" required defaultValue={job?.payment_method||""}><option value="">選択してください</option><option value="bank">銀行振込</option><option value="cash">現金</option></select></label>
-      <label className={styles.field}>13. 支払日 *<input name="payment_date" required maxLength={100} defaultValue={job?.payment_date||""} placeholder="例：即日／翌月15日"/></label>
-      <label className={`${styles.field} ${styles.wide}`}>14. その他の合意事項 *<textarea name="contract_notes" required maxLength={2000} defaultValue={job?.contract_notes||""} placeholder="交通費・深夜手当・税の取扱い・キャンセル時の対応など。ない場合は「なし」と記載してください。"/><small className={styles.muted}>応募・オファー後のチャットに、この条件が最初から表示されます。</small></label>
+      <label className={styles.field}>11. 契約形態 *<select name="contract_type" required defaultValue={base?.contract_type||""}><option value="">選択してください</option><option value="employment">雇用（アルバイト等）</option><option value="contract">業務委託</option></select></label>
+      <label className={styles.field}>12. 支払方法 *<select name="payment_method" required defaultValue={base?.payment_method||""}><option value="">選択してください</option><option value="bank">銀行振込</option><option value="cash">現金</option></select></label>
+      <label className={styles.field}>13. 支払日 *<input name="payment_date" required maxLength={100} defaultValue={base?.payment_date||""} placeholder="例：即日／翌月15日"/></label>
+      <label className={`${styles.field} ${styles.wide}`}>14. その他の合意事項 *<textarea name="contract_notes" required maxLength={2000} defaultValue={base?.contract_notes||""} placeholder="交通費・深夜手当・税の取扱い・キャンセル時の対応など。ない場合は「なし」と記載してください。"/><small className={styles.muted}>応募・オファー後のチャットに、この条件が最初から表示されます。</small></label>
       <label className={`${styles.field} ${styles.wide}`}>求人画像（任意）<input type="file" name="image" accept="image/jpeg,image/png,image/webp"/><small className={styles.muted}>JPEG・PNG・WebP、3MB以内。指定しない場合は店舗画像が自動で表示されます。</small></label>
       {image&&<div className={styles.wide}><img src={image} alt="現在の求人画像" className={styles.photoPreview}/>{job?.image_path&&<label className={styles.checks}><input type="checkbox" name="removeImage"/>専用画像を削除し、店舗画像に戻す</label>}</div>}
     </div>

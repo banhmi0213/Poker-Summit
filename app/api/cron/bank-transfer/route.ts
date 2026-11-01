@@ -15,6 +15,7 @@ import {
 import { sendOverdueGraceNoticeEmail, sendSuspensionNoticeEmail } from "@/lib/email";
 import { notifyStoreLine, PLAN_PAGE_URL } from "@/lib/store-line";
 import { effectivePlanFee } from "@/lib/price-lock";
+import { startCronRun, finishCronRun, checkCronAlive, type CronFailure } from "@/lib/cron-run";
 
 // ============================================================================
 // 銀行振込の毎日の自動処理(2026/10新設。Vercel Cron、日本時間 毎朝9:00)
@@ -46,9 +47,36 @@ type Result = { step: string; id: string; ok: boolean; detail?: string };
 
 export async function GET(req: NextRequest) {
   if (!isAuthorized(req)) {
-    revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // 実行記録と、うまくいかなかったものの運営へのメール(lib/cron-run.ts)
+  const runId = await startCronRun("bank-transfer");
+  let body: { today: string; processed: number; results: Result[] } | null = null;
+  const failures: CronFailure[] = [];
+  try {
+    body = await runBankTransfer();
+    for (const r of body.results) if (!r.ok) failures.push({ step: STEP_LABEL[r.step] ?? r.step, id: r.id, detail: r.detail ?? "" });
+  } catch (e) {
+    failures.push({ step: "振込の自動処理が途中で止まりました", detail: e instanceof Error ? e.message : String(e) });
+  }
+  const alive = await checkCronAlive("card-billing", "カード決済・契約更新", 30).catch(() => null);
+  if (alive) failures.push(alive);
+  const summary = body ? { today: body.today, processed: body.processed, ok: body.results.filter((r) => r.ok).length } : {};
+  await finishCronRun(runId, "bank-transfer", { jobLabel: "振込の請求・入金確認", summary, failures });
+  if (!body) return NextResponse.json({ error: failures[0]?.detail ?? "error" }, { status: 500 });
+  return NextResponse.json(body);
+}
+
+const STEP_LABEL: Record<string, string> = {
+  renewal: "次回分の請求書の発行",
+  renewal_email: "次回分の請求書メールの送信",
+  reminder: "期限前日のお知らせ",
+  overdue_warning: "期限切れのお知らせ",
+  suspend: "未入金による掲載停止",
+  addon_renewal: "アドオン次回分の請求書",
+};
+
+async function runBankTransfer(): Promise<{ today: string; processed: number; results: Result[] }> {
   const svc = createServiceRoleClient();
   const settings = await getBillingSettings(svc);
   const today = todayJst();
@@ -59,9 +87,10 @@ export async function GET(req: NextRequest) {
   const { data: dueContracts } = await svc
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, billing_cycle_months, current_period_end, contact_name, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)"
+      "id, store_id, plan_id, pending_plan_id, pending_plan_effective_at, billing_cycle_months, current_period_end, billing_anchor_day, contact_name, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at, stores(name)"
     )
     .eq("status", "active")
+    .eq("cancel_at_period_end", false) // 解約予定の契約は次の期間の請求書を出さない
     .eq("billing_method", "bank_transfer")
     .not("current_period_end", "is", null)
     .lt("current_period_end", renewalCutoffIso);
@@ -100,6 +129,7 @@ export async function GET(req: NextRequest) {
         months: isBillingCycle(months) ? months : 1,
         periodStart,
         settings,
+        anchorDay: (c as any).billing_anchor_day ?? null,
       });
       try {
         await sendInvoice(invoice, settings, "renewal");
@@ -246,7 +276,7 @@ export async function GET(req: NextRequest) {
   //  4b) 期間終了の7日前に次の1か月分の請求書
   const { data: dueAddons } = await svc
     .from("store_contract_addons")
-    .select("id, fee, current_period_end, store_contract_id, addons(name, monthly_fee), store_contracts!inner(id, status, store_id, contact_name, contact_email, stores(name))")
+    .select("id, fee, current_period_end, billing_anchor_day, store_contract_id, addons(name, monthly_fee), store_contracts!inner(id, status, cancel_at_period_end, store_id, contact_name, contact_email, stores(name))")
     .eq("billing_method", "bank_transfer")
     .is("pending_removed_at", null)
     .not("current_period_end", "is", null)
@@ -254,7 +284,7 @@ export async function GET(req: NextRequest) {
   for (const a of (dueAddons ?? []) as any[]) {
     try {
       const contract = Array.isArray(a.store_contracts) ? a.store_contracts[0] : a.store_contracts;
-      if (!contract || contract.status !== "active" || !contract.contact_email) continue;
+      if (!contract || contract.status !== "active" || contract.cancel_at_period_end || !contract.contact_email) continue;
       const periodStart = isoToJstDate(a.current_period_end);
       const { count } = await svc
         .from("invoices")
@@ -275,6 +305,7 @@ export async function GET(req: NextRequest) {
         lines: [{ addonName: addon?.name ?? "アドオン", unitPrice: a.fee ?? addon?.monthly_fee ?? 0, quantity: 1, monthly: true }],
         periodStart,
         storeContractAddonId: a.id,
+        anchorDay: a.billing_anchor_day ?? null,
       });
       results.push({ step: "addon_renewal", id: invoice.id, ok: true });
     } catch (e) {
@@ -314,5 +345,5 @@ export async function GET(req: NextRequest) {
 
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映
 
-  return NextResponse.json({ today, processed: results.length, results });
+  return { today, processed: results.length, results };
 }

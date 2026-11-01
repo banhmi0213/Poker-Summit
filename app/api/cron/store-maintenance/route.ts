@@ -8,14 +8,17 @@ import { regeocodeNextStores } from "@/lib/regeocode";
 import { matchNextStores, rematchUnlinkedStores } from "@/lib/google-match";
 import { fetchNextGoogleHours } from "@/lib/google-hours";
 import { sendStoreMaintenanceDigest } from "@/lib/email";
+import { autoReviewNewStores } from "@/lib/store-auto-review";
 
 // ============================================================================
 // 店舗データの自動見直し(毎日 Vercel Cron から呼ばれる、2026/10)。
 // 1日に少しずつ進めて、約1か月で全国を1周する。
 //  1. 新店さがし: 全国の地域リストを順番に AREAS_PER_RUN 地域ずつGoogleで「ポーカー」検索し、
-//     店名がポーカー店らしい未登録の店を「承認待ち」に入れる(公開は運営が承認してから)。
+//     店名がポーカー店らしい未登録の店を見つけ、Googleマップと照合して問題なければ自動で掲載する
+//     (lib/store-auto-review.ts。引っかかった店は承認待ちのまま理由を残し、運営が判断する。2026/10/20)。
 //  2. 閉業チェック: 掲載中でGoogleと結びついた店を、確認日の古い順に CHECKS_PER_RUN 件ずつ
-//     Googleの営業状況で確認し、閉業・休業になっていたら記録する(自動で消しはしない)。
+//     Googleの営業状況で確認し、閉業・見つからない店は削除、一時休業の店は掲載から自動で外す
+//     (有料契約中の店は要確認にするだけ。2026/10/21、削除は2026/10/23)。
 //  3. 新しく入った店の座標を国土地理院で取る。
 //  4. Googleマップに無かった店を、30日に1回ずつGoogleで探し直す。
 //  5. 営業時間が空の店舗の営業時間をGoogleから取る(店舗が入れた店は取らない)。
@@ -23,6 +26,7 @@ import { sendStoreMaintenanceDigest } from "@/lib/email";
 // ============================================================================
 
 export const maxDuration = 300;
+export const dynamic = "force-dynamic"; // 毎回データベースの最新を読む(キャッシュしない)
 
 const AREAS_PER_RUN = 16; // 全国約460地域 → 約1か月で1周
 const CHECKS_PER_RUN = 30; // 掲載約800店 → 約1か月で1周
@@ -47,7 +51,7 @@ export async function GET(req: NextRequest) {
   for (let i = 0; i < AREAS_PER_RUN; i++) {
     const t = tasks[cursor];
     try {
-      const r = await sweepArea(svc, t.pref, t.area, { keywords: ["ポーカー"], onlyPokerNames: true });
+      const r = await sweepArea(svc, t.pref, t.area, { keywords: ["ポーカー"], onlyPokerNames: true, autoReview: true });
       newCandidates.push(...r.inserted.map((n) => `${n}(${t.pref})`));
     } catch {
       // 1地域の失敗で全体を止めない
@@ -59,23 +63,70 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // 1-2. 見つけた店をGoogleマップと照合して、問題なければ自動で掲載(引っかかった店は承認待ちのまま理由を残す)
+  const review = await autoReviewNewStores(30).catch(() => ({ approved: [] as string[], held: [] as { name: string; reason: string }[], deleted: [] as { name: string; reason: string }[], capReached: false }));
+
   // 2. 閉業チェック
+  // Googleマップで閉業・一時休業・消えている(NOT_FOUND)店は、掲載から自動で外す(2026/10/21 オーナー指示)。
+  // ただし有料契約中の店は勝手に外さず「要確認」にして運営に知らせる。
+  // 一時休業で外した店(google_match_status = auto_closed)も見続けて、営業中に戻ったら掲載に戻す。
   const { data: stores } = await svc
     .from("stores")
-    .select("id, name, google_place_id, google_business_status")
-    .eq("status", "approved")
+    .select("id, name, status, google_place_id, google_business_status, google_match_status")
+    .or("status.eq.approved,and(status.eq.closed,google_match_status.eq.auto_closed)")
     .not("google_place_id", "is", null)
     .order("google_checked_at", { ascending: true, nullsFirst: true })
     .limit(CHECKS_PER_RUN);
+  const { data: contracted } = await svc
+    .from("store_contracts")
+    .select("store_id")
+    .in("status", ["active", "trialing", "past_due"])
+    .in("store_id", (stores ?? []).map((s) => s.id).concat(["00000000-0000-0000-0000-000000000000"]));
+  const paidIds = new Set(((contracted ?? []) as { store_id: string }[]).map((c) => c.store_id));
   const closed: { name: string; status: string }[] = [];
+  const removed: { name: string; status: string }[] = [];
+  const reopened: string[] = [];
+  const jstNow = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace("T", " ");
   for (const s of stores ?? []) {
     const status = await getPlaceBusinessStatus(s.google_place_id as string);
     const update: Record<string, unknown> = { google_checked_at: new Date().toISOString() };
     if (status) update.google_business_status = status;
-    if (status && status !== "OPERATIONAL" && status !== s.google_business_status) {
+    // 閉業・Googleから消えた店は削除する(2026/10/23 オーナー指示「閉店とかなってる店舗は削除」)。
+    // 有料契約中の店は消さず要確認。一時休業は再開することがあるので、今まで通り掲載から外して見続ける。
+    // 消した店は deleted_store_places に残り、新店さがし・取り込みで拾い直さない。
+    if ((status === "CLOSED_PERMANENTLY" || status === "NOT_FOUND") && !paidIds.has(s.id)) {
+      const label = status === "CLOSED_PERMANENTLY" ? "閉業" : "見つからない";
+      await svc.from("stores").update({ ...update, google_match_note: `自動で削除(${jstNow}): Googleマップで${label}` }).eq("id", s.id);
+      const { error: delError } = await svc.from("stores").delete().eq("id", s.id);
+      if (!delError) {
+        removed.push({ name: s.name, status });
+        continue;
+      }
+      // 求人の応募記録などが残っていて消せない店は、今まで通り掲載から外す
+      update.google_match_note = `自動で掲載停止(${jstNow}): Googleマップで${label}(削除できなかった: ${delError.message})`;
+      if (s.status === "approved") {
+        update.status = "closed";
+        update.google_match_status = "auto_closed";
+        closed.push({ name: s.name, status });
+      }
+      await svc.from("stores").update(update).eq("id", s.id);
+      continue;
+    }
+    if (status && status !== "OPERATIONAL" && s.status === "approved") {
       closed.push({ name: s.name, status });
-      // 一時休業も運営の方針で掲載から外すので、閉業と同じく「要確認」に入れる
-      update.google_match_status = "needs_review";
+      if (paidIds.has(s.id)) {
+        update.google_match_status = "needs_review";
+      } else {
+        update.status = "closed";
+        update.google_match_status = "auto_closed";
+        update.google_match_note = `自動で掲載停止(${jstNow}): Googleマップで${status === "CLOSED_PERMANENTLY" ? "閉業" : status === "CLOSED_TEMPORARILY" ? "一時休業" : "見つからない"}`;
+      }
+    } else if (status === "OPERATIONAL" && s.status === "closed" && s.google_match_status === "auto_closed" && s.google_business_status === "CLOSED_TEMPORARILY") {
+      // 一時休業から営業中に戻った店は掲載に戻す
+      update.status = "approved";
+      update.google_match_status = "matched";
+      update.google_match_note = `自動で掲載再開(${jstNow}): Googleマップで営業中に戻った`;
+      reopened.push(s.name);
     }
     await svc.from("stores").update(update).eq("id", s.id);
   }
@@ -89,14 +140,14 @@ export async function GET(req: NextRequest) {
   // 全店ほぼ同じ日に取ったので、取り直し(25日目)から期限(30日)までの5日で回り切るよう1日150件まで
   const hours = await fetchNextGoogleHours(150).catch(() => null);
 
-  const result = { cursor, cycle, newCandidates: newCandidates.length, closed: closed.length, at: new Date().toISOString() };
+  const result = { cursor, cycle, newCandidates: newCandidates.length, autoApproved: review.approved.length, autoHeld: review.held.length, closed: closed.length, removed: removed.length, autoDeleted: review.deleted.length, reopened: reopened.length, at: new Date().toISOString() };
   await svc.from("store_maintenance_state").update({ sweep_cursor: cursor, sweep_cycle: cycle, last_run_at: new Date().toISOString(), last_result: result }).eq("id", 1);
-  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, closedNames: closed, rematchLinked: rematch.linked, hours } });
+  await svc.from("audit_log").insert({ action: "store_maintenance", target_type: "store", detail: { ...result, newNames: newCandidates, autoApprovedNames: review.approved, autoHeld: review.held, closedNames: closed, removedNames: removed, autoDeletedNames: review.deleted, reopenedNames: reopened, rematchLinked: rematch.linked, hours } });
 
-  if (newCandidates.length || closed.length) {
+  if (review.approved.length || review.held.length || review.deleted.length || closed.length || removed.length || reopened.length) {
     const { data: settings } = await svc.from("site_settings").select("notify_email").eq("id", true).maybeSingle();
     if (settings?.notify_email) {
-      await sendStoreMaintenanceDigest({ to: settings.notify_email, newCandidates, closed }).catch(() => null);
+      await sendStoreMaintenanceDigest({ to: settings.notify_email, approved: review.approved, held: review.held, deleted: review.deleted, closed, removed, reopened }).catch(() => null);
     }
   }
   revalidatePublicData(); // 掲載状態の変化をTOP・一覧へすぐ反映

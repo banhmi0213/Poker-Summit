@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +15,7 @@ import { SITE_NAME, clip, pageTitle, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES } from 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)) return {};
   const supabase = await createClient();
-  const { data } = await supabase.from("coupons").select("id,title,discount,description,valid_until,banner_image_url,stores(name,pref,city,status)").eq("id", params.id).eq("active", true).maybeSingle();
+  const { data } = await supabase.from("coupons").select("id,title,discount,description,valid_until,expires_at,banner_image_url,stores(name,pref,city,status)").eq("id", params.id).eq("active", true).maybeSingle();
   const c = data as any;
   if (!c || !c.stores || !["approved", "listed"].includes(c.stores.status)) return {};
   const area = `${c.stores.pref ?? ""}${c.stores.city ?? ""}`;
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const description = clip(`${c.stores.name}で使えるクーポン「${c.title}」${c.discount ? `（${c.discount}）` : ""}。${c.valid_until ? `有効期限：${c.valid_until.replaceAll("-", "/")}。` : ""}${c.description ?? ""}`, 160);
   const path = `/coupons/${c.id}`;
   const image = c.banner_image_url || undefined;
-  const expired = !!c.valid_until && c.valid_until < new Date().toISOString().slice(0, 10);
+  const expired = isCouponExpired(c);
   return {
     title,
     description,
@@ -33,9 +34,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
-  const today = new Date().toISOString().slice(0, 10);
-  if (c.valid_until && c.valid_until < today) return "expired";
+function couponStatus(c: { valid_until: string | null; expires_at?: string | null; usage_limit: number | null; used_count: number | null }) {
+  if (isCouponExpired(c)) return "expired";
   if (c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit) return "exhausted";
   return "active";
 }
@@ -59,7 +59,7 @@ export default async function CouponDetailPage({
   const { data: coupon } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, stores(id, name, status)"
+      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, stores(id, name, status)"
     )
     .eq("id", params.id)
     .eq("active", true)
@@ -101,15 +101,21 @@ export default async function CouponDetailPage({
             <div className={styles.badges}>{c.offer_type && <span className="badge outline">{c.offer_type}</span>}{statusBadge(status)}</div>
             <h1><ReadableName name={c.title} /></h1>
             {c.discount && <p className={styles.discount}>{c.discount}</p>}
-            <p className={styles.expiry}>▣ {c.valid_until ? `有効期限：${c.valid_until.replaceAll("-", ".")}` : "有効期限なし"}</p>
+            <p className={styles.expiry}>▣ {c.valid_until ? `有効期限：${couponExpiryLabel(c, ".")}` : "有効期限なし"}</p>
             <p className={styles.note}>特典の内容・利用条件をご確認のうえ、ご利用ください。</p>
             <section className={styles.conditions}>
               <h2>ご利用条件</h2>
               {c.description ? <p className={styles.description}>{c.description}</p> : <p className={styles.description}>詳しい利用条件は店舗へお問い合わせください。</p>}
               <dl><div><dt>利用回数</dt><dd>お一人様1回</dd></div><div><dt>利用状況</dt><dd>{c.used_count ?? 0}件利用済み{c.usage_limit != null ? ` ／ 全体の上限${c.usage_limit}件` : ""}</dd></div></dl>
             </section>
-            {c.code && <div className={styles.code}>クーポンコード <strong>{c.code}</strong></div>}
-            <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>店頭でこの画面をご提示ください。</h2><p>利用条件をご確認のうえ、お店でクーポン画面を提示して特典をお受け取りください。</p></div></div>
+            {status === "expired" ? (
+              <div className={styles.present}><span aria-hidden="true">⏳</span><div><h2>このクーポンは有効期限を過ぎました。</h2><p>期限日の営業終了をもって終了したため、ご利用いただけません。</p></div></div>
+            ) : (
+              <>
+                {c.code && <div className={styles.code}>クーポンコード <strong>{c.code}</strong></div>}
+                <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>店頭でこの画面をご提示ください。</h2><p>利用条件をご確認のうえ、お店でクーポン画面を提示して特典をお受け取りください。</p></div></div>
+              </>
+            )}
             <form action={async () => {
               "use server";
               await setFavoriteCoupon(c.id, !isFavorite);
@@ -129,7 +135,7 @@ export default async function CouponDetailPage({
             <li><span>3</span><div><h3>店頭で提示</h3><p>お店で画面を提示し、スタッフの案内に従ってご利用ください。</p></div></li>
           </ol>
         </section>
-        <Link href="/coupons" className={styles.back}>← クーポン一覧に戻る</Link>
+        <Link href="/coupons" className={styles.back}>クーポン一覧に戻る</Link>
       </main>
       <PortalFooter />
       <BottomTabs />

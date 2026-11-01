@@ -1,4 +1,6 @@
 import "server-only";
+import { notEndedEventFilter } from "@/lib/event-end";
+import { notExpiredFilter } from "@/lib/coupon-expiry";
 import { getDomesticTournamentEvents, matchesEventLocation } from "@/lib/major-tournament-events";
 import { unstable_cache } from "next/cache";
 import { createAnonClient } from "@/lib/supabase/anon";
@@ -19,7 +21,7 @@ async function loadHomePublicData(currentPref: string | null) {
   let eventQuery = supabase.from("events")
     .select(`id, title, location, start_at, end_at, category, banner_image_url, store_id, stores${currentPref ? "!inner" : ""}(name, pref, city)`)
     .eq("status", "published")
-    .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`);
+    .or(notEndedEventFilter());
   if (currentPref) eventQuery = eventQuery.eq("stores.pref", currentPref);
 
   const [
@@ -44,7 +46,8 @@ async function loadHomePublicData(currentPref: string | null) {
     Promise.all([
       supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open"),
-      supabase.from("board_posts").select("*", { count: "exact", head: true }).eq("status", "visible"),
+      // 未ログインはサミットの本文を読めない(列ごとの権限)ので、件数は id だけで数える(2026/10/20)
+      supabase.from("board_posts").select("id", { count: "exact", head: true }).eq("status", "visible"),
       supabase.from("major_tournaments").select("*", { count: "exact", head: true }).eq("active", true),
     ]),
     supabase.rpc("public_member_count"),
@@ -68,8 +71,9 @@ async function loadHomePublicData(currentPref: string | null) {
     getDomesticTournamentEvents(supabase, now),
     supabase
       .from("coupons")
-      .select("id, title, discount, valid_until, banner_image_url, store_id, stores(name, category, pref, city)")
+      .select("id, title, discount, valid_until, expires_at, banner_image_url, store_id, stores(name, category, pref, city)")
       .eq("active", true)
+      .or(notExpiredFilter()) // 期限(期限日の営業終了)を過ぎたクーポンは出さない
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .limit(4),

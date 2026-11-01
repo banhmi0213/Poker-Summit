@@ -59,6 +59,13 @@ export function limitLabel(limit: number | null) {
   return limit === null ? "無制限" : `${limit}件まで`;
 }
 
+/** 今月プランの回数を何回使ったか(スポット求人の公開・スカウト。2026/10/22〜、DBの store_plan_quota_used)。 */
+export async function planQuotaUsedThisMonth(supabase: any, storeId: string): Promise<number> {
+  const { data, error } = await supabase.rpc("store_plan_quota_used", { p_store_id: storeId });
+  if (error) throw new Error("今月の利用回数を読み込めませんでした。");
+  return Number(data) || 0;
+}
+
 /** 日本時間の今月1日 0:00 を ISO 文字列で。スポット求人の月間成立数の集計開始。 */
 export function japanMonthStartIso(now = new Date()) {
   const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000);

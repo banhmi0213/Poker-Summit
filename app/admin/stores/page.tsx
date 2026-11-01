@@ -55,7 +55,7 @@ export default async function AdminStoresPage({
     let q0 = supabase
       .from("stores")
       .select(
-        "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at",
+        "id, name, category, region, pref, city, address, tel, hours, description, area_keywords, status, is_recommended, owner_user_id, line_user_id, created_at, google_match_status, google_match_note",
         { count: opts.head ? "exact" : undefined, head: opts.head ?? false }
       )
       // Secondary sort by id: created_at alone ties for rows inserted in the
@@ -65,8 +65,11 @@ export default async function AdminStoresPage({
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       // カテゴリ「その他」= ポーカー店ではない取り込みデータ(パチンコ店・ゲームセンター等、全て却下済み)。
-      // 一覧には出さない(2026/10)。
-      .neq("category", "other");
+      // 一覧には出さない(2026/10)。ただし自動見直しで新しく見つかった店は、カテゴリを推測できないと
+      // 「その他」で承認待ちに入るため、承認待ちのものは出す(2026/10/20「承認待ち2件なのに1件しか出ない」)。
+      .or("category.neq.other,status.eq.pending")
+      // 解約して契約期間が終わった店舗(status=closed)は一覧に出さない(2026/10/18「総合からも削除」)
+      .neq("status", "closed");
 
     if (status !== "all") {
       q0 = q0.eq("status", status);
@@ -136,6 +139,7 @@ export default async function AdminStoresPage({
     { count: listedCount },
     { data: logins },
     { data: pendingChangeRequests },
+    { count: pendingStoreCount },
   ] = await Promise.all([
     showListedCount ? buildListedCountQuery() : Promise.resolve({ count: null as number | null }),
     supabase.rpc("admin_list_store_logins"),
@@ -144,6 +148,8 @@ export default async function AdminStoresPage({
       .select("id, store_id, field, current_value, proposed_value, requested_by, requested_at, stores(name)")
       .eq("status", "pending")
       .order("requested_at", { ascending: true }),
+    // メニューの「店舗管理」の件数の印の内訳(承認待ちの店舗)。どこにあるか分かるよう上に案内を出す(2026/10)
+    supabase.from("stores").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
   const loginMap = new Map<string, string>((logins ?? []).map((l: any) => [l.store_id, l.login_id]));
 
@@ -216,6 +222,13 @@ export default async function AdminStoresPage({
           <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             このコードを店舗にお伝えください。店舗はLINEミニアプリの初回起動時にこのコードを入力して、自分のLINEアカウントとこの店舗を連携します（24時間有効・1回のみ使用可）。
           </p>
+        </div>
+      )}
+
+      {(pendingStoreCount ?? 0) > 0 && status !== "pending" && (
+        <div className="card" style={{ borderColor: "#aa3b28", marginBottom: 16, display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <strong>承認待ちの店舗が {pendingStoreCount}件 あります。</strong>
+          <Link href="/admin/stores?status=pending" className="btn primary">承認待ちを表示する</Link>
         </div>
       )}
 
@@ -360,7 +373,7 @@ export default async function AdminStoresPage({
           </div>
           <div className="field">
             <span className="muted">電話番号</span>
-            <input type="text" name="tel" />
+            <input type="tel" name="tel" autoComplete="tel" />
           </div>
           <div className="field">
             <span className="muted">営業時間</span>
@@ -410,6 +423,8 @@ export default async function AdminStoresPage({
           <option value="approved">承認済み</option>
           <option value="pending">承認待ち</option>
           <option value="rejected">却下</option>
+          <option value="test">テスト用（非公開）</option>
+          <option value="duplicate">重複掲載のため非公開</option>
           <option value="payment_suspended">未入金で非公開</option>
         </select>
         <button type="submit" className="btn">
@@ -476,7 +491,13 @@ export default async function AdminStoresPage({
           )}
           {stores?.map((s) => (
             <tr key={s.id}>
-              <td className="management-name"><ReadableName name={s.name} /></td>
+              <td className="management-name">
+                <ReadableName name={s.name} />
+                {/* 自動審査で保留にした理由(承認待ちの店だけ。2026/10/20) */}
+                {s.status === "pending" && s.google_match_status === "auto_held" && s.google_match_note && (
+                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>{s.google_match_note}</div>
+                )}
+              </td>
               <td>
                 <span className="badge outline">
                   {CATEGORY_LABEL[s.category ?? ""] ?? s.category ?? ""}
@@ -686,7 +707,7 @@ export default async function AdminStoresPage({
             className="btn"
             style={{ fontSize: 13, pointerEvents: page <= 1 ? "none" : undefined, opacity: page <= 1 ? 0.5 : 1 }}
           >
-            ← 前へ
+            前へ
           </Link>
           <span className="muted" style={{ fontSize: 13 }}>
             {page} / {totalPages}
@@ -701,7 +722,7 @@ export default async function AdminStoresPage({
               opacity: page >= totalPages ? 0.5 : 1,
             }}
           >
-            次へ →
+            次へ
           </Link>
         </div>
       )}

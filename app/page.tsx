@@ -1,3 +1,8 @@
+import { AcademyHero } from "./academy-hero";
+import { Suspense } from "react";
+import { HomePokerNews } from "./home-poker-news";
+import { HomeBlogSection } from "./home-blog-section";
+import { freerollSignupOpen, PRELAUNCH_TOURNAMENT } from "@/lib/prelaunch";
 import { JobCategoryEntrances } from "./job-category-entrances";
 import { CouponCategoryEntrances } from "./coupon-category-entrances";
 import { couponCategoryHref } from "@/lib/coupon-categories";
@@ -43,7 +48,8 @@ const HOME_JSON_LD = [
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     name: SITE_NAME,
-    alternateName: `${SITE_NAME}｜${SITE_TAGLINE}`,
+    // カタカナで検索されても同じサイトだと分かるように(2026/10/21)
+    alternateName: ["ポーカーサミット", "PokerSummit", `${SITE_NAME}｜${SITE_TAGLINE}`],
     url: `${SITE_URL}/`,
     description: SITE_DESCRIPTION,
     inLanguage: "ja",
@@ -60,7 +66,10 @@ const HOME_JSON_LD = [
     "@id": `${SITE_URL}/#organization`,
     name: "株式会社Give Rise",
     url: `${SITE_URL}/`,
-    brand: { "@type": "Brand", name: SITE_NAME },
+    logo: `${SITE_URL}/images/logo.webp`,
+    brand: { "@type": "Brand", name: SITE_NAME, alternateName: "ポーカーサミット" },
+    // 公式SNS。本物のサイトがどこかをGoogleに伝える(コピーサイト対策、2026/10/21)
+    sameAs: ["https://x.com/poker_summit", "https://www.instagram.com/pokersummit_official/"],
   },
 ];
 
@@ -199,6 +208,20 @@ export default async function HomePage({
       <JsonLd data={HOME_JSON_LD} />
       <PortalHeader userEmail={user?.email} regionSelector={<PrefSelector currentPref={currentPref} prefOptions={PREF_OPTIONS} />} />
 
+      {/* ログインしていない人にだけ、会員登録とフリーロールの案内を細い帯で出す(2026/10/21、一般公開・宣伝に合わせて)。
+          10/25 21:00 の大会開始で自動で消える(lib/prelaunch.ts freerollSignupOpen) */}
+      {!user && freerollSignupOpen() && (
+        <aside aria-label="会員登録のご案内" style={{ maxWidth: 1180, margin: "12px auto 12px", padding: "0 16px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 14px", padding: "11px 16px", border: "1px solid #e4c98e", borderRadius: 12, background: "linear-gradient(110deg,#fff9e8,#fffdf8)" }}>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6, color: "#3a2a12", flex: "1 1 240px" }}>
+              <strong style={{ color: "#9b7129" }}>10/25（日）までの会員登録</strong>で、
+              <Link href="/tournaments/first-freeroll" style={{ color: "#3a2a12", fontWeight: 700, display: "inline-block" }}>会員限定フリーロール（{PRELAUNCH_TOURNAMENT.prizeLabel}）</Link>に参加できます
+            </p>
+            <Link href="/signup" style={{ display: "inline-block", borderRadius: 9, padding: "9px 18px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none", whiteSpace: "nowrap" }}>会員登録</Link>
+          </div>
+        </aside>
+      )}
+
       {bannersForDevice(topBanners, "mobile").length > 0 && <div className="home-mobile-top-ad banner-mobile-only"><HomeBannerSlider banners={bannersForDevice(topBanners, "mobile")} /></div>}
 
       {settings?.announcement && (
@@ -280,7 +303,7 @@ export default async function HomePage({
 
       <main className={`home-feed ${styles.readable}`}>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る →</Link></div>
+          <div className="home-section-head"><h2><span>🏆</span> {currentPref ? `${currentPref}のPICK UP店舗` : "PICK UP店舗"}</h2><Link href="/stores/featured">すべての店舗を見る</Link></div>
           {!featuredStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{featuredStores.map(s => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
@@ -291,7 +314,7 @@ export default async function HomePage({
           </div>
         )}
         <section className="home-section">
-          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る →</Link></div>
+          <div className="home-section-head"><h2><span>{isEventsLive ? "🔥" : "📅"}</span> {isEventsLive ? "開催中のトーナメント・イベント" : "開催予定のトーナメント・イベント"}</h2><Link href="/events">すべてのトーナメント・イベントを見る</Link></div>
           {!displayEvents.length && <p className="muted">現在開催予定のイベントはありません。</p>}
           <div className="home-grid home-grid-four">{displayEvents.map((ev: any) => {
             const status = getEventStatus(ev, now);
@@ -306,7 +329,7 @@ export default async function HomePage({
         </section>
         {couponBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={couponBanners} layout="wide" /></div>}
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る →</Link></div>
+          <div className="home-section-head"><h2><span>🎟️</span> お得なクーポン</h2><Link href={couponCategoryHref("", pref || (region ? "" : currentPref || ""), area, region)}>すべてのクーポンを見る</Link></div>
           <CouponCategoryEntrances pref={pref || (region ? "" : currentPref || "")} area={area} region={region} />
           {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
           {popularCoupons.length > 0 && <div className="home-grid home-new-grid">{popularCoupons.map((c: any) => <Link href={`/coupons/${c.id}`} className="home-coupon-card home-coupon-card--vertical" key={c.id}>
@@ -318,19 +341,19 @@ export default async function HomePage({
         <div className="home-section"><HomeSectionBanners banners={[{ id: "coupon-section-artwork", title: "クーポンを探す", image_url: "/images/coupon-banner-light-v3.webp", link_url: "/coupons", external: false, device: "all" }]} layout="wide" /></div>
         {communityBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={communityBanners} layout="four" /></div>}
         <section className="home-section home-summit">
-          <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る →</Link></div>
+          <div className="home-section-head"><h2><span>💬</span> サミット｜情報交換</h2><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
         {rankingBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section">
-          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る →</Link></div>
+          <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
           {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
         <section className="home-section">
-          <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る →</Link></div>
+          <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />
           {/* 新着求人(職種画像と求人バナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
           {latestJobs.length > 0 && <div className="home-grid home-new-grid">{latestJobs.map((j: any) => <Link href={`/jobs/${j.id}`} className="home-job-card" key={j.id}>
@@ -340,10 +363,9 @@ export default async function HomePage({
           </Link>)}</div>}
         </section>
         <div className="home-section"><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>
-        <section aria-label="無料ポーカー学習コース" style={{ margin: "26px 0", padding: "22px 24px", border: "1px solid #e4c98e", borderRadius: 14, background: "linear-gradient(110deg,#fff9e8,#fffdf8)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 14 }}>
-          <div><span style={{ color: "#9b7129", fontSize: 11, letterSpacing: "0.13em", fontWeight: 800 }}>POKER SUMMIT ACADEMY</span><h2 style={{ fontSize: "clamp(17px,2.4vw,24px)", margin: "7px 0" }}>遊びながら、ポーカーを学ぼう。</h2><p style={{ margin: 0, fontSize: 12, color: "#765f42" }}>ポジション・レンジ表・役の強さクイズを無料で体験。</p></div>
-          <Link href="/learn" style={{ display: "inline-block", borderRadius: 9, padding: "13px 19px", background: "#d6ac49", color: "#2d200d", fontSize: 13, fontWeight: 800, textDecoration: "none" }}>無料学習コースへ →</Link>
-        </section>
+        <AcademyHero />
+        <Suspense fallback={null}><HomeBlogSection /></Suspense>
+        <Suspense fallback={null}><HomePokerNews /></Suspense>
         {(["pc", "mobile"] as const).map(device => { const footerBanners = bannersForDevice(footerThreeBannerRows, device).slice(0, 3); return (
         <section key={device} className={`${styles.promoGrid} ${device === "pc" ? "banner-pc-only" : "banner-mobile-only"}`} aria-label="おすすめコンテンツ" id={device === "pc" ? "blog" : undefined} style={{ scrollMarginTop: 160 }}>
           {footerBanners.length > 0 ? footerBanners.map((b) => {

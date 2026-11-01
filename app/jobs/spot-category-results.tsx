@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { openingEmptyNote } from "@/lib/prelaunch";
 import { createClient } from "@/lib/supabase/server";
 import { TERMS_VERSION, PRIVACY_VERSION, MATCHING_RULES_VERSION } from "@/lib/legal";
 import { Restricted } from "@/app/spot-jobs/detail";
@@ -19,7 +20,7 @@ export async function SpotCategoryResults({pref,q,employmentFilter}:{pref:string
     ]);
     if (dealer.error || suspended.error || consent.error) throw new Error("スポット求人の閲覧権限を確認できませんでした。");
     if (!dealer.data || suspended.data) notice = <Restricted/>;
-    else if (!consent.data) notice = <p>スポット求人の閲覧には利用規約への同意が必要です。<Link href={destination}>同意してスポット求人を見る →</Link></p>;
+    else if (!consent.data) notice = <p>スポット求人の閲覧には利用規約への同意が必要です。<Link href={destination}>同意してスポット求人を見る</Link></p>;
   }
   if (notice) return <section style={{marginTop:24}}><h2 style={{fontSize:18}}>スポット</h2>{notice}</section>;
   // Spot contracts have their own employment/contract terms, never classify them as permanent jobs.
@@ -34,7 +35,7 @@ export async function SpotCategoryResults({pref,q,employmentFilter}:{pref:string
   const {data,error}=await query;
   if(error) throw new Error("スポット求人を読み込めませんでした。");
   return <section style={{marginTop:24}}><h2 style={{fontSize:18}}>スポット <small className="muted">新着順</small></h2>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>{(data??[]).map((job:any)=><Link className="card" key={job.id} href={`/spot-jobs/${job.id}`}><span className="badge outline">スポット</span><h3><ReadableName name={job.stores?.name??""}/></h3><p className="muted">{job.stores?.pref}</p><p>{job.duties}</p><span>募集詳細を見る →</span></Link>)}</div>
-    {!data?.length&&<p className="empty">条件に合うスポット求人が見つかりませんでした。</p>}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14}}>{(data??[]).map((job:any)=><Link className="card" key={job.id} href={`/spot-jobs/${job.id}`}><span className="badge outline">スポット</span><h3><ReadableName name={job.stores?.name??""}/></h3><p className="muted">{job.stores?.pref}</p><p>{job.duties}</p><span>募集詳細を見る</span></Link>)}</div>
+    {!data?.length&&<p className="empty">条件に合うスポット求人が見つかりませんでした。{openingEmptyNote("スポット求人") && <><br />{openingEmptyNote("スポット求人")}</>}</p>}
   </section>;
 }

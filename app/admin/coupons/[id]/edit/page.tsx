@@ -41,7 +41,7 @@ export default async function AdminCouponEditPage({
           </div>
         </div>
         <Link href="/admin/coupons" className="btn">
-          ← クーポン一覧へ戻る
+          クーポン一覧へ戻る
         </Link>
       </div>
 
@@ -68,7 +68,7 @@ export default async function AdminCouponEditPage({
 
           <div className="field">
             <span className="muted">クーポンコード</span>
-            <input type="text" name="code" defaultValue={coupon.code ?? ""} />
+            <input type="text" name="code" autoCapitalize="none" autoCorrect="off" spellCheck={false} defaultValue={coupon.code ?? ""} />
           </div>
 
           <div className="field">

@@ -11,6 +11,7 @@ import {
 } from "@/lib/analytics";
 import { classifyReferrer } from "@/lib/referrer";
 import { fetchAllRows } from "@/lib/fetch-all-rows";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 type SP = {
   tab?: string;
@@ -179,6 +180,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
 
   const tabs: { key: string; label: string }[] = [
     { key: "overview", label: "全体アクセス" },
+    { key: "prelaunch", label: "先行登録" },
+    { key: "apply", label: "広告・申込" },
     { key: "category", label: "カテゴリー" },
     { key: "blog", label: "BLOG記事" },
     { key: "banner", label: "バナー効果" },
@@ -293,6 +296,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
       )}
       {tab === "blog" && <BlogAnalyticsTab supabase={supabase} since={since} />}
       {tab === "banner" && <BannerTab supabase={supabase} since={since} />}
+      {tab === "prelaunch" && <PrelaunchTab since={since} />}
+      {tab === "apply" && <ApplyTab since={since} />}
       {tab === "issues" && <IssuesTab issues={issues} />}
       {(tab === "overview" || !tab) && (
         <OverviewTab
@@ -333,7 +338,7 @@ async function OverviewTab({
       fetchAllRows(() =>
         supabase
           .from("page_views")
-          .select("created_at, referrer, device")
+          .select("created_at, referrer, device, visitor_id")
           .eq("store_id", storeId)
           .gte("created_at", since.toISOString())
       ),
@@ -343,6 +348,8 @@ async function OverviewTab({
 
     const { counts, labels } = bucketTrend((views ?? []).map((v: any) => v.created_at), filters);
     const totalViews = (views ?? []).length;
+    // UU = 期間内にこの店舗ページを見た人数(閲覧者番号の数。番号の記録は2026/10/21から)
+    const totalUU = new Set((views ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
 
     const refCounts = new Map<string, number>();
     (views ?? []).forEach((v: any) => {
@@ -383,6 +390,7 @@ async function OverviewTab({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
           <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+          <StatTile label="期間内UU" value={totalUU.toLocaleString()} delta="10/21から集計" />
           <StatTile label="累計お気に入り" value={(favCount ?? 0).toLocaleString()} delta={store.pref} />
         </div>
         {compare && (
@@ -431,7 +439,7 @@ async function OverviewTab({
     fetchAllRows(() =>
       supabase
         .from("page_views")
-        .select("created_at, referrer, device, store_id")
+        .select("created_at, referrer, device, store_id, visitor_id")
         .not("store_id", "is", null)
         .gte("created_at", since.toISOString())
     ),
@@ -450,6 +458,16 @@ async function OverviewTab({
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
   const totalViews = (allViews ?? []).length;
+  // UU(何人が見たか)。閲覧者番号の記録は2026/10/21から。サイト全体はTOP・一覧・サミットなど全部の公開ページ(public.site_page_views)
+  const storeUU = new Set((allViews ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
+  const uuByStore = new Map<string, Set<string>>();
+  (allViews ?? []).forEach((v: any) => {
+    if (!v.visitor_id) return;
+    if (!uuByStore.has(v.store_id)) uuByStore.set(v.store_id, new Set());
+    uuByStore.get(v.store_id)!.add(v.visitor_id);
+  });
+  const { data: sitePvUu } = await createServiceRoleClient().rpc("admin_site_pv_uu", { p_since: since.toISOString() });
+  const siteRow = (Array.isArray(sitePvUu) ? sitePvUu[0] : sitePvUu) as { site_pv?: number; site_uu?: number } | null;
 
   const viewsByStore = new Map<string, number>();
   (allViews ?? []).forEach((v: any) => {
@@ -464,7 +482,7 @@ async function OverviewTab({
     .sort((a, b) => b.periodViews - a.periodViews)
     .slice(0, 5);
 
-  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, favs: favByStore.get(s.id) ?? 0 }));
+  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, uu: uuByStore.get(s.id)?.size ?? 0, favs: favByStore.get(s.id) ?? 0 }));
   if (q) storeRows = storeRows.filter((r: any) => r.s.name.includes(q));
   if (category && category !== "other") storeRows = storeRows.filter((r: any) => r.s.category === category);
   storeRows.sort((a: any, b: any) => {
@@ -495,10 +513,13 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
-        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} />
+        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
-        <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
       </div>
@@ -576,23 +597,24 @@ async function OverviewTab({
             絞り込む
           </button>
         </form>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名</th>
               <th>都道府県</th>
               <th>ステータス</th>
               <th>期間内PV</th>
+              <th>期間内UU</th>
               <th>お気に入り</th>
             </tr>
           </thead>
           <tbody>
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted">該当する店舗がありません。</td>
+                <td colSpan={6} className="muted">該当する店舗がありません。</td>
               </tr>
             )}
-            {storeRows.map(({ s, views, favs }: any) => (
+            {storeRows.map(({ s, views, uu, favs }: any) => (
               <tr key={s.id}>
                 <td>
                   <span className="badge outline" style={{ marginRight: 6 }}>
@@ -605,11 +627,12 @@ async function OverviewTab({
                   <span className="badge">{s.status === "approved" || s.status === "listed" ? "公開中" : s.status}</span>
                 </td>
                 <td className="tabular">{views.toLocaleString()}</td>
+                <td className="tabular">{uu.toLocaleString()}</td>
                 <td className="tabular">{favs.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -659,7 +682,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
       </div>
       <div className="card">
         <h3>カテゴリ別サマリー</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>カテゴリ</th>
@@ -678,7 +701,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -727,7 +750,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>記事別アクセス状況</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead><tr><th>記事</th><th>カテゴリ</th><th>状態</th><th>今日</th><th>7日</th><th>30日</th><th>累計</th></tr></thead>
           <tbody>
             {rows.length === 0 && <tr><td colSpan={7} className="muted">記事がありません。</td></tr>}
@@ -743,7 +766,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -802,7 +825,7 @@ async function BannerTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>バナー詳細</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>バナー</th>
@@ -837,10 +860,10 @@ async function BannerTab({ supabase, since }: any) {
               );
             })}
           </tbody>
-        </table>
+        </table></div>
         <div style={{ marginTop: 14 }}>
           <Link href="/admin/banners" className="btn" style={{ fontSize: 12.5 }}>
-            バナー管理を開く →
+            バナー管理を開く
           </Link>
         </div>
       </div>
@@ -875,6 +898,328 @@ function IssuesTab({ issues }: { issues: AnalyticsIssue[] }) {
             </Link>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// 先行登録ページの訪問数と新規会員数(2026/10/18)。
+// 訪問 = 先行登録ページ(/prelaunch。トップ等から差し替えで表示)を未ログインの人が開いた回数。
+// 新規会員 = 会員登録の数(店舗管理ログイン・運営は除く)。auth.users は service_role の関数で集計する。
+async function PrelaunchTab({ since }: { since: Date }) {
+  const svc = createServiceRoleClient();
+  // 会員の都道府県の内訳(全期間。本人が入れた都道府県、なければ登録したときの推定。2026/10/20)
+  const { data: prefRows } = await (await createClient()).rpc("member_pref_breakdown");
+  const prefMap = new Map<string, { total: number; guessed: number }>();
+  ((prefRows ?? []) as { pref: string; source: string; members: number }[]).forEach((r) => {
+    const cur = prefMap.get(r.pref) ?? { total: 0, guessed: 0 };
+    cur.total += Number(r.members);
+    if (r.source === "ip" || r.source === "geo") cur.guessed += Number(r.members);
+    prefMap.set(r.pref, cur);
+  });
+  const byPref = Array.from(prefMap.entries()).sort((a, b) => b[1].total - a[1].total);
+  // 登録で止まった理由(2026/10/20〜、public.signup_errors)
+  const { data: signupErrors } = await svc
+    .from("signup_errors")
+    .select("created_at, reason, message, detail, email_domain, device, in_app")
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const [{ data: views }, { data: signups }, { data: funnel }] = await Promise.all([
+    fetchAllRows(() =>
+      svc.from("page_views").select("created_at, referrer, device").eq("path", "/prelaunch").gte("created_at", since.toISOString())
+    ),
+    svc.rpc("member_signup_daily", { p_since: since.toISOString() }),
+    // ページ内の動き(2026/10/19〜): 登録へボタン・入力開始・登録ボタン(app/signup/funnel-tracker.tsx)
+    fetchAllRows(() =>
+      svc.from("page_views").select("created_at, path").in("path", ["/prelaunch#cta_click", "/prelaunch#form_start", "/prelaunch#submit"]).gte("created_at", since.toISOString())
+    ),
+  ]);
+  const funnelRows = (funnel ?? []) as { created_at: string; path: string }[];
+  const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null }[];
+  const signupRows = (signups ?? []) as { day: string; signups: number; confirmed: number }[];
+
+  const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
+  const days = new Map<string, { views: number; signups: number; confirmed: number; cta: number; start: number; submit: number }>();
+  const dayRow = (d: string) => {
+    if (!days.has(d)) days.set(d, { views: 0, signups: 0, confirmed: 0, cta: 0, start: 0, submit: 0 });
+    return days.get(d)!;
+  };
+  viewRows.forEach((v) => dayRow(jstDay(v.created_at)).views++);
+  const FUNNEL_KEY: Record<string, "cta" | "start" | "submit"> = { "/prelaunch#cta_click": "cta", "/prelaunch#form_start": "start", "/prelaunch#submit": "submit" };
+  funnelRows.forEach((f) => {
+    const k = FUNNEL_KEY[f.path];
+    if (k) dayRow(jstDay(f.created_at))[k]++;
+  });
+  const totalCta = funnelRows.filter((f) => f.path === "/prelaunch#cta_click").length;
+  const totalStart = funnelRows.filter((f) => f.path === "/prelaunch#form_start").length;
+  const totalSubmit = funnelRows.filter((f) => f.path === "/prelaunch#submit").length;
+  signupRows.forEach((r) => {
+    const row = dayRow(String(r.day).slice(0, 10));
+    row.signups += Number(r.signups);
+    row.confirmed += Number(r.confirmed);
+  });
+  const dayList = Array.from(days.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+
+  const totalViews = viewRows.length;
+  const totalSignups = signupRows.reduce((n, r) => n + Number(r.signups), 0);
+  const totalConfirmed = signupRows.reduce((n, r) => n + Number(r.confirmed), 0);
+  const rate = (a: number, b: number) => (b > 0 ? `${((a / b) * 100).toFixed(1)}%` : "—");
+
+  const countBy = (keyOf: (v: (typeof viewRows)[number]) => string) => {
+    const m = new Map<string, number>();
+    viewRows.forEach((v) => m.set(keyOf(v), (m.get(keyOf(v)) ?? 0) + 1));
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
+  };
+  const bySource = countBy((v) => classifyReferrer(v.referrer));
+  const byHost = countBy((v) => {
+    if (!v.referrer) return "（なし・直接）";
+    try {
+      return new URL(v.referrer).hostname;
+    } catch {
+      return "（不明）";
+    }
+  }).slice(0, 10);
+  const DEVICE: Record<string, string> = { mobile: "スマホ", tablet: "タブレット", pc: "パソコン" };
+  const byDevice = countBy((v) => DEVICE[v.device ?? ""] ?? "不明");
+
+  const stat = (label: string, value: string, sub?: string) => (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="muted" style={{ fontSize: 12.5, fontWeight: 700 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{value}</div>
+      {sub && <div className="muted" style={{ fontSize: 12 }}>{sub}</div>}
+    </div>
+  );
+  const listCard = (title: string, rows: [string, number][]) => (
+    <div className="card">
+      <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>{title}</h3>
+      {rows.length === 0 ? (
+        <p className="muted small">まだ記録がありません。</p>
+      ) : (
+        rows.map(([k, n]) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+            <span style={{ overflowWrap: "anywhere" }}>{k}</span>
+            <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+              {n.toLocaleString()} <span className="muted" style={{ fontWeight: 400 }}>({rate(n, totalViews)})</span>
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 12 }}>
+        訪問 = 先行登録ページを未ログインの人が開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月18日の夜からです。
+        <br />
+        新規会員 = 会員登録の数（店舗管理ログイン・運営は除く）。登録率 = 新規会員 ÷ 訪問。
+        <br />
+        ページ内の動き（2026年10月19日から）：「登録へ」= スマホの「無料で先行登録する」ボタンを押した回数、「入力開始」= フォームに入力し始めた回数、「送信」= 登録ボタンを押した回数。
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("訪問", totalViews.toLocaleString())}
+        {stat("新規会員", totalSignups.toLocaleString(), `うちメール確認済み ${totalConfirmed.toLocaleString()}`)}
+        {stat("登録率", rate(totalSignups, totalViews))}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("「登録へ」ボタン", totalCta.toLocaleString(), `訪問の ${rate(totalCta, totalViews)}`)}
+        {stat("入力開始", totalStart.toLocaleString(), `訪問の ${rate(totalStart, totalViews)}`)}
+        {stat("送信", totalSubmit.toLocaleString(), `入力開始の ${rate(totalSubmit, totalStart)}`)}
+      </div>
+
+      <div className="card" style={{ marginBottom: 14, overflowX: "auto" }}>
+        <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>日ごと</h3>
+        {dayList.length === 0 ? (
+          <p className="muted small">まだ記録がありません。</p>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13.5 }}>
+            <thead>
+              <tr className="muted" style={{ textAlign: "right" }}>
+                <th style={{ textAlign: "left", padding: "6px 4px" }}>日付</th>
+                <th style={{ padding: "6px 4px" }}>訪問</th>
+                <th style={{ padding: "6px 4px" }}>登録へ</th>
+                <th style={{ padding: "6px 4px" }}>入力開始</th>
+                <th style={{ padding: "6px 4px" }}>送信</th>
+                <th style={{ padding: "6px 4px" }}>新規会員</th>
+                <th style={{ padding: "6px 4px" }}>確認済み</th>
+                <th style={{ padding: "6px 4px" }}>登録率</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dayList.map(([d, r]) => (
+                <tr key={d} style={{ textAlign: "right", borderTop: "1px solid var(--border)" }}>
+                  <td style={{ textAlign: "left", padding: "6px 4px", whiteSpace: "nowrap" }}>{`${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.views.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.cta.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.start.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.submit.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px", fontWeight: 700 }}>{r.signups.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{r.confirmed.toLocaleString()}</td>
+                  <td style={{ padding: "6px 4px" }}>{rate(r.signups, r.views)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+        {listCard("どこから来たか", bySource)}
+        {listCard("参照元のサイト（上位10）", byHost)}
+        {listCard("端末", byDevice)}
+        <div className="card">
+          <h3 style={{ fontSize: 14.5, margin: "0 0 4px" }}>登録で止まった記録</h3>
+          <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>登録ボタンを押したのに会員にならなかった理由（2026年10月20日の夜から）。アプリ内＝InstagramなどSNSアプリの中のブラウザ。</p>
+          {(signupErrors ?? []).length === 0 ? (
+            <p className="muted small">まだ記録がありません。</p>
+          ) : (
+            (signupErrors ?? []).map((e: any, i: number) => (
+              <div key={i} style={{ fontSize: 12.5, padding: "5px 0", borderBottom: "1px solid var(--border)", lineHeight: 1.6 }}>
+                <span className="muted">{new Date(e.created_at).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>{" "}
+                {e.message}
+                <span className="muted">（{[e.device === "mobile" ? "スマホ" : e.device === "tablet" ? "タブレット" : "PC", e.in_app ? `アプリ内:${e.in_app}` : null, e.email_domain, e.detail].filter(Boolean).join("・")}）</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="card">
+          <h3 style={{ fontSize: 14.5, margin: "0 0 4px" }}>会員の都道府県（全期間）</h3>
+          <p className="muted" style={{ fontSize: 12, margin: "0 0 8px" }}>本人がマイページで入れた都道府県。なければ登録したときの推定（回線や位置情報から。だいたいの目安）。</p>
+          {byPref.length === 0 ? (
+            <p className="muted small">まだ記録がありません。</p>
+          ) : (
+            byPref.map(([k, v]) => (
+              <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+                <span>{k}</span>
+                <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                  {v.total.toLocaleString()}人{v.guessed > 0 && <span className="muted" style={{ fontWeight: 400 }}>（うち推定 {v.guessed}）</span>}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 掲載申し込みページ(/apply)の閲覧と申し込み(2026/10/21〜)。広告のリンクに ?utm_source=instagram&utm_campaign=store_test
+// のような目印を付けると「instagram/store_test」として分けて数える。
+async function ApplyTab({ since }: { since: Date }) {
+  const svc = createServiceRoleClient();
+  const [{ data: views }, { data: apps }] = await Promise.all([
+    fetchAllRows(() => svc.from("page_views").select("created_at, referrer, device, source").eq("path", "/apply").gte("created_at", since.toISOString())),
+    svc.from("listing_applications").select("created_at, source, store_name, company_name").gte("created_at", since.toISOString()).order("created_at", { ascending: false }),
+  ]);
+  const viewRows = (views ?? []) as { created_at: string; referrer: string | null; device: string | null; source: string | null }[];
+  // ディーラー登録広告(2026/10/21): 受け口(/account/dealer)の閲覧、広告から来た会員(public.ad_attributions)、そのうちディーラー登録した人
+  const [{ data: dealerViews }, { data: attrs }] = await Promise.all([
+    fetchAllRows(() => svc.from("page_views").select("source").eq("path", "/account/dealer").gte("created_at", since.toISOString())),
+    svc.from("ad_attributions").select("user_id, source, via").gte("created_at", since.toISOString()),
+  ]);
+  const attrRows = (attrs ?? []) as { user_id: string; source: string; via: string }[];
+  const { data: dealers } = attrRows.length
+    ? await svc.from("dealer_profiles").select("user_id").in("user_id", attrRows.map((a) => a.user_id))
+    : { data: [] as { user_id: string }[] };
+  const dealerSet = new Set(((dealers ?? []) as { user_id: string }[]).map((d) => d.user_id));
+  const adRows = new Map<string, { applyViews: number; applies: number; dealerViews: number; signups: number; dealerRegs: number }>();
+  const ad = (k: string) => {
+    if (!adRows.has(k)) adRows.set(k, { applyViews: 0, applies: 0, dealerViews: 0, signups: 0, dealerRegs: 0 });
+    return adRows.get(k)!;
+  };
+  viewRows.forEach((v) => v.source && ad(v.source).applyViews++);
+  ((dealerViews ?? []) as { source: string | null }[]).forEach((v) => v.source && ad(v.source).dealerViews++);
+  attrRows.forEach((a) => {
+    if (a.via === "signup") ad(a.source).signups++;
+    if (dealerSet.has(a.user_id)) ad(a.source).dealerRegs++;
+  });
+  const appRows = (apps ?? []) as { created_at: string; source: string | null; store_name: string | null; company_name: string | null }[];
+  appRows.forEach((a) => a.source && ad(a.source).applies++);
+  const jstDay = (iso: string) => new Date(Date.parse(iso) + 9 * 3600_000).toISOString().slice(0, 10);
+  const label = (src: string | null, referrer: string | null) => (src ? `広告・リンクの目印：${src}` : classifyReferrer(referrer));
+  const count = <T,>(rows: T[], keyOf: (r: T) => string) => {
+    const m = new Map<string, number>();
+    rows.forEach((r) => m.set(keyOf(r), (m.get(keyOf(r)) ?? 0) + 1));
+    return Array.from(m.entries()).sort((a, b) => b[1] - a[1]);
+  };
+  const bySource = count(viewRows, (v) => label(v.source, v.referrer));
+  const appsBySource = count(appRows, (a) => (a.source ? `広告・リンクの目印：${a.source}` : "目印なし"));
+  const byDay = count(viewRows, (v) => jstDay(v.created_at)).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  const DEVICE: Record<string, string> = { mobile: "スマホ", tablet: "タブレット", pc: "パソコン" };
+  const byDevice = count(viewRows, (v) => DEVICE[v.device ?? ""] ?? "不明");
+
+  const stat = (t: string, v: string) => (
+    <div className="card" style={{ padding: "14px 16px" }}>
+      <div className="muted" style={{ fontSize: 12.5, fontWeight: 700 }}>{t}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{v}</div>
+    </div>
+  );
+  const listCard = (title: string, rows: [string, number][]) => (
+    <div className="card">
+      <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>{title}</h3>
+      {rows.length === 0 ? (
+        <p className="muted small">まだ記録がありません。</p>
+      ) : (
+        rows.map(([k, n]) => (
+          <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 13.5, padding: "5px 0", borderBottom: "1px solid var(--border)" }}>
+            <span style={{ overflowWrap: "anywhere" }}>{k}</span>
+            <span style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{n.toLocaleString()}</span>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  return (
+    <div>
+      <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, marginBottom: 12 }}>
+        閲覧 = 掲載申し込みページを開いた回数（同じ人の再読み込みも数えます。クローラーと運営は除く）。記録は2026年10月21日からです。
+        <br />
+        広告のリンクに目印（例：https://pokersummit.jp/apply?utm_source=instagram&amp;utm_campaign=store_test）を付けると、その広告から来た人と申し込みを分けて数えます。
+        <br />
+        ディーラー登録広告は https://pokersummit.jp/account/dealer?utm_source=instagram&amp;utm_campaign=dealer_test のように付けます。会員登録 = その広告から来て新しく会員登録した人（メール確認前を含む）、ディーラー登録 = 広告から来た会員のうちディーラー登録した人。
+      </p>
+      <div className="card" style={{ marginBottom: 14, overflowX: "auto" }}>
+        <h3 style={{ fontSize: 14.5, margin: "0 0 10px" }}>広告ごとの結果</h3>
+        {adRows.size === 0 ? (
+          <p className="muted small">まだ記録がありません。</p>
+        ) : (
+          <table style={{ width: "100%", fontSize: 13.5, borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ textAlign: "left" }}>
+                <th style={{ padding: "5px 6px" }}>広告の目印</th>
+                <th style={{ padding: "5px 6px" }}>申込ページ閲覧</th>
+                <th style={{ padding: "5px 6px" }}>掲載申込</th>
+                <th style={{ padding: "5px 6px" }}>ディーラー受け口閲覧</th>
+                <th style={{ padding: "5px 6px" }}>会員登録</th>
+                <th style={{ padding: "5px 6px" }}>ディーラー登録</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from(adRows.entries()).map(([k, r]) => (
+                <tr key={k} style={{ borderTop: "1px solid var(--border)" }}>
+                  <td style={{ padding: "5px 6px", overflowWrap: "anywhere" }}>{k}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.applyViews}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.applies}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.dealerViews}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.signups}</td>
+                  <td style={{ padding: "5px 6px" }}>{r.dealerRegs}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 14 }}>
+        {stat("閲覧", viewRows.length.toLocaleString())}
+        {stat("申し込み", appRows.length.toLocaleString())}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+        {listCard("どこから来たか（閲覧）", bySource)}
+        {listCard("どこから来たか（申し込み）", appsBySource)}
+        {listCard("日別の閲覧", byDay)}
+        {listCard("端末", byDevice)}
       </div>
     </div>
   );

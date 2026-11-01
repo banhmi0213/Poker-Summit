@@ -1,4 +1,8 @@
+import { BoardNotificationLink } from "@/app/board/notification-controls";
+import { BoardPanel } from "./board-panel";
 import { ReadableName } from "@/app/readable-name";
+import { OfficialBadge } from "@/app/member-role-badge";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,6 +25,8 @@ import { Avatar } from "@/app/avatar";
 import { CosmeticsSettings, MyFrame } from "@/app/poker-ui/my-cosmetics";
 import { paidFeaturesVisible } from "@/lib/billing/visibility";
 import { AcademyBadge } from "@/app/learn/academy-badge";
+import { PREF_OPTIONS } from "@/lib/constants";
+import { saveJobAlertPreferences } from "./job-alert-actions";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -38,7 +44,7 @@ export async function MyPageContent({
   profileEdit = false,
   dealerRegistration = false,
 }: {
-  searchParams: { tab?: string; error?: string; done?: string };
+  searchParams: { tab?: string; boardPage?: string; error?: string; done?: string };
   profileEdit?: boolean;
   dealerRegistration?: boolean;
 }) {
@@ -66,7 +72,7 @@ export async function MyPageContent({
       .from("favorite_jobs")
       .select("jobs(id, title, status, store_id, stores(name, pref))")
       .eq("user_id", user.id),
-    supabase.from("favorite_coupons").select("coupons(id, title, discount, valid_until, active, stores(name))").eq("user_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("favorite_coupons").select("coupons(id, title, discount, valid_until, expires_at, active, stores(name))").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase
       .from("job_applications")
       .select("applied_at, jobs(id, title, status, store_id, stores(name, pref))")
@@ -82,7 +88,7 @@ export async function MyPageContent({
       .eq("user_id", user.id),
     supabase
       .from("coupons")
-      .select("id, title, valid_until, usage_limit, used_count, store_id, stores(name)")
+      .select("id, title, valid_until, expires_at, usage_limit, used_count, store_id, stores(name)")
       .eq("active", true),
     supabase
       .from("board_posts")
@@ -96,6 +102,9 @@ export async function MyPageContent({
   // profilesテーブルに持たせている(他人の投稿者アイコンを一覧でまとめて
   // 引けるようにするため。詳しくはapp/avatar.tsxのコメント参照)。
   const { data: dealerProfile } = await supabase.from("dealer_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
+  // m HOLD'EM ID(一度登録したら本人は変更できない。member_m_holdem_ids)
+  const { data: mHoldemRow } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", user.id).maybeSingle();
+  const mHoldemId = (mHoldemRow?.m_holdem_id as string | undefined) ?? "";
   const { data: myProfile } = await supabase
     .from("profiles")
     .select("avatar_url, pref_public, role, bio, email_public")
@@ -114,7 +123,7 @@ export async function MyPageContent({
   const appliedJobIds = new Set((applications ?? []).map((a: any) => a.jobs?.id));
   const usedCouponIds = new Set((couponUseRows ?? []).map((r: any) => r.coupon_id));
   const unusedCoupons = (allActiveCoupons ?? []).filter(
-    (c: any) => !usedCouponIds.has(c.id) && (c.usage_limit == null || (c.used_count ?? 0) < c.usage_limit)
+    (c: any) => !usedCouponIds.has(c.id) && !isCouponExpired(c) && (c.usage_limit == null || (c.used_count ?? 0) < c.usage_limit)
   );
   const usedCoupons = (allActiveCoupons ?? []).filter((c: any) => usedCouponIds.has(c.id));
 
@@ -128,17 +137,56 @@ export async function MyPageContent({
     .filter(Boolean)
     .sort((a: any, b: any) => (a.start_at ?? "").localeCompare(b.start_at ?? ""));
 
+  // 運営からのいちばん新しいお知らせ(30日以内。会員が気付けるようマイページの上に出す、2026/10/20)
+  const { data: latestNotice } = await supabase
+    .from("site_notices")
+    .select("title, created_at")
+    .eq("published", true)
+    .gte("created_at", new Date(Date.now() - 30 * 86400 * 1000).toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  // 「運営」バッジのアカウントか(マイページにもバッジを出す、2026/10/20)
+  const { data: officialRows } = await supabase.rpc("official_board_user_ids", { p_ids: [user.id] });
+  const isOfficial = ((officialRows ?? []) as unknown[]).length > 0;
+
   const tab = searchParams.tab || "favorites";
+  const {data:alertPrefs}=await supabase.from("job_alert_preferences").select("enabled,pref,experience_level,subscribed_at").eq("user_id",user.id).maybeSingle();
+  let matchingJobs: any[]=[];
+  if(alertPrefs?.enabled) {
+    let alertQuery=supabase.from("jobs").select("id,title,experience_level,posted_at,application_deadline,stores!inner(name,pref,status)").eq("status","open").gte("posted_at",alertPrefs.subscribed_at).or(`application_deadline.is.null,application_deadline.gte.${new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})}`).order("posted_at",{ascending:false}).limit(100);
+    if(alertPrefs.pref) alertQuery=alertQuery.eq("stores.pref",alertPrefs.pref);
+    const {data:alertRows}=await alertQuery;
+    matchingJobs=(alertRows||[]).filter((j:any)=>["approved","listed"].includes(j.stores?.status)
+      && (!j.application_deadline || j.application_deadline>=new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"}))
+      && (alertPrefs.experience_level==="any" || !j.experience_level || j.experience_level==="any" || j.experience_level===alertPrefs.experience_level));
+  }
   const name = (user.user_metadata as any)?.display_name || "会員";
   const pref = (user.user_metadata as any)?.pref || "";
-  const joinedAt = user.created_at ? formatDate(user.created_at) : "";
+  // 表示用の登録日を運営が指定している場合はそちら(member_joined_overrides、2026/10/20)
+  const { data: joinedOverride } = await supabase.from("member_joined_overrides").select("joined_on").eq("user_id", user.id).maybeSingle();
+  const joinedAt = joinedOverride?.joined_on
+    ? (() => { const [y, m, d] = String(joinedOverride.joined_on).split("-").map(Number); return `${y}/${m}/${d}`; })()
+    : user.created_at
+      ? formatDate(user.created_at)
+      : "";
 
-  const tabs: { key: string; label: string }[] = [
-    { key: "favorites", label: `♥ お気に入り店舗(${favStores.length})` },
-    { key: "favJobs", label: `☆ お気に入り求人(${favJobs.length})` },
-    { key: "coupons", label: `🎟️ クーポン` },
-    { key: "events", label: `🏆 参加予定イベント(${rsvpEvents.length})` },
-    { key: "posts", label: `💬 投稿(${myPosts?.length ?? 0})` },
+  const [{ count: boardFollowCount }, { count: boardUnreadCount }] = await Promise.all([
+    supabase.from("board_thread_preferences").select("post_id,board_posts!inner(status)", { count:"exact",head:true }).eq("user_id",user.id).eq("following",true).eq("board_posts.status","visible"),
+    supabase.from("board_notifications").select("id", { count:"exact",head:true }).eq("user_id",user.id).is("read_at",null),
+  ]);
+  const {count:boardNotificationCount}=await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id);
+  const {count:ownPostUnread}=myPosts?.length ? await supabase.from("board_notifications").select("id",{count:"exact",head:true}).eq("user_id",user.id).is("read_at",null).in("post_id",myPosts.map(p=>p.id)) : {count:0};
+  const tabs = [
+    { key:"favorites",label:"お気に入り店舗",icon:"♥",detail:`${favStores.length} 件`,unread:0 },
+    { key:"jobAlerts",label:"新着求人通知",icon:"🔔",detail:`${matchingJobs.length} 件`,unread:0 },
+    { key:"favJobs",label:"お気に入り求人",icon:"★",detail:`${favJobs.length} 件`,unread:0 },
+    { key:"coupons",label:"クーポン",icon:"▤",detail:`${favCoupons.length} 件`,unread:0 },
+    { key:"events",label:"参加予定イベント",icon:"♛",detail:`${rsvpEvents.length} 件`,unread:0 },
+    { key:"boardFollows",label:"フォロー中",icon:"☆",detail:`${boardFollowCount ?? 0} 件`,unread:0 },
+    { key:"boardNotifications",label:"サミット通知",icon:"🔔",detail:`${boardNotificationCount ?? 0} 件・未読 ${boardUnreadCount ?? 0} 件`,unread:boardUnreadCount ?? 0 },
+    { key:"posts",label:"投稿",icon:"💬",detail:`未読通知数 ${ownPostUnread ?? 0} 件`,unread:ownPostUnread ?? 0 },
   ];
 
   return (
@@ -158,6 +206,13 @@ export async function MyPageContent({
             </Link>
           )}
         </div>
+        {latestNotice && (
+          <Link href="/news" className="card" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 16 }}>
+            <span className="badge">運営からのお知らせ</span>
+            <strong style={{ fontSize: 14.5 }}>{latestNotice.title}</strong>
+            <span className="muted small">{formatDate(latestNotice.created_at)}</span>
+          </Link>
+        )}
         <div className={styles.layout}>
         <section className={styles.overview}>
 
@@ -245,15 +300,15 @@ export async function MyPageContent({
         </div>) : (
           <div className={styles.summary}>
             <div className={styles.identity}>
-              <div className={styles.identityTop}><MyFrame><Avatar name={name} url={avatarUrl} size={84} /></MyFrame><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
+              <div className={styles.identityTop}><MyFrame><Avatar name={name} url={avatarUrl} size={84} /></MyFrame><div><div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center",marginBottom:5}}><OfficialBadge show={isOfficial} /><span style={{fontSize:11,fontWeight:800,color:"#956d25"}}>{graduationScore!==null?"Lv.2 ポーカー卒業生":"Lv.1 ポーカー入門者"}</span><AcademyBadge score={graduationScore}/></div><strong className={styles.memberName}>{name}</strong><p className="muted small">📍 {pref || "未設定"} {pref && !prefPublic && "（非公開）"}{joinedAt && `・ ${joinedAt}に登録`}</p></div></div>
               {myProfile?.bio && <p className={styles.bio}>{myProfile.bio}</p>}
-              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:7}}>{myProfile?.role && <span className={styles.role}>♠ {myProfile.role}</span>}{graduationScore!==null&&<AcademyBadge score={graduationScore} compact/>}</div>
+              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:7}}>{myProfile?.role && <span className={styles.role} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><img src="/images/summit-finger-clean.webp" alt="" aria-hidden="true" width={22} height={28} style={{ width: 22, height: 28, objectFit: "contain", flexShrink: 0 }} />{myProfile.role}</span>}{graduationScore!==null&&<AcademyBadge score={graduationScore} compact/>}</div>
             </div>
             <dl className={styles.memberFacts}>
               <div><dt>✉ メールアドレス</dt><dd className={styles.email}>{user.email}<small>（{myProfile?.email_public === true ? "公開" : "非公開"}）</small></dd></div>
               <div><dt>▦ 登録日</dt><dd>{joinedAt || "未設定"}</dd></div>
-              <div><dt>m HOLD’EM ID</dt><dd>{String(user.user_metadata?.m_holdem_id || "未登録")}<small>（非公開）</small></dd></div>
-              <div><dt>♛ 会員ステータス</dt><dd>一般会員</dd></div>
+              <div><dt>m HOLD’EM ID</dt><dd>{mHoldemId || "未登録"}<small>（非公開）</small></dd></div>
+              <div><dt>♛ 会員ステータス</dt><dd>{isOfficial ? "運営" : "一般会員"}</dd></div>
               <div><dt>♙ 都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
             </dl>
             <div className={styles.summaryActions} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16 }}>
@@ -280,13 +335,9 @@ export async function MyPageContent({
 
         <div className={styles.tiles}>
           {tabs.map((t) => (
-            <Link
-              key={t.key}
-              href={`/mypage?tab=${t.key}`}
-              className={styles.tile}
-            >
-              {<><span className={styles.menuIcon} aria-hidden="true">{["♥", "★", "▤", "♛", "▧"][tabs.indexOf(t)]}</span><span className={styles.menuText}><strong>{t.label.replace(/\(\d+\)$/, "").replace(/^\S+\s*/, "")}</strong><small>{[favStores.length, favJobs.length, favCoupons.length, rsvpEvents.length, myPosts?.length ?? 0][tabs.indexOf(t)]} 件</small></span><b aria-hidden="true">›</b></>}
-            </Link>
+            <BoardNotificationLink key={t.key} href={`/mypage?tab=${t.key}`} className={styles.tile} unread={t.unread>0} ownPostsOnly={t.key==="posts"}>
+              <span className={styles.menuIcon} aria-hidden="true">{t.key === "boardNotifications" ? <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4M12 2V1"/></svg> : t.key === "posts" ? <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 3H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4l4 3v-3h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z"/><path d="M7 8h10M7 12h7"/></svg> : t.icon}</span><span className={styles.menuText}><strong>{t.label}{t.unread>0 && <span className={styles.unreadDot} aria-label="新しい通知あり" />}</strong><small>{t.detail}</small></span><b aria-hidden="true">›</b>
+            </BoardNotificationLink>
           ))}
         </div>
 
@@ -320,6 +371,34 @@ export async function MyPageContent({
               ))
             ))}
 
+          {tab === "jobAlerts" && <div className="card" style={{padding:16}}>
+            <h2 style={{fontSize:18,marginBottom:12}}>新着求人通知</h2>
+            <p className="muted small">希望条件に合う新着求人をマイページに表示します。メール・外部通知は送信しません。通知をONにした後に公開された求人が対象です。募集終了・掲載期限切れ・削除された求人は通知一覧から自動的に消えます。</p>
+            <form action={saveJobAlertPreferences}>
+              <label style={{display:"flex",alignItems:"center",gap:8,margin:"12px 0"}}>
+                <input type="checkbox" name="enabled" defaultChecked={alertPrefs?.enabled===true}/> 新着求人通知をONにする
+              </label>
+              <div className="field"><span>希望勤務地</span>
+                <select name="pref" defaultValue={alertPrefs?.pref||""}>
+                  <option value="">全国</option>
+                  {PREF_OPTIONS.map(p=><option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="field"><span>経験条件</span>
+                <select name="experience" defaultValue={alertPrefs?.experience_level||"any"}>
+                  <option value="any">すべて</option>
+                  <option value="beginner">未経験歓迎</option>
+                  <option value="experienced">経験者募集</option>
+                </select>
+              </div>
+              <button type="submit" className="btn primary">通知設定を保存する</button>
+            </form>
+            <h3 style={{fontSize:16,margin:"22px 0 10px"}}>条件に合う新着求人（{matchingJobs.length}件）</h3>
+            {matchingJobs.length===0 && <p className="muted small">現在、条件に合う新着求人はありません。</p>}
+            {matchingJobs.map((j:any)=><p key={j.id} style={{margin:"10px 0"}}>
+              <Link href={`/jobs/${j.id}`}>{j.title}</Link> <span className="muted small">・{j.stores?.name}（{j.stores?.pref}）</span>
+            </p>)}
+          </div>}
           {tab === "favJobs" &&
             (favJobs.length === 0 ? (
               <p className="muted small">
@@ -388,8 +467,8 @@ export async function MyPageContent({
               {favCoupons.length === 0 ? <p className="muted small" style={{ marginBottom: 22 }}>保存したクーポンはありません。</p> : favCoupons.map((c: any) => (
                 <div className="card" key={c.id} style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}><ReadableName name={c.title} /></Link> : <strong><ReadableName name={c.title} />（掲載終了）</strong>}
-                    <div className="muted small">{c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}</div>
+                    {c.active ? <Link href={`/coupons/${c.id}`} style={{ fontWeight: 800 }}><ReadableName name={c.title} />{isCouponExpired(c) && "（期限切れ）"}</Link> : <strong><ReadableName name={c.title} />（掲載終了）</strong>}
+                    <div className="muted small">{c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}</div>
                   </div>
                   <form action={async () => { "use server"; await setFavoriteCoupon(c.id, false); }}>
                     <button type="submit" className="btn" style={{ fontSize: 12 }}>解除</button>
@@ -407,7 +486,7 @@ export async function MyPageContent({
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}
                       </div>
                     </Link>
                     <Link href={`/coupons/${c.id}`} className="btn primary" style={{ fontSize: 12 }}>
@@ -425,7 +504,7 @@ export async function MyPageContent({
                     <Link href={`/coupons/${c.id}`} style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 800 }}><ReadableName name={c.title} /></div>
                       <div className="muted small">
-                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {c.valid_until ?? "なし"}
+                        {c.stores?.name && <ReadableName name={c.stores.name} />} ・ 期限 {couponExpiryLabel(c) ?? "なし"}
                       </div>
                     </Link>
                     <span className="badge good">✓ 使用済み</span>
@@ -464,6 +543,7 @@ export async function MyPageContent({
               ))
             ))}
 
+          {(tab === "boardFollows" || tab === "boardNotifications") && <BoardPanel userId={user.id} notifications={tab === "boardNotifications"} page={Number(searchParams.boardPage || 1)} />}
           {tab === "posts" && (
             <>
               <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 4 }}>
@@ -487,7 +567,7 @@ export async function MyPageContent({
           )}
         </div>}
         </section>
-        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} mHoldemId={String(user.user_metadata?.m_holdem_id || "")} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
+        {profileEdit ? <ProfileEditor dealerRegistration={dealerRegistration} name={name === "会員" ? "" : name} mHoldemId={mHoldemId} pref={pref} prefPublic={prefPublic} emailPublic={myProfile?.email_public === true} role={dealerRegistration ? (["ディーラー", "フリーディーラー"].includes(myProfile?.role || "") ? myProfile!.role : "ディーラー") : (myProfile?.role || "")} bio={myProfile?.bio || ""} error={searchParams.error} done={searchParams.done} /> : <aside className={styles.sidePanels}>
           <section className={styles.infoPanel}>
             <h2>♟ プロフィール</h2>
             <dl>
@@ -495,7 +575,7 @@ export async function MyPageContent({
               <div><dt>都道府県</dt><dd>{pref || "未設定"}</dd></div>
               <div><dt>都道府県の公開設定</dt><dd>{prefPublic ? "公開（他の会員にも表示）" : "非公開（自分だけに表示）"}</dd></div>
               <div><dt>メールの公開設定</dt><dd>{myProfile?.email_public === true ? "公開" : "非公開"}</dd></div>
-              <div><dt>役職</dt><dd>{myProfile?.role || "未設定"}</dd></div>
+              <div><dt>活動スタイル</dt><dd>{myProfile?.role || "未設定"}</dd></div>
               <div><dt>フリーメッセージ</dt><dd className={styles.message}>{myProfile?.bio || "未設定"}</dd></div>
             </dl>
           </section>

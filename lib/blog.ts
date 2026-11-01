@@ -14,6 +14,7 @@ export const BLOG_CATEGORIES = [
 ] as const;
 export type BlogBlock = {
  type: "paragraph" | "heading" | "heading3" | "image" | "list" | "table";
+ sourceUrl?: string; sourceLabel?: string; xPostUrl?: string;
  text?: string; url?: string; path?: string; caption?: string; alt?: string; uploadKey?: string;
  items?: string[]; ordered?: boolean; rows?: string[][];
 };
@@ -22,7 +23,7 @@ export type BlogEntry = {
  id: string; title: string; summary: string; category: string;
  slug?: string | null; seo_title?: string; meta_description?: string; canonical_url?: string | null; search_index?: boolean;
  author_name?: string; author_profile?: string; published_at?: string | null; updated_at?: string; created_at: string;
- article_url: string | null; image_url: string; image_path: string; image_alt?: string; image_rights?: string;
+ article_url: string | null; image_url: string; image_path: string; image_alt?: string; image_rights?: string; x_post_url?: string;
  content_mode: "internal" | "external"; body: BlogBlock[]; related_store_ids: string[]; related_article_ids?: string[];
  show_toc?: boolean; show_breadcrumbs?: boolean; include_in_sitemap?: boolean; visibility?: "draft"|"published"|"private"; reference_sources?: {label:string;url?:string}[];
  active: boolean; featured: boolean;

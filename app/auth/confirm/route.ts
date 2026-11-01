@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPrelaunchActive } from "@/lib/prelaunch";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { sendWelcomeEmail } from "@/lib/email";
+import { freerollNoticeOpen, sendFreerollRoomEmail, sendWelcomeEmail } from "@/lib/email";
+import { safeNext } from "@/lib/visit-source";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +20,7 @@ export async function GET(req: NextRequest) {
   const type = url.searchParams.get("type") as EmailOtpType | null;
   const nextParam = url.searchParams.get("next") ?? "";
   const defaultNext = type === "recovery" ? "/account/password" : "/mypage";
-  const next = SAFE_NEXT.test(nextParam) ? nextParam : defaultNext;
+  let next = SAFE_NEXT.test(nextParam) ? nextParam : defaultNext;
 
   if (!tokenHash || !type) {
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent("リンクが正しくありません。")}`, url.origin));
@@ -35,24 +37,46 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // 広告から来て会員登録した人は、確認のあとそのままディーラー登録へ(2026/10/21、signup/actions.ts の after_confirm)
+  const afterConfirm = data.user.user_metadata?.after_confirm as string | undefined;
+  if ((type === "signup" || type === "email") && afterConfirm && safeNext(afterConfirm)) next = afterConfirm;
+
   if ((type === "signup" || type === "email") && !data.user.user_metadata?.welcome_email_sent_at) {
     try {
       if (data.user.email) {
         // 先行登録モード中は、オープン前に開けるリンクだけの「先行会員版」を送る
         const { data: flags } = await createServiceRoleClient()
           .from("site_settings")
-          .select("prelaunch_mode, prelaunch_x_url")
+          .select("prelaunch_mode, prelaunch_ends_at, prelaunch_x_url, member_preview")
           .eq("id", true)
           .maybeSingle();
         await sendWelcomeEmail({
           to: data.user.email,
           name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
-          prelaunch: !!flags?.prelaunch_mode,
+          prelaunch: isPrelaunchActive(flags),
+          memberPreview: !!flags?.member_preview,
           xUrl: (flags?.prelaunch_x_url as string | null | undefined) ?? null,
         });
       }
+      // 10/25 20:00までに登録が完了した人には、先行会員限定トーナメントの部屋IDも送る(2026/10/24)
+      let freerollSentAt: string | undefined;
+      if (data.user.email && !data.user.email.endsWith("@login.poker-summit.jp") && freerollNoticeOpen() && !data.user.user_metadata?.freeroll_email_sent_at) {
+        try {
+          await sendFreerollRoomEmail({
+            to: data.user.email,
+            name: (data.user.user_metadata?.display_name as string | undefined) ?? null,
+          });
+          freerollSentAt = new Date().toISOString();
+        } catch {
+          // 部屋IDのメールが送れなくても登録は完了させる
+        }
+      }
       await createServiceRoleClient().auth.admin.updateUserById(data.user.id, {
-        user_metadata: { ...data.user.user_metadata, welcome_email_sent_at: new Date().toISOString() },
+        user_metadata: {
+          ...data.user.user_metadata,
+          welcome_email_sent_at: new Date().toISOString(),
+          ...(freerollSentAt ? { freeroll_email_sent_at: freerollSentAt } : {}),
+        },
       });
     } catch {
       // 送れなくても登録自体は完了させる

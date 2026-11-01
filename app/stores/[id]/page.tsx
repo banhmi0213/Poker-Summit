@@ -1,4 +1,6 @@
+import { getVisitorId, isStaffDevice } from "@/lib/visitor";
 import { ReadableName } from "@/app/readable-name";
+import { couponExpiryLabel, notExpiredFilter } from "@/lib/coupon-expiry";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,10 +14,11 @@ import {
   useCoupon,
 } from "@/app/member-actions";
 import { reportStore, reportJob } from "@/app/report-actions";
+import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
-import { classifyDevice } from "@/lib/device";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
 import { StorePhotoGallery } from "./store-photo-gallery";
 import { ReferenceSlice } from "./reference-slice";
 import { DetailTabLink } from "./detail-tab-link";
@@ -30,6 +33,8 @@ import { fetchStoreDisplayFlags } from "@/lib/plan-entitlements";
 import { VerifiedStoreBadge } from "@/app/store-plan-badge";
 import { cityPageHref, prefPageHref } from "@/lib/city";
 import { distanceKm } from "@/lib/geocode";
+import { buildStoreIntro } from "@/lib/store-intro";
+import { CITY_NICKNAMES } from "@/lib/area-seo";
 
 const STORE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -127,7 +132,8 @@ function storeArea(store: Pick<SeoStore, "pref" | "city">) {
 function storeSeoDescription(store: SeoStore) {
   const area = storeArea(store);
   const station = store.nearest_station ? `（最寄り：${store.nearest_station}）` : "";
-  const lead = `${store.name}は${area || "日本"}${station}の${storeCategoryLabel(store)}。営業時間・アクセス・イベント・求人・クーポン情報を${SITE_NAME}でチェック。`;
+  // 事実だけ（2026/10/30）：登録されていない情報（イベント・求人・クーポンなど）があるとは書かない
+  const lead = `${store.name}は${area || "日本"}${station}にある${storeCategoryLabel(store)}です。所在地などの店舗情報を${SITE_NAME}に掲載しています。`;
   const own = clip(store.description, 200);
   return clip(own ? `${lead}${own}` : lead, 160);
 }
@@ -222,6 +228,18 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
   return [business, breadcrumb];
 }
 
+// 未登録の項目: 「店舗に／お問い合わせください」の切れ目でだけ折り返す
+function AskStore() {
+  return <><span style={{ display: "inline-block" }}>店舗に</span><span style={{ display: "inline-block" }}>お問い合わせください</span></>;
+}
+
+// 住所の番地(1-1-22 など)や部屋番号が途中で改行されないよう、数字のかたまりは1つにまとめる
+function keepNumbersTogether(text: string) {
+  return text.split(/([0-9０-９]+(?:[-－ー‐−][0-9０-９]+)*(?:号室|号|階|F)?)/).map((part, i) =>
+    i % 2 === 1 ? <span key={i} style={{ whiteSpace: "nowrap" }}>{part}</span> : part
+  );
+}
+
 export default async function StoreDetailPage({
   params,
 }: {
@@ -260,15 +278,16 @@ export default async function StoreDetailPage({
       .order("start_at", { ascending: true }),
     supabase
       .from("jobs")
-      .select("id, title, job_type, salary, description, posted_at")
+      .select("id, title, job_type, experience_level, application_deadline, salary, description, posted_at")
       .eq("store_id", params.id)
       .eq("status", "open")
       .order("posted_at", { ascending: false }),
     supabase
       .from("coupons")
-      .select("id, title, discount, description, code, valid_until, usage_limit, used_count")
+      .select("id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count")
       .eq("store_id", params.id)
       .eq("active", true)
+      .or(notExpiredFilter()) // 期限(期限日の営業終了)を過ぎたクーポンは出さない
       .order("created_at", { ascending: false }),
     supabase
       .from("store_notices")
@@ -301,10 +320,14 @@ export default async function StoreDetailPage({
   const referrer = hdrs.get("referer") ?? null;
   const device = classifyDevice(hdrs.get("user-agent"));
 
-  supabase
-    .from("page_views")
-    .insert({ path, store_id: store.id, referrer, device })
-    .then(() => {});
+  // 閲覧数には人のアクセスだけを数える(クローラー・運営の確認は除く)
+  const viewerIsAdmin = user ? (await supabase.rpc("is_admin")).data === true : false;
+  if (!isBotUserAgent(hdrs.get("user-agent")) && !viewerIsAdmin && !isStaffDevice()) {
+    supabase
+      .from("page_views")
+      .insert({ path, store_id: store.id, referrer, device, visitor_id: getVisitorId() })
+      .then(() => {});
+  }
 
   let isFavoriteStore = false;
   let favoriteJobIds = new Set<string>();
@@ -400,14 +423,25 @@ export default async function StoreDetailPage({
   const categoryLabel = categoryBase.endsWith("ポーカー") ? `${categoryBase}店` : categoryBase;
   const station = store.nearest_station || store.station || "";
   const placeName = [store.pref, store.city].filter(Boolean).join("");
-  // 店舗が紹介文を入れていない場合は、登録されている情報から案内文を組み立てる
-  const autoIntro = [
-    `${store.name}は${placeName || "日本"}にある${categoryLabel}です。`,
-    station ? `最寄り駅は${station}です。` : "",
-    upcomingEvents > 0 ? `現在、${upcomingEvents}件のトーナメント・イベントの開催が予定されています。` : "",
-    "料金や営業時間、最新のイベント情報は各タブをご覧いただくか、店舗へ直接お問い合わせください。",
-    store.city && cityStoreCount > 1 ? `${store.city}には、ほかにも${cityStoreCount - 1}店舗のポーカースポットが${SITE_NAME}に掲載されています。` : "",
-  ].join("");
+  // 店舗が紹介文を入れていない場合は、登録されている情報（住所・営業時間・近くの店・イベント・SNS）から
+  // その店だけの案内文を組み立てる。同じひな形だと Google に重複ページ扱いされるため。
+  const autoIntro = buildStoreIntro({
+    name: store.name,
+    categoryLabel,
+    pref: store.pref,
+    city: store.city,
+    cityNickname: store.city ? CITY_NICKNAMES[store.city] ?? null : null,
+    address: store.address,
+    station: station || null,
+    hoursText: store.hours,
+    googleHoursText: Array.isArray(store.google_hours_text) ? (store.google_hours_text as string[]) : null,
+    nearby: nearby.map((s) => ({ name: s.name, km: hasCoords && s.lat != null && s.lng != null ? distanceKm(store.lat, store.lng, s.lat, s.lng) : null })),
+    cityStoreCount,
+    upcomingEvents,
+    hasX: Boolean(store.x_url),
+    hasInstagram: Boolean(store.instagram_url),
+    siteName: SITE_NAME,
+  });
 
   return (
     <div>
@@ -469,9 +503,9 @@ export default async function StoreDetailPage({
                   {(store.google_hours_text as string[]).map((line) => <span key={line} style={{ display: "block" }}>{formatGoogleHoursLine(line)}</span>)}
                   <span className="muted" style={{ display: "block", fontSize: 11, marginTop: 4 }}>※Googleマップの情報です。変更されている場合があるので、来店前に店舗のSNS等でご確認ください。</span>
                 </>
-              ) : "店舗にお問い合わせください"}</dd></div>
-              <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || "最寄り駅は店舗にお問い合わせください"}</dd></div>
-              <div><dt><DetailIcon name="pin" />住所</dt><dd>{store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録"}</dd></div>
+              ) : <AskStore />}</dd></div>
+              <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || <AskStore />}</dd></div>
+              <div><dt><DetailIcon name="pin" />住所</dt><dd>{keepNumbersTogether(store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録")}</dd></div>
               <div><dt><DetailIcon name="phone" />電話番号</dt><dd>{store.tel ? <a href={`tel:${phone}`}>{store.tel}</a> : "未登録"}</dd></div>
             </dl>
             <div className="sd-contact-actions">
@@ -506,7 +540,7 @@ export default async function StoreDetailPage({
             </section>
             </>
           ) },
-          { id: "events", label: "トーナメント・イベント", content: (
+          { id: "events", label: "トーナメント・イベント", shortLabel: "大会・イベント", content: (
             <>
 <section id="store-events" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
@@ -524,7 +558,7 @@ export default async function StoreDetailPage({
             </Link>
 {ev.start_at && <p className="muted"><DetailIcon name="clock" /><span>{new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Tokyo" })} 開始</span></p>}
 
-            <Link className="btn sd-event-detail" href={`/events/${ev.id}`}>詳細を見る ›</Link>
+            <Link className="btn sd-event-detail" href={`/events/${ev.id}`}>詳細を見る</Link>
             <form
               action={async () => {
                 "use server";
@@ -566,11 +600,11 @@ export default async function StoreDetailPage({
                 <h3>{c.title}</h3>
                 {c.discount && <span className="badge">{c.discount}</span>}
               </div>
-              <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る ›</Link>
-              {c.description && <p style={{ marginTop: 6, fontSize: 13.5 }}>{c.description}</p>}
+              <Link className="sd-detail-link sd-coupon-detail" href={`/coupons/${c.id}`}>クーポンの詳細を見る</Link>
+              {c.description && <p style={{ marginTop: 6, fontSize: 13.5, whiteSpace: "pre-wrap" }}>{c.description}</p>}
               <div className="muted" style={{ marginTop: 6 }}>
                 {c.code && <>クーポンコード: {c.code} </>}
-                {c.valid_until && <>(有効期限: {c.valid_until})</>}
+                {c.valid_until && <>(有効期限: {couponExpiryLabel(c)})</>}
               </div>
               <Link className="btn primary sd-coupon-view" href={`/coupons/${c.id}`}>クーポンを見る</Link>
               <form
@@ -641,16 +675,18 @@ export default async function StoreDetailPage({
         {(!jobs || jobs.length === 0) && (
           <p className="muted">現在募集中の求人はありません。</p>
         )}
-        {jobs?.map((j) => (
+        {jobs?.filter((j: any) => !j.application_deadline || j.application_deadline >= new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})).map((j) => (
           <div className="card sd-job-card" key={j.id}>
             <Link href={`/jobs/${j.id}`}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <h3><ReadableName name={j.title} /></h3>
+                <h3 style={{ flex: 1, minWidth: 0 }}><ReadableName name={j.title} /></h3>
                 {j.job_type && <span className="badge">{j.job_type}</span>}
+                {j.experience_level === "beginner" && <span className="badge">未経験歓迎</span>}
+                {j.experience_level === "experienced" && <span className="badge">経験者募集</span>}
               </div>
               {j.salary && <p className="muted">{j.salary}</p>}
             </Link>
-            <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る ›</Link>
+            <Link className="sd-detail-link" href={`/jobs/${j.id}`}>求人の詳細を見る</Link>
             <Link href={`/jobs/${j.id}`} className="btn" style={{ fontSize: 12.5, marginTop: 8, display: "inline-flex" }}>
               詳細を見る
             </Link>
@@ -678,16 +714,7 @@ export default async function StoreDetailPage({
                   <DetailIcon name="phone" />電話をかける
                 </a>
               )}
-              <form
-                action={async () => {
-                  "use server";
-                  await reportJob(j.id, path);
-                }}
-              >
-                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  通報
-                </button>
-              </form>
+              <ReportForm kind="job" label="通報" action={reportJob.bind(null, j.id, path)} />
             </div>
           </div>
         ))}
@@ -699,7 +726,7 @@ export default async function StoreDetailPage({
         ]} />
         {store.description
           ? <section className="sd-introduction"><h2>店舗紹介</h2><p>{store.description}</p></section>
-          : <section className="sd-introduction"><h2>{store.name}について</h2><p>{autoIntro}</p></section>}
+          : <section className="sd-introduction"><h2>{store.name}について</h2>{autoIntro.map((text, i) => <p key={i}>{text}</p>)}</section>}
         {nearby.length > 0 && (
           <section className="sd-introduction sd-nearby" aria-label="近くのポーカー店">
             <h2>{store.city ? `${store.city}周辺のポーカー店` : "近くのポーカー店"}</h2>
@@ -717,17 +744,15 @@ export default async function StoreDetailPage({
             </ul>
             <p style={{ marginTop: 10, display: "flex", gap: 16, flexWrap: "wrap", whiteSpace: "normal" }}>
               {store.pref && store.city && cityStoreCount > 1 && (
-                <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗） ›</Link>
+                <Link href={cityPageHref(store.pref, store.city)} className="sd-detail-link">{store.city}のポーカー店一覧を見る（{cityStoreCount}店舗）</Link>
               )}
-              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る ›</Link>}
+              {store.pref && <Link href={prefPageHref(store.pref)} className="sd-detail-link">{store.pref}のポーカー店一覧を見る</Link>}
             </p>
           </section>
         )}
         <div className="sd-store-support">
           <Link href="/contact" className="btn">お問い合わせ</Link>
-          <form action={async () => { "use server"; await reportStore(store.id, path); }}>
-            <button type="submit" className="btn">店舗情報の問題を報告</button>
-          </form>
+          <ReportForm kind="store" label="店舗情報の問題を報告" action={reportStore.bind(null, store.id, path)} buttonStyle={{ fontSize: undefined }} />
         </div>
       </main>
       <PortalFooter />

@@ -20,7 +20,7 @@ import { sendLoginNotificationEmail } from "@/lib/email";
 // ループしてしまうため(ログイン画面だけ保護対象から外す、という既存の
 // レイアウト構成では難しい分岐を避けるための意図的な配置)。
 export async function adminSignIn(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "").trim() || "/admin/stores";
 

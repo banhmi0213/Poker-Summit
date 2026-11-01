@@ -19,7 +19,7 @@ function emailKey(email: string) {
 }
 
 export async function requestPasswordReset(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim().toLowerCase();
   const from = String(formData.get("from") ?? "") === "admin" ? "admin" : "member";
   const back = `/login/forgot${from === "admin" ? "?from=admin&" : "?"}`;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

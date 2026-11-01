@@ -6,6 +6,7 @@ import {dealerAccess,spotImage} from '@/lib/spot-jobs-server';
 import {UUID,type SpotJob} from '@/lib/spot-jobs';
 import {SpotDetail,Restricted} from '../detail';
 import styles from '../spot.module.css';
+import {CancellationHistory,type CancelHistory} from '@/app/matching/work/cancellation-history';
 import type { Metadata } from "next";
 import { NOINDEX } from "@/lib/seo";
 export const dynamic='force-dynamic';
@@ -23,6 +24,8 @@ export default async function Page({params,searchParams}:{params:{id:string};sea
   job.spot_job_shifts=job.spot_job_shifts.filter(s=>Date.parse(s.work_date+"T"+s.start_time+"+09:00")>now);
   if (!job.spot_job_shifts.length) notFound();
   const image=await spotImage(db,job,job.stores?.banner_url||null);
-  return <><PortalHeader userEmail={user.email}/><main className={styles.public}><SpotDetail job={job} image={image} date={searchParams.date}/></main><PortalFooter/></>;
+  // この店舗の確定後キャンセルの記録(2026/10/22)
+  const {data:cancelData}=await db.rpc('get_cancellation_history',{p_store:job.store_id});
+  return <><PortalHeader userEmail={user.email}/><main className={styles.public}><SpotDetail job={job} image={image} date={searchParams.date}/><CancellationHistory history={(cancelData as CancelHistory|null)??null} subject="store"/></main><PortalFooter/></>;
 }
 

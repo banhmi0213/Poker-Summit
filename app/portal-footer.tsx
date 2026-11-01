@@ -1,8 +1,11 @@
 import { unstable_cache } from "next/cache";
+import styles from "./portal-footer.module.css";
 import { createAnonClient } from "@/lib/supabase/anon";
 import { PREF_OPTIONS, PREF_REGION, REGIONS } from "@/lib/constants";
 import { prefPageHref } from "@/lib/city";
 import { getPrefStoreCounts } from "@/lib/pref-counts";
+import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
+import { PriceLockNote } from "@/app/price-lock-note";
 
 // フッターの問い合わせ先メール(管理画面で保存したら即反映。lib/revalidate.ts)
 const getFooterSettings = unstable_cache(
@@ -15,6 +18,9 @@ const getFooterSettings = unstable_cache(
 );
 
 export async function PortalFooter({ hideManagementLinks = false }: { hideManagementLinks?: boolean } = {}) {
+  // 年内お申込み特典の受付中だけ、店舗向けリンクに一言添える(2026/10/20。OFF・締切後は自動で消える)
+  const priceLock = await getPriceLockCampaign().catch(() => null);
+  const lockNote = priceLock?.accepting && priceLock.deadlineIso ? priceLock.deadlineIso : null;
   // どちらも全ページ共通なのでキャッシュから取る(2026/10、表示速度対策)
   const [settings, prefCounts] = await Promise.all([
     getFooterSettings().catch(() => null),
@@ -28,6 +34,7 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
 
   return (
     <div className="portal-footer">
+      <div className={styles.discovery}>
       {areaRows.length > 0 && (
         <nav className="footer-areas" aria-label="都道府県からポーカー店を探す">
           <p className="footer-areas__title">都道府県からポーカー店を探す</p>
@@ -43,6 +50,19 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
           ))}
         </nav>
       )}
+        <nav className={styles.social} aria-label="Poker Summit公式SNS">
+          <p className={styles.socialTitle}>公式SNS</p>
+          <div className={styles.socialLinks}>
+            <a href="https://x.com/Poker_Summit" target="_blank" rel="noopener noreferrer" aria-label="Poker Summit公式X（新しいタブで開きます）" title="公式X">
+              <svg viewBox="0 0 24 24" width="23" height="23" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l7.4-8.5L1.8 2h6.5l4.5 6.8L18.9 2Zm-1.1 18h1.7L7.4 3.9H5.5L17.8 20Z" /></svg>
+            </a>
+            <span className={styles.socialDivider} aria-hidden="true" />
+            <a href="https://www.instagram.com/pokersummit_official/" target="_blank" rel="noopener noreferrer" aria-label="Poker Summit公式Instagram（新しいタブで開きます）" title="公式Instagram">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+            </a>
+          </div>
+        </nav>
+      </div>
       Poker Summit — 全国のポーカースポット・求人・交流をつなぐポータル
       <br />
       <a href="/contact" className="btn" style={{ fontSize: 12.5, padding: "4px 8px", marginTop: 6, display: "inline-flex" }}>
@@ -84,13 +104,13 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         <a href="/contact">お問い合わせ</a>
         <span className="footer-links__separator footer-links__apply-separator" aria-hidden="true"> ｜ </span>
-        <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ</a>
+        <a className="footer-links__apply" href="/apply">掲載希望の店舗様へ{lockNote && <PriceLockNote deadlineIso={lockNote} text="（年内のご契約で料金据え置き）" />}</a>
         <span className="footer-links__separator" aria-hidden="true"> ｜ </span>
         {!hideManagementLinks && <a className="footer-links__apply" href="/store/login">店舗管理画面</a>}
       </nav>
-      <div className="footer-copyright">© 2026 Poker Summit All Rights Reserved.</div>
+      <div className="footer-copyright">著作権 © 2026 株式会社Give Rise　無断使用・転載・スクレイピングを禁じます</div>
       <div className="footer-store-actions">
-        <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ</a>
+        <a className="footer-apply-mobile" href="/apply">掲載希望の店舗様へ{lockNote && <PriceLockNote deadlineIso={lockNote} text="年内のご契約で料金据え置き" className="footer-apply-note" />}</a>
         {!hideManagementLinks && <a className="footer-apply-mobile" href="/store/login">店舗管理画面</a>}
       </div>
     </div>

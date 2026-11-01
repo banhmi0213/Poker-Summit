@@ -72,6 +72,7 @@ export async function updateNotifySettings(formData: FormData) {
       notify_new_listing: formData.get("notifyNewListing") === "1",
       notify_new_report: formData.get("notifyNewReport") === "1",
       notify_inquiry: formData.get("notifyInquiry") === "1",
+      notify_member_digest: formData.get("notifyMemberDigest") === "1",
       notify_banner_anomaly: formData.get("notifyBannerAnomaly") === "1",
       auto_notify_listing_result: formData.get("autoNotifyListingResult") === "1",
       auto_notify_important: formData.get("autoNotifyImportant") === "1",
@@ -126,6 +127,11 @@ export async function updateMaintenanceSettings(formData: FormData) {
 export async function updatePrelaunchSettings(formData: FormData) {
   const supabase = await createClient();
   const prelaunchMode = formData.get("prelaunchMode") === "1";
+  // 先行会員にサイトを公開(ディーラーマッチングは閉じたまま、2026/10/20)
+  const memberPreview = formData.get("memberPreview") === "1";
+  // 先行登録モードを自動で終える日時(日本時間で入力。空欄なら自動では終えない、2026/10/20)
+  const endsAtRaw = String(formData.get("prelaunchEndsAt") ?? "").trim();
+  const prelaunchEndsAt = endsAtRaw ? new Date(`${endsAtRaw}:00+09:00`).toISOString() : null;
   const prelaunchMessage = String(formData.get("prelaunchMessage") ?? "").trim();
   const prelaunchXUrl = String(formData.get("prelaunchXUrl") ?? "").trim();
   if (prelaunchXUrl && !/^https:\/\/(x|twitter)\.com\//.test(prelaunchXUrl)) {
@@ -135,12 +141,14 @@ export async function updatePrelaunchSettings(formData: FormData) {
     .from("site_settings")
     .update({
       prelaunch_mode: prelaunchMode,
+      member_preview: memberPreview,
+      prelaunch_ends_at: prelaunchEndsAt,
       prelaunch_message: prelaunchMessage || null,
       prelaunch_x_url: prelaunchXUrl || null,
     })
     .eq("id", true);
   if (error) throw new Error(error.message);
-  await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings");
+  await logAdminAction(supabase, prelaunchMode ? "settings_prelaunch_on" : "settings_prelaunch_off", "site_settings", undefined, { memberPreview });
   revalidatePath("/admin/settings");
   revalidatePath("/prelaunch");
 }
@@ -158,6 +166,8 @@ export async function updatePriceLockSettings(formData: FormData) {
   if (error) throw new Error(error.message);
   await logAdminAction(supabase, enabled ? "settings_price_lock_on" : "settings_price_lock_off", "site_settings");
   revalidateTag("price-lock-campaign");
+  // フッターの「年内のご契約で料金据え置き」が全ページに出るので、全部作り直す(2026/10/20)
+  revalidatePath("/", "layout");
   revalidatePath("/admin/settings");
   revalidatePath("/apply");
   revalidatePath("/terms");

@@ -13,6 +13,22 @@
       "schedule": "30 19 * * *"
     },
     {
+      "path": "/api/cron/matching-notifications",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/member-digest",
+      "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/cron/payment-sessions",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/news-drafts",
+      "schedule": "0 6,21 * * *"
+    },
+    {
       "path": "/api/cron/gto-billing",
       "schedule": "0 * * * *"
     }

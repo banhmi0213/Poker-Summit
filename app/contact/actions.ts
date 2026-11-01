@@ -3,20 +3,29 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendInquiryNotificationEmail } from "@/lib/email";
+import { guardPublicForm } from "@/lib/form-guard";
 
 export async function submitInquiry(formData: FormData) {
   const supabase = await createClient();
+  const advertising = formData.get("inquiry_type") === "advertising";
+  const company = String(formData.get("company") ?? "").trim().slice(0, 200);
+  const returnPath = advertising ? "/contact?category=advertising&" : "/contact?";
 
   const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const tel = String(formData.get("tel") ?? "").trim();
   const subject = String(formData.get("subject") ?? "").trim();
-  const message = String(formData.get("message") ?? "").trim();
+  const body = String(formData.get("message") ?? "").trim();
+  const message = advertising ? `会社名・店舗名: ${company}\n\n${body}` : body;
   const category = String(formData.get("category") ?? "").trim();
 
-  if (!name || !email || !message) {
-    redirect("/contact?error=" + encodeURIComponent("必須項目を入力してください。"));
+  if (!name || !email || !body || (advertising && !company)) {
+    redirect(returnPath + "error=" + encodeURIComponent("必須項目を入力してください。"));
   }
+
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで)
+  const blocked = await guardPublicForm(formData, "inquiry", 5);
+  if (blocked) redirect(returnPath + "error=" + encodeURIComponent(blocked));
 
   const { error } = await supabase.from("inquiries").insert({
     name,
@@ -28,7 +37,7 @@ export async function submitInquiry(formData: FormData) {
   });
 
   if (error) {
-    redirect("/contact?error=" + encodeURIComponent(error.message));
+    redirect(returnPath + "error=" + encodeURIComponent(error.message));
   }
 
   // 運営への通知メール(2026/10、「問い合わせ、掲載申込があったらメール
@@ -57,5 +66,5 @@ export async function submitInquiry(formData: FormData) {
     // ベストエフォート: 通知失敗で問い合わせ受付自体は止めない
   }
 
-  redirect("/contact?done=1");
+  redirect(returnPath + "done=1");
 }

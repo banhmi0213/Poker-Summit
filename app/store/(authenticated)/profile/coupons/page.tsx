@@ -1,4 +1,5 @@
 import { couponCategoryLabel } from "@/lib/coupon-categories";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 import { ReadableName } from "@/app/readable-name";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -6,6 +7,8 @@ import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { createCoupon, deactivateCoupon, updateCoupon, deleteCoupon } from "../coupons-actions";
 import { CouponCategorySelect } from "@/app/coupon-category-select";
 import { StoreContentRuleNotice } from "../content-rule-notice";
+import { ConfirmButton } from "../confirm-button";
+import s from "../manage.module.css";
 
 // /store/profile 1ページの中の1セクションだったクーポン管理を、独立した
 // ページへ分離(2026/09/30)。バナー画像はファイルアップロード対応
@@ -40,149 +43,137 @@ export default async function StoreCouponsPage() {
     .eq("store_id", store.id)
     .order("created_at", { ascending: false });
 
+  const couponList = coupons ?? [];
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
+  const couponFields = (c?: (typeof couponList)[number]) => (
+    <>
+      <div className="field">
+        <span>クーポンタイトル</span>
+        <input type="text" name="title" required defaultValue={c?.title ?? ""} placeholder="例: 初回来店ドリンク1杯無料" />
+      </div>
+      <div className="field">
+        <span>割引内容</span>
+        <input type="text" name="discount" defaultValue={c?.discount ?? ""} placeholder="例: 500円引き" />
+      </div>
+      <div className="field">
+        <span>説明</span>
+        <textarea name="description" rows={4} defaultValue={c?.description ?? ""} />
+      </div>
+      <CouponCategorySelect value={c?.offer_type ?? ""} />
+      <div className="field">
+        <span>クーポンコード</span>
+        <input type="text" name="code" autoCapitalize="none" autoCorrect="off" spellCheck={false} defaultValue={c?.code ?? ""} />
+      </div>
+      <div className="field">
+        <span>有効期限</span>
+        <input type="date" name="validUntil" defaultValue={c?.valid_until ?? ""} />
+      </div>
+      <div className="field">
+        <span>利用上限件数（空欄で無制限）</span>
+        <input type="number" name="usageLimit" min={1} inputMode="numeric" defaultValue={c?.usage_limit ?? ""} />
+      </div>
+      <div className="field">
+        <span>{c ? "バナー画像を差し替える（任意）" : "バナー画像（任意）"}</span>
+        <input type="file" name="bannerImage" accept="image/*" />
+      </div>
+      {c?.banner_image_url && (
+        <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 8, margin: "-4px 0 14px", fontSize: 14 }}>
+          <input type="checkbox" name="removeBanner" />
+          現在のバナー画像を削除する
+        </label>
+      )}
+    </>
+  );
+
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
-      <h1 style={{ fontSize: 20, marginBottom: 16 }}>クーポン管理</h1>
+      <h1 style={{ fontSize: 20, marginBottom: 12 }}>クーポン管理</h1>
       <StoreContentRuleNotice />
 
-      <div className="card">
-        <form action={createCoupon} encType="multipart/form-data">
-          <input type="hidden" name="storeId" value={store.id} />
-          <div className="field">
-            <span className="muted">クーポンタイトル</span>
-            <input type="text" name="title" required />
-          </div>
-          <div className="field">
-            <span className="muted">割引内容</span>
-            <input type="text" name="discount" placeholder="例: 500円引き" />
-          </div>
-          <div className="field">
-            <span className="muted">説明</span>
-            <textarea name="description" rows={3} />
-          </div>
-          <CouponCategorySelect value={""} />
-          <div className="field">
-            <span className="muted">クーポンコード</span>
-            <input type="text" name="code" />
-          </div>
-          <div className="field">
-            <span className="muted">有効期限</span>
-            <input type="date" name="validUntil" />
-          </div>
-          <div className="field">
-            <span className="muted">利用上限件数（空欄で無制限）</span>
-            <input type="number" name="usageLimit" min={1} />
-          </div>
-          <div className="field">
-            <span className="muted">バナー画像（任意）</span>
-            <input type="file" name="bannerImage" accept="image/*" capture="environment" />
-          </div>
-          <button type="submit" className="btn primary">
-            クーポンを発行する
-          </button>
-        </form>
-      </div>
+      <details className={`card ${s.add}`} open={couponList.length === 0}>
+        <summary>
+          <span className={s.plus} aria-hidden>＋</span>新しいクーポンを発行する
+        </summary>
+        <div className={s.addBody}>
+          <form action={createCoupon} encType="multipart/form-data">
+            <input type="hidden" name="storeId" value={store.id} />
+            {couponFields()}
+            <button type="submit" className="btn primary">
+              クーポンを発行する
+            </button>
+          </form>
+        </div>
+      </details>
 
-      {coupons?.map((c) => (
-        <div className="card" key={c.id}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-            <h3><ReadableName name={c.title} /></h3>
-            <span className="badge">{c.active ? "公開中" : "停止中"}</span>
-          </div>
-          {!c.offer_type && <p className="small" style={{ color: "#795010" }}>掲載カテゴリが未設定です。「編集」から選択するとカテゴリ別一覧にも掲載されます。</p>}
-          {c.offer_type && (
-            <span className="badge outline" style={{ marginTop: 4 }}>
-              {couponCategoryLabel(c.offer_type)}
-            </span>
-          )}
-          {c.banner_image_url && (
-            <img
-              src={c.banner_image_url}
-              alt=""
-              style={{ width: "100%", maxWidth: 320, borderRadius: 8, marginTop: 8, objectFit: "cover" }}
-            />
-          )}
-          {c.discount && <p className="muted">{c.discount}</p>}
-          <p className="muted small" style={{ marginTop: 4 }}>
-            有効期限: {c.valid_until ?? "なし"} ・ 利用 {c.used_count ?? 0}
-            {c.usage_limit != null ? `/${c.usage_limit}` : ""}件
-          </p>
-          <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-            {c.active && (
+      {couponList.length > 0 && (
+        <div className={s.listHead}>
+          <h2>発行したクーポン</h2>
+          <span>{couponList.length}件</span>
+        </div>
+      )}
+
+      {couponList.map((c) => {
+        const expired = isCouponExpired(c);
+        return (
+          <div className={`card ${s.item} ${c.active && !expired ? "" : s.closed}`} key={c.id}>
+            <h3 className={s.itemTitle}><ReadableName name={c.title} /></h3>
+            <div className={s.badges}>
+              <span className={`badge ${c.active ? s.badgeOn : s.badgeOff}`}>{c.active ? "公開中" : "停止中"}</span>
+              {expired && <span className={`badge ${s.badgeOff}`}>期限切れ</span>}
+              {c.offer_type ? <span className="badge outline">{couponCategoryLabel(c.offer_type)}</span> : <span className={`badge ${s.badgeWarn}`}>カテゴリ未設定</span>}
+            </div>
+            {c.banner_image_url && <img className={s.thumb} src={c.banner_image_url} alt="" loading="lazy" />}
+            <div className={s.facts}>
+              {c.discount && <span>{c.discount}</span>}
+              <span className={s.sub}>
+                有効期限 {couponExpiryLabel(c) ?? "なし"} ・ 利用 {c.used_count ?? 0}
+                {c.usage_limit != null ? `/${c.usage_limit}` : ""}件
+              </span>
+            </div>
+            {!c.offer_type && <p className={s.warn}>掲載カテゴリが未設定です。「内容を編集する」から選ぶと、カテゴリ別の一覧にも掲載されます。</p>}
+            <div className={s.actions}>
+              {c.active && (
+                <form
+                  action={async () => {
+                    "use server";
+                    await deactivateCoupon(c.id, store.id);
+                  }}
+                >
+                  <button type="submit" className="btn">
+                    公開を停止する
+                  </button>
+                </form>
+              )}
               <form
                 action={async () => {
                   "use server";
-                  await deactivateCoupon(c.id, store.id);
+                  await deleteCoupon(c.id, store.id);
                 }}
               >
-                <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                  公開を停止する
-                </button>
+                <ConfirmButton className={`btn ${s.danger}`} message={`「${c.title}」を削除しますか？この操作は取り消せません。`}>
+                  削除する
+                </ConfirmButton>
               </form>
-            )}
-            <form
-              action={async () => {
-                "use server";
-                await deleteCoupon(c.id, store.id);
-              }}
-            >
-              <button type="submit" className="btn" style={{ fontSize: 12.5 }}>
-                削除
-              </button>
-            </form>
+            </div>
+            <details className={s.more}>
+              <summary>内容を編集する</summary>
+              <div className={s.moreBody}>
+                <form action={updateCoupon} encType="multipart/form-data" className={s.editForm}>
+                  <input type="hidden" name="storeId" value={store.id} />
+                  <input type="hidden" name="couponId" value={c.id} />
+                  {couponFields(c)}
+                  <button type="submit" className="btn primary">
+                    更新する
+                  </button>
+                </form>
+              </div>
+            </details>
           </div>
-          <details style={{ marginTop: 10 }}>
-            <summary className="muted small" style={{ cursor: "pointer" }}>
-              編集
-            </summary>
-            <form action={updateCoupon} encType="multipart/form-data" style={{ marginTop: 10 }}>
-              <input type="hidden" name="storeId" value={store.id} />
-              <input type="hidden" name="couponId" value={c.id} />
-              <div className="field">
-                <span className="muted">クーポンタイトル</span>
-                <input type="text" name="title" required defaultValue={c.title} />
-              </div>
-              <div className="field">
-                <span className="muted">割引内容</span>
-                <input type="text" name="discount" defaultValue={c.discount ?? ""} />
-              </div>
-              <div className="field">
-                <span className="muted">説明</span>
-                <textarea name="description" rows={3} defaultValue={c.description ?? ""} />
-              </div>
-              <CouponCategorySelect value={c.offer_type ?? ""} />
-              <div className="field">
-                <span className="muted">クーポンコード</span>
-                <input type="text" name="code" defaultValue={c.code ?? ""} />
-              </div>
-              <div className="field">
-                <span className="muted">有効期限</span>
-                <input type="date" name="validUntil" defaultValue={c.valid_until ?? ""} />
-              </div>
-              <div className="field">
-                <span className="muted">利用上限件数（空欄で無制限）</span>
-                <input type="number" name="usageLimit" min={1} defaultValue={c.usage_limit ?? ""} />
-              </div>
-              <div className="field">
-                <span className="muted">バナー画像を差し替える（任意）</span>
-                <input type="file" name="bannerImage" accept="image/*" capture="environment" />
-              </div>
-              {c.banner_image_url && (
-                <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                  <input type="checkbox" name="removeBanner" />
-                  現在のバナー画像を削除する
-                </label>
-              )}
-              <button type="submit" className="btn primary" style={{ fontSize: 12.5, marginTop: 10 }}>
-                更新する
-              </button>
-            </form>
-          </details>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

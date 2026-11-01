@@ -1,4 +1,6 @@
 import { ReadableName } from "@/app/readable-name";
+import { openingEmptyNote } from "@/lib/prelaunch";
+import { isEventEnded } from "@/lib/event-end";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -40,6 +42,7 @@ export default async function EventsPage({ searchParams }: {
   ]);
   if (error) throw new Error("イベントを読み込めませんでした。");
   let events: any[] = [...(data ?? []), ...domesticEvents].filter((e: any) => {
+    if (isEventEnded(e, now)) return false; // 終わった大会・イベントは出さない(2026/10/18)
     if (!matchesEventLocation(e, { pref, region, area })) return false;
     if (q && ![e.title, e.description, e.location, e.stores?.name].some(v => v?.toLowerCase().includes(q.toLowerCase()))) return false;
     if (!matchesEventDate(e, date)) return false;
@@ -63,9 +66,9 @@ export default async function EventsPage({ searchParams }: {
   }
   return <div>
     <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>TOPに戻る</Link></div>
     <main className="container ep-page">
-      <CompactPortalBanner image="/images/compact-events.webp" eyebrow="TOURNAMENTS & EVENTS" title="トーナメント・イベントを探す" subtitle="次の挑戦も、はじめての一歩も。" detail="" />
+      <CompactPortalBanner image="/images/compact-events.webp" eyebrow="TOURNAMENTS & EVENTS" title="トーナメント・イベントを探す" titleParts={["トーナメント・", "イベントを探す"]} subtitle="次の挑戦も、はじめての一歩も。" detail="" />
         <div className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: 0 }}>
         <Image
           src="/images/poker-events-banner.webp"
@@ -85,10 +88,10 @@ export default async function EventsPage({ searchParams }: {
         <button type="submit" className="btn primary">検索</button>
       </form>
       <nav className="ep-kind-tabs" aria-label="イベントの種類">{kinds.map(label => <Link key={label} href={tabHref(label)} className={kind === label ? "active" : ""} aria-current={kind === label ? "page" : undefined}>{label}</Link>)}</nav>
-      <div className="ep-list-heading"><h2><ReadableName name="開催予定のトーナメント・イベント" /></h2><span>{events.length}件</span></div>
-      {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。</div>}
+      <div className="ep-list-heading"><h2>開催予定のトーナメント・イベント</h2><span>{events.length}件</span></div>
+      {!events.length && <div className="empty">条件に合うイベントが見つかりませんでした。{openingEmptyNote("イベント") && <><br />{openingEmptyNote("イベント")}</>}</div>}
       <div className="ep-grid">{events.map((e: any) => {
-        const isPast = !!(e.end_at || e.start_at) && (e.end_at || e.start_at) < now;
+        const isPast = isEventEnded(e, now);
         const isLive = !!e.start_at && e.start_at <= now && !isPast;
         return <Link key={e.id} href={e.href || `/events/${e.id}`} className="ep-card">
           <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <EventSign title={e.title} category={e.category} startAt={e.start_at} dateOnly={e.all_day} venue={e.stores?.name || e.location} />}</div>

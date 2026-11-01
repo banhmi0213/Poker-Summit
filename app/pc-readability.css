@@ -1,0 +1,77 @@
+/* Public desktop presentation. Keep mobile and management screens unchanged. */
+@media (min-width: 861px) {
+  :is(.home-feed, .sl-page, .ep-page, .cp-page, .sd-page, .jobs-page) {
+    --muted: #665744;
+    --accent-text: #78521a;
+  }
+
+  .home-feed .home-section-head h2 { font-size: 22px; line-height: 1.5; }
+  .home-feed .home-section-head > a,
+  .home-feed .home-card-cta { color: #78521a; font-size: 13px; }
+  .home-feed h3 { font-size: 16px; line-height: 1.55; }
+  .home-feed p { color: #665744; font-size: 13px; line-height: 1.75; }
+  .home-feed .home-location { font-size: 12px !important; color: #665744; }
+  .home-feed .home-tag { color: #78521a; font-size: 11px; }
+
+  /* Counts take up real space, so longer names and badges cannot overlap them. */
+  .home-feed .home-store-card .home-store-copy:has(.home-store-counts) {
+    min-height: 216px;
+    padding: 40px 12px 12px;
+    gap: 6px;
+  }
+  .home-feed .home-store-card .home-store-copy:has(.home-store-counts) h3 {
+    line-height: 1.55;
+    margin: 0;
+  }
+  .home-feed .home-store-card .home-store-meta-row { flex-wrap: wrap; gap: 6px 10px; }
+  .home-feed .home-store-card .home-store-meta-row .home-tag { font-size: 11px; }
+  .home-feed .home-store-card .home-store-meta-row .home-card-cta {
+    position: static; padding: 0; margin: 0; font-size: 12px; color: #78521a;
+  }
+  .home-feed .home-store-card .home-store-copy .home-store-counts {
+    position: static; margin-top: auto; padding-top: 10px; gap: 4px;
+  }
+  .home-feed .home-store-count-number { font-size: 13px; color: #78521a; }
+  .home-feed .home-store-count-label { font-size: 11px; color: #665744; line-height: 1.5; }
+  .home-feed .home-post p { font-size: 12px; color: #665744; }
+  .home-feed .home-coupon-card small { font-size: 12px; color: #665744; }
+
+  .sl-page .sl-card-body { gap: 6px; }
+  .sl-page .sl-card-body h3 { font-size: 17px; line-height: 1.55; }
+  .sl-page .sl-card-body > p { font-size: 13px; color: #665744; }
+  .sl-page :is(.sl-card-body > .badge, .sl-card-distance, .sl-card-cta) { font-size: 12px; color: #78521a; }
+  .ep-page .ep-card-copy h3 { font-size: 16px; line-height: 1.55; }
+  .ep-page .ep-card-copy p { font-size: 13px; color: #665744; line-height: 1.7; }
+  .cp-page :is(.coupon-card__store, .coupon-card__meta-line) { font-size: 13px; color: #665744; }
+
+  .sd-page .sd-info-list dd { font-size: 14px; line-height: 1.75; }
+  .sd-page .sd-info-list > div { padding: 9px 0; }
+  .sd-page .sd-section h2 { font-size: 20px; line-height: 1.5; margin-bottom: 12px !important; }
+  .sd-page .sd-menu-card { height: auto; min-height: 164px; padding: 14px 14px 48px !important; }
+  .sd-page .sd-menu-card h3,
+  .sd-page .sd-event-copy h3,
+  .sd-page .sd-coupon-card h3 { font-size: 16px !important; line-height: 1.55; }
+  .sd-page .sd-menu-price { font-size: 14px; color: #514536; }
+  .sd-page .sd-menu-card .muted { font-size: 13px; line-height: 1.75; color: #514536; }
+  .sd-page .sd-content-side .card p,
+  .sd-page .sd-content-side #store-notices .card p { font-size: 14px !important; line-height: 1.8; }
+  .sd-page .sd-content-side #store-notices .card p.small,
+  .sd-page .sd-coupon-card > .muted { font-size: 12px !important; }
+  .sd-page :is(.sd-see-all, .sd-event-detail, .sd-menu-more) { font-size: 12px !important; color: #78521a; }
+
+  .jobs-page .card h3 { font-size: 17px; line-height: 1.55; }
+  .jobs-page .card .muted { font-size: 13px; line-height: 1.75; }
+
+  .ml-page .ml-card { display: flex; flex-direction: column; }
+  .ml-page .ml-body { flex: 1; display: flex; flex-direction: column; }
+  .ml-page .ml-description { flex: 1; font-size: 14px; color: #514536; }
+  .ml-page .ml-venue { font-size: 13px; color: #665744; }
+  .ml-page .ml-detail { font-size: 13px; color: #78521a; }
+  .ml-page .ml-guide p { font-size: 14px; color: #665744; }
+  .ml-page .ml-active { color: #2a1c06; }
+  .mt-sample .mt-facts :is(small, span),
+  .mt-sample .mt-caption { font-size: 13px !important; color: #665744; }
+  .mt-sample .mt-panel > p { font-size: 15px; line-height: 1.9; }
+  .mt-sample .mt-hero-meta { font-size: 13px; }
+
+}

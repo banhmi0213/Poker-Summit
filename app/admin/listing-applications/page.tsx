@@ -84,7 +84,7 @@ export default async function AdminListingApplicationsPage({
       )}
 
       {applications && applications.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名・会社名</th>
@@ -103,7 +103,7 @@ export default async function AdminListingApplicationsPage({
                 <td>
                   {a.company_name}
                   {a.store_name && a.store_name !== a.company_name && <div className="muted" style={{ fontSize: 12 }}>店舗: {a.store_name}</div>}
-                  {a.matched_store_id && <div style={{ fontSize: 12 }}><a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">掲載中の店舗と結び付け ↗</a></div>}
+                  {a.matched_store_id && <div style={{ fontSize: 12 }}><a href={`/stores/${a.matched_store_id}`} target="_blank" rel="noopener noreferrer">掲載中の店舗と結び付け</a></div>}
                 </td>
                 <td>{a.contact_name}</td>
                 <td>
@@ -166,7 +166,7 @@ export default async function AdminListingApplicationsPage({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       {applications?.some((a) => a.message) && (

@@ -16,7 +16,7 @@ export function SpotDetail({job,image,date,owner=false}:{job:SpotJob;image:strin
   const selected=shifts.find(s=>s.work_date===date)||shifts[0];
   const store=job.stores;
   const base=owner?'/store/profile/spot-jobs/':'/spot-jobs/';
-  return <><Link href={owner?'/store/profile/spot-jobs':'/spot-jobs'}>← {owner?'スポット求人管理':'スポット勤務一覧'}に戻る</Link>
+  return <><Link href={owner?'/store/profile/spot-jobs':'/spot-jobs'}>{owner?'スポット求人管理':'スポット勤務一覧'}に戻る</Link>
     <div className={styles.box}><span className={styles.tag}>スポット勤務</span><h1 style={{fontSize:25}}><ReadableName name={store?.name || ""} /></h1><p className={styles.muted}>{store?.pref} {store?.city} {store?.address}</p><SpotImage url={image} name={store?.name||'店舗'}/>{owner&&<p className={styles.muted}>店舗向けプレビューです。公開中の求人だけが登録済みディーラーに表示されます。</p>}</div>
     <MatchingRulesNotice />
     {selected&&<div className={styles.summary}><div><small>勤務日</small><strong>{selected.work_date}</strong></div><div><small>勤務時間</small><strong>{shiftTime(selected)}</strong></div><div><small>時給</small><strong className={styles.wage}>¥{selected.hourly_wage.toLocaleString()}</strong></div><div><small>募集人数</small><strong>{selected.headcount}人</strong></div></div>}

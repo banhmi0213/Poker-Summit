@@ -1,4 +1,5 @@
 import searchControls from "@/app/search-controls.module.css";
+import { openingEmptyNote } from "@/lib/prelaunch";
 import { couponCategoryLabel, matchesCouponLocation } from "@/lib/coupon-categories";
 import { ReadableName } from "@/app/readable-name";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
@@ -12,12 +13,12 @@ import { PREF_OPTIONS, CATEGORY_LABEL, COUPON_OFFER_TYPE_OPTIONS } from "@/lib/c
 import { PrefAreaSelect } from "@/app/pref-area-select";
 import { CouponBannerLightbox } from "./coupon-banner-lightbox";
 import { staticPageMetadata } from "@/lib/seo";
+import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 
 export const metadata = staticPageMetadata({ title: "ポーカー店のクーポン・お得情報", description: "全国のアミューズメントポーカー店・ポーカーバーで使えるクーポンやキャンペーン情報。来店前にお得な特典をチェックできます。", path: "/coupons" });
 
-function couponStatus(c: { valid_until: string | null; usage_limit: number | null; used_count: number | null }) {
-  const today = new Date().toISOString().slice(0, 10);
-  if (c.valid_until && c.valid_until < today) return "expired";
+function couponStatus(c: { valid_until: string | null; expires_at?: string | null; usage_limit: number | null; used_count: number | null }) {
+  if (isCouponExpired(c)) return "expired";
   if (c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit) return "exhausted";
   return "active";
 }
@@ -81,12 +82,13 @@ export default async function CouponsPage({
   const { data: rawCoupons } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
+      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
     )
     .eq("active", true);
 
+  // 期限(期限日の営業終了)を過ぎたクーポンは一覧に出さない(2026/10/18)
   let coupons = (rawCoupons ?? []).filter(
-    (c: any) => c.stores?.status === "approved" || c.stores?.status === "listed"
+    (c: any) => (c.stores?.status === "approved" || c.stores?.status === "listed") && !isCouponExpired(c)
   );
   coupons = coupons.filter((c: any) => matchesCouponLocation(c.stores, pref, area, region));
   if (offerType) coupons = coupons.filter((c: any) => c.offer_type === offerType);
@@ -119,7 +121,7 @@ export default async function CouponsPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>TOPに戻る</Link></div>
       <main className="container cp-page">
         <CompactPortalBanner image="/images/compact-coupons.webp" eyebrow="COUPONS & OFFERS" title="クーポンで、もっとポーカーを楽しもう。" subtitle="気になるお店の特典を、まとめてチェック。" subtitleParts={["気になるお店の特典を、", "まとめてチェック。"]} detail="" />
         <div className="portal-banner portal-banner--mobile" style={{ height: 190, overflow: "hidden", borderRadius: 10, margin: "0 0 20px" }}>
@@ -199,27 +201,28 @@ export default async function CouponsPage({
               name="sort"
               defaultValue={sort}
               style={{
-                padding: "7px 9px",
+                padding: "8px 10px",
+                minHeight: 40,
                 borderRadius: 6,
                 border: "1px solid var(--border-strong)",
                 background: "var(--surface-2)",
-                fontSize: 12.5,
+                fontSize: 14,
               }}
             >
               <option value="expiry">有効期限が近い順</option>
               <option value="new">新着順</option>
             </select>
-            <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12.5 }}>
-              <input type="checkbox" name="onlyAvailable" value="1" defaultChecked={onlyAvailable} />
+            <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, minHeight: 40, cursor: "pointer" }}>
+              <input type="checkbox" name="onlyAvailable" value="1" defaultChecked={onlyAvailable} style={{ width: 18, height: 18 }} />
               利用可能のみ
             </label>
-            <button type="submit" className="btn" style={{ fontSize: 12 }}>
+            <button type="submit" className="btn" style={{ fontSize: 14, minHeight: 40 }}>
               並び替え
             </button>
           </form>
         </div>
 
-        {list.length === 0 && <div className="empty">条件に合うクーポンが見つかりませんでした。</div>}
+        {list.length === 0 && <div className="empty">条件に合うクーポンが見つかりませんでした。{openingEmptyNote("クーポン") && <><br />{openingEmptyNote("クーポン")}</>}</div>}
 
         <div className="cp-grid"
           style={{
@@ -253,10 +256,10 @@ export default async function CouponsPage({
                   )}
                   <div className="coupon-card__store">
                     {c.stores?.name && <ReadableName name={c.stores.name} />}
-                    {location && <>　{location}</>}
+                    {location && <div style={{ marginTop: 2 }}>📍 {location}</div>}
                   </div>
                   <div className="coupon-card__meta-line">
-                    有効期限：{c.valid_until ?? "設定なし"}
+                    有効期限：{couponExpiryLabel(c) ?? "設定なし"}
                   </div>
                   {c.description && (
                     <div className="coupon-card__meta-line">{truncate(c.description, 28)}</div>

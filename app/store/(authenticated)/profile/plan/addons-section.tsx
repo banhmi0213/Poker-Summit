@@ -45,6 +45,7 @@ export function AddonsSection({
   contractPeriodEnd,
   slotsLeft,
   spotCredits,
+  scoutCredits,
   orders,
   canUseCard,
   hasContract,
@@ -56,6 +57,7 @@ export function AddonsSection({
   contractPeriodEnd: string | null;
   slotsLeft: Record<string, number | null>;
   spotCredits: number;
+  scoutCredits: number;
   orders: Order[];
   canUseCard: boolean;
   hasContract: boolean;
@@ -83,7 +85,7 @@ export function AddonsSection({
       billingType: a.billing_type,
       fee: addonFeeFor(a, pref),
       disabledReason,
-      maxQuantity: a.code === "spot_job_credit" ? 50 : 1,
+      maxQuantity: ["spot_job_credit", "dealer_scout"].includes(a.code ?? "") ? 50 : 1,
     };
   });
 
@@ -127,9 +129,10 @@ export function AddonsSection({
         </div>
       )}
 
+      <p style={{ fontSize: 13, margin: "0 0 8px" }}>ディーラースカウトの残り：<strong>{scoutCredits}回分</strong></p>
       {spotCredits > 0 && (
         <p style={{ fontSize: 13, margin: "0 0 8px" }}>
-          スポット求人の追加掲載枠：<strong>{spotCredits}件</strong>
+          スポット求人の追加分：<strong>{spotCredits}日分</strong>
         </p>
       )}
 

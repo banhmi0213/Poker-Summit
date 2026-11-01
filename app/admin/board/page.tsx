@@ -110,7 +110,7 @@ export default async function AdminBoardPage({
       {(!posts || posts.length === 0) && <p className="muted">該当するスレッドはありません。</p>}
 
       {posts && posts.length > 0 && (
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>投稿者</th>
@@ -173,7 +173,7 @@ export default async function AdminBoardPage({
               );
             })}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       <h2 style={{ fontSize: 16, marginTop: 28, marginBottom: 10 }}>

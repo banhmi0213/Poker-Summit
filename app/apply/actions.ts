@@ -1,13 +1,16 @@
 "use server";
+import { visitSource } from "@/lib/visit-source";
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { createCardRegistrationSession } from "@/lib/komoju";
-import { sendListingApplicationNotificationEmail } from "@/lib/email";
+import { sendListingApplicationNotificationEmail, sendListingApplicationReceivedEmail } from "@/lib/email";
+import { readKyc } from "@/lib/listing-kyc";
+import { createApplyCardSession } from "@/lib/apply-card";
 import { pickupSlotsLeft } from "@/lib/plan-entitlements";
-import { createInvoice, getBillingSettings, isBillingCycle, sendInvoice, type BillingCycle } from "@/lib/bank-transfer";
+import { getBillingSettings, isBillingCycle, type BillingCycle } from "@/lib/bank-transfer";
 import { searchStoreCandidates } from "@/lib/store-match";
+import { guardPublicForm } from "@/lib/form-guard";
 
 // 申込み名義・店舗名・住所と、掲載中の店舗との結び付け(2026/10)。
 // - 店舗名で申し込む: 店舗名だけ必須(請求書の宛名も店舗名)
@@ -85,7 +88,23 @@ async function notifyNewListingApplication(
   }
 }
 
+// 同じ画面からの二重送信の番号(app/request-key-input.tsx)。DBの一意制約で、同じ番号の申込みは1件しか作れない
+function readRequestKey(formData: FormData): string | null {
+  const v = String(formData.get("requestKey") ?? "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 64);
+  return v.length >= 16 ? v : null;
+}
+
+/** insert が「同じ番号の申込みがすでにある」(一意制約)で失敗したか */
+function isDuplicateRequest(error: { code?: string; message?: string } | null): boolean {
+  return !!error && error.code === "23505" && /request_key/.test(`${error.message ?? ""} ${(error as any).details ?? ""}`);
+}
+
 export async function submitApplication(formData: FormData) {
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで。他人のアドレスへの請求書メールの大量送信を防ぐ)
+  {
+    const blocked = await guardPublicForm(formData, "apply", 5);
+    if (blocked) redirect(`/apply?error=${encodeURIComponent(blocked)}`);
+  }
       const supabase = await createClient();
 
   const { data: settings } = await supabase
@@ -106,8 +125,8 @@ export async function submitApplication(formData: FormData) {
   if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
   const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const email = String(formData.get("email") ?? "").trim();
-      const emailConfirm = String(formData.get("emailConfirm") ?? "").trim();
+      const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
+      const emailConfirm = String(formData.get("emailConfirm") ?? "").normalize("NFKC").trim();
       if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
               redirect(`/apply?error=${encodeURIComponent("メールアドレスと確認用のメールアドレスが一致しません。もう一度ご確認ください。")}`);
       }
@@ -125,7 +144,24 @@ export async function submitApplication(formData: FormData) {
                   );
   }
 
+  // 二重送信の防止: 同じ内容の申込み(問い合わせ)が10分以内にあれば、新しく作らない
+  {
+          const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+          const { data: dup } = await createServiceRoleClient()
+                    .from("listing_applications")
+                    .select("id")
+                    .ilike("email", email)
+                    .eq("company_name", companyName)
+                    .is("plan_id", null)
+                    .gte("created_at", since)
+                    .limit(1);
+          if (dup && dup.length > 0) redirect("/apply?done=1");
+  }
+
+  const requestKey = readRequestKey(formData);
   const { error } = await supabase.from("listing_applications").insert({
+          request_key: requestKey,
+          source: visitSource(String(formData.get("source") ?? "").split("/")[0], String(formData.get("source") ?? "").split("/")[1]),
           company_name: companyName,
           applicant_type: applicantType,
           store_name: storeName,
@@ -139,6 +175,7 @@ export async function submitApplication(formData: FormData) {
           message: message || null,
   });
 
+  if (isDuplicateRequest(error)) redirect("/apply?done=1"); // 二重送信: 最初の1件で受付済み
   if (error) {
           redirect(`/apply?error=${encodeURIComponent(error.message)}`);
   }
@@ -159,26 +196,22 @@ export async function submitApplication(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// プランを選んでその場でクレカ契約するルート(セルフサーブ)
+// プランを選んで申し込むルート(2026/10/21 変更)
 //
-// 1. listing_applications行を作成(plan_id付き、payment_status='awaiting_card')
-// 2. KOMOJUのカード登録セッションを作成
-// 3. KOMOJUのカード登録ページ(ホストページ)へリダイレクト
-// カード登録完了後はKOMOJUがapp/apply/complete/callback(return_url)へ戻す
-// 戻してくるので、そこで初回課金〜店舗自動作成〜ログイン/LINE連携コード
-// 発行までを行う(lib/store-provision.ts)。
+// 1. listing_applications行を作成(plan_id付き、payment_status='awaiting_review'、事業者の確認の情報つき)
+// 2. 申込者に「受付・確認後にご案内」のメール、運営に新規申込みの通知
+// 3. 運営が総合管理の申込詳細で確認(本人確認・反社チェック)して「確認OK」を押すと、
+//    振込は請求書、カードはお支払いページ(/apply/pay)のリンクを送る(lib/listing-kyc.ts)
+// カードのお支払い後は app/apply/complete/callback で店舗を発行する(lib/store-provision.ts)。
 // ---------------------------------------------------------------------------
 
-function getSiteUrl(): string {
-      if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
-      if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-              return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-      }
-      if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-      return "http://localhost:3000";
-}
 
 export async function startPaidApplication(formData: FormData) {
+  // ロボット対策と回数制限(同じ回線から1時間に5回まで。他人のアドレスへの請求書メールの大量送信を防ぐ)
+  {
+    const blocked = await guardPublicForm(formData, "apply", 5);
+    if (blocked) redirect(`/apply?error=${encodeURIComponent(blocked)}`);
+  }
       const supabase = await createClient();
 
   const { data: settings } = await supabase
@@ -197,8 +230,8 @@ export async function startPaidApplication(formData: FormData) {
   if (!applicant.ok) redirect(`/apply?error=${encodeURIComponent(applicant.error)}`);
   const { applicantType, companyName, storeName, tel, pref, address, matchedStoreId } = applicant as Extract<Awaited<ReturnType<typeof readApplicant>>, { ok: true }>;
       const contactName = String(formData.get("contactName") ?? "").trim();
-      const email = String(formData.get("email") ?? "").trim();
-      const emailConfirm = String(formData.get("emailConfirm") ?? "").trim();
+      const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
+      const emailConfirm = String(formData.get("emailConfirm") ?? "").normalize("NFKC").trim();
       if (email.toLowerCase() !== emailConfirm.toLowerCase()) {
               redirect(`/apply?error=${encodeURIComponent("メールアドレスと確認用のメールアドレスが一致しません。もう一度ご確認ください。")}`);
       }
@@ -212,6 +245,10 @@ export async function startPaidApplication(formData: FormData) {
   if (formData.get("agree") !== "on") {
           redirect(`/apply?error=${encodeURIComponent("利用規約・特定商取引法に基づく表記・プライバシーポリシーへの同意が必要です。")}`);
   }
+  // 事業者の確認(本人確認・反社会的勢力のチェック)の情報(2026/10/21、lib/listing-kyc.ts)
+  const kyc = readKyc(formData);
+  if (!kyc.ok) redirect(`/apply?error=${encodeURIComponent(kyc.error)}`);
+  const kycValue = (kyc as Extract<typeof kyc, { ok: true }>).value;
   if (!companyName || !contactName || !email) {
           redirect(
                     `/apply?error=${encodeURIComponent("店舗名、担当者名、メールアドレスは必須です。")}`
@@ -250,14 +287,31 @@ export async function startPaidApplication(formData: FormData) {
           if (!billingSettings.cardPaymentEnabled && isAdmin !== true) {
                     redirect(`/apply?error=${encodeURIComponent("現在クレジットカードでのお申込みは受け付けておりません。銀行振込をお選びください。")}`);
           }
-          if (billingCycle !== 1) {
-                    redirect(`/apply?error=${encodeURIComponent("6か月・12か月のまとめ払いは銀行振込でのお支払いのみとなります。")}`);
-          }
   }
 
+  // 二重送信の防止: 同じ内容の振込申込みが10分以内にあれば、新しく作らず完了画面へ
+  // (ボタンの連打で請求書が何通も届かないように)
+  if (billingMethod === "bank_transfer") {
+          const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+          const { data: dup } = await createServiceRoleClient()
+                    .from("listing_applications")
+                    .select("id")
+                    .ilike("email", email)
+                    .eq("company_name", companyName)
+                    .eq("plan_id", planId)
+                    .eq("billing_cycle_months", billingCycle)
+                    .eq("billing_method", "bank_transfer")
+                    .gte("created_at", since)
+                    .limit(1);
+          if (dup && dup.length > 0) redirect("/apply?done=review");
+  }
+
+  const requestKey = readRequestKey(formData);
   const { data: application, error: insertError } = await supabase
         .from("listing_applications")
         .insert({
+                  request_key: requestKey,
+                  source: visitSource(String(formData.get("source") ?? "").split("/")[0], String(formData.get("source") ?? "").split("/")[1]),
                   company_name: companyName,
                   applicant_type: applicantType,
                   store_name: storeName,
@@ -270,13 +324,23 @@ export async function startPaidApplication(formData: FormData) {
                   category: category || null,
                   message: message || null,
                   plan_id: planId,
-                  payment_status: billingMethod === "bank_transfer" ? "awaiting_transfer" : "awaiting_card",
+                  // 振込: 確認(本人確認・反社チェック)が済んでから請求書を送る。
+                  // カード: その場で支払い・すぐ使い始められる。確認は支払いの後に運営が行い、NGなら掲載停止・返金(2026/10/21 オーナー判断)
+                  payment_status: billingMethod === "bank_transfer" ? "awaiting_review" : "awaiting_card",
                   billing_method: billingMethod,
                   billing_cycle_months: billingCycle,
+                  entity_type: kycValue.entityType,
+                  representative_name: kycValue.representativeName,
+                  corporate_number: kycValue.corporateNumber,
+                  license_number: kycValue.licenseNumber,
+                  antisocial_pledged_at: new Date().toISOString(),
+                  kyc_status: "pending",
         })
         .select("id")
         .single();
 
+  // 二重送信: 最初の1件で受付済み(振込は請求書も1通だけ。カードは最初の送信の決済ページで続ける)
+  if (isDuplicateRequest(insertError)) redirect(billingMethod === "bank_transfer" ? "/apply?done=review" : `/apply?error=${encodeURIComponent("お申込みを受け付けています。開いている決済ページでお手続きを続けてください。")}`);
   if (insertError || !application) {
           redirect(`/apply?error=${encodeURIComponent(insertError?.message ?? "申込みに失敗しました。")}`);
           return;
@@ -294,87 +358,23 @@ export async function startPaidApplication(formData: FormData) {
     message,
   });
 
-  // 銀行振込: 請求書を発行してメールで送る。入金確認後に運営が店舗を発行する
-  // (総合管理「入金管理」→ lib/bank-transfer.ts confirmInvoicePayment)。
-  if (billingMethod === "bank_transfer") {
-          let invoiceFailed: string | null = null;
-          try {
-                    const invoice = await createInvoice({
-                              listingApplicationId: application.id,
-                              billToName: companyName,
-                              billToContact: contactName,
-                              billToEmail: email,
-                              plan: { id: plan!.id, name: plan!.name, monthly_fee: plan!.monthly_fee },
-                              months: billingCycle,
-                              settings: billingSettings,
-                    });
-                    try {
-                              await sendInvoice(invoice, billingSettings, "new");
-                    } catch (mailError) {
-                              const svc = createServiceRoleClient();
-                              await svc.from("audit_log").insert({
-                                        actor_user_id: null,
-                                        actor_email: null,
-                                        action: "invoice_email_failed",
-                                        target_type: "invoice",
-                                        target_id: invoice.id,
-                                        detail: { error: mailError instanceof Error ? mailError.message : String(mailError) },
-                              });
-                    }
-          } catch (e) {
-                    invoiceFailed = e instanceof Error ? e.message : String(e);
-          }
-          if (invoiceFailed) {
-                    const svc = createServiceRoleClient();
-                    await svc
-                      .from("listing_applications")
-                      .update({ payment_status: "failed", payment_note: `請求書の作成に失敗: ${invoiceFailed}` })
-                      .eq("id", application.id);
-                    redirect(`/apply?error=${encodeURIComponent("請求書の作成に失敗しました。お手数ですがお問い合わせフォームからご連絡ください。")}`);
-          }
-          redirect("/apply?done=transfer");
+  // カード: その場でKOMOJUのお支払い画面へ。お支払い後すぐに店舗管理を使い始められる。
+  // 事業者の確認は支払いの後に運営が行う(総合管理の申込詳細。NGなら掲載停止・返金)。
+  if (billingMethod === "card") {
+    const r = await createApplyCardSession({ id: application.id, company_name: companyName, email, plan_id: planId, billing_cycle_months: billingCycle });
+    if ("error" in r) {
+      await createServiceRoleClient().from("listing_applications").update({ payment_status: "failed" }).eq("id", application.id);
+      redirect(`/apply?error=${encodeURIComponent(r.error)}`);
+    }
+    redirect((r as { url: string }).url);
   }
 
-  // redirect()はNext.js内部で例外を投げて実現される仕組みなので、
-  // try/catchの中では絶対に呼ばない(catchでもみ消してしまう)。
-  // 決済サービス呼び出し部分だけをtry/catchし、リダイレクト先URLが決まって
-  // からtryの外でredirect()する。
-  let redirectTo: string | null = null;
-      let failureMessage: string | null = null;
-
+  // 振込: 確認(本人確認・反社チェック)が済んでから、運営が請求書を送る(総合管理の申込詳細、lib/listing-kyc.ts)。
+  // ここでは受付のお知らせだけを送る。
   try {
-          // KOMOJUのカード登録ページ(customerモードのセッション)を作ってリダイレクトする。
-          // 登録完了後は /apply/complete/callback に戻り、そこで初月分を決済する。
-          // セッションIDは申込みに保存しておき、戻り先でKOMOJUに問い合わせて結果を確認する
-          // (DB列は fincode 時代の fincode_customer_id を流用。完了後は customer_id に置き換わる)。
-          const returnUrl = `${getSiteUrl()}/apply/complete/callback?application=${application.id}`;
-          const session = await createCardRegistrationSession({
-                    returnUrl,
-                    email,
-                    externalCustomerId: `app-${application.id}`,
-          });
-          if (!session.session_url) {
-                    throw new Error("決済ページのURLを取得できませんでした。");
-          }
-          const svc = createServiceRoleClient();
-          await svc
-            .from("listing_applications")
-            .update({ fincode_customer_id: `session:${session.id}` })
-            .eq("id", application.id);
-
-          redirectTo = session.session_url;
-  } catch (e) {
-          failureMessage = e instanceof Error ? e.message : "決済準備に失敗しました。";
+    await sendListingApplicationReceivedEmail({ to: email, companyName, contactName, billingMethod });
+  } catch {
+    // 受付メールが送れなくても申し込みは受け付ける(運営には通知済み)
   }
-
-  if (failureMessage) {
-          const svc = createServiceRoleClient();
-          await svc
-            .from("listing_applications")
-            .update({ payment_status: "failed" })
-            .eq("id", application.id);
-          redirect(`/apply?error=${encodeURIComponent(failureMessage)}`);
-  }
-
-  redirect(redirectTo!);
+  redirect("/apply?done=review");
 }

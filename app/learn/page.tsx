@@ -7,7 +7,7 @@ import { staticPageMetadata } from "@/lib/seo";
 import { Academy } from "./academy";
 import styles from "./learn.module.css";
 
-export const metadata = staticPageMetadata({ title: "Poker Summit Academy｜遊びながら学ぶポーカー初心者コース", description: "無料・登録不要。ポジション、プリフロップレンジ、役の強さを操作しながら学べるポーカー初心者向け学習コース。", path: "/learn" });
+export const metadata = staticPageMetadata({ title: "Poker Summit Academy｜初心者から実戦判断まで学ぶポーカー学習コース", description: "無料・登録不要。初心者から実戦判断、Lv.4の期待値・GTO・ソルバー読解まで、解説・操作演習・確認テストで段階的に学べます。", path: "/learn" });
 
 export default async function LearnPage() {
  const supabase = await createClient();

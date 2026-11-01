@@ -42,7 +42,7 @@ export default async function StoreMenuPage() {
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 4 }}>料金・メニュー</h1>
       <StoreContentRuleNotice />
@@ -67,7 +67,7 @@ export default async function StoreMenuPage() {
           </div>
           <div className="field">
             <span className="muted">画像（任意）</span>
-            <input type="file" name="image" accept="image/*" capture="environment" />
+            <input type="file" name="image" accept="image/*" />
           </div>
           <button type="submit" className="btn primary">
             追加する
@@ -137,7 +137,7 @@ export default async function StoreMenuPage() {
               </div>
               <div className="field">
                 <span className="muted">画像を差し替える（任意）</span>
-                <input type="file" name="image" accept="image/*" capture="environment" />
+                <input type="file" name="image" accept="image/*" />
               </div>
               {it.image_url && (
                 <label className="muted small" style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>

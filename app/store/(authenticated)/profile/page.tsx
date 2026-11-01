@@ -2,7 +2,7 @@ import { ReadableName } from "@/app/readable-name";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { HoursInput } from "@/app/hours-input";
 import { AddressFields } from "./address-fields";
-import { updateStoreProfile, updateMyStoreContactEmail, confirmMyStoreContactEmail, issueMyStoreLineLinkCode } from "./actions";
+import { updateStoreProfile, updateMyStoreContactEmail, confirmMyStoreContactEmail, issueMyStoreLineLinkCode, updateMyStoreNotifyChannel } from "./actions";
 import { uploadStorePhoto } from "./photos-actions";
 import { uploadStoreLogo, deleteStoreLogo } from "./logo-actions";
 import { uploadStoreBanner, deleteStoreBanner } from "./banner-actions";
@@ -21,7 +21,7 @@ import {
 export default async function StoreProfilePage({
   searchParams,
 }: {
-  searchParams: { lineCode?: string; emailCode?: string; emailError?: string; emailDone?: string };
+  searchParams: { lineCode?: string; emailCode?: string; emailError?: string; emailDone?: string; notifySaved?: string; error?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -168,7 +168,7 @@ export default async function StoreProfilePage({
               marginBottom: 16,
             }}
           >
-            <h1 style={{ fontSize: 20 }}><ReadableName name={store.name} /></h1>
+            <h1 style={{ fontSize: 20, flex: "1 1 12em", minWidth: 0 }}><ReadableName name={store.name} /></h1>
             <span className="badge">{STORE_STATUS_LABEL[store.status] ?? store.status}</span>
             {store.line_user_id && (
               <span className="badge" style={{ marginLeft: 6, background: "rgba(6, 199, 85, 0.12)", color: "#058a3b" }}>
@@ -176,6 +176,37 @@ export default async function StoreProfilePage({
               </span>
             )}
           </div>
+
+          {/* 応募・チャットのお知らせの受け取り方(2026/10)。LINE・メールの両方がある店舗だけ選べる */}
+          {store.line_user_id && activeContract?.contact_email && (
+            <div id="notify-channel" className="card" style={{ marginBottom: 16, scrollMarginTop: 80 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>🔔 応募・チャットのお知らせの受け取り方</p>
+              <p className="muted" style={{ fontSize: 12.5, marginBottom: 10 }}>
+                求人への応募や、ディーラーとのチャット・応募のお知らせを、どこで受け取るか選べます。お支払い・契約など大事なお知らせは、LINEとメールの両方にお送りします。
+              </p>
+              {searchParams.error && <p className="err" style={{ marginBottom: 8 }}>{searchParams.error}</p>}
+              {searchParams.notifySaved && (
+                <p style={{ color: "#1f7a3a", fontWeight: 700, fontSize: 13, marginBottom: 8 }}>保存しました。</p>
+              )}
+              <form action={updateMyStoreNotifyChannel} data-no-draft style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                <input type="hidden" name="storeId" value={store.id} />
+                {[
+                  { v: "both", label: "LINEとメールの両方（おすすめ）" },
+                  { v: "line", label: "LINEのみ" },
+                  { v: "email", label: "メールのみ" },
+                ].map((o) => (
+                  <label key={o.v} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13.5, padding: "6px 10px", border: "1px solid var(--border, #e5e0d5)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="radio" name="channel" value={o.v} defaultChecked={(store.notify_channel ?? "both") === o.v} />
+                    {o.label}
+                  </label>
+                ))}
+                <button type="submit" className="btn primary" style={{ fontSize: 12.5 }}>保存する</button>
+              </form>
+              <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+                送り先：LINE（連携済み）／メール（{activeContract.contact_email}）
+              </p>
+            </div>
+          )}
 
           {/* 検索で上に出るための入力のすすめ(営業時間・紹介文が空の店舗だけに出す) */}
           {(() => {
@@ -334,11 +365,13 @@ export default async function StoreProfilePage({
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{openJobCount}</div>
-              <div className="muted small">掲載中の求人（全{totalJobCount}件）</div>
+              <div className="muted small">掲載中の求人</div>
+              <div className="muted" style={{ fontSize: 11 }}>全{totalJobCount}件中</div>
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>{activeCouponCount}</div>
-              <div className="muted small">発行中のクーポン（お気に入り{couponFavoriteCount}件）</div>
+              <div className="muted small">発行中のクーポン</div>
+              <div className="muted" style={{ fontSize: 11 }}>お気に入り {couponFavoriteCount}件</div>
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>♥ {favoriteCount}</div>
@@ -346,7 +379,8 @@ export default async function StoreProfilePage({
             </div>
             <div className="card" style={{ textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 800 }}>★ {jobFavoriteCount}</div>
-              <div className="muted small">求人のお気に入り数（全求人合計）</div>
+              <div className="muted small">求人のお気に入り数</div>
+              <div className="muted" style={{ fontSize: 11 }}>全求人の合計</div>
             </div>
           </div>
 
@@ -546,7 +580,7 @@ export default async function StoreProfilePage({
               </div>
               <div className="field">
                 <span className="muted">電話番号</span>
-                <input type="text" name="tel" defaultValue={store.tel ?? ""} />
+                <input type="tel" name="tel" autoComplete="tel" defaultValue={store.tel ?? ""} />
               </div>
               <div className="field">
                 <span className="muted">営業時間</span>
@@ -555,7 +589,7 @@ export default async function StoreProfilePage({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
                   gap: 12,
                 }}
               >
@@ -565,15 +599,15 @@ export default async function StoreProfilePage({
                 </div>
                 <div className="field">
                   <span className="muted">LINE公式アカウントURL</span>
-                  <input type="text" name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="lineUrl" placeholder="https://line.me/..." defaultValue={store.line_url ?? ""} />
                 </div>
                 <div className="field">
                   <span className="muted">Xアカウント</span>
-                  <input type="text" name="xUrl" placeholder="https://x.com/..." defaultValue={store.x_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="xUrl" placeholder="https://x.com/..." defaultValue={store.x_url ?? ""} />
                 </div>
                 <div className="field">
                   <span className="muted">Instagram</span>
-                  <input type="text" name="instagramUrl" placeholder="https://instagram.com/..." defaultValue={store.instagram_url ?? ""} />
+                  <input type="text" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} name="instagramUrl" placeholder="https://instagram.com/..." defaultValue={store.instagram_url ?? ""} />
                 </div>
               </div>
               <div className="field">
@@ -624,7 +658,7 @@ export default async function StoreProfilePage({
                 <input type="hidden" name="storeId" value={store.id} />
                 <div className="field">
                   <span className="muted">写真を追加（スマホの写真ライブラリ・カメラから選択できます）</span>
-                  <input type="file" name="photo" accept="image/*" capture="environment" required />
+                  <input type="file" name="photo" accept="image/*" required />
                 </div>
                 <button type="submit" className="btn primary">
                   アップロードする

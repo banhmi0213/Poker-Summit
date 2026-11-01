@@ -39,7 +39,7 @@ export async function updateStoreProfile(formData: FormData) {
   const description = String(formData.get("description") ?? "");
   assertAllowedStoreText(name, description);
   const lineUrl = String(formData.get("lineUrl") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const xUrl = String(formData.get("xUrl") ?? "").trim();
   const instagramUrl = String(formData.get("instagramUrl") ?? "").trim();
   const areaKeywords = String(formData.get("areaKeywords") ?? "").trim();
@@ -301,4 +301,17 @@ export async function issueMyStoreLineLinkCode() {
 
   revalidatePath("/store/profile");
   redirect(`/store/profile?lineCode=${encodeURIComponent(String(code))}#notify-banner`);
+}
+
+// 応募・チャットのお知らせの受け取り方(両方/LINEのみ/メールのみ)を保存する(2026/10)
+export async function updateMyStoreNotifyChannel(formData: FormData) {
+  const supabase = await createClient();
+  const storeId = String(formData.get("storeId") ?? "");
+  const channel = String(formData.get("channel") ?? "");
+  const { error } = await supabase.rpc("set_my_store_notify_channel", { p_store_id: storeId, p_channel: channel });
+  if (error) {
+    redirect(`/store/profile?error=${encodeURIComponent(error.message)}#notify-channel`);
+  }
+  revalidatePath("/store/profile");
+  redirect("/store/profile?notifySaved=1#notify-channel");
 }

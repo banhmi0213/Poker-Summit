@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/app/password-input";
 import { ManagementLoginForm } from "@/app/management-login-form";
 import Link from "next/link";
 import { adminSignIn } from "./actions";
@@ -42,8 +43,7 @@ export default function AdminLoginPage({
           </div>
           <div className="field">
             <span className="muted">パスワード</span>
-            <input
-              type="password"
+            <PasswordInput
               name="password"
               enterKeyHint="go"
               required

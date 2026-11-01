@@ -28,5 +28,11 @@ export function createServiceRoleClient() {
       autoRefreshToken: false,
       persistSession: false,
     },
+    // Next.js のデータキャッシュに読み取り結果を残さない(2026/10)。
+    // 自動処理(請求書の発行・カードの自動更新・通知など)が古いデータを見て
+    // 「対象なし」と判断してしまう不具合があったため、常にデータベースの最新を読む。
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }

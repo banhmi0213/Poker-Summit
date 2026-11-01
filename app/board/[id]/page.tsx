@@ -2,19 +2,23 @@ import { threadCardStyle, threadStyle, validCode } from "@/lib/cosmetics";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createReply, reportPost, reportReply } from "../actions";
+import { reportPost } from "../actions";
+import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { Avatar } from "@/app/avatar";
-import { MemberRoleBadge } from "@/app/member-role-badge";
+import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
 import { AcademyBadge } from "@/app/learn/academy-badge";
+import { BoardBody, BoardHelp, ThreadControls, ReactionButtons, ReplyComposer, ReplyConversation } from "../community";
+import { getThreadCommunity, isMissingBoardSchema } from "../community-data";
 import { NOINDEX } from "@/lib/seo";
 export const metadata = NOINDEX;
 
 function formatDate(value: string) {
   const d = new Date(value);
   return d.toLocaleString("ja-JP", {
+    timeZone: "Asia/Tokyo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -30,7 +34,7 @@ export default async function BoardPostPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { page?: string };
+  searchParams: { page?: string; focus?: string };
 }) {
   const supabase = await createClient();
   const {
@@ -62,26 +66,54 @@ export default async function BoardPostPage({
   // コメントのページ送り(2026/10、「スレッドの中身も100件でページ送りに
   // して」との指示。/boardのスレッド一覧と同じ1ページ100件固定方式)。
   // 投稿順(古い順)のまま、100件ごとに区切る。
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  let page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  let focusedRoot: string | undefined;
+  if (searchParams.focus && /^[0-9a-f-]{36}$/i.test(searchParams.focus)) {
+    const { data: focused } = await supabase.from("board_replies").select("id,parent_reply_id").eq("id", searchParams.focus).eq("post_id", params.id).eq("status", "visible").maybeSingle();
+    if (focused) {
+      const { data: root } = await supabase.from("board_replies").select("id,created_at").eq("id", focused.parent_reply_id || focused.id).eq("post_id", params.id).eq("status", "visible").maybeSingle();
+      if (root) {
+        focusedRoot = root.id;
+        const { count } = await supabase.from("board_replies").select("id", {count:"exact",head:true}).eq("post_id", params.id).eq("status","visible").is("parent_reply_id",null).or(`created_at.lt.${root.created_at},and(created_at.eq.${root.created_at},id.lt.${root.id})`);
+        page = Math.floor((count ?? 0) / PAGE_SIZE) + 1;
+      }
+    }
+  }
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  const [{ count: totalReplyCount }, { data: replies }] = await Promise.all([
+  let [{ count: totalReplyCount, error: countError }, { data: replies, error: repliesError }] = await Promise.all([
     supabase
       .from("board_replies")
       .select("id", { count: "exact", head: true })
       .eq("post_id", params.id)
-      .eq("status", "visible"),
+      .eq("status", "visible").is("parent_reply_id", null),
     supabase
       .from("board_replies")
-      .select("id, body, author_name, author_user_id, created_at, image_url")
+      .select("id, post_id, body, author_name, author_user_id, created_at, image_url, parent_reply_id")
       .eq("post_id", params.id)
       .eq("status", "visible")
+      .is("parent_reply_id", null)
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
       .range(from, to),
   ]);
 
+  // A preview may be deployed before its database migration. Preserve the
+  // existing read-only thread instead of crashing or pretending new tools work.
+  if (isMissingBoardSchema(countError) || isMissingBoardSchema(repliesError)) {
+    const [legacyCount, legacyReplies] = await Promise.all([
+      supabase.from("board_replies").select("id", {count:"exact",head:true}).eq("post_id",params.id).eq("status","visible"),
+      supabase.from("board_replies").select("id,post_id,body,author_name,author_user_id,created_at,image_url").eq("post_id",params.id).eq("status","visible").order("created_at",{ascending:true}).order("id",{ascending:true}).range(from,to),
+    ]);
+    totalReplyCount = legacyCount.count;
+    replies = (legacyReplies.data ?? []).map(r=>({...r,parent_reply_id:null}));
+    countError = legacyCount.error; repliesError = legacyReplies.error;
+  }
+  if (countError || repliesError) throw new Error("コメントを読み込めませんでした。");
+  const community = await getThreadCommunity(supabase, post.id, user.id, (replies ?? []).map(r=>r.id));
+  const {data:followCounts}=community ? await supabase.rpc("board_follow_counts",{p_post_ids:[post.id]}) : {data:null};
+  const followerCount=Number(followCounts?.[0]?.total ?? 0);
   const totalPages = Math.max(1, Math.ceil((totalReplyCount ?? 0) / PAGE_SIZE));
 
   // 投稿者・返信者のアイコン画像(2026/10、board/page.tsxと同じ理由で
@@ -99,6 +131,11 @@ export default async function BoardPostPage({
   const { data: badgeRows } = authorUserIds.length
     ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; best_score: number }[] };
+  // 「運営」バッジを付ける運営アカウント(2026/10/20)
+  const { data: officialRows } = authorUserIds.length
+    ? await supabase.rpc("official_board_user_ids", { p_ids: authorUserIds })
+    : { data: [] as string[] };
+  const officialIds = new Set<string>(((officialRows ?? []) as unknown[]).map((r) => String(r)));
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   // アイコン枠・スレッドデザイン(2026/11/01)。投稿者・返信者ぶんを1回でまとめて引く。
@@ -131,7 +168,7 @@ export default async function BoardPostPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/board" className="breadcrumb">
-          ← スレッド一覧に戻る
+          スレッド一覧に戻る
         </Link>
         <div className="card" style={threadCardStyle(threadDesign)}>
           <div
@@ -150,16 +187,7 @@ export default async function BoardPostPage({
               )}
               <h1 style={{ fontSize: 19 }}>{post.title}{(() => { const t = threadStyle(threadDesign).badge; return t && <span style={t.style}>{t.text}</span>; })()}</h1>
             </div>
-            <form
-              action={async () => {
-                "use server";
-                await reportPost(post.id);
-              }}
-            >
-              <button type="submit" className="btn" style={{ fontSize: 12 }}>
-                🚩 通報する
-              </button>
-            </form>
+            <ReportForm kind="post" label="🚩 通報する" action={reportPost.bind(null, post.id)} buttonStyle={{ fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }} />
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0" }}>
             {/* アイコンから投稿者のプロフィールへ(2026/10、「サミットから
@@ -172,13 +200,15 @@ export default async function BoardPostPage({
               <Avatar name={post.author_name} url={null} />
             )}
             <div style={{ minWidth: 0 }}>
-              <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} /><AcademyBadge score={post.author_user_id ? graduationByUserId[post.author_user_id] : null} compact/></span>
+              <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!post.author_user_id && officialIds.has(post.author_user_id)} /><MemberRoleBadge role={post.author_user_id ? roleByUserId[post.author_user_id] : null} /><AcademyBadge score={post.author_user_id ? graduationByUserId[post.author_user_id] : null} compact/></span>
               <div className="muted">
                 {post.author_name} ・ {formatDate(post.created_at)}
               </div>
             </div>
           </div>
-          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{post.body}</p>
+          {community ? <ThreadControls postId={post.id} preference={community.preference} followerCount={followerCount} resolved={community.resolved} owner={post.author_user_id === user.id} /> : <p role="status" className="muted">掲示板の追加機能は準備中です。現在は本文・コメントの閲覧のみご利用いただけます。</p>}
+          <BoardBody body={post.body} />
+          {community && <ReactionButtons postId={post.id} rows={community.reactions} userId={user.id} />}
           {post.image_url && (
             // eslint-disable-next-line @next/next/no-img-element
             <img loading="lazy" decoding="async"
@@ -197,70 +227,14 @@ export default async function BoardPostPage({
         </div>
 
         <h2 style={{ fontSize: 16, marginTop: 24, marginBottom: 10 }}>
-          コメント ({totalReplyCount ?? 0})
+          コメント・返信 ({community?.totalReplies ?? totalReplyCount ?? 0})
         </h2>
 
         {(!replies || replies.length === 0) && (
           <p className="muted small">まだコメントはありません。</p>
         )}
 
-        {replies?.map((r) => (
-          <div className="card" key={r.id} style={{ display: "flex", gap: 10 }}>
-            {r.author_user_id ? (
-              <Link href={`/members/${r.author_user_id}`} style={{ flexShrink: 0 }}>
-                <Avatar name={r.author_name} url={avatarByUserId[r.author_user_id]} frame={frameByUserId[r.author_user_id]} />
-              </Link>
-            ) : (
-              <Avatar name={r.author_name} url={null} />
-            )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: 10,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={r.author_user_id ? roleByUserId[r.author_user_id] : null} /><AcademyBadge score={r.author_user_id ? graduationByUserId[r.author_user_id] : null} compact/></span>
-                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>
-                    {r.author_name}{" "}
-                    <span className="muted small" style={{ fontWeight: 400 }}>
-                      {formatDate(r.created_at)}
-                    </span>
-                  </div>
-                </div>
-                <form
-                  action={async () => {
-                    "use server";
-                    await reportReply(r.id, post.id);
-                  }}
-                >
-                  <button type="submit" className="btn" style={{ fontSize: 11 }}>
-                    🚩
-                  </button>
-                </form>
-              </div>
-              <div style={{ fontSize: 13.5, marginTop: 2, whiteSpace: "pre-wrap" }}>{r.body}</div>
-              {r.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img loading="lazy" decoding="async"
-                  src={r.image_url}
-                  alt=""
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: 280,
-                    objectFit: "contain",
-                    borderRadius: 8,
-                    marginTop: 8,
-                    background: "var(--surface-2)",
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
+        {community ? replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />) : replies?.map(r => <article className="card" key={r.id} style={{marginBottom:12}}><p className="muted small">{r.author_name} ・ {formatDate(r.created_at)}</p><BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="" loading="lazy" style={{maxWidth:"100%",maxHeight:420,objectFit:"contain"}} />}</article>)}
 
         {totalPages > 1 && (
           <div
@@ -276,11 +250,11 @@ export default async function BoardPostPage({
           >
             {page > 1 ? (
               <Link href={pageHref(page - 1)} className="btn" style={{ padding: "6px 14px" }}>
-                ← 前へ
+                前へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                ← 前へ
+                前へ
               </span>
             )}
             <span className="muted" style={{ fontSize: 13 }}>
@@ -288,40 +262,21 @@ export default async function BoardPostPage({
             </span>
             {page < totalPages ? (
               <Link href={pageHref(page + 1)} className="btn" style={{ padding: "6px 14px" }}>
-                次へ →
+                次へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                次へ →
+                次へ
               </span>
             )}
           </div>
         )}
 
-        <div className="card" style={{ marginTop: 16 }}>
-          <h2 style={{ fontSize: 16, marginBottom: 10 }}>返信する</h2>
-          <form action={createReply} encType="multipart/form-data">
-            <input type="hidden" name="postId" value={post.id} />
-            <div className="field">
-              <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
-              <input type="text" name="authorName" defaultValue={authorDisplayName} placeholder="匿名" />
-            </div>
-            <div className="field">
-              <span className="muted">返信内容 *</span>
-              <textarea name="body" rows={3} required />
-            </div>
-            <div className="field">
-              <span className="muted">画像を添付（任意）</span>
-              <input type="file" name="image" accept="image/*" />
-            </div>
-            <button type="submit" className="btn primary">
-              送信
-            </button>
-            <p className="muted small" style={{ marginTop: 8 }}>
-              ⚠️ 不適切なコメントは運営者によって削除される場合があります。
-            </p>
-          </form>
-        </div>
+        {community && <div className="card" style={{ marginTop: 16 }}>
+          <h2 style={{fontSize:16}}>スレッドにコメントする</h2>
+          <ReplyComposer postId={post.id} authorName={authorDisplayName} />
+        </div>}
+        <BoardHelp />
       </div>
       <PortalFooter />
       <BottomTabs active="board" />

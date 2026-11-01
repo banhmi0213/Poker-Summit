@@ -6,7 +6,7 @@ import { logAdminAction } from "@/lib/audit";
 
 export async function addAdminByEmail(formData: FormData) {
   const supabase = await createClient();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const role = String(formData.get("role") ?? "support").trim();
 
   if (!email) {

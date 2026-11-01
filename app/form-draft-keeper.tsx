@@ -21,6 +21,10 @@ type Draft = { savedAt: number; submitted?: boolean; values: Record<string, stri
 
 const restoredFields = new WeakSet<Element>();
 const handledForms = new WeakSet<HTMLFormElement>();
+// ページを開いたときの下書き(フォームごと)。表示中に保存した下書きで、いま操作している欄を
+// 上書きしないよう、復元にはこの「開いた時点の下書き」だけを使う(2026/10/19 不具合修正:
+// 申込みでカードを選ぶと画面の一部が切り替わり、その瞬間に少し前の下書き(銀行振込)で戻されていた)
+const draftAtOpen = new Map<string, Draft | null>();
 let notify: ((key: string) => void) | null = null;
 let discarding = false; // 「破棄する」の直後は保存しない
 
@@ -155,10 +159,15 @@ function restoreForm(form: HTMLFormElement) {
   if (!eligibleForm(form)) return;
   const key = formKey(form);
   if (!key) return;
-  const draft = readDraft(key);
+  if (!draftAtOpen.has(key)) draftAtOpen.set(key, readDraft(key));
+  const draft = draftAtOpen.get(key) ?? null;
   const first = !handledForms.has(form);
   handledForms.add(form);
-  if (!draft) return;
+  if (!draft) {
+    // 下書きが無いフォーム: いまある欄は「復元済み」扱いにして、あとから下書きで上書きしない
+    for (const [, el] of fieldEntries(form)) restoredFields.add(el);
+    return;
+  }
   if (draft.submitted) {
     // 送信後に戻ってきた: エラー表示があれば書いた内容を戻す。なければ保存できたとみなして破棄
     const hasError = new URL(window.location.href).searchParams.has("error");
@@ -194,6 +203,11 @@ export function FormDraftKeeper() {
       const el = e.target as Element | null;
       const form = (el as Field | null)?.form;
       if (!form || !eligibleField(el!)) return;
+      // お客様が触った欄は、以後は下書きで上書きしない(同じ名前のラジオも含む)
+      restoredFields.add(el!);
+      if (el instanceof HTMLInputElement && el.type === "radio" && el.name) {
+        for (const r of Array.from(form.elements)) if (r instanceof HTMLInputElement && r.type === "radio" && r.name === el.name) restoredFields.add(r);
+      }
       window.clearTimeout(timers.get(form));
       timers.set(
         form,

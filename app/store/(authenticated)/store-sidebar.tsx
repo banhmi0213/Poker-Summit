@@ -3,6 +3,7 @@ import {NotificationBadge} from "@/app/matching/chat/notification-badge";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
 import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 
@@ -25,11 +26,16 @@ const STORE_LINKS: { href: string; label: string }[] = [
   { href: "/store/profile/jobs", label: "求人" },
   { href: "/store/profile/spot-jobs", label: "スポット求人" },
   { href: "/store/profile/notices", label: "店舗のお知らせ" },
+  { href: "/store/profile/link-banner", label: "掲載バナー・リンク" },
   { href: "/store/profile/plan", label: "プラン・お支払い" },
+  { href: "/store/profile/guide", label: "店舗管理ガイド" },
 ];
 
 export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?: boolean }) {
   const pathname = usePathname();
+  // スマホでは「メニュー」ボタンで一覧を開く(横スクロールだと他の項目に気づけないため、2026/10)
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => setMenuOpen(false), [pathname]);
   const counts = useAttentionCounts("store");
   const total = (counts.job_applications ?? 0) + (counts.messages ?? 0);
 
@@ -39,6 +45,11 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
         <small>店舗管理画面{total > 0 && <CountBadge count={total} label="未確認の合計" />}</small>
       </div>
+      <button type="button" className="app-menu-toggle" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+        <span aria-hidden="true">{menuOpen ? "✕" : "☰"}</span> メニュー{!menuOpen && (STORE_LINKS.find((l) => (l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href)))?.label) ? <span className="app-menu-current">（{(STORE_LINKS.find((l) => (l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href)))?.label)}）</span> : null}
+        {!menuOpen && total > 0 && <CountBadge count={total} label="未対応の合計" />}
+      </button>
+      <div className={`app-menu-links${menuOpen ? " open" : ""}`}>
       {STORE_LINKS.map((l) => {
         const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
         if (l.href === "/store/profile/poker-tournaments" && !POKER_TOURNAMENTS_ENABLED) return null;
@@ -56,6 +67,7 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
           </Link>
         );
       })}
+      </div>
     </nav>
   );
 }

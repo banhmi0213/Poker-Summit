@@ -1,5 +1,9 @@
+import { MonthlyGoals } from "./monthly-goals";
+import { AttentionSummary } from "./attention-summary";
+import { isCouponExpired } from "@/lib/coupon-expiry";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { CATEGORY_LABEL, CATEGORY_OPTIONS } from "@/lib/constants";
 import {
   analyticsPeriodDays,
@@ -23,6 +27,7 @@ type SP = {
   q?: string;
   category?: string;
   sort?: string;
+  cmp?: string;
 };
 
 function hrefWith(sp: SP, overrides: Partial<SP>) {
@@ -73,7 +78,37 @@ function Sparkline({ counts, labels }: { counts: number[]; labels: string[] }) {
   );
 }
 
-function StatTile({ label, value, delta }: { label: string; value: string; delta?: string }) {
+type PeriodCell = { cur: number; prev: number; ok: boolean };
+// 前日・先週・先月・前年と比べた上げ下げ(2026/10/22)。今の期間の始まり〜今 と 前の期間の同じ経過時間まで を比べる
+const CHANGE_PERIODS: [string, string][] = [["day", "前日"], ["week", "先週"], ["month", "先月"], ["year", "前年"]];
+// total を渡すと「合計がどれだけ増えたか」(会員数など)、渡さないと「今の期間と前の期間の比較」(PV・UU)
+function TileChanges({ cells, total, only }: { cells?: Record<string, PeriodCell | undefined>; total?: number; only?: string }) {
+  if (!cells) return null;
+  return (
+    <div style={{ marginTop: 6, display: "grid", gap: 1 }}>
+      {CHANGE_PERIODS.filter(([k]) => !only || k === only).map(([k, label]) => {
+        const c = cells[k];
+        if (!c) return null;
+        const cur = Number(c.cur) || 0, prev = Number(c.prev) || 0, diff = cur - prev;
+        if (!c.ok) return <div key={k} className="muted" style={{ fontSize: 11 }}>{label}比 記録なし</div>;
+        if (total !== undefined) {
+          const before = total - cur;
+          const gp = before > 0 ? `+${Math.round((cur / before) * 1000) / 10}%` : cur > 0 ? "前は0" : "±0";
+          return <div key={k} className="tabular" style={{ fontSize: 11, color: cur > 0 ? "#1f7a3d" : "var(--muted)" }}>{label}比 {cur > 0 ? "▲+" : "±"}{cur.toLocaleString()}（{gp}）</div>;
+        }
+        const pct = prev > 0 ? `${diff >= 0 ? "+" : ""}${Math.round((diff / prev) * 1000) / 10}%` : cur > 0 ? "前は0" : "±0";
+        const color = diff > 0 ? "#1f7a3d" : diff < 0 ? "#b3261e" : "var(--muted)";
+        return (
+          <div key={k} className="tabular" style={{ fontSize: 11, color }}>
+            {label}比 {diff > 0 ? "▲" : diff < 0 ? "▼" : "±"}{diff > 0 ? "+" : ""}{diff.toLocaleString()}（{pct}）
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatTile({ label, value, delta, changes, total, only }: { label: string; value: string; delta?: string; changes?: Record<string, PeriodCell | undefined>; total?: number; only?: string }) {
   return (
     <div className="card">
       <div className="muted" style={{ fontSize: 12.5 }}>{label}</div>
@@ -81,6 +116,7 @@ function StatTile({ label, value, delta }: { label: string; value: string; delta
         {value}
       </div>
       {delta && <div className="muted" style={{ fontSize: 12 }}>{delta}</div>}
+      <TileChanges cells={changes} total={total} only={only} />
     </div>
   );
 }
@@ -110,7 +146,7 @@ async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
       .select("id, company_name")
       .in("status", ["pending", "unconfirmed"]),
     supabase.from("listing_applications").select("id, company_name, store_id").eq("status", "approved"),
-    supabase.from("coupons").select("id, title, valid_until").eq("active", true).not("valid_until", "is", null),
+    supabase.from("coupons").select("id, title, valid_until, expires_at").eq("active", true).not("valid_until", "is", null),
   ]);
 
   (pendingStores ?? []).forEach((s: any) =>
@@ -149,7 +185,7 @@ async function computeIssues(supabase: any): Promise<AnalyticsIssue[]> {
   });
 
   (coupons ?? []).forEach((c: any) => {
-    if (c.valid_until < today) {
+    if (isCouponExpired(c)) {
       issues.push({ cls: "outline", icon: "🎟️", text: `クーポン「${c.title}」の有効期限が切れています`, href: "/admin/coupons" });
     } else if (c.valid_until <= in7.toISOString().slice(0, 10)) {
       issues.push({ cls: "warning", icon: "🎟️", text: `クーポン「${c.title}」が近日中に終了します`, href: "/admin/coupons" });
@@ -187,6 +223,8 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
 
   return (
     <div>
+      <AttentionSummary />
+      {(searchParams.tab ?? "overview") === "overview" && <MonthlyGoals />}
       <div className="app-topbar" style={{ marginBottom: 10 }}>
         <h1 style={{ fontSize: 22, margin: 0 }}>アクセス統計</h1>
         <span className="muted" style={{ fontSize: 12.5 }}>
@@ -245,6 +283,18 @@ export default async function AdminAnalyticsPage({ searchParams }: { searchParam
             {label}
           </Link>
         ))}
+        <details style={{ position: "relative" }}>
+          <summary className="btn primary" style={{ fontSize: 12.5, listStyle: "none", cursor: "pointer" }}>
+            {(CHANGE_PERIODS.find(([k]) => k === (searchParams.cmp ?? "day")) ?? CHANGE_PERIODS[0])[1]}比
+          </summary>
+          <div className="card" style={{ position: "absolute", zIndex: 5, top: "110%", left: 0, padding: 6, display: "grid", gap: 4, minWidth: 110 }}>
+            {CHANGE_PERIODS.map(([k, label]) => (
+              <Link key={k} href={hrefWith(searchParams, { cmp: k })} className={`btn ${(searchParams.cmp ?? "day") === k ? "primary" : ""}`} style={{ fontSize: 12.5 }}>
+                {label}比
+              </Link>
+            ))}
+          </div>
+        </details>
         {period === "custom" && (
           <form method="get" style={{ display: "flex", gap: 6 }}>
             <input type="hidden" name="tab" value={tab} />
@@ -333,7 +383,7 @@ async function OverviewTab({
       fetchAllRows(() =>
         supabase
           .from("page_views")
-          .select("created_at, referrer, device")
+          .select("created_at, referrer, device, visitor_id")
           .eq("store_id", storeId)
           .gte("created_at", since.toISOString())
       ),
@@ -343,6 +393,8 @@ async function OverviewTab({
 
     const { counts, labels } = bucketTrend((views ?? []).map((v: any) => v.created_at), filters);
     const totalViews = (views ?? []).length;
+    // UU = 期間内にこの店舗ページを見た人数(閲覧者番号の数。番号の記録は2026/10/21から)
+    const totalUU = new Set((views ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
 
     const refCounts = new Map<string, number>();
     (views ?? []).forEach((v: any) => {
@@ -383,6 +435,7 @@ async function OverviewTab({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
           <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+          <StatTile label="期間内UU" value={totalUU.toLocaleString()} delta="10/21から集計" />
           <StatTile label="累計お気に入り" value={(favCount ?? 0).toLocaleString()} delta={store.pref} />
         </div>
         {compare && (
@@ -431,7 +484,7 @@ async function OverviewTab({
     fetchAllRows(() =>
       supabase
         .from("page_views")
-        .select("created_at, referrer, device, store_id")
+        .select("created_at, referrer, device, store_id, visitor_id")
         .not("store_id", "is", null)
         .gte("created_at", since.toISOString())
     ),
@@ -447,9 +500,23 @@ async function OverviewTab({
     // 会員数(店舗管理用アカウントを除く)・掲載中求人数・公開中フリーディーラー数
     supabase.rpc("admin_dashboard_counts"),
   ]);
+  const { data: periodData } = await supabase.rpc("admin_compare_periods");
+  const pd = (periodData ?? {}) as Record<string, Record<string, PeriodCell>>;
+  const cmp = CHANGE_PERIODS.some(([k]) => k === searchParams.cmp) ? String(searchParams.cmp) : "day";
+  const ch = (key: string) => Object.fromEntries(CHANGE_PERIODS.map(([k]) => [k, pd[k]?.[key]]));
 
   const { counts, labels } = bucketTrend((allViews ?? []).map((v: any) => v.created_at), filters);
   const totalViews = (allViews ?? []).length;
+  // UU(何人が見たか)。閲覧者番号の記録は2026/10/21から。サイト全体はTOP・一覧・サミットなど全部の公開ページ(public.site_page_views)
+  const storeUU = new Set((allViews ?? []).map((v: any) => v.visitor_id).filter(Boolean)).size;
+  const uuByStore = new Map<string, Set<string>>();
+  (allViews ?? []).forEach((v: any) => {
+    if (!v.visitor_id) return;
+    if (!uuByStore.has(v.store_id)) uuByStore.set(v.store_id, new Set());
+    uuByStore.get(v.store_id)!.add(v.visitor_id);
+  });
+  const { data: sitePvUu } = await createServiceRoleClient().rpc("admin_site_pv_uu", { p_since: since.toISOString() });
+  const siteRow = (Array.isArray(sitePvUu) ? sitePvUu[0] : sitePvUu) as { site_pv?: number; site_uu?: number } | null;
 
   const viewsByStore = new Map<string, number>();
   (allViews ?? []).forEach((v: any) => {
@@ -464,7 +531,7 @@ async function OverviewTab({
     .sort((a, b) => b.periodViews - a.periodViews)
     .slice(0, 5);
 
-  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, favs: favByStore.get(s.id) ?? 0 }));
+  let storeRows = (allStoresFull ?? []).map((s: any) => ({ s, views: viewsByStore.get(s.id) ?? 0, uu: uuByStore.get(s.id)?.size ?? 0, favs: favByStore.get(s.id) ?? 0 }));
   if (q) storeRows = storeRows.filter((r: any) => r.s.name.includes(q));
   if (category && category !== "other") storeRows = storeRows.filter((r: any) => r.s.category === category);
   storeRows.sort((a: any, b: any) => {
@@ -495,10 +562,13 @@ async function OverviewTab({
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 12, marginBottom: 22 }}>
         <StatTile label="掲載店舗数" value={(totalStoreCount ?? 0).toLocaleString()} />
-        <StatTile label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} />
+        <StatTile only={cmp} changes={ch("members")} total={Number((dashCounts as any)?.members ?? 0)} label="会員数" value={Number((dashCounts as any)?.members ?? 0).toLocaleString()} delta={Number((dashCounts as any)?.unconfirmed_members ?? 0) > 0 ? `ほかにメール未確認 ${Number((dashCounts as any).unconfirmed_members).toLocaleString()}人` : undefined} />
         <StatTile label="掲載求人数" value={Number((dashCounts as any)?.open_jobs ?? 0).toLocaleString()} />
         <StatTile label="フリーディーラー数" value={Number((dashCounts as any)?.dealers ?? 0).toLocaleString()} delta="公開中" />
-        <StatTile label="期間内PV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile only={cmp} changes={ch("site_pv")} label="サイト全体PV" value={Number(siteRow?.site_pv ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile only={cmp} changes={ch("site_uu")} label="サイト全体UU" value={Number(siteRow?.site_uu ?? 0).toLocaleString()} delta="10/21から集計" />
+        <StatTile only={cmp} changes={ch("store_pv")} label="店舗ページPV" value={totalViews.toLocaleString()} delta={trendGranularityLabel(filters)} />
+        <StatTile only={cmp} changes={ch("store_uu")} label="店舗ページUU" value={storeUU.toLocaleString()} delta="10/21から集計" />
         <StatTile label="累計お気に入り（店舗）" value={(totalFavorites ?? 0).toLocaleString()} delta={`全${totalStoreCount ?? 0}店舗`} />
         <StatTile label="累計お気に入り（求人）" value={(totalJobFavorites ?? 0).toLocaleString()} />
       </div>
@@ -576,23 +646,24 @@ async function OverviewTab({
             絞り込む
           </button>
         </form>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>店舗名</th>
               <th>都道府県</th>
               <th>ステータス</th>
               <th>期間内PV</th>
+              <th>期間内UU</th>
               <th>お気に入り</th>
             </tr>
           </thead>
           <tbody>
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={5} className="muted">該当する店舗がありません。</td>
+                <td colSpan={6} className="muted">該当する店舗がありません。</td>
               </tr>
             )}
-            {storeRows.map(({ s, views, favs }: any) => (
+            {storeRows.map(({ s, views, uu, favs }: any) => (
               <tr key={s.id}>
                 <td>
                   <span className="badge outline" style={{ marginRight: 6 }}>
@@ -605,11 +676,12 @@ async function OverviewTab({
                   <span className="badge">{s.status === "approved" || s.status === "listed" ? "公開中" : s.status}</span>
                 </td>
                 <td className="tabular">{views.toLocaleString()}</td>
+                <td className="tabular">{uu.toLocaleString()}</td>
                 <td className="tabular">{favs.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -659,7 +731,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
       </div>
       <div className="card">
         <h3>カテゴリ別サマリー</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>カテゴリ</th>
@@ -678,7 +750,7 @@ async function CategoryTab({ supabase, since, scope, storeId }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -727,7 +799,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>記事別アクセス状況</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead><tr><th>記事</th><th>カテゴリ</th><th>状態</th><th>今日</th><th>7日</th><th>30日</th><th>累計</th></tr></thead>
           <tbody>
             {rows.length === 0 && <tr><td colSpan={7} className="muted">記事がありません。</td></tr>}
@@ -743,7 +815,7 @@ async function BlogAnalyticsTab({ supabase, since }: any) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -802,7 +874,7 @@ async function BannerTab({ supabase, since }: any) {
       </div>
       <div className="card">
         <h3>バナー詳細</h3>
-        <table>
+        <div className="table-wrap"><table>
           <thead>
             <tr>
               <th>バナー</th>
@@ -837,10 +909,10 @@ async function BannerTab({ supabase, since }: any) {
               );
             })}
           </tbody>
-        </table>
+        </table></div>
         <div style={{ marginTop: 14 }}>
           <Link href="/admin/banners" className="btn" style={{ fontSize: 12.5 }}>
-            バナー管理を開く →
+            バナー管理を開く
           </Link>
         </div>
       </div>

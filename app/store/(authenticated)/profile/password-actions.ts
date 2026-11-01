@@ -1,5 +1,7 @@
 "use server";
 
+import { authErrorMessage } from "@/lib/auth-error";
+
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { passwordPolicyError } from "@/lib/password-policy";
@@ -26,7 +28,7 @@ export async function changeStorePassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    redirect(`/store/profile/password?error=${encodeURIComponent(error.message)}`);
+    redirect(`/store/profile/password?error=${encodeURIComponent(authErrorMessage(error.message))}`);
   }
 
   redirect("/store/profile/password?done=1");

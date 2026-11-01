@@ -4,9 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { isBillingFailedThisMonth } from "@/lib/contracts";
 import {
   updateContract,
-  setContractStatus,
+  scheduleContractCancelAction,
+  undoContractCancelAction,
   recordManualBillingEvent,
 } from "../actions";
+import { ConfirmButton } from "@/app/store/(authenticated)/profile/confirm-button";
+import { continueTrialByBankTransfer, endTrialContract } from "../actions";
 
 function formatYen(value: number | null | undefined) {
   return `¥${(value ?? 0).toLocaleString("ja-JP")}`;
@@ -29,7 +32,7 @@ const BILLING_EVENT_LABEL: Record<string, string> = {
   canceled: "解約",
 };
 
-export default async function ContractDetailPage({ params }: { params: { id: string } }) {
+export default async function ContractDetailPage({ params, searchParams }: { params: { id: string }; searchParams: { ok?: string; error?: string } }) {
   const supabase = await createClient();
 
   const [{ data: contract }, { data: plans }, { data: addons }, { data: billingEvents }] =
@@ -37,12 +40,13 @@ export default async function ContractDetailPage({ params }: { params: { id: str
       supabase
         .from("store_contracts")
         .select(
-          "id, status, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, created_at, plan_id, price_lock_plan_id, price_lock_fee, price_lock_granted_at, price_lock_ended_at, price_lock_end_reason, stores(id, name, pref, region, tel, status), store_contract_addons(addon_id)"
+          "id, status, cancel_at_period_end, cancel_requested_at, current_period_end, trial_ends_at, billing_method, fincode_customer_id, contact_name, contact_email, contact_tel, last_billing_status, last_billing_at, created_at, plan_id, price_lock_plan_id, price_lock_fee, price_lock_granted_at, price_lock_ended_at, price_lock_end_reason, stores(id, name, pref, region, tel, status), store_contract_addons(addon_id)"
         )
         .eq("id", params.id)
         .maybeSingle(),
       supabase.from("plans").select("id, name, monthly_fee, active").order("sort_order"),
-      supabase.from("addons").select("id, name, monthly_fee, active").order("sort_order"),
+      // 契約に付けるのは毎月払いのアドオンだけ(買い切りは店舗が都度買う。2026/10/20)
+      supabase.from("addons").select("id, name, monthly_fee, active").eq("billing_type", "monthly").order("sort_order"),
       supabase
         .from("billing_events")
         .select("id, event_type, amount, occurred_at, source, note")
@@ -81,26 +85,84 @@ export default async function ContractDetailPage({ params }: { params: { id: str
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
+      {searchParams?.ok && <p style={{ color: "#2e7d32", marginBottom: 12 }}>✅ {searchParams.ok}</p>}
+      {searchParams?.error && <p className="err">{searchParams.error}</p>}
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16, flexWrap: "wrap" }}>
         <span className={`badge ${contract.status === "canceled" ? "outline" : ""}`}>
-          {contract.status === "canceled" ? "解約済み" : "契約中"}
+          {contract.status === "canceled" ? "解約済み（店舗ページ削除済み）" : (contract as any).cancel_at_period_end ? "解約予定" : "契約中"}
         </span>
+        {contract.status !== "canceled" && (contract as any).cancel_at_period_end && (contract as any).current_period_end && (
+          <span style={{ fontSize: 13 }}>
+            {new Date(Date.parse((contract as any).current_period_end) - 1).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}
+            の終わりで契約終了・店舗ページを削除します
+          </span>
+        )}
         {failed && (
           <span style={{ color: "#d1453b", fontWeight: 700, fontSize: 13 }}>
             ⚠️ 今月引き落としに失敗しています
           </span>
         )}
-        <form
-          action={async () => {
-            "use server";
-            await setContractStatus(contract.id, contract.status === "canceled" ? "active" : "canceled");
-          }}
-        >
-          <button type="submit" className="btn" style={{ fontSize: 12 }}>
-            {contract.status === "canceled" ? "契約を再開する" : "解約にする"}
-          </button>
-        </form>
+        {contract.status !== "canceled" &&
+          ((contract as any).cancel_at_period_end ? (
+            <form
+              action={async () => {
+                "use server";
+                await undoContractCancelAction(contract.id);
+              }}
+            >
+              <button type="submit" className="btn" style={{ fontSize: 12 }}>
+                解約の予定を取り消す
+              </button>
+            </form>
+          ) : (
+            <form
+              action={async () => {
+                "use server";
+                await scheduleContractCancelAction(contract.id);
+              }}
+            >
+              <ConfirmButton
+                className="btn"
+                message="解約を受け付けます。契約期間の終わりまでは今までどおり使え、それ以降の請求はありません。期間の終わりに店舗ページ・ログインを削除します（請求・入金の記録は残ります）。よろしいですか？"
+              >
+                解約する（満期で終了）
+              </ConfirmButton>
+            </form>
+          ))}
       </div>
+
+      {/* 無料期間(2026/10/20) */}
+      {contract.status !== "canceled" && (contract as any).trial_ends_at && (() => {
+        const c = contract as any;
+        const endLabel = new Date(Date.parse(c.trial_ends_at) - 1).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
+        const ended = Date.parse(c.trial_ends_at) <= Date.now();
+        const hasCard = !!c.fincode_customer_id && !String(c.fincode_customer_id).startsWith("session:");
+        const decided = hasCard || c.billing_method === "bank_transfer";
+        return (
+          <div className="card" style={{ marginBottom: 16, borderColor: ended && !decided ? "#d1453b" : undefined, background: "#fff8e6" }}>
+            <strong>🎁 無料期間：{endLabel}まで（月額プランのみ）{ended && "・終了しました"}</strong>
+            <p style={{ fontSize: 13, margin: "6px 0 10px", lineHeight: 1.7 }}>
+              {hasCard
+                ? "店舗がカードを登録済みです。無料期間の終わった日に自動で決済して続きます。"
+                : c.billing_method === "bank_transfer"
+                  ? "振込で続けます。毎朝9時の自動処理で次の期間の請求書を発行してメールで送ります。"
+                  : ended
+                    ? "続けるかどうかを決めてください。決まるまでは無料のまま使えます。店舗がカードを登録すれば、その場で決済して続きます。"
+                    : "店舗がカードを登録すれば、終わった日に自動で決済して続きます。振込で続けるか終了するかは、ここで決められます。"}
+            </p>
+            {!decided && (
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <form action={async () => { "use server"; await continueTrialByBankTransfer(contract.id); }}>
+                  <ConfirmButton className="btn" message="支払い方法を振込にして続けます。次の期間の請求書を自動で発行して、請求先メールアドレスに送ります。よろしいですか？">振込で続ける</ConfirmButton>
+                </form>
+                <form action={async () => { "use server"; await endTrialContract(contract.id); }}>
+                  <ConfirmButton className="btn" message="無料期間で契約を終了します。プランの特典はなくなり、店舗ページは無料掲載として残ります（ログインも残ります）。よろしいですか？">終了する（無料掲載に戻す）</ConfirmButton>
+                </form>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
         <div className="card">
