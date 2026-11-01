@@ -184,6 +184,36 @@ function formatCount(value: number) {
   return new Intl.NumberFormat("ja-JP").format(value);
 }
 
+export function PokerSummitStats({ stats, className = "" }: { stats: Stats; className?: string }) {
+  // 求人・会員・投稿は一定数を超えたら出す。都道府県・大型大会は、それらが出るまでのつなぎ(2026/10)
+  const activityItems = [
+    ...(stats.jobCount >= STAT_SHOW_THRESHOLDS.jobs ? [{ label: "掲載求人数", value: formatCount(stats.jobCount), icon: <BriefcaseIcon /> }] : []),
+    ...(stats.memberCount >= STAT_SHOW_THRESHOLDS.members ? [{ label: "会員数", value: formatCount(stats.memberCount), icon: <MembersIcon /> }] : []),
+    ...(stats.summitPostCount >= STAT_SHOW_THRESHOLDS.posts ? [{ label: "サミット投稿数", value: formatCount(stats.summitPostCount), icon: <SpeechBubbleIcon /> }] : []),
+  ];
+  const fillerItems = [
+    { label: "掲載都道府県", value: formatCount(stats.prefCount), icon: <MapPinIcon /> },
+    { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
+  ];
+  const storeItem = { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> };
+  // 並びは最大4つ。足りない分だけ、都道府県→大型大会の順でつなぎを入れる(超えた分は大型大会から外す)
+  const MAX_STATS = 4;
+  const keptFillers = fillerItems.slice(0, Math.max(0, MAX_STATS - 1 - activityItems.length));
+  const statItems = [storeItem, ...keptFillers, ...activityItems];
+
+  return (
+      <div className={`ps-region-stats ${className}`} aria-label="Poker Summit 統計" style={{ ["--stat-cols" as string]: String(statItems.length) }}>
+        {statItems.map((item) => (
+          <div className="ps-region-stat" key={item.label}>
+            <span className="ps-region-stat__icon" aria-hidden="true">{item.icon}</span>
+            <span className="ps-region-stat__label">{item.label}</span>
+            <strong>{item.value}</strong>
+          </div>
+        ))}
+      </div>
+  );
+}
+
 /**
  * TOP page hero: 7-region tappable map + statistics panel.
  * Visual spec (colors, layout, spacing, copy, map position) is fixed by the
@@ -213,21 +243,6 @@ export function PokerRegionHero({
   stats,
   backgroundSrc = "/images/poker-region-hero-bg.webp",
 }: Props) {
-  // 求人・会員・投稿は一定数を超えたら出す。都道府県・大型大会は、それらが出るまでのつなぎ(2026/10)
-  const activityItems = [
-    ...(stats.jobCount >= STAT_SHOW_THRESHOLDS.jobs ? [{ label: "掲載求人数", value: formatCount(stats.jobCount), icon: <BriefcaseIcon /> }] : []),
-    ...(stats.memberCount >= STAT_SHOW_THRESHOLDS.members ? [{ label: "会員数", value: formatCount(stats.memberCount), icon: <MembersIcon /> }] : []),
-    ...(stats.summitPostCount >= STAT_SHOW_THRESHOLDS.posts ? [{ label: "サミット投稿数", value: formatCount(stats.summitPostCount), icon: <SpeechBubbleIcon /> }] : []),
-  ];
-  const fillerItems = [
-    { label: "掲載都道府県", value: formatCount(stats.prefCount), icon: <MapPinIcon /> },
-    { label: "国内外大型大会", value: formatCount(stats.majorTournamentCount), icon: <TrophyIcon /> },
-  ];
-  const storeItem = { label: "全国の掲載店舗数", value: formatCount(stats.storeCount), icon: <StoreIcon /> };
-  // 並びは最大4つ。足りない分だけ、都道府県→大型大会の順でつなぎを入れる(超えた分は大型大会から外す)
-  const MAX_STATS = 4;
-  const keptFillers = fillerItems.slice(0, Math.max(0, MAX_STATS - 1 - activityItems.length));
-  const statItems = [storeItem, ...keptFillers, ...activityItems];
 
   return (
     <section className="ps-region-hero" aria-label="全国からポーカー店舗を探す">
@@ -330,15 +345,7 @@ export function PokerRegionHero({
         })}
       </nav>
 
-      <div className="ps-region-stats" aria-label="Poker Summit 統計" style={{ ["--stat-cols" as string]: String(statItems.length) }}>
-        {statItems.map((item) => (
-          <div className="ps-region-stat" key={item.label}>
-            <span className="ps-region-stat__icon" aria-hidden="true">{item.icon}</span>
-            <span className="ps-region-stat__label">{item.label}</span>
-            <strong>{item.value}</strong>
-          </div>
-        ))}
-      </div>
+      <PokerSummitStats stats={stats} />
 
       {/* Mobile-only fallback: real, visible, styled region cards (no tappable
           map on small screens per spec) — same PREF_REGION-driven data. */}
