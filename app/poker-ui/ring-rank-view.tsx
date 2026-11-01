@@ -17,7 +17,7 @@ export function RingRankView(){
  const progress=rank.tier===0?Math.min(1,(100-rank.rookieHandsLeft)/100):rank.next===null?1:rank.floor===null?Math.max(0,Math.min(1,rank.bb/rank.next)):Math.max(0,Math.min(1,(rank.bb-rank.floor)/(rank.next-rank.floor)));
  return <div style={{display:'grid',gap:16}}>
   <section style={{padding:'18px 20px',border:'1px solid #c7ac75',borderRadius:14,background:'#10233c',color:'#f3ead6'}}>
-   <div style={{display:'flex',alignItems:'center',gap:14}}><img src={rankBadgeSrc(rank.tier)} alt="" width={88} height={88} style={{flex:'none'}}/><div><small style={{letterSpacing:'.16em',color:'#c7ac75'}}>{RING_TIER_EN[rank.tier]}</small>
+   <div style={{display:'flex',alignItems:'center',gap:14}}><img src={rankBadgeSrc(rank.tier)} alt="" width={120} height={120} style={{flex:'none'}}/><div><small style={{letterSpacing:'.16em',color:'#c7ac75'}}>{RING_TIER_EN[rank.tier]}</small>
    <h3 style={{margin:'4px 0 8px',fontSize:26}}>{tierName(rank.tier)}</h3></div></div>
    <p style={{margin:0}}>リング通算 <strong>{bb(rank.bb)}</strong>（{rank.hands.toLocaleString()}ハンド）</p>
    <div aria-hidden="true" style={{height:10,borderRadius:5,background:'#203a4c',margin:'14px 0 6px',overflow:'hidden'}}><div style={{width:`${Math.round(progress*100)}%`,height:'100%',background:'#c7ac75'}}/></div>
