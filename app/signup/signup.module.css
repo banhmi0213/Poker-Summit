@@ -91,3 +91,43 @@
 @media(max-width:760px){.tournamentPromo{margin:18px 0 0;padding:15px}.tournamentPromo h2{font-size:16px;gap:8px}.tournamentPromo p{font-size:12px}.tournamentFollow{display:block}.tournamentFollow p{margin-bottom:10px}.xFollowButton{width:100%;font-size:14px;min-height:44px}.earlyIntro{padding-bottom:50px}}
 /* 見出しは「先行会員限定／トーナメント／開催決定！」の切れ目でだけ改行する(スマホで「定！」だけ落ちないように) */
 .tournamentTitle{word-break:keep-all;overflow-wrap:anywhere}
+
+/* Mobile notices and form labels remain readable at actual phone widths. */
+@media(max-width:760px){
+ .field{font-size:14px;line-height:1.6}.field small{font-size:12px;color:#665744;line-height:1.75}
+ .field input::placeholder{color:#756b5e;opacity:1}
+ .lead{font-size:14px;line-height:1.85}
+ .notice{font-size:13px;line-height:1.8}.notice p{font-size:12px;line-height:1.8}
+ .consent{font-size:13px;line-height:1.8;gap:10px}.consent input{width:20px;height:20px;margin-top:2px}
+ .confirmation,.help{font-size:12px;line-height:1.8;color:#665744}
+ .tournamentPromo p{font-size:14px;line-height:1.8}.tournamentPromo .tournamentNote{font-size:12px;color:#66502d;line-height:1.8}
+ .tournamentFollow p{font-size:13px;min-width:0}.tournamentPromo h2{font-size:17px;line-height:1.7}
+ .footer,.storeLinks{font-size:12px;line-height:1.8;color:#665744}.footer nav{gap:8px 16px}.footer a{display:inline-block;padding:5px 0}
+ .headerLabel{font-size:12px}.back{font-size:13px;padding:6px 0}
+}
+
+/* 先行登録: 大会の日時・プライズ、フォームへのボタン、公式Xリンク(2026/10/19) */
+.tournamentFacts{display:flex;gap:8px;margin:10px 0 0;flex-wrap:wrap}
+.tournamentFacts div{flex:1 1 140px;padding:7px 10px;border:1px solid #e2c88e;border-radius:8px;background:#fffaf0}
+.tournamentFacts dt{font-size:10.5px;color:#8a6a35;letter-spacing:.06em}
+.tournamentFacts dd{margin:2px 0 0;font-size:15px;font-weight:700;font-family:"Noto Serif JP",serif;color:#3e2810;line-height:1.5}
+.jumpToForm{display:none;margin-top:12px}
+.tournamentXLink{margin-top:9px!important;font-size:11.5px!important;color:#765323}
+.tournamentXLink a{color:#6a4614;font-weight:700;text-decoration:underline;text-underline-offset:3px;margin:0 2px}
+.panel{scroll-margin-top:12px}
+@media(max-width:760px){.jumpToForm{display:flex;width:100%;font-size:15px;min-height:48px}.tournamentFacts dd{font-size:16px}.tournamentXLink{font-size:13px!important;text-align:center}}
+@media(max-width:760px){.tournamentFacts{flex-direction:column;gap:6px}.tournamentFacts div{flex:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 12px}.tournamentFacts dt{font-size:12px}.tournamentFacts dd{margin:0;white-space:nowrap}}
+
+/* 先行登録: 正式オープン日と使える機能(2026/10/19) */
+.launchBadge{display:inline-block;margin:0 0 10px;padding:4px 14px;border:1px solid #c9a35c;border-radius:999px;background:#fffaf0;color:#6a4614;font-family:"Noto Serif JP",serif;font-weight:700;font-size:14px;letter-spacing:.04em}
+.featureList{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0}
+.featureList li{padding:4px 11px;border:1px solid #d7b66c;border-radius:6px;background:#fffdf7;color:#493019;font-size:12.5px;font-weight:700}
+@media(min-width:761px){.launchBadge,.featureList{margin-left:30px;margin-right:24px}.launchBadge{font-size:13px}}
+@media(max-width:760px){.launchBadge{margin:4px auto 8px;font-size:14px}.featureList{justify-content:center;margin:10px auto 0;max-width:380px}.featureList li{font-size:13px;background:#fffdf7f0}}
+@media(min-width:761px){.launchBadge{align-self:flex-start}}
+
+/* 先行会員にサイト公開中の「今すぐ見られる」(2026/10/20) */
+.leadStrong{font-weight:700;font-size:1.12em}
+/* 開催情報の補足(Amazonギフトの抽選・ダイヤは無料でもらえる、2026/10/20) */
+.factSub{display:block;margin-top:2px;font-size:11.5px;font-weight:700;font-family:inherit;color:#7a5523;line-height:1.5;white-space:normal}
+@media(max-width:760px){.tournamentFacts dd{text-align:right}.factSub{font-size:11.5px}}

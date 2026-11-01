@@ -104,12 +104,15 @@ export async function isLineFriend(lineUserId: string): Promise<boolean | null> 
   }
 }
 
-export async function pushLineMessage(lineUserId: string, text: string): Promise<void> {
+export async function pushLineMessage(lineUserId: string, text: string, meta: { storeId?: string | null } = {}): Promise<void> {
   const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   if (!accessToken || !lineUserId) return;
+  const body = text.slice(0, 4900);
+  // 送ったLINEも記録に残す(public.message_log、2026/10/20)
+  const { logMessage } = await import("@/lib/message-log");
 
   try {
-    await fetch("https://api.line.me/v2/bot/message/push", {
+    const res = await fetch("https://api.line.me/v2/bot/message/push", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -117,10 +120,19 @@ export async function pushLineMessage(lineUserId: string, text: string): Promise
       },
       body: JSON.stringify({
         to: lineUserId,
-        messages: [{ type: "text", text: text.slice(0, 4900) }],
+        messages: [{ type: "text", text: body }],
       }),
     });
-  } catch {
+    await logMessage({
+      channel: "line",
+      to: lineUserId,
+      body,
+      storeId: meta.storeId ?? null,
+      status: res.ok ? "sent" : "failed",
+      error: res.ok ? null : `LINE API error (${res.status}): ${(await res.text().catch(() => "")).slice(0, 300)}`,
+    });
+  } catch (e) {
+    await logMessage({ channel: "line", to: lineUserId, body, storeId: meta.storeId ?? null, status: "failed", error: e instanceof Error ? e.message : String(e) });
     // Best-effort notification only — never throw from here.
   }
 }

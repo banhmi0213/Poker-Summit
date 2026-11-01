@@ -1,3 +1,7 @@
+import { getVisitorId } from "@/lib/visitor";
+import { TurnstileWidget } from "@/app/turnstile-widget";
+import { CARD_BRANDS_NOTE } from "@/lib/constants";
+import { RequestKeyInput } from "@/app/request-key-input";
 import Link from "next/link";
 import { getPriceLockCampaign } from "@/lib/price-lock-campaign";
 import { PriceLockCampaignBox } from "@/app/price-lock-campaign-box";
@@ -7,6 +11,10 @@ import { ApplyEmailFields } from "./email-fields";
 import { ApplyBillingFields } from "./billing-fields";
 import { APPLY_CATEGORY_OPTIONS, PREF_OPTIONS } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { headers } from "next/headers";
+import { classifyDevice, isBotUserAgent } from "@/lib/device";
+import { visitSource } from "@/lib/visit-source";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
@@ -18,7 +26,7 @@ export const metadata = staticPageMetadata({ title: "店舗掲載のお申し込
 export default async function ApplyPage({
   searchParams,
 }: {
-  searchParams: { error?: string; done?: string };
+  searchParams: { error?: string; done?: string; utm_source?: string; utm_campaign?: string };
 }) {
   const params = searchParams;
 
@@ -32,6 +40,19 @@ export default async function ApplyPage({
   const billingBase = await getBillingSettings();
   // カード払いを一般に止めている間も、運営(総合管理にログイン中)だけはカードを選べる(決済画面の確認用、2026/10)
   const { data: isAdmin } = await supabase.rpc("is_admin");
+
+  // 何人がこのページを開いたか、どこから来たか(広告の目印)を記録する(2026/10/21)。運営・クローラーは数えない
+  const source = visitSource(params.utm_source, params.utm_campaign);
+  if (!params.done && !params.error && isAdmin !== true) {
+    const hdrs = await headers();
+    const ua = hdrs.get("user-agent");
+    if (!isBotUserAgent(ua)) {
+      await createServiceRoleClient()
+        .from("page_views")
+        .insert({ path: "/apply", referrer: hdrs.get("referer") ?? null, device: classifyDevice(ua), source, visitor_id: getVisitorId() })
+        .then(() => {}, () => {});
+    }
+  }
   const adminCardPreview = !billingBase.cardPaymentEnabled && isAdmin === true;
   const billing = adminCardPreview ? { ...billingBase, cardPaymentEnabled: true } : billingBase;
   const priceLock = await getPriceLockCampaign();
@@ -48,11 +69,8 @@ export default async function ApplyPage({
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
-          <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-          </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>
               現在、掲載申込の受付を停止しております
@@ -71,17 +89,43 @@ export default async function ApplyPage({
     );
   }
 
+  if (params.done === "review") {
+    return (
+      <div>
+        <PortalHeader />
+        <div className="container" style={{ maxWidth: 480 }}>
+          <Link href="/" className="breadcrumb">
+            トップに戻る
+          </Link>
+          <div className="card">
+            <h1 style={{ fontSize: 18, marginBottom: 8 }}>お申込みありがとうございます</h1>
+            <p style={{ fontSize: 14, lineHeight: 1.8 }}>
+              お申し込みを受け付けました。事業者の確認（実在確認・反社会的勢力に該当しないことの確認）が完了しましたら、ご登録のメールアドレスに請求書またはお支払いのご案内をお送りします（通常1〜2営業日）。
+            </p>
+            <ul className="muted" style={{ fontSize: 12.5, lineHeight: 1.8, paddingLeft: 18, margin: 0 }}>
+              <li>受付のお知らせメールをお送りしています。届かない場合は迷惑メールフォルダをご確認ください。</li>
+              <li>確認の結果によっては、お申し込みをお受けできない場合がございます。</li>
+              <li>ご不明な点は info@pokersummit.jp までご連絡ください。</li>
+            </ul>
+            <a href="/" className="btn" style={{ marginTop: 16, display: "inline-flex" }}>
+              トップへ戻る
+            </a>
+          </div>
+        </div>
+        <PortalFooter />
+        <BottomTabs />
+      </div>
+    );
+  }
+
   if (params.done === "transfer") {
     return (
       <div>
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
-          <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-          </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>お申込みありがとうございます</h1>
             <p style={{ fontSize: 14, lineHeight: 1.8 }}>
@@ -118,11 +162,8 @@ export default async function ApplyPage({
         <PortalHeader />
         <div className="container" style={{ maxWidth: 480 }}>
           <Link href="/" className="breadcrumb">
-            ← トップに戻る
+            トップに戻る
           </Link>
-          <div className="brand wordmark" style={{ marginBottom: 20 }}>
-            <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-          </div>
           <div className="card">
             <h1 style={{ fontSize: 18, marginBottom: 8 }}>
               お申込みありがとうございます
@@ -146,11 +187,8 @@ export default async function ApplyPage({
       <PortalHeader />
       <div className="container" style={{ maxWidth: 480 }}>
         <Link href="/" className="breadcrumb">
-          ← トップに戻る
+          トップに戻る
         </Link>
-        <div className="brand wordmark" style={{ marginBottom: 20 }}>
-          <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-        </div>
         <h1 style={{ fontSize: 20, marginBottom: 6 }}>掲載のお申込み</h1>
         <p className="muted" style={{ marginBottom: 20 }}>
           店舗・施設の掲載をご希望の方は、以下のフォームよりお申込みください。
@@ -160,6 +198,8 @@ export default async function ApplyPage({
         <div className="card">
           {params.error && <p className="err">{params.error}</p>}
           <form action={submitApplication}>
+            <RequestKeyInput />
+            {source && <input type="hidden" name="source" value={source} />}
             <ApplyStoreFields prefOptions={PREF_OPTIONS} />
             <div className="field">
               <span className="muted">ご担当者名 *</span>
@@ -200,6 +240,29 @@ export default async function ApplyPage({
                     ※運営のみ表示：クレジットカード払いは現在一般のお客様には表示していません（確認用）
                   </p>
                 )}
+                {/* 事業者の確認(本人確認・反社会的勢力のチェック)のための項目(2026/10/21)。プランを選んで申し込む場合だけ必須 */}
+                <div style={{ border: "1px solid var(--border-strong, #d8c3a0)", borderRadius: 8, padding: "12px 14px", margin: "4px 0 14px" }}>
+                  <strong style={{ display: "block", fontSize: 13, marginBottom: 4 }}>事業者の確認（プランを選んでお申込みの場合は必須）</strong>
+                  <p className="muted" style={{ fontSize: 12, lineHeight: 1.7, margin: "0 0 10px" }}>
+                    事業者の実在確認と、反社会的勢力に該当しないことの確認を行っています。銀行振込の場合は、確認が完了してから請求書をお送りします（通常1〜2営業日）。{billing.cardPaymentEnabled ? "クレジットカードの場合は、お支払い後すぐにご利用いただけます（確認はお支払いの後に行います）。" : ""}
+                  </p>
+                  <div className="field">
+                    <span className="muted">事業者の区分</span>
+                    <select name="entityType" defaultValue="">
+                      <option value="">選択してください</option>
+                      <option value="corporation">法人</option>
+                      <option value="individual">個人事業主</option>
+                    </select>
+                  </div>
+                  <div className="field">
+                    <span className="muted">代表者名</span>
+                    <input type="text" name="representativeName" maxLength={100} />
+                  </div>
+                  <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 13, lineHeight: 1.6 }}>
+                    <input type="checkbox" name="antisocialPledge" style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0 }} />
+                    <span>申込者（法人の場合はその役員を含む）が、<a href="/terms#antisocial" target="_blank" rel="noopener" style={LINK_STYLE}>利用規約第21条</a>に定める反社会的勢力に該当せず、今後も関係を持たないことを表明・確約します。</span>
+                  </label>
+                </div>
                 <ApplyBillingFields
                   cardEnabled={billing.cardPaymentEnabled}
                   cycles={BILLING_CYCLES.map((m) => {
@@ -230,6 +293,7 @@ export default async function ApplyPage({
                 <a href="/privacy" target="_blank" rel="noopener" style={LINK_STYLE}>プライバシーポリシー</a>に同意します
               </span>
             </label>
+            <TurnstileWidget note="送信できない場合は info@pokersummit.jp までメールでご連絡ください。" />
             <button
               type="submit"
               formAction={submitApplication}
@@ -250,8 +314,8 @@ export default async function ApplyPage({
             )}
             {plans && plans.length > 0 && (
               <p className="muted" style={{ fontSize: 11.5, marginTop: 8, lineHeight: 1.7 }}>
-                銀行振込の場合は、お申込み後に請求書（PDF）をメールでお送りします。ご入金の確認後に店舗管理アカウントを発行します。
-                {billing.cardPaymentEnabled ? "クレジットカードの場合はカード登録画面へ進みます。" : ""}
+                銀行振込の場合は、事業者の確認が完了してから請求書（PDF）をメールでお送りし、ご入金の確認後に店舗管理アカウントを発行します。{billing.cardPaymentEnabled ? "クレジットカードの場合はお支払い画面へ進み、お支払い後すぐに店舗管理アカウントを発行します。" : ""}
+                {billing.cardPaymentEnabled ? CARD_BRANDS_NOTE : ""}
               </p>
             )}
           </form>
@@ -350,11 +414,11 @@ function PricingSection({ plans, billing, priceLockDeadline }: { plans: PriceIte
         <h3 style={{ fontSize: 14, margin: "0 0 6px" }}>お支払いと契約について</h3>
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           <li>表示価格はすべて税込です。お支払いは銀行振込（請求書払い）{billing.cardPaymentEnabled ? "またはクレジットカードによる月額の自動決済" : ""}です。</li>
-          <li>銀行振込は「毎月払い」または「6か月・12か月のまとめ払い」をお選びいただけます。まとめ払いの割引は上記のとおりです。振込手数料はお客様のご負担となります。</li>
+          <li>銀行振込・クレジットカードとも「毎月払い」または「6か月・12か月のまとめ払い」をお選びいただけます。まとめ払いの割引は上記のとおりです。銀行振込の振込手数料はお客様のご負担となります。</li>
           <li>銀行振込の場合、お申込み後に請求書（適格請求書）をメールでお送りします。お支払期限は請求書の発行から{billing.dueDays}日以内です。ご入金の確認後に掲載を開始します。</li>
           <li>契約はお選びいただいた期間ごとに自動更新します。銀行振込の場合は契約期間が終わる7日前に次回分の請求書をお送りします。お支払期限から7日を過ぎてもご入金が確認できない場合、店舗ページの公開を停止し、ご入金の確認後に再開します。</li>
           {billing.cardPaymentEnabled && (
-            <li>クレジットカードの場合、プランのアップグレードはその場で決済し、ダウングレードは現在の契約期間の終了時に反映します。</li>
+            <li>クレジットカードの場合、プランのアップグレードはその場で決済し、ダウングレードは現在の契約期間の終了時に反映します。{CARD_BRANDS_NOTE}</li>
           )}
           <li>解約・自動更新の停止は、更新日前に<a href="/contact" style={LINK_STYLE}>お問い合わせフォーム</a>からご連絡ください。お支払い済みの料金（まとめ払いを含む）の日割り・月割りでの返金は原則行っておりません。</li>
           <li>当サービスは賭博・換金を目的とした決済は一切行いません。お支払いの対象は店舗掲載・広告・オプション等のサービス利用料金です。</li>

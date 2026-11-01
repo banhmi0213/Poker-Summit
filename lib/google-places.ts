@@ -153,6 +153,71 @@ export function guessCategory(name: string, types: string[]): string {
   return "other";
 }
 
+export type PlaceReviewDetails = {
+  name: string | null;
+  address: string | null;
+  tel: string | null;
+  city: string | null;
+  businessStatus: string | null;
+  types: string[];
+  hoursText: string[] | null;
+  hoursPeriods: unknown[] | null;
+  /** 公式サイト・SNS(Googleマップに載っているもの) */
+  website: string | null;
+  /** 口コミの件数 */
+  ratingsTotal: number;
+  /** 新しい順の口コミ(最大5件)。time はUNIX秒 */
+  reviews: { time: number; text: string }[];
+  notFound: boolean;
+};
+
+/**
+ * 自動見直しで見つけた店を掲載してよいか確かめるための詳細(2026/10/20)。
+ * Googleマップの今の情報(店名・住所・電話番号・営業時間・営業状況)を1回でまとめて取る。
+ * 電話番号・営業時間は「Contact Data」の枠を使うので、呼び出し回数は営業時間の月間上限と一緒に数える。
+ * 通信エラーなどで取れなければ null(次回やり直し)。
+ */
+export async function getPlaceReviewDetails(placeId: string): Promise<PlaceReviewDetails | null> {
+  try {
+    const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
+    url.searchParams.set("key", getApiKey());
+    url.searchParams.set("place_id", placeId);
+    url.searchParams.set("language", "ja");
+    url.searchParams.set(
+      "fields",
+      "name,formatted_address,address_component,formatted_phone_number,business_status,type,opening_hours,website,user_ratings_total,reviews"
+    );
+    // 口コミは新しい順で取る(最近ポーカーをやっている裏付けに使う、2026/10/21)
+    url.searchParams.set("reviews_sort", "newest");
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    const data = await res.json();
+    if (data.status === "NOT_FOUND") {
+      return { name: null, address: null, tel: null, city: null, businessStatus: "NOT_FOUND", types: [], hoursText: null, hoursPeriods: null, website: null, ratingsTotal: 0, reviews: [], notFound: true };
+    }
+    if (data.status !== "OK") return null;
+    const r = data.result ?? {};
+    const components: Array<{ long_name: string; types: string[] }> = r.address_components ?? [];
+    const byType = (type: string) => components.find((c) => c.types?.includes(type))?.long_name ?? null;
+    const oh = r.opening_hours;
+    return {
+      name: r.name ?? null,
+      address: r.formatted_address ?? null,
+      tel: r.formatted_phone_number ?? null,
+      city: byType("locality") ?? byType("sublocality_level_1") ?? byType("administrative_area_level_2"),
+      businessStatus: r.business_status ?? null,
+      types: r.types ?? [],
+      hoursText: Array.isArray(oh?.weekday_text) && oh.weekday_text.length ? oh.weekday_text : null,
+      hoursPeriods: Array.isArray(oh?.periods) && oh.periods.length ? oh.periods : null,
+      website: r.website ?? null,
+      ratingsTotal: Number(r.user_ratings_total ?? 0) || 0,
+      reviews: Array.isArray(r.reviews) ? r.reviews.map((v: { time?: number; text?: string }) => ({ time: Number(v.time ?? 0), text: String(v.text ?? "") })) : [],
+      notFound: false,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** 営業状況だけを取る(閉業チェック用)。取れなければ null。 */
 export async function getPlaceBusinessStatus(placeId: string): Promise<string | null> {
   try {

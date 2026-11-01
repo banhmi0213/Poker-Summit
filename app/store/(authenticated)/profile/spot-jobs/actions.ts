@@ -18,18 +18,7 @@ export async function saveSpotJob(_state: { error: string }, form: FormData): Pr
   const {data:store,error:storeError} = await db.from('stores').select('id').eq('owner_user_id',user.id).limit(1).maybeSingle();
   if (storeError || !store) return {error:'店舗情報を確認できませんでした。'};
   await requireMatchingConsent(db,user.id,"store","/store/profile/spot-jobs");
-  // スポット求人の公開はスタンダードプラン以上(2026/10)。最終的な判定はDBトリガー。
-  if (form.get('published')==='true' && spotMonthlyLimitOf(await getStorePlan(db,store.id))===0) {
-    // ライトプラン等: 「スポット求人1件掲載」の追加掲載枠があれば公開できる(枠の消費はDBトリガー)
-    const editingId = String(form.get('id') || '');
-    const [{data:credit},{data:existing}] = await Promise.all([
-      db.from('store_spot_credits').select('balance').eq('store_id',store.id).maybeSingle(),
-      editingId ? db.from('spot_jobs').select('credit_used').eq('id',editingId).eq('store_id',store.id).maybeSingle() : Promise.resolve({data:null}),
-    ]);
-    if (!(existing as {credit_used?:boolean}|null)?.credit_used && !((credit?.balance ?? 0) > 0)) {
-      return {error:'スポット求人の公開はスタンダードプラン以上、または「スポット求人1件掲載」（2,200円）の追加でご利用いただけます。「公開しない」にすると下書きとして保存できます。'};
-    }
-  }
+  // 公開できるか(回数・追加分)はDBトリガーで判定し、足りないときはその案内を表示する(2026/10/22〜 勤務日1日で1回)
   const id = String(form.get('id') || '');
   if (id && !UUID.test(id)) return {error:'求人を確認できませんでした。'};
   let current: {image_path:string|null}|null = null;

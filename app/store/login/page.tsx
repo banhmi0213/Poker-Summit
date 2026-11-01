@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/app/password-input";
 import { ManagementLoginForm } from "@/app/management-login-form";
 import Link from "next/link";
 import { storeSignIn } from "./actions";
@@ -27,7 +28,7 @@ export default function StoreLoginPage({
       <PortalHeader />
       <div className="container" style={{ maxWidth: 380 }}>
         <Link href="/" className="breadcrumb">
-          ← トップに戻る
+          トップに戻る
         </Link>
         <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
           <div className="brand wordmark">
@@ -50,12 +51,15 @@ export default function StoreLoginPage({
                 placeholder="例: store-xxxxxxxx"
                 required
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                inputMode="email"
               />
             </div>
             <div className="field">
               <span className="muted">パスワード</span>
-              <input
-                type="password"
+              <PasswordInput
                 name="password"
                 enterKeyHint="go"
                 required

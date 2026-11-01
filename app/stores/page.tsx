@@ -1,14 +1,16 @@
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
+import { WrapParts } from "@/app/wrap-parts";
 import { STORES_PER_PAGE, paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AREA_OPTIONS, CATEGORY_OPTIONS, PREF_OPTIONS, PREF_REGION, PREF_REGION_ORDER, REGIONS } from "@/lib/constants";
 import { toggleFavoriteStore } from "@/app/member-actions";
-import { getStoreCountForArea, getStoreListData } from "@/lib/store-list-data";
+import { getStoreCountForArea, getStoreListData, getAreaStats } from "@/lib/store-list-data";
 import { getStoreCardExtras } from "@/lib/store-card-extras";
 import { distanceKm } from "@/lib/geocode";
 import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
+import { areaTitleBase, areaDescription, areaIntro } from "@/lib/area-seo";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { HomeStoreCard } from "@/app/home-store-card";
 import { sortByListPriority } from "@/lib/plan-entitlements";
@@ -44,9 +46,14 @@ export async function generateMetadata({ searchParams }: { searchParams: StoreLi
 
   const place = city ? `${pref}${city}` : area ? `${pref} ${area}` : pref || (region ? `${region}エリア` : "全国");
   const kind = category ? CATEGORY_LABEL[category] : "アミューズメントポーカー・ポーカーバー";
-  const base = `${place}の${kind}一覧`;
+  // 都道府県・市区町村のページは、店の数や多い市を入れた検索向けの文にする(2026/10/20、lib/area-seo.ts)
+  const areaPage = !!pref && !area && !region && !category;
+  const stats = areaPage ? await getAreaStats(pref, city).catch(() => null) : null;
+  const base = stats ? areaTitleBase(place, stats.total) : `${place}の${kind}一覧`;
   const title = pageTitle(page > 1 ? `${base}（${page}ページ目）` : base);
-  const description = `${place}の${kind}を探すなら${SITE_NAME}。営業時間・アクセス・最寄り駅、開催中のトーナメントやイベント、求人・クーポン情報まで店舗ごとにまとめてチェックできます。`;
+  const description = stats
+    ? areaDescription(place, pref, stats, !!city)
+    : `${place}の${kind}を探すなら${SITE_NAME}。住所や営業時間など、店舗ごとの情報をまとめて掲載しています。`;
 
   const qs = new URLSearchParams();
   if (pref) qs.set("pref", pref);
@@ -106,6 +113,10 @@ export default async function StoresPage({
   const region = searchParams.region ?? "";
   const city = validCity(PREF_OPTIONS.includes(pref) ? pref : "", searchParams.city);
   const area = city ? "" : searchParams.area ?? "";
+  // 地域ページの紹介文(都道府県・市区町村で、検索・カテゴリ・エリアの絞り込みなし。2026/10/20)
+  const validPref = PREF_OPTIONS.includes(pref) ? pref : "";
+  const introStats = validPref && !q && !category && !area && !region ? await getAreaStats(validPref, city).catch(() => null) : null;
+  const areaIntroText = introStats ? areaIntro(city ? `${validPref}${city}` : validPref, validPref, introStats, !!city) : null;
 
   // Present only when the visitor arrived via "現在地から探す" (top page) —
   // used to sort the results below by distance instead of the usual
@@ -257,7 +268,7 @@ export default async function StoresPage({
       <div className="container sl-page">
         <nav aria-label="戻るリンク" style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 16 }}>
           <Link href={city ? prefPageHref(pref) : pref || region || area ? "/stores" : "/"} style={{ display: "inline-flex", alignItems: "center", minHeight: 44, fontSize: 14, fontWeight: 600 }}>
-            {city ? `← ${pref}の店舗一覧` : pref || region || area ? "← 店舗を探す" : "← TOPに戻る"}
+            {city ? `${pref}の店舗一覧` : pref || region || area ? "店舗を探す" : "TOPに戻る"}
           </Link>
         </nav>
         <div className="store-mobile-banner">
@@ -269,7 +280,11 @@ export default async function StoresPage({
         </div>
         <section className="sl-hero" aria-label="店舗検索">
           <span>FIND YOUR POKER SPOT</span>
-          <h1>{heroPlace}のポーカースポットを探す</h1>
+          {/* 都道府県・市区町村ページは「大阪府 アミューズメントポーカー」「大阪 ポーカーバー」のような検索に合わせた見出しにする(2026/10/26)。
+              語の途中で改行されないよう、区切りごとに折り返す。スマホのバナー見出しは幅が狭いので従来の文言のまま。 */}
+          <h1>{pref
+            ? <WrapParts parts={[`${heroPlace}の`, "アミューズメントポーカー・", "ポーカーバーを探す"]} style={{ display: "inline-block" }} />
+            : `${heroPlace}のポーカースポットを探す`}</h1>
           <p>看板から見つける、あなたの次の一軒。</p>
         </section>
         {storeListBanner.map((banner, i) => banner && (
@@ -300,7 +315,7 @@ export default async function StoresPage({
         )}
 
         <ExpandableSearchForm
-          className=""
+          className="sl-filter"
           style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}
         >
           {/* region isn't its own dropdown here (only q / pref / category are),
@@ -394,7 +409,7 @@ export default async function StoresPage({
         {(pref || city) && !q && !hasOrigin && displayStores.length > 0 && (
           <p className="sl-intro" style={{ fontSize: 13.5, lineHeight: 1.8, margin: "0 0 18px", color: "var(--muted, #666)" }}>
             {heroPlace}には、{SITE_NAME}に掲載中の{category ? CATEGORY_LABEL[category] ?? "ポーカースポット" : "アミューズメントポーカー店・ポーカーバー"}が{displayStores.length}店舗あります。
-            営業時間や最寄り駅、開催予定のトーナメント・イベント、クーポン情報を店舗ごとにチェックして、近くのポーカースポットを見つけてください。
+            住所や営業時間などの店舗情報をチェックして、近くのポーカースポットを見つけてください。
           </p>
         )}
 
@@ -456,7 +471,7 @@ export default async function StoresPage({
 
         {(pref || isKnownRegion) && (
           <section className="home-section" style={{ marginTop: 36 }}>
-            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る →</Link></div>
+            <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る</Link></div>
             {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}
             <div className="home-grid home-grid-four">{rankedStores.map((s: any, index: number) => (
               <HomeStoreCard key={s.id} store={s} contentCounts={storeContentCounts.get(s.id)} rank={index + 1} coverPhoto={coverPhotos.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} flags={displayFlags.get(s.id)} favoriteAction={async () => {
@@ -465,6 +480,10 @@ export default async function StoresPage({
               }} />
             ))}</div>
           </section>
+        )}
+        {/* 地域ページの紹介文(検索向け・ページの一番下に小さく、2026/10/20)。数字は自動 */}
+        {areaIntroText && (
+          <p className="muted" style={{ fontSize: 12, lineHeight: 1.8, marginTop: 32 }}>{areaIntroText}</p>
         )}
       </div>
       <PortalFooter />

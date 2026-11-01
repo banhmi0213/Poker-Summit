@@ -64,3 +64,55 @@ export async function markNotificationsRead(actor:"store"|"dealer",record:string
  const {data:{user}}=await db.auth.getUser();if(!user)return;
  await db.rpc("mark_matching_notifications",{p_record:record,p_events:events});
 }
+
+// 求人を作らずに、条件を書いてディーラーへ直接オファーする(2026/10/22 オーナー指示)。
+// 条件は非公開の「スカウト用の求人」として残り、次のオファー・求人の入力欄に前回の内容として入る。
+export async function offerDirectAction(previous:ChatState,form:FormData):Promise<ChatState>{
+ const dealer=String(form.get("dealer")||""),date=String(form.get("work_date")||"");
+ const start=String(form.get("start_time")||""),end=String(form.get("end_time")||"");
+ const wage=Number.parseInt(String(form.get("hourly_wage")||""),10);
+ const games=form.getAll("games").map(String).filter(Boolean).slice(0,20);
+ const transport=String(form.get("transport_type")||"none");
+ const limitRaw=String(form.get("transport_limit")||"");
+ const fail=(error:string)=>({error,success:previous.success});
+ if(!UUID.test(dealer))return fail("ディーラーを確認してください。");
+ if(!validDate(date))return fail("勤務日を選んでください。");
+ if(!/^\d{2}:\d{2}$/.test(start)||!/^\d{2}:\d{2}$/.test(end))return fail("開始時間と終了時間を入力してください。");
+ if(!Number.isFinite(wage)||wage<1||wage>100000)return fail("時給を入力してください。");
+ if(!games.length)return fail("ゲーム種目を選んでください。");
+ if(!["none","full","limited"].includes(transport))return fail("交通費を選んでください。");
+ const db=await createStoreClient();const {data:{user}}=await db.auth.getUser();
+ if(!user)redirect("/store/login");
+ await requireMatchingConsent(db,user.id,"store","/store/profile/dealers/"+dealer);
+ const {data,error}=await db.rpc("offer_direct_work",{
+  p_dealer:dealer,p_date:date,p_start:start,p_end:end,p_wage:wage,p_games:games,
+  p_duties:String(form.get("duties")||"").slice(0,3000),p_requirements:String(form.get("requirements")||"").slice(0,3000),
+  p_transport_type:transport,p_transport_limit:transport==="limited"?Number.parseInt(limitRaw,10)||0:null,
+  p_dress:String(form.get("dress")||"").slice(0,2000),
+  p_terms:{contract_type:String(form.get("contract_type")||""),payment_method:String(form.get("payment_method")||""),payment_date:String(form.get("payment_date")||"").slice(0,100),notes:String(form.get("contract_notes")||"").slice(0,2000)},
+ });
+ if(error||!UUID.test(String(data)))return fail(error?.code==="P0001"?error.message:"オファーを送れませんでした。");
+ await kickMatchingNotifications(String(data),db);
+ redirect("/store/profile/dealer-chat/"+data);
+}
+
+// チャットから同じディーラーに別の日も頼む(2026/10/22)。勤務日1日ごとに1回。
+export type MoreDaysState={error:string;sent:number};
+export async function offerMoreDaysAction(previous:MoreDaysState,form:FormData):Promise<MoreDaysState>{
+ const record=String(form.get("record")||"");
+ const dates=Array.from(new Set(form.getAll("dates").map(String).filter(Boolean)));
+ const start=String(form.get("start_time")||""),end=String(form.get("end_time")||"");
+ if(!UUID.test(record))return {error:"チャットを確認してください。",sent:previous.sent};
+ if(!dates.length||dates.length>14||dates.some(d=>!validDate(d)))return {error:"頼む日を1〜14日選んでください。",sent:previous.sent};
+ if(!/^\d{2}:\d{2}$/.test(start)||!/^\d{2}:\d{2}$/.test(end))return {error:"開始時間と終了時間を入力してください。",sent:previous.sent};
+ const db=await createStoreClient();const {data:{user}}=await db.auth.getUser();
+ if(!user)redirect("/store/login");
+ await requireMatchingConsent(db,user.id,"store","/store/profile/dealer-chat/"+record);
+ const {data,error}=await db.rpc("offer_more_days",{p_record:record,p_dates:dates,p_start:start,p_end:end});
+ if(error)return {error:error.code==="P0001"?error.message:"オファーを送れませんでした。",sent:previous.sent};
+ const ids=(data as string[]|null)??[];
+ for(const id of ids)await kickMatchingNotifications(id,db);
+ await kickMatchingNotifications(record,db);
+ revalidatePath("/store/profile/dealer-chat","layout");
+ return {error:"",sent:ids.length};
+}

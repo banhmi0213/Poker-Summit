@@ -1,9 +1,12 @@
 "use server";
 
+import { authErrorMessage } from "@/lib/auth-error";
+
 import { normalizeMHoldemId, mHoldemIdError } from "@/lib/m-holdem";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "@/lib/revalidate";
 import { createClient } from "@/lib/supabase/server";
+import { handleNameError } from "@/lib/handle-name";
 
 // ハンドルネーム・都道府県の変更(2026/10、「ハンドルネームの修正欄がない」
 // との指摘を受けて追加)。signup/actions.tsのsignUp()と同じく、
@@ -24,7 +27,9 @@ export async function updateProfile(formData: FormData) {
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const mHoldemId = normalizeMHoldemId(formData.has("mHoldemId") ? formData.get("mHoldemId") : user.user_metadata?.m_holdem_id);
+  // m HOLD'EM ID は一度登録したら本人は変更できない(2026/10/19、複垢対策)。
+  // 未登録のときだけ、ここで1回登録できる(member_m_holdem_ids。変更は総合管理のみ)
+  const mHoldemId = normalizeMHoldemId(formData.get("mHoldemId"));
   const idError = mHoldemIdError(mHoldemId);
   if (idError) redirect(`/account/profile?error=${encodeURIComponent(idError)}`);
   const pref = String(formData.get("pref") ?? "").trim();
@@ -35,16 +40,30 @@ export async function updateProfile(formData: FormData) {
   const role = String(formData.get("role") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
 
-  if (!pref) {
-    redirect(`/account/profile?error=${encodeURIComponent("都道府県を選んでください。")}`);
+  // 都道府県は任意(2026/10/20、登録画面から外したため)
+  // 今の名前のままなら確認しない(文字数を短くした 2026/10/30 より前の長い名前も、そのまま使える)
+  if (name && name !== String(user.user_metadata?.display_name ?? "").trim()) {
+    // 「運営」バッジの運営アカウントだけは「運営」等を含む名前にできる
+    const { data: official } = await supabase.rpc("official_board_user_ids", { p_ids: [user.id] });
+    const isOfficial = ((official ?? []) as unknown[]).length > 0;
+    const nameError = handleNameError(name);
+    if (nameError && !(isOfficial && name.length <= 20)) redirect(`/account/profile?error=${encodeURIComponent(nameError)}`);
   }
 
   const { error } = await supabase.auth.updateUser({
-    data: { display_name: name, pref, pref_public: prefPublic, m_holdem_id: mHoldemId || null },
+    data: { display_name: name, pref, pref_public: prefPublic },
   });
 
   if (error) {
-    redirect(`/account/profile?error=${encodeURIComponent(error.message)}`);
+    redirect(`/account/profile?error=${encodeURIComponent(authErrorMessage(error.message))}`);
+  }
+
+  if (mHoldemId) {
+    const { data: current } = await supabase.from("member_m_holdem_ids").select("m_holdem_id").eq("user_id", user.id).maybeSingle();
+    if (!current) {
+      const { error: idSetError } = await supabase.rpc("set_my_m_holdem_id", { p_id: mHoldemId });
+      if (idSetError) redirect(`/account/profile?error=${encodeURIComponent(idSetError.message)}`);
+    }
   }
 
   // display_nameもprofilesへミラーしておく(2026/10追加)。会員プロフィール

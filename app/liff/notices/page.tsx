@@ -115,7 +115,7 @@ export default function LiffNoticesPage() {
 
       <div className="card" style={{ marginBottom: 16 }}>
         {step === "form" && (
-          <form onSubmit={handleReview}>
+          <form data-allow-resubmit onSubmit={handleReview}>
             <div className="field">
               <span className="muted">タイトル *</span>
               <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />

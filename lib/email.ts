@@ -1,13 +1,16 @@
 // ============================================================================
 // Resend(メール送信)APIラッパー(サーバー専用)
 //
-// 月額掲載契約(fincode初回課金)が成功した店舗に、ログインID/パスワード/
+// 月額掲載契約(カード初回課金)が成功した店舗に、ログインID/パスワード/
 // LINE連携コードを自動メール送信するために追加(2026/09/30)。
 // 送信元ドメインはpokersummit.jp(Resend側で送信ドメイン認証・DNS設定が
 // 必要)。RESEND_API_KEYが未設定の環境ではメール送信をスキップし、
 // 例外は投げない(=決済・店舗発行自体は絶対に止めない。詳細は
 // sendStoreCredentialsEmail()のコメント参照)。
 // ============================================================================
+
+import { freerollSignupOpen, FREEROLL_ELIGIBILITY } from "@/lib/prelaunch";
+import { logMessage } from "@/lib/message-log";
 
 const FROM_ADDRESS = "Poker Summit <info@pokersummit.jp>";
 // 送信専用(返信を受けない)アドレス(2026/10)。会員向け・本人確認やセキュリティのお知らせに使う。
@@ -26,15 +29,22 @@ async function sendEmail(params: {
   bcc?: string | null;
   /** true なら送信専用アドレス(noreply@)から送る */
   noreply?: boolean;
+  /** true なら送信の記録(message_log)に本文を残さない(パスワード・確認コード・ログイン情報、2026/10/20) */
+  sensitive?: boolean;
 }): Promise<void> {
   const apiKey = getResendApiKey();
+  const log = (status: "sent" | "failed" | "skipped", extra: { error?: string; providerId?: string | null } = {}) =>
+    logMessage({ channel: "email", to: params.to, subject: params.subject, body: params.text, sensitive: params.sensitive, hasAttachment: !!params.attachments?.length, status, ...extra });
   if (!apiKey) {
+    await log("skipped", { error: "RESEND_API_KEY 未設定" });
     throw new Error(
       "RESEND_API_KEY が設定されていません。Vercelの環境変数を確認してください。"
       );
   }
 
-const res = await fetch("https://api.resend.com/emails", {
+let res: Response;
+try {
+res = await fetch("https://api.resend.com/emails", {
   method: "POST",
   headers: {
     Authorization: `Bearer ${apiKey}`,
@@ -56,11 +66,19 @@ const res = await fetch("https://api.resend.com/emails", {
       : {}),
   }),
 });
+} catch (e) {
+  await log("failed", { error: e instanceof Error ? e.message : String(e) });
+  throw e;
+}
 
 if (!res.ok) {
   const body = await res.json().catch(() => null);
-  throw new Error(`Resend API error (${res.status}): ${JSON.stringify(body)}`);
+  const message = `Resend API error (${res.status}): ${JSON.stringify(body)}`;
+  await log("failed", { error: message });
+  throw new Error(message);
 }
+const okBody = (await res.json().catch(() => null)) as { id?: string } | null;
+await log("sent", { providerId: okBody?.id ?? null });
 }
 
 function getSiteUrl(): string {
@@ -89,27 +107,30 @@ export async function sendStoreCredentialsEmail(params: {
   const siteUrl = getSiteUrl();
   const text = `${params.companyName} 様
 
-  このたびはPoker Summitへの掲載お申し込み・お支払い手続きをいただき、誠にありがとうございます。
-  決済が完了し、店舗管理アカウントを発行いたしました。
+このたびはPoker Summitへの掲載お申し込み・お支払い手続きをいただき、誠にありがとうございます。
+お支払いを確認し、店舗管理アカウントを発行いたしました。
 
-  ■ 店舗管理画面ログイン情報
-  URL: ${siteUrl}/store/login
-  ログインID: ${params.loginId}
-  パスワード: ${params.password}
+■ 店舗管理画面ログイン情報
+URL: ${siteUrl}/store/login
+ログインID: ${params.loginId}
+パスワード: ${params.password}
 
-  ■ LINE連携コード(24時間有効・1回限り)
-  ${params.lineCode}
-  LINE公式アカウントの店舗用メニューから、店舗アカウントとの初回連携を行う際にご利用ください。
+■ LINE連携コード(24時間有効・1回限り)
+${params.lineCode}
+LINE公式アカウントの店舗用メニューから、店舗アカウントとの初回連携を行う際にご利用ください。
+※24時間を過ぎた場合も、店舗管理画面のトップにある「LINE連携コードを発行する」から、いつでも新しいコードを発行できます。
 
-  ※このメールに記載の情報は第三者に共有せず、大切に保管してください。
-  ※LINE連携コードは24時間を過ぎると無効になります。有効期限が切れてしまった場合や、ログイン情報を紛失した場合は、運営までお問い合わせください。
+※このメールに記載の情報は第三者に共有せず、大切に保管してください。
+※ログイン情報を紛失した場合は、お問い合わせフォームよりご連絡ください。
+${siteUrl}/contact
 
-  Poker Summit運営事務局`;
+Poker Summit運営事務局`;
 
 await sendEmail({
   to: params.to,
   subject: "【Poker Summit】店舗管理アカウント発行のお知らせ",
   text,
+  sensitive: true, // ログイン情報を含むので、送信の記録に本文を残さない
 });
 }
 
@@ -315,7 +336,8 @@ ${lead}
 請求書番号: ${invoice.invoice_number}
 ${isAddon ? `内容: アドオン「${invoice.plan_name}」` : `プラン: ${invoice.plan_name}（${cycleLabel(invoice.months, invoice.discount_label)}）`}
 ご請求金額: ${amount}
-お支払期限: ${due}
+${isAddon ? "" : `ご利用期間: ${invoice.period_start && invoice.period_end ? `${formatJpDate(invoice.period_start)}〜${formatJpDate(invoice.period_end)}` : `ご入金確認日から${invoice.months}か月`}
+`}お支払期限: ${due}
 
 ■ お振込先
 ${bankText}
@@ -470,23 +492,75 @@ Poker Summit`;
   });
 }
 
+// 先行会員限定トーナメント(10/25 21:00)の部屋IDのお知らせ。
+// 10/23に会員全員へ一斉送信したあとに登録した人にも、10/25 20:00(締切)までに登録が完了した人には自動で送る(2026/10/24 オーナー指示)。
+export const FREEROLL_NOTICE_DEADLINE = new Date("2026-10-25T20:00:00+09:00");
+export function freerollNoticeOpen(now: Date = new Date()): boolean {
+  return now.getTime() < FREEROLL_NOTICE_DEADLINE.getTime();
+}
+export async function sendFreerollRoomEmail(params: { to: string; name: string | null }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.name ? `${params.name} 様` : "先行会員の皆さま"}
+
+Poker Summitにご登録いただき、ありがとうございます。
+10月25日（日）21:00から開催する、先行会員限定トーナメント（フリーロール）の部屋IDをお知らせします。
+
+■ 開催日時：2026年10月25日（日）21:00
+■ アプリ：m HOLD'EM
+■ 部屋ID：8624813
+
+【m HOLD'EMのIDをまだ登録していない方へ】
+Poker Summitのマイページに、m HOLD'EMのIDを10月25日（日）20:00までに登録してください。
+登録がない場合、トーナメントに参加されても賞金を受け取る資格がありません。
+マイページの「プロフィールを編集」から登録できます。
+${siteUrl}/mypage
+※IDは一度登録すると、ご自身では変更できません。お間違いのないようご確認ください。
+
+皆さまのご参加をお待ちしています。
+
+――――――――――
+Poker Summit運営事務局
+${siteUrl}/news
+※このメールは、Poker Summitに会員登録いただいた方へ大切なお知らせとしてお送りしています。`;
+  await sendEmail({
+    to: params.to,
+    subject: "【Poker Summit】10/25（日）21:00 先行会員限定トーナメントの部屋IDのお知らせ",
+    text,
+  });
+}
+
 // 会員登録の完了メール(2026/10)。メールアドレスの確認が済んだとき(app/auth/confirm)に1回だけ送る。
 export async function sendWelcomeEmail(params: {
   to: string;
   name: string | null;
   /** 先行登録モード中の登録なら true(オープン前に開けるリンクだけの先行会員版を送る) */
   prelaunch?: boolean;
+  /** 先行会員にサイトを公開中なら true(登録したらすぐサイトを見られる文面にする、2026/10/20) */
+  memberPreview?: boolean;
   xUrl?: string | null;
 }): Promise<void> {
   const siteUrl = getSiteUrl();
   if (params.prelaunch) {
+    const status = params.memberPreview
+      ? `先行会員の皆さまには、10/25（日）の正式オープンに先がけてサイトを公開しています。
+ログインすると、全国のアミューズメントポーカー店・ポーカーバーの検索や、サミット（掲示板）などをすぐにご利用いただけます。
+▼サイトを見る
+${siteUrl}/
+※スポット求人・ディーラーマッチングは、10/25（日）の正式オープンからご利用いただけます。
+
+先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。`
+      : `Poker Summitは現在、オープンに向けて準備を進めています。
+サイトのオープン日や、先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。`;
+    const after = params.memberPreview
+      ? "10/25（日）の正式オープンからは、トーナメント・イベント情報、求人、クーポンなども順次掲載していきます。"
+      : "オープン後は、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご利用いただけます。";
+    const closing = params.memberPreview ? "Poker Summitをどうぞお楽しみください。" : "オープンまで、今しばらくお待ちください。";
     const text = `${params.name ? `${params.name} 様` : "Poker Summit先行会員の皆さま"}
 
 このたびはPoker Summitに先行会員としてご登録いただき、誠にありがとうございます。
 先行会員登録が完了しました。
 
-Poker Summitは現在、オープンに向けて準備を進めています。
-サイトのオープン日や、先行会員限定トーナメントの詳細は、このメールアドレスと公式Xでお知らせします。
+${status}
 ${params.xUrl ? `
 ▼公式X
 ${params.xUrl}
@@ -503,12 +577,12 @@ m HOLD’EMアプリで開催する限定トーナメントにご招待します
 ▼ディーラー登録はこちら
 ${siteUrl}/account/dealer
 
-オープン後は、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご利用いただけます。
+${after}
 
 ご不明な点がございましたら、お問い合わせフォームよりお気軽にご連絡ください。
 ${siteUrl}/contact
 
-オープンまで、今しばらくお待ちください。
+${closing}
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
@@ -522,7 +596,14 @@ Poker Summit運営事務局
 
 Poker Summitでは、全国のアミューズメントポーカー店・ポーカーバーの検索、トーナメント・イベント情報、求人、クーポンなどをご覧いただけます。
 
-■ 会員になるとできること
+${freerollSignupOpen() ? `■ 会員限定フリーロール（10/25（日）21:00）
+${FREEROLL_ELIGIBILITY}が参加できる、m HOLD’EMアプリの限定トーナメントです。参加方法・参加IDは、後ほどこのメールアドレスにお送りします。
+▼大会の詳細
+${siteUrl}/tournaments/first-freeroll
+※参加にはアプリ内アイテム（ダイヤ）が必要です。
+※本大会はPoker Summit主催です（サミー株式会社・m HOLD’EMの公認・協賛大会ではありません）。
+
+` : ""}■ 会員になるとできること
 ・お気に入り店舗の登録
 ・求人への応募
 ・クーポンの利用
@@ -598,7 +679,7 @@ export async function sendEmailVerificationCode(params: { to: string; code: stri
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
+  await sendEmail({ noreply: true, sensitive: true, to: params.to, subject: "【Poker Summit】メールアドレスの確認コード", text });
 }
 
 /** 連絡先メールアドレスが変更されたことを、変更前のアドレスへ知らせる */
@@ -647,6 +728,38 @@ ${siteUrl}/contact
 
 Poker Summit運営事務局`;
   await sendEmail({ to: params.to, subject: "【Poker Summit】クレジットカード決済ができませんでした", text });
+}
+
+/** カードのまとめ払い(6か月・12か月)の自動更新の事前お知らせ(更新の7日前、2026/10/19) */
+export async function sendPrepayRenewalNoticeEmail(params: {
+  to: string;
+  storeName: string;
+  planName: string;
+  months: number;
+  amount: number;
+  renewOn: string; // 更新日(YYYY年M月D日)
+  deadline: string; // 変更・解約の連絡期限(更新日の前日)
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+
+ご契約中の「${params.planName}（${params.months}か月まとめ払い）」は、${params.renewOn} に自動更新されます。
+更新日に、ご登録のクレジットカードで ${params.amount.toLocaleString("ja-JP")}円（${params.months}か月分・税込）を決済します。
+
+■ 引き続きご利用いただく場合
+お手続きは不要です。
+
+■ プラン・お支払い方法の変更、または解約をご希望の場合
+${params.deadline} までに、お問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+ご契約内容は店舗管理画面の「プラン・お支払い」から確認できます。
+${siteUrl}/store/profile/plan
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.renewOn}にご契約が自動更新されます`, text });
 }
 
 /** カード決済が完了したことの店舗向けお知らせ(契約の更新・カード登録時の決済) */
@@ -705,25 +818,49 @@ Poker Summit運営事務局`;
 // ---------------------------------------------------------------------------
 export async function sendStoreMaintenanceDigest(params: {
   to: string;
-  newCandidates: string[];
+  approved: string[];
+  held: { name: string; reason: string }[];
   closed: { name: string; status: string }[];
+  removed?: { name: string; status: string }[];
+  deleted?: { name: string; reason: string }[];
+  reopened?: string[];
 }): Promise<void> {
   const siteUrl = getSiteUrl();
-  const lines: string[] = ["Poker Summit 店舗データの自動見直しで、確認が必要なものが見つかりました。", ""];
-  if (params.newCandidates.length) {
-    lines.push(`■ 新しく見つかった店(承認待ちに入れました): ${params.newCandidates.length}件`);
-    for (const n of params.newCandidates.slice(0, 50)) lines.push(`・${n}`);
+  const lines: string[] = ["Poker Summit 店舗データの自動見直しの結果です。", ""];
+  if (params.approved.length) {
+    lines.push(`■ 新しく見つかり、Googleマップと照合して自動で掲載した店: ${params.approved.length}件`);
+    for (const n of params.approved.slice(0, 50)) lines.push(`・${n}`);
+    lines.push(`→ ${siteUrl}/admin/stores`, "");
+  }
+  if (params.held.length) {
+    lines.push(`■ 新しく見つかったが、確認が必要なので承認待ちにした店: ${params.held.length}件`);
+    for (const h of params.held.slice(0, 50)) lines.push(`・${h.name}(${h.reason})`);
     lines.push(`→ ${siteUrl}/admin/stores?status=pending`, "");
   }
   if (params.closed.length) {
-    lines.push(`■ Googleで閉業・休業になった掲載店: ${params.closed.length}件`);
+    lines.push(`■ Googleで休業中などのため、掲載から外した店: ${params.closed.length}件（有料契約中の店は外さず要確認）`);
     for (const c of params.closed.slice(0, 50)) lines.push(`・${c.name}(${c.status === "CLOSED_PERMANENTLY" ? "閉業" : c.status === "CLOSED_TEMPORARILY" ? "休業" : "Googleから消えた"})`);
     lines.push(`→ ${siteUrl}/admin/stores/google-match`, "");
+  }
+  if (params.removed?.length) {
+    lines.push(`■ Googleで閉業・見つからなくなったため、削除した店: ${params.removed.length}件`);
+    for (const c of params.removed.slice(0, 50)) lines.push(`・${c.name}(${c.status === "CLOSED_PERMANENTLY" ? "閉業" : "Googleから消えた"})`);
+    lines.push("");
+  }
+  if (params.deleted?.length) {
+    lines.push(`■ 新しく見つかったが、営業していないため削除した店: ${params.deleted.length}件`);
+    for (const d of params.deleted.slice(0, 50)) lines.push(`・${d.name}(${d.reason})`);
+    lines.push("");
+  }
+  if (params.reopened?.length) {
+    lines.push(`■ 一時休業から営業中に戻ったため、掲載に戻した店: ${params.reopened.length}件`);
+    for (const n of params.reopened.slice(0, 50)) lines.push(`・${n}`);
+    lines.push("");
   }
   lines.push("Poker Summit");
   await sendEmail({
     to: params.to,
-    subject: `【Poker Summit】店舗の自動見直し: 新規${params.newCandidates.length}件・閉業/休業${params.closed.length}件`,
+    subject: `【Poker Summit】店舗の自動見直し: 自動掲載${params.approved.length}件・確認待ち${params.held.length}件・掲載停止${params.closed.length}件${params.reopened?.length ? `・掲載再開${params.reopened.length}件` : ""}`,
     text: lines.join("\n"),
   });
 }
@@ -743,7 +880,7 @@ ${params.link}
 
 Poker Summit運営事務局
 ※このメールは送信専用です。`;
-  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
+  await sendEmail({ noreply: true, sensitive: true, to: params.to, subject: "【Poker Summit】パスワード再設定のご案内", text });
 }
 
 /** 振込の請求書がお支払期限を過ぎた翌日のお知らせ(猶予7日のうちに入金をお願いする、2026/10) */
@@ -824,4 +961,183 @@ Poker Summit運営事務局`;
 /** GTO billing issues that need a person to check (to the operator). */
 export async function sendGtoBillingAlertEmail(subject: string, lines: string[]): Promise<void> {
   await sendEmail({ to: "info@pokersummit.jp", subject: `【Poker Summit 要確認】${subject}`, text: lines.join("\n") });
+}
+
+/** お問い合わせへの返信(総合管理の「お問い合わせ」から送る、2026/10)。返信を受けられるよう info@ から送る */
+export async function sendInquiryReplyEmail(params: {
+  to: string;
+  name: string | null;
+  subject: string | null;
+  body: string;
+  original: string;
+  receivedAt: Date;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const when = params.receivedAt.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
+  const quoted = params.original
+    .split("\n")
+    .map((l) => `> ${l}`)
+    .join("\n");
+  const text = `${params.name ? `${params.name} 様` : "お問い合わせいただいた方へ"}
+
+${params.body}
+
+Poker Summit運営事務局
+${siteUrl}
+ご不明な点は、このメールへのご返信でお問い合わせいただけます。
+
+―――― お問い合わせ内容（${when}） ――――
+${quoted}`;
+  const subject = params.subject?.trim() ? `Re: ${params.subject.trim()}【Poker Summit】` : "【Poker Summit】お問い合わせへのご回答";
+  await sendEmail({ to: params.to, subject, text });
+}
+
+/** 通報してくれた人への返信(総合管理の通報管理から、2026/10)。返信を受けられるよう info@ から送る */
+export async function sendReportReplyEmail(params: { to: string; body: string; targetLabel: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `Poker Summitをご利用いただきありがとうございます。
+先日ご報告いただいた件（${params.targetLabel}）について、ご連絡いたします。
+
+${params.body}
+
+ご報告いただき、ありがとうございました。
+
+Poker Summit運営事務局
+${siteUrl}
+ご不明な点は、このメールへのご返信でお問い合わせいただけます。`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】ご報告いただいた件について", text });
+}
+
+/** 運営から店舗への個別のお知らせ(店舗管理の「運営からのお知らせ」にも残す。メールは info@ から) */
+export async function sendStoreMessageEmail(params: { to: string; storeName: string; title: string; body: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+いつもPoker Summitをご利用いただき、誠にありがとうございます。
+
+${params.body}
+
+この内容は店舗管理画面の「運営からのお知らせ」でもご確認いただけます。
+${siteUrl}/store/profile/messages
+
+ご不明な点は、このメールへのご返信またはお問い合わせフォームからご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.title}`, text });
+}
+
+/** 運営向けの警告(決済の結果不明・自動処理の失敗など)。site_settings.notify_email 宛て */
+export async function sendAdminAlertEmail(params: { to: string; subject: string; lines: string[]; link?: string }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = [
+    ...params.lines,
+    "",
+    params.link ? `確認する: ${siteUrl}${params.link}` : `確認する: ${siteUrl}/admin/billing/monitor`,
+    "",
+    "Poker Summit（自動送信）",
+  ].join("\n");
+  await sendEmail({ to: params.to, subject: `【Poker Summit 要確認】${params.subject}`, text });
+}
+
+/** 1日1回の新規会員まとめ(運営向け。site_settings.notify_email 宛て) */
+export async function sendMemberDigestEmail(params: {
+  to: string;
+  dayLabel: string;
+  members: Array<{ email: string; at: string; confirmed: boolean; mHoldemId?: string | null }>;
+  total: number;
+}): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const lines = [
+    `${params.dayLabel}の新規会員登録は ${params.members.length}人 でした（会員の合計 ${params.total}人）。`,
+    "",
+    ...params.members.map((m) => `・${m.at}  ${m.email}  m HOLD'EM ID: ${m.mHoldemId || "未登録"}${m.confirmed ? "" : "（メール未確認）"}`),
+    "",
+    "「メール未確認」は、登録後の確認メールのリンクをまだ押していない方です。",
+    "",
+    `会員の一覧: ${siteUrl}/admin/members`,
+    "",
+    "Poker Summit（自動送信。総合管理の「サイト設定」→ 通知設定で止められます）",
+  ];
+  await sendEmail({ to: params.to, subject: `【Poker Summit】${params.dayLabel}の新規会員登録 ${params.members.length}人（合計${params.total}人）`, text: lines.join("\n") });
+}
+
+
+/** 無料期間がもうすぐ終わることの店舗向けお知らせ(2026/10/20。終わる7日前に1回) */
+export async function sendTrialEndingEmail(params: { to: string; storeName: string; planName: string; endOn: string; monthlyFee: number }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const text = `${params.storeName} ご担当者様
+
+Poker Summit をご利用いただきありがとうございます。
+
+${params.planName}の無料期間は、${params.endOn}までです。
+
+■ 引き続きご利用いただく場合
+店舗管理の「プラン・お支払い」から、お支払いに使うクレジットカードをご登録ください。
+無料期間が終わった日に、月額${params.monthlyFee.toLocaleString("ja-JP")}円（税込）の決済を行い、そのまま続けてご利用いただけます。
+銀行振込をご希望の場合は、運営までご連絡ください。
+${siteUrl}/store/profile/plan
+
+■ 続けない場合
+お手続きは不要です。運営からご連絡いたします。
+
+ご不明な点がございましたら、お問い合わせフォームよりご連絡ください。
+${siteUrl}/contact
+
+Poker Summit運営事務局`;
+  await sendEmail({ to: params.to, subject: "【Poker Summit】無料期間終了のお知らせ", text });
+}
+
+/** 有料掲載のお申し込みを受け付けた(確認後に請求書・お支払いの案内を送る)ことのお知らせ(2026/10/21) */
+export async function sendListingApplicationReceivedEmail(params: { to: string; companyName: string; contactName: string; billingMethod: "card" | "bank_transfer" }): Promise<void> {
+  const text = `${params.companyName}
+${params.contactName} 様
+
+このたびはPoker Summitへの掲載をお申し込みいただき、誠にありがとうございます。
+お申し込みを受け付けました。
+
+当サービスでは、有料掲載をお申し込みいただいた事業者様について、お支払いの前に確認（事業者の実在確認・反社会的勢力に該当しないことの確認など）を行っております。
+確認が完了しましたら、${params.billingMethod === "bank_transfer" ? "請求書（PDF）" : "お支払い（クレジットカード）のご案内"}をこのメールアドレスにお送りします。通常1〜2営業日ほどお時間をいただきます。
+
+確認の結果によっては、お申し込みをお受けできない場合がございます。あらかじめご了承ください。
+
+ご不明な点がございましたら、お問い合わせフォームよりご連絡ください。
+${getSiteUrl()}/contact
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】掲載のお申し込みを受け付けました", text });
+}
+
+/** 確認が済んだカード払いのお申し込みに、お支払いページのリンクを送る(2026/10/21) */
+export async function sendCardPaymentLinkEmail(params: { to: string; companyName: string; contactName: string; link: string }): Promise<void> {
+  const text = `${params.companyName}
+${params.contactName} 様
+
+Poker Summitへの掲載のお申し込みについて、確認が完了しました。
+次のリンクから、クレジットカードでのお支払い手続きにお進みください。
+
+${params.link}
+
+お支払いの完了後、店舗管理画面のログイン情報をお送りします。
+お心当たりのない場合は、このメールを破棄してください。
+
+Poker Summit運営事務局
+※このメールは送信専用です。`;
+  await sendEmail({ noreply: true, to: params.to, subject: "【Poker Summit】お支払い手続きのご案内", text, sensitive: true });
+}
+
+/** 自動で作ったポーカーニュースの下書きを運営に知らせる(2026/10/23、app/api/cron/news-drafts) */
+export async function sendNewsDraftDigest(params: { to: string; created: { title: string; id: string }[] }): Promise<void> {
+  const siteUrl = getSiteUrl();
+  const lines = [
+    "ポーカーニュースの下書きを自動で作りました。内容と画像を確認してから公開してください。",
+    "",
+    ...params.created.map((c) => `・${c.title}\n  プレビュー: ${siteUrl}/blog/${c.id}?preview=1`),
+    "",
+    `BLOG管理: ${siteUrl}/admin/blog`,
+    "",
+    "Poker Summit",
+  ];
+  await sendEmail({ to: params.to, subject: `【Poker Summit】ニュースの下書き ${params.created.length}件`, text: lines.join("\n") });
 }

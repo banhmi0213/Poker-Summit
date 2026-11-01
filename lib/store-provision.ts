@@ -3,9 +3,10 @@ import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { generateStoreLinkCode } from "@/lib/store-update";
 import { sendStoreCredentialsEmail } from "@/lib/email";
 import { generateStorePassword } from "@/lib/password-policy";
+import { freshPeriodEnd } from "@/lib/billing-dates";
 
 // ============================================================================
-// セルフサーブ申込み(listing_applications, plan_id付き)がfincodeの初回課金に
+// セルフサーブ申込み(listing_applications, plan_id付き)がKOMOJUの初回課金に
 // 成功した直後に呼ばれる、店舗の自動作成〜ID/LINE連携コード発行まで
 // 一式。app/admin/stores/actions.ts の issueStoreLogin() / issueStoreLineLinkCode()
 // と同じ処理を、管理者セッションなし(=is_admin()が通らないservice-role実行)
@@ -28,11 +29,11 @@ type ListingApplicationRow = {
 
 export async function provisionPaidStoreFromApplication(params: {
     application: ListingApplicationRow;
-    // カード(fincode)で申し込んだ場合
+    // カード(KOMOJU)で申し込んだ場合。列名は旧決済会社時代の fincode_* のまま(中身はKOMOJUの顧客ID)
     fincodeCustomerId?: string | null;
     fincodeSubscriptionId?: string | null;
     // 銀行振込で申し込み、運営が入金を確認した場合(lib/bank-transfer.ts)
-    billing?: { method: "bank_transfer"; cycleMonths: number; currentPeriodEndIso: string };
+    billing?: { method: "bank_transfer"; cycleMonths: number; currentPeriodEndIso: string; anchorDay?: number | null };
 }): Promise<{ storeId: string; loginId: string; password: string; lineCode: string }> {
     const supabase = createServiceRoleClient();
     const { application } = params;
@@ -44,14 +45,20 @@ const { data: appExtra } = await supabase
     .select("store_name, address, matched_store_id")
     .eq("id", application.id)
     .maybeSingle();
+// やり直しに強くする(2026/10/18): 途中で失敗して入金確認・決済後の処理をもう一度行っても、
+// 店舗・契約・ログインを二重に作らない。この申込みで作った/結び付けた店舗があればそれを使う。
 let storeId: string;
 const matchedId = (appExtra?.matched_store_id as string | null) ?? null;
-if (matchedId) {
+const { data: already } = await supabase.from("stores").select("id").eq("source_application_id", application.id).maybeSingle();
+if (already) {
+    storeId = already.id as string;
+} else if (matchedId) {
     const { data: existing } = await supabase.from("stores").select("id, owner_user_id, status").eq("id", matchedId).maybeSingle();
     if (!existing) throw new Error("結び付け先の店舗が見つかりません。");
     if (existing.owner_user_id) throw new Error("結び付け先の店舗には、すでに店舗管理アカウントが発行されています。");
     storeId = existing.id as string;
-    await supabase.from("stores").update({ source_application_id: application.id }).eq("id", storeId);
+    const { error: linkError } = await supabase.from("stores").update({ source_application_id: application.id }).eq("id", storeId);
+    if (linkError) throw new Error(linkError.message);
 } else {
     const { data: store, error: storeError } = await supabase
         .from("stores")
@@ -67,20 +74,27 @@ if (matchedId) {
         .select("id")
         .single();
     if (storeError || !store) {
-        throw new Error(storeError?.message ?? "店舗の作成に失敗しました。");
+        // 同時に別の処理が同じ申込みの店舗を作った(一意制約)→ そちらを使う
+        const { data: raced } = await supabase.from("stores").select("id").eq("source_application_id", application.id).maybeSingle();
+        if (!raced) throw new Error(storeError?.message ?? "店舗の作成に失敗しました。");
+        storeId = raced.id as string;
+    } else {
+        storeId = store.id as string;
     }
-    storeId = store.id as string;
 }
 
-// current_period_end: 初回課金した「今」を起点に1ヶ月後まで(2026/10、
-// プラン・アドオンの自己決済機能で「日割りなし、決済日起点で翌月同日
-// まで」という請求期間の考え方を導入したのに合わせ、新規契約もここから
-// 期間追跡を開始する)。
-const periodEnd = new Date();
-periodEnd.setMonth(periodEnd.getMonth() + 1);
+// 日本時間の今日から1か月(以前は世界標準時で計算し、1/31 → 3/3 のようにずれていた。lib/billing-dates.ts)
 const isTransfer = params.billing?.method === "bank_transfer";
+// カードのまとめ払い(6か月・12か月、2026/10/19〜): 申込みで選んだ月数の期間にする
+let cardCycleMonths = 1;
+if (!isTransfer) {
+    const { data: appCycle } = await supabase.from("listing_applications").select("billing_cycle_months").eq("id", application.id).maybeSingle();
+    const m = Number(appCycle?.billing_cycle_months ?? 1);
+    cardCycleMonths = m === 6 || m === 12 ? m : 1;
+}
+const fresh = freshPeriodEnd(new Date(), cardCycleMonths);
 
-const { error: contractError } = await supabase.from("store_contracts").insert({
+const contractRow = {
     store_id: storeId,
     plan_id: application.plan_id,
     status: "active",
@@ -91,10 +105,20 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
     fincode_subscription_id: params.fincodeSubscriptionId ?? null,
     last_billing_status: "success",
     last_billing_at: new Date().toISOString(),
-    current_period_end: isTransfer ? params.billing!.currentPeriodEndIso : periodEnd.toISOString(),
+    current_period_end: isTransfer ? params.billing!.currentPeriodEndIso : fresh.periodEndIso,
+    billing_anchor_day: isTransfer ? params.billing!.anchorDay ?? null : fresh.anchorDay,
     billing_method: isTransfer ? "bank_transfer" : "card",
-    billing_cycle_months: isTransfer ? params.billing!.cycleMonths : 1,
-});
+    billing_cycle_months: isTransfer ? params.billing!.cycleMonths : cardCycleMonths,
+    // 前に無料期間・解約で終わった契約を上書きするときに、前の情報を残さない(2026/10/20)
+    trial_ends_at: null,
+    trial_notice_sent_at: null,
+    trial_end_notified_at: null,
+    canceled_at: null,
+    cancel_at_period_end: false,
+    cancel_requested_at: null,
+};
+// 店舗ごとに契約は1つ(store_id は一意)。やり直しのときは前回作った契約を同じ内容で上書きする
+const { error: contractError } = await supabase.from("store_contracts").upsert(contractRow, { onConflict: "store_id" });
     if (contractError) {
         throw new Error(contractError.message);
     }
@@ -103,20 +127,30 @@ const { error: contractError } = await supabase.from("store_contracts").insert({
 // 店舗IDの桁数を増やして作り直す(DB側でも同じIDは発行できず、1ログイン=1店舗の制約あり)。
 const password = generateStorePassword();
 let loginId = "";
-let loginError: { message: string } | null = null;
-for (const len of [8, 12, 32]) {
-    loginId = `store-${storeId.replace(/-/g, "").slice(0, len)}`;
-    const { error } = await supabase.rpc("system_issue_store_login", {
-        p_store_id: storeId,
-        p_login_id: loginId,
-        p_password: password,
-    });
-    loginError = error;
-    if (!error || !error.message.includes("このログインIDは既に使用されています")) break;
-}
+const { data: ownerRow } = await supabase.from("stores").select("owner_user_id").eq("id", storeId).maybeSingle();
+if (ownerRow?.owner_user_id) {
+    // やり直し: 前回の処理でログインは作成済み。パスワードだけ新しくして、お知らせし直す
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(ownerRow.owner_user_id as string);
+    if (authError || !authUser?.user?.email) throw new Error(authError?.message ?? "ログイン情報を確認できませんでした。");
+    loginId = authUser.user.email.split("@")[0];
+    const { error: pwError } = await supabase.auth.admin.updateUserById(ownerRow.owner_user_id as string, { password });
+    if (pwError) throw new Error(pwError.message);
+} else {
+    let loginError: { message: string } | null = null;
+    for (const len of [8, 12, 32]) {
+        loginId = `store-${storeId.replace(/-/g, "").slice(0, len)}`;
+        const { error } = await supabase.rpc("system_issue_store_login", {
+            p_store_id: storeId,
+            p_login_id: loginId,
+            p_password: password,
+        });
+        loginError = error;
+        if (!error || !error.message.includes("このログインIDは既に使用されています")) break;
+    }
     if (loginError) {
         throw new Error(loginError.message);
     }
+}
 
 const lineCode = await generateStoreLinkCode(supabase, storeId);
 

@@ -73,7 +73,7 @@ export default async function AdminAuditLogPage({
         </button>
       </form>
 
-      <table>
+      <div className="table-wrap"><table>
         <thead>
           <tr>
             <th>日時</th>
@@ -99,7 +99,7 @@ export default async function AdminAuditLogPage({
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

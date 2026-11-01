@@ -13,3 +13,13 @@ export function MemberRoleBadge({ role }: { role: string | null | undefined }) {
     </span>
   );
 }
+
+// 運営アカウントのバッジ(サミットの投稿者名の上。2026/10/20)。admin_users.board_official のアカウントだけ。
+export function OfficialBadge({ show }: { show: boolean }) {
+  if (!show) return null;
+  return (
+    <span className={`${styles.badge} ${styles.official}`} title="Poker Summit運営">
+      運営
+    </span>
+  );
+}

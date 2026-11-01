@@ -1,4 +1,6 @@
 import "server-only";
+import { notEndedEventFilter } from "@/lib/event-end";
+import { notExpiredFilter } from "@/lib/coupon-expiry";
 import { unstable_cache } from "next/cache";
 import { createAnonClient } from "@/lib/supabase/anon";
 import type { StoreDisplayFlags } from "@/lib/plan-entitlements";
@@ -25,8 +27,8 @@ async function loadAllStoreCardExtras() {
       .select("store_id")
       .eq("status", "published")
       .not("store_id", "is", null)
-      .or(`and(end_at.not.is.null,end_at.gte.${now}),and(end_at.is.null,start_at.gte.${now})`),
-    supabase.from("coupons").select("store_id").eq("active", true).or(`valid_until.is.null,valid_until.gte.${now}`),
+      .or(notEndedEventFilter()),
+    supabase.from("coupons").select("store_id").eq("active", true).or(notExpiredFilter()),
     supabase.from("store_notices").select("store_id").eq("status", "published"),
     supabase.from("jobs").select("store_id").eq("status", "open"),
   ]);

@@ -6,6 +6,7 @@ export const BANK_GRACE_DAYS = 7;
 // (呼び出し元で運営かどうか・本人かどうかを確認してから使うこと)。
 
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
+import { addMonthsAnchored } from "@/lib/billing-dates";
 
 export type BillingCycle = 1 | 6 | 12;
 export const BILLING_CYCLES: BillingCycle[] = [1, 6, 12];
@@ -102,7 +103,7 @@ export function addDays(date: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-/** 'YYYY-MM-DD' に nか月足した日(月末は月末に丸める) */
+/** 'YYYY-MM-DD' に nか月足した日(月末は月末に丸める)。毎月の更新日を保ちたいときは addMonthsAnchored を使う */
 export function addMonths(date: string, months: number) {
   const [y, m, d] = date.split("-").map(Number);
   const target = new Date(Date.UTC(y, m - 1 + months, 1));
@@ -173,9 +174,18 @@ export async function createInvoice(params: {
   months: BillingCycle;
   periodStart?: string | null; // 'YYYY-MM-DD'。新規申込みは入金確認日から始まるので null
   settings: BillingSettings;
+  /** 毎月の更新日(store_contracts.billing_anchor_day)。31日始まりの契約が2月以降28日にずれないように */
+  anchorDay?: number | null;
 }): Promise<InvoiceRow> {
   const svc = createServiceRoleClient();
+  // 金額の安全確認: 月額が正の整数でなければ請求書を作らない(0円・マイナス・小数の請求を防ぐ)
+  if (!Number.isInteger(params.plan.monthly_fee) || params.plan.monthly_fee <= 0) {
+    throw new Error(`プランの月額が正しくありません（${params.plan.monthly_fee}）。請求書は作成していません。`);
+  }
   const q = quote(params.plan.monthly_fee, params.months, discountFor(params.settings, params.months));
+  if (!Number.isInteger(q.total) || q.total <= 0 || q.total > params.plan.monthly_fee * params.months) {
+    throw new Error(`請求金額の計算が正しくありません（${q.total}円）。請求書は作成していません。`);
+  }
   const today = todayJst();
   const periodStart = params.periodStart ?? null;
   const { data, error } = await svc
@@ -196,7 +206,7 @@ export async function createInvoice(params: {
       total_amount: q.total,
       tax_amount: q.tax,
       period_start: periodStart,
-      period_end: periodStart ? addDays(addMonths(periodStart, params.months), -1) : null,
+      period_end: periodStart ? addDays(addMonthsAnchored(periodStart, params.months, params.anchorDay ?? null), -1) : null,
       due_date: addDays(today, params.settings.dueDays),
     })
     .select("*")
@@ -240,6 +250,36 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
   const inv = invoice as InvoiceRow;
   if (inv.status === "canceled") throw new Error("取り消し済みの請求書です。");
   if (inv.status === "paid") return { alreadyPaid: true as const };
+  // 二重処理の防止: 「入金確認」が同時に2回押されても、店舗の発行・期間の延長は1回だけにする。
+  // paid_at を先に入れた方だけが処理を続ける(失敗したら戻す)。
+  {
+    const { data: claimed } = await svc
+      .from("invoices")
+      .update({ paid_at: new Date().toISOString() })
+      .eq("id", invoiceId)
+      .eq("status", "unpaid")
+      .is("paid_at", null)
+      .select("id");
+    if (!claimed?.length) return { alreadyPaid: true as const };
+  }
+  try {
+    return await confirmClaimedInvoice(svc, inv, adminUserId, note);
+  } catch (e) {
+    await svc.from("invoices").update({ paid_at: null }).eq("id", invoiceId).eq("status", "unpaid");
+    throw e;
+  }
+}
+
+/** 請求期間の始まりが今の更新日どおりなら更新日を保ち、違えば(手動で今日から等)始まりの日を新しい更新日にする */
+function keepAnchor(anchor: number | null, periodStart: string): number {
+  const day = Number(periodStart.slice(8, 10));
+  if (!anchor) return day;
+  const [y, m] = periodStart.split("-").map(Number);
+  const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return Math.min(anchor, last) === day ? anchor : day;
+}
+
+async function confirmClaimedInvoice(svc: ReturnType<typeof createServiceRoleClient>, inv: InvoiceRow, adminUserId: string | null, note?: string) {
 
   if (inv.kind === "addon") {
     const { confirmAddonInvoice } = await import("@/lib/addon-orders");
@@ -273,7 +313,9 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
 
   const today = todayJst();
   const periodStart = inv.period_start ?? today;
-  const periodEnd = inv.period_end ?? addDays(addMonths(periodStart, inv.months), -1);
+  // 新規(請求書に期間が無い)は入金確認日から。更新日 = 期間の始まりの日
+  const periodEnd = inv.period_end ?? addDays(addMonthsAnchored(periodStart, inv.months, null), -1);
+  const anchorForNew = Number(periodStart.slice(8, 10));
   // 契約の current_period_end は「次の請求期間が始まる日」の0:00(JST)で持つ
   const nextPeriodStartIso = jstDateToIso(addDays(periodEnd, 1));
 
@@ -297,6 +339,7 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
           method: "bank_transfer",
           cycleMonths: inv.months,
           currentPeriodEndIso: nextPeriodStartIso,
+          anchorDay: anchorForNew,
         },
       });
       storeId = provisioned.storeId;
@@ -306,7 +349,7 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
   } else if (contractId) {
     const { data: contract } = await svc
       .from("store_contracts")
-      .select("id, store_id, suspended_for_nonpayment_at, store_status_before_suspension")
+      .select("id, store_id, suspended_for_nonpayment_at, store_status_before_suspension, billing_anchor_day")
       .eq("id", contractId)
       .maybeSingle();
     if (!contract) throw new Error("契約が見つかりません。");
@@ -319,6 +362,7 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
         billing_method: "bank_transfer",
         billing_cycle_months: inv.months,
         current_period_end: nextPeriodStartIso,
+        billing_anchor_day: keepAnchor(contract.billing_anchor_day as number | null, periodStart),
         pending_plan_id: null,
         pending_plan_effective_at: null,
         canceled_at: null,
@@ -385,14 +429,29 @@ export async function confirmInvoicePayment(invoiceId: string, adminUserId: stri
   return { alreadyPaid: false as const, storeId, contractId };
 }
 
-export async function cancelInvoice(invoiceId: string, adminUserId: string | null) {
+export async function cancelInvoice(invoiceId: string, adminUserId: string | null): Promise<{ canceled: boolean; reason?: string }> {
   const svc = createServiceRoleClient();
-  const { error } = await svc.from("invoices").update({ status: "canceled" }).eq("id", invoiceId).eq("status", "unpaid");
+  // 入金確認の処理中(paid_at が入っている)・入金済み・取消済みのものは取り消さない
+  const { data: canceled, error } = await svc
+    .from("invoices")
+    .update({ status: "canceled" })
+    .eq("id", invoiceId)
+    .eq("status", "unpaid")
+    .is("paid_at", null)
+    .select("id, addon_order_id, invoice_number");
   if (error) throw new Error(error.message);
-  // アドオン注文の請求なら注文も取り消す
-  const { data: inv } = await svc.from("invoices").select("addon_order_id").eq("id", invoiceId).maybeSingle();
-  if (inv?.addon_order_id) {
-    await svc.from("addon_orders").update({ status: "canceled" }).eq("id", inv.addon_order_id).eq("status", "awaiting_payment");
+  if (!canceled?.length) {
+    const { data: inv } = await svc.from("invoices").select("status, paid_at").eq("id", invoiceId).maybeSingle();
+    if (!inv) return { canceled: false, reason: "請求書が見つかりません。" };
+    if (inv.status === "paid") return { canceled: false, reason: "入金確認済みの請求書は取り消せません。" };
+    if (inv.status === "canceled") return { canceled: false, reason: "この請求書はすでに取り消されています。" };
+    return { canceled: false, reason: "入金確認の処理中のため取り消せませんでした。少し待ってから画面を更新してください。" };
+  }
+  // アドオン注文の請求なら注文も取り消す(1枚にまとめた複数の注文も)
+  const addonOrderId = canceled[0].addon_order_id as string | null;
+  await svc.from("addon_orders").update({ status: "canceled" }).eq("invoice_id", invoiceId).eq("status", "awaiting_payment");
+  if (addonOrderId) {
+    await svc.from("addon_orders").update({ status: "canceled" }).eq("id", addonOrderId).eq("status", "awaiting_payment");
   }
   await svc.from("audit_log").insert({
     actor_user_id: adminUserId,
@@ -400,6 +459,7 @@ export async function cancelInvoice(invoiceId: string, adminUserId: string | nul
     action: "invoice_canceled",
     target_type: "invoice",
     target_id: invoiceId,
-    detail: {},
+    detail: { invoiceNumber: canceled[0].invoice_number },
   });
+  return { canceled: true };
 }

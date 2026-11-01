@@ -42,7 +42,7 @@ export function PrefAreaSelect({
         onChange={(e) => setPref(e.target.value)}
         style={selectStyle}
       >
-        <option value="">{`${prefLabel}: すべて`}</option>
+        <option value="">{prefLabel === "都道府県" ? "都道府県：全国" : "都道府県：すべて"}</option>
         {prefOptions.map((p) => (
           <option key={p} value={p}>
             {p}
@@ -70,10 +70,10 @@ export function PrefAreaSelect({
   );
 }
 /** Keep mobile search filters collapsed until the keyword field is used. */
-export function ExpandableSearchForm({ children, className = "search-box", style }: { children: ReactNode; className?: string; style?: CSSProperties }) {
+export function ExpandableSearchForm({ children, className = "search-box", style, collapse = true }: { children: ReactNode; className?: string; style?: CSSProperties; collapse?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   return (
-    <form method="get" action="/stores" className={`${className} ${styles.collapsible}`} style={style}
+    <form method="get" action="/stores" className={`${className} ${collapse ? styles.collapsible : ""}`} style={style}
       data-filters-expanded={expanded ? "true" : "false"}
       onFocusCapture={(event) => {
         if (event.target instanceof HTMLInputElement && event.target.name === "q") setExpanded(true);

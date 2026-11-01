@@ -19,9 +19,9 @@ export default function LoginPage({
   return (
     <div>
       <PortalHeader />
-      <div className="container" style={{ maxWidth: 380 }}>
+      <div className="container public-login" style={{ maxWidth: 380 }}>
         <Link href="/" className="breadcrumb">
-          ← トップに戻る
+          トップに戻る
         </Link>
         <div className="auth-brand-wrap" style={{ margin: "0 0 20px" }}>
           <div className="brand wordmark">

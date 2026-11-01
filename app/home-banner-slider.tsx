@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./home-banner-slider.module.css";
+import { shuffleBannerIds } from "@/lib/banner-order";
 
 // TOPページ「開催予定のトーナメント・イベント」直上のバナースライダー
 // (2026/10追加)。表示する行は総合管理画面 > バナー管理で position='top'
 // として登録したもの(lib/banners.ts の getTopBanners で取得)。
-// 1件なら静止表示、2件以上で5秒ごとの自動切替・前後矢印・ドット・
+// 1件なら静止表示、2件以上で5秒ごとの自動切替・ドット・
 // スワイプ(横スクロールのscroll-snap)に対応する。ホバー/フォーカス/
 // タッチ中と prefers-reduced-motion のときは自動切替しない。
 
@@ -38,12 +39,12 @@ function track(type: "impression" | "click", bannerId: string) {
   }
 }
 
-function BannerImage({ banner, index }: { banner: HomeBanner; index: number }) {
+function BannerImage({ banner, index, clone = false }: { banner: HomeBanner; index: number; clone?: boolean }) {
   const img = (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={banner.image_url}
-      alt={banner.title}
+      alt={clone ? "" : banner.title}
       width={1200}
       height={400}
       loading={index === 0 ? "eager" : "lazy"}
@@ -55,6 +56,7 @@ function BannerImage({ banner, index }: { banner: HomeBanner; index: number }) {
   return (
     <a
       href={banner.link_url}
+      tabIndex={clone ? -1 : undefined}
       {...(banner.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       onClick={() => track("click", banner.id)}
     >
@@ -73,7 +75,64 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
   const [touching, setTouching] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [visible, setVisible] = useState(false);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resetFrame = useRef<number | null>(null);
+  const indexRef = useRef(0);
+  indexRef.current = index;
   const count = banners.length;
+  const bannerKey = JSON.stringify(banners.map(b => b.id));
+  const [order, setOrder] = useState<string[]>([]);
+  const ready = count < 2 || (order.length === count && banners.every(b => order.includes(b.id)));
+  const slides = ready && count > 1 ? order.map(id => banners.find(b => b.id === id)!) : banners;
+
+  const renderedSlides = count > 1
+    ? [{ banner: slides[count - 1], clone: true, key: "tail-clone" },
+       ...slides.map(banner => ({ banner, clone: false, key: banner.id })),
+       { banner: slides[0], clone: true, key: "head-clone" }]
+    : slides.map(banner => ({ banner, clone: false, key: banner.id }));
+
+  // A copy at either edge lets the last slide move left to the first slide.
+  // Reposition to the identical real slide only after scrolling has settled.
+  const jumpTo = useCallback((physical: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    if (resetFrame.current != null) cancelAnimationFrame(resetFrame.current);
+    el.style.scrollSnapType = "none";
+    el.scrollTo({ left: physical * el.clientWidth, behavior: "instant" as ScrollBehavior });
+    resetFrame.current = requestAnimationFrame(() => {
+      el.style.scrollSnapType = "";
+      resetFrame.current = null;
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!ready) return;
+    setIndex(0);
+    jumpTo(count > 1 ? 1 : 0);
+    let width = trackRef.current?.clientWidth;
+    const observer = new ResizeObserver(() => {
+      const nextWidth = trackRef.current?.clientWidth;
+      if (width !== nextWidth) {
+        width = nextWidth;
+        jumpTo(count > 1 ? indexRef.current + 1 : 0);
+      }
+    });
+    if (trackRef.current) observer.observe(trackRef.current);
+    return () => {
+      observer.disconnect();
+      if (settleTimer.current) clearTimeout(settleTimer.current);
+      if (resetFrame.current != null) cancelAnimationFrame(resetFrame.current);
+    };
+  }, [ready, bannerKey, count, jumpTo]);
+
+  // Shuffle on each browser mount, not on the server where a cached order would
+  // be shared by all visitors. Keep the reserved slot hidden until ready so the
+  // first banner and impression are random too.
+  useEffect(() => {
+    setOrder(shuffleBannerIds(JSON.parse(bannerKey)));
+    setIndex(0);
+
+  }, [bannerKey]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -100,21 +159,21 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
 
   // 各バナーが初めて表示されたときに1回だけbanner_impressionsへ記録する。
   useEffect(() => {
-    if (!visible) return;
-    const banner = banners[index];
+    if (!visible || !ready) return;
+    const banner = slides[index];
     if (banner && !seen.current.has(banner.id)) {
       seen.current.add(banner.id);
       track("impression", banner.id);
     }
-  }, [visible, index, banners]);
+  }, [visible, ready, index, slides]);
 
   const goTo = useCallback(
     (target: number) => {
       const el = trackRef.current;
       if (!el || count === 0) return;
       const next = (target + count) % count;
-      el.scrollTo({ left: next * el.clientWidth, behavior: reducedMotion ? "auto" : "smooth" });
-      setIndex(next);
+      const physical = target === count ? count + 1 : next + 1;
+      el.scrollTo({ left: physical * el.clientWidth, behavior: reducedMotion ? "instant" as ScrollBehavior : "smooth" });
     },
     [count, reducedMotion]
   );
@@ -123,16 +182,23 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
   const onScroll = () => {
     const el = trackRef.current;
     if (!el || el.clientWidth === 0) return;
-    const current = Math.round(el.scrollLeft / el.clientWidth);
-    if (current !== index && current >= 0 && current < count) setIndex(current);
+    const physical = Math.round(el.scrollLeft / el.clientWidth);
+    const current = ((physical - 1) % count + count) % count;
+    if (current !== index) setIndex(current);
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => {
+      const position = Math.round(el.scrollLeft / el.clientWidth);
+      if (position === 0) jumpTo(count);
+      else if (position === count + 1) jumpTo(1);
+    }, 160);
   };
 
   const paused = hovered || focused || touching;
   useEffect(() => {
-    if (count < 2 || paused || reducedMotion || !visible) return;
+    if (count < 2 || !ready || paused || reducedMotion || !visible) return;
     const timer = window.setTimeout(() => goTo(index + 1), INTERVAL_MS);
     return () => window.clearTimeout(timer);
-  }, [count, paused, reducedMotion, visible, index, goTo]);
+  }, [count, ready, paused, reducedMotion, visible, index, goTo]);
 
   if (count === 0) return null;
 
@@ -140,11 +206,12 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
     <section
       ref={rootRef}
       className={styles.slider}
+      style={{ visibility: ready ? "visible" : "hidden" }}
       aria-roledescription={count > 1 ? "carousel" : undefined}
       aria-label="おすすめ"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      // キーボード操作でのフォーカス中だけ止める。矢印・ドットをマウスで
+      // キーボード操作でのフォーカス中だけ止める。ドットをマウスで
       // クリックした後もフォーカスが残るため、それでは止めない。
       onFocus={(e) => {
         try {
@@ -161,38 +228,23 @@ export function HomeBannerSlider({ banners }: { banners: HomeBanner[] }) {
       onTouchCancel={() => setTouching(false)}
     >
       <div ref={trackRef} className={styles.track} onScroll={count > 1 ? onScroll : undefined}>
-        {banners.map((b, i) => (
+        {renderedSlides.map(({ banner: b, clone, key }, i) => (
           <div
-            key={b.id}
+            key={key}
+            aria-hidden={clone ? true : undefined}
             className={styles.slide}
-            role={count > 1 ? "group" : undefined}
-            aria-roledescription={count > 1 ? "slide" : undefined}
-            aria-label={count > 1 ? `${i + 1} / ${count}` : undefined}
+            role={!clone && count > 1 ? "group" : undefined}
+            aria-roledescription={!clone && count > 1 ? "slide" : undefined}
+            aria-label={!clone && count > 1 ? `${i} / ${count}` : undefined}
           >
-            <BannerImage banner={b} index={i} />
+            <BannerImage banner={b} index={count > 1 ? i - 1 : i} clone={clone} />
           </div>
         ))}
       </div>
       {count > 1 && (
         <>
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.prev}`}
-            aria-label="前のバナー"
-            onClick={() => goTo(index - 1)}
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            className={`${styles.arrow} ${styles.next}`}
-            aria-label="次のバナー"
-            onClick={() => goTo(index + 1)}
-          >
-            ›
-          </button>
           <div className={styles.dots}>
-            {banners.map((b, i) => (
+            {slides.map((b, i) => (
               <button
                 key={b.id}
                 type="button"

@@ -21,7 +21,7 @@ export function DealerForm({ profile, address, photo, today, contacts }: { conta
  <div className={styles.fields}>
  <DealerPhotoField kind={profile?.avatar_kind ?? null} photo={photo} hasPhoto={Boolean(profile?.photo_url)} />
  <label className={styles.field}>氏名 *<input name="name" defaultValue={profile?.full_name ?? ""} maxLength={100} autoComplete="name" required /></label>
- <label className={styles.field}>年齢 *<input name="age" type="number" min={0} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
+ <label className={styles.field}>年齢 *<input name="age" type="number" inputMode="numeric" min={0} max={120} step={1} defaultValue={profile?.age ?? ""} required /></label>
  <label className={styles.field}>ディーラー種別<select name="dealerType" value={dealerType} onChange={e=>setDealerType(e.target.value)}><option>ディーラー</option><option>フリーディーラー</option></select></label>
  <label className={styles.field}>受付状況 *<select name="contractStatus" defaultValue={profile?.contract_status ?? "契約可能"} required>{DEALER_CONTRACT_STATUSES.map(s=><option key={s} value={s}>{DEALER_STATUS_LABEL[s]}</option>)}</select><span className={styles.hint}>現在の募集状況を選択してください。店舗の一覧にも表示されます。</span></label>
  <DealerRegionField initial={profile?.available_prefectures?.length ? profile.available_prefectures : inferDealerPrefectures(profile?.available_regions ?? "")} required={freelance} />
@@ -41,7 +41,7 @@ export function DealerForm({ profile, address, photo, today, contacts }: { conta
  <p className={styles.hint}>同意しない場合は保存後も非公開です。一般会員や契約相手ではない店舗には公開しません。</p>
  </section>
  <fieldset className={styles.games+" "+styles.wide}><legend>対応可能なゲーム種目 *（複数選択）</legend>{DEALER_GAMES.map(g=><label key={g}><input type="checkbox" name="games" value={g} defaultChecked={profile?.games.includes(g) ?? false} />{g}</label>)}</fieldset>
- <label className={styles.field}>経験年数 *<input name="years" type="number" min={0} max={80} step={0.1} defaultValue={profile?.experience_years ?? ""} required /><span className={styles.hint}>半年の場合は0.5年と入力できます。</span></label>
+ <label className={styles.field}>経験年数 *<input name="years" type="number" inputMode="decimal" min={0} max={80} step={0.1} defaultValue={profile?.experience_years ?? ""} required /><span className={styles.hint}>半年の場合は0.5年と入力できます。</span></label>
  <WorkDates initialDates={profile?.available_dates ?? []} today={today} />
  <DealerWageField initialMin={profile?.desired_hourly_wage_min ?? null} initialMax={profile?.desired_hourly_wage_max ?? null} />
  <label className={styles.field+" "+styles.wide}>アピールポイント<textarea name="appeal" rows={7} maxLength={3000} defaultValue={profile?.appeal ?? ""} placeholder="得意なゲーム、ディーラー経験などを記載してください。" /></label>

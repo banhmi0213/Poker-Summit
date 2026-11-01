@@ -1,7 +1,12 @@
 import { revalidatePath } from "@/lib/revalidate";
 import { effectivePlanFee } from "@/lib/price-lock";
+import { prorateUpgrade } from "@/lib/proration";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
-import { chargeSavedCard, newOrderId } from "@/lib/komoju";
+import { createHash } from "crypto";
+import { chargeOnce, periodGroupKey } from "@/lib/payment-ledger";
+import { freshPeriodEnd, renewedPeriodEnd } from "@/lib/billing-dates";
+import { getBillingSettings, quote, discountFor, isBillingCycle } from "@/lib/bank-transfer";
+import { alertAdmin } from "@/lib/admin-alert";
 import { recordStoreHistory } from "@/lib/store-update";
 import { addonFeeFor } from "@/lib/addons";
 import { sendPaymentReceiptEmail } from "@/lib/email";
@@ -31,7 +36,7 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   const { data, error } = await supabase
     .from("store_contracts")
     .select(
-      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, price_lock_plan_id, price_lock_fee, price_lock_ended_at"
+      "id, store_id, plan_id, fincode_customer_id, fincode_subscription_id, pending_plan_id, pending_plan_effective_at, suspended_for_nonpayment_at, store_status_before_suspension, contact_email, current_period_end, billing_anchor_day, cancel_at_period_end, price_lock_plan_id, price_lock_fee, price_lock_ended_at, billing_cycle_months"
     )
     .eq("id", storeContractId)
     .single();
@@ -39,10 +44,34 @@ async function loadContract(supabase: Supa, storeContractId: string) {
   return data;
 }
 
-function addOneMonthIso(from: Date = new Date()): string {
-  const d = new Date(from);
-  d.setMonth(d.getMonth() + 1);
-  return d.toISOString();
+// カード払いの決済に失敗してから、掲載を止めるまでの猶予日数(cronと同じ)
+export const CARD_GRACE_DAYS = 7;
+
+/**
+ * 決済したかどうかがまだ分からない(処理中・結果不明)。失敗ではないので、
+ * 「決済失敗」の記録・掲載停止・再決済はしないこと。運営が確認してから続きを行う。
+ */
+export class PaymentPendingError extends Error {
+  constructor(message = "お支払いの結果を確認しています。二重にお支払いいただくことがないよう、運営で確認してからご連絡します。") {
+    super(message);
+    this.name = "PaymentPendingError";
+  }
+}
+
+export const CANCEL_SCHEDULED_MESSAGE = "解約のご予定があるため、プラン・アドオンの変更や決済はできません。解約を取り消す場合は運営にお問い合わせください。";
+
+export const PREPAY_CHANGE_MESSAGE = "まとめ払い（6か月・12か月）でご契約中のため、プランやお支払いサイクルの変更はお問い合わせフォームからご連絡ください。";
+
+/** カード契約のまとめ払いの月数(1・6・12)。それ以外は1 */
+export function cardCycleMonths(contract: { billing_cycle_months?: number | null }): 1 | 6 | 12 {
+  const m = Number(contract.billing_cycle_months ?? 1);
+  return isBillingCycle(m) ? m : 1;
+}
+
+export const BUSY_MESSAGE = "同じお手続きを処理しているか、お支払いの結果を確認中です。二重には決済していません。しばらくしてから画面を更新して、結果をご確認ください。";
+
+export function isPaymentPendingError(e: unknown): e is PaymentPendingError {
+  return e instanceof PaymentPendingError || (e instanceof Error && e.name === "PaymentPendingError");
 }
 
 // プラン・アドオンの「現在の確定状態」を、満額決済のうえ即座に適用する。
@@ -58,6 +87,8 @@ export async function applyContractBillingChange(params: {
   resolvesPendingPlan: boolean;
   // 記録用: 期間終了時の自動更新なら "card_renewal"
   source?: "contract_change" | "card_renewal";
+  /** 結果不明だった決済を運営が「決済済み」と確認したあと、同じ支払いとして続きを行うとき(lib/payment-resume.ts) */
+  groupKeyOverride?: string;
 }): Promise<{ chargedAmount: number; newPeriodEnd: string }> {
   const supabase = createServiceRoleClient();
   const contract = await loadContract(supabase, params.storeContractId);
@@ -65,6 +96,10 @@ export async function applyContractBillingChange(params: {
   if (!contract.fincode_customer_id) {
     throw new Error("この契約にはカード情報が登録されていません。運営にお問い合わせください。");
   }
+  if (contract.cancel_at_period_end) throw new Error(CANCEL_SCHEDULED_MESSAGE);
+  // まとめ払い(6か月・12か月)の契約は、期間の終わりの自動更新だけ。途中の変更はお問い合わせで(振込と同じ)
+  const months = cardCycleMonths(contract as any);
+  if (months > 1 && params.source !== "card_renewal") throw new Error(PREPAY_CHANGE_MESSAGE);
 
   const { data: plan, error: planError } = await supabase
     .from("plans")
@@ -88,26 +123,42 @@ export async function applyContractBillingChange(params: {
     .filter((a) => a.billing_type !== "one_time")
     .map((a) => ({ ...a, fee: addonFeeFor(a, pref) as number }));
 
-  const addonFeeTotal = addons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
   // 年内お申込み特典: 据え置き中の同じプランなら据え置き料金で請求する(lib/price-lock.ts)
   const planFee = effectivePlanFee(contract, plan.id, plan.monthly_fee ?? 0);
-  const total = planFee + addonFeeTotal;
+  // まとめ払いの更新: プランの月額 × 月数(まとめ払いの割引込み)。月額アドオンは毎月別に決済する(この決済には含めない)
+  const prepay = months > 1;
+  const chargedAddons = prepay ? [] : addons;
+  const addonFeeTotal = chargedAddons.reduce((sum, a) => sum + (a.fee ?? 0), 0);
+  const total = prepay ? quote(planFee, months as 6 | 12, discountFor(await getBillingSettings(supabase), months as 6 | 12)).total : planFee + addonFeeTotal;
 
-  const orderId = newOrderId("c", contract.id);
-  const charge = await chargeSavedCard({
-    orderId,
+  const isRenewal = params.source === "card_renewal";
+  // 何の支払いか: 更新なら「この契約のこの期間の更新」、即時の変更なら「この期間中のこの構成への変更」
+  const configHash = createHash("sha256").update(`${params.newPlanId}|${[...params.newAddonIds].sort().join(",")}`).digest("hex").slice(0, 16);
+  const groupKey =
+    params.groupKeyOverride ??
+    (isRenewal
+      ? periodGroupKey("renewal", contract.id, contract.current_period_end)
+      : periodGroupKey("change", contract.id, contract.current_period_end, configHash));
+  const description = `${isRenewal ? "契約更新" : "プラン・アドオン変更"}（契約 ${contract.id}・${plan.name}${prepay ? `・${months}か月まとめ払い` : ""}${chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""}）`;
+  const charge = await chargeOnce({
+    purpose: isRenewal ? "renewal" : "change",
+    groupKey,
     customerId: contract.fincode_customer_id,
     amount: total,
-    metadata: { store_contract_id: contract.id },
+    refs: { storeContractId: contract.id, storeId: contract.store_id },
+    context: { kind: "contract_billing_change", params: { ...params, groupKeyOverride: undefined } },
+    description,
   });
 
-  if (charge.status !== "CAPTURED") {
+  if (charge.status === "BUSY") throw new PaymentPendingError(BUSY_MESSAGE);
+  if (charge.status === "UNKNOWN") throw new PaymentPendingError();
+  if (charge.status === "FAILED") {
     await supabase.from("billing_events").insert({
       store_contract_id: contract.id,
       event_type: "failed",
       amount: total,
       source: params.source ?? "contract_change",
-      note: `決済失敗: status=${charge.status} ${charge.error_code ?? ""}`.slice(0, 500),
+      note: `決済失敗: ${charge.error}`.slice(0, 500),
     });
     await supabase
       .from("store_contracts")
@@ -115,15 +166,24 @@ export async function applyContractBillingChange(params: {
       .eq("id", contract.id);
     throw new Error("決済が完了しませんでした。カード情報をご確認ください。");
   }
+  if (charge.replayed && charge.amount !== total) {
+    await alertAdmin("決済済みの金額と今回の計算が違います", [description, `決済済み: ${charge.amount}円 / 今回の計算: ${total}円`, "決済済みの金額で記録し、二重には決済していません。"]);
+  }
+  const chargedTotal = charge.amount;
 
   // 決済成功後はお金を実際に取れている状態。以降で失敗しても billing_events に記録を残す。
   const nowIso = new Date().toISOString();
-  const newPeriodEnd = addOneMonthIso();
+  // 期間の計算は日本時間の暦日で(lib/billing-dates.ts)。更新は更新日を変えず、即時の変更は今日から1か月。
+  const period = isRenewal
+    ? renewedPeriodEnd({ previousPeriodEndIso: contract.current_period_end, anchorDay: contract.billing_anchor_day ?? null, graceDays: CARD_GRACE_DAYS, months })
+    : freshPeriodEnd(new Date(), months);
+  const newPeriodEnd = period.periodEndIso;
 
   const contractUpdate: Record<string, unknown> = {
     plan_id: params.newPlanId,
     fincode_subscription_id: null,
     current_period_end: newPeriodEnd,
+    billing_anchor_day: period.anchorDay,
     last_billing_status: "success",
     last_billing_at: nowIso,
     updated_at: nowIso,
@@ -160,6 +220,8 @@ export async function applyContractBillingChange(params: {
       .eq("status", "payment_suspended");
   }
 
+  // まとめ払いの更新ではアドオンの行は触らない(月額アドオンは毎月別に決済している)
+  if (!prepay) {
   // store_contract_addons を新しい構成に丸ごと置き換える(保留中の解除
   // 予約もここで全部クリアされる=新しい期間がまっさらにスタートする)。
   // 既にある行は残し(PICK UP表示が一瞬外れないように)、外れたものだけ消して、増えたものを足す。
@@ -189,14 +251,15 @@ export async function applyContractBillingChange(params: {
       .insert({ store_contract_id: contract.id, addon_id: a.id, fee: a.fee, billing_method: "card" });
     if (insertError) throw new Error(insertError.message);
   }
+  }
 
   await supabase.from("billing_events").insert({
     store_contract_id: contract.id,
     event_type: "success",
-    amount: total,
+    amount: chargedTotal,
     source: params.source ?? "contract_change",
-    note: `${params.source === "card_renewal" ? "契約更新の決済" : "プラン・アドオン変更の即時決済"}(${plan.name}${
-      addons.length ? " + " + addons.map((a) => a.name).join("、") : ""
+    note: `${params.source === "card_renewal" ? "契約更新の決済" : "プラン・アドオン変更の即時決済"}(${plan.name}${prepay ? `・${months}か月まとめ払い` : ""}${
+      chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""
     })`,
   });
 
@@ -209,8 +272,8 @@ export async function applyContractBillingChange(params: {
       await sendPaymentReceiptEmail({
         to: contract.contact_email,
         storeName: (storeInfo?.name as string | undefined) ?? "店舗",
-        amount: total,
-        description: `契約更新（${plan.name}${addons.length ? " + " + addons.map((a) => a.name).join("、") : ""}）`,
+        amount: chargedTotal,
+        description: `契約更新（${plan.name}${prepay ? `・${months}か月分` : ""}${chargedAddons.length ? " + " + chargedAddons.map((a) => a.name).join("、") : ""}）`,
         periodEnd: `${d.getUTCFullYear()}年${d.getUTCMonth() + 1}月${d.getUTCDate()}日`,
         at: new Date(),
       });
@@ -222,7 +285,7 @@ export async function applyContractBillingChange(params: {
     const d = new Date(Date.parse(newPeriodEnd) + 9 * 3600 * 1000);
     await notifyStoreLine(
       { storeId: contract.store_id },
-      `${yen(total)}のカード決済が完了しました（契約更新：${plan.name}）。\n次回更新日：${d.getUTCMonth() + 1}月${d.getUTCDate()}日\n${PLAN_PAGE_URL}`
+      `${yen(chargedTotal)}のカード決済が完了しました（契約更新：${plan.name}）。\n次回更新日：${d.getUTCMonth() + 1}月${d.getUTCDate()}日\n${PLAN_PAGE_URL}`
     );
   }
 
@@ -232,10 +295,10 @@ export async function applyContractBillingChange(params: {
     actorLabel: "web:self-serve-billing",
     field: "contract_plan_addons_changed",
     oldValue: null,
-    newValue: { planId: params.newPlanId, addonIds: params.newAddonIds, chargedAmount: total },
+    newValue: { planId: params.newPlanId, addonIds: params.newAddonIds, chargedAmount: chargedTotal },
   });
 
-  return { chargedAmount: total, newPeriodEnd };
+  return { chargedAmount: chargedTotal, newPeriodEnd };
 }
 
 // 金額が下がるプラン変更: 今すぐには切り替えず、現在の契約期間が終わる
@@ -247,10 +310,11 @@ export async function schedulePlanDowngrade(params: {
   const supabase = createServiceRoleClient();
   const { data: contract, error } = await supabase
     .from("store_contracts")
-    .select("id, current_period_end")
+    .select("id, current_period_end, billing_method, billing_cycle_months")
     .eq("id", params.storeContractId)
     .single();
   if (error || !contract) throw new Error(error?.message ?? "契約が見つかりません。");
+  if (cardCycleMonths(contract as any) > 1) throw new Error(PREPAY_CHANGE_MESSAGE);
 
   // current_period_endが無い(極めて古い契約等)場合は、次回のcron実行で
   // 即適用される形にフォールバックする。
@@ -310,4 +374,109 @@ export async function cancelScheduledAddonRemovals(storeContractId: string): Pro
     .eq("store_contract_id", storeContractId)
     .not("pending_removed_at", "is", null);
   if (error) throw new Error(error.message);
+}
+
+
+/**
+ * 毎月払いのカード契約で、金額が上がるプランへ途中で変える(2026/10)。
+ * 残りの日数分の差額だけを決済し、次の更新日は変えない(lib/proration.ts)。
+ * 契約期間が終わっている等で日割りできない場合は、従来どおり満額で新しい1か月を始める。
+ */
+export async function applyProratedPlanUpgrade(params: { storeContractId: string; newPlanId: string; groupKeyOverride?: string }): Promise<{
+  chargedAmount: number;
+  remainingDays: number;
+  periodEnd: string | null;
+  prorated: boolean;
+}> {
+  const supabase = createServiceRoleClient();
+  const contract = await loadContract(supabase, params.storeContractId);
+  if (!contract.fincode_customer_id) throw new Error("この契約にはカード情報が登録されていません。運営にお問い合わせください。");
+  if (contract.cancel_at_period_end) throw new Error(CANCEL_SCHEDULED_MESSAGE);
+  if (cardCycleMonths(contract as any) > 1) throw new Error(PREPAY_CHANGE_MESSAGE);
+
+  const [{ data: oldPlan }, { data: newPlan }] = await Promise.all([
+    supabase.from("plans").select("id, name, monthly_fee").eq("id", contract.plan_id).maybeSingle(),
+    supabase.from("plans").select("id, name, monthly_fee").eq("id", params.newPlanId).maybeSingle(),
+  ]);
+  if (!newPlan) throw new Error("プランが見つかりません。");
+  const oldMonthly = oldPlan ? effectivePlanFee(contract, oldPlan.id, oldPlan.monthly_fee ?? 0) : 0;
+  const newMonthly = newPlan.monthly_fee ?? 0;
+  const p = prorateUpgrade({ oldMonthly, newMonthly, periodEndIso: contract.current_period_end as string | null });
+
+  // 日割りできない(契約期間が切れている・不明)ときは、満額で新しい1か月を始める従来の処理
+  if (p.charge === null) {
+    const { data: addonRows } = await supabase
+      .from("store_contract_addons")
+      .select("addon_id")
+      .eq("store_contract_id", contract.id)
+      .eq("billing_method", "card")
+      .is("fincode_subscription_id", null);
+    const r = await applyContractBillingChange({
+      storeContractId: contract.id,
+      newPlanId: params.newPlanId,
+      newAddonIds: ((addonRows ?? []) as any[]).map((a) => a.addon_id as string),
+      resolvesPendingPlan: true,
+      groupKeyOverride: params.groupKeyOverride,
+    });
+    return { chargedAmount: r.chargedAmount, remainingDays: 0, periodEnd: r.newPeriodEnd, prorated: false };
+  }
+
+  let chargedAmount = p.charge;
+  if (p.charge > 0) {
+    const description = `プラン変更の日割り差額（契約 ${contract.id}・${oldPlan?.name ?? "旧プラン"}→${newPlan.name}）`;
+    const charge = await chargeOnce({
+      purpose: "upgrade",
+      // 何の支払いか: 「この契約の、この期間中の、このプランへの変更」(連打・二重送信でも1回だけ)
+      groupKey: params.groupKeyOverride ?? periodGroupKey("upgrade", contract.id, contract.current_period_end, `${contract.plan_id}>${params.newPlanId}`),
+      customerId: contract.fincode_customer_id,
+      amount: p.charge,
+      refs: { storeContractId: contract.id, storeId: contract.store_id },
+      context: { kind: "prorated_upgrade", params: { storeContractId: params.storeContractId, newPlanId: params.newPlanId } },
+      description,
+    });
+    if (charge.status === "BUSY") throw new PaymentPendingError(BUSY_MESSAGE);
+    if (charge.status === "UNKNOWN") throw new PaymentPendingError();
+    if (charge.status === "FAILED") {
+      await supabase.from("billing_events").insert({
+        store_contract_id: contract.id,
+        event_type: "failed",
+        amount: p.charge,
+        source: "contract_change",
+        note: `プラン変更(日割り差額)の決済失敗: ${charge.error}`.slice(0, 500),
+      });
+      throw new Error("決済が完了しませんでした。カード情報をご確認ください。");
+    }
+    chargedAmount = charge.amount;
+  }
+
+  const nowIso = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("store_contracts")
+    .update({
+      plan_id: params.newPlanId,
+      pending_plan_id: null,
+      pending_plan_effective_at: null,
+      updated_at: nowIso,
+    })
+    .eq("id", contract.id);
+  if (updateError) throw new Error(updateError.message);
+
+  await supabase.from("billing_events").insert({
+    store_contract_id: contract.id,
+    event_type: "success",
+    amount: chargedAmount,
+    source: "contract_change",
+    note: `プラン変更の日割り差額(${oldPlan?.name ?? "旧プラン"}→${newPlan.name}・残り${p.remainingDays}日/${p.periodDays}日・月額差${p.diffMonthly}円)`,
+  });
+  revalidatePath("/", "layout");
+  revalidatePath(`/stores/${contract.store_id}`);
+  await recordStoreHistory(supabase, {
+    storeId: contract.store_id,
+    actorType: "web",
+    actorLabel: "web:self-serve-billing",
+    field: "contract_plan_prorated_upgrade",
+    oldValue: { planId: contract.plan_id },
+    newValue: { planId: params.newPlanId, chargedAmount, remainingDays: p.remainingDays, periodDays: p.periodDays },
+  });
+  return { chargedAmount: chargedAmount ?? 0, remainingDays: p.remainingDays, periodEnd: contract.current_period_end as string | null, prorated: true };
 }

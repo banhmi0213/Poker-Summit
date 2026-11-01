@@ -65,7 +65,13 @@ export async function createJob(formData: FormData) {
   const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  assertAllowedStoreText(title, salary, description);
+  const experienceLevel = String(formData.get("experienceLevel") ?? "any");
+  if (!["any", "beginner", "experienced"].includes(experienceLevel)) throw new Error("経験条件を選択してください。");
+  const trainingDetails = String(formData.get("trainingDetails") ?? "").trim();
+  const transportationDetails = String(formData.get("transportationDetails") ?? "").trim();
+  const applicationDeadline = String(formData.get("applicationDeadline") ?? "").trim();
+  if (applicationDeadline && !/^\d{4}-\d{2}-\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
+  assertAllowedStoreText(title, salary, description, trainingDetails, transportationDetails);
   const bannerFile = formData.get("bannerImage");
 
   if (!title) {
@@ -86,6 +92,10 @@ export async function createJob(formData: FormData) {
     job_type: jobType || null,
     ...(formData.has("jobRole") ? { job_role: jobRole } : {}),
     salary: salary || null,
+    experience_level: experienceLevel,
+    training_details: trainingDetails || null,
+    transportation_details: transportationDetails || null,
+    application_deadline: applicationDeadline || null,
     description: description || null,
     banner_image_url: bannerImageUrl,
     banner_storage_path: bannerStoragePath,
@@ -135,7 +145,13 @@ export async function updateJob(formData: FormData) {
   const jobRole = readJobRole(formData.get("jobRole"));
   const salary = String(formData.get("salary") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
-  assertAllowedStoreText(title, salary, description);
+  const experienceLevel = String(formData.get("experienceLevel") ?? "any");
+  if (!["any", "beginner", "experienced"].includes(experienceLevel)) throw new Error("経験条件を選択してください。");
+  const trainingDetails = String(formData.get("trainingDetails") ?? "").trim();
+  const transportationDetails = String(formData.get("transportationDetails") ?? "").trim();
+  const applicationDeadline = String(formData.get("applicationDeadline") ?? "").trim();
+  if (applicationDeadline && !/^\d{4}-\d{2}-\d{2}$/.test(applicationDeadline)) throw new Error("募集期限を確認してください。");
+  assertAllowedStoreText(title, salary, description, trainingDetails, transportationDetails);
   const bannerFile = formData.get("bannerImage");
   const removeBanner = formData.get("removeBanner") === "on";
 
@@ -155,6 +171,10 @@ export async function updateJob(formData: FormData) {
     job_type: jobType || null,
     ...(formData.has("jobRole") ? { job_role: jobRole } : {}),
     salary: salary || null,
+    experience_level: experienceLevel,
+    training_details: trainingDetails || null,
+    transportation_details: transportationDetails || null,
+    application_deadline: applicationDeadline || null,
     description: description || null,
   };
 

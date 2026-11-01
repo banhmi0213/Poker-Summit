@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { handleNameError } from "@/lib/handle-name";
 
 const BOARD_IMAGES_BUCKET = "board-images";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
@@ -27,12 +28,28 @@ async function requireUser(nextPath: string) {
     redirect(`/login?next=${nextPath}`);
   }
 
-  const { data: suspended } = await supabase.rpc("is_suspended");
+  const { data: suspended, error: suspensionError } = await supabase.rpc("is_suspended");
+  if (suspensionError) throw new Error("会員状態を確認できませんでした。");
   if (suspended) {
     redirect("/account/suspended");
   }
 
   return { supabase, user };
+}
+
+// 投稿者名はハンドルネームに固定する(2026/10/20、匿名は荒れる元なので廃止)。
+// ハンドルネームがまだない会員は、投稿フォームで入れた名前をハンドルネームとして保存してから投稿する。
+type BoardClient = Awaited<ReturnType<typeof createClient>>;
+async function resolveAuthorName(supabase: BoardClient, user: { id: string; user_metadata: Record<string, unknown> }, formData: FormData) {
+  const current = String(user.user_metadata?.display_name ?? "").trim();
+  if (current) return current;
+  const name = String(formData.get("authorName") ?? "").trim();
+  const err = handleNameError(name);
+  if (err) throw new Error(err);
+  const { error } = await supabase.auth.updateUser({ data: { display_name: name } });
+  if (error) throw new Error("ハンドルネームを保存できませんでした。もう一度お試しください。");
+  await supabase.from("profiles").upsert({ user_id: user.id, display_name: name, updated_at: new Date().toISOString() });
+  return name;
 }
 
 function extFromFile(file: File): string {
@@ -49,12 +66,12 @@ export async function createPost(formData: FormData) {
 
   const title = String(formData.get("title") ?? "").trim();
   const body = String(formData.get("body") ?? "").trim();
-  const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
   const category = String(formData.get("category") ?? "").trim();
 
   if (!title || !body) {
     throw new Error("タイトルと本文を入力してください。");
   }
+  const authorName = await resolveAuthorName(supabase, user, formData);
 
   const image = formData.get("image");
   if (image instanceof File && image.size > 0) {
@@ -107,11 +124,11 @@ export async function createReply(formData: FormData) {
   const { supabase, user } = await requireUser(`/board/${postId}`);
 
   const body = String(formData.get("body") ?? "").trim();
-  const authorName = String(formData.get("authorName") ?? "").trim() || "匿名";
-
-  if (!body) {
-    throw new Error("返信内容を入力してください。");
-  }
+  if (!body) throw new Error("返信内容を入力してください。");
+  if (body.length > 12000) throw new Error("返信内容が長すぎます。短くして再度送信してください。");
+  const authorName = await resolveAuthorName(supabase, user, formData);
+  const parentReplyId = String(formData.get("parentReplyId") ?? "").trim() || null;
+  if (parentReplyId && !/^[0-9a-f-]{36}$/i.test(parentReplyId)) throw new Error("返信先が不正です。");
 
   // 「サミット返信にも画像添付できるようにして」との指示により追加
   // (2026/09/30)。createPost と同じ流れ: 添付があればバリデートし、
@@ -131,6 +148,7 @@ export async function createReply(formData: FormData) {
     .from("board_replies")
     .insert({
       post_id: postId,
+      parent_reply_id: parentReplyId,
       body,
       author_name: authorName,
       author_user_id: user.id,
@@ -173,9 +191,10 @@ export async function createReply(formData: FormData) {
   revalidatePath(`/board/${postId}`);
   revalidatePath("/board");
   revalidatePath("/");
+  revalidatePath("/mypage");
 }
 
-export async function reportPost(postId: string) {
+export async function reportPost(postId: string, formData?: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -185,7 +204,9 @@ export async function reportPost(postId: string) {
     target_type: "post",
     target_id: postId,
     reporter_user_id: user?.id ?? null,
-    reason: "ユーザーからの通報",
+    reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
+    detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
+    reporter_email: (() => { const e = String(formData?.get("reporterEmail") ?? "").trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 ? e : null; })(),
   });
 
   if (error) {
@@ -195,7 +216,7 @@ export async function reportPost(postId: string) {
   revalidatePath(`/board/${postId}`);
 }
 
-export async function reportReply(replyId: string, postId: string) {
+export async function reportReply(replyId: string, postId: string, formData?: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -205,7 +226,9 @@ export async function reportReply(replyId: string, postId: string) {
     target_type: "reply",
     target_id: replyId,
     reporter_user_id: user?.id ?? null,
-    reason: "ユーザーからの通報",
+    reason: String(formData?.get("reason") ?? "").trim().slice(0, 60) || "ユーザーからの通報",
+    detail: String(formData?.get("detail") ?? "").trim().slice(0, 1000) || null,
+    reporter_email: (() => { const e = String(formData?.get("reporterEmail") ?? "").trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 254 ? e : null; })(),
   });
 
   if (error) {

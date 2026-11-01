@@ -1,19 +1,28 @@
 .wide, .four { width: 100%; }
 .wide { display: grid; grid-template-columns: minmax(0, 1fr); }
 .four { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.banner { composes: hoverable from "./home-banner-hover.module.css"; display: block; overflow: hidden; border-radius: 10px; min-width: 0; line-height: 0; }
+.banner { display: block; overflow: hidden; border-radius: 10px; min-width: 0; line-height: 0; }
 .banner img { display: block; width: 100%; height: auto; aspect-ratio: 10 / 1; object-fit: cover; object-position: center; }
 .four .banner img { aspect-ratio: 3 / 2; }
 @media (max-width: 720px) { .wide .banner img { aspect-ratio: 6 / 1; } }
 @media (max-width: 720px) { .four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
 
-/* Share the same lift and shadow for PICK UP and all other wide banners. */
-.banner{border:1px solid transparent}
-.banner:focus-visible{outline:2px solid #b98a32;outline-offset:3px}
-.wide .banner{border:0;-webkit-tap-highlight-color:transparent}
+.banner{composes:bannerHover from "./home-banner-hover.module.css";border:0}
 .wide .banner img{aspect-ratio:auto;object-fit:contain}
-.pickup{width:100%}
 
 /* Match Summit dimensions with full subjects inside the photographic safe area. */
 .wide .jobsArtwork { position: relative; aspect-ratio: 2146 / 229; }
 .wide .jobsArtwork img { position: absolute; left: 0; top: 50%; width: 100%; height: auto; max-width: none; transform: translateY(-51.25%); }
+
+/* Phone only: modest proportional enlargement using the existing artwork. */
+@media(max-width:767px){
+ .wide{width:calc(100% + 24px);margin-left:-12px}
+}
+
+/* Remove generated canvas padding without scaling either image axis independently. */
+.wide .couponArtwork { position: relative; aspect-ratio: 2146 / 229; }
+.wide .couponArtwork img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; aspect-ratio:auto; }
+
+/* Preserve PICK UP size; remove only the outer image canvas padding. */
+.wide .pickupArtwork { position:relative; aspect-ratio:1600 / 193; }
+.wide .pickupArtwork img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 52%; aspect-ratio:auto; }

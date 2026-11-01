@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { pushLineMessage } from "@/lib/line";
+import { storeNotifyTargets } from "@/lib/store-notify";
 import { sendJobApplicationNotificationEmail } from "@/lib/email";
 
 async function requireUser() {
@@ -89,7 +90,7 @@ export async function submitJobApplication(formData: FormData) {
   const path = String(formData.get("path") ?? "/jobs");
   const name = String(formData.get("name") ?? "").trim();
   const tel = String(formData.get("tel") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").normalize("NFKC").trim();
   const message = String(formData.get("message") ?? "").trim();
   const ageRaw = String(formData.get("age") ?? "").trim();
   const age = ageRaw ? Number(ageRaw) : null;
@@ -144,14 +145,23 @@ export async function submitJobApplication(formData: FormData) {
         .rpc("get_job_notification_target", { p_job_id: jobId })
         .maybeSingle<{ store_name: string; job_title: string; line_user_id: string | null; contact_email: string | null }>();
 
+      // 店舗が選んだ受け取り方(両方/LINEのみ/メールのみ)に従う
+      const { data: jobStore } = await createServiceRoleClient()
+        .from("jobs")
+        .select("stores(notify_channel)")
+        .eq("id", jobId)
+        .maybeSingle();
+      const pref = (Array.isArray((jobStore as any)?.stores) ? (jobStore as any).stores[0] : (jobStore as any)?.stores)?.notify_channel as string | undefined;
+      const send = target ? storeNotifyTargets(pref, !!target.line_user_id, !!target.contact_email) : { line: false, email: false };
+
       if (target) {
-        if (target.line_user_id) {
+        if (target.line_user_id && send.line) {
           await pushLineMessage(
             target.line_user_id,
             `【Poker Summit】求人「${target.job_title}」に応募がありました。\n応募者: ${name}\n店舗管理画面の「求人管理」からご確認ください。`
           );
         }
-        if (target.contact_email) {
+        if (target.contact_email && send.email) {
           await sendJobApplicationNotificationEmail({
             to: target.contact_email,
             storeName: target.store_name,

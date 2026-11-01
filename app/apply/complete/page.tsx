@@ -21,7 +21,7 @@ export default async function ApplyCompletePage({
   const { data: application } = await supabase
     .from("listing_applications")
     .select(
-      "id, company_name, payment_status, issued_login_id, issued_password, issued_line_code, credentials_retrieved_at"
+      "id, company_name, payment_status, payment_note, issued_login_id, issued_password, issued_line_code, credentials_retrieved_at"
     )
     .eq("id", applicationId)
     .maybeSingle();
@@ -41,6 +41,34 @@ export default async function ApplyCompletePage({
       <Card title="お申込みありがとうございます">
         <p className="muted">
           決済は完了しました。現在、店舗情報の登録処理を確認しております。担当者より改めてログイン情報をご連絡いたしますので、今しばらくお待ちください。
+        </p>
+      </Card>
+    );
+  }
+
+  // 支払い画面で払わずに戻ってきた(KOMOJUのセッションがまだ支払い待ち)。料金は発生していないので、そのまま続けられるようにする(2026/10/29)
+  if (application.payment_status === "charge_unknown" && String(application.payment_note ?? "").includes("支払い画面で操作中")) {
+    return (
+      <Card title="お支払いがまだ完了していません">
+        <p className="muted">
+          カードのお支払いはまだ行われていません（料金は発生していません）。お支払いを続ける場合は、下のボタンからお支払い画面にお進みください。
+        </p>
+        <a
+          href={`/apply/complete/resume?application=${application.id}`}
+          className="btn primary"
+          style={{ marginTop: 16, display: "inline-flex" }}
+        >
+          お支払い画面に進む
+        </a>
+      </Card>
+    );
+  }
+
+  if (application.payment_status === "charge_unknown") {
+    return (
+      <Card title="お支払いの結果を確認しています">
+        <p className="muted">
+          通信の状況により、カード決済の結果をすぐに確認できませんでした。二重にお支払いいただくことがないよう、運営で決済の状況を確認してから、ご登録のメールアドレスにご連絡いたします。もう一度お申し込みいただく必要はありません。
         </p>
       </Card>
     );
@@ -112,13 +140,17 @@ export default async function ApplyCompletePage({
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="container" style={{ maxWidth: 480, paddingTop: 40 }}>
-      <div className="brand wordmark" style={{ marginBottom: 20 }}>
+      <a href="/" className="brand wordmark" style={{ marginBottom: 20, display: "inline-block" }}>
         <img className="logo-img" src="/images/logo.webp" alt="Poker Summit" />
-      </div>
+      </a>
       <div className="card">
         <h1 style={{ fontSize: 18, marginBottom: 8 }}>{title}</h1>
         {children}
       </div>
+      {/* どの表示からもサイトに戻れるように(オーナー 2026/10/29) */}
+      <p style={{ marginTop: 16, textAlign: "center", fontSize: 14 }}>
+        <a href="/">トップページに戻る</a>
+      </p>
     </div>
   );
 }

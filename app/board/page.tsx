@@ -1,4 +1,7 @@
 import { threadCardStyle, threadStyle, validCode } from "@/lib/cosmetics";
+import { BoardActivityNav } from "./activity-nav";
+import { BoardHelp, MentionInput } from "./community";
+import compose from "./compose.module.css";
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,7 +12,8 @@ import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { BOARD_CATEGORIES } from "@/lib/constants";
 import { Avatar } from "@/app/avatar";
-import { MemberRoleBadge } from "@/app/member-role-badge";
+import { MemberRoleBadge, OfficialBadge } from "@/app/member-role-badge";
+import { HANDLE_NAME_ASCII_MAX, HANDLE_NAME_NOTICE } from "@/lib/handle-name";
 import { AcademyBadge } from "@/app/learn/academy-badge";
 import { staticPageMetadata } from "@/lib/seo";
 
@@ -62,7 +66,8 @@ export default async function BoardPage({
     .select("id", { count: "exact", head: true })
     .eq("status", "visible");
   if (category) countQuery = countQuery.eq("category", category);
-  if (q) countQuery = countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
+  // サミットの本文は会員だけが読める(2026/10/20)。未ログインの人の検索はタイトルだけで行う
+  if (q) countQuery = user ? countQuery.or(`title.ilike.%${q}%,body.ilike.%${q}%`) : countQuery.ilike("title", `%${q}%`);
 
   // スレッド一覧の並び順。既定は新着順(created_at、2026/10「新着を先に
   // 持ってきて」との指示)。sort=updatedが指定された場合のみ更新日時
@@ -71,15 +76,17 @@ export default async function BoardPage({
   // あれば一番先頭に来るように」との旧指示を踏襲したオプションとして残す)。
   let query = supabase
     .from("board_posts")
-    .select("id, title, author_name, author_user_id, created_at, updated_at, category, image_url")
+    // 未ログインの人にはタイトル等だけ(本文・画像は会員だけ。2026/10/20)
+    .select("id, title, author_name, author_user_id, created_at, updated_at, category" + (user ? ", image_url" : ""))
     .eq("status", "visible")
     .order(sort === "updated" ? "updated_at" : "created_at", { ascending: false })
     .order("id", { ascending: false });
   if (category) query = query.eq("category", category);
-  if (q) query = query.or(`title.ilike.%${q}%,body.ilike.%${q}%`);
+  if (q) query = user ? query.or(`title.ilike.%${q}%,body.ilike.%${q}%`) : query.ilike("title", `%${q}%`);
   query = query.range(from, to);
 
-  const [{ count: totalCount }, { data: posts }] = await Promise.all([countQuery, query]);
+  const [{ count: totalCount }, { data: rawPosts }] = await Promise.all([countQuery, query]);
+  const posts = rawPosts as unknown as {id:string;title:string;author_name:string;author_user_id:string|null;created_at:string;updated_at:string;category:string|null;image_url?:string|null}[] | null;
   const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
   function buildHref(
@@ -99,6 +106,8 @@ export default async function BoardPage({
   }
 
   const postIds = (posts ?? []).map((p) => p.id);
+  const { data: resolutionRows } = user && postIds.length ? await supabase.from("board_resolutions").select("post_id").in("post_id",postIds) : {data:[]};
+  const resolvedIds = new Set((resolutionRows ?? []).map(r=>r.post_id));
   const { data: replyRows } = postIds.length
     ? await supabase.from("board_replies").select("post_id").in("post_id", postIds)
     : { data: [] as { post_id: string }[] };
@@ -119,6 +128,11 @@ export default async function BoardPage({
   const { data: badgeRows } = authorUserIds.length
     ? await supabase.from("academy_graduation").select("user_id, best_score").in("user_id", authorUserIds)
     : { data: [] as { user_id: string; best_score: number }[] };
+  // 「運営」バッジを付ける運営アカウント(2026/10/20)
+  const { data: officialRows } = authorUserIds.length
+    ? await supabase.rpc("official_board_user_ids", { p_ids: authorUserIds })
+    : { data: [] as string[] };
+  const officialIds = new Set<string>(((officialRows ?? []) as unknown[]).map((r) => String(r)));
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
   // アイコン枠・スレッドデザイン(2026/11/01)。投稿者ぶんを1回でまとめて引く。
@@ -144,8 +158,8 @@ export default async function BoardPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>← TOPに戻る</Link></div>
-      <div className="container">
+      <div className="container" style={{ paddingTop: 12, paddingBottom: 0 }}><Link href="/" style={{ color: "#99742f", fontSize: 13, fontWeight: 600 }}>TOPに戻る</Link></div>
+      <div className="container community-page">
         <CompactPortalBanner image="/images/compact-community.webp" eyebrow="POKER SUMMIT COMMUNITY" title="サミット｜情報交換" subtitle="ポーカーの話題で、つながろう。" detail="雑談・初心者質問・大会情報・おすすめ店舗・攻略・戦略" />
         <div className="portal-banner portal-banner--mobile" style={{ margin: "0 0 20px", height: 190, overflow: "hidden", borderRadius: 10 }}>
           <picture>
@@ -178,6 +192,8 @@ export default async function BoardPage({
           ))}
         </div>
 
+        <BoardHelp />
+        {user && <BoardActivityNav userId={user.id} />}
         {/* キーワード検索・並び替え(2026/10、「投稿が増えたときに備えて検索と
             並び替えがあると便利」との指示)。カテゴリ絞り込み(チップ)は維持した
             まま検索・並び替えできるよう、現在のcategoryを隠しフィールドで
@@ -219,13 +235,22 @@ export default async function BoardPage({
         </form>
 
         {user ? (
-          <div className="card">
-            <h2 style={{ fontSize: 16, marginBottom: 10 }}>新規投稿</h2>
+          <details className={`card ${compose.compose}`}>
+            <summary><span className={compose.plus} aria-hidden>＋</span>新しく投稿する</summary>
+            <div className={compose.body}>
             <form action={createPost}>
-              <div className="field">
-                <span className="muted">お名前（空欄で投稿すると匿名になります）</span>
-                <input type="text" name="authorName" defaultValue={authorDisplayName} placeholder="匿名" />
-              </div>
+              {/* 投稿者名はハンドルネームに固定(匿名なし。2026/10/20)。未設定の会員だけここで決めてもらう */}
+              {authorDisplayName ? (
+                <div className="field">
+                  <span className="muted">お名前</span>
+                  <div style={{ fontWeight: 700 }}>{authorDisplayName} <Link href="/account/profile" className="muted small" style={{ fontWeight: 400, textDecoration: "underline" }}>変更</Link></div>
+                </div>
+              ) : (
+                <div className="field">
+                  <span className="muted">ハンドルネーム *（掲示板とマイページに表示されます。{HANDLE_NAME_NOTICE}）</span>
+                  <input type="text" name="authorName" required maxLength={HANDLE_NAME_ASCII_MAX} autoComplete="nickname" placeholder="例）ポーカー太郎" />
+                </div>
+              )}
               <div className="field">
                 <span className="muted">カテゴリ</span>
                 <select name="category" defaultValue="">
@@ -242,8 +267,7 @@ export default async function BoardPage({
                 <input type="text" name="title" required />
               </div>
               <div className="field">
-                <span className="muted">本文 *</span>
-                <textarea name="body" rows={4} required />
+                <MentionInput label="本文" rows={4} />
               </div>
               <div className="field">
                 <span className="muted">画像（任意）</span>
@@ -256,7 +280,8 @@ export default async function BoardPage({
                 投稿する
               </button>
             </form>
-          </div>
+            </div>
+          </details>
         ) : (
           // 投稿には会員登録が必要(2026/10、「サミット投稿・観覧・返信には
           // 会員登録が必要」との指示)。一覧自体は誰でも見れるが、投稿フォーム
@@ -277,7 +302,7 @@ export default async function BoardPage({
               marginBottom: 16,
             }}
           >
-            <p style={{ fontSize: 13, margin: 0 }}>投稿には無料会員登録が必要です</p>
+            <p style={{ fontSize: 13, margin: 0 }}>サミットの閲覧・投稿には会員登録が必要です</p>
             <Link href="/signup" className="btn primary" style={{ fontSize: 12.5, padding: "6px 14px" }}>
               ログイン / 会員登録
             </Link>
@@ -307,7 +332,7 @@ export default async function BoardPage({
                 <Avatar name={p.author_name} url={null} />
               )}
               <Link href={`/board/${p.id}`} style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}{(() => { const b = p.author_user_id ? threadStyle(threadByUserId[p.author_user_id]).badge : undefined; return b && <span style={b.style}>{b.text}</span>; })()}</div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>{p.title}{resolvedIds.has(p.id) && <span className="badge good" style={{marginLeft:8}}>✓ 回答済み</span>}{(() => { const b = p.author_user_id ? threadStyle(threadByUserId[p.author_user_id]).badge : undefined; return b && <span style={b.style}>{b.text}</span>; })()}</div>
                 <div className="meta" style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 2, alignItems: "center" }}>
                   {p.category && <span className="badge outline">{p.category}</span>}
                   {/* 投稿者名・日時のコントラスト向上(2026/10、「薄い文字を
@@ -315,10 +340,10 @@ export default async function BoardPage({
                       コントラスト比が低いため、サイト全体の.mutedは変えず
                       このメタ情報だけ--text-2(より濃い色)で上書きする。 */}
                   <span style={{ display: "inline-flex", flexDirection: "column", lineHeight: 1.25, minWidth: 0, maxWidth: "100%" }}>
-                    <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
+                    <span style={{display:"inline-flex",gap:5,alignItems:"center",flexWrap:"wrap"}}><OfficialBadge show={!!p.author_user_id && officialIds.has(p.author_user_id)} /><MemberRoleBadge role={role} /><AcademyBadge score={p.author_user_id ? graduationByUserId[p.author_user_id] : null} compact/></span>
                     <span className="muted" style={{ color: "var(--text-2)" }}>{p.author_name}</span>
                   </span>
-                  <span className="muted" style={{ color: "var(--text-2)" }}>・ {formatDate(p.created_at)}</span>
+                  <span className="muted" style={{ color: "var(--text-2)", whiteSpace: "nowrap" }}>{formatDate(p.created_at)}</span>
                   <span className="muted">💬 {replyCounts[p.id] ?? 0}</span>
                 </div>
               </Link>
@@ -355,11 +380,11 @@ export default async function BoardPage({
           >
             {page > 1 ? (
               <Link href={buildHref({ page: page - 1 })} className="btn" style={{ padding: "6px 14px" }}>
-                ← 前へ
+                前へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                ← 前へ
+                前へ
               </span>
             )}
             <span className="muted" style={{ fontSize: 13 }}>
@@ -367,11 +392,11 @@ export default async function BoardPage({
             </span>
             {page < totalPages ? (
               <Link href={buildHref({ page: page + 1 })} className="btn" style={{ padding: "6px 14px" }}>
-                次へ →
+                次へ
               </Link>
             ) : (
               <span className="btn" style={{ padding: "6px 14px", opacity: 0.4, pointerEvents: "none" }}>
-                次へ →
+                次へ
               </span>
             )}
           </div>

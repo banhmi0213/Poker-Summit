@@ -66,7 +66,7 @@ export function SweepRunner() {
           {progress.done}/{progress.total}地域({progress.current}) ・ 見つかった {progress.found}件 ・ 新しく仮登録 <strong>{progress.inserted}件</strong>
           {progress.current === "完了" && (
             <>
-              {" "}→ <Link href="/admin/stores?status=pending">承認待ちを見る</Link>
+              {" "}<Link href="/admin/stores?status=pending">承認待ちを見る</Link>
             </>
           )}
         </p>

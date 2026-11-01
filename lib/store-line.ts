@@ -21,7 +21,7 @@ export async function notifyStoreLine(target: { storeId?: string | null; contrac
     const { data: store } = await svc.from("stores").select("line_user_id").eq("id", storeId).maybeSingle();
     const lineUserId = store?.line_user_id as string | null | undefined;
     if (!lineUserId) return;
-    await pushLineMessage(lineUserId, `【Poker Summit】\n${text}`);
+    await pushLineMessage(lineUserId, `【Poker Summit】\n${text}`, { storeId });
   } catch {
     // ベストエフォート
   }

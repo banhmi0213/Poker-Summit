@@ -93,7 +93,7 @@ export default async function JobDetailPage({
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, title, job_type, salary, description, status, posted_at, created_at, banner_image_url, store_id, stores(id, name, category, pref, city, address, tel, status)"
+      "id, title, job_type, experience_level, training_details, transportation_details, application_deadline, salary, description, status, posted_at, created_at, banner_image_url, store_id, stores(id, name, category, pref, city, address, tel, status)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -140,7 +140,7 @@ export default async function JobDetailPage({
       <PortalHeader userEmail={user?.email} />
       <div className="container detail-readable" style={{ maxWidth: 640 }}>
         <Link href="/jobs" className="breadcrumb">
-          ← 求人一覧に戻る
+          求人一覧に戻る
         </Link>
 
         {j.banner_image_url && (
@@ -163,8 +163,10 @@ export default async function JobDetailPage({
             <span className="badge">{CATEGORY_LABEL[j.stores.category] ?? j.stores.category}</span>
           )}
           {j.job_type && <span className="badge outline">{j.job_type}</span>}
+          {j.experience_level === "beginner" && <span className="badge outline">未経験歓迎</span>}
+          {j.experience_level === "experienced" && <span className="badge outline">経験者募集</span>}
           <span className={`badge ${j.status === "open" ? "good" : "outline"}`}>
-            {j.status === "open" ? "● 公開中" : "停止中"}
+            {j.status === "open" ? "● 募集中" : "募集終了"}
           </span>
         </div>
 
@@ -185,7 +187,7 @@ export default async function JobDetailPage({
           </div>
           <div className="info-row">
             <div className="k">仕事内容</div>
-            <div>{j.description || "-"}</div>
+            <div style={{ whiteSpace: "pre-wrap" }}>{j.description || "-"}</div>
           </div>
           <div className="info-row">
             <div className="k">応募状況</div>
@@ -223,13 +225,19 @@ export default async function JobDetailPage({
           </Link>
         </div>
 
+        {(j.training_details || j.transportation_details || j.application_deadline) && <div className="card" style={{marginTop:16}}>
+          <h2 style={{fontSize:16,marginBottom:10}}>勤務・応募条件</h2>
+          {j.training_details && <p>研修：{j.training_details}</p>}
+          {j.transportation_details && <p>交通費：{j.transportation_details}</p>}
+          {j.application_deadline && <p>募集期限：{j.application_deadline}</p>}
+        </div>}
         {searchParams.applyDone && (
           <div className="card" style={{ marginTop: 18, background: "var(--good-soft)" }}>
             <p style={{ fontSize: 13.5 }}>✓ 応募を受け付けました。店舗からの連絡をお待ちください。</p>
           </div>
         )}
 
-        {!appliedByMe && j.status === "open" && (
+        {!appliedByMe && j.status === "open" && (!j.application_deadline || j.application_deadline >= new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Tokyo"})) && (
           <div id="apply" style={{ marginTop: 18, scrollMarginTop: 20 }}>
             <h2 style={{ fontSize: 16, marginBottom: 10 }}>この求人に応募する</h2>
             {searchParams.applyError && <p className="err">{searchParams.applyError}</p>}

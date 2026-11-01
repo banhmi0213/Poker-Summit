@@ -67,7 +67,7 @@ export default async function AdminSystemPage() {
     .from("coupons")
     .select("id, title, valid_until")
     .eq("active", true)
-    .lt("valid_until", new Date().toISOString().slice(0, 10));
+    .lt("expires_at", new Date().toISOString()); // 期限日の営業終了を過ぎたもの
   staleActiveCoupons?.forEach((c) =>
     issues.push(`有効期限切れなのに公開中のクーポン: ${c.title}`)
   );

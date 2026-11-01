@@ -47,7 +47,7 @@ export function HandStrengthQuiz() {
      <div className={styles.player}><span>PLAYER B</span><div className={styles.cards}>{current.b.map((card,i) => <CardFace key={i} card={card}/>)}</div></div>
     </div><p className={styles.prompt}>どちらが勝つでしょうか？</p>
     <div className={styles.options}>{(["A","引き分け","B"] as Winner[]).map(value => <button key={value} type="button" disabled={answered} onClick={() => select(value)} className={answered && current.winner === value ? styles.correct : answered && choice === value ? styles.wrong : styles.option}>{value === "A" ? "PLAYER A" : value === "B" ? "PLAYER B" : "引き分け"}</button>)}</div>
-    {answered && <div className={styles.feedback} role="status"><strong>{choice === current.winner ? "正解！" : "惜しい！"} 正解：{current.winner === "引き分け" ? "引き分け" : "PLAYER " + current.winner}</strong><p>{current.explanation}</p><button type="button" onClick={next}>{index === questions.length - 1 ? "結果を見る →" : "次の問題へ →"}</button></div>}
+    {answered && <div className={styles.feedback} role="status"><strong>{choice === current.winner ? "正解！" : "惜しい！"} 正解：{current.winner === "引き分け" ? "引き分け" : "PLAYER " + current.winner}</strong><p>{current.explanation}</p><button type="button" onClick={next}>{index === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
    </>}
   <p className={styles.note}>※テキサスホールデムの一般的な役判定です。各プレイヤーは手札2枚と共通カード5枚の計7枚から、最も強い5枚を使います。スート自体に強弱はありません。</p>
  </section>;

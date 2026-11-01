@@ -1,3 +1,4 @@
+import { PasswordInput } from "@/app/password-input";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -26,7 +27,7 @@ export default async function StorePasswordPage({
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>パスワード変更</h1>
       <div className="card" style={{ maxWidth: 400 }}>
@@ -41,11 +42,11 @@ export default async function StorePasswordPage({
           <input type="text" name="username" autoComplete="username" value={(user.email ?? "").split("@")[0]} readOnly hidden />
           <div className="field">
             <span className="muted">新しいパスワード（{PASSWORD_RULE_LABEL}）</span>
-            <input type="password" name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />
+            <PasswordInput name="password" required minLength={PASSWORD_MIN_LENGTH} pattern={PASSWORD_INPUT_PATTERN} title={PASSWORD_RULE_LABEL} autoComplete="new-password" />
           </div>
           <div className="field">
             <span className="muted">新しいパスワード（確認）</span>
-            <input type="password" name="passwordConfirm" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
+            <PasswordInput name="passwordConfirm" required minLength={PASSWORD_MIN_LENGTH} autoComplete="new-password" />
           </div>
           <button type="submit" className="btn primary" style={{ width: "100%" }}>
             変更する

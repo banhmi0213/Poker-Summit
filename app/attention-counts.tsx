@@ -48,6 +48,7 @@ export function CountBadge({ count, label }: { count: number | undefined; label?
     <span
       role="status"
       aria-label={`${label ?? "未対応"} ${count}件`}
+      title={`${label ?? "未対応"} ${count}件`}
       style={{
         display: "inline-block",
         marginLeft: 8,
@@ -65,3 +66,16 @@ export function CountBadge({ count, label }: { count: number | undefined; label?
     </span>
   );
 }
+
+// 総合管理の件数の印の意味(メニューの印の説明・ダッシュボードの「対応が必要なこと」で使う)
+export const ADMIN_ATTENTION_ITEMS: { key: string; href: string; label: string }[] = [
+  { key: "billing", href: "/admin/billing", label: "入金待ちの請求書" },
+  { key: "listing_applications", href: "/admin/listing-applications", label: "新しい掲載申込" },
+  { key: "kyc_pending", href: "/admin/listing-applications", label: "事業者の確認待ちの申込（本人確認・反社チェック。カード払いはその日のうちに）" },
+  { key: "stores_pending", href: "/admin/stores", label: "確認待ちの店舗（掲載待ち・情報の変更申請）" },
+  { key: "contracts", href: "/admin/contracts", label: "新しい契約" },
+  { key: "addon_orders", href: "/admin/addon-orders", label: "未対応のアドオン注文" },
+  { key: "reports", href: "/admin/reports", label: "未対応の通報" },
+  { key: "dealer_chat_reports", href: "/admin/dealer-chat-reports", label: "未対応のマッチング通報" },
+  { key: "inquiries", href: "/admin/inquiries", label: "未読・対応中のお問い合わせ" },
+];

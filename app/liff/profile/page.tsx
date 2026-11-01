@@ -181,7 +181,7 @@ export default function LiffProfilePage() {
       )}
 
       {step === "form" && (
-        <form onSubmit={handleReview} className="card">
+        <form data-allow-resubmit onSubmit={handleReview} className="card">
           <div className="field">
             <span className="muted">店名 *</span>
             <input

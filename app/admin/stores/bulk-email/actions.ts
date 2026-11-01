@@ -34,19 +34,48 @@ async function getActiveStoreRecipients(supabase: Awaited<ReturnType<typeof crea
 }
 
 export async function sendBulkEmailToStores(formData: FormData) {
-  const subject = String(formData.get("subject") ?? "").trim();
-  const body = String(formData.get("body") ?? "").trim();
+  // 文案を貼り付けたときに付いてくる「件名：」「本文：」の見出しは外す(2026/10/20)
+  const subject = String(formData.get("subject") ?? "").trim().replace(/^[*＊\s]*件名[*＊\s]*[:：][*＊\s]*/, "").trim();
+  const body = String(formData.get("body") ?? "").trim().replace(/^[*＊\s]*本文[*＊\s]*[:：][*＊\s]*/, "").trim();
 
   if (!subject || !body) {
     throw new Error("件名と本文を入力してください。");
   }
 
   const supabase = await createClient();
-  const recipients = await getActiveStoreRecipients(supabase);
+  // 送り先: 店舗へのメール(+店舗管理画面の受信箱) / LINE / サイトのお知らせ(2026/10/20 サイトを追加)
+  const toEmail = formData.get("toEmail") === "on";
+  const toSite = formData.get("toSite") === "on";
+  // 会員へのメール(大事なお知らせのときだけ使う。2026/10/20)
+  const toMembers = formData.get("toMembers") === "on";
+  const recipients = toEmail ? await getActiveStoreRecipients(supabase) : [];
 
   const lineScope = String(formData.get("lineScope") ?? "none"); // none / contracted / all
-  if (recipients.length === 0 && lineScope === "none") {
+  if (!toEmail && !toSite && !toMembers && lineScope === "none") {
+    throw new Error("送り先(メール・LINE・サイト)を1つ以上選んでください。");
+  }
+  if (toEmail && recipients.length === 0 && lineScope === "none" && !toSite && !toMembers) {
     throw new Error("送信先の店舗メールアドレスが見つかりませんでした。");
+  }
+
+  // サイトのお知らせ(公開サイトの /news に全国・全員向けで出す)
+  let siteNotice = false;
+  if (toSite) {
+    const { data: auth } = await supabase.auth.getUser();
+    const { error: siteError } = await supabase.from("site_notices").insert({ title: subject, body, created_by: auth.user?.id ?? null });
+    if (siteError) throw new Error(`サイトのお知らせを保存できませんでした: ${siteError.message}`);
+    siteNotice = true;
+    revalidatePath("/news");
+  }
+
+  let memberResult = { sent: [] as string[], failed: [] as { to: string; error: string }[] };
+  if (toMembers) {
+    const svc = createServiceRoleClient();
+    const { data: rows, error: rpcError } = await svc.rpc("member_notice_recipients");
+    if (rpcError) throw new Error(`会員の宛先を取得できませんでした: ${rpcError.message}`);
+    const memberEmails = Array.from(new Set(((rows ?? []) as Array<{ email: string }>).map((r) => r.email).filter(Boolean)));
+    const memberText = `${body}\n\n――――――――――\nPoker Summit運営事務局\nhttps://pokersummit.jp/news\n※このメールは、Poker Summitに会員登録いただいた方へ大切なお知らせとしてお送りしています。`;
+    if (memberEmails.length) memberResult = await sendBulkEmail({ recipients: memberEmails, subject: `【Poker Summit】${subject}`, text: memberText });
   }
 
   const result = recipients.length
@@ -55,6 +84,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
 
   // LINE連携済みの店舗にはLINEでも送る(サイトからのお知らせ)
   let lineSent = 0;
+  let lineStoreIds: string[] = [];
   if (lineScope === "contracted" || lineScope === "all") {
     const svc = createServiceRoleClient();
     let storeQuery = svc.from("stores").select("id, line_user_id").not("line_user_id", "is", null);
@@ -67,6 +97,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
     }
     const { data: lineStores } = await storeQuery;
     const userIds = Array.from(new Set((lineStores ?? []).map((s) => s.line_user_id as string).filter(Boolean)));
+    lineStoreIds = (lineStores ?? []).map((s) => s.id as string);
     const text = `【Poker Summit からのお知らせ】\n${subject}\n\n${body}`.slice(0, 4900);
     for (const userId of userIds) {
       await pushLineMessage(userId, text);
@@ -76,7 +107,7 @@ export async function sendBulkEmailToStores(formData: FormData) {
 
   // 店舗管理画面の「運営からのお知らせ」にも残す(契約中の全店舗。メールが届かなくても画面で読める、2026/10)
   let inboxCount = 0;
-  {
+  if (toEmail) {
     const svc = createServiceRoleClient();
     const { data: activeContracts } = await svc.from("store_contracts").select("store_id").eq("status", "active");
     const storeIds = Array.from(new Set((activeContracts ?? []).map((c) => c.store_id as string).filter(Boolean)));
@@ -96,6 +127,16 @@ export async function sendBulkEmailToStores(formData: FormData) {
     lineScope,
     lineSent,
     inboxCount,
+    toEmail,
+    siteNotice,
+    toMembers,
+    memberSent: memberResult.sent.length,
+    memberFailed: memberResult.failed,
+    // 送った宛先の一覧も残す(2026/10/20 オーナー指示「送った記録には宛先の一覧を残す」)
+    storeEmailRecipients: result.sent,
+    memberRecipients: memberResult.sent,
+    lineStoreIds,
+    body: body.slice(0, 2000),
   });
 
   const jar = await cookies();
@@ -106,10 +147,40 @@ export async function sendBulkEmailToStores(formData: FormData) {
       failedCount: result.failed.length,
       failed: result.failed,
       lineSent,
+      toEmail,
+      siteNotice,
+      memberSent: toMembers ? memberResult.sent.length : undefined,
+      memberFailedCount: toMembers ? memberResult.failed.length : undefined,
     }),
     { httpOnly: true, maxAge: 60, path: "/admin/stores/bulk-email" }
   );
 
+  revalidatePath("/admin/stores/bulk-email");
+  redirect("/admin/stores/bulk-email");
+}
+
+/** サイトのお知らせを公開/非公開にする(消さずに隠せるように) */
+export async function setSiteNoticePublished(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const published = formData.get("published") === "true";
+  const supabase = await createClient();
+  const { error } = await supabase.from("site_notices").update({ published, updated_at: new Date().toISOString() }).eq("id", id);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, published ? "site_notice_published" : "site_notice_unpublished", "site_notice", id);
+  revalidatePath("/news");
+  revalidatePath("/admin/stores/bulk-email");
+  redirect("/admin/stores/bulk-email");
+}
+
+/** サイトのお知らせを削除する(2026/10/20。元に戻せない) */
+export async function deleteSiteNotice(formData: FormData) {
+  const id = String(formData.get("id") ?? "");
+  const supabase = await createClient();
+  const { data: row } = await supabase.from("site_notices").select("title").eq("id", id).maybeSingle();
+  const { error } = await supabase.from("site_notices").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  await logAdminAction(supabase, "site_notice_deleted", "site_notice", id, { title: row?.title ?? null });
+  revalidatePath("/news");
   revalidatePath("/admin/stores/bulk-email");
   redirect("/admin/stores/bulk-email");
 }

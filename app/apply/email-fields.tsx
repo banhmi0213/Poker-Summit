@@ -28,7 +28,6 @@ export function ApplyEmailFields() {
           value={confirm}
           ref={confirmRef}
           onChange={(e) => setConfirm(e.target.value)}
-          onPaste={(e) => e.preventDefault()}
         />
         {mismatch && <span style={{ color: "var(--critical, #c0392b)", fontSize: 12 }}>メールアドレスが一致しません</span>}
       </div>

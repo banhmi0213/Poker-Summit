@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { CARD_BRANDS_NOTE, CARD_SAVE_NOTE } from "@/lib/constants";
 import { effectivePlanFee, isPriceLockActive } from "@/lib/price-lock";
+import { prorateUpgrade } from "@/lib/proration";
 import { PendingSubmitButton } from "@/app/pending-submit-button";
 import { redirect } from "next/navigation";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
@@ -46,7 +48,7 @@ export default async function StorePlanPage({
       supabase
         .from("store_contracts")
         .select(
-          "id, status, plan_id, current_period_end, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, price_lock_plan_id, price_lock_fee, price_lock_ended_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
+          "id, status, plan_id, current_period_end, trial_ends_at, fincode_customer_id, billing_method, billing_cycle_months, suspended_for_nonpayment_at, price_lock_plan_id, price_lock_fee, price_lock_ended_at, plans!store_contracts_plan_id_fkey(id, name, monthly_fee, description), store_contract_addons(id, addon_id, billing_method, current_period_end, pending_removed_at, fee, fincode_subscription_id)"
         )
         .eq("store_id", store.id)
         .maybeSingle(),
@@ -75,6 +77,8 @@ export default async function StorePlanPage({
     ]);
 
   const isTransfer = (contract as any)?.billing_method === "bank_transfer";
+  // カードのまとめ払い(6か月・12か月、2026/10/19〜): プラン変更は振込と同じくお問い合わせで
+  const cardPrepayMonths = !isTransfer && [6, 12].includes(Number((contract as any)?.billing_cycle_months)) ? Number((contract as any).billing_cycle_months) : 0;
   // カード登録の途中(session:...)は未登録扱い
   const hasCard = !!contract?.fincode_customer_id && !String(contract.fincode_customer_id).startsWith("session:");
   const [{ data: invoiceRows }, billing] = await Promise.all([
@@ -110,6 +114,9 @@ export default async function StorePlanPage({
     slotsLeft[a.id] = await addonSlotsLeft(svc, a, storePref, store.id);
   }
   const spotCredits = (creditRow?.balance as number | undefined) ?? 0;
+  const { data: scoutRow, error: scoutError } = await supabase.from("store_scout_credits").select("balance").eq("store_id", store.id).maybeSingle();
+  if (scoutError) throw new Error("スカウト枠を読み込めませんでした。");
+  const scoutCredits = scoutRow?.balance ?? 0;
   const addonOrders = (orderRows ?? []) as any[];
 
   const currentAddonIds = ((contract as any)?.store_contract_addons ?? []).map(
@@ -119,7 +126,7 @@ export default async function StorePlanPage({
   return (
     <div>
       <Link href="/store/profile" className="btn" style={{ marginBottom: 16, display: "inline-flex" }}>
-        ← 店舗管理に戻る
+        店舗管理に戻る
       </Link>
       <h1 style={{ fontSize: 20, marginBottom: 16 }}>プラン・お支払い</h1>
 
@@ -131,6 +138,19 @@ export default async function StorePlanPage({
       {searchParams?.error && (
         <div className="card" style={{ marginBottom: 16, borderColor: "#d1453b", background: "rgba(209, 69, 59, 0.08)", color: "#d1453b", fontSize: 13.5 }}>
           ⚠️ {searchParams.error}
+        </div>
+      )}
+
+      {/* 無料期間(2026/10/20) */}
+      {contract?.status === "active" && (contract as any)?.trial_ends_at && (
+        <div className="card" style={{ marginBottom: 16, background: "#fff8e6", fontSize: 13.5, lineHeight: 1.8 }}>
+          <strong>🎁 月額プランの無料期間：{new Date(Date.parse((contract as any).trial_ends_at) - 1).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" })}まで</strong>
+          <br />
+          {hasCard
+            ? "カードをご登録済みです。無料期間が終わった日に決済して、そのまま続けてご利用いただけます。"
+            : isTransfer
+              ? "無料期間のあとは銀行振込でのお支払いです。請求書をメールでお送りします。"
+              : "引き続きご利用いただく場合は、下の「お支払いカード」からカードをご登録ください。無料期間が終わった日に決済して、そのまま続けてご利用いただけます（銀行振込をご希望の場合は運営までご連絡ください）。"}
         </div>
       )}
 
@@ -147,7 +167,7 @@ export default async function StorePlanPage({
         <div className="card" style={{ marginBottom: 16 }}>
           <div className="muted">お支払い方法</div>
           <div style={{ fontWeight: 700, fontSize: 15, marginTop: 2 }}>
-            {isTransfer ? `銀行振込（${cycleLabel((contract as any)?.billing_cycle_months ?? 1)}）` : "クレジットカード"}
+            {isTransfer ? `銀行振込（${cycleLabel((contract as any)?.billing_cycle_months ?? 1)}）` : cardPrepayMonths ? `クレジットカード（${cycleLabel(cardPrepayMonths)}）` : "クレジットカード"}
           </div>
           {isTransfer && (
             <p className="muted" style={{ fontSize: 12, margin: "4px 0 0", lineHeight: 1.7 }}>
@@ -232,7 +252,9 @@ export default async function StorePlanPage({
               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                 カード番号は決済代行会社(KOMOJU)の画面で入力します。Poker Summit には保存されません。
                 <br />
-                KOMOJUの画面では「今後の支払いに備えて支払い方法を保存します」にチェックを入れてから「保存」を押してください。
+                {CARD_BRANDS_NOTE}
+                <br />
+                {CARD_SAVE_NOTE}
               </div>
             </div>
             <form action={startCardRegistration}>
@@ -341,9 +363,9 @@ export default async function StorePlanPage({
               </button>
             </form>
           </div>
-        ) : isTransfer ? (
+        ) : isTransfer || cardPrepayMonths ? (
           <div className="card" style={{ background: "var(--surface-2)", fontSize: 13.5, lineHeight: 1.8 }}>
-            銀行振込でご契約中のため、プランやお支払いサイクル（毎月・6か月・12か月）の変更は
+            {cardPrepayMonths ? "まとめ払いでご契約中のため、" : "銀行振込でご契約中のため、"}プランやお支払いサイクル（毎月・6か月・12か月）の変更は
             <a href="/contact" style={{ textDecoration: "underline", fontWeight: 600 }}>お問い合わせフォーム</a>
             からご連絡ください。変更後の内容で請求書をお送りします。
           </div>
@@ -356,11 +378,24 @@ export default async function StorePlanPage({
                 <option value="" disabled>
                   選択してください
                 </option>
-                {(allPlans ?? []).map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.id === contract?.plan_id}>
-                    {`${p.name}（¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）${p.id === contract?.plan_id ? "・現在のプラン" : ""}`}
-                  </option>
-                ))}
+                {(allPlans ?? []).map((p) => {
+                  // 上げる場合は「今日の決済額(残り日数分の差額)」、下げる場合は「次の更新日から」を選択肢に表示
+                  const curFee = contract ? effectivePlanFee(contract as any, (contract as any).plan_id, ((contract as any)?.plans?.monthly_fee as number | undefined) ?? 0) : 0;
+                  const pr = prorateUpgrade({ oldMonthly: curFee, newMonthly: p.monthly_fee ?? 0, periodEndIso: (contract as any)?.current_period_end ?? null });
+                  const extra =
+                    p.id === contract?.plan_id
+                      ? "・現在のプラン"
+                      : (p.monthly_fee ?? 0) >= ((contract as any)?.plans?.monthly_fee ?? 0)
+                        ? pr.charge === null
+                          ? `・今日の決済 ¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}`
+                          : `・今日の決済 ¥${pr.charge.toLocaleString("ja-JP")}（残り${pr.remainingDays}日分の差額）`
+                        : "・次の更新日から";
+                  return (
+                    <option key={p.id} value={p.id} disabled={p.id === contract?.plan_id}>
+                      {`${p.name}（¥${(p.monthly_fee ?? 0).toLocaleString("ja-JP")}/月）${extra}`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
             <div className="field">
@@ -371,7 +406,7 @@ export default async function StorePlanPage({
               プラン変更を申請する
             </PendingSubmitButton>
             <p className="muted" style={{ fontSize: 11.5, marginTop: 8 }}>
-              料金が上がるプランへの変更は、送信時にカード決済が即時実行され、成功次第すぐに反映されます(日割りなし・満額請求)。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映されます。
+              料金が上がるプランへの変更は、送信時に<strong>残りの日数分の差額だけ</strong>をカードで決済し、すぐに反映します（変更した当日は数えず、1円未満は切り捨て）。次回の更新日は変わらず、更新日からは新しいプランの月額になります。料金が下がるプランへの変更は、現在の契約期間が終わるタイミングで反映します。
             </p>
           </form>
         )}
@@ -384,6 +419,7 @@ export default async function StorePlanPage({
         contractPeriodEnd={(contract as any)?.current_period_end ?? null}
         slotsLeft={slotsLeft}
         spotCredits={spotCredits}
+        scoutCredits={scoutCredits}
         orders={addonOrders}
         canUseCard={billing.cardPaymentEnabled && hasCard}
         hasContract={(contract as any)?.status === "active"}

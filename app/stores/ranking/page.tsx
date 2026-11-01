@@ -19,7 +19,7 @@ export function generateMetadata({ searchParams }: { searchParams: { pref?: stri
   const qs = pref ? `?pref=${encodeURIComponent(pref)}` : region ? `?region=${encodeURIComponent(region)}` : "";
   return staticPageMetadata({
     title: `${place}のポーカー店ランキング`,
-    description: `${place}で人気のアミューズメントポーカー店・ポーカーバーのランキング。営業時間・アクセス・イベント情報もPoker Summitでチェックできます。`,
+    description: `${place}で人気のアミューズメントポーカー店・ポーカーバーのランキング。住所や営業時間などの店舗情報もPoker Summitで確認できます。`,
     path: `/stores/ranking${qs}`,
   });
 }
@@ -52,7 +52,7 @@ export default async function StoreRankingPage({ searchParams }: {
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container">
-      <Link href={query ? "/stores?" + query : "/"} className="btn">{query ? "← 店舗を探す" : "← TOPに戻る"}</Link>
+      <Link href={query ? "/stores?" + query : "/"} className="btn">{query ? "店舗を探す" : "TOPに戻る"}</Link>
       <section className="home-section">
         <div className="home-section-head"><h1>店舗ランキング{pref || region ? "（" + (pref || region) + "）" : "（全国）"}</h1></div>
         {!stores.length && <p className="muted">まだ店舗がありません。</p>}

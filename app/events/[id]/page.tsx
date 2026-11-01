@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { isEventEnded } from "@/lib/event-end";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -88,7 +89,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const e = event as any;
   const store = e.stores?.status === "approved" ? e.stores : null;
   const path = `/events/${e.id}`;
-  const isPast = Boolean((e.end_at || e.start_at) && new Date(e.end_at || e.start_at).getTime() < Date.now());
+  const isPast = isEventEnded(e);
   let joined = false, saved = false;
   if (user) {
     const [p,f] = await Promise.all([
@@ -106,7 +107,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
     {e.start_at && <JsonLd data={eventJsonLd(e)} />}
     <PortalHeader userEmail={user?.email}/>
     <main className={`container detail-readable ${styles.page}`}>
-      <Link href="/events" className="breadcrumb">← トーナメント・イベント一覧に戻る</Link>
+      <Link href="/events" className="breadcrumb">トーナメント・イベント一覧に戻る</Link>
       <div className={styles.topBanner}>{e.banner_image_url ? <img src={e.banner_image_url} alt={e.title}/> : <EventSign title={e.title} category={e.category} startAt={e.start_at} venue={e.stores?.name || e.location} hero />}</div>
           <div className={styles.heading}><h1><ReadableName name={e.title} /></h1>{e.category && <span>{e.category}</span>}{isPast && <span>終了</span>}</div>
       <div className={styles.layout}>
@@ -120,7 +121,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <dl className={styles.details}><div><dt>イベント種別</dt><dd>{e.category || "未登録"}</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div><div><dt>主催店舗</dt><dd>{store?.name || "未登録"}</dd></div></dl>
           </section>
           <section id="structure" className={styles.section}><h2>ストラクチャー</h2><div className={styles.notice}>ブラインド・スタートスタック・レイトレジストなどの情報は、大会概要または主催店舗の案内をご確認ください。</div></section>
-          <section id="access" className={styles.section}><h2>⌖ 会場・アクセス</h2><div className={styles.access}><div><strong>{store?.name || location}</strong><p>{store?.address || location}</p>{store?.nearest_station && <p>最寄駅：{store.nearest_station}</p>}</div>{mapQuery && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer" className={styles.outline}>⌖ 地図・経路を見る ↗</a>}</div></section>
+          <section id="access" className={styles.section}><h2>⌖ 会場・アクセス</h2><div className={styles.access}><div><strong>{store?.name || location}</strong><p>{store?.address || location}</p>{store?.nearest_station && <p>最寄駅：{store.nearest_station}</p>}</div>{mapQuery && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer" className={styles.outline}>⌖ 地図・経路を見る</a>}</div></section>
         </article>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><h2>♟ 参加情報</h2><dl className={styles.participation}><div><dt>参加費</dt><dd>主催店舗にご確認ください</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div></dl>
