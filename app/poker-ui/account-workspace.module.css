@@ -30,3 +30,14 @@
  .shell{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
 }
 @media(max-width:650px){.summaryGrid{display:none}}
+/* スマホでGTOの表を開いたとき (owner 2026/11/1「すぐ表が見えた方がいい」「表ももっと見えやすく」): the page title and
+   the pane's long description shrink, and the pane goes almost edge to edge so the 13×13 table is as large as it can be. */
+@media(max-width:650px){
+ .main[data-fit]{padding:10px 4px}
+ .main[data-fit] .heading{display:none}
+ .main[data-fit] .content{border-radius:12px}
+ .main[data-fit] .panelHeading{padding:12px 12px 10px}
+ .main[data-fit] .panelHeading h2{font-size:19px}
+ .main[data-fit] .panelHeading p:last-child{display:none}
+ .main[data-fit] .panel{padding:12px 10px}
+}

@@ -95,12 +95,12 @@
  .desktopOnly,.intro{display:none!important}
  .chips{order:2;display:flex;flex-direction:column;gap:8px}
  .splitSide>.storeInvite{order:3}
- .totals{order:3;margin:0!important;font-size:13px!important;line-height:1.6!important}
- .splitMain{order:4;margin:0 -13px}
+ .totals,.wrap p.totals{order:3;margin:0!important;font-size:13px!important;line-height:1.6!important;color:#c9d6e0}
+ .splitMain{order:4;margin:0 -8px}
  .aboutMobile{order:5;display:block;font-size:14px;color:#c9d6e0}.aboutMobile summary{cursor:pointer;color:#91a8ba}
  .splitSide>.note{order:6}
  .splitSide>[role=status],.splitSide>[role=alert]{order:0}
- .splitMain .strategyLegend{padding:8px 10px;margin-bottom:6px}.splitMain .strategyLegend>p{display:none}
- .splitMain .grid{font-size:10.5px!important;border-spacing:2px}
- .splitMain .grid td{padding:0;height:27px;line-height:27px;font-weight:700;letter-spacing:-.02em}
+ .splitMain .strategyLegend{padding:6px 10px;margin-bottom:6px}.splitMain .legendItems{gap:4px 12px}.splitMain .actionKey,.wrap .splitMain .actionKey{font-size:12px!important;gap:5px}.splitMain .actionKey>i{width:13px;height:13px}.splitMain .strategyLegend>p{display:none}
+ .splitMain .grid{font-size:11.5px!important;border-spacing:2px}
+ .splitMain .grid td{padding:0;height:31px;line-height:31px;font-weight:800;letter-spacing:-.03em;border-radius:5px}
 }
