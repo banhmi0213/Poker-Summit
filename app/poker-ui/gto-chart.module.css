@@ -70,7 +70,7 @@
 .grid td{cursor:pointer}
 .handDetailHint{margin:8px 2px 0!important;font-size:13px!important;color:#91a8ba!important}
 .handDetail{margin-top:8px;padding:10px 12px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;color:#e9eff5;display:flex;flex-direction:column;gap:6px}
-.handDetail>b{font-size:18px;color:#f3d38a}.handDetail>span{font-size:14px;color:#c9d6e0}
+.handDetail>b{font-size:18px;color:#f3d38a}.handDetail>small{font-size:13px;color:#c9d6e0}.handDetail>span{font-size:14px;color:#c9d6e0}
 .handDetail ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
 .handDetail ul{display:grid!important;grid-template-columns:14px 1fr 3em;column-gap:8px}.handDetail li{display:contents;align-items:center;gap:8px;font-size:14px}
 .handDetail li>i{width:14px;height:14px;border-radius:3px}
@@ -86,6 +86,7 @@
 @media(max-width:700px){
  .split{display:flex!important;flex-direction:column;gap:10px}
  .splitSide{display:contents}
+ .splitSide>*{order:1}
  .splitSide>.form{order:1;grid-template-columns:.85fr 1.3fr .85fr;gap:6px}
  .splitSide>.form label{font-size:12px!important;min-width:0}
  .splitSide>.form select{font-size:13px!important;padding:6px 4px;min-height:38px}
