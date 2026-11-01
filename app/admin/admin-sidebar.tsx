@@ -36,6 +36,7 @@ const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin/inquiries", label: "お問い合わせ" },
   { href: "/admin/admins", label: "運営ユーザー" },
   { href: "/admin/audit-log", label: "操作ログ" },
+  { href: "/admin/security", label: "スクレイピング監視" },
   { href: "/admin/ng-words", label: "NGワード" },
   { href: "/admin/settings", label: "サイト設定" },
   { href: "/admin/system", label: "システム" },
