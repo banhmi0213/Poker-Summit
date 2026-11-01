@@ -69,6 +69,7 @@ export function Academy() {
    <div className={styles.progressRight}><strong>{loaded ? percent : 0}<small>%</small></strong><div className={styles.track}><span style={{width: (loaded ? percent : 0) + "%"}}/></div></div>
   </section>
   <section className={styles.achievementGuide} aria-labelledby="achievement-guide-title">
+   <details className={styles.badgeDetails}><summary>卒業バッジについて</summary>
    <div className={styles.achievementIntro}>
     <span className={styles.eyebrow}>ACHIEVEMENTS</span>
     <h2 id="achievement-guide-title">学んだ証を、あなたのプロフィールに。</h2>
@@ -95,6 +96,7 @@ export function Academy() {
      <div className={styles.achievementLinks}><Link href="/mypage">マイページを見る</Link><Link href="/board">サミットを見る</Link></div>
     </div>
    </div>
+   </details>
    <div className={styles.levelRoadmap}>
     <div><span className={styles.eyebrow}>LEVEL ROADMAP</span><h3>学習レベル一覧・今後の予定</h3><p>Lv.1・2の基本、Lv.3の実戦判断から、Lv.4のGTO・ソルバー読解へ。Lv.5では解析の活用と総合演習を計画しています。</p></div>
     <div className={styles.levelRows}>

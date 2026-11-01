@@ -21,9 +21,9 @@ export default async function Page(){
  const [y,m,d]=date.split('-').map(Number);
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
-   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">学習コース</Link> <span>›</span> 今日のGTOクイズ</nav>
+   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">GTO・学習</Link> <span>›</span> 今日のGTOクイズ</nav>
    <h1 className={styles.title}>今日のGTOクイズ（{m}月{d}日）</h1>
-   <p className={styles.lead}>6人卓・100BBのキャッシュゲームの場面から、毎日5問を出題します。自分ならどう打つかを選ぶと、GTO（相手にどう打たれても大きく損をしない打ち方）がその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。ログインなしで解けます。</p>
+   <p className={styles.lead}>毎日5問。選ぶとGTOと比べて採点し、解説が出ます。</p>
    {questions?<DailyQuiz date={date} questions={questions} member={Boolean(user)} url={`${SITE_URL}/learn/gto-quiz`}/>:<p>今日の問題を準備中です。</p>}
    <article className={styles.article} style={{marginTop:24}}>
     <h2>採点のしかた</h2>

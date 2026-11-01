@@ -13,7 +13,7 @@ export async function GtoToolPage({title,lead,tool,children,join}:{title:string;
  const supabase=await createClient();const {data:{user}}=await supabase.auth.getUser();
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
-   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">学習コース</Link> <span>›</span> {title}</nav>
+   <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">GTO・学習</Link> <span>›</span> {title}</nav>
    <h1 className={styles.title}>{title}</h1>
    <p className={styles.lead}>{lead}</p>
    <section className={styles.tool} aria-label={title}>{tool}</section>
