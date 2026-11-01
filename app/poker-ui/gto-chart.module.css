@@ -72,9 +72,11 @@
 .handDetail{margin-top:8px;padding:10px 12px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;color:#e9eff5;display:flex;flex-direction:column;gap:6px}
 .handDetail>b{font-size:18px;color:#f3d38a}.handDetail>span{font-size:14px;color:#c9d6e0}
 .handDetail ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
-.handDetail ul{display:grid!important;grid-template-columns:14px max-content 1fr 3em;column-gap:8px}.handDetail li{display:contents;align-items:center;gap:8px;font-size:14px}
+.handDetail ul{display:grid!important;grid-template-columns:14px 1fr 3em;column-gap:8px}.handDetail li{display:contents;align-items:center;gap:8px;font-size:14px}
 .handDetail li>i{width:14px;height:14px;border-radius:3px}
-.handDetail li>em{display:block;height:10px;border-radius:5px;background:#0d1d2b;overflow:hidden}.handDetail li>em>s{display:block;height:100%;text-decoration:none}
+.handDetail li[data-zero]>*{opacity:.45}
+.shareBar{display:flex;height:22px;border-radius:6px;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff22}
+.shareBar>span{flex-basis:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#173348;min-width:3px}
 .handDetail li>strong{text-align:right;font-variant-numeric:tabular-nums}
 .chipRow{display:flex;flex-direction:column;gap:5px}.chipRow>span{font-size:13px;color:#c9d6e0}
 .chipRow>div{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.chipRow>div::-webkit-scrollbar{display:none}

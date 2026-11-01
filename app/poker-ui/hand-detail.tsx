@@ -8,9 +8,10 @@ const pct=(v:number)=>`${Math.round(v*100)}%`;
 export function HandDetail({hand,actions,freqs}:{hand:string|null;actions:readonly StrategyAction[];freqs:readonly number[]|null|undefined}){
  if(!hand)return <p className={styles.handDetailHint}>マスを押すと、その手の割合がここに出ます。</p>;
  if(!freqs)return <div className={styles.handDetail}><b>{hand}</b><span>この場面には来ない手です。</span></div>;
- return <div className={styles.handDetail} aria-live="polite"><b>{hand}</b><ul>{actions.map((a,i)=><li key={i}>
-  <i style={{background:strategyColor(a,actions)}} aria-hidden="true"/><span>{a.label}</span><em><s style={{width:pct(freqs[i]??0),background:strategyColor(a,actions)}}/></em><strong>{pct(freqs[i]??0)}</strong>
- </li>)}</ul></div>;
+ // One bar split by the shares (the same colours as the table), then each action with its share.
+ return <div className={styles.handDetail} aria-live="polite"><b>{hand}</b>
+  <div className={styles.shareBar} aria-hidden="true">{actions.map((a,i)=>(freqs[i]??0)>=0.005&&<span key={i} style={{flexGrow:freqs[i],background:strategyColor(a,actions)}}>{(freqs[i]??0)>=0.12?pct(freqs[i]):''}</span>)}</div>
+  <ul>{actions.map((a,i)=><li key={i} data-zero={(freqs[i]??0)<0.005?'':undefined}><i style={{background:strategyColor(a,actions)}} aria-hidden="true"/><span>{a.label}</span><strong>{pct(freqs[i]??0)}</strong></li>)}</ul></div>;
 }
 
 /** A row of buttons in place of a select on phones (seats, situations). */
