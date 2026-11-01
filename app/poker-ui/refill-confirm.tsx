@@ -2,13 +2,12 @@
 // 「補充しますか？」(owner 2026/11/01): the once-a-day refill is always confirmed first, with the amount it brings.
 import {useEffect,useMemo,useState} from 'react';
 import {createClient} from '@/lib/supabase/client';
-import {parseRingRank} from '@/lib/poker/ring-rank';
 
 export function RefillConfirm({open,lead,onYes,onNo}:{open:boolean;lead?:string;onYes:()=>void;onNo:()=>void}){
  const auth=useMemo(()=>createClient(),[]);
  const [amount,setAmount]=useState<number|null>(null),[used,setUsed]=useState(false);
  useEffect(()=>{if(!open)return;let live=true;
-  try{void Promise.resolve(auth.rpc('poker_ring_rank')).then(({data,error})=>{if(!live||error)return;const r=parseRingRank(data);if(r){setAmount(r.refillAmount);setUsed(r.refillUsedToday);}},()=>{});}catch{}
+  try{void Promise.resolve(auth.rpc('poker_ring_refill_status')).then(({data,error})=>{if(!live||error||!data||typeof data!=='object')return;const r=data as {refillAmount?:unknown;refillUsedToday?:unknown};if(typeof r.refillAmount==='number')setAmount(r.refillAmount);setUsed(r.refillUsedToday===true);},()=>{});}catch{}
   return()=>{live=false;};},[auth,open]);
  useEffect(()=>{if(!open)return;const key=(e:KeyboardEvent)=>{if(e.key==='Escape')onNo();};window.addEventListener('keydown',key);return()=>window.removeEventListener('keydown',key);},[open,onNo]);
  if(!open)return null;

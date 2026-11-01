@@ -263,4 +263,15 @@ begin
   where r.table_id=p_table and r.status='seated');
 end; $$;
 
+-- 補充の確認画面: 段位ごとの額を返す(公開時の200固定から切り替え)。
+create or replace function public.poker_ring_refill_status() returns jsonb language plpgsql security definer set search_path='' as $$
+declare who uuid:=auth.uid();
+begin
+ if who is null then raise exception 'Login required';end if;
+ return jsonb_build_object('refillAmount',poker_private.ring_refill_amount(who),'refillUsedToday',exists(select 1 from poker_private.ring_chip_ledger l where l.member_id=who and l.kind='refill'
+   and l.created_at>=(date_trunc('day',now() at time zone 'Asia/Tokyo') at time zone 'Asia/Tokyo')));
+end;$$;
+revoke all on function public.poker_ring_refill_status() from public,anon;
+grant execute on function public.poker_ring_refill_status() to authenticated;
+
 commit;

@@ -10,6 +10,7 @@ import {cardLabel} from '@/lib/poker/card-display';
 import {OnlineTableView} from '@/app/poker-online/[roomId]/online-table-view';
 import {ringStandbyDisplay} from '@/lib/poker/ring-table-display';
 import RingLiveTable from './ring-live-table';
+import {RefillConfirm} from './refill-confirm';
 import {RingAutoMove} from './ring-auto-move';
 import {useRingTiers} from './use-ring-tiers';
 import {RefillConfirm} from './refill-confirm';
@@ -76,6 +77,10 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
   const taken=new Set(t.seats.map(x=>x.seat)),seat=Array.from({length:t.capacity},(_,i)=>i+1).find(n=>!taken.has(n));if(seat===undefined)return;
   autoJoined.current=true;void transport.perform({type:'join',tableId:t.id,amount:buy,seat,requestId:crypto.randomUUID()});
  },[autoSeat,member,view.state,view.pending,view.working,tableId,initialBuyIn,transport]);
+ // 「補充しますか？」(2026/11/01): asked once when the chips run out at this table, and on every refill tap.
+ const [askRefill,setAskRefill]=useState(false),bustAsked=useRef(false);
+ useEffect(()=>{const d=view.state,t=d?.table;const busted=Boolean(member&&!d?.membership&&lastSeat!==null&&t&&d&&d.wallet.inPlay===0&&d.wallet.available<t.minBuyIn);
+  if(busted&&!bustAsked.current){bustAsked.current=true;setAskRefill(true);}if(!busted)bustAsked.current=false;},[member,view.state,lastSeat]);
  if(!enabled)return <p>リング卓の接続は準備中です。</p>;
  if(!member)return <p>着席と残高の確認には<Link href="/login?next=%2Fpoker-lobby">ログイン</Link>してください。</p>;
  const data=view.state,shownPlay=data?.play&&view.pending?.type==='act'?optimisticRingPlay(data.play,view.pending.command):data?.play??null,own=data?.membership&&(!tableId||data.membership.tableId===tableId)?data.membership:null,table=data?.table,blocked=Boolean(view.problem)||view.working||Boolean(view.pending)||view.storageBlocked||Boolean(tableId&&data?.membership&&data.membership.tableId!==tableId),chosen=selected?data?.tables.find(t=>t.id===selected.id)??selected:null,max=chosen?Math.min(chosen.maxBuyIn,data?.wallet.available??0):0,valid=chosen&&Number.isSafeInteger(Number(amount))&&Number(amount)>=chosen.minBuyIn&&Number(amount)<=max;
