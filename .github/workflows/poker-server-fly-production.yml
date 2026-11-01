@@ -5,7 +5,8 @@ name: Deploy poker server to Fly (production, Tokyo)
 # Secrets (repository secrets, values never printed):
 #   FLY_API_TOKEN                   - same Fly.io deploy token as staging
 #   POKER_PROD_SUPABASE_SECRET_KEY  - production Supabase secret key (owner pastes it: Supabase > Project Settings > API Keys)
-#   POKER_PROD_ROOM_KEYS_JSON       - encryption keys for saved hands; set once, never change it
+# The encryption key for saved hands (POKER_ROOM_KEYS_JSON) is made once on Fly by the first deploy and then kept
+# there; it is never regenerated or printed.
 # Everything else is public configuration and lives here.
 # Without the secrets the job is skipped, so main keeps deploying normally on Vercel.
 on:
@@ -28,12 +29,11 @@ jobs:
     env:
       FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       SUPABASE_SECRET: ${{ secrets.POKER_PROD_SUPABASE_SECRET_KEY }}
-      ROOM_KEYS: ${{ secrets.POKER_PROD_ROOM_KEYS_JSON }}
       APP: poker-room-server-prod
     steps:
       - name: Check the secrets
         id: token
-        run: if [ -n "$FLY_API_TOKEN" ] && [ -n "$SUPABASE_SECRET" ] && [ -n "$ROOM_KEYS" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "Production poker server secrets are not all set; skipping."; fi
+        run: if [ -n "$FLY_API_TOKEN" ] && [ -n "$SUPABASE_SECRET" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "Production poker server secrets are not all set; skipping."; fi
       - name: Wait for Poker engine tests on this commit
         if: steps.token.outputs.ok == 'true' && github.event_name == 'push'
         env:
@@ -60,11 +60,15 @@ jobs:
           COMMIT: ${{ github.sha }}
         run: |
           set -euo pipefail
+          # The hand encryption key: made once, then kept on Fly (changing it would make saved hands unreadable).
+          if ! flyctl secrets list --app "$APP" --json | grep -q '"POKER_ROOM_KEYS_JSON"'; then
+            python3 -I -c 'import json,os,base64;print("POKER_ROOM_KEYS_JSON="+json.dumps({"prod1":base64.b64encode(os.urandom(32)).decode()},separators=(",",":")))' \
+              | flyctl secrets import --stage --app "$APP"
+          fi
           printf '%s\n' \
             "POKER_SUPABASE_URL=https://tjmeqnzvuoguoffltxrp.supabase.co" \
             "POKER_SUPABASE_PUBLIC_KEY=sb_publishable_y6CMbe42q_9gvwJRZi_etg_F6gEdfKt" \
             "POKER_SUPABASE_SECRET_KEY=$SUPABASE_SECRET" \
-            "POKER_ROOM_KEYS_JSON=$ROOM_KEYS" \
             "POKER_ROOM_ACTIVE_KEY=prod1" \
             'POKER_ROOM_ORIGINS=["https://pokersummit.jp","https://www.pokersummit.jp"]' \
             "POKER_SERVER_COMMIT=$COMMIT" \
