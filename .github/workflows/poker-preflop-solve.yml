@@ -83,6 +83,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-out/${{ github.run_id }}"
-          git add public/poker-gto
+          # 8/9-max charts are paid (スタンダード／プロ): served by /api/poker/gto-charts after a plan check, never from public/.
+          mkdir -p data/poker-gto/paid && for f in public/poker-gto/preflop-8max*.json public/poker-gto/preflop-9max*.json; do [ -f "$f" ] && mv "$f" data/poker-gto/paid/; done
+          git add public/poker-gto data/poker-gto/paid
           git commit -m "プリフロップ表（run ${{ github.run_id }}）"
           git push origin "gto-preflop-out/${{ github.run_id }}"
