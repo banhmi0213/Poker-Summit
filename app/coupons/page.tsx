@@ -266,7 +266,7 @@ export default async function CouponsPage({
                   )}
                   <div className="coupon-card__cta">
                     <Link href={`/coupons/${c.id}`} className="btn" style={{ width: "100%" }}>
-                      条件・詳細を見る ›
+                      条件・詳細を見る
                     </Link>
                   </div>
                 </div>

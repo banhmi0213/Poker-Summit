@@ -94,7 +94,7 @@ export default async function CouponDetailPage({
             </div>
             <div className={styles.store}>
               <div><small>このクーポンが使える店舗</small><strong><ReadableName name={c.stores.name} /></strong></div>
-              <Link href={`/stores/${c.store_id}`} className="btn">店舗ページを見る ›</Link>
+              <Link href={`/stores/${c.store_id}`} className="btn">店舗ページを見る</Link>
             </div>
           </div>
           <div className={styles.info}>

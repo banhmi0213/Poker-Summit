@@ -357,7 +357,7 @@ export default async function HomePage({
             return <Link className="home-event-card" href={ev.href || `/events/${ev.id}`} key={ev.id}>
               <div className="home-event-photo">{photo ? <img src={photo} alt={ev.title} loading="lazy" /> : <EventSign title={ev.title} category={ev.category} startAt={ev.start_at} dateOnly={ev.all_day} venue={ev.stores?.name || ev.location} />}</div>
               <div className="home-event-body"><div className="home-event-date">{ev.start_at ? <><strong>{new Date(ev.start_at).toLocaleDateString("ja-JP", { month:"2-digit", day:"2-digit", timeZone:"Asia/Tokyo" })}</strong><span>{ev.all_day ? (ev.end_date !== ev.start_date ? `〜${ev.end_date.slice(5).replace("-", "/")}` : "開催日") : new Date(ev.start_at).toLocaleTimeString("ja-JP", { hour:"2-digit", minute:"2-digit", timeZone:"Asia/Tokyo" })}</span></> : <span>日時未定</span>}</div>
-                <div className="home-event-copy"><h3><ReadableName name={ev.title} /></h3><p><ReadableName name={ev.stores?.name || ""} /></p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る ›</span></div>
+                <div className="home-event-copy"><h3><ReadableName name={ev.title} /></h3><p><ReadableName name={ev.stores?.name || ""} /></p><p className="home-location">📍 {[ev.stores?.pref, ev.stores?.city].filter(Boolean).join(" ") || ev.location}</p><span className="home-tag">{status === "live" ? "開催中" : status === "soon" ? "まもなく開催" : "開催予定"}</span><span className="home-card-cta">詳細を見る</span></div>
               </div>
             </Link>;
           })}</div>
@@ -369,7 +369,7 @@ export default async function HomePage({
           {/* 新着クーポン(カテゴリ画像とクーポンバナーの間、2026/10)。新しい順に最大4件、1件から表示。0件なら出さない */}
           {popularCoupons.length > 0 && <div className="home-grid home-new-grid">{popularCoupons.map((c: any) => <Link href={`/coupons/${c.id}`} className="home-coupon-card home-coupon-card--vertical" key={c.id}>
             <div className="home-coupon-image">{c.banner_image_url ? <img src={c.banner_image_url} alt={c.title} loading="lazy" /> : <div><span>COUPON</span><strong>{c.discount || "店舗特典"}</strong><span>POKER SUMMIT</span></div>}</div>
-            <div className="home-coupon-copy"><h3><ReadableName name={c.title} /></h3><p><ReadableName name={c.stores?.name || ""} /></p><p className="home-location">📍 {[c.stores?.pref, c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る ›</span></div>
+            <div className="home-coupon-copy"><h3><ReadableName name={c.title} /></h3><p><ReadableName name={c.stores?.name || ""} /></p><p className="home-location">📍 {[c.stores?.pref, c.stores?.city].filter(Boolean).join(" ")}</p>{c.valid_until && <small>{formatDate(c.valid_until)}まで</small>}<span className="home-card-cta">条件を見る</span></div>
           </Link>)}</div>}
         </section>
 
@@ -378,7 +378,7 @@ export default async function HomePage({
         <section className="home-section home-summit" data-tone="light-navy">
           <div className="home-section-head"><div className="home-section-title"><span className="home-section-eyebrow" lang="en">SUMMIT COMMUNITY</span><h2><span>💬</span> サミット｜情報交換</h2></div><Link href="/board">すべて見る</Link></div>
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
-          <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
+          <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div></Link>)}</div>
         </section>
         {rankingBanners.length > 0 && <div className="home-section" data-tone="light-navy" data-tone-banner><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section" data-tone="champagne">
@@ -394,7 +394,7 @@ export default async function HomePage({
           {latestJobs.length > 0 && <div className="home-grid home-new-grid">{latestJobs.map((j: any) => <Link href={`/jobs/${j.id}`} className="home-job-card" key={j.id}>
             <div className="home-job-top"><div className="home-job-logo">{j.stores?.logo_url ? <img src={j.stores.logo_url} alt="" loading="lazy" /> : "♠"}</div><span className="home-tag">{j.job_type || "求人募集中"}</span></div>
             <h3><ReadableName name={j.title} /></h3><p><ReadableName name={j.stores?.name || ""} /></p><p className="home-location">📍 {[j.stores?.pref, j.stores?.city].filter(Boolean).join(" ")}</p>
-            {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る ›</span>
+            {j.salary && <strong className="home-job-salary">{j.salary}</strong>}<span className="home-card-cta">募集詳細を見る</span>
           </Link>)}</div>}
         </section>
         <div className="home-section" data-tone="navy" data-tone-banner><HomeSectionBanners banners={[{ id: "jobs-section-artwork", title: "新着求人・スポット求人 — ポーカーが好き。その気持ちが、仕事のきっかけに。", image_url: "/images/jobs-banner-light-v6.webp", link_url: "/jobs", external: false, device: "all" }]} layout="wide" /></div>

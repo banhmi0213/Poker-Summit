@@ -96,7 +96,7 @@ export default async function EventsPage({ searchParams }: {
         return <Link key={e.id} href={e.href || `/events/${e.id}`} className="ep-card">
           <div className="ep-card-image">{e.banner_image_url ? <img src={e.banner_image_url} alt="" loading="lazy" /> : <EventSign title={e.title} category={e.category} startAt={e.start_at} dateOnly={e.all_day} venue={e.stores?.name || e.location} />}</div>
           <div className="ep-card-body"><div className="ep-date">{e.start_at ? <><strong>{new Date(e.start_at).toLocaleDateString("ja-JP",{month:"2-digit",day:"2-digit",timeZone:"Asia/Tokyo"})}</strong><span>{e.all_day ? (e.end_date !== e.start_date ? `〜${e.end_date.slice(5).replace("-", "/")}` : "開催日") : new Date(e.start_at).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Tokyo"})}</span></> : <span>日時未定</span>}</div>
-            <div className="ep-card-copy"><h3><ReadableName name={e.title} /></h3>{e.stores?.name && <p><ReadableName name={e.stores.name} /></p>}<p>{[e.stores?.pref,e.stores?.city].filter(Boolean).join("・") || e.location}</p><div className="ep-card-meta"><span>{eventKind(e)}</span>{isPast ? <span>終了</span> : isLive ? <span>開催中</span> : null}<b>詳細を見る ›</b></div></div>
+            <div className="ep-card-copy"><h3><ReadableName name={e.title} /></h3>{e.stores?.name && <p><ReadableName name={e.stores.name} /></p>}<p>{[e.stores?.pref,e.stores?.city].filter(Boolean).join("・") || e.location}</p><div className="ep-card-meta"><span>{eventKind(e)}</span>{isPast ? <span>終了</span> : isLive ? <span>開催中</span> : null}<b>詳細を見る</b></div></div>
           </div>
         </Link>;
       })}</div>

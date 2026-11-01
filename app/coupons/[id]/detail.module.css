@@ -12,3 +12,9 @@
 
 /* Match the champagne site reading surfaces. */
 .panel,.how{background:linear-gradient(135deg,#fffefa,#fbf6ec);border-color:#d8c8a7;box-shadow:0 7px 24px #20384a09}
+
+.store>div{min-width:0;overflow-wrap:anywhere}
+.conditions dl>div{grid-template-columns:90px minmax(0,1fr)}
+.conditions dd{overflow-wrap:anywhere}
+.favoriteButton{color:#294657}
+@media(max-width:359px){.store{flex-wrap:wrap}.conditions dl>div{grid-template-columns:minmax(0,1fr);gap:4px}}
