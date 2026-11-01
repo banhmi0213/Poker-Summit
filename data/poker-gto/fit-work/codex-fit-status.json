@@ -334,7 +334,12 @@
       "iterations": 250,
       "handEv": true
     },
-    "state": "open, Vercel pending; do not merge until all checks succeed"
+    "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
+    "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "No new spot started: 4 ongoing spots consume 21 jobs. Full latest rescan got transient HTTP403. Use recorded verified timestamps. No production changes."
+  "notes": "Public GitHub REST rescans hit HTTP403 rate limit; preserve snapshot observation time. 40BB additional refinement 41360125420 Fit step verified in_progress. Do not duplicate it. No new spot: 4 ongoing spots occupy 21 jobs; 40BB fit plus staging CI can fill remaining slots. No production/DB changes.",
+  "validatedCompleteSpots": [
+    "btn-bb",
+    "hu-3bet"
+  ]
 }
