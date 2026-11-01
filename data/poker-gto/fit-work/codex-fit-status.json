@@ -1,13 +1,207 @@
 {
-  "sourceBranch": "claude/fit-defend-by-opener",
-  "sourceCommit": "15288e944e4e1b3d50e9a23aa51a3bd6ed1e094d",
-  "status": "running",
-  "stacks": [
-    40,
-    60
-  ],
-  "rounds": 6,
-  "iterations": 400,
-  "reuse20": "data/poker-gto/fit-work/fit2-20.json",
-  "notes": "Claude jobs stopped by owner; Codex runs both refinements locally. Remove fit-work before merging."
+  "checkedAt": "2026-11-01T18:14:45.661105+00:00",
+  "event": "Local fits stopped without completed JSON; restarted on durable GitHub Actions",
+  "localLastReports": {
+    "40": {
+      "round": 1,
+      "perHandDiff": 3.45,
+      "rfi": {
+        "BTN": 62.3,
+        "CO": 38.3,
+        "HJ": 28.3,
+        "LJ": 24,
+        "UTG+1": 18.6,
+        "UTG": 15.4
+      },
+      "defend": {
+        "BTN": 0.959,
+        "CO": 0.763,
+        "HJ": 0.697,
+        "UTG": 0.599
+      },
+      "call": 0.589,
+      "callBy": {
+        "BTN": 0.47958362437266017,
+        "CO": 0.574855254743254,
+        "HJ": 0.6267315369616012,
+        "UTG": 0.7160272881863539,
+        "UTG+1": 0.686,
+        "LJ": 0.656
+      }
+    },
+    "60": {
+      "round": 1,
+      "perHandDiff": 1.99,
+      "rfi": {
+        "BTN": 55,
+        "CO": 36.6,
+        "HJ": 27.5,
+        "LJ": 21.6,
+        "UTG+1": 17.4,
+        "UTG": 15.1
+      },
+      "defend": {
+        "BTN": 0.847,
+        "CO": 0.786,
+        "HJ": 0.704,
+        "UTG": 0.608
+      },
+      "call": 0.654,
+      "callBy": {
+        "BTN": 0.5948553568291934,
+        "CO": 0.6233563079820561,
+        "HJ": 0.6619025093349319,
+        "UTG": 0.7534919075739906,
+        "UTG+1": 0.723,
+        "LJ": 0.692
+      }
+    }
+  },
+  "completed20": {
+    "round": 6,
+    "perHandDiff": 2.83,
+    "rfi": {
+      "BTN": 41.4,
+      "CO": 32.9,
+      "HJ": 27.7,
+      "LJ": 23.5,
+      "UTG+1": 20.6,
+      "UTG": 18.1
+    },
+    "defend": {
+      "BTN": 0.837,
+      "CO": 0.786,
+      "HJ": 0.722,
+      "UTG": 0.56
+    },
+    "call": 0.477,
+    "callBy": {
+      "BTN": 0.4754768894742633,
+      "CO": 0.4664348148832559,
+      "HJ": 0.4553736443040984,
+      "UTG": 0.5115873168369853,
+      "UTG+1": 0.493,
+      "LJ": 0.474
+    }
+  },
+  "replacementRun": 41335511969,
+  "replacementBranch": "gto-preflop-fit/refine-mtt-20261102-b",
+  "replacementCommit": "f10df9fadf0ef2e55177e0a31644cf40d64d1709",
+  "sourceBranch": "chatgpt/gto-stack-fit-20261102-a",
+  "flops": {
+    "checkedAt": "2026-11-01T18:13:01.435651+00:00",
+    "jobs": [
+      {
+        "run": 40922255985,
+        "solve": {
+          "completed": 181,
+          "queued": 19
+        },
+        "success": 181,
+        "running": 0,
+        "total": 201
+      },
+      {
+        "run": 40922261771,
+        "solve": {
+          "completed": 159,
+          "queued": 41
+        },
+        "success": 159,
+        "running": 0,
+        "total": 201
+      },
+      {
+        "run": 41279675288,
+        "solve": {
+          "completed": 178,
+          "in_progress": 7,
+          "queued": 15
+        },
+        "success": 178,
+        "running": 7,
+        "total": 201
+      },
+      {
+        "run": 41279680906,
+        "solve": {
+          "completed": 48,
+          "in_progress": 7,
+          "queued": 145
+        },
+        "success": 48,
+        "running": 7,
+        "total": 201
+      },
+      {
+        "run": 41279681140,
+        "solve": {
+          "completed": 69,
+          "in_progress": 7,
+          "queued": 124
+        },
+        "success": 69,
+        "running": 7,
+        "total": 201
+      }
+    ]
+  },
+  "eta": {
+    "rows": [
+      {
+        "spot": "hu-srp",
+        "done": 181,
+        "remaining": 19,
+        "delta": 0,
+        "rate": 0.0,
+        "etaJst": "2026-11-02T06:36:52.044713+09:00"
+      },
+      {
+        "spot": "hu-limp",
+        "done": 159,
+        "remaining": 41,
+        "delta": 0,
+        "rate": 0.0,
+        "etaJst": "2026-11-02T11:05:47.188909+09:00"
+      },
+      {
+        "spot": "hu-3bet",
+        "done": 178,
+        "remaining": 22,
+        "delta": 17,
+        "rate": 16.66194326439249,
+        "etaJst": "2026-11-02T04:32:14.782769+09:00"
+      },
+      {
+        "spot": "sb-bb",
+        "done": 48,
+        "remaining": 152,
+        "delta": 5,
+        "rate": 4.900571548350732,
+        "etaJst": "2026-11-03T10:14:01.880683+09:00"
+      },
+      {
+        "spot": "co-bb",
+        "done": 69,
+        "remaining": 131,
+        "delta": 6,
+        "rate": 5.880685858020879,
+        "etaJst": "2026-11-03T01:29:36.163168+09:00"
+      }
+    ],
+    "summary": {
+      "checkedAt": "2026-11-01T18:13:01.435651+00:00",
+      "intervalMinutes": 61.21734924999999,
+      "throughput": 27.443200670764103,
+      "remaining": 3365,
+      "allEtaJst": "2026-11-07T05:50:02.250422+09:00"
+    }
+  },
+  "capacity": {
+    "otherRunning": 21,
+    "fitParallel": 2,
+    "expectedTotal": 23,
+    "guardJob": 124934382443
+  },
+  "notes": "Do not restart old local fits. Fetch gto-preflop-fit-out/41335511969 when run completes. Both refined JSONs are archived under data/poker-gto/fit-work; gate them before merging byStack. Temporary workflow must not enter staging."
 }
