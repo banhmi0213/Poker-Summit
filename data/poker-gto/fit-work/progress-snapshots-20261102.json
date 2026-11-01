@@ -1,0 +1,294 @@
+{
+  "snapshots": [
+    {
+      "checkedAt": "2026-11-01T16:59:44.553973+00:00",
+      "runs": [
+        {
+          "spot": "hu-srp",
+          "run": 40922255985,
+          "total": 201,
+          "fetched": 201,
+          "all_status": {
+            "completed": 182,
+            "queued": 19
+          },
+          "solve_status": {
+            "completed": 181,
+            "queued": 19
+          },
+          "solve_conclusions": {
+            "success": 181,
+            "null": 19
+          },
+          "other": [
+            {
+              "id": 123618340700,
+              "name": "plan",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "spot": "hu-limp",
+          "run": 40922261771,
+          "total": 201,
+          "fetched": 201,
+          "all_status": {
+            "completed": 160,
+            "queued": 41
+          },
+          "solve_status": {
+            "completed": 159,
+            "queued": 41
+          },
+          "solve_conclusions": {
+            "success": 159,
+            "null": 41
+          },
+          "other": [
+            {
+              "id": 123618359929,
+              "name": "plan",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "spot": "hu-3bet",
+          "run": 41279675288,
+          "total": 201,
+          "fetched": 201,
+          "all_status": {
+            "completed": 160,
+            "in_progress": 7,
+            "queued": 34
+          },
+          "solve_status": {
+            "completed": 159,
+            "in_progress": 7,
+            "queued": 34
+          },
+          "solve_conclusions": {
+            "success": 159,
+            "null": 41
+          },
+          "other": [
+            {
+              "id": 124768849103,
+              "name": "plan",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "spot": "sb-bb",
+          "run": 41279680906,
+          "total": 201,
+          "fetched": 201,
+          "all_status": {
+            "completed": 43,
+            "in_progress": 7,
+            "queued": 151
+          },
+          "solve_status": {
+            "completed": 42,
+            "in_progress": 7,
+            "queued": 151
+          },
+          "solve_conclusions": {
+            "success": 42,
+            "null": 158
+          },
+          "other": [
+            {
+              "id": 124768865985,
+              "name": "plan",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        },
+        {
+          "spot": "co-bb",
+          "run": 41279681140,
+          "total": 201,
+          "fetched": 201,
+          "all_status": {
+            "completed": 61,
+            "in_progress": 7,
+            "queued": 133
+          },
+          "solve_status": {
+            "completed": 60,
+            "in_progress": 7,
+            "queued": 133
+          },
+          "solve_conclusions": {
+            "success": 60,
+            "null": 140
+          },
+          "other": [
+            {
+              "id": 124768866845,
+              "name": "plan",
+              "status": "completed",
+              "conclusion": "success"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "checkedAt": "2026-11-01T17:11:48.394696+00:00",
+      "repoRunningJobs": 21,
+      "runs": [],
+      "jobs": [
+        {
+          "run": 40922255985,
+          "all": {
+            "completed": 182,
+            "queued": 19
+          },
+          "solve": {
+            "completed": 181,
+            "queued": 19
+          },
+          "success": 181,
+          "failures": [],
+          "jobTotal": 201
+        },
+        {
+          "run": 41279681140,
+          "all": {
+            "completed": 64,
+            "in_progress": 7,
+            "queued": 130
+          },
+          "solve": {
+            "completed": 63,
+            "in_progress": 7,
+            "queued": 130
+          },
+          "success": 63,
+          "failures": [],
+          "jobTotal": 201
+        },
+        {
+          "run": 41279675288,
+          "all": {
+            "completed": 162,
+            "in_progress": 7,
+            "queued": 32
+          },
+          "solve": {
+            "completed": 161,
+            "in_progress": 7,
+            "queued": 32
+          },
+          "success": 161,
+          "failures": [],
+          "jobTotal": 201
+        },
+        {
+          "run": 41279680906,
+          "all": {
+            "completed": 44,
+            "in_progress": 7,
+            "queued": 150
+          },
+          "solve": {
+            "completed": 43,
+            "in_progress": 7,
+            "queued": 150
+          },
+          "success": 43,
+          "failures": [],
+          "jobTotal": 201
+        },
+        {
+          "run": 40922261771,
+          "all": {
+            "completed": 160,
+            "queued": 41
+          },
+          "solve": {
+            "completed": 159,
+            "queued": 41
+          },
+          "success": 159,
+          "failures": [],
+          "jobTotal": 201
+        }
+      ]
+    }
+  ],
+  "estimate": {
+    "rows": [
+      {
+        "spot": "hu-srp",
+        "done": 181,
+        "delta": 0,
+        "remaining": 19,
+        "ratePerHour": 0.0,
+        "etaHours": 5.8309391575000005,
+        "etaJst": "2026-11-02T08:01:39.775663+09:00"
+      },
+      {
+        "spot": "co-bb",
+        "done": 63,
+        "delta": 3,
+        "remaining": 137,
+        "ratePerHour": 14.920409500088322,
+        "etaHours": 9.182053615833334,
+        "etaJst": "2026-11-02T11:22:43.787713+09:00"
+      },
+      {
+        "spot": "hu-3bet",
+        "done": 161,
+        "delta": 2,
+        "remaining": 39,
+        "ratePerHour": 9.946939666725548,
+        "etaHours": 3.92080391625,
+        "etaJst": "2026-11-02T06:07:03.288795+09:00"
+      },
+      {
+        "spot": "sb-bb",
+        "done": 43,
+        "delta": 1,
+        "remaining": 157,
+        "ratePerHour": 4.973469833362774,
+        "etaHours": 31.5674981975,
+        "etaJst": "2026-11-03T09:45:51.388207+09:00"
+      },
+      {
+        "spot": "hu-limp",
+        "done": 159,
+        "delta": 0,
+        "remaining": 41,
+        "ratePerHour": 0.0,
+        "etaHours": 9.95280994125,
+        "etaJst": "2026-11-02T12:08:58.510485+09:00"
+      }
+    ],
+    "summary": {
+      "fromJst": "2026-11-02T01:59:44.553973+09:00",
+      "toJst": "2026-11-02T02:11:48.394696+09:00",
+      "observedMinutes": 12.06401205,
+      "allDelta": 6,
+      "throughputPerHour": 29.840819000176644,
+      "perSpotProxyRate": 9.946939666725548,
+      "allRemaining": 3393,
+      "overallHours": 113.70331357125,
+      "overallEtaJst": "2026-11-06T19:54:00.323553+09:00",
+      "assumptions": [
+        "21 jobs / 3 spots maintained; free slots replenished without delay",
+        "unstarted spots have observed average cost per board",
+        "hu-srp then hu-limp resume when hu-3bet frees a slot",
+        "short observation window; includes all 21 spots, excludes further tournament/8-9max/overbet work"
+      ]
+    }
+  }
+}
