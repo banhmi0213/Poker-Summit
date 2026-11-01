@@ -1,5 +1,6 @@
 # Staging room server in Tokyo (owner 2026/10/28: 練習ぐらいサクサク動かな話しにならん).
 # Exactly one machine: ring tables, stamps and shown cards live in this process.
+# 2GB: the 200-player tournament run used about 1.1GB (2026/11/01).
 app = "poker-room-server-staging"
 primary_region = "nrt"
 
@@ -27,4 +28,4 @@ primary_region = "nrt"
 
 [[vm]]
   size = "shared-cpu-1x"
-  memory = "512mb"
+  memory = "2048mb"
