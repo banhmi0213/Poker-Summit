@@ -26,7 +26,7 @@ const GROUPS: MenuGroup[] = [
   { label: "オリジナルコンテンツ", links: [
     { label: "サミット", href: "/board", image: "/images/navigation/community-v1.webp", description: "ポーカー仲間との交流・質問・情報交換" },
     { label: "BLOG", href: "/blog", image: "/images/navigation/blog-v1.webp", description: "ポーカーの楽しみ方がもっと広がる" },
-    { label: "学習コース", href: "/learn", image: "/images/navigation/learn-v1.webp", description: "遊びながら、ポーカーを学ぼう。" },
+    { label: "GTO・学習", href: "/learn", image: "/images/navigation/learn-v1.webp", description: "登録なしで使える無料のGTO表・計算機・レッスン" },
     { label: "お知らせ", href: "/news", image: "/images/navigation/notice-v1.webp", description: "Poker Summitからの最新情報" },
   ] },
 ];
