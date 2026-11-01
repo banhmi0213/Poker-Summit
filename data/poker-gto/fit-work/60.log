@@ -1,0 +1,10 @@
+{"round":0,"perHandDiff":5.14,"rfi":{"BTN":54.6,"CO":42.4,"HJ":31.5,"LJ":26.8,"UTG+1":22.7,"UTG":18},"defend":{"BTN":0.698,"CO":0.61,"HJ":0.526,"UTG":0.433},"call":0.55}
+{"round":1,"perHandDiff":3.19,"rfi":{"BTN":53.7,"CO":38.8,"HJ":29.2,"LJ":24.7,"UTG+1":20.7,"UTG":16.9},"defend":{"BTN":0.84,"CO":0.757,"HJ":0.659,"UTG":0.479},"call":0.623}
+{"round":2,"perHandDiff":2.18,"rfi":{"BTN":53.5,"CO":37.1,"HJ":28.7,"LJ":23.9,"UTG+1":18.9,"UTG":15.8},"defend":{"BTN":0.888,"CO":0.788,"HJ":0.703,"UTG":0.47},"call":0.643}
+{"round":3,"perHandDiff":1.93,"rfi":{"BTN":53.7,"CO":36.4,"HJ":28.3,"LJ":23.4,"UTG+1":19.6,"UTG":15.8},"defend":{"BTN":0.899,"CO":0.795,"HJ":0.699,"UTG":0.499},"call":0.648}
+{"round":4,"perHandDiff":2.02,"rfi":{"BTN":54.5,"CO":35.4,"HJ":28.5,"LJ":23.5,"UTG+1":18.9,"UTG":15.4},"defend":{"BTN":0.907,"CO":0.804,"HJ":0.732,"UTG":0.471},"call":0.648}
+{"round":5,"perHandDiff":1.83,"rfi":{"BTN":54,"CO":36.6,"HJ":28,"LJ":22.9,"UTG+1":18.8,"UTG":15.5},"defend":{"BTN":0.907,"CO":0.798,"HJ":0.668,"UTG":0.47},"call":0.645}
+{"round":6,"perHandDiff":1.71,"rfi":{"BTN":54.3,"CO":35.5,"HJ":28.8,"LJ":22.9,"UTG+1":18.1,"UTG":15.4},"defend":{"BTN":0.915,"CO":0.812,"HJ":0.718,"UTG":0.45},"call":0.651}
+{"round":7,"perHandDiff":1.78,"rfi":{"BTN":53.8,"CO":36,"HJ":27.7,"LJ":23,"UTG+1":19,"UTG":15.3},"defend":{"BTN":0.918,"CO":0.812,"HJ":0.692,"UTG":0.461},"call":0.65}
+{"round":8,"perHandDiff":1.78,"rfi":{"BTN":53.7,"CO":35.5,"HJ":28.1,"LJ":22.6,"UTG+1":18.3,"UTG":15.1},"defend":{"BTN":0.915,"CO":0.816,"HJ":0.686,"UTG":0.448},"call":0.651}
+saved /tmp/claude-0/-home-claude/404d5d94-5488-5649-b24c-59353ef5970c/scratchpad/fitout/fit-60.json
