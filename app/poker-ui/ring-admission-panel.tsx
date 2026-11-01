@@ -57,9 +57,9 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
   try{const {error}=await auth.rpc('poker_ring_refill',{p_request:crypto.randomUUID(),p_table:t.id});if(error)throw Error(error.message);
    const buy=Math.min(t.maxBuyIn,Math.max(t.minBuyIn,t.bb*100));setAmount(String(buy));
    if(lastSeat!==null&&!t.seats.some(s=>s.seat===lastSeat))await transport.perform({type:'join',tableId:t.id,amount:buy,seat:lastSeat,requestId:crypto.randomUUID()});
-   else{setSelectSeat(true);setRefillNote('1,000 chipを補充しました。空いている席を選んでください。');}
+   else{setSelectSeat(true);setRefillNote('おかわりしました。空いている席を選んでください。');}
    setLastSeat(null);
-  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだ補充できません（この卓に着ける分のchipが残っています）。':e instanceof Error&&e.message.includes('Refill limit')?'chipの補充は1日3回までです。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
+  }catch(e){setRefillNote(e instanceof Error&&e.message.includes('not needed')?'まだおかわりできません（chipが残っているか、卓に座っています）。':e instanceof Error&&e.message.includes('Refill limit')?'おかわりは1日1回です。明日またお試しください。':'補充できませんでした。時間をおいてもう一度お試しください。');}
   finally{setRefilling(false);}};
  // Rank conditions (2026/11/01): 1/2 up to gold, 5/10 and 10/20 from platinum.
  const ringTiers=useRingTiers(auth,member,(view.state?.tables??[]).map(t=>t.id).join(','));
@@ -75,7 +75,7 @@ export default function RingAdmissionPanel({enabled,tableId=null,layout='simple'
  if(!member)return <p>着席と残高の確認には<Link href="/login?next=%2Fpoker-lobby">ログイン</Link>してください。</p>;
  const data=view.state,shownPlay=data?.play&&view.pending?.type==='act'?optimisticRingPlay(data.play,view.pending.command):data?.play??null,own=data?.membership&&(!tableId||data.membership.tableId===tableId)?data.membership:null,table=data?.table,blocked=Boolean(view.problem)||view.working||Boolean(view.pending)||view.storageBlocked||Boolean(tableId&&data?.membership&&data.membership.tableId!==tableId),chosen=selected?data?.tables.find(t=>t.id===selected.id)??selected:null,max=chosen?Math.min(chosen.maxBuyIn,data?.wallet.available??0):0,valid=chosen&&Number.isSafeInteger(Number(amount))&&Number(amount)>=chosen.minBuyIn&&Number(amount)<=max;
  const canRefillHere=Boolean(!own&&lastSeat!==null&&table&&data&&data.wallet.inPlay===0&&data.wallet.available<table.minBuyIn);
- const refillControl=(canRefillHere||refillNote)&&<>{canRefillHere&&<button type="button" disabled={blocked||refilling} onClick={()=>void refillAndSit()}>{refilling?'補充中':'補充して座り直す'}</button>}{refillNote&&<p role="status">{refillNote}</p>}</>;
+ const refillControl=(canRefillHere||refillNote)&&<>{canRefillHere&&<button type="button" disabled={blocked||refilling} onClick={()=>void refillAndSit()}>{refilling?'おかわり中':'補充して座り直す'}</button>}{refillNote&&<p role="status">{refillNote}</p>}</>;
  const join=async()=>{if(!chosen||!valid)return;if(productionFlow){window.location.assign(`/poker-ring/${chosen.id}?view=table&buyin=${Number(amount)}`);return;}await transport.perform({type:'join',tableId:chosen.id,amount:Number(amount),requestId:crypto.randomUUID()});setSelected(null);};
  const leave=async()=>{if(!own)return;await transport.perform({type:'leave',reservationId:own.reservationId,requestId:crypto.randomUUID()});if(exitIntent==='lobby')setLobbyPending(true);setConfirmExit(false);};
  const action=(action:import('@/lib/poker/betting').BettingAction|import('@/lib/poker/hand-command').RunsChoice)=>{if(!own||!data?.play)return;void transport.perform({type:'act',reservationId:own.reservationId,requestId:crypto.randomUUID(),command:{handId:data.play.hand.handId,revision:data.play.hand.revision,actionId:crypto.randomUUID(),action}});};

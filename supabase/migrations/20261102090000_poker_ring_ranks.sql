@@ -101,25 +101,44 @@ begin
 end;$$;
 revoke all on function poker_private.ensure_ring_season(uuid) from public,anon,authenticated,service_role;
 
--- 無料補充: 段位に合わせた基準額まで(1日3回の上限は今まで通り)。
+-- おかわり(オーナー 2026/11/01): 1日1回、段位で打つレートの100BBまで戻す。
+--   ルーキー〜シルバー 200(1/2) / ゴールド 500(2/5) / プラチナ 1,000(5/10) / ダイヤ・レジェンド 2,000(10/20)
+-- 卓に座っていない、かつ残高がその額より少ないときだけ。毎月1日の配布(1,000、プラチナ以上3,000)は別。
+create or replace function poker_private.ring_refill_amount(p_member uuid) returns bigint language sql security definer set search_path='' as $$
+ select case poker_private.ring_member_tier(p_member) when 3 then 500 when 4 then 1000 when 5 then 2000 when 6 then 2000 else 200 end::bigint
+$$;
+revoke all on function poker_private.ring_refill_amount(uuid) from public,anon,authenticated;
 create or replace function public.poker_ring_refill(p_request uuid,p_table uuid default null) returns jsonb language plpgsql security definer set search_path='' as $$
-declare who uuid:=auth.uid();a poker_private.ring_accounts%rowtype;smallest bigint;base bigint;
+declare who uuid:=auth.uid();a poker_private.ring_accounts%rowtype;amount bigint;
 begin
  if who is null or p_request is null or coalesce(public.is_suspended(),true) or not poker_private.ring_member_eligible(who) then raise exception 'Login required';end if;
  perform poker_private.ensure_ring_welcome(who);
+ perform poker_private.ensure_ring_season(who);
  select * into a from poker_private.ring_accounts where member_id=who for update;
  if not found then raise exception 'Account unavailable';end if;
  if exists(select 1 from poker_private.ring_chip_ledger where member_id=who and request_id=p_request) then return poker_private.ring_balance();end if;
- base:=poker_private.ring_base_chips(who);
- select coalesce(min(min_buy_in),1) into smallest from public.poker_ring_tables where published and deleted_at is null and (p_table is null or id=p_table);
  if p_table is not null and not exists(select 1 from public.poker_ring_tables where id=p_table and published and deleted_at is null) then raise exception 'Table unavailable';end if;
- if a.in_play>0 or a.available>=least(smallest,base) then raise exception 'Refill not needed';end if;
- update poker_private.ring_accounts set available=base,updated_at=now() where member_id=who;
- insert into poker_private.ring_chip_ledger(member_id,request_id,kind,available_delta,in_play_delta) values(who,p_request,'refill',base-a.available,0);
+ amount:=poker_private.ring_refill_amount(who);
+ if a.in_play>0 or a.available>=amount then raise exception 'Refill not needed';end if;
+ update poker_private.ring_accounts set available=amount,updated_at=now() where member_id=who;
+ insert into poker_private.ring_chip_ledger(member_id,request_id,kind,available_delta,in_play_delta) values(who,p_request,'refill',amount-a.available,0);
  return poker_private.ring_balance();
 end;$$;
 revoke all on function public.poker_ring_refill(uuid,uuid) from public,anon,service_role;
 grant execute on function public.poker_ring_refill(uuid,uuid) to authenticated;
+
+-- おかわりは1日1回(日本時間)。着席回数の上限は今まで通り。
+create or replace function poker_private.ring_ledger_throttle() returns trigger language plpgsql set search_path='' as $$
+begin
+ if new.kind='reserve' and (select count(*) from poker_private.ring_chip_ledger l where l.member_id=new.member_id and l.kind='reserve' and l.created_at>now()-interval '1 hour')>=30 then
+  raise exception 'Too many seat changes' using hint='着席の回数が多すぎます。しばらく時間をおいてください。';
+ end if;
+ if new.kind='refill' and (select count(*) from poker_private.ring_chip_ledger l where l.member_id=new.member_id and l.kind='refill'
+    and l.created_at>=(date_trunc('day',now() at time zone 'Asia/Tokyo') at time zone 'Asia/Tokyo'))>=1 then
+  raise exception 'Refill limit reached' using hint='おかわりは1日1回までです。';
+ end if;
+ return new;
+end; $$;
 
 -- 自分の段位と、全体の中の位置(オーナー 2026/11/01: 全体のランキングは自分のマイページにだけ。自分がどの位置か分かるように)。
 create or replace function public.poker_ring_rank() returns jsonb language plpgsql security definer set search_path='' as $$
