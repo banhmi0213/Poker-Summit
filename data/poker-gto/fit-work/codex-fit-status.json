@@ -1,0 +1,13 @@
+{
+  "sourceBranch": "claude/fit-defend-by-opener",
+  "sourceCommit": "15288e944e4e1b3d50e9a23aa51a3bd6ed1e094d",
+  "status": "running",
+  "stacks": [
+    40,
+    60
+  ],
+  "rounds": 6,
+  "iterations": 400,
+  "reuse20": "data/poker-gto/fit-work/fit2-20.json",
+  "notes": "Claude jobs stopped by owner; Codex runs both refinements locally. Remove fit-work before merging."
+}
