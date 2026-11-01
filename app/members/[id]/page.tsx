@@ -105,7 +105,7 @@ export default async function MemberProfilePage({
               {user?.id === params.id && <div className={styles.summaryActions}><Link href="/account/profile" className="btn">プロフィール編集</Link><Link href="/mypage" className="btn">マイページへ</Link></div>}
             </div>
             <div className={styles.tiles}>
-              <a href="#member-posts" className={styles.tile}><span className={styles.menuIcon} aria-hidden="true">▧</span><span className={styles.menuText}><strong>サミットへの投稿</strong><small>{postCount ?? posts?.length ?? 0} 件</small></span><b aria-hidden="true">›</b></a>
+              <a href="#member-posts" className={styles.tile}><span className={styles.menuIcon} aria-hidden="true">▧</span><span className={styles.menuText}><strong>サミットへの投稿</strong><small>{postCount ?? posts?.length ?? 0} 件</small></span></a>
               <div className={styles.tile}><span className={styles.menuIcon} aria-hidden="true">▤</span><span className={styles.menuText}><strong>コメント</strong><small>{replyCount ?? replies?.length ?? 0} 件</small></span></div>
             </div>
         <h2 id="member-posts" style={{ fontSize: 16, marginTop: 20, marginBottom: 10 }}>

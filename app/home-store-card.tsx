@@ -19,7 +19,7 @@ export function HomeStoreCard({ store, coverPhoto, isFavorite, favoriteAction, r
         <h3><StoreDisplayName name={store.name} /></h3><p className="home-location">📍 {[store.pref, store.city].filter(Boolean).join(" ")}</p>
         <div className="home-store-meta-row">
           {store.category && <span className="home-tag">{tagWords(CATEGORY_LABEL[store.category] ?? store.category)}</span>}
-          <span className="home-card-cta">店舗詳細を見る <b>›</b></span>
+          <span className="home-card-cta">店舗詳細を見る</span>
         </div>
         <VerifiedStoreBadge flags={flags} />
         {contentCounts && <div className="home-store-counts" aria-label="店舗の掲載情報">

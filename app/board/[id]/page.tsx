@@ -153,7 +153,7 @@ export default async function BoardPostPage({
   return (
     <div>
       <PortalHeader userEmail={user?.email} />
-      <div className="container detail-readable" style={{ maxWidth: 640 }}>
+      <div className="container detail-readable reading-detail community-detail">
         <Link href="/board" className="breadcrumb">
           スレッド一覧に戻る
         </Link>

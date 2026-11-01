@@ -138,7 +138,7 @@ export default async function JobDetailPage({
     <div>
       {j.status === "open" && <JsonLd data={jobPostingJsonLd(j)} />}
       <PortalHeader userEmail={user?.email} />
-      <div className="container detail-readable" style={{ maxWidth: 640 }}>
+      <div className="container detail-readable reading-detail job-detail">
         <Link href="/jobs" className="breadcrumb">
           求人一覧に戻る
         </Link>

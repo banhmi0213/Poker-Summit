@@ -31,7 +31,7 @@
 .sidebarCard small{display:block;margin-bottom:5px;color:#8a6d3c;font-size:10px;line-height:1.5}
 .sidebarCard strong{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
 .sidebarCard:hover strong{color:#8a6d3c;text-decoration:underline}
-.sidebarAll,.sidebarLearn{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none}
+.sidebarAll,.sidebarLearn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none}
 .sidebarAll{margin-top:10px;background:#203a4c;color:#fff}
 .sidebarLearn{margin-top:8px;background:#f5efe2;color:#6c542e;border:1px solid #e5d8bd}
 .sidebarAll:hover{background:#315266}
@@ -53,3 +53,5 @@
 
 /* Match the champagne site reading surfaces. */
 .article,.relatedArticles{background:linear-gradient(135deg,#fffefa,#fbf6ec);border-color:#d8c8a7;box-shadow:0 7px 24px #20384a09}
+
+.sidebarSticky{background:linear-gradient(135deg,#fffefa,#fbf6ec);border-color:#d8c8a7;border-top-color:#c7aa6b}

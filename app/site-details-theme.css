@@ -22,3 +22,20 @@ body:has(.portal-nav) .breadcrumb{color:#586b77}
  body:has(.portal-nav) .sd-tabs{gap:2px}
  body:has(.portal-nav) .sd-tabs button{font-size:12px;padding-inline:3px}
 }
+
+/* Public reading pages share the homepage's proportions and hierarchy. */
+body:has(.portal-nav) .reading-detail{max-width:900px}
+body:has(.portal-nav) .reading-detail>.breadcrumb{display:inline-flex;margin-bottom:20px;font-size:13px;color:#815f27}
+body:has(.portal-nav) .reading-detail .card{padding:clamp(18px,3vw,32px);border-radius:14px}
+body:has(.portal-nav) .reading-detail>.card:first-of-type{border-top:3px solid #c7aa6b}
+body:has(.portal-nav) .reading-detail h1{font-size:clamp(23px,2.4vw,30px)!important;line-height:1.6;overflow-wrap:anywhere}
+body:has(.portal-nav) .reading-detail h2{font-size:20px!important;line-height:1.6;border-left:3px solid #c7aa6b;padding-left:12px;margin-top:28px}
+body:has(.portal-nav) .reading-detail .card h2:first-child{margin-top:0}
+body:has(.portal-nav) .reading-detail .info-row{padding-block:16px;border-bottom-color:#dfd5c1;line-height:1.85}
+body:has(.portal-nav) .reading-detail .info-row>div{min-width:0;overflow-wrap:anywhere}
+body:has(.portal-nav) .reading-detail .btn{min-height:44px;border-radius:9px;padding:10px 16px;line-height:1.5}
+body:has(.portal-nav) .community-detail>.card:first-of-type>div:first-child{flex-wrap:wrap}
+@media(max-width:767px){
+ body:has(.portal-nav) .reading-detail h2{font-size:18px!important}
+ body:has(.portal-nav) .reading-detail .info-row{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+}

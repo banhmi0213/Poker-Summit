@@ -31,8 +31,8 @@ export function RelatedSidebar({articles}:{articles:RelatedArticleCard[]}){
      <span><small>{article.category}</small><strong>{article.title}</strong></span>
     </Link>
    </li>)}</ul>:<p className={styles.sidebarEmpty}>ポーカーのルールや戦略、最新の話題をチェック。</p>}
-   <Link href="/blog" className={styles.sidebarAll}>ブログ一覧を見る <span aria-hidden="true">→</span></Link>
-   <Link href="/learn" className={styles.sidebarLearn}>無料の学習コースへ <span aria-hidden="true">→</span></Link>
+   <Link href="/blog" className={styles.sidebarAll}>ブログ一覧を見る</Link>
+   <Link href="/learn" className={styles.sidebarLearn}>無料の学習コースへ</Link>
   </div>
  </aside>;
 }

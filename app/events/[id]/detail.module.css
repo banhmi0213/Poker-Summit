@@ -36,4 +36,6 @@
 }
 
 /* Match the champagne site reading surfaces. */
-.facts>div,.box{background:linear-gradient(135deg,#fffefa,#fbf6ec);border-color:#d8c8a7;box-shadow:0 7px 24px #20384a09}
+.facts>div,.panel{background:linear-gradient(135deg,#fffefa,#fbf6ec);border-color:#d8c8a7;box-shadow:0 7px 24px #20384a09}
+
+.facts strong{color:#183247}
