@@ -39,9 +39,13 @@ export const REALIZE:Record<'limp'|'srp'|'3bp'|'4bp'|'allin',[number,number]>={l
 export let PLAYABILITY={suited:0.06,offsuit:-0.06,gapStep:0.02,pair:0.02};
 /** Per-class playability fitted from the per-hand flop EVs (scripts/poker-gto/calibrate-hands.cjs), when loaded. */
 let PLAY_TABLE:Record<string,number>|null=null;
+/** Per stack depth (2026/11/1, tournament charts fitted to published 8-handed BBA ranges): a playability table and
+ * realisation roles for that depth, used as they are (no scaling towards 1 by depth). Keyed by the stack in BB. */
+type StackFit={play?:Record<string,number>;role?:Partial<typeof REALIZE_ROLE>};
+let BY_STACK:Record<string,StackFit>|null=null;
 /** Load a realisation fit ({role, play}) before solving (2026/10/29). Classes missing from `play` keep the formula. */
-export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Record<string,number>}|null){
- PLAY_TABLE=fit?.play??null;for(const [k,v] of Object.entries(fit?.role??{}))if(v)REALIZE_ROLE[k as keyof typeof REALIZE_ROLE]={...v};
+export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Record<string,number>;byStack?:Record<string,StackFit>}|null){
+ PLAY_TABLE=fit?.play??null;BY_STACK=fit?.byStack??null;for(const [k,v] of Object.entries(fit?.role??{}))if(v)REALIZE_ROLE[k as keyof typeof REALIZE_ROLE]={...v};
 }
 export function playability(label:string){
  if(PLAY_TABLE&&PLAY_TABLE[label]!==undefined)return PLAY_TABLE[label];
@@ -163,14 +167,14 @@ export class PreflopSolver{
  readonly pair:Float64Array;readonly eq:Float64Array;readonly play:Float64Array;
  readonly root:PreflopNode;readonly decisions:PreflopDecision[];
  readonly regret:Float64Array[];readonly avg:Float64Array[];iterations=0;
- readonly cfg:PreflopConfig;readonly depth:number;readonly seats:number;readonly post:number[];
+ readonly cfg:PreflopConfig;readonly depth:number;readonly role:typeof REALIZE_ROLE;readonly seats:number;readonly post:number[];
  constructor(equity:Equity,cfg:PreflopConfig=DEFAULT_PREFLOP){
-  this.cfg=cfg;this.seats=cfg.seats??6;this.post=postOrder(this.seats);this.depth=Math.sqrt(Math.min(1,cfg.stack/100));
+  this.cfg=cfg;this.seats=cfg.seats??6;this.post=postOrder(this.seats);const st=BY_STACK?.[String(cfg.stack)];this.depth=st?1:Math.sqrt(Math.min(1,cfg.stack/100));this.role={...REALIZE_ROLE,...(st?.role??{})} as typeof REALIZE_ROLE;
   const n=equity.labels.length;this.n=n;this.labels=equity.labels;
   this.combos=Float64Array.from(equity.labels,l=>l.length===2?6:l[2]==='s'?4:12);this.prior=Float64Array.from(this.combos,c=>c/1326);
   const ranks='23456789TJQKA',cards=equity.labels.map(l=>{const a=ranks.indexOf(l[0]),b=ranks.indexOf(l[1]),out:[number,number][]=[];
    for(let x=0;x<4;x++)for(let y=0;y<4;y++){if(a===b&&y<=x)continue;if(l[2]==='s'&&x!==y)continue;if(l[2]==='o'&&x===y)continue;if(a!==b&&!l[2])continue;out.push([a*4+x,b*4+y]);}return out;});
-  this.pair=new Float64Array(n*n);this.eq=new Float64Array(n*n);this.play=Float64Array.from(equity.labels,l=>1+(playability(l)-1)*this.depth);
+  this.pair=new Float64Array(n*n);this.eq=new Float64Array(n*n);this.play=Float64Array.from(equity.labels,l=>st?.play?.[l]??1+(playability(l)-1)*this.depth);
   for(let i=0;i<n;i++)for(let j=0;j<n;j++){let ok=0;for(const [p,q] of cards[i])for(const [r,s] of cards[j])if(p!==r&&p!==s&&q!==r&&q!==s)ok++;this.pair[i*n+j]=ok/(this.combos[i]*1225);this.eq[i*n+j]=equity.eq[i][j]/10000;}
   const {root,decisions}=buildPreflopTree(cfg);this.root=root;this.decisions=decisions;
   this.regret=decisions.map(d=>new Float64Array(n*d.actions.length));this.avg=decisions.map(d=>new Float64Array(n*d.actions.length));
@@ -193,7 +197,7 @@ export class PreflopSolver{
     return values;
    }
    if(node.threeWay)return this.#threeWay(node,reach,mass,pot-rakeTaken(this.cfg.rake,pot,'threeWay'));
-   const {a,b,kind,aggr}=node.showdown!,won=pot-rakeTaken(this.cfg.rake,pot,kind),ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?REALIZE_ROLE[kind]:null;
+   const {a,b,kind,aggr}=node.showdown!,won=pot-rakeTaken(this.cfg.rake,pot,kind),ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?this.role[kind]:null;
    // Shorter stacks leave less to play for after the flop: realisation moves towards 1 (by the square root of the depth).
    const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
