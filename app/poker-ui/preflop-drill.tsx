@@ -22,7 +22,7 @@ const read=():Stats=>{try{const v=JSON.parse(window.localStorage.getItem(KEY)??'
 const write=(s:Stats)=>{try{window.localStorage.setItem(KEY,JSON.stringify(s));}catch{/* convenience only */}};
 const pct=(x:number)=>`${Math.round(x*100)}%`;
 
-/** weak (スタンダード): add 「自分の弱点」, dealing the member's costliest preflop spots from あかんとこ一覧. upsell: show it
+/** weak (スタンダード): add 「自分の弱点」, dealing the member's costliest preflop spots from 弱点分析. upsell: show it
  * marked 「（スタンダード）」 with a note instead. Both false while paid features are hidden. */
 const DRILLABLE=/^pre:(open|vsOpen|vs3bet):/;
 export function PreflopDrill({weak=false,upsell=false}:{weak?:boolean;upsell?:boolean}={}){
@@ -56,7 +56,7 @@ export function PreflopDrill({weak=false,upsell=false}:{weak?:boolean;upsell?:bo
   setLoading(true);
   const d=await (next.current??fetchOne(key));next.current=fetchOne(key);
   setLoading(false);
-  if(d)setCur(d);else setError(key==='weak'?'弱点の場面がまだありません。GTOと対戦やリングで打つと、あかんとこ一覧から自分の苦手な場面が集まります。':'問題を作れませんでした。もう一度押してください。');
+  if(d)setCur(d);else setError(key==='weak'?'弱点の場面がまだありません。GTOと対戦やリングで打つと、弱点分析に自分の苦手な場面が集まります。':'問題を作れませんでした。もう一度押してください。');
  },[fetchOne]);
  const start=(key=modeKey)=>{if(key==='weak'&&!weak){setCur(null);return;}next.current=null;setReviewing(false);void show(key,null);};
 
@@ -86,7 +86,7 @@ export function PreflopDrill({weak=false,upsell=false}:{weak?:boolean;upsell?:bo
  return <div className={chart.wrap}>
   <p>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。キーボードの1〜4でも選べます。</p>
   <div className={`${chart.form} ${styles.formBig}`}>
-   <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（あかんとこ一覧から）{weak?'':'（スタンダード）'}</option>}</select></label>
+   <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（弱点分析から）{weak?'':'（スタンダード）'}</option>}</select></label>
    <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>setAuto(e.target.value==='on')}><option value="on">する</option><option value="off">しない</option></select></label>
    {!cur&&<button type="button" disabled={loading} onClick={()=>start()}>連打を始める</button>}
    {review.length>0&&!reviewing&&<button type="button" onClick={()=>void show(modeKey,review)}>外した手を復習する（{review.length}）</button>}
