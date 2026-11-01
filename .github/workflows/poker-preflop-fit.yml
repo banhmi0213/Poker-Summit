@@ -10,17 +10,53 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      parallel: ${{ steps.capacity.outputs.parallel }}
+    steps:
+      - name: Check repository job capacity
+        id: capacity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          python3 - <<'PYCODE'
+          import os,json,subprocess
+          repo=os.environ['REPOSITORY']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/'+path],text=True))
+          ids={40922255985,40922261771,41279675288,41279680906,41279681140,int(os.environ['THIS_RUN'])}
+          for status in ['in_progress','queued','waiting']:
+              for page in api('actions/runs?status='+status+'&per_page=100'):
+                  ids.update(r['id'] for r in page['workflow_runs'])
+          running=0
+          for rid in sorted(ids):
+              jobs=[j for page in api(f'actions/runs/{rid}/jobs?per_page=100') for j in page['jobs']]
+              n=sum(j['status']=='in_progress' for j in jobs)
+              running+=n
+              print(rid,n)
+          other=max(0,running-1)
+          slots=min(2,23-other)
+          print('repository running jobs including capacity check:',running,'fit parallel:',slots)
+          if slots<1: raise SystemExit('No capacity below the 23-job limit; no fit started')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write(f'parallel={slots}\n')
+          PYCODE
   fit:
+    needs: capacity
     name: Fit ${{ matrix.stack }}BB
     runs-on: ubuntu-latest
     timeout-minutes: 330
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: ${{ fromJSON(needs.capacity.outputs.parallel) }}
       matrix:
-        stack: [60, 40, 20]
+        stack: [40, 60]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,7 +67,7 @@ jobs:
       - name: Fit
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds ${{ vars.GTO_FIT_ROUNDS || '8' }} --iters ${{ vars.GTO_FIT_ITERS || '400' }} --out out/fit-${{ matrix.stack }}.json
+        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds 6 --iters 400 --init data/poker-gto/fit-work/fit-${{ matrix.stack }}.json --out out/fit2-${{ matrix.stack }}.json
       - uses: actions/upload-artifact@v4
         with:
           name: fit-${{ matrix.stack }}
@@ -49,15 +85,16 @@ jobs:
           pattern: fit-*
           merge-multiple: true
           path: out
-      - name: Merge into preflop-play-fit.json and push gto-preflop-fit-out/<run id>
+      - name: Preserve refinement results for acceptance review
         run: |
-          node -e "
-          const fs=require('fs');const f='data/poker-gto/preflop-play-fit.json',fit=JSON.parse(fs.readFileSync(f,'utf8'));fit.byStack=fit.byStack||{};
-          for(const n of fs.readdirSync('out').filter(x=>/^fit-\d+\.json$/.test(x))){const r=JSON.parse(fs.readFileSync('out/'+n,'utf8'));fit.byStack[r.stack]={play:r.play,role:r.role,report:r.report};console.log(r.stack,JSON.stringify(r.report));}
-          fs.writeFileSync(f,JSON.stringify(fit));"
+          set -euo pipefail
+          for stack in 40 60; do
+            test -s "out/fit2-$stack.json"
+            cp "out/fit2-$stack.json" "data/poker-gto/fit-work/fit2-$stack.json"
+          done
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-fit-out/${{ github.run_id }}"
-          git add data/poker-gto/preflop-play-fit.json
-          git commit -m "大会向けのプリフロップ当て直し（run ${{ github.run_id }}）"
+          git add data/poker-gto/fit-work/fit2-40.json data/poker-gto/fit-work/fit2-60.json
+          git commit -m "Preserve 40BB and 60BB refinement results for review"
           git push origin "gto-preflop-fit-out/${{ github.run_id }}"
