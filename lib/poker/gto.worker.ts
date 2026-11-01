@@ -5,13 +5,13 @@ import {decideGto,preflopEvById,type GtoData,type GtoView,type GtoDecision,type 
 import {adviseGto,flagHand,liveRecordRows,recordRows,trainerSpot,reviewGto,reviewLive,reviewRanges,summarizeDeviation,type GtoRange,type DeviationSummary,type LiveDecision,type LiveReview,type GtoAdvice,type TrainerSpot,type HandFlags,type GtoReview,type GtoReviewHand} from './gto-review';
 import type {FlopData} from './gto-spots';
 import type {HistoryAction} from './hand-history';
-import type {GtoRecordRow,GtoRecordSource} from './gto-record';
+import {spotOf,type GtoRecordRow,type GtoRecordSource} from './gto-record';
 import {HERO,MODE_POSITIONS,reachSpot,startTrainerHand,trainerView,type TrainerHand,type TrainerMode} from './gto-trainer';
 import {exploreTurn,type ExploreResult} from './gto-explore';
 import {RAKE_CHARTS,rakeKey} from './ring-rake';
 import {icmPushFold,type IcmResult,type IcmSpot} from './icm';
 
-export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'liveRecords';id:number;items:LiveDecision[];ref:string;budgetMs:number}|{type:'records';id:number;hands:GtoReviewHand[];source:GtoRecordSource;streets?:HistoryAction['street'][];budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number}|{type:'deviation';id:number;hands:GtoReviewHand[]}|{type:'explore';id:number;spot:string;flop:string;path:number[];turn:string;steps:number[];budgetMs:number}|{type:'icm';id:number;spot:IcmSpot}|{type:'spot';id:number;view:GtoView;budgetMs:number}|{type:'trainerStart';id:number;mode:TrainerMode;seed:number;buttonIndex:number;tries:number}|{type:'flags';id:number;hands:GtoReviewHand[];streets:('preflop'|'flop'|'turn'|'river')[];budgetMs:number}|{type:'drill';id:number;modes:DrillMode[];seed:number};
+export type GtoRequest={type:'decide';id:number;view:GtoView;budgetMs:number}|{type:'liveRecords';id:number;items:LiveDecision[];ref:string;budgetMs:number}|{type:'records';id:number;hands:GtoReviewHand[];source:GtoRecordSource;streets?:HistoryAction['street'][];budgetMs:number}|{type:'advise';id:number;view:GtoView;budgetMs:number}|{type:'reviewLive';id:number;items:LiveDecision[];budgetMs:number}|{type:'review';id:number;hand:GtoReviewHand;budgetMs:number}|{type:'deviation';id:number;hands:GtoReviewHand[]}|{type:'explore';id:number;spot:string;flop:string;path:number[];turn:string;steps:number[];budgetMs:number}|{type:'icm';id:number;spot:IcmSpot}|{type:'spot';id:number;view:GtoView;budgetMs:number}|{type:'trainerStart';id:number;mode:TrainerMode;seed:number;buttonIndex:number;tries:number}|{type:'flags';id:number;hands:GtoReviewHand[];streets:('preflop'|'flop'|'turn'|'river')[];budgetMs:number}|{type:'drill';id:number;modes:DrillMode[];seed:number;spots?:string[]};
 export type GtoReply={type:'decision';id:number;decision:GtoDecision}|{type:'records';id:number;rows:GtoRecordRow[]}|{type:'advice';id:number;advice:GtoAdvice}|{type:'liveReview';id:number;reviews:LiveReview[]}|{type:'review';id:number;reviews:GtoReview[];others?:{index:number;range:GtoRange}[]}|{type:'deviation';id:number;summary:DeviationSummary}|{type:'explore';id:number;result:ExploreResult}|{type:'icm';id:number;result:{icm:IcmResult;chip:IcmResult}}|{type:'spot';id:number;spot:TrainerSpot}|{type:'trainerStart';id:number;hand:TrainerHand|null}|{type:'flags';id:number;flags:HandFlags[]}|{type:'drill';id:number;drill:{hand:TrainerHand;spot:TrainerSpot;mode:DrillMode}|null}|{type:'error';id:number;message:string};
 
 const scope=self as unknown as {postMessage(m:GtoReply):void;onmessage:((e:MessageEvent<GtoRequest>)=>void)|null};
@@ -33,8 +33,25 @@ function load(){
 /** プリフロップ連打 (owner 2026/10/31, Olympia's FastFold-style preflop trainer): one random preflop spot for the hero —
  * a random seat that can have one of the chosen spots — with GTO's menu for that hand, in one round trip. */
 export type DrillMode='rfi'|'vsOpen'|'vs3bet';
-function findDrill(modes:DrillMode[],seed:number,data:GtoData){
+/** 弱点ドリル (owner 2026/11/1, スタンダード): the member's costly preflop spots from the GTO records
+ * (pre:open:CO, pre:vsOpen:BB:BTN, pre:vs3bet:BTN:SB …). Returns the spots the drill can deal. */
+function drillableSpot(key:string):{mode:DrillMode;pos:string}|null{
+ const [p,k,pos]=key.split(':');if(p!=='pre'||!pos)return null;
+ const mode=k==='open'?'rfi':k==='vsOpen'?'vsOpen':k==='vs3bet'?'vs3bet':null;
+ return mode&&MODE_POSITIONS[mode].includes(pos as never)?{mode,pos}:null;
+}
+function findDrill(modes:DrillMode[],seed:number,data:GtoData,spots?:string[]){
  let s=seed>>>0;const rnd=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
+ const targets=(spots??[]).map(k=>({k,d:drillableSpot(k)})).filter(x=>x.d) as {k:string;d:{mode:DrillMode;pos:string}}[];
+ if(targets.length){
+  for(let k=0;k<40;k++){
+   const t=targets[Math.floor(rnd()*targets.length)],b=[0,1,2,3,4,5].find(i=>startTrainerHand(1,i).heroPos===t.d.pos)??0;
+   const hand=findSpot(t.d.mode,Math.floor(rnd()*2**31),b,6,data);if(!hand)continue;
+   const view=trainerView(hand,HERO);if(!view||spotOf(view)!==t.k)continue;const spot=trainerSpot(view,data,0);
+   if(spot.source==='preflop'&&spot.options.length>=2)return {hand,spot,mode:t.d.mode,target:t.k};
+  }
+  return null;
+ }
  for(let k=0;k<12;k++){
   const mode=modes[Math.floor(rnd()*modes.length)]??'rfi',seats=[0,1,2,3,4,5].filter(b=>MODE_POSITIONS[mode].includes(startTrainerHand(1,b).heroPos));
   const b=seats[Math.floor(rnd()*seats.length)]??0,hand=findSpot(mode,Math.floor(rnd()*2**31),b,8,data);if(!hand)continue;
@@ -61,7 +78,7 @@ scope.onmessage=async e=>{
  try{
   const b=await load(),preflopRake=m.type==='review'||m.type==='flags'||m.type==='records'||m.type==='deviation'||m.type==='reviewLive'?await loadRake():undefined;
   const data:GtoData={...b,...(preflopRake?{preflopRake}:{}),flop(spot,flop){const k=spot+'/'+flop;if(flops.has(k))return flops.get(k)!;missing.add(k);return null;}};
-  const run=()=>m.type==='decide'?decideGto(m.view,data,Math.random,m.budgetMs):m.type==='spot'?trainerSpot(m.view,data,m.budgetMs):m.type==='trainerStart'?findSpot(m.mode,m.seed,m.buttonIndex,m.tries,data):m.type==='drill'?findDrill(m.modes,m.seed,data):m.type==='flags'?m.hands.map(h=>flagHand(h,data,m.streets,m.budgetMs)):m.type==='records'?m.hands.flatMap(h=>recordRows(h,data,m.source,m.budgetMs,m.streets)):m.type==='liveRecords'?liveRecordRows(m.items,data,m.ref,m.budgetMs):m.type==='advise'?adviseGto(m.view,data,m.budgetMs):m.type==='reviewLive'?reviewLive(m.items,data,m.budgetMs):m.type==='deviation'?summarizeDeviation(m.hands,data):{reviews:reviewGto(m.hand,data,m.budgetMs),others:reviewRanges(m.hand,data,Math.min(m.budgetMs,800))};
+  const run=()=>m.type==='decide'?decideGto(m.view,data,Math.random,m.budgetMs):m.type==='spot'?trainerSpot(m.view,data,m.budgetMs):m.type==='trainerStart'?findSpot(m.mode,m.seed,m.buttonIndex,m.tries,data):m.type==='drill'?findDrill(m.modes,m.seed,data,m.spots):m.type==='flags'?m.hands.map(h=>flagHand(h,data,m.streets,m.budgetMs)):m.type==='records'?m.hands.flatMap(h=>recordRows(h,data,m.source,m.budgetMs,m.streets)):m.type==='liveRecords'?liveRecordRows(m.items,data,m.ref,m.budgetMs):m.type==='advise'?adviseGto(m.view,data,m.budgetMs):m.type==='reviewLive'?reviewLive(m.items,data,m.budgetMs):m.type==='deviation'?summarizeDeviation(m.hands,data):{reviews:reviewGto(m.hand,data,m.budgetMs),others:reviewRanges(m.hand,data,Math.min(m.budgetMs,800))};
   let d=run();
   // A flop file was needed but not loaded yet: fetch it and decide again.
   for(let i=0;i<5&&missing.size>0;i++){const keys=[...missing];missing.clear();

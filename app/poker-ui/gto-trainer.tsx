@@ -56,14 +56,14 @@ const heroOut=(h:TrainerHand)=>!h.result&&Boolean(h.round.players.find(p=>p.id==
 const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p=>p.id===HERO)!.totalCommitted);
 
 /** Two ways to practise (2026/10/31): a whole hand against GTO, or プリフロップ連打 (preflop decisions one after another). */
-export function GtoTrainer(){
+export function GtoTrainer({standard=false,upsell=false}:{standard?:boolean;upsell?:boolean}={}){
  const [kind,setKind]=useState<'hand'|'drill'>('hand');
  return <div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
    <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
    <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
   </div>
-  {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill/>}
+  {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill weak={standard} upsell={upsell}/>}
  </div>;
 }
 function GtoHandTrainer(){
