@@ -5,7 +5,7 @@ import {LEVEL_TEXT,type TrainerLevel} from '@/lib/poker/gto-trainer';
 import {syncHandRecords} from './gto-record-sync';
 import styles from './gto-weak-spots.module.css';
 
-/** あかんとこ一覧 (owner 2026/11/1「プレイヤーがプレイした全部から収集」): the member's GTO records from every place they
+/** 弱点分析 (owner 2026/11/1「プレイヤーがプレイした全部から収集」): the member's GTO records from every place they
  * play, grouped by spot, the costliest first. Ring and tournament hands are judged in the background on open. */
 type Example={source:GtoRecordSource;hand:string;board:string;action:string;freq:number|null;evLoss:number|null;level:TrainerLevel|null;at:string;ref:string|null};
 type Spot={spot:string;n:number;misses:number;close:number;good:number;evLoss:number;evN:number;last:string;examples:Example[]};
@@ -16,6 +16,19 @@ const FILTERS:{id:string;label:string;sources:GtoRecordSource[]|null}[]=[
 const pct=(a:number,b:number)=>b?`${Math.round(a/b*100)}%`:'-';
 const bb=(v:number)=>`${v.toFixed(2)}BB`;
 const SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
+// The headline of a spot (owner 2026/11/1「見出し」): what the member does too often there, from the latest misses,
+// and how much it matters next to the costliest spot (three marks at 60% of the top EV loss or more).
+const KIND_WORDS:[RegExp,string][]=[[/^フォールド/,'フォールドしすぎ'],[/^チェック/,'チェックしすぎ'],[/^コール/,'コールしすぎ'],[/オールイン/,'オールインしすぎ'],[/^(レイズ|3ベット|4ベット|5ベット|オープン)/,'レイズしすぎ'],[/^ベット/,'ベットしすぎ'],[/^リンプ/,'リンプしすぎ']];
+function headline(s:Spot):string{
+ const miss=s.examples.filter(e=>e.level==='mistake'||e.level==='blunder'),pool=miss.length?miss:s.examples,count=new Map<string,number>();
+ for(const e of pool){const w=KIND_WORDS.find(([r])=>r.test(e.action))?.[1];if(w)count.set(w,(count.get(w)??0)+1);}
+ const top=[...count].sort((a,b)=>b[1]-a[1])[0];
+ return top&&top[1]*2>=pool.length?top[0]:s.misses?'GTOから外れた打ち方が多い':'おおむねGTOどおり';
+}
+function weight(s:Spot,top:Spot|undefined):number{
+ const base=top?.evLoss?s.evLoss/top.evLoss:top?.misses?s.misses/top.misses:0;
+ return base>=0.6?3:base>=0.3?2:1;
+}
 const boardText=(b:string)=>b.match(/../g)?.map(c=>(c[0]==='T'?'10':c[0])+SUIT[c[1]]).join(' ')??'';
 
 export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean}={}){
@@ -24,7 +37,7 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
  const load=useCallback(async()=>{
   const f=FILTERS.find(x=>x.id===filter)!;
   try{const r=await fetch(`/api/poker/gto-records?days=${days}${f.sources?`&sources=${f.sources.join(',')}`:''}`,{cache:'no-store'});
-   if(r.status===401){setError('ログインすると、打ったハンドから自分のあかんとこが集まります。');return;}
+   if(r.status===401){setError('ログインすると、打ったハンドから自分の弱点が集まります。');return;}
    if(!r.ok)throw Error();setData(await r.json());setError('');}catch{setError('読み込めませんでした。少しおいて開き直してください。');}
  },[days,filter]);
  useEffect(()=>{void load();},[load]);
@@ -49,7 +62,7 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
    <ol className={styles.list}>{data.spots.slice(0,limit??data.spots.length).map((s,i)=>{const graded=s.misses+s.close+s.good||s.n;return <li key={s.spot} className={styles.item}>
     <button type="button" className={styles.head} aria-expanded={open===s.spot} onClick={()=>setOpen(open===s.spot?null:s.spot)}>
      <span className={styles.rank}>{i+1}</span>
-     <span className={styles.title}><b>{spotLabel(s.spot)}</b><small>{s.n}回・ミス {s.misses}回・惜しい {s.close}回・EV損失 {bb(s.evLoss)}{s.evN?`（1回あたり ${bb(s.evLoss/s.evN)}）`:''}</small></span>
+     <span className={styles.title}><b>{headline(s)}<i className={styles.stars} aria-label={`重要度 ${weight(s,data.spots[0])}（3段階）`}>{'★'.repeat(weight(s,data.spots[0]))}<s>{'★'.repeat(3-weight(s,data.spots[0]))}</s></i></b><em className={styles.spot}>{spotLabel(s.spot)}</em><small>{s.n}回・ミス {s.misses}回・惜しい {s.close}回・EV損失 {bb(s.evLoss)}{s.evN?`（1回あたり ${bb(s.evLoss/s.evN)}）`:''}</small></span>
      <span className={styles.meter} aria-label={`GTOどおり ${pct(s.good,graded)}`}><i style={{width:pct(s.good,graded)}}/></span>
     </button>
     {open===s.spot&&<div className={styles.body}>{s.examples.length===0?<p className={styles.note}>この場面の最近の判断はGTOどおりでした。</p>:<ul>{s.examples.map((e,k)=><li key={k}>

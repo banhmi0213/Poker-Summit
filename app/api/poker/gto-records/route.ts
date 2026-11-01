@@ -3,7 +3,7 @@ import {createClient} from '@/lib/supabase/server';
 import {getGtoTier} from '@/lib/billing/plan';
 import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
 
-// GTO records (owner 2026/11/1): graded decisions from every place the member plays, and the あかんとこ一覧 built from them.
+// GTO records (owner 2026/11/1): graded decisions from every place the member plays, and the 弱点分析 built from them.
 // The database functions check the login and keep each member to their own rows (supabase/migrations/*_poker_gto_records.sql).
 export const dynamic='force-dynamic';
 const SOURCES=new Set(['ring','tournament','practice','trainer','drill','quiz','daily']);
