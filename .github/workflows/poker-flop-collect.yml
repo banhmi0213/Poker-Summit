@@ -20,13 +20,17 @@ jobs:
       - name: Read run id from branch name
         id: run
         run: echo "id=${GITHUB_REF_NAME#gto-flop-collect/}" >> "$GITHUB_OUTPUT"
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: flop-*
-          merge-multiple: true
-          path: public/poker-gto/flops
-          run-id: ${{ steps.run.outputs.id }}
-          github-token: ${{ github.token }}
+      # gh run download pages through every artifact of the run; download-artifact stopped at 100 (2026/11/1: a
+      # 200-flop run came back with only its first 100 flops).
+      - name: Download every flop artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "${{ steps.run.outputs.id }}" --repo "${{ github.repository }}" --pattern 'flop-*' --dir "$RUNNER_TEMP/flops"
+          n=$(ls "$RUNNER_TEMP/flops" | wc -l); echo "artifacts: $n"
+          mkdir -p public/poker-gto/flops
+          for d in "$RUNNER_TEMP"/flops/*/; do cp -r "$d". public/poker-gto/flops/; done
       - name: Commit to gto-flop-results
         run: |
           set -o pipefail

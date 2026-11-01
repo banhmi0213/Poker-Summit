@@ -18,3 +18,26 @@
  .main[data-fit] .panelIcon{width:38px;height:38px}
  .main[data-fit] .panel{padding:12px 18px;min-height:0}
 }
+
+/* スマホの下のメニュー (owner 2026/11/1): the five most used panes, fixed at the bottom on phones only. The three
+   shortcut cards at the top are left out on phones, as the bar does the same job and they pushed the pane a screen down. */
+.dock{display:none}
+@media(max-width:900px){
+ .dock{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;position:fixed;left:0;right:0;bottom:0;z-index:50;background:#102334f2;border-top:1px solid #d9b36866;padding:4px 4px calc(4px + env(safe-area-inset-bottom));backdrop-filter:blur(6px)}
+ .dock button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;border:0;border-radius:10px;background:none;color:#c9d6e0;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+ .dock button svg{width:22px;height:22px}
+ .dock button[aria-current=page]{color:#14283a;background:#d9b368}
+ .shell{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+}
+@media(max-width:650px){.summaryGrid{display:none}}
+/* スマホでGTOの表を開いたとき (owner 2026/11/1「すぐ表が見えた方がいい」「表ももっと見えやすく」): the page title and
+   the pane's long description shrink, and the pane goes almost edge to edge so the 13×13 table is as large as it can be. */
+@media(max-width:650px){
+ .main[data-fit]{padding:10px 4px}
+ .main[data-fit] .heading{display:none}
+ .main[data-fit] .content{border-radius:12px}
+ .main[data-fit] .panelHeading{padding:12px 12px 10px}
+ .main[data-fit] .panelHeading h2{font-size:19px}
+ .main[data-fit] .panelHeading p:last-child{display:none}
+ .main[data-fit] .panel{padding:12px 10px}
+}
