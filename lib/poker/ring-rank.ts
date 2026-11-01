@@ -18,3 +18,6 @@ export function parseRingRank(v:unknown):RingRank|null{
  const opt=(x:unknown)=>x===null||x===undefined?null:n(x);
  return {tier,bb:n(r.bb)||0,hands:n(r.hands)||0,place:opt(r.place),players:n(r.players)||0,next:opt(r.next),floor:opt(r.floor),rookieHandsLeft:n(r.rookieHandsLeft)||0,baseChips:n(r.baseChips)||1000};
 }
+/** Badge image per rank (owner's design 2026/11/01). */
+export const RANK_BADGES=['rookie','bronze','silver','gold','platinum','diamond','legend'] as const;
+export const rankBadgeSrc=(tier:number)=>`/images/ranks/${RANK_BADGES[Math.max(0,Math.min(6,Math.trunc(tier)))]}.webp`;
