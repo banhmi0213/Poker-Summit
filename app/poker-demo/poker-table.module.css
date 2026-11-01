@@ -1250,3 +1250,11 @@
  .demoShell .table [data-name-size=s]{font-size:24px!important;line-height:1.2}
  .demoShell .table [data-name-size=m]{font-size:21px!important;line-height:1.2}
 }
+
+/* Ring rank badge (owner 2026/11/01): about a third of the avatar, on its top corner (left for P3/P5, right for
+   P2/P4/P6); your own sits on the top-left of your name plate (your avatar is under your hole cards). */
+.seatTimerRing{position:relative}
+.rankBadge{position:absolute;top:-10%;width:36%;height:auto;aspect-ratio:1;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 3px #0009)}
+.rankBadge[data-side="left"]{left:-10%}.rankBadge[data-side="right"]{right:-10%}
+.rankBadgeSelf{position:absolute;left:-18px;top:-18px;width:38px;height:38px;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 3px #0009)}
+@media(max-width:899px){.rankBadge{width:24px;top:-6px}.rankBadge[data-side="left"]{left:-6px}.rankBadge[data-side="right"]{right:-6px}.rankBadgeSelf{width:22px;height:22px;left:-10px;top:-10px}}

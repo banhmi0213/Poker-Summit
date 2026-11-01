@@ -226,4 +226,20 @@ begin
  return to_jsonb(row);
 end;$$;
 
+-- 卓の席に段位バッジを出すため、席の会員情報に段位を足す(段位は着席のときなどに更新した値)。
+create or replace function poker_display.ring_member_profiles(p_table uuid)
+returns jsonb language plpgsql stable security definer set search_path='' as $$
+declare who uuid:=auth.uid();
+begin
+ if who is null or coalesce((auth.jwt()->>'is_anonymous')::boolean,false) or public.is_suspended() is distinct from false then raise exception 'Not authorized'; end if;
+ return (select coalesce(jsonb_agg(jsonb_build_object('seat',r.seat_number,'displayName',left(coalesce(nullif(p.display_name,''),'会員'),80),'avatarUrl',p.avatar_url,
+    'you',r.member_id=who,'color',n.color,'frame',c.frame,'plate',c.plate,'tier',case when rr.member_id is null then 0 else poker_private.ring_tier(rr.bb_total,rr.hands) end) order by r.seat_number),'[]'::jsonb)
+  from poker_private.ring_fund_reservations r join public.poker_ring_tables t on t.id=r.table_id and t.published and t.deleted_at is null
+  left join public.profiles p on p.user_id=r.member_id
+  left join poker_private.member_notes n on n.owner_id=who and n.target_id=r.member_id
+  left join poker_private.member_cosmetics c on c.member_id=r.member_id
+  left join poker_private.ring_ranks rr on rr.member_id=r.member_id
+  where r.table_id=p_table and r.status='seated');
+end; $$;
+
 commit;
