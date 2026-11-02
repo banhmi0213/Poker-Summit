@@ -1,4 +1,5 @@
 # Production room server in Tokyo (11/5 ring release). One machine: ring tables and tournaments live in this process.
+# 4GB: the 400-player tournament run peaked at about 1.6GB (2026/11/02); room for ring tables at the same time.
 # Exactly one machine: ring tables, stamps and shown cards live in this process.
 app = "poker-room-server-prod"
 primary_region = "nrt"
@@ -27,4 +28,4 @@ primary_region = "nrt"
 
 [[vm]]
   size = "shared-cpu-2x"
-  memory = "2048mb"
+  memory = "4096mb"
