@@ -91,6 +91,14 @@ export default async function AdminCouponsPage({
             <span className="muted">利用可能回数（空欄で無制限）</span>
             <input type="number" name="usageLimit" min={1} />
           </div>
+          <div className="field">
+            <span className="muted">使える回数</span>
+            <select name="useRule" defaultValue="once">
+              <option value="once">お一人様1回</option>
+              <option value="daily">お一人様1日1回</option>
+              <option value="unlimited">何度でも</option>
+            </select>
+          </div>
           <button type="submit" className="btn primary" style={{ alignSelf: "flex-start" }}>
             発行する
           </button>
