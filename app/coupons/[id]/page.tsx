@@ -109,7 +109,7 @@ export default async function CouponDetailPage({
             <h1><ReadableName name={c.title} /></h1>
             {c.discount && <p className={styles.discount}>{c.discount}</p>}
             <p className={styles.expiry}>▣ {c.valid_until ? `有効期限：${couponExpiryLabel(c, ".")}` : "有効期限なし"}</p>
-            <p className={styles.note}>特典の内容・利用条件をご確認のうえ、ご利用ください。</p>
+            <p className={styles.note}>PokerSummit限定のクーポンです。特典の内容・利用条件をご確認のうえ、ご利用ください。</p>
             <section className={styles.conditions}>
               <h2>ご利用条件</h2>
               {c.description ? <p className={styles.description}>{c.description}</p> : <p className={styles.description}>詳しい利用条件は店舗へお問い合わせください。</p>}
