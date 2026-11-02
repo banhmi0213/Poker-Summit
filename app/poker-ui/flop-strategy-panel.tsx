@@ -9,7 +9,7 @@ import {HandDetail} from './hand-detail';
 import {FlopAggregate} from './flop-aggregate';
 import {TurnExplorer} from './turn-explorer';
 
-/** Precomputed flop solutions for 13 spots × up to 200 representative flops (2026/10/29: 95 → 200; the list shows only computed ones) (public/poker-gto/flops/<spot>/<flop>.json). */
+/** Initial representative set; each spot may add further computed flops through its index, up to all 1,755 kinds. */
 export const FLOPS=GTO_FLOPS;
 const R='AKQJT98765432',SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};
 const label=(i:number,j:number)=>i===j?R[i]+R[j]:i<j?R[i]+R[j]+'s':R[j]+R[i]+'o';
@@ -23,6 +23,8 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  const [index,setIndex]=useState<Record<string,string[]>|null>(()=>cachedFlopIndex()),[mode,setMode]=useState<'flop'|'summary'>('flop'),[explore,setExplore]=useState<number[]|null>(null);
  useEffect(()=>{void loadFlopIndex().then(setIndex);},[]);
  const ready=index?.[spot]??[],computed=(f:string)=>!index||ready.includes(f);
+ // The index includes additional batches beyond the initial 200; keep the current selection visible during spot changes.
+ const choices=index?[...new Set([...ready,flop])]:flops;
  useEffect(()=>{let live=true;setError('');setTrail([0]);setExplore(null);
   const c=cachedFlop(spot,flop);if(c){setData(c);return;}
   void loadFlop(spot,flop).then(d=>{if(!live)return;if(d)setData(d);else{setData(null);setError('この場面・フロップはまだ計算中です。別のフロップを選ぶか、しばらくしてから開いてください。');}});
@@ -41,7 +43,7 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
   <details className={styles.aboutMobile}><summary>この表について</summary><p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。{(data&&sizeNote(data.spot.sizes,!!data.multiway))??''}お互いのレンジはプリフロップの表から出したレンジです。</p></details>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
-   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{flops.filter(f=>computed(f)||f===flop).map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
+   <label>フロップを選ぶ<select value={flop} onChange={e=>{setFlop(e.target.value);setNearNote('');}}>{choices.map(f=><option key={f} value={f}>{flopText(f)}{computed(f)?'':'（計算中）'}</option>)}</select></label>
    <label>好きなフロップで探す<input value={typed} onChange={e=>setTyped(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')lookup();}} placeholder="Kh7d2c"/></label>
    <button type="button" onClick={lookup}>近いフロップを表示</button>
   </div>
