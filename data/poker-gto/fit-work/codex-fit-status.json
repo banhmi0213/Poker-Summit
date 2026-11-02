@@ -1901,7 +1901,7 @@
     "state": "PR-checks-pending",
     "ownerRequest": "Before phase2 step5 fix all3 in onePR: drillsettingssheet+reviewbadge,collapsiblegradingrules,fixedbottomactions+nextwithfeedbackabove",
     "pr": 761,
-    "head": "7be9a513eb7f316a5a3d50d8691bb90442759e18",
+    "head": "245b05765e2d846c92476caf93f4f72aad0e4569",
     "branch": "chatgpt/gto-mobile-play-dock-20261103-q",
     "screenshots": "docs/gto-mobile/20261103/play-dock",
     "widths": [
@@ -1913,6 +1913,10 @@
     "geometryVerified": true,
     "safeAreaSimulation": 34,
     "workspace": "/workspace/scratch/181a490d1af4/gto-mobile",
-    "testScript": "out/mobile-qa/revision.cjs"
+    "testScript": "out/mobile-qa/revision.cjs",
+    "tree": "24ae7ceff93d9543e8635d4d4c0324663d8351b8",
+    "normalNavigationVerified": true,
+    "minimumTouchPx": 44,
+    "fixedWhileScrolling": true
   }
 }
