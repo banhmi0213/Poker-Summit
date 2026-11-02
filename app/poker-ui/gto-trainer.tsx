@@ -12,6 +12,7 @@ import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
 import {MobilePlaySurface} from './mobile-play-surface';
+import {GtoAnswerBars} from './gto-answer-bars';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
@@ -193,7 +194,7 @@ function GtoHandTrainer(){
    {error&&<p role="alert">{error}</p>}
    {last&&<section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
     <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
-    {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
+    {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
    </section>}
    {done&&<div className={`${chart.form} ${styles.formBig}`}>

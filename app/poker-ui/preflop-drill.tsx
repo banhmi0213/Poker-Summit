@@ -7,6 +7,7 @@ import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import {CardChip,actText} from './gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
+import {GtoAnswerBars} from './gto-answer-bars';
 
 /** プリフロップ連打 (owner 2026/10/31, against Olympia's FastFold-style preflop trainer): one preflop decision after
  * another — a random seat and spot, the hero's two cards, GTO's menu as buttons. Each choice is graded at once (grade,
@@ -101,7 +102,8 @@ export function PreflopDrill({weak=false,upsell=false}:{weak?:boolean;upsell?:bo
    <div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={!!result} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>
    {result&&<div className={styles.feedback} data-level={result.level}>
     <p><b>{LEVEL_TEXT[result.level]}</b><span>スコア {result.score}点</span>{result.loss!==null&&<span>{result.loss>0?`EV損失 ${result.loss.toFixed(2)}BB`:'EV損失なし'}</span>}</p>
-    <p className={chart.note}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
+    <p className={`${chart.note} ${styles.answerText}`}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
+    <GtoAnswerBars options={cur.spot.options} chosen={cur.spot.options[result.choice]?.text}/>
     {!auto&&<p><button type="button" onClick={goNext}>次の手</button></p>}
    </div>}
   </section>}
