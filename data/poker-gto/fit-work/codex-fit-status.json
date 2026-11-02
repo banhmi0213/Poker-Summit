@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T15:15:11.671Z",
+  "checkedAt": "2026-11-02T15:28:08.591Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -1619,7 +1619,39 @@
       "fixPR": 754,
       "fixHead": "596a05914357ad9ab2f44110fe0c693246f6cbb3",
       "testsPassed": 4,
-      "state": "PRopen awaitingallchecks;notmerged"
+      "state": "PRopen awaitingallchecks;notmerged",
+      "followupCardPickerPR": 755,
+      "longListIsTemporary": true
     }
+  },
+  "flopCardPicker": {
+    "pr": 755,
+    "url": "https://github.com/banhmi0213/Poker-Summit/pull/755",
+    "head": "2af985b4282fc12564f8e944820c24946f7ed767",
+    "branch": "chatgpt/gto-flop-card-picker-20261102-k",
+    "dependsOnPR": 754,
+    "state": "open,CI41471662490in_progress,Vercelpending;merge754firstafterallsuccess",
+    "ciRun": 41471662490,
+    "localTests": 6,
+    "browserVerified": {
+      "engine": "Chromium153",
+      "viewports": [
+        320,
+        390,
+        768,
+        1280
+      ],
+      "minimumTouchTargetPx": 44,
+      "horizontalOverflow": false,
+      "cases": [
+        "three-card selection",
+        "incomplete disabled",
+        "duplicate disabled",
+        "suit-equivalent exact",
+        "nearest fallback label",
+        "spot changes re-resolve"
+      ]
+    },
+    "instructions": "\n【フロップカード選択UI・最新指示】オーナーは1755件の長い一覧を禁止し、754は全checks成功後にmerge可、その後続で3枚をランク/スートのボタン指定するPRを依頼。PR755 https://github.com/banhmi0213/Poker-Summit/pull/755 作成済み、branchchatgpt/gto-flop-card-picker-20261102-k head2af985b4282fc12564f8e944820c24946f7ed767、parent596a059(#754)で先行754依存。754CI41469556012まだin_progress、Vercelはsuccess。755CI41471662490 in_progress、Vercelpending確認。新規重複PR不要。754全checks成功を確認して先にstage mergeし、次に755全checks成功後stage merge。failureは1回再実行、再失敗はstage取り込みpushし直し未成功ならmergeしない。\n755は長いフロップselect/文字入力を廃止し3枚のカード枠+13rank+4suitボタンへ変更。重複カード/未完成指定禁止、選び直し可能。resolveFlopSelectionはspotの全indexを対象にcanonical同形なら計算済みの答え、未計算なら最も近いcomputed答えと盤面を一言明示。spot変更時も再判定。進捗分母1755。紺金維持、button矢印なし。localフロップ関連6tests、TSX構文、diffチェック成功。実Chromiumでfullpanelのカード選択/重複禁止/未完成禁止/同形exact/nearest/spot切替、320/390/768/1280pxで44px以上と横overflowなしを検証。390pxのカードpicker画面も目視確認済み。ブラウザharnessはgto-picker-test、codeworktreegto-flop-cards。ユーザーへの共有はコピー可能な形で自発的に出す。"
   }
 }
