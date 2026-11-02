@@ -11,7 +11,7 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
-import {MobilePlaySurface} from './mobile-play-surface';
+import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback} from './mobile-play-surface';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
 
@@ -189,20 +189,21 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    <div className={styles.playSide}>
    {formBox}
    <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
-   {!done&&hand.round.toAct===HERO&&<div className={styles.actions}>
+   {!done&&hand.round.toAct===HERO&&<MobilePlayControls><div className={styles.actions}>
     {spot==='loading'&&<p role="status">GTOを計算中…</p>}
     {menu.map((o,i)=><button key={i} type="button" data-kind={o.kind} onClick={()=>choose(i)}>{o.text}</button>)}
-   </div>}
+   </div></MobilePlayControls>}
+   {!done&&hand.round.toAct!==HERO&&<MobilePlayControls><p className={styles.mobileWaiting}>GTOが考えています…</p></MobilePlayControls>}
    {error&&<p role="alert">{error}</p>}
-   {last&&<section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
+   {last&&<MobilePlayFeedback><section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
     <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
     {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
-   </section>}
-   {done&&<div className={`${chart.form} ${styles.formBig}`}>
+   </section></MobilePlayFeedback>}
+   {done&&<MobilePlayControls><div className={`${chart.form} ${styles.formBig}`}>
     <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
-   </div>}
+   </div></MobilePlayControls>}
    {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.evLoss!==null&&`（EV損失 ${f.evLoss.toFixed(2)}BB）`}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
    {statsBox}
    </div>

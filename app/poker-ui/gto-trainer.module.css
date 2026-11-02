@@ -147,7 +147,7 @@
    decision and the action log; the settings and the totals move to the bottom. PC is unchanged. */
 .introShort{display:none}
 @media (max-width:700px){
- .trainer .answerText{display:none!important}
+ .answerText{display:none!important}
  :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
  :global([data-mobile-play-fullscreen]) .trainer .play .settings,
  :global([data-mobile-play-fullscreen]) .trainer .stats,
@@ -168,5 +168,14 @@
 }
 .practiceTarget{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:10px 12px;border:1px solid #d6b36480;border-radius:8px;color:#f1d18a!important;background:#193a4c;font-weight:700;font-size:13px;line-height:1.6}
 .practiceTarget>span{min-width:0}.practiceTarget small{display:block;color:#d2e0e7;font-weight:400;font-size:12px}
-.targetToggle{flex-shrink:0;min-height:44px}
-@media(max-width:700px){.targetSettings{display:none!important}}
+.drillRules,.mobileWaiting{display:none}
+@media(max-width:700px){
+ .rulesWide,.desktopNext{display:none!important}
+ .drillRules{display:block;color:#c9d6e0;font-size:13px}
+ .drillRules summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#f1d18a}
+ :global([data-mobile-play-fullscreen]) .drill[data-drill-playing] .drillIntro{display:none!important}
+ .mobileNext{display:grid;gap:5px;text-align:center}
+ .mobileNext button{width:100%;min-height:52px!important}
+ .mobileNext small{font-size:11px;color:#b8cbd5}
+ .mobileWaiting{display:grid;place-items:center;min-height:44px;margin:0;color:#d2e0e7}
+}

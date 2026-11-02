@@ -9,6 +9,7 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
+import {MobilePlayControls,MobilePlayFeedback,MobilePlaySettings} from './mobile-play-surface';
 
 /** プリフロップ連打 (owner 2026/10/31, against Olympia's FastFold-style preflop trainer): one preflop decision after
  * another — a random seat and spot, the hero's two cards, GTO's menu as buttons. Each choice is graded at once (grade,
@@ -19,6 +20,7 @@ type Result={choice:number;level:TrainerLevel;score:number;loss:number|null};
 type Stats={n:number;best:number;good:number;score:number;evLoss:number;evCount:number};
 const empty=():Stats=>({n:0,best:0,good:0,score:0,evLoss:0,evCount:0});
 const KEY='poker-preflop-drill-stats';
+const DRILL_RULES='6人卓・100BB・レーキなしの表で採点します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。△惜しい以下の手が復習に入り、復習で○良い以上を選ぶと外れます。成績はこのブラウザに保存されます。';
 const MODES:Record<string,{text:string;modes:DrillMode[]}>={mix:{text:'すべて（混ぜて出す）',modes:['rfi','vsOpen','vs3bet']},rfi:{text:'オープンするか',modes:['rfi']},vsOpen:{text:'オープンされた',modes:['vsOpen']},vs3bet:{text:'オープンして3ベットされた',modes:['vs3bet']}};
 const read=():Stats=>{try{const v=JSON.parse(window.localStorage.getItem(KEY)??'null');return v&&typeof v.n==='number'?{...empty(),...v}:empty();}catch{return empty();}};
 const write=(s:Stats)=>{try{window.localStorage.setItem(KEY,JSON.stringify(s));}catch{/* convenience only */}};
@@ -30,7 +32,7 @@ const DRILLABLE=/^pre:(open|vsOpen|vs3bet):/;
 export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot}:{weak?:boolean;upsell?:boolean;practiceSpot?:string}={}){
  const practiceSpot=preflopPracticeSpot(requestedSpot),targetStarted=useRef<string|null>(null);
  const [weakSpots,setWeakSpots]=useState<string[]|null>(null);
- const [modeKey,setModeKey]=useState(practiceSpot?'target':'mix'),[auto,setAuto]=useState(!practiceSpot),[cur,setCur]=useState<Drill|null>(null),[result,setResult]=useState<Result|null>(null),[targetSettingsOpen,setTargetSettingsOpen]=useState(false);
+ const [modeKey,setModeKey]=useState(practiceSpot?'target':'mix'),[auto,setAuto]=useState(!practiceSpot),[cur,setCur]=useState<Drill|null>(null),[result,setResult]=useState<Result|null>(null),[settingsOpen,setSettingsOpen]=useState(false);
  const [stats,setStats]=useState<Stats>(empty),[review,setReview]=useState<Drill[]>([]),[reviewing,setReviewing]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState('');
  const worker=useRef<Worker|null>(null),seq=useRef(0),next=useRef<Promise<Drill|null>|null>(null),timer=useRef<number|null>(null);
  useEffect(()=>{setStats(read());return()=>{worker.current?.terminate();if(timer.current)window.clearTimeout(timer.current);};},[]);
@@ -65,7 +67,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
  useEffect(()=>{if(!practiceSpot||targetStarted.current===practiceSpot)return;targetStarted.current=practiceSpot;next.current=null;void show('target',null);},[practiceSpot,show]);
 
  const choose=useCallback((i:number)=>{
-  if(!cur||result)return;const o=cur.spot.options;if(!o[i])return;
+  if(!cur||result||loading||settingsOpen)return;const o=cur.spot.options;if(!o[i])return;
   const g=gradeChoice(o.map(x=>x.freq),i),raw=evLoss(o,i),loss=raw===null?null:g.level==='best'?0:raw;
   setResult({choice:i,level:g.level,score:g.score,loss});
   {const v=trainerView(cur.hand,HERO);if(v)sendGtoRecords([recordRow(v,'drill',{freqs:o.map(x=>x.freq),chosen:i,action:o[i].text,evLoss:loss})]);}
@@ -76,45 +78,48 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
   if(reviewing)rest=ok?review.slice(1):[...review.slice(1),cur];
   else if(!ok)rest=[...review,cur].slice(-50);
   setReview(rest);
-  if(auto)timer.current=window.setTimeout(()=>{void show(modeKey,reviewing?rest:null);},ok?600:1800);
- },[cur,result,review,reviewing,auto,show,modeKey]);
- const goNext=()=>{void show(modeKey,reviewing?review:null);};
+ },[cur,result,review,reviewing,loading,settingsOpen]);
+ const goNext=()=>{if(!loading)void show(modeKey,reviewing?review:null);};
+ useEffect(()=>{if(!auto||!result||settingsOpen)return;const ok=result.level==='best'||result.level==='correct';timer.current=window.setTimeout(()=>{void show(modeKey,reviewing?review:null);},ok?600:1800);return()=>{if(timer.current)window.clearTimeout(timer.current);timer.current=null;};},[auto,result,settingsOpen,show,modeKey,reviewing,review]);
 
  useEffect(()=>{
-  const on=(e:KeyboardEvent)=>{if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
+  const on=(e:KeyboardEvent)=>{if(settingsOpen)return;if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
    const k=Number(e.key);if(k>=1&&k<=4){e.preventDefault();choose(k-1);}else if((e.key==='Enter'||e.key===' ')&&result){e.preventDefault();goNext();}};
   window.addEventListener('keydown',on);return()=>window.removeEventListener('keydown',on);
  });
 
  const scene=cur?cur.hand.log.filter(a=>a.street==='preflop'&&(!practiceSpot||modeKey!=='target'||a.type!=='fold')).map(a=>`${cur.hand.positions[a.id]} ${actText(a.type,a.to,a.allIn)}`):[];
- return <div className={chart.wrap}>
-  {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人卓・100BB）</small></span><button type="button" className={styles.targetToggle} aria-expanded={targetSettingsOpen} onClick={()=>setTargetSettingsOpen(v=>!v)}>{targetSettingsOpen?'設定を閉じる':'出題を変更'}</button></div>}
-  <p className={practiceSpot?styles.intro:undefined}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。キーボードの1〜4でも選べます。</p>
-  <div className={`${chart.form} ${styles.formBig} ${practiceSpot&&modeKey==='target'&&cur&&!targetSettingsOpen?styles.targetSettings:''}`}>
+ const choices=cur?<div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={Boolean(result)||loading} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>:null;
+ const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&<small>自動で次の手に進みます</small>}</div>;
+ return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}>
+  {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人卓・100BB）</small></span></div>}
+  <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。キーボードの1〜4でも選べます。</p>
+  <MobilePlaySettings active={Boolean(cur)} reviewCount={review.length} onOpenChange={setSettingsOpen}><div className={`${chart.form} ${styles.formBig}`}>
    <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{practiceSpot&&<option value="target">この弱点の場面</option>}{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（弱点分析から）{weak?'':'（スタンダード）'}</option>}</select></label>
    <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>setAuto(e.target.value==='on')}><option value="on">する</option><option value="off">しない</option></select></label>
    {!cur&&<button type="button" disabled={loading} onClick={()=>start()}>連打を始める</button>}
    {review.length>0&&!reviewing&&<button type="button" onClick={()=>void show(modeKey,review)}>外した手を復習する（{review.length}）</button>}
    {reviewing&&<button type="button" onClick={()=>start()}>復習をやめる</button>}
-  </div>
+  </div></MobilePlaySettings>
   {modeKey==='weak'&&!weak&&<div className={chart.storeInvite}><b>自分の弱点の練習はスタンダードプランで使えます</b><span>リング・大会・練習で外した場面だけを集めて、集中して出題します。</span>{upsell&&<a href="/pricing">プランを見る</a>}</div>}
   {loading&&!cur&&<p role="status">問題を作っています…</p>}
   {error&&<p role="alert">{error}</p>}
   {cur&&<section aria-live="polite">
    <p className={styles.drillHead}>{reviewing&&<span className={styles.drillTag}>復習 残り{review.length}</span>}<b>{cur.hand.heroPos}</b>{scene.length?scene.join('、'):'誰も参加していません'}</p>
    <div className={styles.drillHand}><CardChip card={cur.hand.holes[HERO][0]}/><CardChip card={cur.hand.holes[HERO][1]}/></div>
-   <div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={!!result} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>
-   {result&&<div className={styles.feedback} data-level={result.level}>
+   <MobilePlayControls mobileChildren={result?nextControls:choices}>{choices}</MobilePlayControls>
+   {result&&<MobilePlayFeedback><div className={styles.feedback} data-level={result.level} aria-live="polite">
     <p><b>{LEVEL_TEXT[result.level]}</b><span>スコア {result.score}点</span>{result.loss!==null&&<span>{result.loss>0?`EV損失 ${result.loss.toFixed(2)}BB`:'EV損失なし'}</span>}</p>
     <p className={`${chart.note} ${styles.answerText}`}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
     <GtoAnswerBars options={cur.spot.options} chosen={cur.spot.options[result.choice]?.text}/>
-    {!auto&&<p><button type="button" onClick={goNext}>次の手</button></p>}
-   </div>}
+    {!auto&&<p className={styles.desktopNext}><button type="button" onClick={goNext}>次の手</button></p>}
+   </div></MobilePlayFeedback>}
   </section>}
   <section className={styles.stats} aria-label="連打の成績">
    <p><b>成績</b><span>{stats.n}問</span><span>◎完璧 {stats.n?pct(stats.best/stats.n):'—'}</span><span>○良い以上 {stats.n?pct(stats.good/stats.n):'—'}</span><span>平均スコア {stats.n?Math.round(stats.score/stats.n):0}点</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB</span>}</p>
    <button type="button" className={styles.reset} onClick={()=>{const s=empty();setStats(s);write(s);}}>成績をリセット</button>
   </section>
-  <p className={chart.note}>6人卓・100BB・レーキなしの表で採点します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。△惜しい以下の手が復習に入り、復習で○良い以上を選ぶと外れます。成績はこのブラウザに保存されます。</p>
+  <p className={`${chart.note} ${styles.rulesWide}`}>{DRILL_RULES}</p>
+  <details className={styles.drillRules}><summary>採点のしかた</summary><p className={chart.note}>{DRILL_RULES}</p></details>
  </div>;
 }
