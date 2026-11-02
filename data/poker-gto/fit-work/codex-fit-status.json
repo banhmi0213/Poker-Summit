@@ -328,21 +328,13 @@
     "assumptions": "Observed six-spot phase;6spots x7 demand with40runner limit,observedcompletion rate includesCI/queue. New/pending spots use aggregate/6 proxy. Refill immediately at earliest lane,real6hinspection delays notmodeled,boardcost varies;allow>=1day uncertainty. This is21x200 completion,not1755coverage."
   },
   "flopPR": {
-    "number": 744,
-    "head": "chatgpt/gto-flop-hu-3bet-20261102-b",
-    "headSha": "261f090abbf4d525ba7ee162531617a5da45667f",
-    "localTests": {
-      "passed": 58,
-      "failed": 0
-    },
-    "validatedHu3bet": {
-      "count": 200,
-      "version": 3,
-      "iterations": 250,
-      "handEv": true
-    },
-    "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
-    "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
+    "number": 756,
+    "state": "merged",
+    "url": "https://github.com/banhmi0213/Poker-Summit/pull/756",
+    "head": "6f4cf19ad081fceb9da229ebb6b06762d8654a0f",
+    "merge": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd",
+    "tests": 66,
+    "allChecks": "success"
   },
   "notes": [
     "2026-11-02T17:08Z: owner added mobile phase2 (5/6/7) gated on all4 earlier items staged; prerequisite not yet verified, requirements queued. hu-limp validated200+66tests; PR756 awaiting Vercel. co-bb collect queued, no duplicate."
@@ -350,7 +342,8 @@
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet",
-    "hu-srp"
+    "hu-srp",
+    "hu-limp"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -1041,9 +1034,21 @@
   "importedCompleteSpots": [
     "btn-bb",
     "hu-3bet",
-    "hu-srp"
+    "hu-srp",
+    "hu-limp"
   ],
-  "stagingVerified": "26b4177a05d85869a4a60ebbb6407bfefd65ec6a",
+  "stagingVerified": {
+    "sha": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd",
+    "spotCounts": {
+      "btn-bb": 200,
+      "hu-3bet": 200,
+      "hu-srp": 200,
+      "hu-limp": 200
+    },
+    "initialComplete": 4,
+    "totalSpots": 21,
+    "huLimpTreeMatched": true
+  },
   "conditionalAcceptance": {
     "rule": "\n【最新40BB条件付き合格ルール】追加の当て直しは全面禁止。再生成8maxのBB守り4席が参考BTN84/CO78/HJ70/UTG57%から各±4ptなら合格。UTGだけ±5pt以内(52〜62%)で他3席が±4pt以内なら条件付き合格として20/60BB表と一緒にstageへ入れてよい。PR本文へ必ず「40BB の UTG 相手は参考から −4.5 前後。GTO Wizard で最終確認する項目」と記載。より外れたらマージせず結果のみ報告。6/9人卓は訂正後の位置比較基準を維持。Wizardの課金を今勧める指示ではない。全CI成功後のみstage merge、本番main/DB/課金/公開は操作しない。",
     "source": "owner explicit instruction",
@@ -1769,9 +1774,10 @@
       },
       "pr": 756,
       "head": "6f4cf19ad081fceb9da229ebb6b06762d8654a0f",
-      "state": "PR-open-Vercel-pending",
+      "state": "merged-and-stage-index-verified",
       "tests": 66,
-      "tree": "01b58909e67197c3531322f447857e36a0f4915b"
+      "tree": "01b58909e67197c3531322f447857e36a0f4915b",
+      "merge": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd"
     },
     {
       "spot": "co-bb",
