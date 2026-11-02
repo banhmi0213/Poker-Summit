@@ -589,7 +589,7 @@ export default async function StoreDetailPage({
             <>
 <section id="store-coupons" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          <DetailIcon name="ticket" />クーポン ({coupons?.length ?? 0})<DetailTabLink id="coupons" />
+          <DetailIcon name="ticket" />PokerSummit限定クーポン ({coupons?.length ?? 0})<DetailTabLink id="coupons" />
         </h2>
         {(!coupons || coupons.length === 0) && (
           <p className="muted">現在利用可能なクーポンはありません。</p>
