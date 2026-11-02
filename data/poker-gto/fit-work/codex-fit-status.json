@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T10:56:30.829Z",
+  "checkedAt": "2026-11-02T11:00:48.236Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -366,7 +366,7 @@
       }
     ],
     "etaJst": "2026-11-13T18:55:38.013+09:00",
-    "assumptions": "3 spots x7parallel maintained when possible,23total job limit and pending15 in specified order. Same observed mean board cost4.12boards/spot/hour; earliest free lane filled at next inspection; excludes further failures. Coarse estimated dates."
+    "assumptions": "Three7parallel flop spots maintained,23totaljob limit; pending15 in specified order use observed aggregate rate/3=4.12176boards/spot/hour. Earliest free lane refilled immediately in model; inspection delay not modeled. Same mean board cost, no further stalls; coarse ETA with>=1day uncertainty."
   },
   "flopPR": {
     "number": 744,
@@ -979,7 +979,7 @@
     "solveSuccess": 200,
     "collectRun": 41432597493,
     "collectJob": 125234591250,
-    "status": "collect and200-file validation success,index/aggregate updated,post-index58tests pass,tree equality verified;PR752 open awaitingVercel success",
+    "status": "MergedPR752 into staging after58post-index tests andVercel success;staging readback confirms all3spots200/200v3/250iter/handEv",
     "output": "gto-flop-out/40922255985",
     "baseStage": "8e100b7598a2db969228d2ed0791f55d11ead2fd",
     "worktree": "/workspace/scratch/181a490d1af4/gto-husrp",
@@ -994,13 +994,16 @@
     "pr": {
       "number": 752,
       "url": "https://github.com/banhmi0213/Poker-Summit/pull/752",
-      "state": "open",
+      "state": "merged",
       "head": "214d4249ec07412897358063fa12b6a9d5b7b374",
-      "checks": "Vercel pending;PR workflows0 (data-only paths)"
+      "checks": "Vercel success,PRworkflow0data-only",
+      "mergeSha": "585c0a903f7b2173d47c944c8e2d435a55319a23"
     }
   },
   "importedCompleteSpots": [
     "btn-bb",
-    "hu-3bet"
-  ]
+    "hu-3bet",
+    "hu-srp"
+  ],
+  "stagingVerified": "585c0a903f7b2173d47c944c8e2d435a55319a23"
 }
