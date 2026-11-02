@@ -8,6 +8,8 @@ import { PortalHeader } from "@/app/portal-header";
 import { PortalFooter } from "@/app/portal-footer";
 import { BottomTabs } from "@/app/bottom-tabs";
 import { CouponBannerLightbox } from "@/app/coupons/coupon-banner-lightbox";
+import { CouponUsePanel } from "@/app/coupons/coupon-use-panel";
+import { COUPON_USE_RULE_LABEL, couponUsedUp, parseCouponUseRule } from "@/lib/coupon-use-rule";
 import styles from "./detail.module.css";
 import type { Metadata } from "next";
 import { SITE_NAME, clip, pageTitle, DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES } from "@/lib/seo";
@@ -59,7 +61,7 @@ export default async function CouponDetailPage({
   const { data: coupon } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, stores(id, name, status)"
+      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, use_rule, offer_type, banner_image_url, store_id, stores(id, name, status)"
     )
     .eq("id", params.id)
     .eq("active", true)
@@ -72,8 +74,13 @@ export default async function CouponDetailPage({
 
   const status = couponStatus(c);
 
+  const useRule = parseCouponUseRule(c.use_rule);
+  let usedDates: string[] = [];
   let isFavorite = false;
   if (user) {
+    const { data: uses } = await supabase.from("coupon_uses").select("used_jst_date")
+      .eq("user_id", user.id).eq("coupon_id", c.id).eq("status", "used");
+    usedDates = (uses ?? []).map((u: { used_jst_date: string | null }) => u.used_jst_date ?? "");
     const { data: favorite, error } = await supabase.from("favorite_coupons")
       .select("coupon_id").eq("user_id", user.id).eq("coupon_id", c.id).maybeSingle();
     if (error) throw new Error("お気に入りを読み込めませんでした。");
@@ -106,14 +113,22 @@ export default async function CouponDetailPage({
             <section className={styles.conditions}>
               <h2>ご利用条件</h2>
               {c.description ? <p className={styles.description}>{c.description}</p> : <p className={styles.description}>詳しい利用条件は店舗へお問い合わせください。</p>}
-              <dl><div><dt>利用回数</dt><dd>お一人様1回</dd></div><div><dt>利用状況</dt><dd>{c.used_count ?? 0}件利用済み{c.usage_limit != null ? ` ／ 全体の上限${c.usage_limit}件` : ""}</dd></div></dl>
+              <dl><div><dt>利用回数</dt><dd>{COUPON_USE_RULE_LABEL[useRule]}</dd></div><div><dt>利用状況</dt><dd>{c.used_count ?? 0}件利用済み{c.usage_limit != null ? ` ／ 全体の上限${c.usage_limit}件` : ""}</dd></div></dl>
             </section>
             {status === "expired" ? (
               <div className={styles.present}><span aria-hidden="true">⏳</span><div><h2>このクーポンは有効期限を過ぎました。</h2><p>期限日の営業終了をもって終了したため、ご利用いただけません。</p></div></div>
             ) : (
               <>
                 {c.code && <div className={styles.code}>クーポンコード <strong>{c.code}</strong></div>}
-                <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>店頭でこの画面をご提示ください。</h2><p>利用条件をご確認のうえ、お店でクーポン画面を提示して特典をお受け取りください。</p></div></div>
+                <div className={styles.present}><span aria-hidden="true">▤</span><div><h2>お店で「お店で使う」を押してください。</h2><p>お店の近くにいるかを位置情報で確かめたあと、表示された画面を店員さんに見せてください。店員さんが「使用済みにする」を押すと、特典をお受け取りいただけます。</p></div></div>
+                <CouponUsePanel
+                  couponId={c.id}
+                  path={`/coupons/${c.id}`}
+                  loggedIn={!!user}
+                  usedUp={couponUsedUp(useRule, usedDates)}
+                  usedUpLabel={useRule === "daily" ? "本日は使用済みです" : "使用済みです"}
+                  limitReached={status === "exhausted"}
+                />
               </>
             )}
             <form action={async () => {
@@ -132,7 +147,7 @@ export default async function CouponDetailPage({
           <ol>
             <li><span>1</span><div><h3>特典を探す</h3><p>お気に入りのお店のクーポンを見つけましょう。</p></div></li>
             <li><span>2</span><div><h3>利用条件を確認</h3><p>有効期限や対象内容など、詳細をご確認ください。</p></div></li>
-            <li><span>3</span><div><h3>店頭で提示</h3><p>お店で画面を提示し、スタッフの案内に従ってご利用ください。</p></div></li>
+            <li><span>3</span><div><h3>お店で使う</h3><p>お店で「お店で使う」を押し、表示された画面を店員さんに見せてください。店員さんが「使用済みにする」を押して完了です。</p></div></li>
           </ol>
         </section>
         <Link href="/coupons" className={styles.back}>クーポン一覧に戻る</Link>

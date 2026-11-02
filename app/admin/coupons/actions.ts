@@ -5,6 +5,7 @@ import { revalidatePath } from "@/lib/revalidate";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logAdminAction } from "@/lib/audit";
+import { parseCouponUseRule } from "@/lib/coupon-use-rule";
 
 export async function setCouponActive(id: string, active: boolean) {
   const supabase = await createClient();
@@ -62,6 +63,7 @@ export async function createCouponByAdmin(formData: FormData) {
       code: code || null,
       valid_until: validUntil || null,
       usage_limit: usageLimit,
+      use_rule: parseCouponUseRule(formData.get("useRule")),
       offer_type: offerType || null,
     })
     .select("id")
@@ -102,6 +104,7 @@ export async function updateCouponByAdmin(formData: FormData) {
       code: code || null,
       valid_until: validUntil || null,
       usage_limit: usageLimit,
+      use_rule: parseCouponUseRule(formData.get("useRule")),
       offer_type: offerType || null,
     })
     .eq("id", couponId);

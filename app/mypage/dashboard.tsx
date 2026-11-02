@@ -83,7 +83,8 @@ export async function MyPageContent({
     supabase
       .from("coupon_uses")
       .select("coupon_id, used_at")
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .eq("status", "used"),
     supabase
       .from("coupons")
       .select("id, title, valid_until, expires_at, usage_limit, used_count, store_id, stores(name)")
