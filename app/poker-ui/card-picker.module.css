@@ -1,0 +1,21 @@
+/* カードを押して選ぶ (owner 2026/11/1): board / hand slots and the 52-card grid, shared by リバー計算機 and 勝率計算機. */
+.slots{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.slotWrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.slotWrap small{font-size:12px;color:#9fb6c6;min-height:16px}
+.slot{width:56px;height:76px;border-radius:9px;border:1px dashed #8fa8b8!important;background:#ffffff0d!important;color:#c9d6e0!important;font:inherit;font-size:26px!important;font-weight:400!important;display:flex;align-items:center;justify-content:center;padding:0!important;min-height:0!important;cursor:pointer}
+.slot[data-card]{border:1px solid #d9d4c4!important;background:#f7f4ec!important;color:#1a2633!important;flex-direction:column;line-height:1.05;font-weight:800!important;font-size:24px!important}
+.slot[data-red]{color:#c43a33!important}
+.slot[data-active]{outline:3px solid #e6bd70;outline-offset:2px}
+.slot span{font-size:20px}
+.panel{margin-top:10px;border:1px solid #adc5d448;border-radius:12px;background:#0f2433;padding:12px 14px}
+.panelHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;font-size:15px;color:#e9eff5}
+.panelHead b{color:#e6bd70;margin-right:8px}
+.panelHead button{border:1px solid #adc5d448!important;background:#24435a!important;color:#e9eff5!important;border-radius:999px!important;padding:6px 16px!important;min-height:36px!important;font-size:14px!important}
+.grid{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:5px}
+.card{aspect-ratio:5/6;min-width:0;border-radius:7px;border:1px solid #d9d4c4!important;background:#f7f4ec!important;color:#1a2633!important;font:inherit;font-weight:800!important;font-size:15px!important;line-height:1.05;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0!important;min-height:0!important;cursor:pointer}
+.card[data-red]{color:#c43a33!important}
+.card:disabled{opacity:.25!important;cursor:default}
+.card span{font-size:14px}
+.typed{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:13px;color:#9fb6c6}
+.typed input{background:#203e51;color:#f7f7ee;border:1px solid #93a9b6;border-radius:8px;padding:9px 11px;font:inherit;font-size:15px;min-height:42px}
+@media(max-width:650px){.grid{gap:3px}.card{font-size:12px!important}.card span{font-size:11px}.slot{width:46px;height:64px}}

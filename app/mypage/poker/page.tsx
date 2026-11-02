@@ -1,0 +1,59 @@
+import {loadPokerStatistics} from '@/lib/poker/statistics';
+import {loadRingMonthly} from '@/lib/poker/ring-monthly';
+import {RingMonthlyView} from '@/app/poker-ui/ring-monthly-view';
+import {RingBbCurve} from '@/app/poker-ui/ring-bb-curve';
+import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
+import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
+import {PokerWorkspace} from '@/app/poker-ui/workspace';
+import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
+import {GtoDeviationView} from '@/app/poker-ui/gto-deviation-view';
+import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
+import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
+import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
+import {EquityCalculator} from '@/app/poker-ui/equity-calculator';
+import {GtoWeakSpots} from '@/app/poker-ui/gto-weak-spots';
+import {IcmPanel} from '@/app/poker-ui/icm-panel';
+import {FlopStrategyPanel} from '@/app/poker-ui/flop-strategy-panel';
+import {RangeTrainer} from '@/app/poker-ui/range-trainer';
+import {GtoTrainer} from '@/app/poker-ui/gto-trainer';
+import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
+import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
+import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
+import {CosmeticsSettings} from '@/app/poker-ui/my-cosmetics';
+import {GtoPlanPanel} from '@/app/poker-ui/gto-plan-panel';
+import {paidFeaturesVisible} from '@/lib/billing/visibility';
+import {getGtoPlanStatus} from '@/lib/billing/plan';
+import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
+export const dynamic='force-dynamic';
+export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
+ const gto=gtoAccess(plan?.tier);
+ const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
+ const panes=[
+ {id:'ring',label:'チップ残高・順位',eyebrow:'RING CHIP BALANCE',description:'リング用チップの残高と自分のランキング。',content:data?<><StatisticsView data={data} section="ring"/><RingMonthlyView rows={monthly}/></>:unavailable},
+ {id:'curve',label:'収支グラフ',eyebrow:'RING RESULTS',description:'リングの通算の勝ち負け（BB）の推移。',content:<RingBbCurve/>},
+ {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
+ {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加卓を確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},
+ {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
+ {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<><HandStatsView stats={tendencies.ring}/><GtoDeviationView/></>:unavailable},
+ {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PushFoldChart/>},
+ {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
+ {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
+ {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell}/>},
+ {id:'weak',label:'弱点分析',eyebrow:'YOUR LEAKS',description:'リング・大会・練習卓・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
+ {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
+ {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
+ {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'リバーの2人勝負を計算して、手札ごとの正解の打ち方を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<RiverSolverPanel/>},
+ {id:'equity',label:'勝率計算機',eyebrow:'EQUITY & POT ODDS',description:'ハンド同士の勝率と、リバーまでにできる役の確率。ポットオッズからコールが得かも確かめられます。',content:<EquityCalculator/>},
+ {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
+ {id:'looks',label:'アイコン枠・プレート',eyebrow:'LOOKS',description:'卓で他の会員にも見える、アイコン枠とネームプレートを選びます（2026/11/01）。',content:<CosmeticsSettings kinds={['frame','plate']}/>},
+ {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
+ {id:'plan',label:'GTOプラン',eyebrow:'GTO PLAN',description:'ご利用中のGTOプランと、お支払い・解約。',content:<GtoPlanPanel status={plan} message={searchParams?.billing}/>},
+ ];
+ // Ring-first release: tournament panes stay hidden until tournaments open.
+ const tourneyShown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
+ // Paid features hidden (lib/billing/visibility.ts): no 「GTOプラン」 pane, no 「アイコン枠・プレート」 pane.
+ const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
+ const first=shown.findIndex(p=>p.id===searchParams?.pane);
+ return <PokerWorkspace kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
+}

@@ -1,0 +1,30 @@
+.quiz{display:flex;flex-direction:column;gap:14px}
+.steps{display:flex;gap:8px;list-style:none;margin:0;padding:0}
+.steps button{width:36px;height:36px;border-radius:999px;border:1px solid #e7d3a8;background:#fff;color:#5c4a33;font-weight:800;cursor:pointer}
+.steps li[data-current] button{border-color:#bd8c33;box-shadow:0 0 0 2px #e0b553}
+.steps li[data-verdict=正解] button{background:#2f6a4c;color:#fff;border-color:#2f6a4c}
+.steps li[data-verdict=まずまず] button{background:#e0b553;color:#35240f}
+.steps li[data-verdict=ミス] button{background:#a8433f;color:#fff;border-color:#a8433f}
+.steps button:disabled{opacity:.45;cursor:default}
+.question{background:#132a3c;color:#e9eff5;border-radius:16px;padding:clamp(16px,3vw,24px);font-size:16px;line-height:1.8}
+.question p{margin:0 0 8px}
+.title{color:#e6bd70;font-weight:800}
+.hand{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.hand span{color:#c9d6e0;margin-right:2px}
+.card{display:inline-block;background:#f7f4ec;color:#1a2633;border-radius:5px;padding:1px 6px;font-size:17px}
+.card[data-red]{color:#c62f2f}
+.options{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.options button{flex:1 1 140px;border:0;border-radius:9px;padding:12px 10px;font:inherit;font-weight:800;background:#24435a;color:#fff;cursor:pointer}
+.options button[aria-pressed=true]{background:#d9b368;color:#14283a}
+.options button:disabled{cursor:default}
+.result{border-left:5px solid #91a8ba;background:#193a4c;border-radius:8px;padding:10px 14px}
+.result[data-verdict=正解]{border-color:#5fd08a}.result[data-verdict=まずまず]{border-color:#e6bd70}.result[data-verdict=ミス]{border-color:#f05b58}
+.result ul{margin:6px 0 10px;padding-left:18px}
+.result button{border:0;border-radius:8px;padding:9px 14px;background:#d9b368;color:#14283a;font-weight:800;cursor:pointer}
+.summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:16px 18px;border:1px solid #e7d3a8;border-radius:14px;background:#fffdf8}
+.summary p{margin:0}.summary b{font-size:18px}
+.share{display:inline-block;background:#111;color:#fff!important;border-radius:9px;padding:10px 16px;font-weight:800;text-decoration:none!important}
+.note{width:100%;font-size:14px;color:#846e4e}
+.more{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:16px 18px;border:1px solid #e7d3a8;border-radius:14px;background:#fffdf8}
+.more p{flex:1 1 260px;margin:0;font-size:15px;line-height:1.8;color:#5c4a33}
+.more a{display:inline-block;border:1px solid #bd8c33;border-radius:9px;background:#e0b553;color:#35240f!important;padding:11px 16px;font-weight:800;font-size:15px;text-decoration:none!important;white-space:nowrap}
+.steps{scroll-margin-top:90px}

@@ -1,0 +1,31 @@
+# Staging room server in Tokyo (owner 2026/10/28: 練習ぐらいサクサク動かな話しにならん).
+# Exactly one machine: ring tables, stamps and shown cards live in this process.
+# 2GB: the 200-player tournament run used about 1.1GB (2026/11/01).
+app = "poker-room-server-staging"
+primary_region = "nrt"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  POKER_ROOM_HOST = "0.0.0.0"
+  PORT = "3001"
+  POKER_ROOM_MAX_ROOMS = "16"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "15s"
+    method = "GET"
+    path = "/version"
+    timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2048mb"

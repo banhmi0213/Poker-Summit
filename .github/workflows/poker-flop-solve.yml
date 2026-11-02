@@ -1,0 +1,57 @@
+name: Poker flop solutions
+
+# Precomputes the flop browser data (scripts/poker-gto/flop-solve.cjs), one job per flop of one spot.
+# Push a gto-flop-solve/<spot>/<anything> branch (spot = a key of scripts/poker-gto/spots.cjs).
+# Flops come from data/poker-gto/flops.json; flops already solved in version 3 (wider bet menu, per-hand EV) are skipped.
+# Each solve runs a fixed number of iterations (the river keeps no averages, so the measured exploitability reads high
+# and is not used to stop early). Each solve splits the turn cards over all the runner's cores (scripts/poker-gto/parallel-flop.cjs).
+# Results are uploaded as artifacts and gathered by the "collect" workflow.
+on:
+  push:
+    branches: ["gto-flop-solve/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      spot: ${{ steps.plan.outputs.spot }}
+      flops: ${{ steps.plan.outputs.flops }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: |
+          spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
+          node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
+          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=3;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
+          echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
+  solve:
+    name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
+    needs: plan
+    if: needs.plan.outputs.flops != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    strategy:
+      fail-fast: false
+      # GitHub Pro (2026/11/1): the account limit is 40 jobs. At most 5 runs × 7 = 35, leaving runners for the regular test CI.
+      max-parallel: 7
+      matrix:
+        flop: ${{ fromJSON(needs.plan.outputs.flops) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Solve
+        env:
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0' }} --max-iters ${{ vars.GTO_FLOP_ITERS || '250' }} --check-every 50 --max-minutes 320 --threads $(nproc) --out out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flop-${{ needs.plan.outputs.spot }}-${{ matrix.flop }}
+          path: out/
+          retention-days: 14

@@ -12,8 +12,8 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { ArticleContent } from "../article-content";
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME } from "@/lib/seo";
 import styles from "../article.module.css";
+import { RelatedSidebar, type RelatedArticleCard } from "../related-sidebar";
 import { TournamentPost } from "../tournament-post";
-import postStyles from "../tournament-post.module.css";
 export async function generateMetadata({ params, searchParams }: { params: { id: string }; searchParams: { preview?: string } }): Promise<Metadata> {
  if (searchParams.preview === "1") return { robots: { index: false, follow: false } };
  const supabase = await createClient();
@@ -67,6 +67,27 @@ export default async function BlogArticlePage({ params, searchParams }: { params
   const {data:found}=await relatedQuery;
   relatedArticles=entry.related_article_ids.flatMap(id=>(found||[]).filter(a=>a.id===id)) as BlogEntry[];
  }
- const hasTournamentPost = !!entry.x_post_url;
- return <div className="portal"><PortalHeader userEmail={user?.email} /><main className={`${styles.page} ${hasTournamentPost ? postStyles.wide : ""} detail-readable`}>{entry.show_breadcrumbs !== false && <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> › <Link href="/blog">BLOG</Link> › <span>{entry.category}</span> › <span>{entry.title}</span></nav>}<Link href="/blog" className={styles.back}>BLOG一覧に戻る</Link>{preview && <div className={styles.notice}>管理者プレビュー（{entry.active ? "公開中" : "下書き"}）　<Link href="/admin/blog">編集画面に戻る</Link></div>}<div className={hasTournamentPost ? postStyles.layout : undefined}><ArticleContent title={entry.title} category={entry.category} summary={entry.summary} image={entry.image_url} imageAlt={entry.image_alt} body={Array.isArray(entry.body) ? entry.body : []} stores={stores} authorName={entry.author_name} authorProfile={entry.author_profile} publishedAt={entry.published_at || entry.created_at} updatedAt={entry.published_at && entry.updated_at && new Date(entry.updated_at).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}) !== new Date(entry.published_at).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}) ? entry.updated_at : undefined} showToc={entry.show_toc !== false} references={entry.reference_sources || []} imageRights={entry.image_rights || ""} articleSlug={entry.slug || ""} />{hasTournamentPost && <TournamentPost key={entry.x_post_url} url={entry.x_post_url || ""} />}</div>{relatedArticles.length>0&&<section className={styles.relatedArticles}><h2>関連記事</h2>{relatedArticles.map(a=><Link key={a.id} href={`/blog/${a.slug||a.id}`}><span>{a.category}</span><strong>{a.title}</strong></Link>)}</section>}{entry.content_mode === "external" && entry.article_url && <p><a href={entry.article_url} className={styles.back}>外部の記事を読む</a></p>}</main><PortalFooter /><BottomTabs /></div>;
+
+ // The sidebar only recommends public articles, including in an admin preview.
+ const cardColumns="id,slug,title,category,image_url,image_alt,active";
+ const sidebarArticles: RelatedArticleCard[]=[];
+ const seen=new Set([entry.id]);
+ const appendCards=(rows: RelatedArticleCard[])=>{
+  for(const row of rows) if(row.active && !seen.has(row.id) && sidebarArticles.length<4){
+   seen.add(row.id); sidebarArticles.push({id:row.id,slug:row.slug,title:row.title,category:row.category,image_url:row.image_url,image_alt:row.image_alt,active:row.active});
+  }
+ };
+ appendCards(relatedArticles);
+ if(sidebarArticles.length<4){
+  const [categoryResult,recentResult]=await Promise.all([
+   supabase.from("blog_entries").select(cardColumns).eq("active",true).eq("category",entry.category).neq("id",entry.id)
+    .order("published_at",{ascending:false,nullsFirst:false}).order("created_at",{ascending:false}).limit(8),
+   supabase.from("blog_entries").select(cardColumns).eq("active",true).neq("id",entry.id)
+    .order("published_at",{ascending:false,nullsFirst:false}).order("created_at",{ascending:false}).limit(12),
+  ]);
+  appendCards((categoryResult.data||[]) as RelatedArticleCard[]);
+  appendCards((recentResult.data||[]) as RelatedArticleCard[]);
+ }
+
+ return <div className="portal"><PortalHeader userEmail={user?.email} /><main className={`${styles.page} detail-readable`}>{entry.show_breadcrumbs !== false && <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> › <Link href="/blog">BLOG</Link> › <span>{entry.category}</span> › <span>{entry.title}</span></nav>}<Link href="/blog" className={styles.back}>BLOG一覧に戻る</Link>{preview && <div className={styles.notice}>管理者プレビュー（{entry.active ? "公開中" : "下書き"}）　<Link href="/admin/blog">編集画面に戻る</Link></div>}<div className={styles.articleLayout}><div className={styles.articleMain}><ArticleContent title={entry.title} category={entry.category} summary={entry.summary} image={entry.image_url} imageAlt={entry.image_alt} body={Array.isArray(entry.body) ? entry.body : []} stores={stores} authorName={entry.author_name} authorProfile={entry.author_profile} publishedAt={entry.published_at || entry.created_at} updatedAt={entry.published_at && entry.updated_at && new Date(entry.updated_at).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}) !== new Date(entry.published_at).toLocaleDateString("ja-JP",{timeZone:"Asia/Tokyo"}) ? entry.updated_at : undefined} showToc={entry.show_toc !== false} references={entry.reference_sources || []} imageRights={entry.image_rights || ""} articleSlug={entry.slug || ""} />{relatedArticles.length>0&&<section className={styles.relatedArticles}><h2>関連記事</h2>{relatedArticles.map(a=><Link key={a.id} href={`/blog/${a.slug||a.id}`}><span>{a.category}</span><strong>{a.title}</strong></Link>)}</section>}{entry.content_mode === "external" && entry.article_url && <p><a href={entry.article_url} className={styles.back}>外部の記事を読む</a></p>}</div><RelatedSidebar articles={sidebarArticles} relatedPost={entry.x_post_url ? <TournamentPost key={entry.x_post_url} url={entry.x_post_url} inline /> : undefined}/></div></main><PortalFooter /><BottomTabs /></div>;
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import styles from "./preflop-range-trainer.module.css";
+import { toQuizTop } from "@/lib/ui/quiz-top";
 
 type Position = "UTG" | "HJ" | "CO" | "BTN" | "SB";
 type Hand = { key: string; kind: "pair" | "suited" | "offsuit" };
@@ -120,7 +121,7 @@ export function PreflopRangeTrainer() {
    {finished ? <div className={styles.result} role="status"><strong>{score} / {questions.length} 問正解！</strong><p>{score === questions.length ? "全問正解です！参考レンジの基本を理解できています。" : "上の表で各ハンドを確認して、もう一度挑戦しましょう。"}</p><button type="button" onClick={restart}>もう一度挑戦する ↻</button></div>
    : <><p className={styles.question}>「{question.position}」で「{question.hand}」は、この参考レンジに含まれる？</p>
      <div className={styles.answers}><button type="button" disabled={answer !== null} onClick={() => choose(true)}>含まれる</button><button type="button" disabled={answer !== null} onClick={() => choose(false)}>含まれない</button></div>
-     {answer !== null && <div className={styles.feedback} role="status"><strong>{answer === correct ? "正解！" : "惜しい！"} 正解は「{correct ? "含まれる" : "含まれない"}」です。</strong><p>この教材で設定した{question.position}の参考レンジに、{question.hand}は{correct ? "含まれています" : "含まれていません"}。表のポジションを切り替えて確認してみましょう。</p><button type="button" onClick={next}>{questionIndex === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
+     {answer !== null && <div className={styles.feedback} role="status"><strong>{answer === correct ? "正解！" : "惜しい！"} 正解は「{correct ? "含まれる" : "含まれない"}」です。</strong><p>この教材で設定した{question.position}の参考レンジに、{question.hand}は{correct ? "含まれています" : "含まれていません"}。表のポジションを切り替えて確認してみましょう。</p><button type="button" onClick={e=>{next();toQuizTop(e.currentTarget);}}>{questionIndex === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
     </>}
   </div>
   <p className={styles.note}>※6人制テキサスホールデム、100BB前後、アンティなし、前のプレイヤーが全員フォールドした場面の「最初にレイズする参考例」です。GTO最適解や実戦での保証された推奨レンジではありません。SBは簡略化したレイズ例です。BBはこの状況では最初にレイズする立場ではないため対象外です。実際の判断はスタック・レーキ・相手・大会形式などで変わります。</p>

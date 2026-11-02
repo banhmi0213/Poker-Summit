@@ -37,7 +37,7 @@ export const advancedLevels = [
  },
  {
   level: 5,
-  name: "アカデミーエキスパート（仮）",
+  name: "エキスパート（仮）",
   theme: "条件を検証し、自分で戦略を組み立てる",
   summary: "ソルバー活用・相手への対応・総合演習",
   prerequisite: "Lv.4相当のGTOとソルバー読解を学んだ方",

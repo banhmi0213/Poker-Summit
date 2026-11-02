@@ -1,0 +1,115 @@
+/* Stamps (owner 2026/10/27): no frame, big, over the avatar AND the cards (「これぐらい大きくていい・トランプの上」),
+   phrase over the character, one line, 3 seconds; gone as soon as a new hand starts so the new cards are seen. */
+.bubble{position:absolute;left:50%;top:50%;z-index:20;pointer-events:none;transform:translate(-50%,-52%);animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:translate(-50%,-52%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translate(-50%,-52%) scale(1) rotate(0);opacity:1}}
+.sticker{position:relative;display:block}
+.sticker[data-size=bubble]{width:136px;height:136px}
+.sticker[data-size=bubble] .phrase{font-size:21px;-webkit-text-stroke:6px #1b1813}
+.sticker[data-size=bubble][data-long] .phrase{font-size:17px}
+.sticker[data-size=pick]{width:58px;height:58px}
+.sticker[data-size=bubble] .art{transform:scale(1.22) translateY(-9%)}
+.art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 4px #000a) drop-shadow(0 0 1px #000)}
+.thumb{position:absolute;left:50%;bottom:6%;width:60%;transform:translateX(-50%);filter:drop-shadow(0 3px 4px #000a)}
+.phrase{position:absolute;left:-6px;right:-6px;top:33%;z-index:1;text-align:center;white-space:nowrap;font-weight:900;line-height:1;letter-spacing:-.03em;color:#fff;
+ -webkit-text-stroke:5px #1b1813;paint-order:stroke fill;transform:rotate(-6deg);font-size:15px}
+.sticker[data-long] .phrase{font-size:12.5px;letter-spacing:-.06em}
+.sticker[data-size=pick] .phrase{font-size:10.5px;-webkit-text-stroke:3.5px #1b1813}
+.sticker[data-size=pick][data-long] .phrase{font-size:8.5px}
+.sticker[data-tone=r] .phrase{color:#ff4d5a}.sticker[data-tone=y] .phrase{color:#ffd23f}.sticker[data-tone=b] .phrase{color:#53b7ff}.sticker[data-tone=g] .phrase{color:#4fd18b}
+/* Phone: the stamp about the size of the avatar (owner 2026/10/27: スマホはアイコンサイズ); PC stays big. */
+@media(max-width:899px){.sticker[data-size=bubble]{width:112px;height:112px}.sticker[data-size=bubble] .phrase{font-size:17px;-webkit-text-stroke:5px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:13.5px}}
+.bar{position:relative;display:inline-flex}
+.toggle{background:#302a23;color:#f3d9a7;border:1px solid #705c40;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;min-height:36px}
+/* All 14 at a glance (owner 2026/10/27: こんだけ？ — the top rows were scrolled out of view). */
+.list{position:absolute;bottom:calc(100% + 6px);left:0;z-index:30;display:grid;grid-template-columns:repeat(5,60px);gap:6px;max-width:calc(100vw - 24px);background:#182430;border:1px solid #a78a54;border-radius:12px;padding:10px;box-shadow:0 10px 24px #0008}
+@media(max-width:360px){.list{grid-template-columns:repeat(5,54px);gap:4px}.sticker[data-size=pick]{width:52px;height:52px}}
+.list button{display:grid;place-items:center;height:60px;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
+.list button:hover:not(:disabled){background:#ffffff12}
+.list button:disabled{opacity:.45;cursor:default}
+.list button:focus-visible{outline:2px solid #f3c663;outline-offset:2px}
+
+/* Summit and stamp buttons (owner 2026/10/28): no frame, large, right beside your name and chips — サミット on the left,
+   スタンプ on the right. Inside the name box they flank it; elsewhere (ring seat) they flank the seat. */
+.quick{position:absolute;left:-72px;right:-72px;top:58%;transform:translateY(-50%);display:flex;justify-content:space-between;pointer-events:none;z-index:25}
+.quickBtn{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:1px;width:56px;padding:0;border:0;background:none;cursor:pointer;color:#f3d9a7}
+.quickIcon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#3a3126,#1a1612);box-shadow:0 0 0 2px #b99a58,0 3px 8px #0009;overflow:hidden}
+.quickIcon img{width:52px;height:52px;object-fit:contain;transform:translateY(-16%)}
+.quickIcon[data-kind=summit] img{width:26px;height:26px;transform:none}
+.quickLabel{font-size:10px;font-weight:800;line-height:1;letter-spacing:.02em;text-shadow:0 1px 2px #000;white-space:nowrap}
+.quickBtn:disabled{opacity:.45;cursor:default}
+.quickBtn[aria-expanded=true] .quickIcon{box-shadow:0 0 0 2px #f3c663,0 0 10px #f3c66399}
+.quickBtn:focus-visible{outline:2px solid #f3c663;outline-offset:2px;border-radius:10px}
+@media(min-width:900px){.quick{left:-76px;right:-76px}.quickBtn{width:66px}.quickIcon{width:54px;height:54px}.quickIcon img{width:62px;height:62px;transform:translateY(-16%)}.quickIcon[data-kind=summit] img{width:30px;height:30px}.quickLabel{font-size:11px}}
+.sheetBackdrop{position:fixed;inset:0;z-index:1000;background:#0006;display:flex;align-items:flex-end;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+.sheetList{display:grid;grid-template-columns:repeat(5,60px);gap:6px;background:#182430;border:1px solid #a78a54;border-radius:14px;padding:10px;box-shadow:0 10px 24px #0008;margin-bottom:8vh}
+.sheetList button{display:grid;place-items:center;height:60px;padding:0;border:0;background:none;cursor:pointer;border-radius:12px}
+.sheetList button:hover:not(:disabled){background:#ffffff12}
+.sheetList button:disabled{opacity:.45;cursor:default}
+@media(max-width:360px){.sheetList{grid-template-columns:repeat(5,54px);gap:4px}}
+.summitSheet{width:min(560px,100%);height:min(75dvh,720px);display:flex;flex-direction:column;background:#0f1a24;border:1px solid #a78a54;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px #0008}
+.summitHead{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;color:#f3d9a7;border-bottom:1px solid #2f4a5f}
+.summitHead button{background:none;border:0;color:#f3d9a7;font-size:22px;line-height:1;cursor:pointer;min-width:36px;min-height:36px}
+.summitSheet iframe{flex:1;width:100%;border:0;background:#fff}
+/* Phone (owner 2026/10/28): bigger finger and character in the buttons, and the buttons as low as they can go without
+   touching the control panel frame below the table (measured at 390px: label bottom 708px, panel top 712px). */
+@media(max-width:899px){
+ .quick{top:calc(58% + 14px);left:-60px;right:-60px}
+ .quickIcon img{width:66px;height:66px;transform:translateY(-16%)}
+ .quickIcon[data-kind=summit] img{width:36px;height:36px;transform:none}
+}
+/* Stamp button: crop the drawing so the character itself sits in the middle of the circle (owner 2026/10/28: どこが真中なん).
+   Character box in stamp-02 (512px art): x 116–396, y 192–496, centre (256,344). Scaled so the character is ~87% of the circle. */
+.quickIcon{position:relative}
+.quickIcon:not([data-kind=summit]) img{position:absolute;transform:none;width:67px;height:67px;left:-10.7px;top:-22.3px}
+@media(min-width:900px){.quickIcon:not([data-kind=summit]) img{width:79px;height:79px;left:-12.6px;top:-26.2px}}
+/* Summit finger larger (owner 2026/10/28: 指もおおきくしていい) */
+.quickIcon[data-kind=summit] img{width:38px!important;height:38px!important}
+@media(max-width:899px){.quickIcon[data-kind=summit] img{width:52px!important;height:52px!important;transform:translate(-9%,-9%)!important}}
+@media(min-width:900px){.quickIcon[data-kind=summit] img{width:60px!important;height:60px!important;transform:translate(-9%,-9%)!important}}
+/* The practice table moves your seat 30px down on phones; keep the buttons at the same place on screen. */
+@media(max-width:899px){[class*=demoShell] .quick{top:calc(58% - 16px)}}
+/* Very short phone screens (owner 2026/10/28): the pictures stay, the サミット・スタンプ captions go to save height. */
+@media(max-width:899px) and (max-height:620px){.quickLabel{display:none}}
+/* Ring tables wrap the table in panels whose generic button style (navy box) used to win over these round buttons. */
+.quick .quickBtn.quickBtn{padding:0;border:0;border-radius:0;background:none;min-height:0;color:#f3d9a7}
+/* PC (owner 2026/10/28): the action panel sits to the right of your seat, so both round buttons go on the left of your
+   name plate (サミット then スタンプ) instead of one under the panel. */
+@media(min-width:900px){.quick{left:auto;right:calc(100% + 10px);justify-content:flex-end;gap:10px}}
+/* PC: the stamp on a seat is as big as the avatar it covers (owner 2026/10/28: PCスタンプアイコンぐらい大きく). */
+@media(min-width:900px){.sticker[data-size=bubble]{width:172px;height:172px}.sticker[data-size=bubble] .phrase{font-size:25px;-webkit-text-stroke:7px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:20px}}
+
+/* Owner 2026/10/29: bigger stamps (phone and PC). */
+@media(max-width:899px){.sticker[data-size=bubble]{width:144px;height:144px}.sticker[data-size=bubble] .phrase{font-size:21px;-webkit-text-stroke:6px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:17px}}
+@media(min-width:900px){.sticker[data-size=bubble]{width:216px;height:216px}.sticker[data-size=bubble] .phrase{font-size:31px;-webkit-text-stroke:8px #1b1813}.sticker[data-size=bubble][data-long] .phrase{font-size:25px}}
+/* Owner 2026/10/29: on PC the サミット board opens on the left side of the table (it may cover seats 3 and 5). */
+@media(min-width:900px){.sheetBackdrop[data-kind=summit]{justify-content:flex-start;align-items:center;padding-left:24px;background:#0003}.sheetBackdrop[data-kind=summit] .summitSheet{width:min(520px,40vw);height:min(86dvh,860px)}}
+/* Owner 2026/10/29: ticket +20s and rabbit sit right under the サミット・スタンプ buttons. */
+.quickExtra{position:absolute;top:calc(100% + 6px);left:0;pointer-events:auto;display:flex;flex-direction:column;align-items:flex-start;gap:4px;z-index:26}
+.quickExtra>*{margin:0}
+.quickExtra button{white-space:nowrap;font-size:12px;font-weight:700;min-height:32px;padding:5px 10px;border-radius:8px;border:1px solid #d9b15d;background:#29495c;color:#ffdc8c;cursor:pointer}
+.quickExtra p{font-size:12px;color:#f3d9a7;white-space:nowrap;background:#1d2a33e6;border:1px solid #bda15d;border-radius:8px;padding:4px 8px}
+@media(min-width:900px){.quickExtra{left:auto;right:0;align-items:flex-end}}
+
+/* Owner 2026/10/29 (もうちょい上, then ちょい下): the stamp sits a little higher over the seat so the name and chips stay readable. */
+.bubble{transform:translate(-50%,-61%)}
+@keyframes popHigh{0%{transform:translate(-50%,-61%) scale(.3) rotate(-12deg);opacity:0}100%{transform:translate(-50%,-61%) scale(1) rotate(0);opacity:1}}
+.bubble{animation-name:popHigh}
+
+/* Owner 2026/10/29: a ticket button with no ticket left is grey; tapping it explains where to exchange. */
+.quickExtra button[data-empty]{background:#3a3f44;border-color:#6b7076;color:#a9adb2;cursor:pointer}
+.quickExtra p[role=status]{white-space:normal;max-width:220px;line-height:1.4}
+
+/* Your ⏰ sits right above the stamp button, without a frame, a little smaller than the stamp circle (owner 2026/10/30). */
+.stampSlot{position:relative;display:flex}
+.quickClock{position:absolute;left:50%;bottom:calc(100% + 5px);transform:translateX(-50%);pointer-events:auto;display:flex;justify-content:center}
+.quickClock>*{position:relative;display:inline-flex;align-items:center;justify-content:center;margin:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;font-size:28px!important;line-height:1;color:#ffd987;filter:drop-shadow(0 2px 3px #000c)}
+.quickClock button{cursor:pointer;min-height:0}
+.quickClock button:focus-visible{outline:2px solid #f3c663;outline-offset:2px;border-radius:8px}
+.quickClock b{position:absolute;left:calc(100% + 1px);right:auto;bottom:-2px;font-size:15px;font-weight:900;line-height:1;color:#ffd987;text-shadow:0 1px 2px #000,0 0 3px #000}
+@media(min-width:900px){.quickClock>*{font-size:38px!important}.quickClock b{font-size:18px;left:calc(100% + 2px)}}
+
+/* The point the floating stamp is centred on (the avatar's centre). */
+.bubbleAnchor{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none}
+/* Owner 2026/10/30 (時計をずらして数字を右に): the clock steps left so its count sits on its right, clear of your cards. */
+.quickClock{transform:translateX(calc(-50% - 10px))}
+@media(min-width:900px){.quickClock{transform:translateX(calc(-50% - 14px))}}

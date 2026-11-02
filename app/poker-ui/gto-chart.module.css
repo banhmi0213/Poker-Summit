@@ -1,0 +1,114 @@
+.wrap{--gto-on:#d9b368;--gto-off:var(--poker-chart-off,#1b3448);display:flex;flex-direction:column;gap:12px}
+.stack{display:flex;align-items:center;gap:10px;font-size:15px;color:#e9eff5}.stack select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.grid{border-collapse:separate;border-spacing:2px;width:100%;table-layout:fixed;font-size:11px}
+.grid caption{caption-side:top;text-align:left;font-size:13px;color:#e6bd70;padding-bottom:6px}
+.grid td{padding:5px 0;text-align:center;border-radius:3px;background:var(--gto-off);color:#9ab0c0;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden}
+.grid td[data-on=all]{background:var(--gto-on);color:#14283a;font-weight:700}.grid td[data-on=mix]{color:#fff;font-weight:700;text-shadow:0 1px 2px #0008}
+.legend{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px!important}.legend span{display:inline-block;width:14px;height:14px;border-radius:3px;background:var(--gto-off)}.legend span[data-on=all]{background:var(--gto-on)}.legend span[data-on=mix]{background:linear-gradient(90deg,var(--gto-on) 50%,var(--gto-off) 50%)}
+.note{font-size:13px!important;color:#91a8ba!important}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end;font-size:14px;color:#c9d6e0}
+.form label{display:flex;flex-direction:column;gap:4px;min-width:0}.form input,.form select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-width:0}
+.form button,.path button{background:#d9b368;color:#14283a;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}.form button:disabled,.path button:disabled{opacity:.45;cursor:default}
+.path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;color:#c9d6e0}.path span{background:#1b3448;border-radius:6px;padding:4px 8px}.path button{padding:6px 10px;font-size:14px;background:#24435a;color:#e9eff5}
+.key{display:inline-flex;align-items:center;gap:4px;font-style:normal;margin-right:8px}.key i{display:inline-block;width:12px;height:12px;border-radius:3px}
+@media(max-width:900px){.pair{grid-template-columns:1fr}.grid{font-size:10px}}
+.grid td[data-hero]{outline:2px solid #f3d38a;outline-offset:-2px;opacity:1!important}
+.rangeToggle{margin-left:6px;background:none;border:1px solid #3a5366;color:#d9b368;border-radius:6px;padding:1px 8px;font:inherit;font-size:12px;cursor:pointer}
+.overlay{position:fixed;inset:0;z-index:2147483000;background:#030b12f0;display:flex;align-items:center;justify-content:center;padding:16px}
+.dialog{--gto-on:#d9b368;--gto-off:#1b3448;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#0d1d2b;border:1px solid #3a5366;border-radius:12px;padding:14px 14px 10px;color:#e9eff5;font-size:14px}
+.dialogHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;font-size:15px;color:#e6bd70}.dialogHead button{background:#24435a;color:#e9eff5;border:0;border-radius:8px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer}
+
+/* Pastel action palette: dark labels remain readable across every frequency segment. */
+.wrap,.dialog{--gto-on:#F3CE78;--gto-fold:#D6DFE8}.grid{font-size:13px;border-spacing:3px}.grid td{padding:8px 1px;border-radius:4px;line-height:1.35;font-weight:600;min-height:30px;box-shadow:inset 0 0 0 1px #c6dae118}.grid td[data-on=mix]{color:#173348;font-weight:800;text-shadow:none}.grid td[data-on=all]{color:#173348;font-weight:800}.grid td[data-on=fold]{background:var(--gto-fold);color:#284559;font-weight:700}.grid td[data-on=none]{color:#a5b9c5;background:repeating-linear-gradient(135deg,#213e50 0 5px,#29485a 5px 6px);box-shadow:inset 0 0 0 1px #b1c7d11c}.pair .grid{font-size:11px;border-spacing:2px}.pair .grid td{padding:7px 0}.strategyLegend{padding:13px 15px;border:1px solid #adc5d448;border-radius:9px;background:#193a4c70}.legendItems{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap}.actionKey{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#eef5f5;white-space:nowrap}.actionKey>i{display:inline-block;width:17px;height:17px;border-radius:4px;border:1px solid #ffffff35;flex-shrink:0}.actionKey>.unavailableKey{background:repeating-linear-gradient(135deg,#213e50 0 5px,#456176 5px 6px)}.strategyLegend>p{font-size:13px!important;line-height:1.7!important;margin:10px 0 0!important;color:#cbdae3!important}.legend span[data-on=none]{background:var(--gto-fold)}
+@media(max-width:900px){.grid{font-size:12px;border-spacing:2px}.pair .grid{font-size:12px}.grid td{padding:7px 0}}
+@media(max-width:650px){.grid,.pair .grid{font-size:11px;border-spacing:1px}.grid td,.pair .grid td{padding:7px 0}.strategyLegend{padding:12px}.actionKey{font-size:13px}.legendItems{gap:9px 13px}}
+.legend span[data-on=mix]{background:linear-gradient(90deg,var(--gto-on) 50%,var(--gto-fold) 50%)}
+.cats{display:flex;flex-direction:column;gap:4px}
+.catRow{display:grid;grid-template-columns:8.5em 3em 1fr;align-items:center;gap:8px;font-size:13px;color:#c9d6e0}.catRow small{text-align:right;color:#91a8ba;font-variant-numeric:tabular-nums}.catRow i{display:block;height:12px;border-radius:3px}
+
+/* The viewer's own hand at a reviewed decision (2026/10/30). */
+.ownHand{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #d9b36866;border-radius:9px;background:#193a4c70;font-size:14px;color:#e9eff5}.ownHand i{display:block;height:16px;border-radius:4px}.ownHand small{color:#c9d6e0}
+/* From the GTO tools to the store search (2026/10/31). */
+.storeInvite{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 14px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;font-size:14px;color:#c9d6e0}.storeInvite b{color:#e6bd70;font-size:15px;width:100%}.storeInvite span{flex:1 1 220px}.storeInvite a{background:#d9b368;color:#14283a!important;border-radius:8px;padding:8px 14px;font-weight:700;text-decoration:none!important;white-space:nowrap}
+/* 文字の大きさ (owner 2026/10/31): beats the mypage shell's .panel p 13px / .panel button 12px */
+.wrap{font-size:15px!important}
+.wrap p{font-size:15px!important;line-height:1.75!important}
+.form button,.wrap>div>button{font-size:15px!important;min-height:42px}
+.stack{font-size:15px!important}
+.grid caption{font-size:15px!important}
+.legend,.actionKey{font-size:14px!important}
+.wrap .note,.wrap .strategyLegend>p,.note,.strategyLegend>p{font-size:14px!important}
+.form,.form label{font-size:14px!important}
+.form input,.form select{font-size:15px!important;min-height:42px}
+.path,.path button{font-size:15px!important}
+.rangeToggle{font-size:14px!important;padding:2px 9px!important}
+.dialog{font-size:15px!important}
+.dialogHead{font-size:16px!important}
+.dialogHead button{font-size:15px!important}
+.catRow{font-size:15px!important}
+.ownHand{font-size:15px!important}
+.storeInvite{font-size:15px!important}
+.storeInvite b{font-size:16px!important}
+@media(min-width:900px){.grid{font-size:13px!important}.pair .grid{font-size:12px!important}}
+/* フロップ戦略 on PC (owner 2026/10/31「余白あるし文字大きく」): settings and notes on the left, the 13×13 table on the
+   right, so the page fits one screen without the whole panel being shrunk. */
+.split{display:block}
+@media(min-width:1100px){
+ .split[data-on]{display:grid;grid-template-columns:minmax(340px,.8fr) minmax(0,1.5fr);gap:20px;align-items:start}
+ .split[data-on] .form{grid-template-columns:1fr 1fr}
+ .splitSide>p{margin:0 0 8px!important}
+ .splitSide>.form,.splitSide>nav,.splitSide>div{margin:0 0 10px}
+ .splitSide .path button{min-height:38px}
+ .splitMain .grid{font-size:15px!important;border-spacing:3px}
+ .splitMain .grid td{padding:6px 1px}
+}
+/* スマホ (owner 2026/11/1「ほとんどの人がスマホで見る」): the table right under short controls, seats and situations as
+   buttons, the tapped hand's shares under the table, the long explanation folded away. PC is unchanged. */
+.chips,.aboutMobile{display:none}
+.grid td[data-pick]{outline:3px solid #f3d38a;outline-offset:-3px}
+.grid td{cursor:pointer}
+.handDetailHint{margin:8px 2px 0!important;font-size:13px!important;color:#91a8ba!important}
+.handDetail{margin-top:8px;padding:10px 12px;border:1px solid #d9b36866;border-radius:10px;background:#193a4c70;color:#e9eff5;display:flex;flex-direction:column;gap:6px}
+.handDetail>b{font-size:18px;color:#f3d38a}.handDetail>small{font-size:13px;color:#c9d6e0}.handDetail>span{font-size:14px;color:#c9d6e0}
+.handDetail ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.handDetail ul{display:grid!important;grid-template-columns:14px 1fr 3em;column-gap:8px}.handDetail li{display:contents;align-items:center;gap:8px;font-size:14px}
+.handDetail li>i{width:14px;height:14px;border-radius:3px}
+.handDetail li[data-zero]>*{opacity:.45}
+.shareBar{display:flex;height:22px;border-radius:6px;overflow:hidden;box-shadow:inset 0 0 0 1px #ffffff22}
+.shareBar>span{flex-basis:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#173348;min-width:3px}
+.handDetail li>strong{text-align:right;font-variant-numeric:tabular-nums}
+.chipRow{display:flex;flex-direction:column;gap:5px}.chipRow>span{font-size:13px;color:#c9d6e0}
+.chipRow>div{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.chipRow>div::-webkit-scrollbar{display:none}
+.chipRow button{flex:0 0 auto;min-height:38px!important;padding:0 13px!important;border-radius:19px!important;border:1px solid #3a5366!important;background:#102334!important;color:#e9eff5!important;font:inherit;font-size:14px!important;font-weight:700!important;white-space:nowrap;cursor:pointer;box-shadow:none!important}
+.chipRow button[aria-pressed=true]{background:#d9b368!important;border-color:#d9b368!important;color:#14283a!important}
+.chipSelect{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#c9d6e0}.chipSelect select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-height:42px;width:100%}
+@media(max-width:700px){
+ .split{display:flex!important;flex-direction:column;gap:10px}
+ .splitSide{display:contents}
+ .splitSide>*{order:1}
+ .splitSide>.form{order:1;grid-template-columns:1fr 1fr;gap:8px}
+ .splitSide>.form.compact{grid-template-columns:.85fr 1.3fr .85fr;gap:6px}
+ .splitSide>.form.compact label{font-size:12px!important;min-width:0}
+ .splitSide>.form.compact select{font-size:13px!important;padding:6px 4px;min-height:38px}
+ .splitSide>.form>button{align-self:end}
+ .desktopOnly,.intro{display:none!important}
+ .chips{order:2;display:flex;flex-direction:column;gap:8px}
+ .splitSide>.storeInvite{order:3}
+ .totals,.wrap p.totals{order:3;margin:0!important;font-size:13px!important;line-height:1.6!important;color:#c9d6e0}
+ .splitMain{order:4;margin:0 -8px}
+ .aboutMobile{order:5;display:block;font-size:14px;color:#c9d6e0}.aboutMobile summary{cursor:pointer;color:#91a8ba}
+ .splitSide>.note{order:6}
+ .splitSide>[role=status],.splitSide>[role=alert]{order:0}
+ .splitMain .strategyLegend{padding:6px 10px;margin-bottom:6px}.splitMain .legendItems{gap:4px 12px}.splitMain .actionKey,.wrap .splitMain .actionKey{font-size:12px!important;gap:5px}.splitMain .actionKey>i{width:13px;height:13px}.splitMain .strategyLegend>p{display:none}
+ .splitMain .grid{font-size:11.5px!important;border-spacing:2px}
+ .splitMain .grid td{padding:0;height:31px;line-height:31px;font-weight:800;letter-spacing:-.03em;border-radius:5px}
+}
+/* レンジ練習 (owner 2026/11/1「スマホの部分もっと改善」): the brush shows its colour, and the one in use is gold. On phones
+   the brushes and the score sit right above the table. */
+.brushes button{display:inline-flex;align-items:center;gap:6px}.brushes button>i{width:12px;height:12px;border-radius:3px;border:1px solid #ffffff40}
+.brushes button[aria-pressed=true]{background:#d9b368!important;color:#14283a!important}
+@media (max-width:700px){
+ .splitSide>.brushes{order:3;gap:6px}.brushes button{min-height:40px;padding:6px 11px!important}
+ .splitSide>.score{order:3;margin:0!important}
+}

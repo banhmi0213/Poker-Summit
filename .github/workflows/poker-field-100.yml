@@ -1,0 +1,46 @@
+name: Poker 100-player tournament
+
+# Owner 2026/10/31 (100人きたらええな): a full 100-player multi-table tournament with real browsers and the real
+# room service, run by hand before a big event (too long for every push).
+on:
+  workflow_dispatch:
+  # Pushing any commit to this branch runs it (a new workflow cannot be dispatched until it is on main).
+  push:
+    branches: [ci/field-100]
+
+permissions:
+  contents: read
+
+jobs:
+  field-100:
+    name: 100-player multi-table tournament end to end
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build poker server
+        run: npm run build:poker-server
+      - name: Install isolated test runtimes
+        run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10 react-test-renderer@18.3.1 esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
+      - name: Verify a 100-player multi-table tournament end to end
+        timeout-minutes: 80
+        env:
+          POKER_FIELD_ENTRANTS: "100"
+          POKER_PGLITE_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@electric-sql/pglite
+          POKER_ESBUILD_MODULE: ${{ runner.temp }}/poker-sql/node_modules/esbuild
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+          POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-field-e2e
+        run: |
+          start=$(date +%s)
+          set +e; node tests/poker-field-e2e.cjs 2>&1 | tee field.log; code=${PIPESTATUS[0]}; set -e
+          echo "::notice::100-player run took $(( $(date +%s) - start )) s"
+          grep -E "^PASS" field.log | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timed out|waiting for|expected|actual" field.log | grep -v node_modules | head -20 | while IFS= read -r l; do echo "::error::${l:0:500}"; done; exit "$code"; fi

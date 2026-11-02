@@ -277,7 +277,7 @@
 /* Showdown awards: a purely visual, non-interactive layer above the felt.
    Flights originate at POT (table center) and end at the winning seat.
    Each winner gets a separate stream, including split/side pots. */
-.awardAnimationLayer{position:absolute;inset:0;z-index:25;pointer-events:none;overflow:hidden;border-radius:46%/27%}
+.awardAnimationLayer{position:absolute;inset:0;z-index:25;pointer-events:none;overflow:visible;border-radius:46%/27%}
 .awardFlight{position:absolute;left:50%;top:35%;width:0;height:0;--award-x:0px;--award-y:0px}
 .awardP2{--award-x:0px;--award-y:-115px}
 .awardP3{--award-x:-205px;--award-y:-70px}
@@ -288,7 +288,7 @@
 .awardCoin{position:absolute;left:-11px;top:-11px;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 28%,#fff2ae,#f5c75b 48%,#a66c18 80%);border:2px solid #fff2a0;box-shadow:0 0 11px #ffd66b,0 2px 4px #001c35;color:#785017;font-size:12px;font-weight:900;opacity:0;animation:potChipFlight 1.3s cubic-bezier(.2,.6,.22,1) forwards}
 .awardCoin:nth-child(2){animation-delay:.13s}.awardCoin:nth-child(3){animation-delay:.26s}
 .awardAmount{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;background:#142b3d;border:1px solid #f3c35f;border-radius:8px;padding:4px 7px;color:#ffdd81;font-size:13px;opacity:0;animation:awardNumberPop 1.8s ease-out 1.05s both}
-@keyframes potChipFlight{0%{opacity:0;transform:translate(0,0) scale(.5)}12%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translate(var(--award-x),var(--award-y)) scale(.8)}}
+@keyframes potChipFlight{0%{opacity:0;transform:translate(0,0) scale(.5)}12%{opacity:1}70%,90%{opacity:1;transform:translate(var(--award-x),var(--award-y)) scale(.8)}100%{opacity:0;transform:translate(var(--award-x),var(--award-y)) scale(.8)}}
 @keyframes awardNumberPop{0%{opacity:0;transform:translate(calc(var(--award-x) - 50%),calc(var(--award-y) + 10px)) scale(.7)}30%,75%{opacity:1;transform:translate(calc(var(--award-x) - 50%),var(--award-y)) scale(1.1)}100%{opacity:0;transform:translate(calc(var(--award-x) - 50%),calc(var(--award-y) - 8px)) scale(1)}}
 @media(max-width:560px){
  .awardP2{--award-x:0px;--award-y:-105px}
@@ -472,7 +472,781 @@
  .gameClock aside b{font-size:clamp(13px,1.4vw,20px);text-align:right}
 }
 
-/* Measure payout paths after layout; every coin reaches the actual avatar. */
-.awardAnimationLayer{overflow:visible}
+/* Cosmetic tokens can later be selected from an authorized member theme. */
+.miniCards .cardBack,.hole .cardBack,.showdownPosition .miniCards .cardBack{background:var(--poker-card-back-background,linear-gradient(145deg,#143a68,#092441));border:1px solid var(--poker-card-back-border,#dfbd7b);color:#dcb46b;box-shadow:inset 0 0 0 2px #1c4c7b,0 2px 4px #0005}
+.thumbLogo{width:58%;height:68%;object-fit:contain;filter:saturate(.72) drop-shadow(0 1px 1px #0008)}
+
+/* Measured POT/avatar centers override fixed viewport distances. */
 .awardFlight[data-pot-winner]{left:var(--pot-start-x,50%);top:var(--pot-start-y,35%)}
+
+/* Coordinates and animation are assigned together after layout measurement. */
 .awardCoin[data-pot-coin]{animation:none;opacity:0}
+
+/* Reversible beige design trial. Presentation only; seat and game state remain intact. */
+.shell{background:#201e1b;color:#f7efdf}
+.table,.table[data-felt=green],.table[data-felt=black]{background:radial-gradient(ellipse at 50% 42%,#e7d6b5 0%,#d3bd94 65%,#b79c72 100%);border-color:#65503a;outline-color:#b99a61;box-shadow:inset 0 0 0 3px #e7cf98,inset 0 0 35px #78604466,0 12px 28px #0005}
+.felt{--board-card-width:clamp(34px,9vw,52px);--board-card-height:clamp(51px,13vw,68px);--board-gap:4px}
+.cards{position:relative;isolation:isolate;justify-content:flex-start;width:calc(var(--board-card-width)*5 + var(--board-gap)*4);height:var(--board-card-height);flex-shrink:0;gap:var(--board-gap)}
+.cards::before{content:"";position:absolute;z-index:-1;left:calc(var(--board-card-width)*.56);right:calc(var(--board-card-width)*.56);top:20%;height:60%;background:url('/images/logo.webp') center/contain no-repeat;filter:grayscale(1) sepia(1);mix-blend-mode:multiply;opacity:.22;pointer-events:none}
+.cards>span{flex:0 0 var(--board-card-width);width:var(--board-card-width);height:var(--board-card-height);box-shadow:0 3px 6px #49341e40}
+.pot{background:#493b2ddd;border:1px solid #ac8d58;color:#faf2e4}.pot strong{color:#f2d391}.street{color:#51432e;text-shadow:0 1px #fff5}
+.avatar{background:linear-gradient(145deg,#544839,#26231e);border-color:#c4a46d}.seat small,.self small{color:#f3d9a7;text-shadow:0 1px 3px #23190b}
+.controls{background:#302a23;border:1px solid #705c40;box-shadow:0 5px 18px #0002}.controls input{accent-color:#c3a062}.menuToggle,.topExit{background:#302a23}
+.actions button{background:#c6a266;color:#201b13}.actions button:first-child{background:#85484b}.actions button:nth-child(2){background:#5b625e}.actions button:nth-child(3){background:#477563}
+.quickBets button{background:#5b5140}.quickBets button:last-child{background:#a47d38}
+@media(min-width:900px){.gamePage{background:#171715}.desktopStructure{background:#2b2721}.gameMain{max-width:1540px}.shell{grid-template-columns:210px minmax(400px,1fr) 280px}}
+
+/* Keep the complete board lane anchored when demo streets advance. */
+.table .felt,.table[data-street="0"] .felt{top:40%}
+
+/* Reference framing: a wide PC table and a portrait phone table. */
+@media(min-width:900px){
+ .gameMain{max-width:1800px;max-height:none;padding:8px 22px 14px}
+ .shell{grid-template-columns:minmax(0,1fr);grid-template-rows:36px 48px minmax(280px,1fr) auto;gap:6px;padding:6px 18px 10px}
+ .shell .desktopStructure{display:none!important}
+ .heading{grid-column:1;grid-row:1}
+ .gameClock{grid-column:1;grid-row:2;width:min(760px,100%);justify-self:center}
+ .table{grid-column:1;grid-row:3;width:calc(100% - 56px);box-sizing:border-box;justify-self:center;min-height:280px;max-height:none;margin:12px 28px 8px;border-radius:48%/44%}
+ .actionColumn{grid-column:1;grid-row:4;width:min(900px,100%);justify-self:center;padding:0;max-height:230px;overflow:auto}
+ .actionColumn>.controls,.actionColumn>.resultOverlay,.actionColumn>.spectatorPanel{margin-top:0}
+ .statusDock{position:absolute;right:20px;top:48px;width:210px;min-height:0}
+ .showdownFive,.showdownSix{top:65%}
+ .demoInfo{top:14px;left:auto;right:80px}
+ .previousResult{display:none}
+ .table .felt,.table[data-street="0"] .felt{top:39%}
+}
+@media(max-width:899px){
+ .gameMain{max-width:540px}
+ .table{border-radius:47%/25%}
+}
+
+/* Size the whole playing surface by its aspect ratio, never by grid leftover height. */
+@media(min-width:900px){
+ .gamePage{height:auto;min-height:100dvh;overflow:auto}
+ .gameMain{height:auto;min-height:0;flex:0 0 auto;padding:8px 22px 18px}
+ .shell{display:flex;flex-direction:column;height:auto;min-height:calc(100dvh - 32px);padding:8px 30px 14px;gap:8px;box-sizing:border-box}
+ .heading{height:40px;min-height:40px;width:100%}
+ .gameClock{width:min(800px,100%);align-self:center}
+ .table{flex:none;width:min(1100px,calc((100dvh - 260px)*1.6),calc(100% - 64px));height:auto!important;min-height:0!important;aspect-ratio:1.6;align-self:center;box-sizing:border-box;margin:18px 32px 14px;border-width:10px;border-radius:48%/43%;padding:0}
+ .actionColumn{flex:none;width:min(900px,100%);align-self:center;max-height:none;overflow:visible;padding:0}
+ .seat{font-size:12px;gap:3px;min-width:80px;padding:0 5px;text-shadow:0 1px 3px #000}
+ .seat small,.self small{font-size:14px;color:#f3d9a7}
+ .seatTimerRing{width:58px;height:58px}.seatTimerRing .avatar,.avatar{width:50px;height:50px;font-size:18px}
+ .topSeats{top:-18px}.edgeSeatThree,.edgeSeatFour{top:13%}.edgeSeatFive,.edgeSeatSix{top:67%;bottom:auto}
+ .edgeSeatThree,.edgeSeatFive{left:1%}.edgeSeatFour,.edgeSeatSix{right:1%}
+ .self{bottom:-14px;gap:8px;background:#302a23e8;padding:6px 12px;border:1px solid #b99a61;border-radius:12px;z-index:4}
+ .self .activeAvatar{width:56px;height:56px}.self .activeAvatar .avatar{width:48px;height:48px}
+ .showdownThree,.table[data-showdown=true] .showdownThree{top:15%;left:14%}
+ .showdownFour,.table[data-showdown=true] .showdownFour{top:15%;right:14%}
+ .showdownFive,.table[data-showdown=true] .showdownFive{top:69%;bottom:auto;left:14%}
+ .showdownSix,.table[data-showdown=true] .showdownSix{top:69%;bottom:auto;right:14%}
+ .showdownTwo{top:4%;left:58%}
+ .showdownPosition .miniCards span{width:36px;height:48px;font-size:19px}.hole span,.self .hole span{width:42px;height:56px;font-size:22px}
+ .table .felt,.table[data-street="0"] .felt{top:36%;--board-card-width:clamp(44px,4vw,64px);--board-card-height:clamp(62px,5.6vw,86px);gap:8px}
+ .pot{font-size:15px;padding:5px 15px}.street{font-size:11px}
+ .controls{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;padding:9px 12px}
+ .turnHeader{grid-column:1/-1;min-height:32px;padding-right:56px}.timeBankButton{height:34px;width:44px}.timeBankButton span{font-size:18px}.timeBankButton small{font-size:9px}
+ .controls>label{grid-column:1;font-size:11px;align-self:center}.controls>input{grid-column:1;grid-row:3;margin:0}
+ .quickBets{grid-column:2;grid-row:2/4;align-self:center}.quickBets button{min-height:34px;padding:7px 2px;font-size:12px}
+ .controls>small{grid-column:1/-1;font-size:10px}.actions{grid-column:1/-1;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.actions button{min-height:42px;font-size:14px;padding:9px}
+ .demoFoldControls{grid-column:1/-1;margin:0;font-size:9px;gap:5px}.demoFoldControls>span,.demoFoldControls>small{width:auto}.demoFoldControls button{padding:4px 7px}
+ .controls>p{grid-column:1/-1;font-size:10px;min-height:0;margin:0}.demoSteps{grid-column:1/-1}
+ .bet_p3{top:32%;left:24%}.bet_p4{top:32%;left:76%}.bet_p5{top:70%;left:30%}.bet_p6{top:70%;left:70%}.bet_you{bottom:18%}
+}
+/* Seat plaques remain legible against the light felt. */
+.seat>span:not(.actionBadge):not(.turnSeconds),.seat>small{background:#302a23e8;border-radius:3px;padding:2px 5px}
+@media(max-width:899px){
+ .shell{padding-bottom:12px}.table{min-height:430px}.cards::before{opacity:.32}
+ .seat{font-size:10px}.seat small{font-size:11px}
+ .controls{padding:8px;gap:5px}.actions button{min-height:42px;font-size:12px}
+ .controls .quickBets button{min-height:32px;padding:6px 2px}
+}
+
+.cards::before{top:0;height:100%;background-size:100% auto}
+
+/* Approved six-seat concept: padded brown rail, beige felt and connected seat plaques. */
+.table,.table[data-felt=green],.table[data-felt=black]{background:radial-gradient(ellipse at 50% 42%,#e3cca2,#c3a16c);border:18px solid #35261d;outline:2px solid #c49c57;box-shadow:inset 0 0 0 2px #e5c78e,inset 0 0 32px #6b471f66,0 0 0 6px #1c1713,0 12px 32px #0009}
+.table::after{content:"";position:absolute;inset:20px;border:1px solid #92734066;border-radius:inherit;pointer-events:none}
+.cards::before{opacity:.8;filter:brightness(.45) sepia(1) saturate(.55);mix-blend-mode:multiply}
+.avatar{overflow:hidden;background:radial-gradient(circle at 35% 25%,#6f5738,#241c13);border:2px solid #deba72;box-shadow:inset 0 0 0 2px #282017,0 3px 7px #0006}
+.memberAvatarImage{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.seatTimerRing{background:#a98b52;padding:3px;box-sizing:border-box}.seatAvatarRow{position:relative}
+.seat{gap:0;min-width:94px}.seat>span:not(.actionBadge):not(.turnSeconds){box-sizing:border-box;width:94px;max-width:94px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 4px 2px;background:linear-gradient(#30261b,#12110e);border:1px solid #b79754;border-bottom:0;border-radius:7px 7px 0 0;z-index:3}
+.seat>small{box-sizing:border-box;width:94px;max-width:94px;padding:0 4px 5px;color:#6dd9ed;background:#12110e;border:1px solid #b79754;border-top:0;border-radius:0 0 7px 7px;z-index:3;font-variant-numeric:tabular-nums}
+.seatAvatarRow{margin-bottom:15px}.showdownPosition .miniCards{gap:0}.showdownPosition .miniCards>span:first-child{transform:rotate(-7deg)}.showdownPosition .miniCards>span:last-child{transform:rotate(7deg);margin-left:-3px}
+.miniCards .cardBack,.hole .cardBack,.showdownPosition .miniCards .cardBack{background:repeating-linear-gradient(45deg,#68363b 0 2px,#79444a 2px 4px);border-color:#eddfba;box-shadow:inset 0 0 0 2px #b67d77,0 2px 4px #0005}
+.cardCorner{position:absolute;top:4px;left:5px;font-style:normal;display:flex;flex-direction:column;align-items:center;line-height:.9;font-size:.6em}.cardSuit{font-size:1.5em;line-height:1;margin-top:10px}
+.cards>span,.hole>span,.miniCards>span{position:relative}
+.controls{background:linear-gradient(#292116,#15120e);border:1px solid #a1854c;box-shadow:0 6px 16px #0006}.actions{gap:7px}.actions button{border:1px solid #f0d081;background:linear-gradient(#e4b553,#a76d1c);color:#fff4d4;border-radius:10px;box-shadow:inset 0 1px #fff5,0 3px 6px #0007}.actions button:first-child{border-color:#b06762;background:linear-gradient(#a33e44,#63232b)}.actions button:nth-child(2),.actions button:nth-child(3){border-color:#43a2b4;background:linear-gradient(#18728b,#07384a)}
+.quickBets{grid-template-columns:repeat(auto-fit,minmax(50px,1fr))}.quickBets button{border:1px solid #9a7b43;border-radius:999px;background:#201c16;color:#f3dcaa}
+.menuFields input[type=number]{width:80px;padding:6px;border:1px solid #a1854c;border-radius:5px;color:#f5deac;background:#292116}
+.demoTools{grid-column:1/-1;color:#c4b18d;font-size:10px}.demoTools summary{cursor:pointer}.demoTools[open]{padding:6px}
+.self{background:none;border:0;padding:0;display:flex;flex-direction:column;gap:0;z-index:4;min-width:110px}
+.selfInfo{position:relative;align-items:center;background:linear-gradient(#30261b,#12110e);border:1px solid #b79754;border-radius:7px;padding:5px 8px;min-width:96px;box-sizing:border-box;color:#fff0c5;z-index:3}.selfInfo small{color:#6dd9ed}.self .handWithRank{position:absolute;left:calc(50% + 24px);top:6px;z-index:2}.self .hole{gap:0;margin:0}.self .hole>span:first-child{transform:rotate(-7deg)}.self .hole>span:last-child{transform:rotate(7deg)}
+@media(min-width:900px){
+ .gameHeader{display:none!important}.gamePage{background:radial-gradient(ellipse at 50% 50%,#33271e,#15130f 80%)}
+ .gameMain{max-width:1440px;padding:10px 40px 20px}.shell{background:transparent;box-shadow:none;min-height:0;padding:0 18px 10px}
+ .table{width:min(1100px,calc((100dvh - 225px)*1.75),calc(100% - 70px));aspect-ratio:1.75;margin-top:25px;margin-bottom:48px}
+ .seatTimerRing{width:80px;height:80px}.seatTimerRing .avatar,.avatar{width:72px;height:72px;font-size:22px}.seatAvatarRow{min-height:80px}
+ .topSeats{top:-35px}.edgeSeatThree,.edgeSeatFour{top:12%}.edgeSeatFive,.edgeSeatSix{top:64%}.self{bottom:-48px}
+ .self .activeAvatar{width:80px;height:80px}.self .activeAvatar .avatar{width:72px;height:72px}
+ .showdownTwo{top:10px;left:calc(50% - 36px)}
+ .showdownThree,.table[data-showdown=true] .showdownThree{top:calc(12% + 47px);left:calc(1% + 10px)}
+ .showdownFour,.table[data-showdown=true] .showdownFour{top:calc(12% + 47px);right:calc(1% + 10px)}
+ .showdownFive,.table[data-showdown=true] .showdownFive{top:calc(64% + 47px);bottom:auto;left:calc(1% + 10px)}
+ .showdownSix,.table[data-showdown=true] .showdownSix{top:calc(64% + 47px);bottom:auto;right:calc(1% + 10px)}
+ .table .felt,.table[data-street="0"] .felt{top:33%}
+ .showdownPosition .miniCards span{width:39px;height:54px;font-size:18px}
+ .actionColumn{width:min(860px,100%)}.controls{gap:5px 12px}.controls>p{margin:0}.demoInfo{position:absolute;top:12px;right:80px}
+ .handRank{display:none}
+}
+@media(max-width:899px){
+ .table{border-width:12px;min-height:420px;margin:28px 8px 42px;padding:0;border-radius:47%/27%}
+ .table::after{inset:12px}.topSeats{top:-25px}.self{bottom:-38px}
+ .seat{min-width:72px}.seat>span:not(.actionBadge):not(.turnSeconds),.seat>small{width:72px;max-width:72px;font-size:10px}
+ .seatTimerRing{width:56px;height:56px}.seatTimerRing .avatar,.seat .avatar{width:48px;height:48px}.seatAvatarRow{min-height:56px;margin-bottom:10px}
+ .self .activeAvatar{width:56px;height:56px}.self .activeAvatar .avatar{width:48px;height:48px}
+ .selfInfo{min-width:82px;font-size:11px}.self .hole span{width:34px;height:46px}.self .handWithRank{left:calc(50% + 15px)}
+ .edgeSeatThree,.edgeSeatFour{top:16%}.edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:63%}
+ .edgeSeatThree,.edgeSeatFive{left:-4%}.edgeSeatFour,.edgeSeatSix{right:-4%}
+ .showdownTwo,.table[data-showdown=true] .showdownTwo,.table[data-showdown=false] .showdownTwo{top:8px;left:calc(50% - 26px)}
+ .showdownThree,.table[data-showdown=true] .showdownThree{top:calc(16% + 29px);left:calc(-4% + 8px)}
+ .showdownFour,.table[data-showdown=true] .showdownFour{top:calc(16% + 29px);right:calc(-4% + 8px)}
+ .showdownFive,.table[data-showdown=true] .showdownFive{top:calc(63% + 29px);bottom:auto;left:calc(-4% + 8px)}
+ .showdownSix,.table[data-showdown=true] .showdownSix{top:calc(63% + 29px);bottom:auto;right:calc(-4% + 8px)}
+ .showdownPosition .miniCards span{width:28px;height:38px;font-size:14px}.handRank{display:none}
+ .table .felt,.table[data-street="0"] .felt{top:36%;gap:7px}.actions button{font-size:13px;min-height:46px}
+}
+.actions{grid-template-columns:repeat(3,minmax(0,1fr))}.actions button:last-child{border-color:#f0d081;background:linear-gradient(#e4b553,#a76d1c);color:#fff4d4}
+@media(min-width:900px){.actions{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.hole .cardCorner,.miniCards .cardCorner{font-size:.65em;top:3px;left:3px}.hole .cardSuit,.miniCards .cardSuit{font-size:1.2em;margin-top:12px}
+
+/* Compact reference action dock. Presets, slider/value and actions share one small area. */
+.controls{display:grid;grid-template-columns:minmax(0,1fr) 84px;grid-template-rows:auto auto auto auto auto;gap:7px 8px;padding:10px 12px;border-radius:14px;background:linear-gradient(150deg,#241e15,#110f0b);border:1px solid #a58a50;box-shadow:0 6px 18px #0007}
+.controls .turnHeader{grid-column:1/-1;grid-row:1;min-height:24px;padding:0 40px 0 0;font-size:10px}.controls .turn{font-size:10px;text-align:left}.controls .timeBankButton{height:27px;width:33px;border-radius:7px}.controls .timeBankButton span{font-size:15px}.controls .timeBankButton small{font-size:8px}
+.controls>label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.controls .quickBets{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:6px;align-self:stretch}
+.controls .quickBets button{min-width:0;min-height:28px;padding:4px 2px;border-radius:999px;font-size:11px;background:linear-gradient(#292319,#12100c);border:1px solid #9d8049;color:#f5dfaa;white-space:nowrap}
+.controls>input[type=range]{grid-column:1;grid-row:3;min-width:0;width:100%;height:28px;margin:0;accent-color:#e5bb67}
+.controls .raiseAmountInput{grid-column:2;grid-row:3;width:100%;box-sizing:border-box;height:30px;padding:3px 6px;background:#100f0c;color:#ffe0a0;border:1px solid #a58a50;border-radius:8px;text-align:center;font-size:14px}
+.controls>.actions{grid-column:1/-1;grid-row:4;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.controls .actions button{min-width:0;min-height:60px;padding:8px 4px;font-size:19px;font-weight:700;line-height:1.2;white-space:normal;border-radius:12px;box-shadow:inset 0 2px 0 #ffffff25,0 3px 6px #0007}
+.controls>small{grid-column:1/-1;grid-row:5;font-size:9px;min-height:0}
+.controls>.demoFoldControls,.controls>p,.controls>.demoTools{grid-column:1/-1;grid-row:auto}.controls>.demoFoldControls{gap:5px;margin:0;justify-content:flex-start}.controls>.demoFoldControls>span,.controls>.demoFoldControls>small{display:none}.controls>.demoFoldControls button{font-size:9px;padding:4px 6px}.controls>p{font-size:10px;margin:0;line-height:1.4;min-height:0}
+@media(min-width:900px){
+ .shell{position:relative;padding-bottom:10px}
+ .actionColumn{width:min(480px,100%);align-self:flex-end;justify-self:end;margin-top:-5px;z-index:5}
+ .table{margin-bottom:28px;width:min(1100px,calc((100dvh - 250px)*1.75),calc(100% - 70px))}
+ .actionColumn>.resultOverlay{padding:5px 8px;margin:0 0 5px;font-size:10px;border-radius:8px}.actionColumn .resultDeltas{display:none}
+}
+@media(max-width:899px){
+ .actionColumn{width:100%;max-width:440px;margin:0 auto}.controls{padding:8px 9px;gap:6px}.controls .actions button{min-height:54px;font-size:17px}.controls .quickBets button{font-size:10px}
+}
+@media(min-width:900px){.actionColumn{margin-right:max(0px,calc((100% - min(1100px,calc((100dvh - 250px)*1.75),calc(100% - 70px)))/2 - 40px))}}
+.controls .actions small{display:block;font-size:13px;margin-top:3px;color:inherit}
+
+/* Real tabletop materials; functional cards/seats remain independent layers. */
+.table,.table[data-felt]{background:transparent url('/images/poker-table-desktop.png') center/100% 100% no-repeat!important;border:0!important;outline:0!important;box-shadow:none!important;padding:0;border-radius:0}
+.table::after{display:none}
+@media(min-width:900px){.table{aspect-ratio:16/9}.topSeats{top:-24px}.edgeSeatThree{left:3%;top:15%}.edgeSeatFour{right:3%;top:15%}.edgeSeatFive{left:3%;top:65%}.edgeSeatSix{right:3%;top:65%}}
+@media(max-width:899px){.table,.table[data-felt]{background-image:url('/images/poker-table-mobile.png')!important;aspect-ratio:936/1664;min-height:0!important;max-height:none;width:calc(100% - 44px);height:auto!important;margin:30px 22px 48px}.topSeats{top:-20px}.edgeSeatThree{left:-5%;top:18%}.edgeSeatFour{right:-5%;top:18%}.edgeSeatFive{left:-5%;top:67%}.edgeSeatSix{right:-5%;top:67%}}
+.hint{margin:4px 0 8px;font-size:12px;line-height:1.6;color:#d9e6ee}.hint b{color:#ffe3a0;font-variant-numeric:tabular-nums}.hint small{display:block;font-size:10px;color:#91a8ba}
+
+/* Preserve the official gold artwork; reveal both cards inside the rail. */
+.cards::before{filter:none;mix-blend-mode:normal;opacity:1}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:4}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition{transform:none}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition .miniCards{gap:4px}
+.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownPosition .miniCards>span{transform:none;margin-left:0}
+@media(min-width:900px){
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:20.5%;left:50%;right:auto;transform:translateX(-50%)}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:17%;left:16%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:17%;right:16%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;bottom:auto;left:16%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;bottom:auto;right:16%;left:auto}
+}
+@media(max-width:899px){
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:17%;left:50%;right:auto;transform:translateX(-50%)}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:22%;left:18%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:22%;right:18%;left:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:68%;bottom:auto;left:18%;right:auto}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:68%;bottom:auto;right:18%;left:auto}
+}
+
+/* Larger readable cards and a matching fixed logo footprint. */
+.cards::before{left:0;right:0;background-size:100% auto}
+@media(min-width:900px){
+ .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(56px,5vw,76px);--board-card-height:clamp(78px,7vw,104px);--board-gap:6px}
+ .self .hole span{width:56px;height:76px;font-size:28px}
+ .showdownPosition .miniCards span{width:52px;height:72px;font-size:24px}
+ .self .handWithRank{left:calc(50% + 44px);top:0}
+}
+@media(max-width:899px){
+ .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(38px,10vw,46px);--board-card-height:clamp(54px,14vw,64px);--board-gap:4px}
+ .self .hole span{width:49px;height:67px;font-size:26px}
+ .showdownPosition .miniCards span{width:40px;height:56px;font-size:20px}
+ .self .handWithRank{left:calc(50% + 28px);top:0}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{left:20%}
+ .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{right:20%}
+}
+
+/* Felt-side wagers: burgundy casino chips with ivory edge inserts and stacked rims. */
+.streetBet{gap:9px;padding:4px 9px 4px 5px;border:1px solid #b49a665e;border-radius:18px;background:#211c16eb;color:#fff4dc;font-size:13px;box-shadow:0 3px 8px #0005;font-variant-numeric:tabular-nums}
+.betChip{position:relative;display:grid;place-items:center;flex-shrink:0;box-sizing:border-box;width:27px;height:27px;flex:0 0 27px;border:2px solid #e4d5b8;border-radius:50%;background:conic-gradient(#f5e7cf 0deg 18deg,#833a44 18deg 60deg,#f5e7cf 60deg 78deg,#833a44 78deg 120deg,#f5e7cf 120deg 138deg,#833a44 138deg 180deg,#f5e7cf 180deg 198deg,#833a44 198deg 240deg,#f5e7cf 240deg 258deg,#833a44 258deg 300deg,#f5e7cf 300deg 318deg,#833a44 318deg);color:#f7ead1;font-size:10px;box-shadow:0 2px 0 #5e2932,0 4px 0 #d1bfa0,0 6px 0 #52222b,0 8px 9px #0006}
+.betChip::before{content:"";position:absolute;inset:4px;border:1px solid #e7d5a9;border-radius:50%;background:#73303b;z-index:0}
+.betChip::after{content:"♠";position:absolute;inset:0;display:grid;place-items:center;z-index:1;font-size:12px;color:#f3dfb6}
+.pot{background:#231e17f2;border:1px solid #b99a5b;border-radius:18px;padding:7px 20px;box-shadow:0 3px 12px #0003;letter-spacing:.08em;color:#dbc99f}.pot strong{color:#fff4d6;font-size:17px;letter-spacing:0}
+.seat .actionBadge,.selfInfo .actionBadge{border:1px solid #b99a5b;background:#29231be8;color:#ffe8ab;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;white-space:nowrap}
+.actionToast{position:absolute;z-index:5;left:50%;top:60%;transform:translate(-50%,-50%);max-width:80%;padding:10px 24px;border:1px solid #c8ab6b;border-radius:9px;background:#211d16f5;color:#fff1cd;font-size:18px;font-weight:800;letter-spacing:.04em;text-align:center;pointer-events:none;box-shadow:0 7px 24px #0005;animation:actionNotice 2.6s ease both}
+.actionToast[data-kind=fold]{border-color:#b18b88;color:#eadbd7}.actionToast[data-kind=call],.actionToast[data-kind=check]{border-color:#80aca1;color:#d9f2e9}.actionToast[data-kind=allin]{background:#56303af5;border-color:#efd28d;color:#fff1c7;font-size:21px}
+@keyframes actionNotice{0%{opacity:0;transform:translate(-50%,-38%) scale(.97)}10%,85%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+.controls{background:#211e19;border-color:#8b7954;box-shadow:0 5px 18px #0004}
+.controls .actions button{border-radius:9px;box-shadow:inset 0 1px #ffffff26,0 2px 4px #0004;font-size:18px;transition:filter .15s,transform .15s}
+.controls .actions button:first-child{background:linear-gradient(160deg,#84454b,#5d3037);border-color:#a56b70;color:#fff0ec}
+.controls .actions button:nth-child(2){background:linear-gradient(160deg,#315e63,#23454a);border-color:#63868a;color:#eef7f5}
+.controls .actions button:last-child{background:linear-gradient(160deg,#d4b777,#ad8c4d);border-color:#ead4a2;color:#231c11;text-shadow:none}
+.controls .actions button:disabled{opacity:.4;box-shadow:none}.controls .actions button:enabled:hover{filter:brightness(1.12)}.controls .actions button:enabled:active{transform:translateY(1px)}
+.controls .quickBets button{border-radius:7px;background:#2c2820;border-color:#746443;color:#e8d8af}
+@media(max-width:899px){.betChip{width:22px;height:22px;flex-basis:22px}.streetBet{gap:7px;font-size:11px;padding:3px 7px 3px 4px}.actionToast{font-size:14px;padding:8px 14px;max-width:85%;top:60%}.actionToast[data-kind=allin]{font-size:17px}.controls .actions button{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.actionToast{animation:none}.controls .actions button{transition:none}}
+
+/* Reference composition: the table fills the screen, with the action dock over the lower right rail. */
+@media(min-width:900px){
+ .gamePage{min-height:100dvh;height:auto}
+ .gameMain{width:100%;max-width:none;padding:6px 10px 10px;box-sizing:border-box}
+ .shell{position:relative;width:100%;max-width:none;min-height:calc(100dvh - 16px);padding:0 8px 12px;gap:6px;box-sizing:border-box}
+ .heading{height:40px;min-height:40px}
+ .table{width:min(calc(100% - 28px),calc((100dvh - 132px)*16/9));aspect-ratio:16/9;margin:12px 14px 18px;align-self:center}
+ .actionColumn{position:absolute;right:8px;bottom:8px;width:min(480px,36vw);margin:0;max-height:calc(100dvh - 100px);overflow:auto;z-index:5;align-self:auto}
+ .self,.table[data-showdown=true] .self{bottom:4%}
+ .topSeats{top:-24px}
+ .seatTimerRing{width:96px;height:96px}.seatTimerRing .avatar,.avatar{width:88px;height:88px}.seatAvatarRow{min-height:96px;margin-bottom:12px}
+ .self .activeAvatar{width:96px;height:96px}.self .activeAvatar .avatar{width:88px;height:88px}
+ .seat>span:not(.actionBadge):not(.turnSeconds),.seat>small{width:110px;max-width:110px;font-size:13px}.selfInfo{min-width:110px}
+ .self .handWithRank{left:calc(50% + 50px);top:4px}
+ .self .hole span{width:72px;height:98px;font-size:34px}
+ .table .felt,.table[data-street="0"] .felt{--board-card-width:clamp(64px,5.8vw,88px);--board-card-height:clamp(90px,8vw,122px);--board-gap:7px}
+ .showdownPosition .miniCards span{width:65px;height:90px;font-size:29px}
+ .betChip{width:30px;height:30px;flex-basis:30px}.streetBet{font-size:14px}
+ .controls{gap:5px 8px;padding:8px 10px}.controls>p[role=status]{display:none}.controls .actions button{min-height:62px;font-size:20px}
+}
+/* Phones use the available width instead of leaving a broad outer gutter. */
+@media(max-width:899px){
+ .gameMain{padding-left:2px;padding-right:2px}
+ .shell{padding-left:4px;padding-right:4px}
+ .table,.table[data-felt]{width:calc(100% - 24px);margin-left:12px;margin-right:12px}
+}
+@media(min-width:900px){
+ .shell{justify-content:flex-start}
+ .heading>span{position:absolute;top:14px;left:80px;font-size:10px}
+ .edgeSeatFive,.edgeSeatSix,.table[data-showdown=true] .edgeSeatFive,.table[data-showdown=true] .edgeSeatSix{top:56%;bottom:auto}
+ .table[data-showdown=false]:not([data-reveal-hands=true]) .showdownFive{top:calc(56% + 47px);bottom:auto;left:calc(3% + 10px);right:auto}
+ .table[data-showdown=false]:not([data-reveal-hands=true]) .showdownSix{top:calc(56% + 47px);bottom:auto;right:calc(3% + 10px);left:auto}
+}
+
+/* Table information stays reachable without a permanent sidebar or lost play space. */
+.infoDrawer>summary{list-style:none;cursor:pointer}.infoDrawer>summary::-webkit-details-marker{display:none}
+.infoNotice{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#e56e63;box-shadow:0 0 5px #e56e6355}.infoNotice[hidden],.infoDrawer[open] .infoNotice{display:none}
+.infoBody{min-width:0}
+/* Seat labels are presentation only; game controls must receive every click. */
+.actionBadge,.turnSeconds{pointer-events:none}
+@media(min-width:900px){
+ .gamePage:has(.infoDrawer){height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+ .gameMain:has(.infoDrawer){height:100%;flex:1;min-height:0;max-height:100%;padding:6px 10px 10px;box-sizing:border-box}
+ .shell:has(.infoDrawer){height:100%;min-height:0;max-height:100%;overflow:visible}
+ .shell .desktopStructure:has(.infoDrawer){display:block!important;position:absolute;top:50px;left:18px;width:auto;max-width:320px;min-height:0;max-height:none;overflow:visible!important;background:transparent!important;padding:0!important;border:0;box-shadow:none;z-index:40;pointer-events:none}
+ .infoDrawer>summary,.infoBody{pointer-events:auto}
+ .infoDrawer>summary{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:7px 13px;border:1px solid #a48b56;border-radius:9px;background:#29231a;color:#f3dfb4;font-size:12px;font-weight:700;box-shadow:0 3px 8px #0005}
+ .infoDrawer>summary::after{content:'＋';color:#e3c07b}.infoDrawer[open]>summary::after{content:'－'}
+ .infoBody{display:flex;flex-direction:column;gap:8px;width:300px;margin-top:6px;padding:12px;max-height:calc(100dvh - 120px);overflow:auto;overscroll-behavior:contain;background:#29251e;border:1px solid #9b8354;border-radius:10px;box-shadow:0 8px 24px #0008}
+ .menuBackdrop{z-index:59}.menuPanel{z-index:60}
+}
+@media(max-width:899px){.infoDrawer>summary{display:none}}
+
+/* Approved cards: B jumbo indices on white; back 2 navy with the canonical gold finger. */
+.table :is(.cards,.hole,.miniCards)>span{container-type:size;box-sizing:border-box;overflow:hidden;border-radius:6px;font-family:Arial,Helvetica,sans-serif;text-shadow:none}
+.table :is(.cards,.hole,.miniCards)>span:not(.cardBack){background:#fff;border:1px solid #deded9;box-shadow:0 2px 5px #0005;color:#13161b}
+.table :is(.cards,.hole,.miniCards)>span:is(.red,.redCard){color:#cf1024}
+.table :is(.cards,.hole,.miniCards) .cardCorner{position:absolute;top:4%;left:5%;bottom:auto;right:auto;display:flex;flex-direction:column;align-items:center;gap:0;margin:0;font-size:38cqw;font-style:normal;font-weight:900;line-height:.88;letter-spacing:-.045em;z-index:2}
+.table :is(.cards,.hole,.miniCards) .cardCorner[data-card-rank="10"]{font-size:32cqw;letter-spacing:-.1em}
+.table :is(.cards,.hole,.miniCards) .cardCorner em{font-size:57%;font-style:normal;font-weight:700;line-height:1.05;letter-spacing:0}
+.table :is(.cards,.hole,.miniCards) .cardCornerBottom{top:auto;left:auto;right:5%;bottom:4%;transform:rotate(180deg)}
+.table :is(.cards,.hole,.miniCards) .cardSuit{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:64cqw;line-height:1;margin:0;font-weight:700;z-index:1}
+.table :is(.cards,.hole,.miniCards)>.cardBack{position:relative;display:grid;place-items:center;border:1px solid #d0af69;background-color:#10273d;background-image:repeating-linear-gradient(37deg,transparent 0 6px,#7797b424 6px 6.6px,transparent 6.6px 13px),repeating-linear-gradient(-37deg,transparent 0 6px,#7797b424 6px 6.6px,transparent 6.6px 13px);color:#e0bd77;box-shadow:inset 0 0 0 2px #10273d,0 2px 5px #0005}
+.table :is(.cards,.hole,.miniCards)>.cardBack::before{content:'';position:absolute;left:13%;top:24%;width:74%;height:52%;box-sizing:border-box;border:1px solid #d0af69;border-radius:50%;background:#10273d;z-index:1}
+.table :is(.cards,.hole,.miniCards)>.cardBack::after{content:'';position:absolute;inset:3px;border:1px solid #c8a964;border-radius:3px;pointer-events:none}
+.table .cardBack .thumbLogo{position:relative;width:51%;height:47%;object-fit:contain;filter:drop-shadow(0 1px 1px #0008);z-index:2}
+
+/* Phone demos share the live table's one-screen, thumb-reachable action area. */
+@media(max-width:899px){
+ .demoViewport{height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+ .demoViewport .gameMain{flex:1;min-height:0;max-height:100%;width:100%;padding:3px 6px max(6px,env(safe-area-inset-bottom));box-sizing:border-box;display:flex;flex-direction:column}
+ .demoViewport .previewLinks{display:none}
+ .demoViewport>.mobileFooterToggle{position:absolute;top:6px;bottom:auto;right:126px;font-size:10px;padding:7px 8px}
+ .demoShell{width:100%;height:100%;min-height:0;max-height:100%;box-sizing:border-box;padding:0 4px;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:30px auto minmax(0,1fr) auto;gap:4px;border-radius:0;position:relative}
+ .demoShell>.heading{grid-column:1;grid-row:1;margin:0;min-height:0;align-items:center;padding:0}
+ .demoShell>.heading>span{font-size:8px;letter-spacing:.04em;padding:0 60px}
+ .demoShell>.heading button{height:28px;min-height:28px;min-width:30px;padding:0;display:grid;place-items:center}
+ .demoShell>.gameClock{grid-column:1;grid-row:2;min-height:0}
+ .demoShell>.gameClock aside{margin:0;padding:3px 7px;font-size:9px}
+ .demoShell>.gameClock aside b{font-size:14px}.demoShell>.gameClock aside p{font-size:9px;line-height:1.2}.demoShell>.gameClock aside small{display:none}
+ .demoShell>.statusDock{position:absolute;top:33px;right:6px;min-height:0;z-index:8}
+ .demoShell>.table{grid-column:1;grid-row:3;width:calc(100% - 24px);height:100%!important;min-height:0!important;max-height:100%;aspect-ratio:auto;margin:0 12px;border-width:5px;padding:8px 4px;box-sizing:border-box;align-self:stretch;justify-self:center}
+ .demoShell .topSeats{top:5px}.demoShell .table .self{bottom:14px}
+ .demoShell>.actionColumn{grid-column:1;grid-row:4;position:static;width:100%;min-height:0;max-height:none;overflow:visible;align-self:stretch;margin:0;padding:0;z-index:30}
+ .demoShell .controls{padding:7px 8px;gap:5px 7px}.demoShell .controls .actions button{min-height:54px;font-size:17px}
+ .demoShell .controls>p[role=status]{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);margin:0}
+ .demoShell .controls>.hint{font-size:9px;line-height:1.2;margin:0}
+ .demoShell .demoTools{margin:0;font-size:9px}.demoShell .demoTools[open]{position:absolute;bottom:6px;left:6px;right:6px;z-index:50;max-height:65dvh;overflow:auto;background:#211e19;border:1px solid #a58a50;border-radius:9px;padding:8px}
+ .demoShell .resultOverlay{padding:4px 7px;margin:0 0 3px;font-size:10px}.demoShell .resultDeltas{display:none}
+ .demoShell>.demoInfo{top:8px;right:44px;font-size:8px;z-index:8}
+ .demoShell .controls{position:relative;grid-template-rows:auto auto auto;padding:6px 8px}
+ .demoShell .controls>.quickBets,.demoShell .controls>input,.demoShell .controls>label,.demoShell .controls>small{display:none}
+ .demoShell .controls>.actions{grid-row:2}.demoShell .controls>.turnHeader{grid-row:1;min-height:22px}.demoShell .controls>.demoFoldControls{grid-row:3}
+ .demoShell .controls>.demoTools{position:absolute;right:0;bottom:calc(100% + 6px);font-size:8px;z-index:5}.demoShell .controls>.demoTools[open]{left:0;bottom:calc(100% + 6px);font-size:10px}
+ .demoShell .controls>.hint{position:absolute;left:0;bottom:calc(100% + 6px);max-width:65%;background:#211e19ee;border-radius:6px;padding:4px;z-index:4}
+}
+
+/* The player's own made hand under the chip count (flop onward). */
+.madeHand{display:block;font-style:normal;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap;line-height:1.3}
+
+.phoneHint{display:none}
+@media(max-width:899px){
+ .demoShell .controls>.hint{display:none}
+ .demoShell .phoneHint{display:block;position:absolute;top:9px;right:49px;z-index:5;font-size:9px;color:#e8d8b5}
+ .demoShell .phoneHint>summary{cursor:pointer;list-style:none}.demoShell .phoneHint>summary::-webkit-details-marker{display:none}
+ .demoShell .phoneHint[open]{top:auto;bottom:calc(100% + 6px);left:0;right:auto;max-width:230px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px}
+ .demoShell .phoneHint p{margin:6px 0;line-height:1.5}.demoShell .phoneHint small{font-size:9px}
+}
+
+/* On phones the cards take visual priority over player portraits. */
+@media(max-width:899px){
+ .table .self .handWithRank{left:calc(50% - 18px);top:-4px;z-index:8}
+ .table .self .selfInfo{margin-top:10px}
+ .table[data-reveal-hands=true] .opponentCardsLayer{z-index:10}
+ .table[data-reveal-hands=true] .showdownTwo{top:5px;left:50%;right:auto;transform:translateX(-50%)}
+ .table[data-reveal-hands=true] .showdownThree{top:18%;left:0;right:auto}
+ .table[data-reveal-hands=true] .showdownFour{top:18%;right:0;left:auto}
+ .table[data-reveal-hands=true] .showdownFive{top:67%;left:0;right:auto;bottom:auto}
+ .table[data-reveal-hands=true] .showdownSix{top:67%;right:0;left:auto;bottom:auto}
+}
+
+/* Phone spacing: spend the spare heading space on the table, not overlapping cards. */
+@media(max-width:899px){
+ .demoShell>.demoInfo{position:absolute;top:8px;left:48px;right:auto;margin:0}
+ .demoShell>.heading>span{visibility:hidden}
+ .demoShell:not(:has(>.gameClock)){grid-template-rows:30px 0 minmax(0,1fr) auto;row-gap:2px}
+ .table .self{height:115px;min-height:115px;bottom:4px;justify-content:flex-start}
+ .table .self .activeAvatar{position:absolute;top:0;left:50%;transform:translateX(-50%)}
+ .table .self .handWithRank{top:0}
+ .table .self .selfInfo{position:absolute;top:68px;left:50%;transform:translateX(-50%);margin:0;padding:3px 6px;min-width:100px;gap:1px;font-size:10px;line-height:1.1}
+ .table .selfInfo .actionBadge,.table .selfInfo .positionBadge{display:none}
+ .table .selfInfo .madeHand{font-size:9px;line-height:1.1}.table .selfInfo small{font-size:10px}
+ .table .felt,.table[data-street="0"] .felt{top:32%}
+}
+@media(max-width:899px){
+ .table .self .selfInfo{width:72px;min-width:72px;max-width:72px;padding:2px 3px;font-size:9px;border-radius:5px}
+ .table .selfInfo .memberName,.table .selfInfo>strong{display:block;width:100%;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.1}
+ .table .selfInfo small{font-size:10px;line-height:1.1}.table .selfInfo .madeHand{font-size:8px;line-height:1.1}
+}
+@media(max-width:899px){.table .selfInfo small{display:block;width:100%;white-space:nowrap;font-size:9px}}
+
+/* Phone only: retain the logo behind the board and center the own hand. */
+@media(max-width:899px){
+ .table .cards::before{background-size:75% auto}
+ .table .self .handWithRank{left:50%;transform:translateX(-50%)}
+}
+
+@media(min-width:900px){.demoShell .menuNav{grid-template-columns:repeat(3,minmax(0,1fr))}.demoShell .menuFields a{display:block;padding:10px;border:1px solid #8e794e;border-radius:8px;color:#f5d991;text-decoration:none}.demoShell .menuFields details>summary{cursor:pointer;padding:10px 0;color:#f5d991}}
+
+/* PC: bring the controls inward and remove the duplicate result strip. */
+@media(min-width:900px){
+ .shell .actionColumn{right:clamp(80px,8vw,160px);width:min(480px,28vw)}
+ .shell .actionColumn>.resultOverlay{display:none}
+}
+
+/* PC seats: larger portraits and wagers on the felt directly in front of each seat. */
+@media(min-width:900px){
+ .table .seatTimerRing,.table .self .activeAvatar{width:120px;height:120px}
+ .table .seatTimerRing .avatar,.table .self .activeAvatar .avatar{width:112px;height:112px}
+ .table .seatAvatarRow{min-height:120px}
+ .table .bet_p3{left:22%;top:30%;bottom:auto}
+ .table .bet_p4{left:78%;top:30%;bottom:auto}
+ .table .bet_p5{left:24%;top:56%;bottom:auto}
+ .table .bet_p6{left:76%;top:56%;bottom:auto}
+ .table .bet_you{left:50%;bottom:35%;top:auto}
+ .table .topSeats .bet_p2{top:calc(100% + 42px)}
+ .table>.streetBets>.bet_p2{top:24%;left:50%;bottom:auto}
+}
+
+/* Dealer button on the felt next to the button seat; it hops to the next seat every hand. */
+.dealerButton{position:absolute;top:50%;left:0;width:24px;height:24px;margin-top:-12px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#fff,#e6e1d4 70%,#c9c2b0);color:#1d1a14;font:900 12px/1 system-ui,sans-serif;box-shadow:0 2px 5px #0008,inset 0 0 0 2px #fff,inset 0 0 0 3px #b9b1a0;animation:dealerHop .45s ease-out}
+/* The spot shares each seat's bet position on the felt; the disc sits beside the bet chip, toward the table center. */
+.streetBets>.dealerSpot{position:absolute;width:0;height:24px;padding:0;border:0;background:none;box-shadow:none;transform:none;z-index:2}
+.dealerSpot .dealerButton{left:48px}
+.dealerSpot.bet_p4 .dealerButton,.dealerSpot.bet_p6 .dealerButton{left:-72px}
+.streetBets>.dealerSpot.bet_p2{top:20%;bottom:auto;left:50%}
+.streetBets>.dealerSpot.bet_you{top:auto}
+@keyframes dealerHop{from{transform:scale(.4) translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.dealerButton{animation:none}}
+.seatAvatarRow,.activeAvatar{position:relative}
+/* Time bank cards left, next to the player's name. */
+.bankCards{flex:0 0 auto;margin-left:6px;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap}
+.nameRow{display:flex;align-items:center;gap:0;max-width:100%;min-width:0}
+/* PC: center cards over portraits and bring the action dock farther inward. */
+@media(min-width:900px){
+ .shell .actionColumn{right:clamp(180px,20vw,400px);width:min(480px,24vw)}
+ .table .self .handWithRank{left:50%;top:0;transform:translateX(-50%);z-index:8}
+ .table .opponentCardsLayer,.table:is([data-showdown=true],[data-reveal-hands=true]) .opponentCardsLayer{z-index:10}
+ .table .showdownTwo,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{top:0;left:50%;right:auto;transform:translateX(-50%)}
+ .table .showdownThree,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree{top:15%;left:calc(3% - 12px);right:auto}
+ .table .showdownFour,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:15%;right:calc(3% - 12px);left:auto}
+ .table .showdownFive,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive{top:65%;left:calc(3% - 12px);right:auto;bottom:auto}
+ .table .showdownSix,.table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:65%;right:calc(3% - 12px);left:auto;bottom:auto}
+}
+@media(min-width:1600px){.shell .actionColumn{right:24vw;width:min(480px,20vw)}}
+@media(min-width:900px){.shell .actionColumn .actions button{font-size:clamp(15px,1.2vw,20px);white-space:nowrap}}
+@media(max-width:899px){.dealerSpot.bet_p3 .dealerButton,.dealerSpot.bet_p4 .dealerButton{left:-12px;top:calc(50% + 28px)}}
+
+/* Skins (2026/10/27, lib/poker/skins.ts). Only non-standard skins set these attributes, so the standard design is untouched. */
+.table[data-table-skin]{background-image:var(--skin-table-desktop)!important}
+@media(max-width:899px){.table[data-table-skin]{background-image:var(--skin-table-mobile)!important}}
+.table[data-card-skin] :is(.cards,.hole,.miniCards)>span:not(.cardBack){background:var(--skin-card-bg);border-color:var(--skin-card-border);font-family:var(--skin-card-font,inherit)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=s]{color:var(--skin-card-s)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=h]{color:var(--skin-card-h)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=d]{color:var(--skin-card-d)}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) [data-suit=c]{color:var(--skin-card-c)}
+.table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack{background:var(--skin-card-back) center/cover no-repeat!important}
+.table[data-card-back=image] :is(.cards,.hole,.miniCards)>.cardBack::before,.table[data-card-back=image] .cardBack .thumbLogo{display:none}
+@font-face{font-family:'PokerSkinRoboto';src:url('/images/skins/fonts/RobotoCondensed-Bold.ttf') format('truetype');font-weight:700;font-style:normal;font-display:swap}
+.table[data-card-skin] :is(.cards,.hole,.miniCards) .cardCorner{font-family:var(--skin-card-font,inherit);font-weight:700}
+.cardArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;border-radius:inherit;z-index:3;pointer-events:none;user-select:none}
+.srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.table[data-table-skin] .street{color:var(--skin-table-text,inherit)}
+
+/* ハンド後の「GTOで振り返る」(2026/10/27) */
+.gtoReview{display:grid;gap:6px;margin:6px 0;font-size:12px;color:#d6e0e8}
+.gtoReview button{justify-self:start;background:#d9b368;color:#14283a;border:0;border-radius:8px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer}
+.gtoReview ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.gtoReview li{background:#132a3c;border:1px solid #2f4a5f;border-radius:8px;padding:6px 8px;line-height:1.5}
+.gtoReview em{font-style:normal;color:#e6bd70;margin-right:4px}
+.gtoReview b{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:11px;background:#2f6a4a;color:#fff}
+.gtoReview b[data-verdict=mixed]{background:#8a6d2a}.gtoReview b[data-verdict=rare]{background:#8a3a3a}
+.gtoReview small{display:block;color:#9fb3c3}
+/* スタンプ(2026/10/27): アイコンに被せる。出ている間はアイコンを暗くし、カードは常にスタンプより上に出す。 */
+.seatAvatarRow{position:relative}
+.seatAvatarRow:has([data-stamp-anchor]) .seatTimerRing,.activeAvatar:has([data-stamp-anchor]){filter:brightness(.45)}
+/* The seat showing a stamp comes in front of the cards for those 3 seconds. */
+
+/* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
+.activeAvatar{position:relative}
+.demoStampBar{display:flex;justify-content:flex-start}
+
+/* ブラインドとポットを卓の中で分かりやすく (owner 2026/10/27, リング・トーナメントとも) */
+.blindsInfo{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--skin-table-text,#51432e);opacity:.85;text-shadow:0 1px #fff5;white-space:nowrap}
+.table[data-table-skin] .blindsInfo{text-shadow:0 1px 2px #0008}
+.pot strong{font-size:1.15em}
+@media(min-width:900px){.blindsInfo{font-size:14px}}
+/* Your own stamp: your avatar box is its own layer (transform), so lift it above your hole cards while a stamp shows. */
+
+/* PC: a little larger portraits and cards (owner 2026/10/28: ＰＣだけアイコンとカードもうちょい大きく). Grows with the window
+   height so short PC screens keep their current layout. */
+@media(min-width:900px){
+ .table .seatTimerRing,.table .self .activeAvatar{width:clamp(120px,17vh,150px);height:clamp(120px,17vh,150px)}
+ .table .seatTimerRing .avatar,.table .self .activeAvatar .avatar{width:calc(clamp(120px,17vh,150px) - 8px);height:calc(clamp(120px,17vh,150px) - 8px)}
+ .table .seatAvatarRow{min-height:clamp(120px,17vh,150px)}
+ .table .self .hole span{width:clamp(72px,10.5vh,92px);height:clamp(98px,14.3vh,125px);font-size:clamp(34px,4.9vh,42px)}
+ .table .showdownPosition .miniCards span{width:clamp(65px,9.5vh,82px);height:clamp(90px,13.1vh,113px);font-size:clamp(29px,4.2vh,37px)}
+}
+
+/* Phone header (owner 2026/10/28): menu and exit as plain gold icons, no frame. */
+@media(max-width:899px){
+ .menuToggle,.topExit{border:0!important;background:none!important;box-shadow:none!important;padding:0;display:grid;place-items:center;line-height:0;color:#f3d27e}
+ .menuToggle svg,.topExit svg{width:26px;height:26px}
+}
+@media(min-width:900px){.menuToggle,.topExit{line-height:0}}
+/* Phone practice table (owner 2026/10/28: 手札とチップの欄を両方下げる・アイコンも): your avatar, cards and chip box move
+   down together to just above the control panel; the Summit/Stamp buttons stay where they were. */
+@media(max-width:899px){.demoShell .table .self{translate:0 30px}}
+/* Phone practice table (owner 2026/10/28): PLAYER 3・4 a little lower and PLAYER 5・6 a little higher so the four side
+   seats sit evenly between the top seat and yours. Their cards and wagers move with them. */
+@media(max-width:899px){
+ .demoShell .edgeSeatThree,.demoShell .edgeSeatFour,.demoShell .showdownThree,.demoShell .showdownFour,.demoShell .table .bet_p3,.demoShell .table .bet_p4{translate:0 70px}
+ .demoShell .edgeSeatFive,.demoShell .edgeSeatSix,.demoShell .showdownFive,.demoShell .showdownSix,.demoShell .table .bet_p5,.demoShell .table .bet_p6{translate:0 -70px}
+}
+/* PLAYER 3・4 wagers sit just below the blinds line instead of on top of it. */
+
+
+/* Blinds as a small second line inside the pot (owner 2026/10/28): keeps the felt free for wagers and the board. */
+.pot .blindsInfo{display:block;margin-top:2px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#cdb98f;opacity:.9;text-shadow:none;text-align:center}
+.pot{text-align:center}
+@media(min-width:900px){.pot .blindsInfo{font-size:12px}}
+/* When your made hand is listed (flop onward) the chip box is one line taller: grow it upward so it never reaches
+   the control panel. */
+@media(max-width:899px){.demoShell .table .self:has([class*=madeHand]){translate:0 18px}}
+
+/* Your turn (owner 2026/10/28): the buttons glow, faster and red in the last 5 seconds; on phones the seconds sit
+   beside AUTO FOLD and the header line is gone. */
+.controls[data-turn] .actions{border-radius:12px;animation:turnGlow 1.6s ease-in-out infinite}
+.controls[data-turn=urgent] .actions{animation:turnUrgent .55s ease-in-out infinite}
+@keyframes turnGlow{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66333}50%{box-shadow:0 0 0 2px #f3c663cc,0 0 22px #f3c66388}}
+@keyframes turnUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5866,0 0 10px #f05b5844}50%{box-shadow:0 0 0 3px #f05b58,0 0 26px #f05b58aa}}
+@media(prefers-reduced-motion:reduce){.controls[data-turn] .actions{animation:none;box-shadow:0 0 0 2px #f3c663}.controls[data-turn=urgent] .actions{box-shadow:0 0 0 3px #f05b58}}
+.turnSeconds,.rowHintToggle,.rowHint{display:none}
+@media(max-width:899px){
+ .demoShell .controls .turnHeader,.demoShell .controls .phoneHint{display:none}
+ .demoShell .turnSeconds{display:inline-block;font-size:11px;font-weight:800;color:#f3d27e;white-space:nowrap}
+ .demoShell .turnSeconds[data-urgent]{color:#ff6b62}
+ .demoShell .demoFoldControls{position:relative}
+ .demoShell .rowHintToggle{display:inline-block;margin-left:auto;background:none!important;border:1px solid #a58a50!important;color:#f3d27e!important}
+ .demoShell .rowHint{display:block;position:absolute;right:0;bottom:calc(100% + 6px);z-index:30;max-width:240px;padding:8px;background:#211e19fa;border:1px solid #a58a50;border-radius:8px;font-size:11px;color:#f1e6cc}
+ .demoShell .rowHint p{margin:4px 0;line-height:1.5}.demoShell .rowHint small{font-size:9px}
+}
+/* Phone practice table (owner 2026/10/28): no PREFLOP/FLOP label; the board (and the logo behind it) sits exactly in the
+   middle of the table on every phone height: the felt starts 88px (pot + gap + half the board) above the centre. */
+@media(max-width:899px){
+ .demoShell .felt .street{display:none}
+ .demoShell .table .felt{top:calc(50% - 88px)!important;translate:none}
+}
+
+/* Whose turn it is, at every seat (owner 2026/10/28): the acting player's ring glows, red and faster in the last 5 s. */
+.seatTimerRing[data-turn]{animation:seatTurn 1.6s ease-in-out infinite}
+.seatTimerRing[data-turn=urgent]{animation:seatUrgent .55s ease-in-out infinite}
+@keyframes seatTurn{0%,100%{box-shadow:0 0 0 2px #f3c66366,0 0 10px #f3c66355}50%{box-shadow:0 0 0 3px #f3c663,0 0 24px #f3c663aa}}
+@keyframes seatUrgent{0%,100%{box-shadow:0 0 0 2px #f05b5877,0 0 10px #f05b5855}50%{box-shadow:0 0 0 4px #f05b58,0 0 28px #f05b58cc}}
+/* Owner 2026/10/30 (相手アイコンも同じ): no fast pulse; a light runs round the acting player's ring once every 10 s,
+   every 20 s once extended, like the action panel. */
+.seatTimerRing[data-turn]{position:relative;animation:none;box-shadow:0 0 0 2px #f3c66388,0 0 14px #f3c66366}
+.seatTimerRing[data-turn=urgent]{animation:none;box-shadow:0 0 0 3px #f05b58aa,0 0 18px #f05b5888}
+@property --seat-orbit{syntax:'<angle>';inherits:false;initial-value:0deg}
+.seatTimerRing[data-turn]::before{content:"";position:absolute;inset:-3px;border-radius:50%;padding:3px;pointer-events:none;z-index:4;
+ background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 250deg,#f3c66355 285deg,#ffe6a1 340deg,#fff6d8 352deg,transparent 360deg);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+ filter:drop-shadow(0 0 5px #f3c663);animation:seatOrbit 10s linear infinite}
+.seatTimerRing[data-turn=urgent]::before{background:conic-gradient(from var(--seat-orbit),transparent 0deg,transparent 230deg,#f05b5866 280deg,#ff8a86 340deg,#ffd9d7 352deg,transparent 360deg);filter:drop-shadow(0 0 6px #f05b58)}
+.seatTimerRing[data-turn][data-extended]::before{animation-duration:20s}
+@keyframes seatOrbit{to{--seat-orbit:360deg}}
+@media(prefers-reduced-motion:reduce){.seatTimerRing[data-turn]::before{animation:none;display:none}.seatTimerRing[data-turn]{animation:none;box-shadow:0 0 0 3px #f3c663}.seatTimerRing[data-turn=urgent]{box-shadow:0 0 0 4px #f05b58}}
+/* Phones (owner 2026/10/28: これもいらん): no 「PLAYER 6・フォールド」 banner in the middle of the felt; each seat already
+   shows its action. */
+@media(max-width:899px){.actionToast{display:none!important}}
+/* Phone practice table (owner 2026/10/28): the dealer button sits right beside the dealer's seat, clear of its wager,
+   instead of out in the middle of the table. Positions are % of the table box (measured at 390px). */
+@media(max-width:899px){
+ .demoShell .table .dealerSpot{height:0;translate:none;transform:none;right:auto;bottom:auto}
+ .demoShell .table .dealerSpot .dealerButton,.demoShell .table .dealerSpot.bet_p4 .dealerButton,.demoShell .table .dealerSpot.bet_p6 .dealerButton{left:-12px;top:-12px}
+ .demoShell .table .dealerSpot.bet_p2{left:64.2%;top:13.4%}
+ .demoShell .table .dealerSpot.bet_p3{left:17.9%;top:31.9%}
+ .demoShell .table .dealerSpot.bet_p4{left:82.1%;top:31.9%}
+ .demoShell .table .dealerSpot.bet_p5{left:19.1%;top:71.8%}
+ .demoShell .table .dealerSpot.bet_p6{left:80.9%;top:71.8%}
+ .demoShell .table .dealerSpot.bet_you{left:68.2%;top:78.1%}
+}
+/* Phone practice table wagers (owner 2026/10/28): PLAYER 3・4 inside the felt line beside their seat (clear of the pot),
+   PLAYER 5・6 straight in front of their own seat, also inside the line. % of the table box, measured at 390px. */
+@media(max-width:899px){
+ .demoShell .table .bet_p3,.demoShell .table .bet_p5{left:23.7%;right:auto;bottom:auto;transform:none;translate:none}
+ .demoShell .table .bet_p4,.demoShell .table .bet_p6{left:auto;right:23.7%;bottom:auto;transform:none;translate:none}
+ .demoShell .table .bet_p3,.demoShell .table .bet_p4{top:27.6%}
+ .demoShell .table .bet_p5,.demoShell .table .bet_p6{top:65%}
+}
+/* Phone practice table (owner 2026/10/28): PLAYER 2 (avatar, cards and name/chip box) a little higher. */
+@media(max-width:899px){.demoShell .topSeats,.demoShell .showdownTwo{translate:0 -16px}}
+/* Practice table (owner 2026/10/28): no action badges (RAISE / FOLD) or SB/BB labels on the chips, since the amounts show it;
+   folded players are greyed out; PLAYER 2's cards fan out behind the avatar like your own hand. */
+/* Only the avatar and plate go grey; a stamp shown by a folded player stays in colour (owner 2026/10/28). */
+.demoShell .seat[data-folded] .seatTimerRing,.demoShell .seat[data-folded]>span,.demoShell .seat[data-folded]>small{filter:grayscale(1) brightness(.62);opacity:.7}
+@media(max-width:899px){
+ .demoShell .table .showdownTwo,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownTwo{left:50%;right:auto;transform:translateX(-50%);translate:0 -16px;z-index:2}
+ .demoShell .table[data-showdown=false] .showdownTwo [class*=cardBack]{width:50px;height:64px}
+ .demoShell .table[data-showdown=false] .showdownTwo [class*=thumbLogo]{width:24px;height:30px}
+}
+/* Phone practice table (owner 2026/10/28): smaller chip icon on bets; the amount stays the same size. */
+@media(max-width:899px){.demoShell .streetBet{gap:6px}.demoShell .betChip{width:16px;height:16px;flex-basis:16px;border-width:1px}.demoShell .betChip::before{inset:3px}.demoShell .betChip::after{font-size:8px}}
+/* Phone practice table (owner 2026/10/28): avatar and name/stack plate as one badge (like other apps), and the pot as plain text. */
+@media(max-width:899px){
+ .demoShell .table .seat .seatAvatarRow{margin-bottom:0;position:relative;z-index:1}
+ .demoShell .table .seat .seatTimerRing{width:72px;height:72px;box-shadow:0 4px 10px #0009}
+ .demoShell .table .seat .seatTimerRing .avatar{width:66px;height:66px;overflow:hidden}
+ .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){position:relative;z-index:2;margin-top:-8px;width:80px;max-width:80px;padding:5px 6px 1px;border:1px solid #c9a35c;border-bottom:0;border-radius:10px 10px 0 0;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;font-size:10px;font-weight:600;letter-spacing:.02em}
+ .demoShell .table .seat>small{position:relative;z-index:2;width:80px;max-width:80px;padding:0 6px 4px;border:1px solid #c9a35c;border-top:0;border-radius:0 0 10px 10px;background:#16120ef7;color:#ffd987;font-size:13px;font-weight:800;line-height:1.15;box-shadow:0 4px 8px #0009;font-variant-numeric:tabular-nums}
+ .demoShell .table .pot{background:none;border:0;box-shadow:none;padding:0;color:#f3e6c8;text-shadow:0 1px 3px #000c}
+ /* The standard beige felt needs dark text; the darker skins keep light text. */
+ .demoShell .table:not([data-table-skin]) .pot{color:#4a3720;text-shadow:0 1px 0 #fff6}
+ .demoShell .table:not([data-table-skin]) .pot strong{color:#2b1d0f}
+ .demoShell .table:not([data-table-skin]) .pot small{color:#5e4a30}
+}
+/* Phone practice table (owner 2026/10/28): more room for the table and evenly spaced seats.
+   The site bar goes (the game menu has サイト), the menu/exit icons sit over the table's top corners, the table uses
+   more of the width, and PLAYER 3・4 / 5・6 (with their cards, wagers and dealer button) sit evenly between PLAYER 2 and you. */
+@media(max-width:899px){
+ .demoViewport .mobileSiteBar,.demoViewport .mobileFooterToggle{display:none}
+ .demoShell{position:relative}
+ .demoShell>.heading{position:absolute;top:4px;left:8px;right:8px;z-index:20;pointer-events:none}
+ .demoShell>.heading>*{pointer-events:auto}
+ .demoShell .table,.demoShell .table[data-felt]{width:calc(100% - 20px);margin-left:10px;margin-right:10px}
+ .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{translate:0 70px}
+ /* PLAYER 3・4 wagers move less than the seats so they stay clear of the pot; the pot and board sit a little lower. */
+ .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4{translate:0 40px}
+ .demoShell .table .felt{top:calc(50% - 58px)!important}
+ .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6,.demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{translate:0 -70px}
+}
+/* Seat action ribbon on the avatar (owner 2026/10/28: アイコンにアクション, 英語, カラー, 真っ直ぐ). Phone practice table only. */
+.seatAct,.seatFold{display:none}
+@media(max-width:899px){
+ .demoShell .seatAct{display:block;position:relative;z-index:4;height:0;align-self:center}
+ .demoShell .seatAct b{position:absolute;left:50%;top:-29px;translate:-50% 0;padding:3px 16px 4px;font:900 13px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 50%,calc(100% - 9px) 100%,9px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
+ .demoShell .seatAct b::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(#ffffff59,#ffffff00);pointer-events:none}
+ .demoShell .seatAct[data-kind=check] b{background:linear-gradient(90deg,#3b6fae,#6aa2e0,#3b6fae)}
+ .demoShell .seatAct[data-kind=call] b{background:linear-gradient(90deg,#118a5b,#38c98b,#118a5b)}
+ .demoShell .seatAct[data-kind=bet] b{background:linear-gradient(90deg,#d8620c,#ffb13b,#d8620c)}
+ .demoShell .seatAct[data-kind=allin] b{background:linear-gradient(90deg,#a5121f,#ff4b4b,#a5121f)}
+ .demoShell .seatFold{display:grid;position:absolute;inset:0;place-items:center;border-radius:50%;background:radial-gradient(circle,#000a 0 55%,#0006 100%);color:#f1e2bd;font:900 13px/1 'Arial Black',system-ui,sans-serif;letter-spacing:.1em;-webkit-text-stroke:.5px #c9a35c;z-index:3;pointer-events:none}
+ .demoShell .table .seat .seatTimerRing .avatar{position:relative}
+}
+@keyframes seatActPop{from{scale:.4;opacity:0}to{scale:1;opacity:1}}
+@media(prefers-reduced-motion:reduce){.demoShell .seatAct b{animation:none}}
+/* Phone practice table (owner 2026/10/28): side seats placed by a share of the table height (not fixed px) so they stay
+   evenly spaced on short screens too; wagers and the dealer button sit in front of each seat. */
+@media(max-width:899px){
+ .demoShell .table .edgeSeatThree,.demoShell .table .edgeSeatFour{top:26%;bottom:auto;translate:none}
+ .demoShell .table .edgeSeatFive,.demoShell .table .edgeSeatSix{top:54%;bottom:auto;translate:none}
+ .demoShell .table .showdownThree,.demoShell .table .showdownFour,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownThree,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFour{top:calc(26% + 8px);bottom:auto;translate:none}
+ .demoShell .table .showdownFive,.demoShell .table .showdownSix,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownFive,.demoShell .table:is([data-showdown=true],[data-reveal-hands=true]) .showdownSix{top:calc(54% + 8px);bottom:auto;translate:none}
+ .demoShell .table .streetBet.bet_p3,.demoShell .table .streetBet.bet_p4{top:calc(26% + 52px);translate:none}
+ .demoShell .table .streetBet.bet_p5,.demoShell .table .streetBet.bet_p6{top:calc(54% + 44px);translate:none}
+ .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p5{left:22%;translate:none}
+ .demoShell .table .dealerSpot.bet_p4,.demoShell .table .dealerSpot.bet_p6{left:78%;translate:none}
+ .demoShell .table .dealerSpot.bet_p3,.demoShell .table .dealerSpot.bet_p4{top:calc(26% + 14px)}
+ .demoShell .table .dealerSpot.bet_p5,.demoShell .table .dealerSpot.bet_p6{top:calc(54% + 14px)}
+}
+/* Very short phone screens only (owner 2026/10/28: iPhone SE etc.; a 14 Pro stays as it is): slightly smaller opponent
+   avatars and plates and lower action buttons (still above the 44px touch size) so the seats keep their spacing. */
+@media(max-width:899px) and (max-height:620px){
+ .demoShell .table .seat .seatTimerRing{width:60px;height:60px}
+ .demoShell .table .seat .seatTimerRing .avatar{width:54px;height:54px}
+ .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){width:72px;max-width:72px;font-size:9px;padding:4px 5px 1px}
+ .demoShell .table .seat>small{width:72px;max-width:72px;font-size:12px;padding:0 5px 3px}
+ .demoShell .seatAct b{font-size:12px;padding:3px 13px 4px;top:-22px}
+ .demoShell .controls .actions button{min-height:46px;padding-top:4px;padding-bottom:4px;font-size:15px;line-height:1.1}
+}
+/* Phone practice table (owner 2026/10/28): your own plate matches the opponents' (gold edge, gold stack), your own action
+   ribbon sits on top of it, FOLD shows on your avatar, and the red timer ring only shows while it is your turn. */
+@media(max-width:899px){
+ .demoShell .table .self .selfInfo{width:84px;min-width:84px;max-width:84px;padding:4px 6px 4px;border:1px solid #c9a35c;border-radius:10px;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;box-shadow:0 4px 8px #0009}
+ .demoShell .table .selfInfo .memberName{font-size:10px;font-weight:600;color:#e8dcc4;letter-spacing:.02em}
+ .demoShell .table .selfInfo small{color:#ffd987;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+ .demoShell .table .selfInfo .seatAct{position:absolute;left:50%;top:0;width:0}
+ .demoShell .table .selfInfo .seatAct b{top:-12px}
+ /* Your plate (and its ribbon) sits in front of the bottom of your cards, so the ribbon is not hidden. */
+ .demoShell .table .self .selfInfo{z-index:9}
+ .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
+ .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
+}
+@media(max-width:899px) and (max-height:620px){
+ .demoShell .table .felt{top:calc(50% - 40px)!important}
+}
+/* PC practice table (owner 2026/10/28: PCも同じに、サイズはPCに合ったサイズ): the same avatar badge, gold plates,
+   action ribbons, FOLD on the avatar and plain pot text as the phone, sized for the larger PC seats. Face-down cards sit
+   behind the avatar instead of covering it. */
+@media(min-width:900px){
+ .demoShell .table .seat .seatAvatarRow{margin-bottom:0;position:relative;z-index:1}
+ .demoShell .table .seat .seatTimerRing{box-shadow:0 6px 16px #000a}
+ .demoShell .table .seat .seatTimerRing .avatar{position:relative;overflow:hidden}
+ .demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){position:relative;z-index:2;margin-top:-16px;width:136px;max-width:136px;padding:7px 8px 2px;border:1px solid #c9a35c;border-bottom:0;border-radius:12px 12px 0 0;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;font-size:13px;font-weight:600;letter-spacing:.02em}
+ .demoShell .table .seat>small{position:relative;z-index:2;width:136px;max-width:136px;padding:0 8px 6px;border:1px solid #c9a35c;border-top:0;border-radius:0 0 12px 12px;background:#16120ef7;color:#ffd987;font-size:18px;font-weight:800;line-height:1.15;box-shadow:0 6px 12px #0009;font-variant-numeric:tabular-nums}
+ .demoShell .seatAct{display:block;position:relative;z-index:4;height:0;align-self:center}
+ .demoShell .seatAct b{position:absolute;left:50%;top:-34px;translate:-50% 0;padding:5px 22px 6px;font:900 17px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.06em;color:#fff;white-space:nowrap;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);text-shadow:0 1px 0 #0006,0 0 6px #0005;filter:drop-shadow(0 2px 3px #000a);animation:seatActPop .35s cubic-bezier(.2,1.6,.4,1) both}
+ .demoShell .seatAct b::after{content:"";position:absolute;inset:0 0 55% 0;background:linear-gradient(#ffffff59,#ffffff00);pointer-events:none}
+ .demoShell .seatAct[data-kind=check] b{background:linear-gradient(90deg,#3b6fae,#6aa2e0,#3b6fae)}
+ .demoShell .seatAct[data-kind=call] b{background:linear-gradient(90deg,#118a5b,#38c98b,#118a5b)}
+ .demoShell .seatAct[data-kind=bet] b{background:linear-gradient(90deg,#d8620c,#ffb13b,#d8620c)}
+ .demoShell .seatAct[data-kind=allin] b{background:linear-gradient(90deg,#a5121f,#ff4b4b,#a5121f)}
+ .demoShell .seatFold{display:grid;position:absolute;inset:0;place-items:center;border-radius:50%;background:radial-gradient(circle,#000a 0 55%,#0006 100%);color:#f1e2bd;font:900 22px/1 'Arial Black',system-ui,sans-serif;letter-spacing:.1em;-webkit-text-stroke:.6px #c9a35c;z-index:3;pointer-events:none}
+ .demoShell .table[data-showdown=false] .showdownPosition{z-index:2}
+ .demoShell .table[data-showdown=false] .showdownPosition .miniCards span{width:58px;height:80px}
+ .demoShell .table .pot{background:none;border:0;box-shadow:none;padding:0;color:#f3e6c8;text-shadow:0 1px 3px #000c}
+ .demoShell .table:not([data-table-skin]) .pot{color:#4a3720;text-shadow:0 1px 0 #fff6}
+ .demoShell .table:not([data-table-skin]) .pot strong{color:#2b1d0f}
+ .demoShell .table:not([data-table-skin]) .pot small{color:#5e4a30}
+ .demoShell .table .self .selfInfo{z-index:9;min-width:140px;padding:6px 10px;border:1px solid #c9a35c;border-radius:12px;background:linear-gradient(#2c2318f7,#16120ef7);color:#e8dcc4;box-shadow:0 6px 12px #0009}
+ .demoShell .table .selfInfo .memberName{color:#e8dcc4;font-weight:600}
+ .demoShell .table .selfInfo small{color:#ffd987;font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+ .demoShell .table .selfInfo .seatAct{position:absolute;left:50%;top:0;width:0}
+ .demoShell .table .selfInfo .seatAct b{top:-16px}
+ .demoShell .table .self .activeAvatar .avatar{position:relative;overflow:hidden}
+ .demoShell .table .self .activeAvatar:not(.turnActive){background:#a98b52!important}
+}
+/* PC practice table: during play the face-down cards sit behind each avatar, peeking out on the table side (as on the
+   phone); at showdown they come back in front so the hands can be read. */
+@media(min-width:900px){
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .opponentCardsLayer{z-index:2}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownThree,.demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownFive{translate:56px -46px}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownFour,.demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownSix{translate:-56px -46px}
+ .demoShell .table[data-showdown=false][data-reveal-hands=false] .showdownTwo{translate:0 -12px}
+}
+/* Ring and tournament tables share the practice-table design (owner 2026/10/28): the site bar goes on phones there too. */
+@media(max-width:899px){.gamePage:has(.demoShell) .mobileSiteBar,.gamePage:has(.demoShell) .mobileFooterToggle{display:none}}
+/* PC practice table: the ribbons now show each action, so the centre action banner goes (as on the phone), and
+   PLAYER 2's wager sits a little higher, clear of the pot text. */
+@media(min-width:900px){
+ .demoShell .actionToast{display:none!important}
+ .demoShell .table .streetBet.bet_p2{translate:0 -16px}
+}
+/* 「見せる」 after a hand (owner 2026/10/28: ハンドを触ったら見せれる): your cards become buttons; shown ones glow gold,
+   and cards other players showed sit face up at their seat. */
+.hole>span.showCard{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hole>span.showCard[data-shown]{box-shadow:0 0 0 2px #f3c663,0 0 14px #f3c663aa}
+.showHint{position:absolute;left:50%;bottom:calc(100% + 4px);translate:-50% 0;white-space:nowrap;padding:2px 8px;border-radius:999px;background:#16120ee6;border:1px solid #c9a35c;color:#f3e6c8;font-size:10px;font-weight:700;pointer-events:none}
+.showdownPosition[data-shown] .miniCards span{box-shadow:0 0 0 2px #f3c663,0 0 12px #f3c663aa}
+.hole[data-show-hole]{position:relative}
+/* Time bank used (owner 2026/10/28): the turn ring turns blue and a small 延長 tag shows on the avatar, for everyone. */
+.seatTimerRing[data-extended]{position:relative}
+.seatTimerRing[data-extended]::after{content:"延長";position:absolute;left:50%;top:-6px;translate:-50% 0;z-index:6;padding:1px 7px;border-radius:999px;background:linear-gradient(#3d8fe0,#1f5fa8);border:1px solid #bfe0ff;color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;white-space:nowrap;box-shadow:0 2px 6px #0008;pointer-events:none}
+
+/* Your own seat: the avatar sits under your cards, so the 延長 tag goes on your name plate instead (owner 2026/10/28: 被って見えない). */
+.self .seatTimerRing[data-extended]::after{display:none}
+.extTag{flex:0 0 auto;display:inline-block;margin-right:4px;padding:0 5px;border-radius:999px;background:linear-gradient(#3d8fe0,#1f5fa8);border:1px solid #bfe0ff;color:#fff;font-size:9px;font-weight:800;line-height:14px;letter-spacing:.06em;vertical-align:1px;white-space:nowrap}
+.self .hole>span.showCard:nth-of-type(2){transform:rotate(7deg)}
+/* Tap your ⏰ to extend the turn (owner 2026/10/28). Only a button on your own turn; it gently pulses so it reads as tappable. */
+.bankCards.clockButton.clockButton{appearance:none;margin-left:4px;padding:0 6px;border:1px solid #f3c66399;border-radius:999px;background:#f3c66324;color:#f3c663;font:inherit;font-size:11px;font-weight:800;line-height:16px;min-height:0;min-width:0;box-shadow:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:clockPulse 1.2s ease-in-out infinite}
+.bankCards.clockButton.clockButton:active{transform:scale(.94)}
+@keyframes clockPulse{0%,100%{box-shadow:0 0 0 0 #f3c66300}50%{box-shadow:0 0 0 3px #f3c66355}}
+/* Owner 2026/10/29: an empty seat shows only its ＋ button, no name-plate frame. */
+.demoShell .table .seat[data-empty-seat]>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){background:none;border:0;box-shadow:none}
+.demoShell .table .seat[data-empty-seat]>small{visibility:hidden}
+/* Owner 2026/10/29: a stamp is drawn in front of every card on the table. */
+/* Only the seat group is raised: inside your own seat the avatar stays under your cards (owner 2026/10/29: 一瞬アイコンが上になって戻る). */
+/* Owner 2026/10/29 (設定枠小さ過ぎる): bet-size boxes are text inputs now; give them the same size as before. */
+.menuFields input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;padding:6px 10px;border:1px solid #a1854c;border-radius:6px;color:#f5deac;background:#292116;font:inherit;font-size:16px;text-align:center}
+/* Owner 2026/10/30 (小さいから大きく、先ずはPC): seat plates on PC read bigger — name 18px, chips 24px; ⏰ moved above the stamp button.
+   Side padding is 4px and the plates are a little wider, so a 7-character name (漢字・かな) fits; longer names end in "…".
+   Big chip counts step down in size so they stay inside the plate. Phones unchanged. */
+@media(min-width:900px){
+.demoShell .table .seat>span:not(.actionBadge):not(.turnSeconds):not(.eliminatedTag){font-size:18px;width:144px;max-width:144px;padding-left:4px;padding-right:4px}
+.demoShell .table .seat>small{font-size:24px;width:144px;max-width:144px;padding-left:4px;padding-right:4px}
+.demoShell .table .self .selfInfo{width:144px;min-width:144px;max-width:144px;padding-left:4px;padding-right:4px}
+.demoShell .table .selfInfo .nameRow{justify-content:center}
+.demoShell .table .selfInfo .memberName{font-size:18px;max-width:134px}
+.demoShell .table .selfInfo small{font-size:24px}
+.demoShell .table .seat>small[data-len="10"],.demoShell .table .selfInfo small[data-len="10"]{font-size:21px}
+.demoShell .table .seat>small[data-len="11"],.demoShell .table .selfInfo small[data-len="11"]{font-size:19px}
+.demoShell .table .seat>small:is([data-len="12"],[data-len="13"],[data-len="14"],[data-len="15"]),.demoShell .table .selfInfo small:is([data-len="12"],[data-len="13"],[data-len="14"],[data-len="15"]){font-size:16px}
+}
+.seatName{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;font-weight:inherit}
+
+/* ⏰ next to your name when the table has no stamp bar (2026/10/30); above the stamp button it is styled by the stamp bar. */
+.clockMark{flex:0 0 auto;margin-left:6px;padding:0;border:0;background:none;font:inherit;font-size:11px;font-weight:700;color:#f3c663;white-space:nowrap}
+.clockMark b{font-weight:800}
+/* Your chip count sits in the middle of your plate, like everyone else's (owner 2026/10/30: チップ表示左に寄ってるから真ん中に). */
+.table .selfInfo small{text-align:center}
+/* Owner 2026/10/30: the stamp floats on its own top layer, so seats are no longer lifted over the cards while it shows
+   (avatar under the cards, stamp over them). */
+
+/* Owner 2026/10/31: on PC (1) your own action ribbon sits on top of your plate like the other seats' — above the name,
+   not over it; (2) short names are drawn larger so every plate looks balanced (name-size.ts: s ≤6, m ≤10 half-width units). */
+@media(min-width:900px){
+ .demoShell .table .selfInfo .seatAct b{top:-26px}
+ .demoShell .table [data-name-size=s]{font-size:24px!important;line-height:1.2}
+ .demoShell .table [data-name-size=m]{font-size:21px!important;line-height:1.2}
+}

@@ -1,0 +1,131 @@
+// Real engine + PostgreSQL runtime and deadline fences. No external accounts.
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{randomUUID,randomBytes}=require('crypto'),ts=require('typescript');
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
+(async()=>{const db=await require('../../tests/helpers/poker-ring-database.cjs')();let runner;try{
+const {RingPlayRuntime,SupabaseRingPlayStore,PlayingRingAdmissionStore}=require('../../lib/poker/ring-play-runtime.ts'),{SupabaseRingAdmissionStore}=require('../../lib/poker/ring-lobby-handler.ts'),{RingHandOwner}=require('../../lib/poker/ring-hand-owner.ts');
+const keys={active:'fixture',keys:{fixture:randomBytes(32)}},members=[randomUUID(),randomUUID(),randomUUID(),randomUUID()],tables=[randomUUID(),randomUUID()],reservations=members.map(()=>randomUUID());
+for(const m of members)await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[m,'live-'+m+'@example.invalid']);
+for(const t of tables)await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,6,50,100,1000,3000,true)',[t,'Runtime SQL fixture']);
+await db.exec('set role service_role');
+const names={poker_ring_play_write_v2:['p_hand','p_expected','p_write','p_sealed','p_result','p_timeout','p_from','p_actor'],poker_ring_choose_seat:['p_member','p_table','p_amount','p_request','p_seat'],poker_ring_timebank:['p_member','p_reservation','p_hand','p_revision','p_request'],poker_ring_ticket_timebank:['p_member','p_reservation','p_hand','p_revision','p_request'],poker_ring_lobby_state:['p_member','p_table'],poker_ring_admit:['p_member','p_table','p_amount','p_request'],poker_ring_depart:['p_member','p_reservation','p_request'],poker_ring_context:['p_table'],poker_ring_hand_load:['p_hand'],poker_ring_play_ready:['p_member','p_reservation'],poker_ring_play_ping:['p_member','p_table'],poker_ring_play_meta:['p_table'],poker_ring_play_tables:['p_limit'],poker_ring_play_begin:['p_table','p_hand','p_roster','p_terms','p_sealed','p_result'],poker_ring_play_write:['p_hand','p_expected','p_write','p_sealed','p_result','p_timeout','p_from'],poker_ring_cashout:['p_member','p_reservation','p_request']};
+let lose=false;const rpcCounts={};
+const client={rpc:async(name,args)=>{rpcCounts[name]=(rpcCounts[name]??0)+1;try{assert.ok(names[name],name);const values=names[name].map(k=>args[k]!==null&&typeof args[k]==='object'?JSON.stringify(args[k]):args[k]);const r=await db.query(`select public.${name}(${names[name].map((k,i)=>k+' => $'+(i+1)).join(',')}) value`,values);if(lose&&(name==='poker_ring_play_write'||name==='poker_ring_play_write_v2')){lose=false;return {data:null,error:{code:'fixture_lost_ack'}};}return {data:r.rows[0].value,error:null};}catch(error){return {data:null,error};}}};
+const base=new SupabaseRingAdmissionStore(client),factory=()=>new SupabaseRingPlayStore(client);runner=new RingPlayRuntime({store:factory,keys});let service=new PlayingRingAdmissionStore(base,runner);
+for(let i=0;i<4;i++)await base.change(members[i],{type:'join',tableId:tables[Math.floor(i/2)],amount:1000,requestId:reservations[i]});
+await service.change(members[0],{type:'ready',reservationId:reservations[0],requestId:randomUUID()});assert.equal((await factory().meta(tables[0])).context.activeHandId,null);
+await assert.rejects(service.change(members[1],{type:'ready',reservationId:reservations[0],requestId:randomUUID()}));
+await service.change(members[1],{type:'ready',reservationId:reservations[1],requestId:randomUUID()});let v=await service.state(members[0],tables[0]);assert.equal(v.play.turnDurationMs,10000);assert.ok(v.play.deadline-v.play.serverNow<=10000&&v.play.deadline-v.play.serverNow>9000);const id=v.play.hand.handId,deadline=v.play.deadline,cards=v.play.hand.players[0].hole;
+await runner.close();runner=new RingPlayRuntime({store:factory,keys});service=new PlayingRingAdmissionStore(base,runner);v=await service.state(members[0],tables[0]);assert.equal(v.play.hand.handId,id);assert.equal(v.play.deadline,deadline);assert.deepEqual(v.play.hand.players[0].hole,cards);
+const command={type:'act',reservationId:reservations[0],requestId:randomUUID(),command:{handId:id,revision:v.play.hand.revision,actionId:'lost-live-ack',action:{type:'call'}}};lose=true;await assert.rejects(service.change(members[0],command));await service.change(members[0],command);v=await service.state(members[1],tables[0]);assert.equal(v.play.hand.revision,1);assert.equal((await factory().load(id)).version,2);
+// Warm state reads load one checkpoint; heartbeats and scheduler ticks do not
+// reread/decrypt it redundantly. A mutation still reloads after its durable write.
+const count=name=>rpcCounts[name]??0;
+let loads=count('poker_ring_hand_load'),pings=count('poker_ring_play_ping');
+await service.state(members[1],tables[0]);assert.equal(count('poker_ring_hand_load')-loads,1);assert.equal(count('poker_ring_play_ping')-pings,0);
+// Concurrent viewers share a committed read but never another viewer's holes.
+loads=count('poker_ring_hand_load');const metas=count('poker_ring_play_meta');
+const views=await Promise.all([runner.view(tables[0],members[0]),runner.view(tables[0],members[1])]);
+assert.equal(count('poker_ring_hand_load')-loads,1);assert.equal(count('poker_ring_play_meta')-metas,1);
+for(let i=0;i<2;i++){assert.equal(views[i].hand.players[i].hole.length,2);assert.equal(views[i].hand.players[1-i].hole,null);}
+loads=count('poker_ring_hand_load');await runner.tick(tables[0]);assert.equal(count('poker_ring_hand_load')-loads,0);
+const scoped=factory();loads=count('poker_ring_hand_load');await scoped.load(id);await scoped.load(id);assert.equal(count('poker_ring_hand_load')-loads,1);
+// Timer cannot run early, and an invalid action cannot change the deadline.
+const early=factory(),owner=await RingHandOwner.restore(early,id,keys);early.timeout=true;early.from=owner.snapshot(null).board.length;await assert.rejects(owner.act(members[1],{handId:id,revision:1,actionId:'early-timeout',action:{type:'check'}}));assert.equal((await factory().load(id)).version,2);
+await assert.rejects(service.change(members[1],{type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'invalid-wager',action:{type:'raise',amount:1}}}));assert.equal((await factory().load(id)).version,2);
+// Spectators get only a public projection and cannot receive betting controls.
+const publicView=await runner.watch(tables[0]);assert.equal((await service.state(members[2],tables[0])).play.spectating,true);assert.equal(publicView.spectating,true);assert.equal(publicView.hand.legal,null);assert.ok(publicView.hand.players.every(p=>p.hole===null));
+assert.equal(require('../../lib/poker/ring-play-state.ts').parseRingPlay(publicView).spectating,true);
+assert.equal(require('../../lib/poker/ring-table-display.ts').ringTableDisplay(publicView,publicView.serverNow).youSeat,null);
+// A confirmed check reuses its post-write owner, with no third hand load.
+await db.exec('reset role');await db.query('update poker_private.ring_fund_reservations set timeout_streak=2 where id=$1',[reservations[1]]);await db.exec('set role service_role');
+const beforeCheck={...rpcCounts};
+const check={type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:1,actionId:'counted-check',action:{type:'check'}}};
+const checked=await service.change(members[1],check);
+// One move = one hand load; the table lobby read runs alongside the move (owner 2026/10/28: 重過ぎ — fewer database round trips).
+assert.equal(count('poker_ring_hand_load')-(beforeCheck.poker_ring_hand_load??0),1);
+assert.equal(count('poker_ring_play_meta')-(beforeCheck.poker_ring_play_meta??0),2);
+assert.equal(count('poker_ring_lobby_state')-(beforeCheck.poker_ring_lobby_state??0),2);
+assert.equal(count('poker_ring_play_write_v2')-(beforeCheck.poker_ring_play_write_v2??0),1);
+assert.equal(checked.play.hand.revision,2);assert.equal(checked.play.timeoutStreak,0);
+assert.equal((await service.change(members[1],check)).play.hand.revision,2);
+// Timebank is durable, one use per hand, only on the caller's current turn.
+const leaving=await service.change(members[1],{type:'leave',reservationId:reservations[1],requestId:randomUUID()});assert.equal(leaving.membership.exitRequested,true);assert.equal(leaving.play.hand.handId,id);assert.equal(leaving.play.hand.legal.check,true);
+const bank={type:'bank',reservationId:reservations[1],requestId:randomUUID(),handId:id,revision:2};
+const extended=await service.change(members[1],bank);assert.equal(extended.play.deadline,checked.play.deadline+20000);assert.equal(extended.play.timeBank.remaining,0);assert.equal(extended.play.turnDurationMs,30000);assert.equal((await runner.watch(tables[0])).turnDurationMs,30000);
+assert.equal((await service.change(members[1],bank)).play.deadline,extended.play.deadline);
+await assert.rejects(service.change(members[1],{...bank,requestId:randomUUID()}));
+await assert.rejects(service.change(members[0],{...bank,reservationId:reservations[0],requestId:randomUUID()}));
+assert.equal((await service.state(members[1],tables[0])).play.timeBank.remaining,0);
+// Clock-tap tickets (owner 2026/10/28): +20s each, both may be spent on the same turn, at most 2 per hand even with more tickets.
+await db.exec('reset role');await db.query("insert into poker_private.member_tickets(member_id,item,count) values($1,'time_bank',3) on conflict (member_id,item) do update set count=3",[members[1]]);await db.exec('set role service_role');
+const tb={type:'ticket-bank',reservationId:reservations[1],requestId:randomUUID(),handId:id,revision:2};
+const t1=await service.change(members[1],tb);assert.equal(t1.play.deadline,extended.play.deadline+20000);assert.equal(t1.play.turnDurationMs,50000);assert.equal(t1.play.timeBank.ticket,true);
+assert.equal((await service.change(members[1],tb)).play.deadline,t1.play.deadline,'a repeated ticket request is a replay');
+const t2=await service.change(members[1],{...tb,requestId:randomUUID()});assert.equal(t2.play.deadline,t1.play.deadline+20000);assert.equal(t2.play.turnDurationMs,70000);assert.equal(t2.play.timeBank.ticket,false);
+await assert.rejects(service.change(members[1],{...tb,requestId:randomUUID()}),'at most two tickets per hand');
+await db.exec('reset role');assert.equal((await db.query("select count from poker_private.member_tickets where member_id=$1 and item='time_bank'",[members[1]])).rows[0].count,1,'two tickets spent, one left');await db.exec('set role service_role');
+const afterPendingCheck=await service.change(members[1],{type:'act',reservationId:reservations[1],requestId:randomUUID(),command:{handId:id,revision:2,actionId:randomUUID(),action:{type:'check'}}});assert.equal(afterPendingCheck.play.hand.revision,3);assert.equal(afterPendingCheck.membership.exitRequested,true);
+// A new participant can choose a free seat during a hand, but gets no cards in it.
+await db.exec('reset role');
+const newcomer=randomUUID(),newReservation=randomUUID();await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[newcomer,'new@example.invalid']);await db.exec('set role service_role');
+const joinSeat={type:'join',tableId:tables[0],amount:1000,requestId:newReservation,seat:5};
+const joined=await service.change(newcomer,joinSeat);assert.equal(joined.membership.seat,5);assert.equal(joined.membership.playEnabled,true);
+await service.change(newcomer,joinSeat);await assert.rejects(service.change(newcomer,{...joinSeat,seat:4}));
+const waitingNew=(await service.state(newcomer,tables[0])).play;assert.equal(waitingNew.spectating,true);assert.equal(waitingNew.waiting.seat,5);assert.equal(waitingNew.hand.legal,null);assert.ok(waitingNew.hand.players.every(p=>p.hole===null));
+assert.equal((await service.state(members[1],tables[0])).play.hand.players.length,2);
+await db.exec('reset role');assert.equal(Number((await db.query('select (select sum(available+in_play) from poker_private.ring_accounts)+(select coalesce(sum(amount),0) from poker_private.ring_rake) total')).rows[0].total),15000);await db.exec('set role service_role');
+// Create a legitimate encrypted initial deal with a historical commit timestamp.
+// Only the isolated fixture inserts this row; production always uses the fenced RPC.
+class HistoricalStore extends SupabaseRingPlayStore{async begin(r){await db.exec('reset role');await db.query(`insert into poker_private.ring_hands(id,table_id,version,button_seat,participants,terms,sealed,status) values($1,$2,1,$3,$4,$5,$6,'active')`,[r.handId,r.tableId,r.terms.buttonSeat,JSON.stringify(r.roster),JSON.stringify({sb:r.terms.sb,bb:r.terms.bb}),JSON.stringify(r.sealed)]);await db.query("insert into poker_private.ring_hand_commits(hand_id,request_id,version,fingerprint,created_at) values($1,$1,1,decode(repeat('00',32),'hex'),clock_timestamp()-interval '31 seconds')",[r.handId]);await db.exec('set role service_role');return 1;}}
+const prepared=await RingHandOwner.prepare(new HistoricalStore(client),tables[1],keys);await prepared.commit();const stale=await factory().meta(tables[1]);assert.ok(Date.parse(stale.now)-Date.parse(stale.changedAt)>30000);
+await assert.rejects(runner.act(members[2],tables[1],{handId:prepared.handId,revision:0,actionId:'too-late',action:{type:'call'}}));
+await runner.tick(tables[1]);const timed=await RingHandOwner.restore(factory(),prepared.handId,keys);assert.equal(timed.snapshot(null).revision,1);assert.ok(timed.snapshot(null).result);assert.equal(timed.snapshot(null).result.showdown,false);await runner.tick(tables[1]);assert.equal((await factory().load(prepared.handId)).version,2);
+// Re-seating the SAME account must not project its previous reservation's deal.
+await service.change(members[2],{type:'leave',reservationId:reservations[2],requestId:randomUUID()});
+await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '7 seconds' where id=$1",[prepared.handId]);await db.exec('set role service_role');
+const alone=await service.state(members[3],tables[1]);assert.ok(alone.membership);assert.equal(alone.table.seats.length,1);assert.equal(alone.play,null,'remaining seated winner returns to waiting view after the result hold');
+await db.exec('reset role');await db.query('update poker_private.ring_hands set completed_at=clock_timestamp() where id=$1',[prepared.handId]);await db.exec('set role service_role');
+const fresh=await service.change(members[2],{type:'join',tableId:tables[1],amount:1000,requestId:randomUUID(),seat:1});
+assert.equal(fresh.membership.stack,1000);assert.equal((await service.state(members[2],tables[1])).play,null);
+// A fold result holds for six seconds, then both runtime and database permit the next deal.
+await service.change(members[3],{type:'ready',reservationId:reservations[3],requestId:randomUUID()});
+await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '5 seconds' where id=$1",[prepared.handId]);await db.exec('set role service_role');
+await runner.tick(tables[1]);assert.equal((await factory().meta(tables[1])).context.activeHandId,null);
+await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '6.2 seconds' where id=$1",[prepared.handId]);await db.exec('set role service_role');
+await runner.tick(tables[1]);const nextDeal=(await factory().meta(tables[1])).context.activeHandId;assert.ok(nextDeal);assert.notEqual(nextDeal,prepared.handId);
+await db.exec('reset role');assert.equal(Number((await db.query('select (select sum(available+in_play) from poker_private.ring_accounts where member_id=any($1::uuid[]))+(select coalesce(sum(amount),0) from poker_private.ring_rake where member_id=any($1::uuid[])) total',[members])).rows[0].total),12000);
+// Only this isolated DB injects a virtual clock; immutable ledger protections stay enabled.
+// Three real deadline expirations persist a sit-out; no refresh or restart clears it.
+await db.exec("reset role;create or replace function public.poker_test_clock() returns timestamptz language sql volatile as $$select statement_timestamp()+coalesce(nullif(current_setting('poker_test.offset',true),''),'0 seconds')::interval$$;");for(const name of ['ring_play_meta','ring_play_write_v2','ring_play_begin','ring_play_ready']){const def=(await db.query("select pg_get_functiondef(oid) body from pg_proc where pronamespace='poker_private'::regnamespace and proname=$1",[name])).rows[0].body;await db.exec(def.replaceAll('clock_timestamp()','public.poker_test_clock()'));}
+const policyMembers=[randomUUID(),randomUUID()],policyTable=randomUUID(),policyReservations=[randomUUID(),randomUUID()];
+for(const m of policyMembers)await db.query('insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())',[m,'policy-'+m+'@example.invalid']);
+await db.query('insert into public.poker_ring_tables(id,title,capacity,sb,bb,min_buy_in,max_buy_in,published) values($1,$2,2,50,100,1000,3000,true)',[policyTable,'Policy fixture']);await db.exec('set role service_role');
+for(let i=0;i<2;i++)await service.change(policyMembers[i],{type:'join',tableId:policyTable,amount:1000,requestId:policyReservations[i],seat:i+1});
+for(let step=0;step<40;step++){
+ const meta=await factory().meta(policyTable);if(meta.penalties[policyReservations[0]].strikes===3)break;
+ if(!meta.context.activeHandId){await db.exec('reset role');await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '16 seconds' where id=$1",[meta.lastHandId]);await db.exec('set role service_role');await runner.tick(policyTable);continue;}
+ const owner=await RingHandOwner.restore(factory(),meta.context.activeHandId,keys),h=owner.snapshot(null),actor=h.toAct==='seat-1'?0:1;
+ if(actor===0){
+  // At 0 the free +20s is spent automatically first; the timeout follows when the extended 40s also runs out.
+  await db.exec("select set_config('poker_test.offset','21 seconds',false)");const before=await factory().meta(policyTable);await runner.tick(policyTable);const banked=await factory().meta(policyTable);
+  if(!before.bankUsed?.[policyReservations[0]]){assert.ok(banked.bankUsed?.[policyReservations[0]],'free time bank is used when the turn runs out');assert.equal(banked.context.activeHandId,before.context.activeHandId);}
+  await db.exec("select set_config('poker_test.offset','41 seconds',false)");await runner.tick(policyTable);await db.exec("select set_config('poker_test.offset','0 seconds',false)");}
+ else {const legal=owner.snapshot(policyMembers[1]).legal;await runner.act(policyMembers[1],policyTable,{handId:h.handId,revision:h.revision,actionId:randomUUID(),action:{type:legal.check?'check':'call'}});}
+}
+let policyMeta=await factory().meta(policyTable);assert.equal(policyMeta.penalties[policyReservations[0]].strikes,3);assert.ok(policyMeta.penalties[policyReservations[0]].since);
+let policyView=await service.state(policyMembers[0],policyTable);assert.equal(policyView.play.sittingOut,true);assert.equal(policyView.play.hand.legal,null);
+await assert.rejects(runner.act(policyMembers[0],policyTable,{handId:policyView.play.hand.handId,revision:policyView.play.hand.revision,actionId:randomUUID(),action:{type:'check'}}));
+// A sitting-out actor folds without another twenty-second wait.
+for(let step=0;step<4;step++){policyMeta=await factory().meta(policyTable);if(!policyMeta.context.activeHandId)break;const o=await RingHandOwner.restore(factory(),policyMeta.context.activeHandId,keys),h=o.snapshot(null);if(h.toAct==='seat-1')await runner.tick(policyTable);else {const legal=o.snapshot(policyMembers[1]).legal;await runner.act(policyMembers[1],policyTable,{handId:h.handId,revision:h.revision,actionId:randomUUID(),action:{type:legal.check?'check':'call'}});}}
+policyMeta=await factory().meta(policyTable);assert.equal(policyMeta.context.activeHandId,null);assert.ok(policyMeta.penalties[policyReservations[0]].hands>=1);
+await service.change(policyMembers[0],{type:'ready',reservationId:policyReservations[0],requestId:randomUUID()});policyMeta=await factory().meta(policyTable);assert.equal(policyMeta.penalties[policyReservations[0]].strikes,0);assert.equal(policyMeta.penalties[policyReservations[0]].since,null);
+// Five completed sit-out hands also trigger a one-time cashout. Roll back only
+// this isolated scenario, so the independent three-minute path is tested too.
+await db.exec('reset role;begin');await db.query('update poker_private.ring_fund_reservations set sit_out_since=clock_timestamp(),sit_out_hands=5 where id=$1',[policyReservations[0]]);await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '16 seconds' where id=$1",[policyMeta.lastHandId]);await db.exec('set role service_role');await runner.tick(policyTable);assert.equal((await base.state(policyMembers[0],policyTable)).membership,null);await db.exec('reset role;rollback;set role service_role');
+// A three-minute sit-out is cashed out once, after the current hand has settled.
+await db.exec('reset role');await db.query("update poker_private.ring_fund_reservations set sit_out_since=clock_timestamp()-interval '181 seconds',timeout_streak=3 where id=$1",[policyReservations[0]]);await db.query("update poker_private.ring_hands set completed_at=clock_timestamp()-interval '16 seconds' where id=$1",[policyMeta.lastHandId]);await db.exec('set role service_role');await runner.tick(policyTable);await runner.tick(policyTable);
+assert.equal((await base.state(policyMembers[0],policyTable)).membership,null);await db.exec('reset role');assert.equal(Number((await db.query('select (select sum(available+in_play) from poker_private.ring_accounts where member_id=any($1::uuid[]))+(select coalesce(sum(amount),0) from poker_private.ring_rake where member_id=any($1::uuid[])) total',[policyMembers])).rows[0].total),6000);await db.exec('set role service_role');
+
+await db.exec('set role authenticated');for(const name of ['poker_ring_play_write_v2(uuid,bigint,uuid,jsonb,jsonb,boolean,integer,uuid)','poker_ring_play_ready(uuid,uuid)','poker_ring_play_meta(uuid)','poker_ring_play_write(uuid,bigint,uuid,jsonb,jsonb,boolean,integer)'])assert.equal((await db.query('select has_function_privilege(current_user,$1,$2) ok',['public.'+name,'execute'])).rows[0].ok,false);
+console.log('PASS live ring: explicit readiness/ownership, encrypted restart without redeal or timer reset, lost-ACK replay, early/late clock fencing, invalid wager rollback, durable auto-fold, three-timeout sit-out, immediate fold, recovery, five-hand/three-minute kick and chip conservation.');
+}finally{await runner?.close();await db.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

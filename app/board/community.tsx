@@ -112,7 +112,7 @@ export function ReplyComposer({ postId, parentId = null, authorName, recipient, 
     {error && <p className={s.error} role="alert">{error}</p>}
   </form>;
 }
-type Author = { avatar?: string | null; role?: string | null; official?: boolean; score?: number };
+type Author = { avatar?: string | null; role?: string | null; official?: boolean; score?: number; frame?: string | null };
 export function ReplyConversation({ reply, postId, userId, authorName, owner, resolutionId, resolved, reactions, authors, childCount, focusReplyId }: {
   reply: BoardReply; postId: string; userId: string; authorName: string; owner: boolean; resolutionId: string | null; resolved: boolean; reactions: BoardReaction[]; authors: Record<string, Author>; childCount: number; focusReplyId?: string;
 }) {
@@ -138,7 +138,7 @@ export function ReplyConversation({ reply, postId, userId, authorName, owner, re
     const a = r.author_user_id ? (authors[r.author_user_id] ?? childAuthors[r.author_user_id]) : {};
     return <div className={root ? s.comment : s.child} id={`reply-${r.id}`} key={r.id}>
       <div className={s.commentHead}><div className={s.author}>
-        {r.author_user_id ? <Link href={`/members/${r.author_user_id}`}><Avatar name={r.author_name} url={a?.avatar} /></Link> : <Avatar name={r.author_name} />}
+        {r.author_user_id ? <Link href={`/members/${r.author_user_id}`}><Avatar name={r.author_name} url={a?.avatar} frame={a?.frame} /></Link> : <Avatar name={r.author_name} />}
         <div><OfficialBadge show={a?.official ?? false} /><MemberRoleBadge role={a?.role} /><AcademyBadge score={a?.score} compact /><div className={s.authorName}>{r.author_name} {resolutionId === r.id && <span className={s.resolved}>✓ スレ主が選んだ回答</span>}</div><div className={s.date}>{new Date(r.created_at).toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"})}</div></div>
       </div><ReportForm kind="reply" label="🚩" action={reportReply.bind(null, r.id, postId)} buttonStyle={{ fontSize: 11 }} /></div>
       <BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="コメントに添付された画像" loading="lazy" className={s.image} />}
