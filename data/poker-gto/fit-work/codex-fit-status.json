@@ -1800,7 +1800,7 @@
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
   "mobileUsabilityPhase2": {
     "requestedAt": "2026-11-02T17:08:00Z",
-    "state": "waiting-for-phase1-staging-verification",
+    "state": "waiting-for-PR760-checks-and-merge",
     "dependency": {
       "items": [
         "全画面プレイ",
@@ -1817,5 +1817,74 @@
       "7": "Use prefetchGtoCharts/cachedJson; warm current-stack chart and common flop index; persist device cache; total prefetch a few hundred KB maximum"
     },
     "workflow": "Only begin 5-7 after all4 phase1 items staged. Separate new branch/PR per numbered item,allchecks green before stage merge. Preserve PC/navy/gold/chartcolors, noarrows. Report375px verification perPR, home-launch screenshot for5. Do not substitute viewport-only screenshot for actual standalone launch evidence."
+  },
+  "mobileUsabilityPhase1": {
+    "updatedAt": "2026-11-02T17:51:43.549Z",
+    "requestedByOwner": "2026-11-03: prioritize four mobile tasks between autonomous flop calculations; separate PRs,375px+320px screenshots beforestage merge",
+    "items": [
+      {
+        "number": 1,
+        "title": "全画面プレイ",
+        "pr": 757,
+        "head": "8fed97be3635f027cf6e4997944b41babc21e20d",
+        "state": "merged",
+        "merge": "46fd41bae5a4c0787207a82838aac084a2302c71",
+        "screenshotDirectory": "docs/gto-mobile/20261103",
+        "viewports": [
+          375,
+          320
+        ],
+        "desktopViewport": 1280,
+        "validation": "hand survives fullscreen open/close;Escape;scroll restored;quiz same question;11 relevanttests"
+      },
+      {
+        "number": 2,
+        "title": "答えの棒グラフ",
+        "pr": 758,
+        "head": "ed1a7bc242d87b6cf053a04ce4bce0bf00b79db1",
+        "state": "merged",
+        "merge": "2dd471b9813705ce20d7546896bb3098b89bb957",
+        "screenshotDirectory": "docs/gto-mobile/20261103",
+        "viewports": [
+          375,
+          320
+        ],
+        "desktopViewport": 1280,
+        "validation": "real drill answer bars width matchesfrequency within1pt;chosen label;palette reused"
+      },
+      {
+        "number": 3,
+        "title": "プリフロップ表の欄を縮める",
+        "pr": 759,
+        "head": "854c09188c5d3d438a980f93ae8924c489bcfa1e",
+        "state": "merged",
+        "merge": "93ab712b924f554ce2bf912ffb0d1f4943ed88fe",
+        "screenshotDirectory": "docs/gto-mobile/20261103",
+        "viewports": [
+          375,
+          320
+        ],
+        "desktopViewport": 1280,
+        "validation": "controls open/change BB opponent/close;215px less space;nooverflow;desktop controls unchanged"
+      },
+      {
+        "number": 4,
+        "title": "弱点から練習へ",
+        "pr": 760,
+        "head": "56f759986917bff56a16fb65dcb3edd5458c8b21",
+        "state": "checks-pending",
+        "merge": null,
+        "screenshotDirectory": "docs/gto-mobile/20261103",
+        "viewports": [
+          375,
+          320
+        ],
+        "desktopViewport": 1280,
+        "validation": "real worker BB versus BTN targeted requests only;auto starts;all actions withinviewport;nooverflow;16 relevanttests;unsupported targets clearly marked"
+      }
+    ],
+    "browser": "Chromium138 real React components in local accountworkspace;fixed API responses;actual worker,data;not iPhone hardware",
+    "workspace": "/workspace/scratch/181a490d1af4/gto-mobile",
+    "harness": "out/mobile-qa"
   }
 }
