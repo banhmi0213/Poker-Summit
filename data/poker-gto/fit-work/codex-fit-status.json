@@ -1193,6 +1193,213 @@
     "parallelPerSpot": 7,
     "targetFlopJobs": 35,
     "policy": "\n【最新Pro負荷試験】オーナーが請求ページでGitHubPro契約確認済みと明示。従来23job制限を今回の追加2場面について解除し、2026-11-02T14:13:12Zにsb-limp/run41459846661とsb-iso/run41459848850を最新stage585c0a90から追加開始済み。各7Solve工程in_progressを確認。重複起動禁止。約25分後に全run全jobページでin_progress合計を取る一回確認task設定済み。開始前未開始run0件/同spotbranchなし確認済み。今回の目標5spots×7=35。30超を実測したら『Proが効き始めた』として以後5spotsを基本に、完了したら指定順から1spotずつ補充。20〜24で十分なqueuedが残るなら実数/待ち数をそのままサポート用報告し効いたと断言しない。測定前にPro有効性や上限40の実証を断言しない。25〜30/負荷不足は未確定として実数を報告。全runは親status=in_progressだけでなくqueued/waitingも取得する。",
-    "status": "Both added runs started;25minute full-repository measurement scheduled;no conclusion yet"
+    "status": "Proが効き始めた:initial34jobs verified;maintain5activeflopspots after confirmation;recheck due14:38:48UTC",
+    "initialMeasurement": {
+      "checkedAt": "2026-11-02T14:14:10.565203+00:00",
+      "errors": [],
+      "jobs": [
+        {
+          "run": 40922255985,
+          "total": 201,
+          "running": 0,
+          "success": 200,
+          "solve": {
+            "completed": 200,
+            "in_progress": 0,
+            "queued": 0
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve hu-srp AhJd8c"
+          ]
+        },
+        {
+          "run": 40922261771,
+          "total": 201,
+          "running": 5,
+          "success": 195,
+          "solve": {
+            "completed": 195,
+            "in_progress": 5,
+            "queued": 0
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve hu-limp Kh8d8c"
+          ]
+        },
+        {
+          "run": 41279675288,
+          "total": 201,
+          "running": 0,
+          "success": 200,
+          "solve": {
+            "completed": 200,
+            "in_progress": 0,
+            "queued": 0
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve hu-3bet AhAd7c"
+          ]
+        },
+        {
+          "run": 41279680906,
+          "total": 201,
+          "running": 7,
+          "success": 131,
+          "solve": {
+            "completed": 131,
+            "in_progress": 7,
+            "queued": 62
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve sb-bb Kh7d2c"
+          ]
+        },
+        {
+          "run": 41279681140,
+          "total": 201,
+          "running": 7,
+          "success": 189,
+          "solve": {
+            "completed": 189,
+            "in_progress": 7,
+            "queued": 4
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve co-bb QhJdTc"
+          ]
+        },
+        {
+          "run": 41385060824,
+          "total": 3,
+          "running": 0,
+          "success": 0,
+          "solve": {
+            "completed": 0,
+            "in_progress": 0,
+            "queued": 0
+          },
+          "failed": [],
+          "sampleNames": [
+            "capacity",
+            "Fit 40BB"
+          ]
+        },
+        {
+          "run": 41458315861,
+          "total": 1,
+          "running": 1,
+          "success": 0,
+          "solve": {
+            "completed": 0,
+            "in_progress": 0,
+            "queued": 0
+          },
+          "failed": [],
+          "sampleNames": [
+            "Poker engine regression tests"
+          ]
+        },
+        {
+          "run": 41459846661,
+          "total": 201,
+          "running": 7,
+          "success": 0,
+          "solve": {
+            "completed": 0,
+            "in_progress": 7,
+            "queued": 193
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve sb-limp AhAd7c"
+          ]
+        },
+        {
+          "run": 41459848850,
+          "total": 201,
+          "running": 7,
+          "success": 0,
+          "solve": {
+            "completed": 0,
+            "in_progress": 7,
+            "queued": 193
+          },
+          "failed": [],
+          "sampleNames": [
+            "plan",
+            "Solve sb-iso AhKd5c"
+          ]
+        }
+      ],
+      "activeRuns": [
+        {
+          "id": 41458315861,
+          "head_branch": "chatgpt/gto-mtt-conditional-20261102-i",
+          "head_sha": "b3bf52304a4b62a1fc1cb1246dfd32ae215467f1",
+          "status": "in_progress",
+          "name": "Poker engine tests"
+        },
+        {
+          "id": 40922261771,
+          "head_branch": "gto-flop-solve/hu-limp/v3b",
+          "head_sha": "400eae6c210b8771395aa59bfa19410de7ec7ec7",
+          "status": "in_progress",
+          "name": "Poker flop solutions"
+        },
+        {
+          "id": 41459848850,
+          "head_branch": "gto-flop-solve/sb-iso/v3b",
+          "head_sha": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+          "status": "queued",
+          "name": "Poker flop solutions"
+        },
+        {
+          "id": 41459846661,
+          "head_branch": "gto-flop-solve/sb-limp/v3b",
+          "head_sha": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+          "status": "queued",
+          "name": "Poker flop solutions"
+        },
+        {
+          "id": 41279681140,
+          "head_branch": "gto-flop-solve/co-bb/v3b",
+          "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e",
+          "status": "queued",
+          "name": "Poker flop solutions"
+        },
+        {
+          "id": 41279680906,
+          "head_branch": "gto-flop-solve/sb-bb/v3b",
+          "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e",
+          "status": "queued",
+          "name": "Poker flop solutions"
+        }
+      ],
+      "runningJobs": 34
+    },
+    "initialResult": "34in_progress repository total =33flop+1engineCI; all pages total_count matched. >30 observed,Pro expanded concurrency confirmed. 25minute recheck retained."
+  },
+  "concurrencyPolicy": {
+    "maxActiveFlopSpots": 5,
+    "parallelPerSpot": 7,
+    "targetFlopJobs": 35,
+    "repoNominalLimit": 40,
+    "repoLimit40ExactlyVerified": false,
+    "over30Observed": true,
+    "observedRepositoryJobs": 34,
+    "observedFlopJobs": 33,
+    "checkedAt": "2026-11-02T14:14:10.565203+00:00",
+    "replenish": "one next unstarted spot when a running spot finishes;count all other jobs and avoidduplicates"
   }
 }
