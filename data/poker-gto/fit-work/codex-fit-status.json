@@ -392,7 +392,7 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "40BB both gates pass using round2, not final round6. All20/40/60 integrated on clean source branch; 9 tournament chart regeneration launched, awaiting generated charts then compare-mtt. Never import temporary calculation workflow or fit-work into staging. No new flop spot: four active spots occupy21jobs. Productionmain/DB/billing unchanged.",
+  "notes": "Owner requested reporting and no merge when additional chart gates fail. Generated charts are blocked, no new PR or staging merge. Fit pass and chart pass must remain separate. 8max20/60 fit-consistency pass,40 fails. Recompute metrics from actual169-class1326-combo weighted strategies in output1d7eff01; save data for diagnosis. No automatic extra fitting beyond owner-authorized retry policy.",
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet"
@@ -663,7 +663,7 @@
       60
     ],
     "capacityMaxParallel": 2,
-    "status": "capacity succeeded; Solve6max20bb(job125104159079) and Solve6max40bb(job125104159046) steps in_progress verified; remaining7 queued",
+    "status": "All9 solve jobs and collect succeeded; generated-chart acceptance FAIL. Do not merge or launch another fit without further instruction.",
     "temporaryWorkflow": true,
     "collectRequiresAll9": true,
     "capacityObservedAt": "2026-11-02T05:01:49.5628480Z",
@@ -673,5 +673,190 @@
       "passed": 63,
       "failed": 0
     }
-  }
+  },
+  "chartValidation": {
+    "outputCommit": "1d7eff01d2e8e3658f43e83e26d421df167de04e",
+    "depths": {
+      "20": {
+        "tables": {
+          "6": {
+            "btnRfi": 41.512217194570134,
+            "bbDefend": {
+              "BTN": 82.81719457013574,
+              "CO": 78.70407239819004,
+              "HJ": 73.40120663650076,
+              "UTG": 72.41719457013572
+            }
+          },
+          "8": {
+            "btnRfi": 41.526696832579184,
+            "bbDefend": {
+              "BTN": 82.82533936651582,
+              "CO": 78.59366515837104,
+              "HJ": 73.09079939668176,
+              "UTG": 55.45852187028658
+            }
+          },
+          "9": {
+            "btnRfi": 41.517043740573136,
+            "bbDefend": {
+              "BTN": 82.85701357466063,
+              "CO": 78.42805429864252,
+              "HJ": 73.39336349924585,
+              "UTG": 50.36410256410257
+            }
+          }
+        },
+        "vsFitDifferencePt": {
+          "BTN": -0.8746606334841829,
+          "CO": -0.006334841628969912,
+          "HJ": 0.8907993966817571,
+          "UTG": -0.5414781297134255
+        },
+        "crossDifferencePt": {
+          "6": {
+            "BTN": -0.00814479638007981,
+            "CO": 0.11040723981899703,
+            "HJ": 0.31040723981899987,
+            "UTG": 16.95867269984914
+          },
+          "9": {
+            "BTN": 0.031674208144806926,
+            "CO": -0.16561085972851686,
+            "HJ": 0.30256410256409083,
+            "UTG": -5.094419306184008
+          }
+        },
+        "gates": {
+          "8maxVsFit": true,
+          "btnOrder": false,
+          "6maxVs8": false,
+          "9maxVs8": false
+        }
+      },
+      "40": {
+        "tables": {
+          "6": {
+            "btnRfi": 61.53815987933635,
+            "bbDefend": {
+              "BTN": 82.92307692307693,
+              "CO": 76.99004524886878,
+              "HJ": 68.02413273001508,
+              "UTG": 65.00754147812971
+            }
+          },
+          "8": {
+            "btnRfi": 61.65580693815986,
+            "bbDefend": {
+              "BTN": 83.14811463046756,
+              "CO": 77.0603318250377,
+              "HJ": 68.18702865761689,
+              "UTG": 52.506787330316726
+            }
+          },
+          "9": {
+            "btnRfi": 61.673604826546004,
+            "bbDefend": {
+              "BTN": 83.11855203619908,
+              "CO": 77.03800904977375,
+              "HJ": 68.27631975867267,
+              "UTG": 49.629864253393656
+            }
+          }
+        },
+        "vsFitDifferencePt": {
+          "BTN": 0.5481146304675661,
+          "CO": 0.6603318250376873,
+          "HJ": -0.4129713423831163,
+          "UTG": -2.993212669683281
+        },
+        "crossDifferencePt": {
+          "6": {
+            "BTN": -0.22503770739062645,
+            "CO": -0.0702865761689111,
+            "HJ": -0.16289592760180938,
+            "UTG": 12.500754147812984
+          },
+          "9": {
+            "BTN": -0.029562594268483622,
+            "CO": -0.02232277526394455,
+            "HJ": 0.0892911010557782,
+            "UTG": -2.8769230769230703
+          }
+        },
+        "gates": {
+          "8maxVsFit": false,
+          "btnOrder": false,
+          "6maxVs8": false,
+          "9maxVs8": true
+        }
+      },
+      "60": {
+        "tables": {
+          "6": {
+            "btnRfi": 53.20995475113123,
+            "bbDefend": {
+              "BTN": 83.710407239819,
+              "CO": 77.0497737556561,
+              "HJ": 70.13484162895928,
+              "UTG": 67.37104072398189
+            }
+          },
+          "8": {
+            "btnRfi": 53.19185520361991,
+            "bbDefend": {
+              "BTN": 83.70950226244345,
+              "CO": 77.20542986425339,
+              "HJ": 70.12579185520363,
+              "UTG": 56.80663650075415
+            }
+          },
+          "9": {
+            "btnRfi": 53.20633484162896,
+            "bbDefend": {
+              "BTN": 83.70950226244345,
+              "CO": 77.23348416289593,
+              "HJ": 70.13484162895928,
+              "UTG": 52.63559577677225
+            }
+          }
+        },
+        "vsFitDifferencePt": {
+          "BTN": 0.009502262443447762,
+          "CO": -1.4945701357466135,
+          "HJ": 0.825791855203633,
+          "UTG": 0.006636500754154895
+        },
+        "crossDifferencePt": {
+          "6": {
+            "BTN": 0.0009049773755549495,
+            "CO": -0.15565610859728451,
+            "HJ": 0.009049773755648971,
+            "UTG": 10.56440422322774
+          },
+          "9": {
+            "BTN": 0,
+            "CO": 0.028054298642544495,
+            "HJ": 0.009049773755648971,
+            "UTG": -4.171040723981903
+          }
+        },
+        "gates": {
+          "8maxVsFit": true,
+          "btnOrder": false,
+          "6maxVs8": false,
+          "9maxVs8": true
+        }
+      }
+    },
+    "pass": false,
+    "rules": "\n【追加の必須マージ判定】再生成した20/40/60BBそれぞれで、8人卓のJSONからコンボ数で重み付けしてBB守り（BTN/CO/HJ/UTGの単一オープン相手、call+3bet）を再計算し、採用fit.report.defendとの差を4席すべて±2ポイント以内で確認・報告する。外れたら統合/再生成の不一致としてマージ禁止。さらに6/8/9人卓JSONからBTN RFIを計算し6人卓>=8人卓>=9人卓を確認する。6人卓と9人卓のBB守り4席は各8人卓との差±5ポイント以内を必須とし、欠損/不合格ならマージせず実測値と差を報告する。6/9人卓にはBeyondGTO参考がなく8人卓との妥当性比較であると明記する。従来のBB参考±4pt/RFI<=3判定も維持し、この追加検証の代わりに使わない。"
+  },
+  "mergeBlocked": true,
+  "mergeBlockReasons": [
+    "40BB8max UTG BB defend52.5068 vs fitted55.5: -2.9932pt (limit2)",
+    "6max UTG vs8max +16.9587/+12.5008/+10.5644pt for20/40/60 (limit5)",
+    "9max20BB UTG vs8max -5.0944pt (limit5)",
+    "BTN RFI6>=8>=9 ordering fails at all3 depths (small differences .01-.14pt); strict requested rule applied"
+  ]
 }
