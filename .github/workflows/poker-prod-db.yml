@@ -44,7 +44,7 @@ jobs:
           grep -E "ERROR|FATAL|LINE|DETAIL|HINT|CONTEXT|could not|failed" /tmp/out.txt | sed "s/postgresql:[^ ]*/[address]/g" | head -20 | while read -r l; do echo "::notice::$l"; done || true
           grep -n "^-- =====" /tmp/release.sql > /tmp/marks.txt
           line=$(grep -oE "psql:/tmp/release.sql:[0-9]+" /tmp/out.txt | head -1 | cut -d: -f3 || true)
-          if [ -n "$line" ]; then mig=$(awk -F: -v l="$line" '$1<=l{m=$0} END{print m}' /tmp/marks.txt); echo "::notice::failed in: $mig (line $line)"; fi
+          if [ $code -ne 0 ] && [ -n "$line" ]; then mig=$(awk -F: -v l="$line" '$1<=l{m=$0} END{print m}' /tmp/marks.txt); echo "::notice::failed in: $mig (line $line)"; fi
           if [ $code -ne 0 ]; then echo "::error::The release SQL failed; the transaction was rolled back."; exit 1; fi
           echo "::notice::OK: all migrations ran (${GITHUB_REF_NAME})."
       - name: After apply, check the new objects exist
