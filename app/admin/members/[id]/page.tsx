@@ -54,7 +54,8 @@ export default async function AdminMemberDetailPage({
     supabase
       .from("coupon_uses")
       .select("used_at, coupons(id, title)")
-      .eq("user_id", member.id),
+      .eq("user_id", member.id)
+      .eq("status", "used"),
     // 同じメールアドレス・電話番号で以前退会したアカウント(評価・実績・利用停止を引き継いでいる)
     supabase.rpc("admin_member_previous_accounts", { p_user_id: member.id }),
     supabase.rpc("admin_member_m_holdem_ids"),

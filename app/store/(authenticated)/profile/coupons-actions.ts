@@ -5,6 +5,7 @@ import { requireCouponCategory } from "@/lib/coupon-categories";
 import { revalidatePath } from "@/lib/revalidate";
 import { createStoreClient as createClient } from "@/lib/supabase/store-server";
 import { uploadBannerImage, removeBannerImage } from "@/lib/store-banner-upload";
+import { parseCouponUseRule } from "@/lib/coupon-use-rule";
 
 async function getOwnedStoreClient(storeId: string) {
   const supabase = await createClient();
@@ -68,6 +69,7 @@ export async function createCoupon(formData: FormData) {
     code: code || null,
     valid_until: validUntil || null,
     usage_limit: usageLimit,
+    use_rule: parseCouponUseRule(formData.get("useRule")),
     offer_type: offerType || null,
     banner_image_url: bannerImageUrl,
     banner_storage_path: bannerStoragePath,
@@ -140,6 +142,7 @@ export async function updateCoupon(formData: FormData) {
     code: code || null,
     valid_until: validUntil || null,
     usage_limit: usageLimit,
+    use_rule: parseCouponUseRule(formData.get("useRule")),
     offer_type: offerType || null,
   };
 

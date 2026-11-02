@@ -17,7 +17,7 @@ export default async function AdminCouponEditPage({
   const { data: coupon } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, usage_limit, used_count, active, offer_type, store_id, stores(name)"
+      "id, title, discount, description, code, valid_until, usage_limit, used_count, use_rule, active, offer_type, store_id, stores(name)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -79,6 +79,15 @@ export default async function AdminCouponEditPage({
           <div className="field">
             <span className="muted">利用可能回数（空欄で無制限）</span>
             <input type="number" name="usageLimit" min={1} defaultValue={coupon.usage_limit ?? ""} />
+          </div>
+
+          <div className="field">
+            <span className="muted">使える回数</span>
+            <select name="useRule" defaultValue={(coupon as { use_rule?: string }).use_rule ?? "once"}>
+              <option value="once">お一人様1回</option>
+              <option value="daily">お一人様1日1回</option>
+              <option value="unlimited">何度でも</option>
+            </select>
           </div>
 
           <CouponCategorySelect value={coupon.offer_type ?? ""} />

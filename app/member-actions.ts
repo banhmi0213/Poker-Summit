@@ -205,14 +205,27 @@ export async function leaveEvent(eventId: string, path: string) {
   revalidatePath(path);
 }
 
-export async function useCoupon(couponId: string, path: string) {
+export type CouponShowResult =
+  | { ok: true; useId: string; storeName: string; title: string; discount: string | null; shownAt: string }
+  | { ok: false; reason: string; distanceM?: number };
+
+/** お店で「使う」：位置情報で店の近くか確かめ、店員さんに見せる画面の記録を作る（2026/11/02） */
+export async function showCouponAtStore(couponId: string, lat: number | null, lng: number | null, accuracy: number | null): Promise<CouponShowResult> {
   const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("coupon_show", { p_coupon_id: couponId, p_lat: lat, p_lng: lng, p_accuracy: accuracy });
+  if (error || !data) return { ok: false, reason: "error" };
+  const r = data as { ok: boolean; reason?: string; distance_m?: number; use_id?: string; store_name?: string; title?: string; discount?: string | null; shown_at?: string };
+  if (!r.ok) return { ok: false, reason: r.reason ?? "error", distanceM: r.distance_m };
+  return { ok: true, useId: r.use_id!, storeName: r.store_name ?? "", title: r.title ?? "", discount: r.discount ?? null, shownAt: r.shown_at ?? "" };
+}
 
-  const { error } = await supabase.rpc("use_coupon", { p_coupon_id: couponId });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
+/** 店員さんが「使用済みにする」を押す */
+export async function confirmCouponUse(useId: string, path: string): Promise<{ ok: true; usedAt: string } | { ok: false; reason: string }> {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("coupon_confirm", { p_use_id: useId });
+  if (error || !data) return { ok: false, reason: "error" };
+  const r = data as { ok: boolean; reason?: string; used_at?: string };
+  if (!r.ok) return { ok: false, reason: r.reason ?? "error" };
   revalidatePath(path);
+  return { ok: true, usedAt: r.used_at ?? new Date().toISOString() };
 }
