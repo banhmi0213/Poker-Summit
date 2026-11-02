@@ -30,11 +30,11 @@
  .sheet button{min-height:44px!important}
  .sheet select{min-height:44px!important;font-size:16px!important;max-width:100%}
  .dock:has([data-play-controls]){position:fixed;left:0;right:0;bottom:0;z-index:2147483002;display:flex;flex-direction:column;max-height:calc(100dvh - 84px);box-sizing:border-box;gap:8px;padding:8px 12px calc(8px + var(--play-safe-bottom));border-top:1px solid #d6b364;background:#203e51;color:#f7f7ef;box-shadow:0 -5px 20px #08172355;font-family:inherit}
- :global(body:has([data-bottom-nav])) .root:not(.full)>.dock{bottom:calc(62px + var(--play-safe-bottom));padding-bottom:8px;max-height:calc(100dvh - 150px)}
+ :global(body:has([data-bottom-nav])) .root:not(.full)>.dock{bottom:calc(63px + var(--play-safe-bottom));padding-bottom:8px;max-height:calc(100dvh - 150px)}
  .dockFeedback{min-height:0;overflow:auto;scrollbar-width:thin}
  .dockFeedback:empty{display:none}
  .dockActions{flex:none}
- .dock button{font-family:inherit;min-height:48px;border-radius:8px;cursor:pointer}
+ .dock button{font-family:inherit;font-size:16px!important;min-height:48px!important;border-radius:8px;cursor:pointer}
  .dock button:not([data-kind]){border:1px solid #d6b364;background:#d6b364;color:#18364b;font-size:15px;font-weight:700;padding:10px 12px}
  .dockFeedback :global([data-answer-bars]){margin-top:8px;padding:8px;gap:7px}
  .dockFeedback :global([role=meter]){height:12px}

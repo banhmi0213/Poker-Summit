@@ -16,6 +16,9 @@
     "ruleCanOpen": true,
     "simulatedSafeAreaPx": 34,
     "reviewStartsAndClosesSettings": true,
+    "normalDockAboveNav": true,
+    "normalButtonsAtLeast44": true,
+    "fixedWhileScrolling": true,
     "errors": []
   },
   {
@@ -35,6 +38,9 @@
     "ruleCanOpen": true,
     "simulatedSafeAreaPx": 34,
     "reviewStartsAndClosesSettings": true,
+    "normalDockAboveNav": true,
+    "normalButtonsAtLeast44": true,
+    "fixedWhileScrolling": true,
     "errors": []
   },
   {
