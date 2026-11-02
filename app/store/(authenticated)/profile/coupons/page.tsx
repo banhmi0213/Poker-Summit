@@ -73,6 +73,14 @@ export default async function StoreCouponsPage() {
         <input type="number" name="usageLimit" min={1} inputMode="numeric" defaultValue={c?.usage_limit ?? ""} />
       </div>
       <div className="field">
+        <span>使える回数</span>
+        <select name="useRule" defaultValue={(c as { use_rule?: string } | null | undefined)?.use_rule ?? "once"}>
+          <option value="once">お一人様1回</option>
+          <option value="daily">お一人様1日1回</option>
+          <option value="unlimited">何度でも</option>
+        </select>
+      </div>
+      <div className="field">
         <span>{c ? "バナー画像を差し替える（任意）" : "バナー画像（任意）"}</span>
         <input type="file" name="bannerImage" accept="image/*" />
       </div>
