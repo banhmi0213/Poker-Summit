@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T17:01:49.395Z",
+  "checkedAt": "2026-11-02T23:03:03.239Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,228 +104,204 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-02T16:59:44.839Z",
+    "checkedAt": "2026-11-02T23:03:03.239Z",
     "runs": [
       {
-        "id": 41464873348,
+        "id": 41279680906,
+        "spot": "sb-bb",
         "total": 201,
-        "running": 7,
-        "success": 14,
+        "success": 164,
         "solveRunning": 7,
-        "queued": 179,
-        "failed": []
-      },
-      {
-        "id": 41459848850,
-        "total": 201,
-        "running": 7,
-        "success": 16,
-        "solveRunning": 7,
-        "queued": 177,
+        "queued": 29,
         "failed": []
       },
       {
         "id": 41459846661,
+        "spot": "sb-limp",
         "total": 201,
-        "running": 7,
-        "success": 7,
+        "success": 27,
         "solveRunning": 7,
-        "queued": 186,
+        "queued": 166,
         "failed": []
       },
       {
-        "id": 40922261771,
+        "id": 41459848850,
+        "spot": "sb-iso",
         "total": 201,
-        "running": 0,
-        "success": 200,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": []
-      },
-      {
-        "id": 41279681140,
-        "total": 201,
-        "running": 0,
-        "success": 200,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": []
-      },
-      {
-        "id": 41279680906,
-        "total": 201,
-        "running": 7,
-        "success": 143,
+        "success": 53,
         "solveRunning": 7,
-        "queued": 50,
+        "queued": 140,
+        "failed": []
+      },
+      {
+        "id": 41464873348,
+        "spot": "utg-bb",
+        "total": 201,
+        "success": 59,
+        "solveRunning": 5,
+        "queued": 136,
+        "failed": []
+      },
+      {
+        "id": 41486975878,
+        "spot": "hj-bb",
+        "total": 201,
+        "success": 38,
+        "solveRunning": 7,
+        "queued": 155,
+        "failed": []
+      },
+      {
+        "id": 41486979979,
+        "spot": "co-btn",
+        "total": 201,
+        "success": 51,
+        "solveRunning": 5,
+        "queued": 144,
         "failed": []
       }
     ]
   },
   "eta": {
-    "checkedAt": "2026-11-02T16:59:44.839Z",
-    "previousAt": "2026-11-02T14:46:45.531Z",
-    "hours": 2.2164744444444446,
-    "delta": 57,
-    "speed": 25.716515768034018,
-    "proxySpotRate": 4.286085961339003,
-    "remainingInitial200": 3020,
+    "checkedAt": "2026-11-02T23:03:03.239Z",
+    "previousAt": "2026-11-02T16:59:44.839Z",
+    "hours": 6.0551111111111116,
+    "delta": 212,
+    "speed": 35.01174398120963,
+    "proxySpotRate": 5.835290663534938,
+    "remainingInitial200": 2808,
     "rows": [
       {
-        "id": 41464873348,
-        "total": 201,
-        "running": 7,
-        "success": 14,
-        "solveRunning": 7,
-        "queued": 179,
-        "failed": [],
-        "spot": "utg-bb",
-        "remaining": 186,
-        "delta": 14,
-        "rate": 6.3163372061837935,
-        "etaJst": "2026-11-04T07:26:35.645+09:00"
-      },
-      {
-        "id": 41459848850,
-        "total": 201,
-        "running": 7,
-        "success": 16,
-        "solveRunning": 7,
-        "queued": 177,
-        "failed": [],
-        "spot": "sb-iso",
-        "remaining": 184,
-        "delta": 16,
-        "rate": 7.218671092781479,
-        "etaJst": "2026-11-04T03:29:06.881+09:00"
-      },
-      {
-        "id": 41459846661,
-        "total": 201,
-        "running": 7,
-        "success": 7,
-        "solveRunning": 7,
-        "queued": 186,
-        "failed": [],
-        "spot": "sb-limp",
-        "remaining": 193,
-        "delta": 7,
-        "rate": 3.1581686030918967,
-        "etaJst": "2026-11-05T15:06:25.759+09:00"
-      },
-      {
-        "id": 40922261771,
-        "total": 201,
-        "running": 0,
-        "success": 200,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "spot": "hu-limp",
-        "remaining": 0,
-        "delta": 4,
-        "rate": 1.8046677731953698,
-        "etaJst": "completed"
-      },
-      {
-        "id": 41279681140,
-        "total": 201,
-        "running": 0,
-        "success": 200,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "spot": "co-bb",
-        "remaining": 0,
-        "delta": 7,
-        "rate": 3.1581686030918967,
-        "etaJst": "completed"
-      },
-      {
-        "id": 41279680906,
-        "total": 201,
-        "running": 7,
-        "success": 143,
-        "solveRunning": 7,
-        "queued": 50,
-        "failed": [],
         "spot": "sb-bb",
-        "remaining": 57,
-        "delta": 9,
-        "rate": 4.060502489689582,
-        "etaJst": "2026-11-03T16:02:00.456+09:00"
+        "id": 41279680906,
+        "success": 164,
+        "running": 7,
+        "queued": 29,
+        "previous": 143,
+        "remaining": 36,
+        "rate": 3.4681444509688784,
+        "etaJst": "2026-11-03T18:25:51.924+09:00"
+      },
+      {
+        "spot": "sb-limp",
+        "id": 41459846661,
+        "success": 27,
+        "running": 7,
+        "queued": 166,
+        "previous": 7,
+        "remaining": 173,
+        "rate": 3.3029947152084556,
+        "etaJst": "2026-11-05T12:25:39.399+09:00"
+      },
+      {
+        "spot": "sb-iso",
+        "id": 41459848850,
+        "success": 53,
+        "running": 7,
+        "queued": 140,
+        "previous": 16,
+        "remaining": 147,
+        "rate": 6.110540223135643,
+        "etaJst": "2026-11-04T08:06:27.693+09:00"
+      },
+      {
+        "spot": "utg-bb",
+        "id": 41464873348,
+        "success": 59,
+        "running": 5,
+        "queued": 136,
+        "previous": 14,
+        "remaining": 141,
+        "rate": 7.431738109219025,
+        "etaJst": "2026-11-04T03:01:24.892+09:00"
       },
       {
         "spot": "hj-bb",
-        "remaining": 200,
-        "success": 0,
-        "rate": 4.286085961339003,
-        "etaJst": "2026-11-05T00:39:30.270+09:00",
-        "rateType": "proxyfornewrun"
+        "id": 41486975878,
+        "success": 38,
+        "running": 7,
+        "queued": 155,
+        "previous": 0,
+        "remaining": 162,
+        "rate": 6.2756899588960655,
+        "etaJst": "2026-11-04T09:51:53.260+09:00"
       },
       {
         "spot": "co-btn",
-        "remaining": 200,
-        "success": 0,
-        "rate": 4.286085961339003,
-        "etaJst": "2026-11-05T00:39:30.270+09:00",
-        "rateType": "proxyfornewrun"
+        "id": 41486979979,
+        "success": 51,
+        "running": 5,
+        "queued": 144,
+        "previous": 0,
+        "remaining": 149,
+        "rate": 8.422636523781561,
+        "etaJst": "2026-11-04T01:44:28.760+09:00"
       }
     ],
     "planned": [
       {
         "spot": "utg-btn",
-        "startJst": "2026-11-03T16:02:00.456+09:00",
-        "etaJst": "2026-11-05T14:41:45.887+09:00"
+        "startJst": "2026-11-03T18:25:51.924+09:00",
+        "etaJst": "2026-11-05T04:42:19.094+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "btn-bb-3bet",
-        "startJst": "2026-11-04T03:29:06.881+09:00",
-        "etaJst": "2026-11-06T02:08:52.312+09:00"
+        "startJst": "2026-11-04T01:44:28.760+09:00",
+        "etaJst": "2026-11-05T12:00:55.930+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "co-bb-3bet",
-        "startJst": "2026-11-04T07:26:35.645+09:00",
-        "etaJst": "2026-11-06T06:06:21.076+09:00"
+        "startJst": "2026-11-04T03:01:24.892+09:00",
+        "etaJst": "2026-11-05T13:17:52.062+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "btn-sb-3bet",
-        "startJst": "2026-11-05T00:39:30.270+09:00",
-        "etaJst": "2026-11-06T23:19:15.702+09:00"
+        "startJst": "2026-11-04T08:06:27.693+09:00",
+        "etaJst": "2026-11-05T18:22:54.862+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "utg-bb-3bet",
-        "startJst": "2026-11-05T00:39:30.270+09:00",
-        "etaJst": "2026-11-06T23:19:15.702+09:00"
+        "startJst": "2026-11-04T09:51:53.260+09:00",
+        "etaJst": "2026-11-05T20:08:20.429+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "co-btn-3bet",
-        "startJst": "2026-11-05T14:41:45.887+09:00",
-        "etaJst": "2026-11-07T13:21:31.319+09:00"
+        "startJst": "2026-11-05T04:42:19.094+09:00",
+        "etaJst": "2026-11-06T14:58:46.264+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "btn-bb-4bet",
-        "startJst": "2026-11-05T15:06:25.759+09:00",
-        "etaJst": "2026-11-07T13:46:11.191+09:00"
+        "startJst": "2026-11-05T12:00:55.930+09:00",
+        "etaJst": "2026-11-06T22:17:23.100+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "co-btn-bb",
-        "startJst": "2026-11-06T02:08:52.312+09:00",
-        "etaJst": "2026-11-08T00:48:37.744+09:00"
+        "startJst": "2026-11-05T12:25:39.399+09:00",
+        "etaJst": "2026-11-06T22:42:06.568+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "btn-sb-bb",
-        "startJst": "2026-11-06T06:06:21.076+09:00",
-        "etaJst": "2026-11-08T04:46:06.508+09:00"
+        "startJst": "2026-11-05T13:17:52.062+09:00",
+        "etaJst": "2026-11-06T23:34:19.231+09:00",
+        "rateType": "sixspotProxy"
       },
       {
         "spot": "utg-btn-bb",
-        "startJst": "2026-11-06T23:19:15.702+09:00",
-        "etaJst": "2026-11-08T21:59:01.133+09:00"
+        "startJst": "2026-11-05T18:22:54.862+09:00",
+        "etaJst": "2026-11-07T04:39:22.032+09:00",
+        "rateType": "sixspotProxy"
       }
     ],
-    "etaJst": "2026-11-08T21:59:01.133+09:00",
-    "assumptions": "Observed six-spot phase;6spots x7 demand with40runner limit,observedcompletion rate includesCI/queue. New/pending spots use aggregate/6 proxy. Refill immediately at earliest lane,real6hinspection delays notmodeled,boardcost varies;allow>=1day uncertainty. This is21x200 completion,not1755coverage."
+    "allInitial200EtaJst": "2026-11-07T04:39:22.032+09:00",
+    "assumption": "6 spots stay active; finished spots are replaced in the required order; new spots use the six-spot observed average per-spot rate; CI shares the measured 40-running-job repo load; estimate excludes 1,755 expansion and may move by 12h or more."
   },
   "flopPR": {
     "number": 756,
@@ -1969,5 +1945,32 @@
     "stageTreeMatchesLocal": true,
     "allChecks": "success",
     "completedAt": "2026-11-02T22:38:11.893Z"
+  },
+  "flopCollection": {
+    "coBb": {
+      "solveRun": 41279681140,
+      "collectRun": 41487113673,
+      "collectConclusion": "success",
+      "validated": {
+        "canonicalUnique": 200,
+        "version": 3,
+        "iterations": 250,
+        "handEv": "non-empty",
+        "tests": "66/66"
+      },
+      "pr": 763,
+      "prState": "open-checks-pending",
+      "branch": "chatgpt/gto-flop-co-bb-20261103-t",
+      "head": "a8da6ebd45e25e399abe676700a091f7d6dd5c39",
+      "validatedImportedCount": "200/1755"
+    }
+  },
+  "concurrency": {
+    "checkedAt": "2026-11-02T23:03:03.239Z",
+    "repoInProgressJobs": 40,
+    "flopInProgressJobs": 38,
+    "otherInProgressJobs": 2,
+    "proEffective": true,
+    "note": "All active/queued/waiting parent runs enumerated; every run's full jobs pages counted."
   }
 }
