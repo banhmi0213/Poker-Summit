@@ -11,8 +11,9 @@ import {
   toggleFavoriteStore,
   toggleFavoriteJob,
   joinEvent,
-  useCoupon,
 } from "@/app/member-actions";
+import { CouponUsePanel } from "@/app/coupons/coupon-use-panel";
+import { COUPON_USE_RULE_LABEL, couponUsedUp, parseCouponUseRule } from "@/lib/coupon-use-rule";
 import { reportStore, reportJob } from "@/app/report-actions";
 import { ReportForm } from "@/app/report-form";
 import { PortalHeader } from "@/app/portal-header";
@@ -284,7 +285,7 @@ export default async function StoreDetailPage({
       .order("posted_at", { ascending: false }),
     supabase
       .from("coupons")
-      .select("id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count")
+      .select("id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, use_rule")
       .eq("store_id", params.id)
       .eq("active", true)
       .or(notExpiredFilter()) // 期限(期限日の営業終了)を過ぎたクーポンは出さない
@@ -333,7 +334,8 @@ export default async function StoreDetailPage({
   let favoriteJobIds = new Set<string>();
   let appliedJobIds = new Set<string>();
   let joinedEventIds = new Set<string>();
-  let usedCouponIds = new Set<string>();
+  // クーポンごとの使用日（日本時間）。使える回数（1回・1日1回・何度でも）の判断に使う
+  let couponUsedDates = new Map<string, string[]>();
 
   // ログイン中の人のお気に入り等と、近くの店舗は互いに独立なので同時に取る
   const userDataPromise = user
@@ -350,7 +352,7 @@ export default async function StoreDetailPage({
         .from("event_participants")
         .select("event_id")
         .eq("user_id", user.id),
-      supabase.from("coupon_uses").select("coupon_id").eq("user_id", user.id),
+      supabase.from("coupon_uses").select("coupon_id, used_jst_date").eq("user_id", user.id).eq("status", "used"),
       ])
     : null;
 
@@ -416,7 +418,10 @@ export default async function StoreDetailPage({
     favoriteJobIds = new Set((favJobs ?? []).map((f) => f.job_id));
     appliedJobIds = new Set((apps ?? []).map((a) => a.job_id));
     joinedEventIds = new Set((parts ?? []).map((p) => p.event_id));
-    usedCouponIds = new Set((uses ?? []).map((u) => u.coupon_id));
+    couponUsedDates = new Map();
+    for (const u of (uses ?? []) as { coupon_id: string; used_jst_date: string | null }[]) {
+      couponUsedDates.set(u.coupon_id, [...(couponUsedDates.get(u.coupon_id) ?? []), u.used_jst_date ?? ""]);
+    }
   }
   const upcomingEvents = (events ?? []).filter((ev) => !ev.start_at || Date.parse(ev.start_at) >= Date.now()).length;
   const categoryBase = (store.category && CATEGORY_LABEL[store.category]) || "ポーカースポット";
@@ -584,7 +589,7 @@ export default async function StoreDetailPage({
             <>
 <section id="store-coupons" className="sd-section">
         <h2 style={{ fontSize: 18, marginTop: 28, marginBottom: 12 }}>
-          <DetailIcon name="ticket" />クーポン ({coupons?.length ?? 0})<DetailTabLink id="coupons" />
+          <DetailIcon name="ticket" />PokerSummit限定クーポン ({coupons?.length ?? 0})<DetailTabLink id="coupons" />
         </h2>
         {(!coupons || coupons.length === 0) && (
           <p className="muted">現在利用可能なクーポンはありません。</p>
@@ -592,7 +597,8 @@ export default async function StoreDetailPage({
         {[...(coupons ?? [])].sort((a,b) => Number(b.title.includes("友達")) - Number(a.title.includes("友達"))).map((c) => {
           const limitReached =
             c.usage_limit != null && (c.used_count ?? 0) >= c.usage_limit;
-          const alreadyUsed = usedCouponIds.has(c.id);
+          const useRule = parseCouponUseRule((c as { use_rule?: string }).use_rule);
+          const alreadyUsed = couponUsedUp(useRule, couponUsedDates.get(c.id) ?? []);
           return (
             <div className="card sd-coupon-card" key={c.id}>
               <ReferenceSlice region={[869,539,55,55]} alt="" className="sd-coupon-thumb" />
@@ -607,25 +613,15 @@ export default async function StoreDetailPage({
                 {c.valid_until && <>(有効期限: {couponExpiryLabel(c)})</>}
               </div>
               <Link className="btn primary sd-coupon-view" href={`/coupons/${c.id}`}>クーポンを見る</Link>
-              <form
-                action={async () => {
-                  "use server";
-                  await useCoupon(c.id, path);
-                }}
-                style={{ marginTop: 8 }}
-              >
-                <button
-                  type="submit"
-                  className={`btn ${alreadyUsed ? "" : "primary"}`}
-                  disabled={alreadyUsed || (limitReached && !alreadyUsed)}
-                >
-                  {alreadyUsed
-                    ? "✓ 使用済みです"
-                    : limitReached
-                    ? "利用上限に達しました"
-                    : "クーポンを使う"}
-                </button>
-              </form>
+              <div className="muted" style={{ marginTop: 6, fontSize: 12.5 }}>利用回数：{COUPON_USE_RULE_LABEL[useRule]}</div>
+              <CouponUsePanel
+                couponId={c.id}
+                path={path}
+                loggedIn={!!user}
+                usedUp={alreadyUsed}
+                usedUpLabel={useRule === "daily" ? "本日は使用済みです" : "使用済みです"}
+                limitReached={limitReached && !alreadyUsed}
+              />
             </div>
           );
         })}

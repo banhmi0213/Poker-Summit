@@ -15,7 +15,7 @@ import { CouponBannerLightbox } from "./coupon-banner-lightbox";
 import { staticPageMetadata } from "@/lib/seo";
 import { couponExpiryLabel, isCouponExpired } from "@/lib/coupon-expiry";
 
-export const metadata = staticPageMetadata({ title: "ポーカー店のクーポン・お得情報", description: "全国のアミューズメントポーカー店・ポーカーバーで使えるクーポンやキャンペーン情報。来店前にお得な特典をチェックできます。", path: "/coupons" });
+export const metadata = staticPageMetadata({ title: "ポーカー店のクーポン・お得情報｜PokerSummit限定", description: "全国のアミューズメントポーカー店・ポーカーバーで使える、PokerSummit限定のクーポンやキャンペーン情報。来店前にお得な特典をチェックできます。", path: "/coupons" });
 
 function couponStatus(c: { valid_until: string | null; expires_at?: string | null; usage_limit: number | null; used_count: number | null }) {
   if (isCouponExpired(c)) return "expired";
@@ -190,7 +190,7 @@ export default async function CouponsPage({
             marginBottom: 14,
           }}
         >
-          <h2 style={{ fontSize: 17 }}>{offerType ? couponCategoryLabel(offerType) : "クーポン"}一覧　{list.length}件</h2>
+          <h2 style={{ fontSize: 17 }}>{offerType ? couponCategoryLabel(offerType) : "PokerSummit限定クーポン"}一覧　{list.length}件</h2>
           <form method="get" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <input type="hidden" name="q" value={q} />
             <input type="hidden" name="pref" value={pref} />
@@ -240,7 +240,7 @@ export default async function CouponsPage({
                   {c.banner_image_url ? (
                     <CouponBannerLightbox imageUrl={c.banner_image_url} alt={c.title} />
                   ) : (
-                    <div className="coupon-card__media-fallback"><span>POKER SUMMIT</span><strong>{c.discount || c.title}</strong><small>店舗で使える特典クーポン</small></div>
+                    <div className="coupon-card__media-fallback"><span>POKER SUMMIT</span><strong>{c.discount || c.title}</strong><small>PokerSummit限定クーポン</small></div>
                   )}
                 </div>
                 <div className="coupon-card__body">
