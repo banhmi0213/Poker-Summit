@@ -67,7 +67,14 @@ async function database(){
   const port=await start();
   // 1. Open registration through the real lobby API for everyone; it closes by itself (start - 10 min).
   for(let i=0;i<ENTRANTS;i++)check((await f.directory.changeRegistration(f.users[i],f.tid,'register')).ok,'registered '+i);
-  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',30000)).finalization.roomId;
+  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',90000).catch(async e=>{
+   const q=async sql=>{try{return JSON.stringify((await f.db.query(sql,[f.tid])).rows);}catch(x){return 'ERR '+x.message;}};
+   console.log('DIAG status',await f.directory.managementStatus(f.tid).then(x=>JSON.stringify(x)).catch(x=>'ERR '+x.message));
+   console.log('DIAG regs',await q('select count(*) n from poker_private.tournament_registrations where tournament_id=$1'));
+   console.log('DIAG final',await q('select capacity,cardinality(members) n from poker_private.registration_finalizations where tournament_id=$1'));
+   console.log('DIAG rooms',await q('select capacity,expected_count from poker_private.tournament_rooms where tournament_id=$1'));
+   console.log('DIAG due',await q("select public.poker_entry_due()::text d where $1::uuid is not null"));
+   throw e;})).finalization.roomId;
   check((await f.directory.binding(roomId)).capacity===400,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
   // 2. Seats are drawn before the start; nobody is dealt in.
   let c=await until(saved,c=>Boolean(c.field),'seat draw');const tables=c.field.tables.length;check(tables===Math.ceil(ENTRANTS/6),'tables drawn');
