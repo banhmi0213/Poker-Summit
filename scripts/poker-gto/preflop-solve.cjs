@@ -5,7 +5,7 @@ const {PreflopSolver,positionsFor}=require(path.resolve(__dirname,'../../lib/pok
 const equity=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/preflop-equity.json'),'utf8'));
 const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
 // --fit file (2026/10/29): realisation fitted from the per-hand flop EVs (scripts/poker-gto/calibrate-hands.cjs).
-const fitFile=arg('fit');if(fitFile){require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts')).setRealizeFit(JSON.parse(fs.readFileSync(fitFile,'utf8')));console.log('realisation fit',fitFile);}
+const fitFile=arg('fit'),fit=fitFile?JSON.parse(fs.readFileSync(fitFile,'utf8')):null;if(fit){require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts')).setRealizeFit(fit);console.log('realisation fit',fitFile);}
 // --stack N --ante A (2026/10/30): tournament depths, e.g. --stack 20 --ante 1 (big blind ante) → preflop-20bb.json.
 const stack=Number(arg('stack',100)),ante=Number(arg('ante',0));
 // --rake BPS --rake-cap BB (2026/10/31): cash-game rake, e.g. --rake 300 --rake-cap 3 → preflop-rake300-3.json.
@@ -45,7 +45,7 @@ const sizeNote=deep?'オープン2.5BB（SB 3BB）、3ベットはIP 3倍・ブ�
  :`オープン${stack>=50?2.5:stack>=30?2.2:2}BB（SB ${stack>=50?3:2.5}BB）${stack<=25?'・オープンオールインあり':''}、3ベット・4ベットはスタックの45%以上になるときはオールイン`;
 const rakeText=rake?`レーキ${rakeBps/100}%・上限${rakeCap}BB（フロップまで進んだポットだけ）`:'レーキなし';
 const sizeNote2=rake?'オープン2.5BB（SB 3BB）、3ベットはIP 3倍・ブラインドから11BB（SB対BBは9BB）、4ベットは2.2〜2.5倍、5ベットはオールイン':sizeNote;
-const out={version:1,model:`simplified-${seats}max-${stack}bb${ante?`-ante${ante}`:''}${rake?`-rake${rakeBps}-${rakeCap}`:''}`,seats,stack,ante,...(rake?{rake:{bps:rakeBps,capBb:rakeCap}}:{}),assumptions:[`${stack}BB・${seats}人卓・${ante?`BBアンティ${ante}BB`:'アンティなし'}・${rakeText}`,sizeNote2,'リンプはSBだけ（SBまで全員降りたとき）。BBはチェックか4BBにレイズ、SBはフォールド・コール・12BBに3ベット。オープンにコールが入ったら、後ろの人はスクイーズ（10BB、ブラインドから12BB）でき、BBだけはコールでも参加できる（3人まで）。スクイーズにはオープナーがフォールド・コール・オールイン、コーラーがフォールド・コール。それ以外は1対1','フロップ以降は打ち合わず、オールイン時の勝率をポジションと手の打ちやすさで補正した取り分で評価'+(deep||rake?'':'（スタックが浅いほど、補正を小さくしています）'),...(rake?['レーキは、フロップのあとにポットが大きくなる分も見込んで（リンプ・シングルレイズは2.5倍、3ベットは1.6倍、4ベットは1.2倍）、上限までを勝った人の取り分から引いています']:[])],iterations:s.iterations,averageRegret:+s.averageRegret().toFixed(5),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+const out={version:1,model:`simplified-${seats}max-${stack}bb${ante?`-ante${ante}`:''}${rake?`-rake${rakeBps}-${rakeCap}`:''}`,seats,stack,ante,...(rake?{rake:{bps:rakeBps,capBb:rakeCap}}:{}),assumptions:[`${stack}BB・${seats}人卓・${ante?`BBアンティ${ante}BB`:'アンティなし'}・${rakeText}`,sizeNote2,'リンプはSBだけ（SBまで全員降りたとき）。BBはチェックか4BBにレイズ、SBはフォールド・コール・12BBに3ベット。オープンにコールが入ったら、後ろの人はスクイーズ（10BB、ブラインドから12BB）でき、BBだけはコールでも参加できる（3人まで）。スクイーズにはオープナーがフォールド・コール・オールイン、コーラーがフォールド・コール。それ以外は1対1','フロップ以降は打ち合わず、オールイン時の勝率をポジションと手の打ちやすさで補正した取り分で評価'+(deep||rake?'':fit?.byStack?.[String(stack)]?'（この深さ用の補正を使用しています）':'（スタックが浅いほど、補正を小さくしています）'),...(rake?['レーキは、フロップのあとにポットが大きくなる分も見込んで（リンプ・シングルレイズは2.5倍、3ベットは1.6倍、4ベットは1.2倍）、上限までを勝った人の取り分から引いています']:[])],iterations:s.iterations,averageRegret:+s.averageRegret().toFixed(5),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
 // --ev file (2026/10/31): also write each action's EV per hand (big blinds) for the trainer's EV loss.
 const evFile=arg('ev');if(evFile){const ev=s.actionEvs(),r2=v=>Math.round(v*100)/100;
  fs.writeFileSync(evFile,JSON.stringify({version:1,model:out.model,iterations:s.iterations,unit:'bb',
