@@ -14,3 +14,10 @@ test('nearest flop: exact kind when computed, otherwise a close texture',()=>{
  const n=nearestFlop('Ks7s3d',flops);assert.ok(n&&!n.exact);assert.equal(texture(n.flop).pattern,'hm','keeps the two-tone pattern of the high cards');
  assert.equal(nearestFlop('XX',flops),null);assert.equal(canonicalFlop('Kh7h7h'),null,'repeated card');
 });
+
+test('an additional computed flop outside the initial 200 overrides its former representative',()=>{
+ const initial=new Set(flops.map(f=>texture(f).key));
+ const extra=allTextures().find(t=>!initial.has(t.key)).example;
+ assert.equal(nearestFlop(extra,flops).exact,false);
+ assert.deepEqual(nearestFlop(extra,[...flops,extra]),{flop:extra,distance:0,exact:true});
+});
