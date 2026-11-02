@@ -663,8 +663,15 @@
       60
     ],
     "capacityMaxParallel": 2,
-    "status": "run in_progress; verify job state next; do not duplicate",
+    "status": "capacity succeeded; Solve6max20bb(job125104159079) and Solve6max40bb(job125104159046) steps in_progress verified; remaining7 queued",
     "temporaryWorkflow": true,
-    "collectRequiresAll9": true
+    "collectRequiresAll9": true,
+    "capacityObservedAt": "2026-11-02T05:01:49.5628480Z",
+    "repositoryRunningIncludingCapacity": 21,
+    "allowedParallel": 2,
+    "localRegressionTests": {
+      "passed": 63,
+      "failed": 0
+    }
   }
 }
