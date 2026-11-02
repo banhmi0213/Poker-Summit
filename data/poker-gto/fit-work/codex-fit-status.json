@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-01T23:08:03.976532+00:00",
+  "checkedAt": "2026-11-02T03:49:30.592Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -98,11 +98,10 @@
       "rfi": "pass"
     }
   },
-  "refinementRun": 41360125420,
-  "refinementBranch": "gto-preflop-fit/refine-40bb-20261102-c",
-  "refinementJob": 125008669127,
+  "refinementRun": 41385060824,
+  "refinementBranch": "gto-preflop-fit/best-round-40bb-20261102-d",
   "refinementInit": "gto-preflop-fit-out/41335511969:data/poker-gto/fit-work/fit2-40.json",
-  "refinementState": "Fit in_progress verified; only 40BB rerun, preserve 20/60",
+  "refinementState": "capacity check observed in_progress; 40BB only, 400 iterations from same prior fit2-40; round snapshots and conditional one-time 600-iteration fallback",
   "flops": {
     "checkedAt": "2026-11-01T23:02:17.778543+00:00",
     "activeRuns": [
@@ -337,9 +336,220 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "Public GitHub REST rescans hit HTTP403 rate limit; preserve snapshot observation time. 40BB additional refinement 41360125420 Fit step verified in_progress. Do not duplicate it. No new spot: 4 ongoing spots occupy 21 jobs; 40BB fit plus staging CI can fill remaining slots. No production/DB changes.",
+  "notes": "Public GitHub REST rescans hit HTTP403 rate limit; preserve snapshot observation time. 40BB additional refinement 41360125420 Fit step verified in_progress. Do not duplicate it. No new spot: 4 ongoing spots occupy 21 jobs; 40BB fit plus staging CI can fill remaining slots. No production/DB changes. Owner updated selection rule: final round alone must not be used. Verify selection.complete, selection.eligible, all snapshots and matching play/role. Code on calculation branch must be picked into eventual source PR WITHOUT temporary workflow or fit-work.",
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet"
-  ]
+  ],
+  "roundSelectionPolicy": {
+    "stack": 40,
+    "rule": "Choose lowest BeyondGTO RFI perHandDiff among rounds with all four BB defenses within +/-4pt. Use that same round's exact play and full role/callBy.",
+    "snapshotSuffix": ".rounds.json",
+    "fallback": "If no BB-qualified result <=3.0 at 400 iterations, run once only at 600 iterations; preserve and report result without further fitting.",
+    "tests": {
+      "passed": 63,
+      "failed": 0
+    }
+  },
+  "priorRefinement": {
+    "run": 41360125420,
+    "status": "completed",
+    "reports": [
+      {
+        "round": 0,
+        "perHandDiff": 3.09,
+        "rfi": {
+          "BTN": 62.6,
+          "CO": 36.4,
+          "HJ": 28.5,
+          "LJ": 23.3,
+          "UTG+1": 19.1,
+          "UTG": 16.7
+        },
+        "defend": {
+          "BTN": 0.803,
+          "CO": 0.765,
+          "HJ": 0.69,
+          "UTG": 0.555
+        },
+        "call": 0.612,
+        "callBy": {
+          "BTN": 0.48304908716340356,
+          "CO": 0.6719058847278171,
+          "HJ": 0.6816513282606518,
+          "UTG": 0.705790377883847,
+          "UTG+1": 0.698,
+          "LJ": 0.69
+        }
+      },
+      {
+        "round": 1,
+        "perHandDiff": 2.98,
+        "rfi": {
+          "BTN": 62,
+          "CO": 36.1,
+          "HJ": 28.6,
+          "LJ": 25,
+          "UTG+1": 19.8,
+          "UTG": 16.2
+        },
+        "defend": {
+          "BTN": 0.818,
+          "CO": 0.731,
+          "HJ": 0.67,
+          "UTG": 0.533
+        },
+        "call": 0.622,
+        "callBy": {
+          "BTN": 0.5049797241273855,
+          "CO": 0.6841096954482919,
+          "HJ": 0.68988042000136,
+          "UTG": 0.7186096318534949,
+          "UTG+1": 0.709,
+          "LJ": 0.699
+        }
+      },
+      {
+        "round": 2,
+        "perHandDiff": 2.87,
+        "rfi": {
+          "BTN": 61.5,
+          "CO": 37.4,
+          "HJ": 28.3,
+          "LJ": 23,
+          "UTG+1": 19.5,
+          "UTG": 16.5
+        },
+        "defend": {
+          "BTN": 0.826,
+          "CO": 0.764,
+          "HJ": 0.686,
+          "UTG": 0.555
+        },
+        "call": 0.639,
+        "callBy": {
+          "BTN": 0.5184887230364046,
+          "CO": 0.7255415040692273,
+          "HJ": 0.7151685707740237,
+          "UTG": 0.7512348191766802,
+          "UTG+1": 0.739,
+          "LJ": 0.727
+        }
+      },
+      {
+        "round": 3,
+        "perHandDiff": 2.52,
+        "rfi": {
+          "BTN": 60.6,
+          "CO": 35.7,
+          "HJ": 28.4,
+          "LJ": 23.2,
+          "UTG+1": 19.6,
+          "UTG": 16.7
+        },
+        "defend": {
+          "BTN": 0.787,
+          "CO": 0.728,
+          "HJ": 0.659,
+          "UTG": 0.578
+        },
+        "call": 0.647,
+        "callBy": {
+          "BTN": 0.5272729141858677,
+          "CO": 0.7396064927650382,
+          "HJ": 0.7272848949111761,
+          "UTG": 0.7648794794605772,
+          "UTG+1": 0.752,
+          "LJ": 0.74
+        }
+      },
+      {
+        "round": 4,
+        "perHandDiff": 2.29,
+        "rfi": {
+          "BTN": 58.1,
+          "CO": 35.7,
+          "HJ": 28.3,
+          "LJ": 24.4,
+          "UTG+1": 19.5,
+          "UTG": 16.5
+        },
+        "defend": {
+          "BTN": 0.799,
+          "CO": 0.782,
+          "HJ": 0.668,
+          "UTG": 0.532
+        },
+        "call": 0.665,
+        "callBy": {
+          "BTN": 0.5618968421917627,
+          "CO": 0.7872282865631262,
+          "HJ": 0.7639621745782305,
+          "UTG": 0.7575717695882684,
+          "UTG+1": 0.76,
+          "LJ": 0.762
+        }
+      },
+      {
+        "round": 5,
+        "perHandDiff": 1.85,
+        "rfi": {
+          "BTN": 55.8,
+          "CO": 37.3,
+          "HJ": 28.4,
+          "LJ": 23.3,
+          "UTG+1": 19.2,
+          "UTG": 16.5
+        },
+        "defend": {
+          "BTN": 0.785,
+          "CO": 0.788,
+          "HJ": 0.69,
+          "UTG": 0.551
+        },
+        "call": 0.68,
+        "callBy": {
+          "BTN": 0.5902335335891813,
+          "CO": 0.7853412040801537,
+          "HJ": 0.7938688555133473,
+          "UTG": 0.7929167842437418,
+          "UTG+1": 0.793,
+          "LJ": 0.794
+        }
+      },
+      {
+        "round": 6,
+        "perHandDiff": 1.41,
+        "rfi": {
+          "BTN": 52.8,
+          "CO": 36,
+          "HJ": 28.2,
+          "LJ": 24,
+          "UTG+1": 19.2,
+          "UTG": 16.3
+        },
+        "defend": {
+          "BTN": 0.772,
+          "CO": 0.73,
+          "HJ": 0.695,
+          "UTG": 0.559
+        },
+        "call": 0.69,
+        "callBy": {
+          "BTN": 0.630503229947255,
+          "CO": 0.7778380015177908,
+          "HJ": 0.803452669658887,
+          "UTG": 0.8112029571454313,
+          "UTG+1": 0.809,
+          "LJ": 0.806
+        }
+      }
+    ],
+    "bestBBPassingRound": 2,
+    "bestRfiDifference": 2.87,
+    "playAvailable": false,
+    "note": "Last-only saver lost round2 play. Final round6 RFI1.41 but BB fails BTN/CO. Not eligible for integration."
+  },
+  "refinementCommit": "6285a159283437b60d1b3991581ce22353cfc3eb",
+  "refinementOutput": "gto-preflop-fit-out/41385060824"
 }
