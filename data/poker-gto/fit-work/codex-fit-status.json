@@ -1038,7 +1038,6 @@
     "hu-limp"
   ],
   "stagingVerified": {
-    "sha": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd",
     "spotCounts": {
       "btn-bb": 200,
       "hu-3bet": 200,
@@ -1800,7 +1799,7 @@
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
   "mobileUsabilityPhase2": {
     "requestedAt": "2026-11-02T17:08:00Z",
-    "state": "waiting-for-PR760-checks-and-merge",
+    "state": "ready-to-start-5",
     "dependency": {
       "items": [
         "全画面プレイ",
@@ -1809,7 +1808,14 @@
         "弱点から練習へ"
       ],
       "allMustBeMergedTo": "chatgpt/poker-authoritative-hand",
-      "verification": "PR list through #755 and staging ac82aa1 inspected; phase1 complete set not verified; no fullscreen implementation found; no duplicate implementation started"
+      "verification": "PR list through #755 and staging ac82aa1 inspected; phase1 complete set not verified; no fullscreen implementation found; no duplicate implementation started",
+      "verified": true,
+      "prs": [
+        757,
+        758,
+        759,
+        760
+      ]
     },
     "requirements": {
       "5": "standalone manifest; Poker Summit name;192/512/icon apple-touch; navy theme;iOS webapp metadata; safearea;GTO install guidance dismiss permanently per device;375px verify;home launch screenshot required",
@@ -1828,7 +1834,6 @@
         "pr": 757,
         "head": "8fed97be3635f027cf6e4997944b41babc21e20d",
         "state": "merged",
-        "merge": "46fd41bae5a4c0787207a82838aac084a2302c71",
         "screenshotDirectory": "docs/gto-mobile/20261103",
         "viewports": [
           375,
@@ -1843,7 +1848,6 @@
         "pr": 758,
         "head": "ed1a7bc242d87b6cf053a04ce4bce0bf00b79db1",
         "state": "merged",
-        "merge": "2dd471b9813705ce20d7546896bb3098b89bb957",
         "screenshotDirectory": "docs/gto-mobile/20261103",
         "viewports": [
           375,
@@ -1858,7 +1862,6 @@
         "pr": 759,
         "head": "854c09188c5d3d438a980f93ae8924c489bcfa1e",
         "state": "merged",
-        "merge": "93ab712b924f554ce2bf912ffb0d1f4943ed88fe",
         "screenshotDirectory": "docs/gto-mobile/20261103",
         "viewports": [
           375,
@@ -1872,8 +1875,7 @@
         "title": "弱点から練習へ",
         "pr": 760,
         "head": "56f759986917bff56a16fb65dcb3edd5458c8b21",
-        "state": "checks-pending",
-        "merge": null,
+        "state": "merged",
         "screenshotDirectory": "docs/gto-mobile/20261103",
         "viewports": [
           375,
@@ -1885,6 +1887,14 @@
     ],
     "browser": "Chromium138 real React components in local accountworkspace;fixed API responses;actual worker,data;not iPhone hardware",
     "workspace": "/workspace/scratch/181a490d1af4/gto-mobile",
-    "harness": "out/mobile-qa"
+    "harness": "out/mobile-qa",
+    "stageTree": "4ea53c180058b7fac1607c4abf7ae2224fb61b02",
+    "stageTreeMatchesLocal": true,
+    "additionalValidation": [
+      "no substitute randomquestion iftarget unavailable",
+      "invalidtarget rejected",
+      "floppractice initialmode",
+      "allactions within320x568 viewport"
+    ]
   }
 }
