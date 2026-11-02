@@ -1800,7 +1800,7 @@
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
   "mobileUsabilityPhase2": {
     "requestedAt": "2026-11-02T17:08:00Z",
-    "state": "ready-to-start-5",
+    "state": "paused-until-mobile-polish-merged",
     "dependency": {
       "items": [
         "全画面プレイ",
@@ -1823,7 +1823,22 @@
       "6": "Disable pull-to-refresh/page bounce only during GTO opponent/practice playing;restore other screens",
       "7": "Use prefetchGtoCharts/cachedJson; warm current-stack chart and common flop index; persist device cache; total prefetch a few hundred KB maximum"
     },
-    "workflow": "Only begin 5-7 after all4 phase1 items staged. Separate new branch/PR per numbered item,allchecks green before stage merge. Preserve PC/navy/gold/chartcolors, noarrows. Report375px verification perPR, home-launch screenshot for5. Do not substitute viewport-only screenshot for actual standalone launch evidence."
+    "workflow": "Only begin 5-7 after all4 phase1 items staged. Separate new branch/PR per numbered item,allchecks green before stage merge. Preserve PC/navy/gold/chartcolors, noarrows. Report375px verification perPR, home-launch screenshot for5. Do not substitute viewport-only screenshot for actual standalone launch evidence.",
+    "prepared5": {
+      "workspace": "/workspace/scratch/181a490d1af4/gto-mobile",
+      "branch": "chatgpt/gto-home-install-20261103-r",
+      "state": "local-draft-only-noPR-paused",
+      "files": [
+        "app/layout.tsx",
+        "app/manifest.ts",
+        "app/poker-ui/account-workspace.tsx",
+        "app/poker-ui/account-workspace.module.css",
+        "app/poker-ui/gto-install-hint.tsx",
+        "app/poker-ui/gto-install-hint.module.css"
+      ],
+      "standaloneScreenshotMissing": true,
+      "notes": "Existing standalone/name/icons192/512/apple180 verified. Draft viewportFit cover/theme current navy/install hint durable dismissal/header safearea. Actualstandalone notyettested. Headlessshell lacksPWA CDP; fullChrome downloaded /workspace/scratch/181a490d1af4/chrome-full but launchfailed; don'tmislabel normalviewport as home launch."
+    }
   },
   "mobileUsabilityPhase1": {
     "updatedAt": "2026-11-02T17:51:43.549Z",
@@ -1924,5 +1939,13 @@
     "allChecks": "success",
     "autoPauseAndResumeVerified": true,
     "completedAt": "2026-11-02T18:51:06.631Z"
+  },
+  "mobileUsabilityPolish": {
+    "state": "working",
+    "ownerRequest": "11/3 remaining4 before phase5: taller fullscreentable+board/hero separation+0BB relocation,actualmini drilltable+why+hidekeyboardhint,mobilehanddetail sheet+shortstacklabel+swipehint,removeweakintroduplicate",
+    "branch": "chatgpt/gto-mobile-gto-polish-20261103-s",
+    "workspace": "/workspace/scratch/181a490d1af4/gto-mobile-polish",
+    "base": "f4aad219f5ce3eaa19d3cb9406392287a3e26bdc",
+    "tests": 15
   }
 }
