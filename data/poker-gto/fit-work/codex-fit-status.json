@@ -1047,7 +1047,7 @@
     "initialComplete": 4,
     "totalSpots": 21,
     "huLimpTreeMatched": true,
-    "sha": "f4aad219f5ce3eaa19d3cb9406392287a3e26bdc"
+    "sha": "f5f108ffe46dda1cc6be4b06e32df1106721ef7c"
   },
   "conditionalAcceptance": {
     "rule": "\n【最新40BB条件付き合格ルール】追加の当て直しは全面禁止。再生成8maxのBB守り4席が参考BTN84/CO78/HJ70/UTG57%から各±4ptなら合格。UTGだけ±5pt以内(52〜62%)で他3席が±4pt以内なら条件付き合格として20/60BB表と一緒にstageへ入れてよい。PR本文へ必ず「40BB の UTG 相手は参考から −4.5 前後。GTO Wizard で最終確認する項目」と記載。より外れたらマージせず結果のみ報告。6/9人卓は訂正後の位置比較基準を維持。Wizardの課金を今勧める指示ではない。全CI成功後のみstage merge、本番main/DB/課金/公開は操作しない。",
@@ -1800,7 +1800,7 @@
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
   "mobileUsabilityPhase2": {
     "requestedAt": "2026-11-02T17:08:00Z",
-    "state": "paused-until-mobile-polish-merged",
+    "state": "ready-to-resume-5",
     "dependency": {
       "items": [
         "全画面プレイ",
@@ -1941,7 +1941,7 @@
     "completedAt": "2026-11-02T18:51:06.631Z"
   },
   "mobileUsabilityPolish": {
-    "state": "PR-checks-pending",
+    "state": "merged",
     "ownerRequest": "11/3 remaining4 before phase5: taller fullscreentable+board/hero separation+0BB relocation,actualmini drilltable+why+hidekeyboardhint,mobilehanddetail sheet+shortstacklabel+swipehint,removeweakintroduplicate",
     "branch": "chatgpt/gto-mobile-gto-polish-20261103-s",
     "workspace": "/workspace/scratch/181a490d1af4/gto-mobile-polish",
@@ -1964,6 +1964,10 @@
       "320": 263,
       "375": 507
     },
-    "zeroBBVerified": true
+    "zeroBBVerified": true,
+    "merge": "f5f108ffe46dda1cc6be4b06e32df1106721ef7c",
+    "stageTreeMatchesLocal": true,
+    "allChecks": "success",
+    "completedAt": "2026-11-02T22:38:11.893Z"
   }
 }
