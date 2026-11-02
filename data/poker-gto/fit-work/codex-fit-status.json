@@ -1153,7 +1153,7 @@
     "branch": "chatgpt/gto-mtt-conditional-20261102-i",
     "head": "b3bf52304a4b62a1fc1cb1246dfd32ae215467f1",
     "state": "open",
-    "checks": "Poker engine tests run41458315861 job125320601621 in_progress (regression stage);Vercel pending;Vercel Preview Comments success",
+    "checks": "Vercel success;engine run41458315861 still in_progress Verify selected seats and per-hand timebank in browsers;not yet merged",
     "tests": {
       "passed": 63,
       "failed": 0
@@ -1168,5 +1168,31 @@
     "ciRun": 41458315861,
     "ciJob": 125320601621,
     "retryCount": 0
+  },
+  "proLoadTest": {
+    "ownerConfirmedPlan": "GitHubPro on billing page",
+    "startedAt": "2026-11-02T14:13:12.313Z",
+    "stage": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+    "addedSpots": [
+      {
+        "spot": "sb-limp",
+        "run": 41459846661,
+        "branch": "gto-flop-solve/sb-limp/v3b",
+        "sevenSolveStepsRunningVerified": true
+      },
+      {
+        "spot": "sb-iso",
+        "run": 41459848850,
+        "branch": "gto-flop-solve/sb-iso/v3b",
+        "sevenSolveStepsRunningVerified": true
+      }
+    ],
+    "measurementTask": "6ae89a9ceb708191b3a4580e2876b584",
+    "measurementDueUtc": "2026-11-02T14:38:48Z",
+    "targetSpots": 5,
+    "parallelPerSpot": 7,
+    "targetFlopJobs": 35,
+    "policy": "\n【最新Pro負荷試験】オーナーが請求ページでGitHubPro契約確認済みと明示。従来23job制限を今回の追加2場面について解除し、2026-11-02T14:13:12Zにsb-limp/run41459846661とsb-iso/run41459848850を最新stage585c0a90から追加開始済み。各7Solve工程in_progressを確認。重複起動禁止。約25分後に全run全jobページでin_progress合計を取る一回確認task設定済み。開始前未開始run0件/同spotbranchなし確認済み。今回の目標5spots×7=35。30超を実測したら『Proが効き始めた』として以後5spotsを基本に、完了したら指定順から1spotずつ補充。20〜24で十分なqueuedが残るなら実数/待ち数をそのままサポート用報告し効いたと断言しない。測定前にPro有効性や上限40の実証を断言しない。25〜30/負荷不足は未確定として実数を報告。全runは親status=in_progressだけでなくqueued/waitingも取得する。",
+    "status": "Both added runs started;25minute full-repository measurement scheduled;no conclusion yet"
   }
 }
