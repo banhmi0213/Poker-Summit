@@ -64,8 +64,8 @@ jobs:
           set +e
           npm run test:poker > poker-unit.log 2>&1; code=$?
           tail -n 5 poker-unit.log
-          grep -E "^not ok|^# (pass|fail)" poker-unit.log | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
-          grep -B2 -A12 "^not ok" poker-unit.log | grep -E "AssertionError|Error|expected|actual|message|location" | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          grep -E "not ok|^# (pass|fail)" poker-unit.log | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          grep -A14 "not ok" poker-unit.log | grep -E "AssertionError|Error|expected|actual|message|location" | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
           exit $code
       - name: Install isolated test runtimes
         run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10 react-test-renderer@18.3.1 esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
