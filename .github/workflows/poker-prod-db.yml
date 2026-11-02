@@ -44,4 +44,6 @@ jobs:
           echo "::notice::OK: all migrations ran (${GITHUB_REF_NAME})."
       - name: After apply, check the new objects exist
         if: github.ref_name == 'ops/prod-db-apply'
-        run: psql "$DB_URL" -X -A -t -c "select count(*) from information_schema.tables where table_schema='poker_private'" | sed 's/^/::notice::poker_private tables: /'
+        run: |
+          n=$(psql "$DB_URL" -X -A -t -c "select count(*) from information_schema.tables where table_schema='poker_private'")
+          echo "::notice::poker_private tables: $n"
