@@ -385,7 +385,7 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "19:53JST full-page scan:hu-srp200success,hu-limp184/5/11,sb-bb117/7/76,co-bb169/7/24;repo19running before40BB chart restart. No newspot:19flop+2chart+collect leave<7 capacity. Latest staging8e100b75 preserved. Need collect HU-SRP, validate200files, index, relevanttests then newPR allchecks. Preflop finalchart must pass owner corrected gates; nofit/table equality requirement. Pro>30 not observed.",
+  "notes": "Latest owner conditions permit40BBUTG52..62 ifother3within4. Actual−4.4932;PR753 includesexact requestedWizard caveat. Donot recommendpurchase yet. No further40BB fitting. AfterallchecksmergePRS753staging thenclose723asreplaced. Workflows/fit-work excluded,top-levelplay/role unchanged,all3flopsets preserved. Previous fail rules overridden by latest acceptance.",
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet",
@@ -644,7 +644,7 @@
       40
     ],
     "variants": 3,
-    "status": "6max and8max Solve steps in_progress verified;9max queued; final chart gates pending",
+    "status": "All340BB solve and collect succeeded;20/60original output retained. Final8max40BB52.5068UTG conditionally accepted by owner;no morefit. PR753awaitingchecks.",
     "retained20and60Output": "gto-preflop-out/41391600063",
     "note": "1000iteration selected round0 has identical play and role as previous400iteration selected round2, so previous2000iteration UTG52.5068 may persist. No manual strategy edits or additional fit."
   },
@@ -844,10 +844,8 @@
     "pass": false,
     "rules": "\n【最優先：2026-11-02オーナー訂正】旧6/9人卓同席±5・BTN大小順・8人卓fit一致±2の基準は撤回。再生成表8人卓のBB守りBTN84/CO78/HJ70/UTG57%から各±4ptで判定し、fit時の数値との一致は要求しない。6人卓はUTG相手のBB守りを8人卓HJ相手と比べ±5ptなら合格。9人卓はUTG相手のBB守りが8人卓UTG相手以下なら合格。BTN RFIは人数間の差±1pt以内なら合格。20BB/60BBは既存生成済みrun41391600063（出力commit1d7eff01d2e8e3658f43e83e26d421df167de04e）をそのまま維持、再計算しない。40BB8maxUTG52.5068%だけ参考基準外。採用済みround2のplay/role/callByを--initに指定し、--iters1000 --rounds3で40BBのみ当て直す。今回新runのbranchはgto-preflop-fit/40bb-1000iters-20261102-f、採用round2をdata/poker-gto/fit-work/fit2-40-selected-init.jsonへそのまま配置。600反復の旧fallbackは禁止、1000反復3roundのみ。各round保存とBB合格回の最小RFI選択は維持。完了後、40BBのみ6/8/9人卓を2000反復で再生成し上記の訂正基準とBeyondGTO RFIを実測・報告。旧20/60結果を上書きしない。手で数値を合わせない。重複起動せず最新checkpointのrunを確認。\n進展/問題/引継ぎなどClaudeへ共有する事項があれば、オーナーに言われる前にコピーできる形で提示する。"
   },
-  "mergeBlocked": true,
-  "mergeBlockReasons": [
-    "40BB generated8max UTG defend52.5068% below53% minimum; prior cross-seat/fit-consistency blocks withdrawn by owner"
-  ],
+  "mergeBlocked": false,
+  "mergeBlockReasons": [],
   "acceptanceCorrection": {
     "ownerRules": "\n【最優先：2026-11-02オーナー訂正】旧6/9人卓同席±5・BTN大小順・8人卓fit一致±2の基準は撤回。再生成表8人卓のBB守りBTN84/CO78/HJ70/UTG57%から各±4ptで判定し、fit時の数値との一致は要求しない。6人卓はUTG相手のBB守りを8人卓HJ相手と比べ±5ptなら合格。9人卓はUTG相手のBB守りが8人卓UTG相手以下なら合格。BTN RFIは人数間の差±1pt以内なら合格。20BB/60BBは既存生成済みrun41391600063（出力commit1d7eff01d2e8e3658f43e83e26d421df167de04e）をそのまま維持、再計算しない。40BB8maxUTG52.5068%だけ参考基準外。採用済みround2のplay/role/callByを--initに指定し、--iters1000 --rounds3で40BBのみ当て直す。今回新runのbranchはgto-preflop-fit/40bb-1000iters-20261102-f、採用round2をdata/poker-gto/fit-work/fit2-40-selected-init.jsonへそのまま配置。600反復の旧fallbackは禁止、1000反復3roundのみ。各round保存とBB合格回の最小RFI選択は維持。完了後、40BBのみ6/8/9人卓を2000反復で再生成し上記の訂正基準とBeyondGTO RFIを実測・報告。旧20/60結果を上書きしない。手で数値を合わせない。重複起動せず最新checkpointのrunを確認。\n進展/問題/引継ぎなどClaudeへ共有する事項があれば、オーナーに言われる前にコピーできる形で提示する。",
     "eightMaxTargets": {
@@ -1005,5 +1003,167 @@
     "hu-3bet",
     "hu-srp"
   ],
-  "stagingVerified": "585c0a903f7b2173d47c944c8e2d435a55319a23"
+  "stagingVerified": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+  "conditionalAcceptance": {
+    "rule": "\n【最新40BB条件付き合格ルール】追加の当て直しは全面禁止。再生成8maxのBB守り4席が参考BTN84/CO78/HJ70/UTG57%から各±4ptなら合格。UTGだけ±5pt以内(52〜62%)で他3席が±4pt以内なら条件付き合格として20/60BB表と一緒にstageへ入れてよい。PR本文へ必ず「40BB の UTG 相手は参考から −4.5 前後。GTO Wizard で最終確認する項目」と記載。より外れたらマージせず結果のみ報告。6/9人卓は訂正後の位置比較基準を維持。Wizardの課金を今勧める指示ではない。全CI成功後のみstage merge、本番main/DB/課金/公開は操作しない。",
+    "source": "owner explicit instruction",
+    "extraFittingForbidden": true
+  },
+  "finalChartAcceptance": {
+    "charts": {
+      "20": {
+        "tables": {
+          "6": {
+            "btnRfi": 41.512217194570134,
+            "bbDefend": {
+              "BTN": 82.81719457013574,
+              "CO": 78.70407239819004,
+              "HJ": 73.40120663650076,
+              "UTG": 72.41719457013572
+            }
+          },
+          "8": {
+            "btnRfi": 41.526696832579184,
+            "bbDefend": {
+              "BTN": 82.82533936651582,
+              "CO": 78.59366515837104,
+              "HJ": 73.09079939668176,
+              "UTG": 55.45852187028658
+            }
+          },
+          "9": {
+            "btnRfi": 41.517043740573136,
+            "bbDefend": {
+              "BTN": 82.85701357466063,
+              "CO": 78.42805429864252,
+              "HJ": 73.39336349924585,
+              "UTG": 50.36410256410257
+            }
+          }
+        },
+        "differencePt": {
+          "BTN": -1.17466063348418,
+          "CO": 0.5936651583710386,
+          "HJ": 3.09079939668176,
+          "UTG": -1.5414781297134184
+        },
+        "checks": {
+          "BB": true,
+          "6UTGvs8HJ": true,
+          "9UTG<=8UTG": true,
+          "BTNspread<=1": true
+        },
+        "status": "pass"
+      },
+      "40": {
+        "tables": {
+          "6": {
+            "btnRfi": 61.53815987933635,
+            "bbDefend": {
+              "BTN": 82.92307692307693,
+              "CO": 76.99004524886878,
+              "HJ": 68.02413273001508,
+              "UTG": 65.00754147812971
+            }
+          },
+          "8": {
+            "btnRfi": 61.65580693815986,
+            "bbDefend": {
+              "BTN": 83.14811463046756,
+              "CO": 77.0603318250377,
+              "HJ": 68.18702865761689,
+              "UTG": 52.506787330316726
+            }
+          },
+          "9": {
+            "btnRfi": 61.673604826546004,
+            "bbDefend": {
+              "BTN": 83.11855203619908,
+              "CO": 77.03800904977375,
+              "HJ": 68.27631975867267,
+              "UTG": 49.629864253393656
+            }
+          }
+        },
+        "differencePt": {
+          "BTN": -0.8518853695324395,
+          "CO": -0.939668174962307,
+          "HJ": -1.8129713423831078,
+          "UTG": -4.493212669683274
+        },
+        "checks": {
+          "BB": true,
+          "6UTGvs8HJ": true,
+          "9UTG<=8UTG": true,
+          "BTNspread<=1": true
+        },
+        "status": "conditional"
+      },
+      "60": {
+        "tables": {
+          "6": {
+            "btnRfi": 53.20995475113123,
+            "bbDefend": {
+              "BTN": 83.710407239819,
+              "CO": 77.0497737556561,
+              "HJ": 70.13484162895928,
+              "UTG": 67.37104072398189
+            }
+          },
+          "8": {
+            "btnRfi": 53.19185520361991,
+            "bbDefend": {
+              "BTN": 83.70950226244345,
+              "CO": 77.20542986425339,
+              "HJ": 70.12579185520363,
+              "UTG": 56.80663650075415
+            }
+          },
+          "9": {
+            "btnRfi": 53.20633484162896,
+            "bbDefend": {
+              "BTN": 83.70950226244345,
+              "CO": 77.23348416289593,
+              "HJ": 70.13484162895928,
+              "UTG": 52.63559577677225
+            }
+          }
+        },
+        "differencePt": {
+          "BTN": -0.2904977375565494,
+          "CO": -0.7945701357466106,
+          "HJ": 0.12579185520363012,
+          "UTG": -0.19336349924584795
+        },
+        "checks": {
+          "BB": true,
+          "6UTGvs8HJ": true,
+          "9UTG<=8UTG": true,
+          "BTNspread<=1": true
+        },
+        "status": "pass"
+      }
+    },
+    "pass": true,
+    "conditional": true
+  },
+  "mttPR": {
+    "number": 753,
+    "url": "https://github.com/banhmi0213/Poker-Summit/pull/753",
+    "branch": "chatgpt/gto-mtt-conditional-20261102-i",
+    "head": "b3bf52304a4b62a1fc1cb1246dfd32ae215467f1",
+    "state": "open",
+    "checks": "Vercel pending;PR workflows not yet observed",
+    "tests": {
+      "passed": 63,
+      "failed": 0
+    },
+    "tree": "430f9655358c09cd7b67d48baf8a5f260a7c2ea5",
+    "perHandDiffGenerated": {
+      "20": 2.926797385620915,
+      "40": 2.8554047259929614,
+      "60": 1.934162895927602
+    },
+    "bodyIncludesRequestedCaveat": true
+  }
 }
