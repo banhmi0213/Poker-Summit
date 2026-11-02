@@ -344,7 +344,9 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "Latest6spot instruction supersedes5/3spot or23job caps. UTG-BB added and7Solve steps verified. All6flop runs now38running+CI1=39repo;alljobpages fetched via GitHubfetchcontentJSON total_count matched. Additionalqueued allowed for42demand. Nextslot startsHJ-BB,skipanyduplicate. PR753merged afterallsuccess,source9chartsreadbackmatched;723closed. Noadditional40BBfit,nomaterialstrategyedits,productionmainDBbillinguntouched.",
+  "notes": [
+    "2026-11-02T17:08Z: owner added mobile phase2 (5/6/7) gated on all4 earlier items staged; prerequisite not yet verified, requirements queued. hu-limp validated200+66tests; PR756 awaiting Vercel. co-bb collect queued, no duplicate."
+  ],
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet",
@@ -562,11 +564,90 @@
   "refinementCommit": "78fc80c560710df16391f01c228d6a486f72d2e6",
   "refinementOutput": "gto-preflop-fit-out/41416201956",
   "lastCapacityCheck": {
-    "observedAt": "2026-11-02T10:55:07.3117255Z",
-    "repositoryRunningIncludingCapacity": 20,
-    "otherRunning": 19,
-    "fitParallel": 2,
-    "note": "Snapshot before two40BB solves andHU-SRPcollect; no>30 observation"
+    "checkedAt": "2026-11-02T17:02:42.312Z",
+    "runs": [
+      {
+        "id": 41486806514,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0,
+        "solveRunning": 0
+      },
+      {
+        "id": 41486806522,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0,
+        "solveRunning": 0
+      },
+      {
+        "id": 41487113673,
+        "branch": "gto-flop-collect/41279681140",
+        "total": 1,
+        "running": 0,
+        "success": 0,
+        "queued": 0,
+        "solveRunning": 0
+      },
+      {
+        "id": 41486979979,
+        "branch": "gto-flop-solve/co-btn/v3b",
+        "total": 201,
+        "running": 4,
+        "success": 0,
+        "queued": 196,
+        "solveRunning": 4
+      },
+      {
+        "id": 41486975878,
+        "branch": "gto-flop-solve/hj-bb/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193,
+        "solveRunning": 7
+      },
+      {
+        "id": 41464873348,
+        "branch": "gto-flop-solve/utg-bb/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 14,
+        "queued": 179,
+        "solveRunning": 7
+      },
+      {
+        "id": 41459848850,
+        "branch": "gto-flop-solve/sb-iso/v3b",
+        "total": 201,
+        "running": 6,
+        "success": 17,
+        "queued": 177,
+        "solveRunning": 6
+      },
+      {
+        "id": 41459846661,
+        "branch": "gto-flop-solve/sb-limp/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 7,
+        "queued": 186,
+        "solveRunning": 7
+      },
+      {
+        "id": 41279680906,
+        "branch": "gto-flop-solve/sb-bb/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 144,
+        "queued": 49,
+        "solveRunning": 7
+      }
+    ]
   },
   "fitSelection": {
     "policy": "minimum RFI difference among BB-passing rounds",
@@ -1678,12 +1759,26 @@
     {
       "spot": "hu-limp",
       "solveRun": 40922261771,
-      "branch": "gto-flop-collect/40922261771"
+      "collectRun": 41486981128,
+      "collectState": "success",
+      "validated": {
+        "version": 3,
+        "iterations": 250,
+        "handEv": true,
+        "uniqueCanonical": 200
+      },
+      "pr": 756,
+      "head": "6f4cf19ad081fceb9da229ebb6b06762d8654a0f",
+      "state": "PR-open-Vercel-pending",
+      "tests": 66,
+      "tree": "01b58909e67197c3531322f447857e36a0f4915b"
     },
     {
       "spot": "co-bb",
       "solveRun": 41279681140,
-      "branch": "gto-flop-collect/41279681140"
+      "collectRun": 41487113673,
+      "state": "queued",
+      "job": 125420255718
     }
   ],
   "newFlopRuns": [
@@ -1696,5 +1791,25 @@
       "run": 41486979979
     }
   ],
-  "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered"
+  "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
+  "mobileUsabilityPhase2": {
+    "requestedAt": "2026-11-02T17:08:00Z",
+    "state": "waiting-for-phase1-staging-verification",
+    "dependency": {
+      "items": [
+        "全画面プレイ",
+        "答えの棒グラフ",
+        "プリフロップ表の欄を縮める",
+        "弱点から練習へ"
+      ],
+      "allMustBeMergedTo": "chatgpt/poker-authoritative-hand",
+      "verification": "PR list through #755 and staging ac82aa1 inspected; phase1 complete set not verified; no fullscreen implementation found; no duplicate implementation started"
+    },
+    "requirements": {
+      "5": "standalone manifest; Poker Summit name;192/512/icon apple-touch; navy theme;iOS webapp metadata; safearea;GTO install guidance dismiss permanently per device;375px verify;home launch screenshot required",
+      "6": "Disable pull-to-refresh/page bounce only during GTO opponent/practice playing;restore other screens",
+      "7": "Use prefetchGtoCharts/cachedJson; warm current-stack chart and common flop index; persist device cache; total prefetch a few hundred KB maximum"
+    },
+    "workflow": "Only begin 5-7 after all4 phase1 items staged. Separate new branch/PR per numbered item,allchecks green before stage merge. Preserve PC/navy/gold/chartcolors, noarrows. Report375px verification perPR, home-launch screenshot for5. Do not substitute viewport-only screenshot for actual standalone launch evidence."
+  }
 }
