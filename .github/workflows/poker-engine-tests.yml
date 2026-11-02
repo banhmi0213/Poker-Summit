@@ -240,7 +240,14 @@ jobs:
           POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-browser-e2e
-        run: node tests/poker-browser-e2e.cjs
+        shell: bash
+        run: |
+          set +e
+          node tests/poker-browser-e2e.cjs > "$RUNNER_TEMP/e2e6.log" 2>&1
+          code=$?
+          cat "$RUNNER_TEMP/e2e6.log"
+          if [ $code -ne 0 ]; then echo "::error title=six-browser e2e::$(tail -c 2500 "$RUNNER_TEMP/e2e6.log" | tr '\n\r' '  ')"; fi
+          exit $code
       - name: Verify a 24-player multi-table tournament end to end
         timeout-minutes: 10
         env:
