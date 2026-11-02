@@ -66,6 +66,7 @@
 /* スマホ (owner 2026/11/1「ほとんどの人がスマホで見る」): the table right under short controls, seats and situations as
    buttons, the tapped hand's shares under the table, the long explanation folded away. PC is unchanged. */
 .chips,.aboutMobile{display:none}
+.mobileConditions{display:none}
 .grid td[data-pick]{outline:3px solid #f3d38a;outline-offset:-3px}
 .grid td{cursor:pointer}
 .handDetailHint{margin:8px 2px 0!important;font-size:13px!important;color:#91a8ba!important}
@@ -84,6 +85,10 @@
 .chipRow button[aria-pressed=true]{background:#d9b368!important;border-color:#d9b368!important;color:#14283a!important}
 .chipSelect{display:flex;flex-direction:column;gap:4px;font-size:13px;color:#c9d6e0}.chipSelect select{background:var(--poker-input-bg,#102334);color:#e9eff5;border:1px solid #3a5366;border-radius:8px;padding:8px 10px;font:inherit;font-size:15px;min-height:42px;width:100%}
 @media(max-width:700px){
+ .mobileConditions{display:flex;align-items:center;justify-content:space-between;gap:8px;order:0!important}
+ .mobileConditions>span{min-width:0;color:#f1d18a;font-size:13px;font-weight:700}
+ .mobileConditions button{min-height:44px!important;flex-shrink:0;font-size:13px!important}
+ .wrap[data-controls-collapsed] .form.compact,.wrap[data-controls-collapsed] .chips{display:none!important}
  .split{display:flex!important;flex-direction:column;gap:10px}
  .splitSide{display:contents}
  .splitSide>*{order:1}
