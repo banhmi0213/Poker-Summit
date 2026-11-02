@@ -14,13 +14,15 @@ export function attachPokerRoomWebSocket(server:Server,options:Options){
   if(p.key&&current.get(p.key)===p){current.delete(p.key);if(p.owner)track(p.owner.disconnectConnection(p.connection));}p.token='';
  }
  function end(p:Peer){dispose(p);p.ws.terminate();}
+ // 4009: this connection was replaced (another tab/device joined). The client then stays put instead of taking the seat back.
+ function replaced(p:Peer){dispose(p);try{p.ws.close(4009,'replaced');}catch{p.ws.terminate();}}
  async function check(p:Peer){
   if(p.closed||!p.token)return;if(p.busy){p.again=true;return;}if(checks>=limit){end(p);return;}p.busy=true;checks++;
-  const abort=new AbortController();p.abort=abort;
+  const abort=new AbortController();p.abort=abort;let revoked=false;
   const deadline=setTimeout(()=>{abort.abort();end(p);},timeout);deadline.unref();
   try{
    const response=await options.handler(new Request('http://room.internal/api/poker/rooms/'+p.roomId,{method:'POST',signal:abort.signal,headers:{origin:p.origin,authorization:'Bearer '+p.token,'content-type':'application/json','x-poker-connection':p.connection},body:'{"type":"state"}'}),p.roomId);
-   if(p.closed)return;if(response.status!==200)throw Error();const body=await response.json();if(body.ok!==true||!Number.isSafeInteger(body.result?.revision))throw Error();
+   if(p.closed)return;if(response.status===409){revoked=true;throw Error();}if(response.status!==200)throw Error();const body=await response.json();if(body.ok!==true||!Number.isSafeInteger(body.result?.revision))throw Error();
    if(!p.owner){const owner=await options.owner(p.roomId);if(!owner||p.closed)throw Error();p.owner=owner;
     // Subscribe before the second read; commits during the first read cannot be lost.
     p.unsubscribe=owner.subscribe(()=>{
@@ -30,7 +32,7 @@ export function attachPokerRoomWebSocket(server:Server,options:Options){
    }
    if(p.ws.bufferedAmount>16384)throw Error();
    if(p.revision!==body.result.revision){p.ws.send(JSON.stringify({type:p.revision===null?'ready':'changed',revision:body.result.revision}));p.revision=body.result.revision;}
-  }catch{end(p);}finally{clearTimeout(deadline);checks--;if(p.abort===abort)p.abort=null;p.busy=false;if(p.again&&!p.closed){p.again=false;void check(p);}}
+  }catch{if(revoked)replaced(p);else end(p);}finally{clearTimeout(deadline);checks--;if(p.abort===abort)p.abort=null;p.busy=false;if(p.again&&!p.closed){p.again=false;void check(p);}}
  }
  const upgrade=(req:IncomingMessage,socket:Duplex,head:Buffer)=>{
   // Ring table pushes have their own handler on the same server (ring-events.ts).
