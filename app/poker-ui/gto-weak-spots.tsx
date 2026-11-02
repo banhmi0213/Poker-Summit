@@ -47,7 +47,6 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
  useEffect(()=>{let live=true;setSync('running');void syncHandRecords().then(added=>{if(!live)return;setSync('done');if(added>0)void load();}).catch(()=>{if(live)setSync('done');});return()=>{live=false;};},[]);// eslint-disable-line react-hooks/exhaustive-deps
 
  return <div className={styles.wrap}>
-  <p className={styles.lead}>リング・大会・練習卓・GTOと対戦・プリフロップ連打で打った判断を全部GTOと比べて、損が大きかった場面から順に並べます。直したい場面から練習しましょう。</p>
   <div className={styles.filters}>
    <div className={styles.tabs} role="group" aria-label="どこで打ったか">{FILTERS.map(f=><button key={f.id} type="button" aria-pressed={filter===f.id} onClick={()=>setFilter(f.id)}>{f.label}</button>)}</div>
    <label className={styles.days}>期間<select value={days} onChange={e=>setDays(Number(e.target.value))}><option value={7}>7日</option><option value={30}>30日</option><option value={90}>90日</option><option value={365}>1年</option></select></label>

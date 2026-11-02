@@ -1,4 +1,5 @@
 'use client';
+import {useCallback,useLayoutEffect,useRef,useState} from 'react';
 import {strategyColor,type StrategyAction} from './strategy-colors';
 import styles from './gto-chart.module.css';
 
@@ -16,5 +17,8 @@ export function HandDetail({hand,actions,freqs,note}:{hand:string|null;actions:r
 
 /** A row of buttons in place of a select on phones (seats, situations). */
 export function ChipRow<T extends string|number>({label,value,options,onChange}:{label:string;value:T;options:readonly {value:T;label:string}[];onChange:(v:T)=>void}){
- return <div className={styles.chipRow} role="group" aria-label={label}><span>{label}</span><div>{options.map(o=><button key={String(o.value)} type="button" aria-pressed={o.value===value} onClick={()=>onChange(o.value)}>{o.label}</button>)}</div></div>;
+ const list=useRef<HTMLDivElement>(null),[overflow,setOverflow]=useState(false),[next,setNext]=useState(false),signature=options.map(o=>`${o.value}:${o.label}`).join('|');
+ const measure=useCallback(()=>{const e=list.current;if(e){setOverflow(e.scrollWidth>e.clientWidth+1);setNext(e.scrollLeft+e.clientWidth<e.scrollWidth-1);}},[]);
+ useLayoutEffect(()=>{measure();const e=list.current;if(!e)return;const observer=new ResizeObserver(measure);observer.observe(e);return()=>observer.disconnect();},[signature,measure]);
+ return <div className={styles.chipRow} role="group" aria-label={label} data-can-next={next||undefined}><span>{label}</span><div ref={list} onScroll={measure}>{options.map(o=><button key={String(o.value)} type="button" aria-pressed={o.value===value} onClick={()=>onChange(o.value)}>{o.label}</button>)}</div>{overflow&&<small className={styles.chipScrollHint}>横にスワイプできます</small>}</div>;
 }

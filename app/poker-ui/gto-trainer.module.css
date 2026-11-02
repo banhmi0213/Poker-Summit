@@ -179,3 +179,26 @@
  .mobileNext small{font-size:11px;color:#b8cbd5}
  .mobileWaiting{display:grid;place-items:center;min-height:44px;margin:0;color:#d2e0e7}
 }
+/* Phone polish: use the space above the fixed controls, without changing the PC columns. */
+.mobileHandResult,.mobileOnlyFeedback,.miniTable,.why{display:none}
+@media(max-width:700px){
+ :global([data-mobile-play-fullscreen]) .trainer .table{height:max(263px,calc(100dvh - var(--play-dock-height,0px) - 176px));max-height:680px;margin:24px auto 14px}
+ .trainer .center{padding-bottom:20px}
+ .trainer .pot{font-size:14px!important;line-height:1.4;padding:2px 10px!important}
+ .trainer .board{min-height:50px}
+ .trainer .center>.result{display:none}
+ .mobileHandResult{display:block;color:#f1d18a!important;font-weight:800}
+ .mobileOnlyFeedback{display:block}
+ .keyboardHint{display:none}
+ .miniTable{display:block;position:relative;height:154px;width:min(100%,320px);margin:10px auto 14px}
+ .miniFelt{position:absolute;inset:20% 15%;border:2px solid #9d824c;border-radius:50%;background:#1b4147;display:grid;place-items:center;text-align:center;font-size:11px;color:#f1d18a}
+ .miniFelt small{display:block;font-size:10px;color:#b8cbd5}
+ .miniSeat{position:absolute;transform:translate(-50%,-50%);width:78px;text-align:center;display:grid;gap:2px;border:1px solid #78909e;border-radius:6px;background:#203e51;color:#d2e0e7;padding:3px 2px;line-height:1.3}
+ .miniSeat b{font-size:11px}.miniSeat small{font-size:9px;white-space:nowrap}
+ .miniSeat[data-hero]{background:#d6b364;color:#18364b;border-color:#f1d18a}.miniSeat[data-folded]{opacity:.6}
+ .drill .drillHead{display:none}
+ .why{display:block;font-size:12px!important;line-height:1.6!important;margin:7px 0 0!important;color:#f1d18a!important}
+}
+@media(max-width:360px){.trainer .kinds button{font-size:13px!important;padding:8px 4px!important;min-height:44px!important}.miniTable{height:144px}.miniSeat{width:69px}}
+.feedback .mobileHandResult,.feedback .why{display:none}
+@media(max-width:700px){.feedback .mobileHandResult,.feedback .why{display:block}}

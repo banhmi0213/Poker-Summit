@@ -10,6 +10,7 @@ import styles from './gto-trainer.module.css';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
 import {MobilePlayControls,MobilePlayFeedback,MobilePlaySettings} from './mobile-play-surface';
+import {DrillSeatMap,drillWhy} from './drill-seat-map';
 
 /** プリフロップ連打 (owner 2026/10/31, against Olympia's FastFold-style preflop trainer): one preflop decision after
  * another — a random seat and spot, the hero's two cards, GTO's menu as buttons. Each choice is graded at once (grade,
@@ -93,7 +94,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
  const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&<small>自動で次の手に進みます</small>}</div>;
  return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}>
   {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人卓・100BB）</small></span></div>}
-  <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。キーボードの1〜4でも選べます。</p>
+  <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。<span className={styles.keyboardHint}>キーボードの1〜4でも選べます。</span></p>
   <MobilePlaySettings active={Boolean(cur)} reviewCount={review.length} onOpenChange={setSettingsOpen}><div className={`${chart.form} ${styles.formBig}`}>
    <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{practiceSpot&&<option value="target">この弱点の場面</option>}{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（弱点分析から）{weak?'':'（スタンダード）'}</option>}</select></label>
    <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>setAuto(e.target.value==='on')}><option value="on">する</option><option value="off">しない</option></select></label>
@@ -105,6 +106,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
   {loading&&!cur&&<p role="status">問題を作っています…</p>}
   {error&&<p role="alert">{error}</p>}
   {cur&&<section aria-live="polite">
+   <DrillSeatMap hand={cur.hand}/>
    <p className={styles.drillHead}>{reviewing&&<span className={styles.drillTag}>復習 残り{review.length}</span>}<b>{cur.hand.heroPos}</b>{scene.length?scene.join('、'):'誰も参加していません'}</p>
    <div className={styles.drillHand}><CardChip card={cur.hand.holes[HERO][0]}/><CardChip card={cur.hand.holes[HERO][1]}/></div>
    <MobilePlayControls mobileChildren={result?nextControls:choices}>{choices}</MobilePlayControls>
@@ -112,6 +114,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
     <p><b>{LEVEL_TEXT[result.level]}</b><span>スコア {result.score}点</span>{result.loss!==null&&<span>{result.loss>0?`EV損失 ${result.loss.toFixed(2)}BB`:'EV損失なし'}</span>}</p>
     <p className={`${chart.note} ${styles.answerText}`}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
     <GtoAnswerBars options={cur.spot.options} chosen={cur.spot.options[result.choice]?.text}/>
+    {result.level!=='best'&&result.level!=='correct'&&<p className={styles.why}>{drillWhy(cur.spot.options,result.choice)}</p>}
     {!auto&&<p className={styles.desktopNext}><button type="button" onClick={goNext}>次の手</button></p>}
    </div></MobilePlayFeedback>}
   </section>}
