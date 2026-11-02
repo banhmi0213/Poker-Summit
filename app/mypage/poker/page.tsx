@@ -25,7 +25,7 @@ import {paidFeaturesVisible} from '@/lib/billing/visibility';
 import {getGtoPlanStatus} from '@/lib/billing/plan';
 import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
 export const dynamic='force-dynamic';
-export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
+export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string;practice?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
  const gto=gtoAccess(plan?.tier);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
  const panes=[
@@ -38,7 +38,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PushFoldChart/>},
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人卓・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人卓・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},
- {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell}/>},
+ {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOで打つCPU5人と6人卓で対戦。自分のカードは表向き、座る場所は毎ハンド動き、1手ごとにGTOと比べて採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell} practiceSpot={searchParams?.practice}/>},
  {id:'weak',label:'弱点分析',eyebrow:'YOUR LEAKS',description:'リング・大会・練習卓・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
  {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題。自分の打ち方がGTOとどれだけ合っているか採点します。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<GtoQuiz/>},
  {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'計算で求めた表を見る前に、自分でレンジを塗って採点します。',content:<RangeTrainer/>},
@@ -55,5 +55,5 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
- return <PokerWorkspace kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
+ return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
 }

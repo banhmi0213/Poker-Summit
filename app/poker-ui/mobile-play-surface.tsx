@@ -5,7 +5,7 @@ import styles from './mobile-play-surface.module.css';
 
 /** Keep one portal host when moving between the page and the mobile play surface:
  * switching presentation must never redeal a hand or reset an unanswered question. */
-export function MobilePlaySurface({children,label}:{children:ReactNode;label:string}){
+export function MobilePlaySurface({children,label,startFullscreen=false}:{children:ReactNode;label:string;startFullscreen?:boolean}){
  const anchor=useRef<HTMLDivElement>(null),openButton=useRef<HTMLButtonElement>(null),closeButton=useRef<HTMLButtonElement>(null);
  const [host,setHost]=useState<HTMLDivElement|null>(null),[full,setFull]=useState(false);
  useLayoutEffect(()=>{const el=document.createElement('div');el.className=styles.host;anchor.current?.appendChild(el);setHost(el);return()=>{el.remove();};},[]);
@@ -27,6 +27,7 @@ export function MobilePlaySurface({children,label}:{children:ReactNode;label:str
   return()=>{document.body.style.overflow=previous;document.removeEventListener('keydown',onKey);anchor.current?.appendChild(host);(openButton.current??focused)?.focus();};
  },[host,full]);
  useEffect(()=>{const m=window.matchMedia('(max-width:700px)'),change=()=>{if(!m.matches)setFull(false);};m.addEventListener('change',change);return()=>m.removeEventListener('change',change);},[]);
+ useEffect(()=>{if(startFullscreen&&window.matchMedia('(max-width:700px)').matches)setFull(true);},[startFullscreen]);
  const content=<div className={full?styles.full:undefined} data-mobile-play-fullscreen={full||undefined} role={full?'dialog':undefined} aria-modal={full||undefined} aria-label={full?`${label}・全画面`:undefined}>
   <div className={styles.toolbar}>
    {full?<><strong>{label}</strong><button ref={closeButton} type="button" onClick={()=>setFull(false)}>全画面を閉じる</button></>:<button ref={openButton} type="button" onClick={()=>setFull(true)}>全画面でプレイ</button>}

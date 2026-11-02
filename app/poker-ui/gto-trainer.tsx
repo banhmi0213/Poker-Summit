@@ -13,6 +13,7 @@ import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
 import {MobilePlaySurface} from './mobile-play-surface';
 import {GtoAnswerBars} from './gto-answer-bars';
+import {preflopPracticeSpot} from './gto-practice-target';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
@@ -58,21 +59,22 @@ const heroOut=(h:TrainerHand)=>!h.result&&Boolean(h.round.players.find(p=>p.id==
 const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p=>p.id===HERO)!.totalCommitted);
 
 /** Two ways to practise (2026/10/31): a whole hand against GTO, or プリフロップ連打 (preflop decisions one after another). */
-export function GtoTrainer({standard=false,upsell=false}:{standard?:boolean;upsell?:boolean}={}){
- const [kind,setKind]=useState<'hand'|'drill'>('hand');
- return <MobilePlaySurface label="GTOと対戦"><div className={styles.trainer}>
+export function GtoTrainer({standard=false,upsell=false,practiceSpot}:{standard?:boolean;upsell?:boolean;practiceSpot?:string}={}){
+ const target=preflopPracticeSpot(practiceSpot);
+ const [kind,setKind]=useState<'hand'|'drill'>(target?'drill':'hand');
+ return <MobilePlaySurface label="GTOと対戦" startFullscreen={Boolean(target)}><div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
    <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
    <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
   </div>
-  {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill weak={standard} upsell={upsell}/>}
+  {kind==='hand'?<GtoHandTrainer initialMode={practiceSpot==='flop'?'flop':'all'}/>:<PreflopDrill weak={standard} upsell={upsell} practiceSpot={target??undefined}/>}
  </div></MobilePlaySurface>;
 }
-function GtoHandTrainer(){
+function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
- const [mode,setMode]=useState<TrainerMode>('all'),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
+ const [mode,setMode]=useState<TrainerMode>(initialMode),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
  const worker=useRef<Worker|null>(null),seq=useRef(0),counted=useRef<number|null>(null);
  useEffect(()=>{setStats(readStats());return()=>worker.current?.terminate();},[]);
  const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
