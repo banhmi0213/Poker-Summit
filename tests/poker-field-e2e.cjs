@@ -68,7 +68,7 @@ async function database(){
   // 1. Open registration through the real lobby API for everyone; it closes by itself (start - 10 min).
   for(let i=0;i<ENTRANTS;i++)check((await f.directory.changeRegistration(f.users[i],f.tid,'register')).ok,'registered '+i);
   roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',30000)).finalization.roomId;
-  check((await f.directory.binding(roomId)).capacity===200,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
+  check((await f.directory.binding(roomId)).capacity===400,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
   // 2. Seats are drawn before the start; nobody is dealt in.
   let c=await until(saved,c=>Boolean(c.field),'seat draw');const tables=c.field.tables.length;check(tables===Math.ceil(ENTRANTS/6),'tables drawn');
   for(const [,t] of c.field.tables)check(t.seats.length>=3&&t.seats.length<=6,'table size');check(c.field.tables.every(([,t])=>t.hand===null),'no hand before the start');

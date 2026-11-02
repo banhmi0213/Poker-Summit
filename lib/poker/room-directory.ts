@@ -5,10 +5,10 @@ import type {TournamentControl} from './scheduled-tournament-room';
 import {pokerUUID} from './request-auth';
 import {validateStructure,type TournamentStructure} from './tournament';
 import {FIELD_MAX_PLAYERS} from './tournament-field';
-/** 2 (heads-up), 6 (one table) or 200 (multi-table field, 7+ players; 2026/10/31). 60 and 100 were the field sizes before; kept valid for rooms made then. */
-export type RoomCapacity=2|6|60|100|200;
-export const ROOM_CAPACITIES:readonly number[]=[2,6,60,100,FIELD_MAX_PLAYERS];
-export function capacityFor(players:number):RoomCapacity{return players===2?2:players<=6?6:200;}
+/** 2 (heads-up), 6 (one table) or 400 (multi-table field, 7+ players; 2026/11/02). 60, 100 and 200 were the field sizes before; kept valid for rooms made then. */
+export type RoomCapacity=2|6|60|100|200|400;
+export const ROOM_CAPACITIES:readonly number[]=[2,6,60,100,200,FIELD_MAX_PLAYERS];
+export function capacityFor(players:number):RoomCapacity{return players===2?2:players<=6?6:400;}
 export type PlayerOperation='seat'|'connect'|'state'|'spectate'|'act'|'disconnect'|'leave';
 export type RoomAccess={memberId:string;roomId:string;operation:PlayerOperation};
 export type RoomConfig={tournamentId:string;starts_at:string;structure:TournamentStructure};
