@@ -1799,7 +1799,7 @@
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
   "mobileUsabilityPhase2": {
     "requestedAt": "2026-11-02T17:08:00Z",
-    "state": "ready-to-start-5",
+    "state": "waiting-for-PR761-checks-and-merge",
     "dependency": {
       "items": [
         "全画面プレイ",
@@ -1896,5 +1896,23 @@
       "floppractice initialmode",
       "allactions within320x568 viewport"
     ]
+  },
+  "mobileUsabilityRefinement": {
+    "state": "PR-checks-pending",
+    "ownerRequest": "Before phase2 step5 fix all3 in onePR: drillsettingssheet+reviewbadge,collapsiblegradingrules,fixedbottomactions+nextwithfeedbackabove",
+    "pr": 761,
+    "head": "7be9a513eb7f316a5a3d50d8691bb90442759e18",
+    "branch": "chatgpt/gto-mobile-play-dock-20261103-q",
+    "screenshots": "docs/gto-mobile/20261103/play-dock",
+    "widths": [
+      375,
+      320
+    ],
+    "desktop": 1280,
+    "tests": 16,
+    "geometryVerified": true,
+    "safeAreaSimulation": 34,
+    "workspace": "/workspace/scratch/181a490d1af4/gto-mobile",
+    "testScript": "out/mobile-qa/revision.cjs"
   }
 }
