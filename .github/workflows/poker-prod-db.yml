@@ -3,7 +3,8 @@ name: Production DB poker release (rehearsal / apply)
 # Runs deploy/db/build-poker-release-sql.py against the production database in ONE transaction.
 #   push to ops/prod-db-rehearsal -> everything runs, then ROLLBACK (nothing changes)
 #   push to ops/prod-db-apply     -> everything runs, then COMMIT (11/5 release; owner OK)
-# Needs the repository secret POKER_PROD_DB_URL (the direct postgresql:// connection string). Never printed.
+# Needs only the repository secret POKER_PROD_DB_PASSWORD (the production database password). Never printed.
+# The rest of the address (session pooler, Tokyo) is public and written here.
 on:
   push:
     branches: [ops/prod-db-rehearsal, ops/prod-db-apply]
@@ -19,11 +20,15 @@ jobs:
   run:
     runs-on: ubuntu-latest
     env:
-      DB_URL: ${{ secrets.POKER_PROD_DB_URL }}
+      DB_PASSWORD: ${{ secrets.POKER_PROD_DB_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check the secret
-        run: if [ -z "$DB_URL" ]; then echo "::error::POKER_PROD_DB_URL is not set."; exit 1; fi
+      - name: Check the secret and build the address
+        run: |
+          if [ -z "$DB_PASSWORD" ]; then echo "::error::POKER_PROD_DB_PASSWORD is not set."; exit 1; fi
+          pw=$(python3 -I -c 'import os,urllib.parse;print(urllib.parse.quote(os.environ["DB_PASSWORD"].strip(),safe=""))')
+          echo "::add-mask::$pw"
+          echo "DB_URL=postgresql://postgres.tjmeqnzvuoguoffltxrp:${pw}@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require" >> "$GITHUB_ENV"
       - name: Install psql
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
       - name: Build the SQL
