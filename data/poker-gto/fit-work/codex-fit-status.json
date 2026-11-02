@@ -388,7 +388,8 @@
   "notes": "19:53JST full-page scan:hu-srp200success,hu-limp184/5/11,sb-bb117/7/76,co-bb169/7/24;repo19running before40BB chart restart. No newspot:19flop+2chart+collect leave<7 capacity. Latest staging8e100b75 preserved. Need collect HU-SRP, validate200files, index, relevanttests then newPR allchecks. Preflop finalchart must pass owner corrected gates; nofit/table equality requirement. Pro>30 not observed.",
   "validatedCompleteSpots": [
     "btn-bb",
-    "hu-3bet"
+    "hu-3bet",
+    "hu-srp"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -602,20 +603,11 @@
   "refinementCommit": "78fc80c560710df16391f01c228d6a486f72d2e6",
   "refinementOutput": "gto-preflop-fit-out/41416201956",
   "lastCapacityCheck": {
-    "observedAt": "2026-11-02T03:49:48.0192272Z",
-    "repositoryRunningIncludingCapacity": 23,
-    "otherRunning": 22,
-    "fitParallel": 1,
-    "activeRunCounts": {
-      "40922255985": 2,
-      "40922261771": 5,
-      "41279675288": 0,
-      "41279680906": 7,
-      "41279681140": 7,
-      "41384833885": 1,
-      "41385060824": 1
-    },
-    "note": "Point-in-time scan; no >30 observation. Fit matrix contains only 40BB, replacing completed capacity job."
+    "observedAt": "2026-11-02T10:55:07.3117255Z",
+    "repositoryRunningIncludingCapacity": 20,
+    "otherRunning": 19,
+    "fitParallel": 2,
+    "note": "Snapshot before two40BB solves andHU-SRPcollect; no>30 observation"
   },
   "fitSelection": {
     "policy": "minimum RFI difference among BB-passing rounds",
@@ -987,10 +979,28 @@
     "solveSuccess": 200,
     "collectRun": 41432597493,
     "collectJob": 125234591250,
-    "status": "Download every artifact in_progress",
+    "status": "collect and200-file validation success,index/aggregate updated,post-index58tests pass,tree equality verified;PR752 open awaitingVercel success",
     "output": "gto-flop-out/40922255985",
     "baseStage": "8e100b7598a2db969228d2ed0791f55d11ead2fd",
     "worktree": "/workspace/scratch/181a490d1af4/gto-husrp",
-    "branch": "chatgpt/gto-flop-hu-srp-20261102-h"
-  }
+    "branch": "chatgpt/gto-flop-hu-srp-20261102-h",
+    "outputCommit": "c3609bb7fbf006bf7ce37cf0ca079c0d7e7f8846",
+    "tree": "78ae04e15c50d06df3507a11141b0f7b9fc8bab3",
+    "head": "214d4249ec07412897358063fa12b6a9d5b7b374",
+    "localTests": {
+      "passed": 58,
+      "failed": 0
+    },
+    "pr": {
+      "number": 752,
+      "url": "https://github.com/banhmi0213/Poker-Summit/pull/752",
+      "state": "open",
+      "head": "214d4249ec07412897358063fa12b6a9d5b7b374",
+      "checks": "Vercel pending;PR workflows0 (data-only paths)"
+    }
+  },
+  "importedCompleteSpots": [
+    "btn-bb",
+    "hu-3bet"
+  ]
 }
