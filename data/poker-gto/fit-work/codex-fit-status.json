@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T15:28:08.591Z",
+  "checkedAt": "2026-11-02T17:01:49.395Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,269 +104,228 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-02T10:53:44.378372+00:00",
-    "errors": [],
-    "jobs": [
+    "checkedAt": "2026-11-02T16:59:44.839Z",
+    "runs": [
       {
-        "run": 40922255985,
-        "total": 201,
-        "running": 0,
-        "success": 200,
-        "solve": {
-          "completed": 200,
-          "in_progress": 0,
-          "queued": 0
-        },
-        "failed": [],
-        "sampleNames": [
-          "plan",
-          "Solve hu-srp AhJd8c"
-        ]
-      },
-      {
-        "run": 40922261771,
-        "total": 201,
-        "running": 5,
-        "success": 184,
-        "solve": {
-          "completed": 184,
-          "in_progress": 5,
-          "queued": 11
-        },
-        "failed": [],
-        "sampleNames": [
-          "plan",
-          "Solve hu-limp Kh8d8c"
-        ]
-      },
-      {
-        "run": 41279675288,
-        "total": 201,
-        "running": 0,
-        "success": 200,
-        "solve": {
-          "completed": 200,
-          "in_progress": 0,
-          "queued": 0
-        },
-        "failed": [],
-        "sampleNames": [
-          "plan",
-          "Solve hu-3bet AhAd7c"
-        ]
-      },
-      {
-        "run": 41279680906,
+        "id": 41464873348,
         "total": 201,
         "running": 7,
-        "success": 117,
-        "solve": {
-          "completed": 117,
-          "in_progress": 7,
-          "queued": 76
-        },
-        "failed": [],
-        "sampleNames": [
-          "plan",
-          "Solve sb-bb Kh7d2c"
-        ]
+        "success": 14,
+        "solveRunning": 7,
+        "queued": 179,
+        "failed": []
       },
       {
-        "run": 41279681140,
+        "id": 41459848850,
         "total": 201,
         "running": 7,
-        "success": 169,
-        "solve": {
-          "completed": 169,
-          "in_progress": 7,
-          "queued": 24
-        },
-        "failed": [],
-        "sampleNames": [
-          "plan",
-          "Solve co-bb QhJdTc"
-        ]
+        "success": 16,
+        "solveRunning": 7,
+        "queued": 177,
+        "failed": []
       },
       {
-        "run": 41385060824,
-        "total": 3,
-        "running": 0,
-        "success": 0,
-        "solve": {
-          "completed": 0,
-          "in_progress": 0,
-          "queued": 0
-        },
-        "failed": [],
-        "sampleNames": [
-          "capacity",
-          "Fit 40BB"
-        ]
-      }
-    ],
-    "activeRuns": [
-      {
-        "id": 41279681140,
-        "head_branch": "gto-flop-solve/co-bb/v3b",
-        "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e",
-        "status": "queued",
-        "name": "Poker flop solutions"
-      },
-      {
-        "id": 41279680906,
-        "head_branch": "gto-flop-solve/sb-bb/v3b",
-        "head_sha": "fc4a7a4d682c7325604fa5f426544abc5013ec4e",
-        "status": "queued",
-        "name": "Poker flop solutions"
+        "id": 41459846661,
+        "total": 201,
+        "running": 7,
+        "success": 7,
+        "solveRunning": 7,
+        "queued": 186,
+        "failed": []
       },
       {
         "id": 40922261771,
-        "head_branch": "gto-flop-solve/hu-limp/v3b",
-        "head_sha": "400eae6c210b8771395aa59bfa19410de7ec7ec7",
-        "status": "queued",
-        "name": "Poker flop solutions"
+        "total": 201,
+        "running": 0,
+        "success": 200,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": []
+      },
+      {
+        "id": 41279681140,
+        "total": 201,
+        "running": 0,
+        "success": 200,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": []
+      },
+      {
+        "id": 41279680906,
+        "total": 201,
+        "running": 7,
+        "success": 143,
+        "solveRunning": 7,
+        "queued": 50,
+        "failed": []
       }
-    ],
-    "runningJobs": 19
+    ]
   },
   "eta": {
-    "checkedAt": "2026-11-02T10:53:44.378372+00:00",
-    "previousAt": "2026-11-02T04:59:31.317587+00:00",
-    "hours": 5.903628055555555,
-    "delta": 73,
-    "speed": 12.365277641653597,
-    "proxySpotRate": 4.121759213884532,
+    "checkedAt": "2026-11-02T16:59:44.839Z",
+    "previousAt": "2026-11-02T14:46:45.531Z",
+    "hours": 2.2164744444444446,
+    "delta": 57,
+    "speed": 25.716515768034018,
+    "proxySpotRate": 4.286085961339003,
+    "remainingInitial200": 3020,
     "rows": [
       {
-        "spot": "hu-srp",
-        "done": 200,
-        "remaining": 0,
-        "delta": 6,
-        "rate": 1.016324189724953,
-        "running": 0,
-        "queued": 0,
-        "etaJst": "completed"
+        "id": 41464873348,
+        "total": 201,
+        "running": 7,
+        "success": 14,
+        "solveRunning": 7,
+        "queued": 179,
+        "failed": [],
+        "spot": "utg-bb",
+        "remaining": 186,
+        "delta": 14,
+        "rate": 6.3163372061837935,
+        "etaJst": "2026-11-04T07:26:35.645+09:00"
       },
       {
+        "id": 41459848850,
+        "total": 201,
+        "running": 7,
+        "success": 16,
+        "solveRunning": 7,
+        "queued": 177,
+        "failed": [],
+        "spot": "sb-iso",
+        "remaining": 184,
+        "delta": 16,
+        "rate": 7.218671092781479,
+        "etaJst": "2026-11-04T03:29:06.881+09:00"
+      },
+      {
+        "id": 41459846661,
+        "total": 201,
+        "running": 7,
+        "success": 7,
+        "solveRunning": 7,
+        "queued": 186,
+        "failed": [],
+        "spot": "sb-limp",
+        "remaining": 193,
+        "delta": 7,
+        "rate": 3.1581686030918967,
+        "etaJst": "2026-11-05T15:06:25.759+09:00"
+      },
+      {
+        "id": 40922261771,
+        "total": 201,
+        "running": 0,
+        "success": 200,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": [],
         "spot": "hu-limp",
-        "done": 184,
-        "remaining": 16,
-        "delta": 9,
-        "rate": 1.5244862845874296,
-        "running": 5,
-        "queued": 11,
-        "etaJst": "2026-11-03T06:23:27.597+09:00"
-      },
-      {
-        "spot": "hu-3bet",
-        "done": 200,
         "remaining": 0,
-        "delta": 0,
-        "rate": 0,
-        "running": 0,
-        "queued": 0,
+        "delta": 4,
+        "rate": 1.8046677731953698,
         "etaJst": "completed"
       },
       {
-        "spot": "sb-bb",
-        "done": 117,
-        "remaining": 83,
-        "delta": 24,
-        "rate": 4.065296758899812,
-        "running": 7,
-        "queued": 76,
-        "etaJst": "2026-11-03T16:18:44.547+09:00"
+        "id": 41279681140,
+        "total": 201,
+        "running": 0,
+        "success": 200,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": [],
+        "spot": "co-bb",
+        "remaining": 0,
+        "delta": 7,
+        "rate": 3.1581686030918967,
+        "etaJst": "completed"
       },
       {
-        "spot": "co-bb",
-        "done": 169,
-        "remaining": 31,
-        "delta": 34,
-        "rate": 5.759170408441401,
+        "id": 41279680906,
+        "total": 201,
         "running": 7,
-        "queued": 24,
-        "etaJst": "2026-11-03T01:16:42.168+09:00"
+        "success": 143,
+        "solveRunning": 7,
+        "queued": 50,
+        "failed": [],
+        "spot": "sb-bb",
+        "remaining": 57,
+        "delta": 9,
+        "rate": 4.060502489689582,
+        "etaJst": "2026-11-03T16:02:00.456+09:00"
+      },
+      {
+        "spot": "hj-bb",
+        "remaining": 200,
+        "success": 0,
+        "rate": 4.286085961339003,
+        "etaJst": "2026-11-05T00:39:30.270+09:00",
+        "rateType": "proxyfornewrun"
+      },
+      {
+        "spot": "co-btn",
+        "remaining": 200,
+        "success": 0,
+        "rate": 4.286085961339003,
+        "etaJst": "2026-11-05T00:39:30.270+09:00",
+        "rateType": "proxyfornewrun"
       }
     ],
     "planned": [
       {
-        "spot": "sb-limp",
-        "startJst": "2026-11-03T01:16:42.168+09:00",
-        "etaJst": "2026-11-05T01:48:04.862+09:00"
-      },
-      {
-        "spot": "sb-iso",
-        "startJst": "2026-11-03T06:23:27.597+09:00",
-        "etaJst": "2026-11-05T06:54:50.290+09:00"
-      },
-      {
-        "spot": "utg-bb",
-        "startJst": "2026-11-03T16:18:44.547+09:00",
-        "etaJst": "2026-11-05T16:50:07.240+09:00"
-      },
-      {
-        "spot": "hj-bb",
-        "startJst": "2026-11-05T01:48:04.862+09:00",
-        "etaJst": "2026-11-07T02:19:27.555+09:00"
-      },
-      {
-        "spot": "co-btn",
-        "startJst": "2026-11-05T06:54:50.290+09:00",
-        "etaJst": "2026-11-07T07:26:12.983+09:00"
-      },
-      {
         "spot": "utg-btn",
-        "startJst": "2026-11-05T16:50:07.240+09:00",
-        "etaJst": "2026-11-07T17:21:29.933+09:00"
+        "startJst": "2026-11-03T16:02:00.456+09:00",
+        "etaJst": "2026-11-05T14:41:45.887+09:00"
       },
       {
         "spot": "btn-bb-3bet",
-        "startJst": "2026-11-07T02:19:27.555+09:00",
-        "etaJst": "2026-11-09T02:50:50.248+09:00"
+        "startJst": "2026-11-04T03:29:06.881+09:00",
+        "etaJst": "2026-11-06T02:08:52.312+09:00"
       },
       {
         "spot": "co-bb-3bet",
-        "startJst": "2026-11-07T07:26:12.983+09:00",
-        "etaJst": "2026-11-09T07:57:35.677+09:00"
+        "startJst": "2026-11-04T07:26:35.645+09:00",
+        "etaJst": "2026-11-06T06:06:21.076+09:00"
       },
       {
         "spot": "btn-sb-3bet",
-        "startJst": "2026-11-07T17:21:29.933+09:00",
-        "etaJst": "2026-11-09T17:52:52.626+09:00"
+        "startJst": "2026-11-05T00:39:30.270+09:00",
+        "etaJst": "2026-11-06T23:19:15.702+09:00"
       },
       {
         "spot": "utg-bb-3bet",
-        "startJst": "2026-11-09T02:50:50.248+09:00",
-        "etaJst": "2026-11-11T03:22:12.941+09:00"
+        "startJst": "2026-11-05T00:39:30.270+09:00",
+        "etaJst": "2026-11-06T23:19:15.702+09:00"
       },
       {
         "spot": "co-btn-3bet",
-        "startJst": "2026-11-09T07:57:35.677+09:00",
-        "etaJst": "2026-11-11T08:28:58.370+09:00"
+        "startJst": "2026-11-05T14:41:45.887+09:00",
+        "etaJst": "2026-11-07T13:21:31.319+09:00"
       },
       {
         "spot": "btn-bb-4bet",
-        "startJst": "2026-11-09T17:52:52.626+09:00",
-        "etaJst": "2026-11-11T18:24:15.319+09:00"
+        "startJst": "2026-11-05T15:06:25.759+09:00",
+        "etaJst": "2026-11-07T13:46:11.191+09:00"
       },
       {
         "spot": "co-btn-bb",
-        "startJst": "2026-11-11T03:22:12.941+09:00",
-        "etaJst": "2026-11-13T03:53:35.634+09:00"
+        "startJst": "2026-11-06T02:08:52.312+09:00",
+        "etaJst": "2026-11-08T00:48:37.744+09:00"
       },
       {
         "spot": "btn-sb-bb",
-        "startJst": "2026-11-11T08:28:58.370+09:00",
-        "etaJst": "2026-11-13T09:00:21.063+09:00"
+        "startJst": "2026-11-06T06:06:21.076+09:00",
+        "etaJst": "2026-11-08T04:46:06.508+09:00"
       },
       {
         "spot": "utg-btn-bb",
-        "startJst": "2026-11-11T18:24:15.319+09:00",
-        "etaJst": "2026-11-13T18:55:38.013+09:00"
+        "startJst": "2026-11-06T23:19:15.702+09:00",
+        "etaJst": "2026-11-08T21:59:01.133+09:00"
       }
     ],
-    "etaJst": "2026-11-13T18:55:38.013+09:00",
-    "assumptions": "Three7parallel flop spots maintained,23totaljob limit; pending15 in specified order use observed aggregate rate/3=4.12176boards/spot/hour. Earliest free lane refilled immediately in model; inspection delay not modeled. Same mean board cost, no further stalls; coarse ETA with>=1day uncertainty."
+    "etaJst": "2026-11-08T21:59:01.133+09:00",
+    "assumptions": "Observed six-spot phase;6spots x7 demand with40runner limit,observedcompletion rate includesCI/queue. New/pending spots use aggregate/6 proxy. Refill immediately at earliest lane,real6hinspection delays notmodeled,boardcost varies;allow>=1day uncertainty. This is21x200 completion,not1755coverage."
   },
   "flopPR": {
     "number": 744,
@@ -1630,7 +1589,7 @@
     "head": "2af985b4282fc12564f8e944820c24946f7ed767",
     "branch": "chatgpt/gto-flop-card-picker-20261102-k",
     "dependsOnPR": 754,
-    "state": "open,CI41471662490in_progress,Vercelpending;merge754firstafterallsuccess",
+    "state": "merged754then755 afterallchecks",
     "ciRun": 41471662490,
     "localTests": 6,
     "browserVerified": {
@@ -1652,6 +1611,90 @@
         "spot changes re-resolve"
       ]
     },
-    "instructions": "\n【フロップカード選択UI・最新指示】オーナーは1755件の長い一覧を禁止し、754は全checks成功後にmerge可、その後続で3枚をランク/スートのボタン指定するPRを依頼。PR755 https://github.com/banhmi0213/Poker-Summit/pull/755 作成済み、branchchatgpt/gto-flop-card-picker-20261102-k head2af985b4282fc12564f8e944820c24946f7ed767、parent596a059(#754)で先行754依存。754CI41469556012まだin_progress、Vercelはsuccess。755CI41471662490 in_progress、Vercelpending確認。新規重複PR不要。754全checks成功を確認して先にstage mergeし、次に755全checks成功後stage merge。failureは1回再実行、再失敗はstage取り込みpushし直し未成功ならmergeしない。\n755は長いフロップselect/文字入力を廃止し3枚のカード枠+13rank+4suitボタンへ変更。重複カード/未完成指定禁止、選び直し可能。resolveFlopSelectionはspotの全indexを対象にcanonical同形なら計算済みの答え、未計算なら最も近いcomputed答えと盤面を一言明示。spot変更時も再判定。進捗分母1755。紺金維持、button矢印なし。localフロップ関連6tests、TSX構文、diffチェック成功。実Chromiumでfullpanelのカード選択/重複禁止/未完成禁止/同形exact/nearest/spot切替、320/390/768/1280pxで44px以上と横overflowなしを検証。390pxのカードpicker画面も目視確認済み。ブラウザharnessはgto-picker-test、codeworktreegto-flop-cards。ユーザーへの共有はコピー可能な形で自発的に出す。"
-  }
+    "instructions": "\n【フロップカード選択UI・最新指示】オーナーは1755件の長い一覧を禁止し、754は全checks成功後にmerge可、その後続で3枚をランク/スートのボタン指定するPRを依頼。PR755 https://github.com/banhmi0213/Poker-Summit/pull/755 作成済み、branchchatgpt/gto-flop-card-picker-20261102-k head2af985b4282fc12564f8e944820c24946f7ed767、parent596a059(#754)で先行754依存。754CI41469556012まだin_progress、Vercelはsuccess。755CI41471662490 in_progress、Vercelpending確認。新規重複PR不要。754全checks成功を確認して先にstage mergeし、次に755全checks成功後stage merge。failureは1回再実行、再失敗はstage取り込みpushし直し未成功ならmergeしない。\n755は長いフロップselect/文字入力を廃止し3枚のカード枠+13rank+4suitボタンへ変更。重複カード/未完成指定禁止、選び直し可能。resolveFlopSelectionはspotの全indexを対象にcanonical同形なら計算済みの答え、未計算なら最も近いcomputed答えと盤面を一言明示。spot変更時も再判定。進捗分母1755。紺金維持、button矢印なし。localフロップ関連6tests、TSX構文、diffチェック成功。実Chromiumでfullpanelのカード選択/重複禁止/未完成禁止/同形exact/nearest/spot切替、320/390/768/1280pxで44px以上と横overflowなしを検証。390pxのカードpicker画面も目視確認済み。ブラウザharnessはgto-picker-test、codeworktreegto-flop-cards。ユーザーへの共有はコピー可能な形で自発的に出す。",
+    "mergeSha": "ac82aa1c9e1012e2f8cd375e5e9a70ee7f558318"
+  },
+  "uiPRs": [
+    {
+      "number": 754,
+      "state": "merged",
+      "head": "596a05914357ad9ab2f44110fe0c693246f6cbb3",
+      "merge": "1cb1906f4eb039e6ee73a199da83be4e5e259e1d",
+      "checks": {
+        "checks": [
+          {
+            "id": 125359995972,
+            "name": "Vercel Preview Comments",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 125359237153,
+            "name": "Poker engine regression tests",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "statuses": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/poker-summit/poker-summit/F3Q4RKtXPFYGiisrNhJD8Aq9aYQT"
+          }
+        ]
+      }
+    },
+    {
+      "number": 755,
+      "state": "merged",
+      "head": "2af985b4282fc12564f8e944820c24946f7ed767",
+      "merge": "ac82aa1c9e1012e2f8cd375e5e9a70ee7f558318",
+      "checks": {
+        "checks": [
+          {
+            "id": 125367022628,
+            "name": "Vercel Preview Comments",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 125366512189,
+            "name": "Poker engine regression tests",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ],
+        "statuses": [
+          {
+            "context": "Vercel",
+            "state": "success",
+            "target_url": "https://vercel.com/poker-summit/poker-summit/GAkgDuhkoi1Y7VzbntZJ2xAt1gCh"
+          }
+        ]
+      }
+    }
+  ],
+  "pendingCollections": [
+    {
+      "spot": "hu-limp",
+      "solveRun": 40922261771,
+      "branch": "gto-flop-collect/40922261771"
+    },
+    {
+      "spot": "co-bb",
+      "solveRun": 41279681140,
+      "branch": "gto-flop-collect/41279681140"
+    }
+  ],
+  "newFlopRuns": [
+    {
+      "spot": "hj-bb",
+      "run": 41486975878
+    },
+    {
+      "spot": "co-btn",
+      "run": 41486979979
+    }
+  ],
+  "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered"
 }
