@@ -1,0 +1,44 @@
+[
+  {
+    "width": 375,
+    "sheetBox": {
+      "x": 0,
+      "y": 653.203125,
+      "width": 375,
+      "height": 158.796875
+    },
+    "actionsFixed": true,
+    "barsAboveControls": true,
+    "reviewBadge": true,
+    "rulesCollapsed": true,
+    "escapeClosesOnlySettings": true,
+    "handNextFixed": true,
+    "ruleCanOpen": true,
+    "simulatedSafeAreaPx": 34,
+    "reviewStartsAndClosesSettings": true,
+    "errors": []
+  },
+  {
+    "width": 320,
+    "sheetBox": {
+      "x": 0,
+      "y": 329.40625,
+      "width": 320,
+      "height": 238.59375
+    },
+    "actionsFixed": true,
+    "barsAboveControls": true,
+    "reviewBadge": true,
+    "rulesCollapsed": true,
+    "escapeClosesOnlySettings": true,
+    "handNextFixed": true,
+    "ruleCanOpen": true,
+    "simulatedSafeAreaPx": 34,
+    "reviewStartsAndClosesSettings": true,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "desktopInlineUnchanged": true
+  }
+]
