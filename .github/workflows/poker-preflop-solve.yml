@@ -9,40 +9,62 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      parallel: ${{ steps.capacity.outputs.parallel }}
+    steps:
+      - name: Check repository job capacity
+        id: capacity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          python3 - <<'PYCODE'
+          import os,json,subprocess
+          repo=os.environ['REPOSITORY']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/'+path],text=True))
+          ids={40922255985,40922261771,41279675288,41279680906,41279681140,int(os.environ['THIS_RUN'])}
+          for status in ['in_progress','queued','waiting']:
+              for page in api('actions/runs?status='+status+'&per_page=100'):
+                  ids.update(r['id'] for r in page['workflow_runs'])
+          running=0
+          for rid in sorted(ids):
+              jobs=[j for page in api(f'actions/runs/{rid}/jobs?per_page=100') for j in page['jobs']]
+              n=sum(j['status']=='in_progress' for j in jobs)
+              running+=n
+              print(rid,n)
+          other=max(0,running-1)
+          slots=min(2,23-other)
+          print('repository running jobs including capacity check:',running,'fit parallel:',slots)
+          if slots<1: raise SystemExit('No capacity below the 23-job limit; no fit started')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write(f'parallel={slots}\n')
+          PYCODE
   solve:
+    needs: capacity
     name: Solve ${{ matrix.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
       fail-fast: false
-      # The flop solutions use 15 of the account's 20 jobs; keep some free for the regular CI.
-      max-parallel: 4
+      max-parallel: ${{ fromJSON(needs.capacity.outputs.parallel) }}
       matrix:
         include:
-          - {name: 6max-100bb, args: "--seats 6 --ev out/preflop-ev.json"}
-          - {name: 6max-rake300-3, args: "--seats 6 --rake 300 --rake-cap 3"}
-          - {name: 6max-rake500-5, args: "--seats 6 --rake 500 --rake-cap 5"}
-          - {name: 6max-rake1000-10, args: "--seats 6 --rake 1000 --rake-cap 10"}
-          - {name: 6max-60bb, args: "--seats 6 --stack 60 --ante 1"}
-          - {name: 6max-40bb, args: "--seats 6 --stack 40 --ante 1"}
           - {name: 6max-20bb, args: "--seats 6 --stack 20 --ante 1"}
-          - {name: 6max-10bb, args: "--seats 6 --stack 10 --ante 1"}
-          - {name: 9max-100bb, args: "--seats 9 --ev out/preflop-9max-ev.json"}
-          - {name: 8max-100bb, args: "--seats 8 --ev out/preflop-8max-ev.json"}
-          - {name: 9max-rake500-5, args: "--seats 9 --rake 500 --rake-cap 5"}
-          - {name: 9max-rake1000-10, args: "--seats 9 --rake 1000 --rake-cap 10"}
-          - {name: 8max-rake500-5, args: "--seats 8 --rake 500 --rake-cap 5"}
-          - {name: 8max-rake1000-10, args: "--seats 8 --rake 1000 --rake-cap 10"}
-          - {name: 9max-40bb, args: "--seats 9 --stack 40 --ante 1"}
-          - {name: 9max-20bb, args: "--seats 9 --stack 20 --ante 1"}
-          - {name: 8max-40bb, args: "--seats 8 --stack 40 --ante 1"}
+          - {name: 6max-40bb, args: "--seats 6 --stack 40 --ante 1"}
+          - {name: 6max-60bb, args: "--seats 6 --stack 60 --ante 1"}
           - {name: 8max-20bb, args: "--seats 8 --stack 20 --ante 1"}
-          - {name: 9max-60bb, args: "--seats 9 --stack 60 --ante 1"}
-          - {name: 9max-10bb, args: "--seats 9 --stack 10 --ante 1"}
+          - {name: 8max-40bb, args: "--seats 8 --stack 40 --ante 1"}
           - {name: 8max-60bb, args: "--seats 8 --stack 60 --ante 1"}
-          - {name: 8max-10bb, args: "--seats 8 --stack 10 --ante 1"}
+          - {name: 9max-20bb, args: "--seats 9 --stack 20 --ante 1"}
+          - {name: 9max-40bb, args: "--seats 9 --stack 40 --ante 1"}
+          - {name: 9max-60bb, args: "--seats 9 --stack 60 --ante 1"}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,7 +89,6 @@ jobs:
           retention-days: 14
   collect:
     needs: solve
-    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -76,15 +97,23 @@ jobs:
         with:
           pattern: preflop-*
           merge-multiple: true
-          path: public/poker-gto
+          path: out
       - name: Push the charts to gto-preflop-out/<run id>
         run: |
-          ls -la public/poker-gto | grep -E "preflop" || true
+          set -euo pipefail
+          for seats in 6 8 9; do
+            for stack in 20 40 60; do
+              if [ "$seats" = 6 ]; then base=preflop; dest=public/poker-gto; else base="preflop-${seats}max"; dest=data/poker-gto/paid; fi
+              file="$base-${stack}bb.json"
+              test -s "out/$file"
+              mkdir -p "$dest"
+              cp "out/$file" "$dest/$file"
+              git add "$dest/$file"
+            done
+          done
+          node scripts/poker-gto/compare-mtt.cjs data/poker-gto/paid
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-out/${{ github.run_id }}"
-          # 8/9-max charts are paid (スタンダード／プロ): served by /api/poker/gto-charts after a plan check, never from public/.
-          mkdir -p data/poker-gto/paid && for f in public/poker-gto/preflop-8max*.json public/poker-gto/preflop-9max*.json; do [ -f "$f" ] && mv "$f" data/poker-gto/paid/; done
-          git add public/poker-gto data/poker-gto/paid
-          git commit -m "プリフロップ表（run ${{ github.run_id }}）"
+          git commit -m "Generate fitted 20/40/60BB tournament charts (run ${{ github.run_id }})"
           git push origin "gto-preflop-out/${{ github.run_id }}"
