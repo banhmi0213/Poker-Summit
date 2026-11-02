@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T14:47:56.292Z",
+  "checkedAt": "2026-11-02T15:15:11.671Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -1499,5 +1499,127 @@
       }
     ]
   },
-  "nextEtaInstruction": "Next report must recompute entire21spot finish time using completion deltas after thissixspot baseline,allremaining12unstartedspots,40jobcap/42demand and onebyone refill. Observation only2minutes aftersixstart here;do not call old3spot11/13 projection current. Include assumptions/range."
+  "nextEtaInstruction": "Next report must recompute entire21spot finish time using completion deltas after thissixspot baseline,allremaining12unstartedspots,40jobcap/42demand and onebyone refill. Observation only2minutes aftersixstart here;do not call old3spot11/13 projection current. Include assumptions/range.",
+  "flopExpansionPlan": {
+    "ownerDate": "2026-11-02",
+    "targetCanonicalClassesPerSpot": 1755,
+    "priority": "First100BB21spotsx200,thenincremental200batches",
+    "initialTotal": 4200,
+    "full100bb21SpotTotal": 36855,
+    "batchSize": 200,
+    "lastBatchMayBeSmaller": true,
+    "priorityOrder": [
+      "btn-bb",
+      "co-bb",
+      "sb-bb",
+      "hu-srp",
+      "hj-bb",
+      "utg-bb",
+      "co-btn",
+      "other"
+    ],
+    "maxConcurrentSlots": 6,
+    "afterShallowOr89MaxStarts": {
+      "expansionSlots": 2,
+      "newConditionSlots": 4
+    },
+    "rules": "\n【最新11/2オーナー指示・1,755全網羅計画】最終目標は各場面1,755スート同型クラスすべて。まず100BB21場面×200枚=4,200枚を優先し、6slot運用を維持。初期200枚の未開始spotがある間は拡充分を開始しない。未開始spotがなく枠が空いたら追加batchを最大200枚ずつ、btn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順で計算する。最後の余りは1755まで。allTextures()の1,755クラスと実フロップ出現数weightを使い、version3/250iter/handEv完了済みと実行中manifestのcanonical keyを除外。ペア/モノトーン/ツートーン/レインボー/コネクトなどの層を偏らせず、各層内は出現頻度を考慮して未計算盤面を選ぶ。各batchのmanifestとrunを保存し重複を防ぐ。既存workflowはdata/poker-gto/flops.jsonの初期200枚だけを読むため、そのまま再pushして追加分を計算できると誤認しない。拡充開始時に専用manifestを読む計算branch/workflowを用意し初期200を勝手に置換しない。\n浅いスタック/8〜9人卓を始めたら6slotのうち約2slotを追加flopbatchへ配分し、残り4slotで新条件を並行。拡充分もversion3/iterations250/handEv検証→flop-index.cjs（全JSON列挙）→GTO/フロップtests→新PR全checks成功→stage merge。1755件はファイル件数ではなくcanonical keyのユニーク数で数え、stack/seats別に混ぜない。次から各場面を『検証/取り込み済み数 / 1,755』（初期200完成度も併記可）で報告し、計算済み未回収/未検証は別記。ETAは初期21×200完了と最終1755網羅を混同しない。\nアプリ確認結果：flop-index.cjsは全JSONを索引化。gto-bot.tsはcanonical同形をnearestより優先、flop-strategy-panelのtyped検索も索引全体をnearestへ渡すので追加済み同形を直接使う。一方dropdownだけ初期200に固定されており修正PR754を作成済み。head596a05914357ad9ab2f44110fe0c693246f6cbb3、branchchatgpt/gto-flop-expanded-picker-20261102-j、ローカル4floptests成功。計算済み索引全件を選択肢にし、初期200以外の盤面が直接選ばれる回帰テスト追加。全checks成功後だけstage merge。重複PR禁止。\n今は拡充batchを開始せず、初期21×200の既存計画を進める。詳細は最新checkpoint.flopExpansionPlanを優先。共有事項はコピー可能な形で自発的に提示する。",
+    "stagedValidatedCounts": {
+      "utg-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "hj-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "co-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "btn-bb": {
+        "validated": 200,
+        "total": 1755
+      },
+      "sb-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "utg-btn": {
+        "validated": 0,
+        "total": 1755
+      },
+      "co-btn": {
+        "validated": 0,
+        "total": 1755
+      },
+      "utg-bb-3bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "co-bb-3bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "btn-bb-3bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "btn-sb-3bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "co-btn-3bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "btn-bb-4bet": {
+        "validated": 0,
+        "total": 1755
+      },
+      "sb-limp": {
+        "validated": 0,
+        "total": 1755
+      },
+      "sb-iso": {
+        "validated": 0,
+        "total": 1755
+      },
+      "hu-srp": {
+        "validated": 200,
+        "total": 1755
+      },
+      "hu-limp": {
+        "validated": 0,
+        "total": 1755
+      },
+      "hu-3bet": {
+        "validated": 200,
+        "total": 1755
+      },
+      "co-btn-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "btn-sb-bb": {
+        "validated": 0,
+        "total": 1755
+      },
+      "utg-btn-bb": {
+        "validated": 0,
+        "total": 1755
+      }
+    },
+    "countNote": "These are staged v3/250iter/handEv distinct files;active/completed-but-uncollected results must be reported separately. Initial200 baseline retained.",
+    "appReview": {
+      "indexEnumeratesAllJson": true,
+      "botCanonicalExactBeforeNearest": true,
+      "typedLookupIncludesWholeIndex": true,
+      "dropdownWasLimitedToInitial200": true,
+      "fixPR": 754,
+      "fixHead": "596a05914357ad9ab2f44110fe0c693246f6cbb3",
+      "testsPassed": 4,
+      "state": "PRopen awaitingallchecks;notmerged"
+    }
+  }
 }
