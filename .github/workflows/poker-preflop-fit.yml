@@ -1,0 +1,106 @@
+name: Poker preflop fit
+
+# Fits the tournament depths (scripts/poker-gto/fit-stack.cjs, owner 2026/11/1): per-depth hand playability against
+# BeyondGTO's 8-handed big-blind-ante open ranges and the caller's realisation against published BB defence figures.
+# The results are merged into data/poker-gto/preflop-play-fit.json (byStack) and pushed to gto-preflop-fit-out/<run id>.
+# Trigger: push a gto-preflop-fit/<anything> branch. Then re-solve the charts with "Poker preflop charts".
+on:
+  push:
+    branches: ["gto-preflop-fit/**"]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      parallel: ${{ steps.capacity.outputs.parallel }}
+    steps:
+      - name: Check repository job capacity
+        id: capacity
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          python3 - <<'PYCODE'
+          import os,json,subprocess
+          repo=os.environ['REPOSITORY']
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api','--paginate','--slurp',f'repos/{repo}/'+path],text=True))
+          ids={40922255985,40922261771,41279675288,41279680906,41279681140,int(os.environ['THIS_RUN'])}
+          for status in ['in_progress','queued','waiting']:
+              for page in api('actions/runs?status='+status+'&per_page=100'):
+                  ids.update(r['id'] for r in page['workflow_runs'])
+          running=0
+          for rid in sorted(ids):
+              jobs=[j for page in api(f'actions/runs/{rid}/jobs?per_page=100') for j in page['jobs']]
+              n=sum(j['status']=='in_progress' for j in jobs)
+              running+=n
+              print(rid,n)
+          other=max(0,running-1)
+          slots=min(2,23-other)
+          print('repository running jobs including capacity check:',running,'fit parallel:',slots)
+          if slots<1: raise SystemExit('No capacity below the 23-job limit; no fit started')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:f.write(f'parallel={slots}\n')
+          PYCODE
+  fit:
+    needs: capacity
+    name: Fit ${{ matrix.stack }}BB
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(needs.capacity.outputs.parallel) }}
+      matrix:
+        stack: [40]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Verify selection policy
+        run: node --test tests/poker-gto-fit-selection.test.cjs
+      - name: Fit
+        env:
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+        run: |
+          set -euo pipefail
+          node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack 40 --rounds 3 --iters 1000 --init data/poker-gto/fit-work/fit2-40-selected-init.json --out out/fit2-40.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fit-${{ matrix.stack }}
+          path: out/
+          retention-days: 14
+  collect:
+    needs: fit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fit-*
+          merge-multiple: true
+          path: out
+      - name: Preserve refinement results for acceptance review
+        run: |
+          set -euo pipefail
+          mkdir -p data/poker-gto/fit-work
+          for stack in 40; do
+            test -s "out/fit2-$stack.json"
+            cp "out/fit2-$stack.json" "data/poker-gto/fit-work/fit2-$stack.json"
+          done
+          cp out/*.json data/poker-gto/fit-work/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "gto-preflop-fit-out/${{ github.run_id }}"
+          git add data/poker-gto/fit-work/fit2-40*.json
+          git commit -m "Preserve every 40BB round and the BB-qualified minimum-RFI selection"
+          git push origin "gto-preflop-fit-out/${{ github.run_id }}"
