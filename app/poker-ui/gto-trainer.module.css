@@ -146,6 +146,14 @@
 /* スマホ (owner 2026/11/1「スマホの部分もっと改善」): the buttons right under the table, then the result of the last
    decision and the action log; the settings and the totals move to the bottom. PC is unchanged. */
 .introShort{display:none}
+@media (max-width:700px){
+ :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
+ :global([data-mobile-play-fullscreen]) .trainer .play .settings,
+ :global([data-mobile-play-fullscreen]) .trainer .stats,
+ :global([data-mobile-play-fullscreen]) .trainer .history,
+ :global([data-mobile-play-fullscreen]) .trainer .rules{display:none}
+ :global([data-mobile-play-fullscreen]) .trainer .log{max-height:65px;overflow:auto}
+}
 @media (max-width:650px){
  .introShort{display:block}
  .intro{display:none}
