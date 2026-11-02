@@ -195,10 +195,13 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    </div></MobilePlayControls>}
    {!done&&hand.round.toAct!==HERO&&<MobilePlayControls><p className={styles.mobileWaiting}>GTOが考えています…</p></MobilePlayControls>}
    {error&&<p role="alert">{error}</p>}
-   {last&&<MobilePlayFeedback><section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
+   {(last||done)&&<MobilePlayFeedback><section className={`${styles.feedback} ${!last?styles.mobileOnlyFeedback:''}`} aria-live="polite" data-level={last?.level??'none'}>
+    {done&&<p className={styles.mobileHandResult}>このハンド：{heroNet(hand)>0?'+':''}{heroNet(hand)}BB</p>}
+    {last&&<>
     <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
     {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
+    </>}
    </section></MobilePlayFeedback>}
    {done&&<MobilePlayControls><div className={`${chart.form} ${styles.formBig}`}>
     <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
