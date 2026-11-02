@@ -21,7 +21,7 @@ export default function RegistrationControls({scope,tournamentId,disabled,enable
    <label>定員 <input type="number" min={2} max={200} step={1} value={capacity} disabled={Boolean(plan)||uncertain||Boolean(policy?.automatic)} onChange={e=>setCapacity(Number(e.target.value))} style={{width:90,textAlign:'center',margin:8}}/></label>
    <label><input type="checkbox" checked={open} disabled={Boolean(plan)||uncertain||Boolean(policy?.automatic)} onChange={e=>setOpen(e.target.checked)}/> 参加受付を有効にする</label>
    <button type="button" className="btn" disabled={Boolean(policy?.automatic)||Boolean(plan)||uncertain||!Number.isSafeInteger(capacity)||capacity<2||capacity>200} onClick={()=>void send('configure')}>受付設定を保存</button>
-   {policy&&policy.count>200&&!plan&&<p>参加者を確定できるのは200人までです。</p>}
+   {policy&&policy.count>400&&!plan&&<p>参加者を確定できるのは400人までです。</p>}
    {!policy?.automatic&&!plan&&<label style={{display:'block',margin:'12px 0'}}><input type="checkbox" checked={confirm} disabled={uncertain||!canFinalize} onChange={e=>setConfirm(e.target.checked)}/> 現在の参加者で受付を締め切り、卓へ割り当てる</label>}
    {!policy?.automatic&&<button type="button" className="btn" disabled={uncertain||!canFinalize||!plan&&!confirm} onClick={()=>void send('finalize')}>{plan?plan.assigned?'卓割り当て済み':'同じ卓の割り当て処理を再開':'参加者を確定・卓へ割り当て'}</button>}{policy?.automatic&&<p>指定対象者の卓は開始10分前に自動割り当てされます。手動確定は不要です。</p>}
   </>}
