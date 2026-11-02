@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T11:00:48.236Z",
+  "checkedAt": "2026-11-02T14:04:21.521Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -1153,7 +1153,7 @@
     "branch": "chatgpt/gto-mtt-conditional-20261102-i",
     "head": "b3bf52304a4b62a1fc1cb1246dfd32ae215467f1",
     "state": "open",
-    "checks": "Vercel pending;PR workflows not yet observed",
+    "checks": "Poker engine tests run41458315861 job125320601621 in_progress (regression stage);Vercel pending;Vercel Preview Comments success",
     "tests": {
       "passed": 63,
       "failed": 0
@@ -1164,6 +1164,9 @@
       "40": 2.8554047259929614,
       "60": 1.934162895927602
     },
-    "bodyIncludesRequestedCaveat": true
+    "bodyIncludesRequestedCaveat": true,
+    "ciRun": 41458315861,
+    "ciJob": 125320601621,
+    "retryCount": 0
   }
 }
