@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T23:03:03.239Z",
+  "checkedAt": "2026-11-02T23:04:30.269Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -1814,6 +1814,11 @@
       ],
       "standaloneScreenshotMissing": true,
       "notes": "Existing standalone/name/icons192/512/apple180 verified. Draft viewportFit cover/theme current navy/install hint durable dismissal/header safearea. Actualstandalone notyettested. Headlessshell lacksPWA CDP; fullChrome downloaded /workspace/scratch/181a490d1af4/chrome-full but launchfailed; don'tmislabel normalviewport as home launch."
+    },
+    "step5": {
+      "state": "local-draft-blocked-on-actual-standalone-evidence",
+      "branch": "chatgpt/gto-home-install-20261103-r",
+      "note": "Latest staging merged locally. Full Chrome launch is blocked by sandbox Unix socket restrictions; no PR and no simulated screenshot is being represented as a home-screen launch."
     }
   },
   "mobileUsabilityPhase1": {
@@ -1959,11 +1964,22 @@
         "tests": "66/66"
       },
       "pr": 763,
-      "prState": "open-checks-pending",
+      "prState": "merged",
       "branch": "chatgpt/gto-flop-co-bb-20261103-t",
       "head": "a8da6ebd45e25e399abe676700a091f7d6dd5c39",
-      "validatedImportedCount": "200/1755"
-    }
+      "validatedImportedCount": "200/1755",
+      "mergeCommit": "f4eb6d50590a1516bd1dff09205c78ed23ac52e6",
+      "mergedAt": "2026-11-02T23:04:04Z",
+      "stageReadbackVerified": true
+    },
+    "importedValidatedSpots": [
+      "btn-bb",
+      "hu-3bet",
+      "hu-srp",
+      "hu-limp",
+      "co-bb"
+    ],
+    "importedValidatedCount": 5
   },
   "concurrency": {
     "checkedAt": "2026-11-02T23:03:03.239Z",
