@@ -1941,11 +1941,29 @@
     "completedAt": "2026-11-02T18:51:06.631Z"
   },
   "mobileUsabilityPolish": {
-    "state": "working",
+    "state": "PR-checks-pending",
     "ownerRequest": "11/3 remaining4 before phase5: taller fullscreentable+board/hero separation+0BB relocation,actualmini drilltable+why+hidekeyboardhint,mobilehanddetail sheet+shortstacklabel+swipehint,removeweakintroduplicate",
     "branch": "chatgpt/gto-mobile-gto-polish-20261103-s",
     "workspace": "/workspace/scratch/181a490d1af4/gto-mobile-polish",
     "base": "f4aad219f5ce3eaa19d3cb9406392287a3e26bdc",
-    "tests": 15
+    "tests": 15,
+    "pr": 762,
+    "head": "708b35bd6aff38283db0d431223a17e6daa794fd",
+    "tree": "511ebfb50b43e83a9d9c25b4bcdbc7fd36f56e78",
+    "screenshots": "docs/gto-mobile/20261103/polish",
+    "viewports": [
+      375,
+      320
+    ],
+    "desktop": 1280,
+    "boardHeroGapPx": {
+      "320": 9.78125,
+      "375": 97.625
+    },
+    "tableHeightPx": {
+      "320": 263,
+      "375": 507
+    },
+    "zeroBBVerified": true
   }
 }
