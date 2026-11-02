@@ -85,8 +85,8 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   // With the live push channel open, the 1-second read is only a 5-second safety net (owner 2026/10/30: 60-player tournaments).
   const timer=setInterval(()=>{setTick(v=>v+1);if(pollMode.current&&!busyRef.current&&!c.pending&&(!socketLive.current||Date.now()-lastRead.current>=5000))void refresh();},1000);
   const visible=()=>{if(typeof document!=='undefined'&&!document.hidden&&rejoinWaiting.current){rejoinWaiting.current=false;scheduleRejoin();}};const online=()=>{if(rejoinTimer.current){clearTimeout(rejoinTimer.current);rejoinTimer.current=null;void autoRejoin();}};
-  if(typeof document!=='undefined')document.addEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.addEventListener('online',online);
-  return()=>{clearInterval(timer);if(typeof document!=='undefined')document.removeEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.removeEventListener('online',online);stopAuto();subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
+  if(typeof document!=='undefined')document.addEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.addEventListener?.('online',online);
+  return()=>{clearInterval(timer);if(typeof document!=='undefined')document.removeEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.removeEventListener?.('online',online);stopAuto();subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
  useEffect(()=>{if(state?.autoExitAt!=null)setExitDeadline(current=>current??Date.now()+Math.max(0,state.autoExitAt!-state.serverNow));},[state?.autoExitAt]);
  useEffect(()=>{
