@@ -38,12 +38,12 @@ jobs:
           echo "::notice::mode=${GITHUB_REF_NAME} bytes=$(wc -c < /tmp/release.sql) last=$(tail -n1 /tmp/release.sql)"
       - name: Run it in one transaction
         run: |
-          set -o pipefail
-          psql "$DB_URL" -v ON_ERROR_STOP=1 -X -q -f /tmp/release.sql > /tmp/out.txt 2>&1; code=$?
+          set +e
+          code=0; psql "$DB_URL" -v ON_ERROR_STOP=1 -X -q -f /tmp/release.sql > /tmp/out.txt 2>&1 || code=$?
           # Only the error lines (no data, no secrets) go to the summary.
-          grep -E "ERROR|LINE|DETAIL|HINT|CONTEXT" /tmp/out.txt | head -20 | while read -r l; do echo "::notice::$l"; done
+          grep -E "ERROR|FATAL|LINE|DETAIL|HINT|CONTEXT|could not|failed" /tmp/out.txt | sed "s/postgresql:[^ ]*/[address]/g" | head -20 | while read -r l; do echo "::notice::$l"; done || true
           grep -n "^-- =====" /tmp/release.sql > /tmp/marks.txt
-          line=$(grep -oE "psql:/tmp/release.sql:[0-9]+" /tmp/out.txt | head -1 | cut -d: -f3)
+          line=$(grep -oE "psql:/tmp/release.sql:[0-9]+" /tmp/out.txt | head -1 | cut -d: -f3 || true)
           if [ -n "$line" ]; then mig=$(awk -F: -v l="$line" '$1<=l{m=$0} END{print m}' /tmp/marks.txt); echo "::notice::failed in: $mig (line $line)"; fi
           if [ $code -ne 0 ]; then echo "::error::The release SQL failed; the transaction was rolled back."; exit 1; fi
           echo "::notice::OK: all migrations ran (${GITHUB_REF_NAME})."
