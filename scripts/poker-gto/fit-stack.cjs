@@ -3,6 +3,7 @@
 // realisation in single-raised pots so the big blind defends about as often as published figures (BB vs BTN / vs UTG).
 // Writes { stack, play, role, report } to --out; the workflow merges every depth into data/poker-gto/preflop-play-fit.json
 // under byStack. Usage: node scripts/poker-gto/fit-stack.cjs --stack 40 --rounds 8 --iters 400 --out out/fit-40.json
+const {bestRound}=require('./fit-selection.cjs');
 const fs=require('fs'),path=require('path');process.chdir(path.resolve(__dirname,'../..'));require('./common.cjs');
 const S=require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts'));
 const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
@@ -25,7 +26,8 @@ let call=Number(arg('call',init?.role?.srp?.call??0.55));
 // and too little against under the gun. Seats without a published figure sit between their neighbours.
 const by=Object.fromEntries(Object.keys(DEFEND).map(p=>[p,init?.role?.srp?.callBy?.[p]??call]));
 const role=()=>({srp:{call,aggr:0.8,callBy:{...by,'UTG+1':+(by.UTG*2/3+by.HJ/3).toFixed(3),LJ:+(by.UTG/3+by.HJ*2/3).toFixed(3)}}});
-let report=null;
+let report=null;const snapshots=[];
+fs.mkdirSync(path.dirname(path.resolve(out)),{recursive:true});
 for(let r=0;r<=rounds;r++){
  S.setRealizeFit({...base,byStack:{[stack]:{play,role:role()}}});
  const s=new S.PreflopSolver(eq,{stack,ante:1,seats:8});s.run(iters);
@@ -43,12 +45,20 @@ for(let r=0;r<=rounds;r++){
  }
  const defErr=Object.keys(DEFEND).filter(p=>defend[p]!==undefined).map(p=>defend[p]-DEFEND[p]),meanErr=defErr.reduce((a,b)=>a+b,0)/Math.max(1,defErr.length);
  report={round:r,perHandDiff:+(abs/w*100).toFixed(2),rfi,defend,call:+call.toFixed(3),callBy:role().srp.callBy};console.log(JSON.stringify(report));
+ // Persist before updating parameters; retain the exact evaluated values without rounding.
+ snapshots.push(JSON.parse(JSON.stringify({stack,play,role:role(),report})));
+ fs.writeFileSync(out+'.rounds.json',JSON.stringify({stack,iters,rounds:snapshots}));
  if(r===rounds)break;
  for(const l of eq.labels)if(cnt[l])play[l]*=Math.exp(0.12*diff[l]/cnt[l]);
  // Defending too much: the caller realises too much; lower it (and the reverse).
  call=Math.min(0.95,Math.max(0.3,call*Math.exp(-0.8*meanErr)));
  for(const p of Object.keys(DEFEND))if(defend[p]!==undefined)by[p]=Math.min(0.95,Math.max(0.25,by[p]*Math.exp(-1.2*(defend[p]-DEFEND[p]))));
 }
-fs.mkdirSync(path.dirname(path.resolve(out)),{recursive:true});
-fs.writeFileSync(out,JSON.stringify({stack,play:Object.fromEntries(Object.entries(play).map(([k,v])=>[k,Math.round(v*1000)/1000])),role:role(),report}));
-console.log('saved',out);
+const selected=stack===40?bestRound(snapshots):snapshots.at(-1);
+const result=selected??snapshots.at(-1);
+fs.writeFileSync(out,JSON.stringify({...result,selection:{
+ policy:stack===40?'minimum RFI difference among BB-passing rounds':'last round',
+ eligible:stack===40?selected!==null:true,selectedRound:selected?.report.round??null,
+ evaluatedRounds:snapshots.length,iters,complete:true
+}}));
+console.log('saved',out,'selected round',selected?.report.round??'none');

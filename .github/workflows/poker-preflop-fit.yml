@@ -64,11 +64,22 @@ jobs:
           node-version: "24"
       - name: Install TypeScript loader
         run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Verify selection policy
+        run: node --test tests/poker-gto-fit-selection.test.cjs
       - name: Fit
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack ${{ matrix.stack }} --rounds 6 --iters 400 --init data/poker-gto/fit-work/fit2-${{ matrix.stack }}.json --out out/fit2-${{ matrix.stack }}.json
+        run: |
+          set -euo pipefail
+          node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack 40 --rounds 6 --iters 400 --init data/poker-gto/fit-work/fit2-40.json --out out/fit2-40-400.json
+          if node -e "const r=require('./out/fit2-40-400.json');process.exit(r.selection.eligible && r.report.perHandDiff<=3 ? 1 : 0)"; then
+            node --max-old-space-size=6000 scripts/poker-gto/fit-stack.cjs --stack 40 --rounds 6 --iters 600 --init out/fit2-40-400.json --out out/fit2-40-600.json
+            cp out/fit2-40-600.json out/fit2-40.json
+          else
+            cp out/fit2-40-400.json out/fit2-40.json
+          fi
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: fit-${{ matrix.stack }}
           path: out/
@@ -92,9 +103,10 @@ jobs:
             test -s "out/fit2-$stack.json"
             cp "out/fit2-$stack.json" "data/poker-gto/fit-work/fit2-$stack.json"
           done
+          cp out/*.json data/poker-gto/fit-work/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-preflop-fit-out/${{ github.run_id }}"
-          git add data/poker-gto/fit-work/fit2-40.json
-          git commit -m "Preserve 40BB and 60BB refinement results for review"
+          git add data/poker-gto/fit-work/fit2-40*.json
+          git commit -m "Preserve every 40BB round and the BB-qualified minimum-RFI selection"
           git push origin "gto-preflop-fit-out/${{ github.run_id }}"
