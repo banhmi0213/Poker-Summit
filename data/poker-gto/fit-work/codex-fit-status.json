@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T05:02:21.447Z",
+  "checkedAt": "2026-11-02T08:52:57.845Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -99,10 +99,10 @@
       "rfi": "pass"
     }
   },
-  "refinementRun": 41385060824,
-  "refinementBranch": "gto-preflop-fit/best-round-40bb-20261102-d",
-  "refinementInit": "gto-preflop-fit-out/41335511969:data/poker-gto/fit-work/fit2-40.json",
-  "refinementState": "completed successfully, all 7 rounds retained; selected round2 exactly matches saved play/role/report; BB and RFI pass; no 600-iteration retry needed",
+  "refinementRun": 41416201956,
+  "refinementBranch": "gto-preflop-fit/40bb-1000iters-20261102-f",
+  "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
+  "refinementState": "Run queued verified;40BB only1000 iterations3rounds from selected round2. No600 fallback. Await result then regenerate40BB only6/8/9max at2000iterations; preserve original20/60 charts.",
   "flops": {
     "checkedAt": "2026-11-02T04:59:31.317587+00:00",
     "errors": [],
@@ -392,7 +392,7 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "Owner requested reporting and no merge when additional chart gates fail. Generated charts are blocked, no new PR or staging merge. Fit pass and chart pass must remain separate. 8max20/60 fit-consistency pass,40 fails. Recompute metrics from actual169-class1326-combo weighted strategies in output1d7eff01; save data for diagnosis. No automatic extra fitting beyond owner-authorized retry policy.",
+  "notes": "Latest owner correction supersedes prior acceptance instructions. Old20BB/60BB charts pass corrected gates and are retained. No manually edited strategy values. Need evaluate new40BB generated chart directly vs84/78/70/57 +/-4; do not require fit snapshot equality. Shared progress/issues must proactively be copyable for Claude.",
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet"
@@ -606,9 +606,8 @@
     "playAvailable": false,
     "note": "Last-only saver lost round2 play. Final round6 RFI1.41 but BB fails BTN/CO. Not eligible for integration."
   },
-  "refinementCommit": "6285a159283437b60d1b3991581ce22353cfc3eb",
-  "refinementOutput": "gto-preflop-fit-out/41385060824",
-  "refinementJob": 125084289153,
+  "refinementCommit": "78fc80c560710df16391f01c228d6a486f72d2e6",
+  "refinementOutput": "gto-preflop-fit-out/41416201956",
   "lastCapacityCheck": {
     "observedAt": "2026-11-02T03:49:48.0192272Z",
     "repositoryRunningIncludingCapacity": 23,
@@ -728,6 +727,12 @@
           }
         },
         "gates": {
+          "eightMaxBB": true,
+          "sixMaxUTG": true,
+          "nineMaxUTG": true,
+          "btnDifference": true
+        },
+        "withdrawnGates": {
           "8maxVsFit": true,
           "btnOrder": false,
           "6maxVs8": false,
@@ -785,6 +790,12 @@
           }
         },
         "gates": {
+          "eightMaxBB": false,
+          "sixMaxUTG": true,
+          "nineMaxUTG": true,
+          "btnDifference": true
+        },
+        "withdrawnGates": {
           "8maxVsFit": false,
           "btnOrder": false,
           "6maxVs8": false,
@@ -842,6 +853,12 @@
           }
         },
         "gates": {
+          "eightMaxBB": true,
+          "sixMaxUTG": true,
+          "nineMaxUTG": true,
+          "btnDifference": true
+        },
+        "withdrawnGates": {
           "8maxVsFit": true,
           "btnOrder": false,
           "6maxVs8": false,
@@ -850,13 +867,25 @@
       }
     },
     "pass": false,
-    "rules": "\n【追加の必須マージ判定】再生成した20/40/60BBそれぞれで、8人卓のJSONからコンボ数で重み付けしてBB守り（BTN/CO/HJ/UTGの単一オープン相手、call+3bet）を再計算し、採用fit.report.defendとの差を4席すべて±2ポイント以内で確認・報告する。外れたら統合/再生成の不一致としてマージ禁止。さらに6/8/9人卓JSONからBTN RFIを計算し6人卓>=8人卓>=9人卓を確認する。6人卓と9人卓のBB守り4席は各8人卓との差±5ポイント以内を必須とし、欠損/不合格ならマージせず実測値と差を報告する。6/9人卓にはBeyondGTO参考がなく8人卓との妥当性比較であると明記する。従来のBB参考±4pt/RFI<=3判定も維持し、この追加検証の代わりに使わない。"
+    "rules": "\n【最優先：2026-11-02オーナー訂正】旧6/9人卓同席±5・BTN大小順・8人卓fit一致±2の基準は撤回。再生成表8人卓のBB守りBTN84/CO78/HJ70/UTG57%から各±4ptで判定し、fit時の数値との一致は要求しない。6人卓はUTG相手のBB守りを8人卓HJ相手と比べ±5ptなら合格。9人卓はUTG相手のBB守りが8人卓UTG相手以下なら合格。BTN RFIは人数間の差±1pt以内なら合格。20BB/60BBは既存生成済みrun41391600063（出力commit1d7eff01d2e8e3658f43e83e26d421df167de04e）をそのまま維持、再計算しない。40BB8maxUTG52.5068%だけ参考基準外。採用済みround2のplay/role/callByを--initに指定し、--iters1000 --rounds3で40BBのみ当て直す。今回新runのbranchはgto-preflop-fit/40bb-1000iters-20261102-f、採用round2をdata/poker-gto/fit-work/fit2-40-selected-init.jsonへそのまま配置。600反復の旧fallbackは禁止、1000反復3roundのみ。各round保存とBB合格回の最小RFI選択は維持。完了後、40BBのみ6/8/9人卓を2000反復で再生成し上記の訂正基準とBeyondGTO RFIを実測・報告。旧20/60結果を上書きしない。手で数値を合わせない。重複起動せず最新checkpointのrunを確認。\n進展/問題/引継ぎなどClaudeへ共有する事項があれば、オーナーに言われる前にコピーできる形で提示する。"
   },
   "mergeBlocked": true,
   "mergeBlockReasons": [
-    "40BB8max UTG BB defend52.5068 vs fitted55.5: -2.9932pt (limit2)",
-    "6max UTG vs8max +16.9587/+12.5008/+10.5644pt for20/40/60 (limit5)",
-    "9max20BB UTG vs8max -5.0944pt (limit5)",
-    "BTN RFI6>=8>=9 ordering fails at all3 depths (small differences .01-.14pt); strict requested rule applied"
-  ]
+    "40BB generated8max UTG defend52.5068% below53% minimum; prior cross-seat/fit-consistency blocks withdrawn by owner"
+  ],
+  "acceptanceCorrection": {
+    "ownerRules": "\n【最優先：2026-11-02オーナー訂正】旧6/9人卓同席±5・BTN大小順・8人卓fit一致±2の基準は撤回。再生成表8人卓のBB守りBTN84/CO78/HJ70/UTG57%から各±4ptで判定し、fit時の数値との一致は要求しない。6人卓はUTG相手のBB守りを8人卓HJ相手と比べ±5ptなら合格。9人卓はUTG相手のBB守りが8人卓UTG相手以下なら合格。BTN RFIは人数間の差±1pt以内なら合格。20BB/60BBは既存生成済みrun41391600063（出力commit1d7eff01d2e8e3658f43e83e26d421df167de04e）をそのまま維持、再計算しない。40BB8maxUTG52.5068%だけ参考基準外。採用済みround2のplay/role/callByを--initに指定し、--iters1000 --rounds3で40BBのみ当て直す。今回新runのbranchはgto-preflop-fit/40bb-1000iters-20261102-f、採用round2をdata/poker-gto/fit-work/fit2-40-selected-init.jsonへそのまま配置。600反復の旧fallbackは禁止、1000反復3roundのみ。各round保存とBB合格回の最小RFI選択は維持。完了後、40BBのみ6/8/9人卓を2000反復で再生成し上記の訂正基準とBeyondGTO RFIを実測・報告。旧20/60結果を上書きしない。手で数値を合わせない。重複起動せず最新checkpointのrunを確認。\n進展/問題/引継ぎなどClaudeへ共有する事項があれば、オーナーに言われる前にコピーできる形で提示する。",
+    "eightMaxTargets": {
+      "BTN": 84,
+      "CO": 78,
+      "HJ": 70,
+      "UTG": 57
+    },
+    "tolerancePt": 4,
+    "compareFitNumbers": false,
+    "sixMax": "UTG defend within5pt of8max HJ",
+    "nineMax": "UTG defend <=8max UTG",
+    "btnRfi": "max minus min across6/8/9 <=1pt",
+    "retainGenerated20and60": true
+  }
 }
