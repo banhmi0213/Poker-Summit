@@ -1,9 +1,11 @@
 'use client';
 import {useCallback,useEffect,useState} from 'react';
+import Link from 'next/link';
 import {SOURCE_TEXT,spotLabel,type GtoRecordSource} from '@/lib/poker/gto-record';
 import {LEVEL_TEXT,type TrainerLevel} from '@/lib/poker/gto-trainer';
 import {syncHandRecords} from './gto-record-sync';
 import styles from './gto-weak-spots.module.css';
+import {weakPracticeLink} from './gto-practice-target';
 
 /** 弱点分析 (owner 2026/11/1「プレイヤーがプレイした全部から収集」): the member's GTO records from every place they
  * play, grouped by spot, the costliest first. Ring and tournament hands are judged in the background on open. */
@@ -59,12 +61,13 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
     <div><small>EV損失の合計</small><b>{bb(data.total.evLoss)}</b><span>{data.total.evN?`1回あたり ${bb(data.total.evLoss/data.total.evN)}`:'計算できた判断がまだありません'}</span></div>
    </div>
    {data.spots.length===0?<p className={styles.note}>この期間の記録はまだありません。GTOと対戦やリングで打つと、ここに集まります。</p>:
-   <ol className={styles.list}>{data.spots.slice(0,limit??data.spots.length).map((s,i)=>{const graded=s.misses+s.close+s.good||s.n;return <li key={s.spot} className={styles.item}>
+   <ol className={styles.list}>{data.spots.slice(0,limit??data.spots.length).map((s,i)=>{const graded=s.misses+s.close+s.good||s.n,practice=weakPracticeLink(s.spot);return <li key={s.spot} className={styles.item}>
     <button type="button" className={styles.head} aria-expanded={open===s.spot} onClick={()=>setOpen(open===s.spot?null:s.spot)}>
      <span className={styles.rank}>{i+1}</span>
      <span className={styles.title}><b>{headline(s)}<i className={styles.stars} aria-label={`重要度 ${weight(s,data.spots[0])}（3段階）`}>{'★'.repeat(weight(s,data.spots[0]))}<s>{'★'.repeat(3-weight(s,data.spots[0]))}</s></i></b><em className={styles.spot}>{spotLabel(s.spot)}</em><small>{s.n}回・ミス {s.misses}回・惜しい {s.close}回・EV損失 {bb(s.evLoss)}{s.evN?`（1回あたり ${bb(s.evLoss/s.evN)}）`:''}</small></span>
      <span className={styles.meter} aria-label={`GTOどおり ${pct(s.good,graded)}`}><i style={{width:pct(s.good,graded)}}/></span>
     </button>
+    <div className={styles.practice}><Link href={practice.href}>{practice.label}</Link><small>{practice.note}</small></div>
     {open===s.spot&&<div className={styles.body}>{s.examples.length===0?<p className={styles.note}>この場面の最近の判断はGTOどおりでした。</p>:<ul>{s.examples.map((e,k)=><li key={k}>
      <span className={styles.badge} data-level={e.level??''}>{e.level?LEVEL_TEXT[e.level]:'-'}</span>
      <span><b>{e.hand}</b>{e.board&&<em>{boardText(e.board)}</em>}：{e.action}{e.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(e.freq*100)}%）`}{e.evLoss!==null&&e.evLoss>0&&`・EV損失 ${bb(e.evLoss)}`}</span>

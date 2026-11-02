@@ -166,3 +166,7 @@
  .playSide>.settings{order:6}
  .playSide>.stats{order:7}
 }
+.practiceTarget{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:10px 12px;border:1px solid #d6b36480;border-radius:8px;color:#f1d18a!important;background:#193a4c;font-weight:700;font-size:13px;line-height:1.6}
+.practiceTarget>span{min-width:0}.practiceTarget small{display:block;color:#d2e0e7;font-weight:400;font-size:12px}
+.targetToggle{flex-shrink:0;min-height:44px}
+@media(max-width:700px){.targetSettings{display:none!important}}
