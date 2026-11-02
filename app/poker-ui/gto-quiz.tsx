@@ -6,6 +6,7 @@ import {PREFLOP_CATEGORY,explainQuiz,flopQuestion,gradeQuiz,preflopQuestion,type
 import styles from './gto-chart.module.css';
 import { toQuizTop } from '@/lib/ui/quiz-top';
 import {MobilePlaySurface} from './mobile-play-surface';
+import {GtoAnswerBars} from './gto-answer-bars';
 
 /** GTO practice (2026/10/27): preflop questions from the 6-max chart and flop questions from the computed flops.
  * The answer is graded against how often GTO takes each action with that hand, with an explanation.
@@ -105,6 +106,7 @@ export function GtoQuiz(){
    <div className={styles.path}>{q.options.map((label,i)=><button key={i} type="button" disabled={Boolean(graded)} aria-pressed={graded?.choice===i} onClick={()=>answer(i)}>{label}</button>)}</div>
    {graded&&<div role="status">
     <p><b>{graded.verdict}</b>（{graded.points}点）</p>
+    <GtoAnswerBars options={q.options.map((text,i)=>({text,freq:q.freqs[i]}))} chosen={q.options[graded.choice]}/>
     <ul style={{margin:'6px 0 10px',paddingLeft:18,display:'grid',gap:4}}>{explainQuiz(q,graded).map((line,i)=><li key={i}>{line}</li>)}</ul>
     <button type="button" onClick={e=>{const t=e.currentTarget.closest('[data-quiz-top]');void next().then(()=>toQuizTop(t));}}>次の問題</button>
    </div>}

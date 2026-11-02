@@ -147,6 +147,7 @@
    decision and the action log; the settings and the totals move to the bottom. PC is unchanged. */
 .introShort{display:none}
 @media (max-width:700px){
+ .trainer .answerText{display:none!important}
  :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
  :global([data-mobile-play-fullscreen]) .trainer .play .settings,
  :global([data-mobile-play-fullscreen]) .trainer .stats,
