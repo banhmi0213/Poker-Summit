@@ -24,7 +24,7 @@ async function database(){
  create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;
  grant usage on schema public to anon,authenticated,service_role;`);
  const folder=path.resolve(__dirname,'../supabase/migrations');
- for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql','_poker_room_save_large_fields.sql']){
+ for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql','_poker_field_400.sql','_poker_room_save_large_fields.sql']){
   const file=fs.readdirSync(folder).find(f=>f.endsWith(suffix));assert.ok(file,suffix);await db.exec(fs.readFileSync(path.join(folder,file),'utf8'));
  }
  const {SupabaseRoomDirectory}=require('../lib/poker/room-directory.ts'),{SupabaseRoomStore}=require('../lib/poker/room-persistence.ts');
@@ -67,8 +67,15 @@ async function database(){
   const port=await start();
   // 1. Open registration through the real lobby API for everyone; it closes by itself (start - 10 min).
   for(let i=0;i<ENTRANTS;i++)check((await f.directory.changeRegistration(f.users[i],f.tid,'register')).ok,'registered '+i);
-  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',30000)).finalization.roomId;
-  check((await f.directory.binding(roomId)).capacity===200,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
+  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',90000).catch(async e=>{
+   const q=async sql=>{try{return JSON.stringify((await f.db.query(sql,[f.tid])).rows);}catch(x){return 'ERR '+x.message;}};
+   console.log('DIAG status',await f.directory.managementStatus(f.tid).then(x=>JSON.stringify(x)).catch(x=>'ERR '+x.message));
+   console.log('DIAG regs',await q('select count(*) n from poker_private.tournament_registrations where tournament_id=$1'));
+   console.log('DIAG final',await q('select capacity,cardinality(members) n from poker_private.registration_finalizations where tournament_id=$1'));
+   console.log('DIAG rooms',await q('select capacity,expected_count from poker_private.tournament_rooms where tournament_id=$1'));
+   console.log('DIAG due',await q("select public.poker_entry_due()::text d where $1::uuid is not null"));
+   throw e;})).finalization.roomId;
+  check((await f.directory.binding(roomId)).capacity===400,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
   // 2. Seats are drawn before the start; nobody is dealt in.
   let c=await until(saved,c=>Boolean(c.field),'seat draw');const tables=c.field.tables.length;check(tables===Math.ceil(ENTRANTS/6),'tables drawn');
   for(const [,t] of c.field.tables)check(t.seats.length>=3&&t.seats.length<=6,'table size');check(c.field.tables.every(([,t])=>t.hand===null),'no hand before the start');
