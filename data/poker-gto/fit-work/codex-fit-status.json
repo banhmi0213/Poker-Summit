@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-02T14:04:21.521Z",
+  "checkedAt": "2026-11-02T14:47:56.292Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -385,7 +385,7 @@
     "state": "merged into chatgpt/poker-authoritative-hand after 58 local tests and Vercel success; no PR-triggered workflows for data-only paths",
     "mergeSha": "30d5706fe4ee51bffa16d206c38a1308ed7cce2f"
   },
-  "notes": "Latest owner conditions permit40BBUTG52..62 ifother3within4. Actual−4.4932;PR753 includesexact requestedWizard caveat. Donot recommendpurchase yet. No further40BB fitting. AfterallchecksmergePRS753staging thenclose723asreplaced. Workflows/fit-work excluded,top-levelplay/role unchanged,all3flopsets preserved. Previous fail rules overridden by latest acceptance.",
+  "notes": "Latest6spot instruction supersedes5/3spot or23job caps. UTG-BB added and7Solve steps verified. All6flop runs now38running+CI1=39repo;alljobpages fetched via GitHubfetchcontentJSON total_count matched. Additionalqueued allowed for42demand. Nextslot startsHJ-BB,skipanyduplicate. PR753merged afterallsuccess,source9chartsreadbackmatched;723closed. Noadditional40BBfit,nomaterialstrategyedits,productionmainDBbillinguntouched.",
   "validatedCompleteSpots": [
     "btn-bb",
     "hu-3bet",
@@ -1003,7 +1003,7 @@
     "hu-3bet",
     "hu-srp"
   ],
-  "stagingVerified": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+  "stagingVerified": "26b4177a05d85869a4a60ebbb6407bfefd65ec6a",
   "conditionalAcceptance": {
     "rule": "\n【最新40BB条件付き合格ルール】追加の当て直しは全面禁止。再生成8maxのBB守り4席が参考BTN84/CO78/HJ70/UTG57%から各±4ptなら合格。UTGだけ±5pt以内(52〜62%)で他3席が±4pt以内なら条件付き合格として20/60BB表と一緒にstageへ入れてよい。PR本文へ必ず「40BB の UTG 相手は参考から −4.5 前後。GTO Wizard で最終確認する項目」と記載。より外れたらマージせず結果のみ報告。6/9人卓は訂正後の位置比較基準を維持。Wizardの課金を今勧める指示ではない。全CI成功後のみstage merge、本番main/DB/課金/公開は操作しない。",
     "source": "owner explicit instruction",
@@ -1152,8 +1152,8 @@
     "url": "https://github.com/banhmi0213/Poker-Summit/pull/753",
     "branch": "chatgpt/gto-mtt-conditional-20261102-i",
     "head": "b3bf52304a4b62a1fc1cb1246dfd32ae215467f1",
-    "state": "open",
-    "checks": "Vercel success;engine run41458315861 still in_progress Verify selected seats and per-hand timebank in browsers;not yet merged",
+    "state": "merged",
+    "checks": "Poker engine regression success;Vercel success;Vercel Preview Comments success",
     "tests": {
       "passed": 63,
       "failed": 0
@@ -1167,7 +1167,10 @@
     "bodyIncludesRequestedCaveat": true,
     "ciRun": 41458315861,
     "ciJob": 125320601621,
-    "retryCount": 0
+    "retryCount": 0,
+    "mergeSha": "26b4177a05d85869a4a60ebbb6407bfefd65ec6a",
+    "stagingReadbackVerified": true,
+    "retiredPR723": "closed after replacement753 merged"
   },
   "proLoadTest": {
     "ownerConfirmedPlan": "GitHubPro on billing page",
@@ -1391,15 +1394,110 @@
     "initialResult": "34in_progress repository total =33flop+1engineCI; all pages total_count matched. >30 observed,Pro expanded concurrency confirmed. 25minute recheck retained."
   },
   "concurrencyPolicy": {
-    "maxActiveFlopSpots": 5,
+    "maxActiveFlopSpots": 6,
     "parallelPerSpot": 7,
-    "targetFlopJobs": 35,
+    "requestedFlopJobs": 42,
     "repoNominalLimit": 40,
-    "repoLimit40ExactlyVerified": false,
+    "queuedAllowed": true,
     "over30Observed": true,
-    "observedRepositoryJobs": 34,
-    "observedFlopJobs": 33,
-    "checkedAt": "2026-11-02T14:14:10.565203+00:00",
-    "replenish": "one next unstarted spot when a running spot finishes;count all other jobs and avoidduplicates"
-  }
+    "repoLimit40ExactlyVerified": false,
+    "observedRepositoryJobs": 39,
+    "observedFlopJobs": 38,
+    "checkedAt": "2026-11-02T14:46:45.531Z",
+    "replenish": "After a spot finishes addone next unstarted spot,keeping6active;queueabove40explicitlyallowed"
+  },
+  "utgBbStart": {
+    "run": 41464873348,
+    "branch": "gto-flop-solve/utg-bb/v3b",
+    "startedAt": "2026-11-02T14:44:51.310Z",
+    "source": "585c0a903f7b2173d47c944c8e2d435a55319a23",
+    "sevenSolveStepsRunningVerified": true,
+    "duplicateCheck": "v3b absent,olderv3run40841481660cancelled;noactiveutg-bb beforestart"
+  },
+  "sixSpotBaseline": {
+    "checkedAt": "2026-11-02T14:46:45.531Z",
+    "runs": [
+      {
+        "id": 41279681140,
+        "branch": "gto-flop-solve/co-bb/v3b",
+        "status": "in_progress",
+        "total": 201,
+        "running": 7,
+        "solveSuccess": 193,
+        "solveRunning": 7,
+        "solveQueued": 0
+      },
+      {
+        "id": 40922261771,
+        "branch": "gto-flop-solve/hu-limp/v3b",
+        "status": "in_progress",
+        "total": 201,
+        "running": 4,
+        "solveSuccess": 196,
+        "solveRunning": 4,
+        "solveQueued": 0
+      },
+      {
+        "id": 41464988915,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "status": "queued",
+        "total": 1,
+        "running": 1,
+        "solveSuccess": 0,
+        "solveRunning": 0,
+        "solveQueued": 0
+      },
+      {
+        "id": 41464989229,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "status": "queued",
+        "total": 1,
+        "running": 0,
+        "solveSuccess": 0,
+        "solveRunning": 0,
+        "solveQueued": 0
+      },
+      {
+        "id": 41464873348,
+        "branch": "gto-flop-solve/utg-bb/v3b",
+        "status": "queued",
+        "total": 201,
+        "running": 7,
+        "solveSuccess": 0,
+        "solveRunning": 7,
+        "solveQueued": 193
+      },
+      {
+        "id": 41459848850,
+        "branch": "gto-flop-solve/sb-iso/v3b",
+        "status": "queued",
+        "total": 201,
+        "running": 7,
+        "solveSuccess": 0,
+        "solveRunning": 7,
+        "solveQueued": 193
+      },
+      {
+        "id": 41459846661,
+        "branch": "gto-flop-solve/sb-limp/v3b",
+        "status": "queued",
+        "total": 201,
+        "running": 7,
+        "solveSuccess": 0,
+        "solveRunning": 7,
+        "solveQueued": 193
+      },
+      {
+        "id": 41279680906,
+        "branch": "gto-flop-solve/sb-bb/v3b",
+        "status": "queued",
+        "total": 201,
+        "running": 7,
+        "solveSuccess": 134,
+        "solveRunning": 7,
+        "solveQueued": 59
+      }
+    ]
+  },
+  "nextEtaInstruction": "Next report must recompute entire21spot finish time using completion deltas after thissixspot baseline,allremaining12unstartedspots,40jobcap/42demand and onebyone refill. Observation only2minutes aftersixstart here;do not call old3spot11/13 projection current. Include assumptions/range."
 }
