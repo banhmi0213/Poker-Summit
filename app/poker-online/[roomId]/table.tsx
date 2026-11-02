@@ -84,8 +84,9 @@ export default function OnlineTable({roomId,enabled,eventsOrigin}:{roomId:string
   const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_OUT'||userId!==undefined&&userId!==(session?.user.id??'')){stopAuto();c.close();client.current=null;pollMode.current=null;setExitDeadline(null);setState(null);setPending(false);setBusy(false);busyRef.current=false;setConnectionEpoch(0);setMessage('ログイン状態が変わりました。ページを再読み込みしてください。');}userId=session?.user.id??'';});
   // With the live push channel open, the 1-second read is only a 5-second safety net (owner 2026/10/30: 60-player tournaments).
   const timer=setInterval(()=>{setTick(v=>v+1);if(pollMode.current&&!busyRef.current&&!c.pending&&(!socketLive.current||Date.now()-lastRead.current>=5000))void refresh();},1000);
-  const visible=()=>{if(typeof document!=='undefined'&&!document.hidden&&rejoinWaiting.current){rejoinWaiting.current=false;scheduleRejoin();}};if(typeof document!=='undefined')document.addEventListener('visibilitychange',visible);
-  return()=>{clearInterval(timer);if(typeof document!=='undefined')document.removeEventListener('visibilitychange',visible);stopAuto();subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
+  const visible=()=>{if(typeof document!=='undefined'&&!document.hidden&&rejoinWaiting.current){rejoinWaiting.current=false;scheduleRejoin();}};const online=()=>{if(rejoinTimer.current){clearTimeout(rejoinTimer.current);rejoinTimer.current=null;void autoRejoin();}};
+  if(typeof document!=='undefined')document.addEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.addEventListener('online',online);
+  return()=>{clearInterval(timer);if(typeof document!=='undefined')document.removeEventListener('visibilitychange',visible);if(typeof window!=='undefined')window.removeEventListener('online',online);stopAuto();subscription.unsubscribe();c.close();if(client.current===c)client.current=null;busyRef.current=false;};
  },[roomId,enabled]);
  useEffect(()=>{if(state?.autoExitAt!=null)setExitDeadline(current=>current??Date.now()+Math.max(0,state.autoExitAt!-state.serverNow));},[state?.autoExitAt]);
  useEffect(()=>{
