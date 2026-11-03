@@ -18,7 +18,7 @@ export function savePublicGtoCache(url:string,data:unknown){
   const text=JSON.stringify(data),size=new TextEncoder().encode(text).byteLength;if(size>620_000)return;
   const cache=await caches.open(CACHE);await cache.delete(url);
   const keys=await cache.keys();let total=size;
-  for(const key of keys.reverse()){const r=await cache.match(key);const n=Number(r?.headers.get('x-gto-bytes'));if(!n||total+n>MAX_BYTES)await cache.delete(key);else total+=n;}
+  for(const key of [...keys].reverse()){const r=await cache.match(key);const n=Number(r?.headers.get('x-gto-bytes'));if(!n||total+n>MAX_BYTES)await cache.delete(key);else total+=n;}
   await cache.put(url,new Response(text,{headers:{'content-type':'application/json','x-gto-saved':String(Date.now()),'x-gto-bytes':String(size)}}));
  }catch{/* Quota/private mode must not prevent play. */}});
 }
