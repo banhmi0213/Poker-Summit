@@ -1,6 +1,7 @@
 /** Precomputed postflop spots shown on my page (data: public/poker-gto/flops/<id>/<flop>.json, made by
  * scripts/poker-gto/flop-solve.cjs with the ranges in scripts/poker-gto/spots.cjs). */
 import flops from '@/data/poker-gto/flops.json';
+import {fetchGtoJson,preferredGtoDepth,readPublicGtoCache,savePublicGtoCache} from './gto-public-cache';
 export const GTO_SPOTS=[
  {id:'utg-bb',group:'シングルレイズ',label:'UTG対BB',detail:'UTGオープン → BBコール（ポット5.5BB）'},
  {id:'hj-bb',group:'シングルレイズ',label:'HJ対BB',detail:'HJオープン → BBコール（ポット5.5BB）'},
@@ -52,10 +53,10 @@ const jsonCache=new Map<string,unknown>(),jsonPending=new Map<string,Promise<unk
 /** A chart file already loaded in this page, or undefined. */
 export function cachedJson<T>(url:string):T|undefined{return jsonCache.get(url) as T|undefined;}
 /** Loads a chart file once per page (null when missing). */
-export function loadJson<T>(url:string):Promise<T|null>{
+export function loadJson<T>(url:string,maxBytes?:number):Promise<T|null>{
  if(jsonCache.has(url))return Promise.resolve(jsonCache.get(url) as T);
  let p=jsonPending.get(url);
- if(!p){p=fetch(url).then(r=>r.ok?r.json():null).then(d=>{if(d!==null)jsonCache.set(url,d);return d;}).catch(()=>null).finally(()=>jsonPending.delete(url));jsonPending.set(url,p);}
+ if(!p){p=(async()=>{const stored=await readPublicGtoCache(url);const d=stored??await fetchGtoJson(url,maxBytes);if(d!==null){jsonCache.set(url,d);if(stored===null)savePublicGtoCache(url,d);}return d;})().catch(()=>null).finally(()=>jsonPending.delete(url));jsonPending.set(url,p);}
  return p as Promise<T|null>;
 }
 const flopUrl=(spot:string,flop:string)=>`/poker-gto/flops/${spot}/${flop}.json`;
@@ -66,5 +67,8 @@ export async function loadFlopIndex():Promise<Record<string,string[]>>{return (a
 export function cachedFlopIndex(){return cachedJson<Record<string,string[]>>('/poker-gto/flops/index.json')??null;}
 /** Loads the charts the GTO panes open with, in the background (mypage). */
 export function prefetchGtoCharts(){
- void loadJson('/poker-gto/preflop.json');void loadFlopIndex();void loadFlop('btn-bb',GTO_FLOPS[0]);
+ if(typeof navigator!=='undefined'&&(navigator as Navigator&{connection?:{saveData?:boolean}}).connection?.saveData)return;
+ const depth=preferredGtoDepth();
+ void loadJson(depth===100?'/poker-gto/preflop.json':`/poker-gto/preflop-${depth}bb.json`,620_000);
+ void loadJson('/poker-gto/flops/index.json',20_000);
 }

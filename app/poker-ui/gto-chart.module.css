@@ -123,3 +123,20 @@
 .handSheet>header{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#f1d18a}
 .handSheet>header button{min-height:44px!important;border:1px solid #d6b364;border-radius:8px;padding:8px 14px;background:#d6b364;color:#18364b;font:inherit;font-weight:700;cursor:pointer}
 @media(max-width:700px){.desktopDepth{display:none!important}.mobileDepth{display:flex!important}.mobileDepth small{font-size:10px;color:#b8cbd5;line-height:1.3}.chipScrollHint{display:block!important;font-size:10px;color:#b8cbd5}.chipRow[data-can-next]>div{mask-image:linear-gradient(to right,#000 calc(100% - 18px),transparent)}}
+
+@media (min-width:1100px){
+ .wrap .split[data-on]{display:grid;grid-template-columns:400px minmax(0,1fr);gap:14px 28px;align-items:start}
+ .wrap .split[data-on] .splitSide{display:contents}
+ .wrap .split[data-on] .splitSide>*{grid-column:1;min-width:0;margin:0!important}
+ .wrap .split[data-on] .splitMain{grid-column:2;grid-row:1 / span 6;min-width:0}
+ .wrap .split[data-on] .splitSide>.note:not(.intro),.wrap .split[data-on] .splitSide>p:not([class]),.wrap .split[data-on] .splitSide>.path{grid-column:2}
+ .wrap .split[data-on] .splitSide>.path[aria-label="表示を選ぶ"]{grid-column:1}
+ .wrap :is(p,label,select,.note,.intro,.totals,.path,.handDetailHint){font-size:15px!important;line-height:1.7}
+ .wrap :is(h2,h3){font-size:20px!important}
+ .wrap .splitMain .grid{width:100%;font-size:16px!important;table-layout:fixed;border-spacing:3px}
+ .wrap .splitMain .grid td{height:38px;padding:5px 1px;font-size:16px;line-height:26px}
+ .wrap :is(.strategyLegend,.legendItems,.actionKey,.key){font-size:14px!important}
+ .wrap .handDetail{padding:16px 18px;gap:10px;font-size:16px}
+ .wrap .handDetail b{font-size:22px}.wrap .handDetail :is(span,small,li){font-size:16px!important}
+ .wrap .path button{font-size:15px!important;min-height:40px}
+}

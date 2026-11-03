@@ -9,7 +9,7 @@ export type HomeFeatureItem = {
   title: string;
   description: string;
   image: string;
-  href: string;
+  href?: string;
   external?: boolean;
 };
 
@@ -57,9 +57,9 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
             const active = slideIndex === index;
             return <article key={item.id} className={styles.slide} aria-hidden={!active} aria-label={`${slideIndex + 1} / ${items.length}`}>
               <div className={styles.visual}>
-                <a tabIndex={active ? 0 : -1} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>
+                {item.href ? <a tabIndex={active ? 0 : -1} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>
                   <img src={item.image} alt={item.title} />
-                </a>
+                </a> : <img src={item.image} alt={item.title} />}
                 {items.length > 1 && <div className={styles.arrows}>
                   <button tabIndex={active ? 0 : -1} type="button" onClick={() => move(-1)} aria-label="前の注目情報">‹</button>
                   <button tabIndex={active ? 0 : -1} type="button" onClick={() => move(1)} aria-label="次の注目情報">›</button>
@@ -69,7 +69,7 @@ export function HomeFeaturePanel({ items }: { items: HomeFeatureItem[] }) {
                 <span className={styles.badge}>{item.category}</span>
                 <h2>{item.title}</h2>
                 <p>{item.description}</p>
-                <a tabIndex={active ? 0 : -1} className={styles.detail} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>詳細を見る</a>
+                {item.href && <a tabIndex={active ? 0 : -1} className={styles.detail} href={item.href} target={item.external ? "_blank" : undefined} rel={item.external ? "noopener noreferrer" : undefined}>詳細を見る</a>}
               </div>
             </article>;
           })}

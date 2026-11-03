@@ -21,11 +21,8 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   if (!user && !isPreview) redirect("/signup");
   if (user && pokerAccess(user) === "verify") redirect("/mypage?poker=verify");
   // Preview deployment alone must not expose customer-facing debug controls.
-  let showDemoTools = process.env.POKER_DEMO_TOOLS === "1" && process.env.VERCEL_ENV !== "production" && isPreview;
-  if (user && !showDemoTools) {
-    try { const { data, error } = await supabase.rpc("is_admin"); showDemoTools = !error && data === true; }
-    catch { showDemoTools = false; }
-  }
+  const showDemoTools = process.env.POKER_DEMO_TOOLS === "1" && process.env.VERCEL_ENV !== "production" && isPreview;
+  // オーナー 2026/11/04「表示全部消せよ」: 運営でも出さない（開発用の環境変数 POKER_DEMO_TOOLS=1 のプレビューだけ）。
   const { data: profile } = user ? await supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle() : { data: null };
   const serverNow = Date.now();
   let tournament: PokerTournament | undefined;

@@ -167,3 +167,11 @@
 @media(max-width:767px){.navy-preview .portal-footer .footer-discovery{gap:24px}}
 
 .navy-preview #blog{scroll-margin-top:180px}
+
+/* Draw full-bleed section backgrounds directly to avoid clipped shadow seams. */
+.navy-preview { overflow-x: clip; }
+.navy-preview .home-feed.home-feed .home-section[data-tone]::before {
+  inset-inline: calc(50% - 50vw);
+  clip-path: none;
+  box-shadow: none;
+}

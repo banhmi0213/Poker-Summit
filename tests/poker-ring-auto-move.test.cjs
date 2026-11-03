@@ -26,3 +26,7 @@ test('a short stack tops up to the minimum from the wallet only when it can',()=
  assert.equal(pickRingMove(a,[a,t('b',1,2,3)],rakes,40,10),null);
 });
 test('two equally short tables merge one way only',()=>{const a=t('a',1,2,2),b=t('b',1,2,2);assert.equal(pickRingMove(a,[a,b],rakes,150,0),null);assert.equal(pickRingMove(b,[a,b],rakes,150,0).target.id,'a');});
+test('the rank condition keeps a player away from tables they may not sit at',()=>{
+ const a=t('a',1,2,1),b=t('b',1,2,4),m=pickRingMove(a,[a,b,t('d',2,5,3)],rakes,150,1000,x=>x.id!=='b');
+ assert.equal(m.target.id,'d');assert.equal(m.sameRate,false);
+});

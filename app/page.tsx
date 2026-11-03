@@ -201,29 +201,22 @@ export default async function HomePage({
   const jobsBanners = sectionBanners(jobsBannerRows);
 
   // 6つの入口を固定順で表示。各セクションの専用画像・リンクを使用する。
-  const freerollFeature = freerollSignupOpen()
-    ? topBanners.find(b => /フリーロール/.test(b.title) && b.image_url)
-    : undefined;
   const homeFeatureItems: HomeFeatureItem[] = [
     { id: "stores", category: "店舗検索", title: `全国${totalStoreCount}店舗から、次に遊ぶお店を探そう`,
       description: "都道府県・エリア・店舗タイプで、お近くのポーカー店を探せます。",
       image: "/images/navigation/stores-v1.webp", href: "/stores" },
-    freerollFeature
-      ? { id: "featured", category: "注目企画", title: freerollFeature.title,
-          description: `10/25（日）までの会員登録で、${PRELAUNCH_TOURNAMENT.prizeLabel}の会員限定フリーロールに参加できます。`,
-          image: freerollFeature.image_url, href: freerollFeature.link_url || "/tournaments/first-freeroll", external: freerollFeature.external }
-      : { id: "featured", category: "ポーカーニュース", title: "国内外のポーカーニュースをチェック",
-          description: "日本人選手の活躍や大会情報、注目の話題をまとめてお届け。",
-          image: "/images/navigation/domestic-v1.webp", href: "/poker-news" },
+    { id: "events", category: "トーナメント・イベント", title: "次に参加したいトーナメント・イベントを探そう",
+      description: "開催中・開催予定のトーナメントやイベントをチェック。",
+      image: "/images/navigation/events-v1.webp", href: "/events" },
+    { id: "summit-online", category: "SummitPokerオンライン", title: "SummitPokerオンライン",
+      description: "オンライン対戦とGTO学習。",
+      image: "/images/navigation/summit-online-v1.webp" },
     { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
       description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
       image: "/images/navigation/community-v1.webp", href: "/board" },
     { id: "jobs", category: "求人", title: "ポーカーが好き。その気持ちが、仕事のきっかけに。",
       description: "ポーカー店舗の求人・スポット求人から、自分に合う働き方を探そう。",
       image: "/images/navigation/jobs-v1.webp", href: "/jobs" },
-    { id: "events", category: "トーナメント・イベント", title: "次に参加したいトーナメント・イベントを探そう",
-      description: "開催中・開催予定のトーナメントやイベントをチェック。",
-      image: "/images/navigation/events-v1.webp", href: "/events" },
     { id: "blog", category: "BLOG", title: "ポーカーの楽しみ方がもっと広がる。",
       description: "Poker Summit BLOGで、ポーカーにまつわる記事を読もう。",
       image: "/images/navigation/blog-v1.webp", href: "/blog" },

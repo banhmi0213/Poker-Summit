@@ -2,7 +2,8 @@
 import {createContext,useContext,useEffect,useLayoutEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import styles from './mobile-play-surface.module.css';
-const PlaySlots=createContext<{mobile:boolean;actions:HTMLDivElement|null;feedback:HTMLDivElement|null;tools:HTMLSpanElement|null}>({mobile:false,actions:null,feedback:null,tools:null});
+const PlaySlots=createContext<{mobile:boolean;actions:HTMLDivElement|null;feedback:HTMLDivElement|null;tools:HTMLSpanElement|null;stopVersion:number}>({mobile:false,actions:null,feedback:null,tools:null,stopVersion:0});
+export function useMobilePlayStop(){return useContext(PlaySlots).stopVersion;}
 
 /** Only the controls move into the dock; the game state stays in its original component. */
 export function MobilePlayControls({children,mobileChildren}:{children:ReactNode;mobileChildren?:ReactNode}){
@@ -23,6 +24,7 @@ export function MobilePlaySettings({children,active,reviewCount,onOpenChange,lab
   else if(dialog?.open)dialog.close();
  },[open,enabled,onOpenChange]);
  useEffect(()=>{if(!enabled)setOpen(false);},[enabled]);
+ if(slots.mobile)return active?null:<>{children}</>;
  if(!enabled)return <>{children}</>;
  const button=<button ref={trigger} type="button" className={styles.settingsButton} aria-label={reviewCount?`設定・復習 ${reviewCount}問`:'設定'} aria-haspopup="dialog" aria-expanded={open} onClick={()=>setOpen(true)}>設定{reviewCount>0&&<span className={styles.reviewBadge} aria-hidden="true">{reviewCount}</span>}</button>;
  return <>{slots.tools?createPortal(button,slots.tools):button}<dialog ref={sheet} className={styles.sheet} aria-label={label} onClose={()=>{setOpen(false);trigger.current?.focus();}} onClick={e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientY<r.top)setOpen(false);}}}>
@@ -36,6 +38,8 @@ export function MobilePlaySettings({children,active,reviewCount,onOpenChange,lab
 export function MobilePlaySurface({children,label,startFullscreen=false}:{children:ReactNode;label:string;startFullscreen?:boolean}){
  const anchor=useRef<HTMLDivElement>(null),openButton=useRef<HTMLButtonElement>(null),closeButton=useRef<HTMLButtonElement>(null);
  const [host,setHost]=useState<HTMLDivElement|null>(null),[full,setFull]=useState(false);
+ const [stopVersion,setStopVersion]=useState(0);
+ const stop=()=>{setStopVersion(v=>v+1);setFull(false);};
  const [mobile,setMobile]=useState(false),[actions,setActions]=useState<HTMLDivElement|null>(null),[feedback,setFeedback]=useState<HTMLDivElement|null>(null),[tools,setTools]=useState<HTMLSpanElement|null>(null),[dockHeight,setDockHeight]=useState(0);
  const dock=useRef<HTMLDivElement>(null);
  useLayoutEffect(()=>{const el=document.createElement('div');el.className=styles.host;anchor.current?.appendChild(el);setHost(el);return()=>{el.remove();};},[]);
@@ -46,7 +50,7 @@ export function MobilePlaySurface({children,label,startFullscreen=false}:{childr
   document.body.appendChild(host);document.body.style.overflow='hidden';closeButton.current?.focus();
   const onKey=(e:KeyboardEvent)=>{
    const dialog=host.querySelector<HTMLDialogElement>('dialog[open]');
-   if(e.key==='Escape'){if(dialog)return;e.preventDefault();setFull(false);}
+   if(e.key==='Escape'){if(dialog)return;e.preventDefault();stop();}
    if(e.key==='Tab'){
     const buttons=[...(dialog??host).querySelectorAll<HTMLElement>('button:not(:disabled),a[href],select,input,[tabindex="0"]')].filter(x=>x.getClientRects().length);
     const first=buttons[0],last=buttons[buttons.length-1];
@@ -60,9 +64,9 @@ export function MobilePlaySurface({children,label,startFullscreen=false}:{childr
  useLayoutEffect(()=>{const m=window.matchMedia('(max-width:700px)'),change=()=>{setMobile(m.matches);if(!m.matches)setFull(false);};change();m.addEventListener('change',change);return()=>m.removeEventListener('change',change);},[]);
  useLayoutEffect(()=>{const el=dock.current;if(!el||!mobile){setDockHeight(0);return;}const measure=()=>setDockHeight(Math.ceil(el.getBoundingClientRect().height));measure();const observer=new ResizeObserver(measure);observer.observe(el);return()=>observer.disconnect();},[mobile,host]);
  useEffect(()=>{if(startFullscreen&&window.matchMedia('(max-width:700px)').matches)setFull(true);},[startFullscreen]);
- const content=<PlaySlots.Provider value={{mobile,actions,feedback,tools}}><div className={`${styles.root} ${full?styles.full:''}`} style={{'--play-dock-height':`${dockHeight}px`} as CSSProperties} data-mobile-play-fullscreen={full||undefined} role={full?'dialog':undefined} aria-modal={full||undefined} aria-label={full?`${label}・全画面`:undefined}>
+ const content=<PlaySlots.Provider value={{mobile,actions,feedback,tools,stopVersion}}><div className={`${styles.root} ${full?styles.full:''}`} style={{'--play-dock-height':`${dockHeight}px`} as CSSProperties} data-mobile-play-fullscreen={full||undefined} role={full?'dialog':undefined} aria-modal={full||undefined} aria-label={full?`${label}・全画面`:undefined}>
   <div className={styles.toolbar}>
-   {full&&<strong>{label}</strong>}<div className={styles.toolbarActions}><span ref={setTools}/>{full?<button ref={closeButton} type="button" onClick={()=>setFull(false)}>全画面を閉じる</button>:<button ref={openButton} type="button" onClick={()=>setFull(true)}>全画面でプレイ</button>}</div>
+   {full&&<strong>{label}</strong>}<div className={styles.toolbarActions}><span ref={setTools}/>{full?<button ref={closeButton} type="button" onClick={stop}>やめる</button>:<button ref={openButton} type="button" onClick={()=>setFull(true)}>全画面でプレイ</button>}</div>
   </div>
   <div className={styles.content}>{children}</div>
   <div ref={dock} className={styles.dock}><div ref={setFeedback} className={styles.dockFeedback}/><div ref={setActions} className={styles.dockActions}/></div>

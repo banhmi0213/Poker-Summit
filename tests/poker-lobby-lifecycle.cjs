@@ -26,7 +26,7 @@ test('available-seat filter excludes unknown and full tables, and rate filter re
 test('guest dashboard keeps the approved sections and exposes practice without fake public records',()=>{
  const Dashboard=require('../app/poker-lobby/lobby-dashboard.tsx').default;
  const html=renderToStaticMarkup(React.createElement(Dashboard,{guest:true,admin:false,memberName:'会員',ringEnabled:false,tournamentsEnabled:true,rings:[],ringError:false,tournaments:[],assigned:null,registration:null,board:null}));
- for(const label of ['あなたの持ちチップ','参加中のテーブル','着せ替え交換','チップ獲得ランキング','歴代大会優勝者','練習テーブル'])assert.ok(html.includes(label),label);
+ for(const label of ['あなたの持ちチップ','参加中のテーブル','デザイン変更','チップ獲得ランキング','歴代大会優勝者','練習テーブル'])assert.ok(html.includes(label),label);
  assert.match(html,/月 チップ獲得ランキング/);assert.match(html,/優勝者一覧は公開準備中/);
  assert.ok(!html.includes('SUMMIT ACE'));assert.ok(!html.includes('128,400'));
 });
@@ -46,7 +46,7 @@ test('account theme switches the selected detail without leaking other pane cont
  assert.match(JSON.stringify(r.toJSON()),/balance detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('history detail'));
  await act(async()=>r.root.findAllByType('button').find(b=>b.props['aria-pressed']===false&&b.findAllByType('span').some(n=>n.children.join('')==='ハンド履歴')).props.onClick());
  assert.match(JSON.stringify(r.toJSON()),/history detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('balance detail'));
- assert.ok(r.root.findAllByType('a').some(a=>a.props.href==='/mypage/poker/hands'));
+ assert.ok(r.root.findAllByType('button').some(b=>b.props.children==='ハンド履歴を見る'),'hand history opens inside the player page (menu stays whole)');
  await act(async()=>r.unmount());
 });
 test('single hand replay uses the same account theme and preserves the supplied controls',()=>{
