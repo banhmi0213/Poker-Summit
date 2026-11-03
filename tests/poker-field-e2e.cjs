@@ -61,7 +61,7 @@ async function database(){
  const saved=async()=>{const v=await restoreRoom(f.store,roomId,f.keys,{now:()=>now});assert.ok(v);return v.room.checkpoint();};
  const where=c=>{const map=new Map();for(const [t,room] of c.field?.tables??[])for(const [seat,s] of room.seats)map.set(s.memberId,{table:t,seat,stack:s.stack});return map;};
  const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
-  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await editor.getByRole('button',{name:/^(レイズ|ベット|オールイン) /}).click();return;}
+  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await panel.locator('div[class*="actions"] > button').last().click();return;}
   await p.getByRole('button',{name:'ALL-IN額',exact:true}).click();await panel.getByRole('button',{name:label}).click();};
  try{
   const port=await start();
