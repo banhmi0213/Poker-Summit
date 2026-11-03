@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T23:09:27.107Z",
+  "checkedAt": "2026-11-03T23:10:54.209Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -245,7 +245,8 @@
       },
       {
         "spot": "sb-iso",
-        "eta": "2026-11-03T23:10:38.975Z"
+        "eta": "2026-11-04T01:07:23.489Z",
+        "note": "single board runner duration ~7/proxySpotRate plus1h queue allowance; no completed rate from retry yet"
       },
       {
         "spot": "btn-bb-3bet",
@@ -297,7 +298,7 @@
       }
     ],
     "initial21x200": "2026-11-06T05:35:00.262Z",
-    "assumptions": "6slots, measured aggregate/6 for new/unstarted/retry, specified order; sb-iso queued restart waits may delay; ±24h or more. Initial21x200 only, not1755."
+    "assumptions": "6slots, measured aggregate/6 for new/unstarted/retry, specified order; sb-iso queued restart waits may delay; ±24h or more. Initial21x200 only, not1755. sb-iso ETA uses single-runner board duration7/proxy plus1h queue; recalculated Nov4JST."
   },
   "flopPR": {
     "number": 756,
@@ -316,7 +317,11 @@
     "hu-3bet",
     "hu-srp",
     "hu-limp",
-    "sb-bb"
+    "co-bb",
+    "sb-bb",
+    "co-btn",
+    "utg-bb",
+    "hj-bb"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -1009,7 +1014,11 @@
     "hu-3bet",
     "hu-srp",
     "hu-limp",
-    "sb-bb"
+    "co-bb",
+    "sb-bb",
+    "co-btn",
+    "utg-bb",
+    "hj-bb"
   ],
   "stagingVerified": {
     "spotCounts": {
@@ -2065,9 +2074,11 @@
       "hu-limp",
       "co-bb",
       "sb-bb",
-      "co-btn"
+      "co-btn",
+      "utg-bb",
+      "hj-bb"
     ],
-    "importedValidatedCount": 7,
+    "importedValidatedCount": 9,
     "sbBb": {
       "solveRun": 41279680906,
       "solveConclusion": "success",
@@ -2101,7 +2112,7 @@
       "pr": 784,
       "head": "c9f560f0be1b1439599a1d2ee563e9df22bbe322",
       "tree": "6fd8d7dd2acd3d4f2518fef821946b4bb3c95aa6",
-      "state": "awaiting-checks",
+      "state": "merged-validated",
       "branch": "chatgpt/gto-flops-utg-hj-20261104-d",
       "collectRuns": [
         41735948690,
@@ -2112,7 +2123,10 @@
         41486975878
       ],
       "verified": "Each200canonicalunique/v3/250/nonemptyfinitehandEv;67tests;tree readbackmatch",
-      "workspace": "/workspace/scratch/7d368c3d87fa/gto"
+      "workspace": "/workspace/scratch/7d368c3d87fa/gto",
+      "mergeCommit": "27c84a4fa8c8989fcebbf62567fb855f55c63817",
+      "stageTreeMatches": true,
+      "checks": "Allcheckruns andVercelsuccess"
     }
   },
   "concurrency": {
@@ -2877,5 +2891,27 @@
   "freeze": {
     "until": "2026-11-05T00:00:00+09:00",
     "scope": "Only flop data intake; UIexception handled separately,no UI/code changes in thisrun."
+  },
+  "currentStage": "27c84a4fa8c8989fcebbf62567fb855f55c63817",
+  "chartRechecked": {
+    "at": "2026-11-03T23:10:54.209Z",
+    "eightMaxBB": "82.825/78.594/73.091/55.459;83.148/77.060/68.187/52.507;83.710/77.205/70.126/56.807",
+    "rfiPerHandDiff": [
+      2.926797385620915,
+      2.8554047259929614,
+      1.934162895927602
+    ],
+    "sixUtgVsEightHj": [
+      -0.673604826546,
+      -3.179487179487,
+      -2.75475113122
+    ],
+    "btnSpread": [
+      0.014479638,
+      0.135444947,
+      0.018099548
+    ],
+    "nineUtgBelowEight": true,
+    "noFitStarted": true
   }
 }
