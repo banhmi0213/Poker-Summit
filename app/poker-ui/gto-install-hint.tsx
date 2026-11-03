@@ -12,5 +12,5 @@ export function GtoInstallHint(){
   return()=>{standalone.removeEventListener('change',update);window.removeEventListener('storage',update);};
  },[]);
  if(!visible)return null;
- return <aside className={styles.hint} aria-label="ホーム画面への追加方法"><div><strong>ホーム画面からアプリのように開く</strong><p>{ios?'Safariの共有メニューで「ホーム画面に追加」を選べます。':'ブラウザのメニューで「アプリをインストール」または「ホーム画面に追加」を選べます。'}</p></div><button type="button" onClick={()=>{setVisible(false);try{localStorage.setItem(DISMISSED,'1');}catch{/* Hidden for this view. */}}} aria-label="ホーム画面追加の案内を閉じる">閉じる</button></aside>;
+ return <aside className={styles.hint} aria-label="ホーム画面への追加方法"><div><strong>ホーム画面からアプリのように開く</strong><p>{ios?'このGTOのページをSafariで開いた状態で、「共有」から「ホーム画面に追加」を選んでください。':'ブラウザのメニューで「アプリをインストール」または「ホーム画面に追加」を選べます。'}</p></div><button type="button" onClick={()=>{setVisible(false);try{localStorage.setItem(DISMISSED,'1');}catch{/* Hidden for this view. */}}} aria-label="ホーム画面追加の案内を閉じる">閉じる</button></aside>;
 }
