@@ -1,3 +1,4 @@
+import { threadCardStyle, threadStyle, validCode } from "@/lib/cosmetics";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -137,6 +138,18 @@ export default async function BoardPostPage({
   const officialIds = new Set<string>(((officialRows ?? []) as unknown[]).map((r) => String(r)));
   const graduationByUserId: Record<string, number> = {};
   badgeRows?.forEach(row => { graduationByUserId[row.user_id] = row.best_score; });
+  // アイコン枠・スレッドデザイン(2026/11/01)。投稿者・返信者ぶんを1回でまとめて引く。
+  const { data: cosmeticRows } = authorUserIds.length
+    ? await supabase.rpc("poker_cosmetics_for", { p_members: authorUserIds })
+    : { data: [] };
+  const frameByUserId: Record<string, string | null> = {};
+  const threadByUserId: Record<string, string | null> = {};
+  (Array.isArray(cosmeticRows) ? (cosmeticRows as { userId?: unknown; frame?: unknown; thread?: unknown }[]) : []).forEach((c) => {
+    if (typeof c?.userId !== "string") return;
+    frameByUserId[c.userId] = validCode(c.frame, "frame");
+    threadByUserId[c.userId] = validCode(c.thread, "thread");
+  });
+  const threadDesign = post.author_user_id ? threadByUserId[post.author_user_id] : null;
   const avatarByUserId: Record<string, string | null> = {};
   // 投稿者・返信者の役職(2026/10、「サミットアイコン横の名前の上に役職を
   // 表示」との指示)。board/page.tsxと同じくavatar_urlと一緒にまとめて引く。
@@ -157,7 +170,7 @@ export default async function BoardPostPage({
         <Link href="/board" className="breadcrumb">
           スレッド一覧に戻る
         </Link>
-        <div className="card">
+        <div className="card" style={threadCardStyle(threadDesign)}>
           <div
             style={{
               display: "flex",
@@ -172,7 +185,7 @@ export default async function BoardPostPage({
                   <span className="badge outline">{post.category}</span>
                 </div>
               )}
-              <h1 style={{ fontSize: 19 }}>{post.title}</h1>
+              <h1 style={{ fontSize: 19 }}>{post.title}{(() => { const t = threadStyle(threadDesign).badge; return t && <span style={t.style}>{t.text}</span>; })()}</h1>
             </div>
             <ReportForm kind="post" label="🚩 通報する" action={reportPost.bind(null, post.id)} buttonStyle={{ fontSize: 12, whiteSpace: "nowrap", flexShrink: 0 }} />
           </div>
@@ -181,7 +194,7 @@ export default async function BoardPostPage({
                 アイコン押したらプロフィールが見れるように」との指示)。 */}
             {post.author_user_id ? (
               <Link href={`/members/${post.author_user_id}`}>
-                <Avatar name={post.author_name} url={avatarByUserId[post.author_user_id]} />
+                <Avatar name={post.author_name} url={avatarByUserId[post.author_user_id]} frame={frameByUserId[post.author_user_id]} />
               </Link>
             ) : (
               <Avatar name={post.author_name} url={null} />
@@ -221,7 +234,7 @@ export default async function BoardPostPage({
           <p className="muted small">まだコメントはありません。</p>
         )}
 
-        {community ? replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />) : replies?.map(r => <article className="card" key={r.id} style={{marginBottom:12}}><p className="muted small">{r.author_name} ・ {formatDate(r.created_at)}</p><BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="" loading="lazy" style={{maxWidth:"100%",maxHeight:420,objectFit:"contain"}} />}</article>)}
+        {community ? replies?.map(r => <ReplyConversation key={r.id} reply={r} postId={post.id} userId={user.id} authorName={authorDisplayName} owner={post.author_user_id === user.id} resolutionId={community.resolutionId} resolved={community.resolved} reactions={community.reactions} childCount={community.counts[r.id] ?? 0} focusReplyId={focusedRoot === r.id ? searchParams.focus : undefined} authors={Object.fromEntries(authorUserIds.map(id => [id, {avatar:avatarByUserId[id], frame:frameByUserId[id], role:roleByUserId[id], official:officialIds.has(id),score:graduationByUserId[id]}]))} />) : replies?.map(r => <article className="card" key={r.id} style={{marginBottom:12}}><p className="muted small">{r.author_name} ・ {formatDate(r.created_at)}</p><BoardBody body={r.body} />{r.image_url && <img src={r.image_url} alt="" loading="lazy" style={{maxWidth:"100%",maxHeight:420,objectFit:"contain"}} />}</article>)}
 
         {totalPages > 1 && (
           <div

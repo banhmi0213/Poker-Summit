@@ -8,7 +8,7 @@ import StructureView from "./structure-view";
 export default function StructureEditor({ initial = defaultStructure }: {
     initial?: TournamentStructure;
 }) {
-    const [s, setS] = useState<TournamentStructure>(initial);
+    const [s, setS] = useState<TournamentStructure>({ ...initial, timeBankCards: initial.timeBankCards ?? 2 });
     const [minutes, setMinutes] = useState(20);
     const update = (i: number, patch: Partial<BlindPeriod>) => setS(prev => ({ ...prev, periods: prev.periods.map((p, j) => j === i ? { ...p, ...patch } : p) }));
     let level = 0;
@@ -19,7 +19,11 @@ export default function StructureEditor({ initial = defaultStructure }: {
             <label className={layout.field}>アンティ方式<select value={s.anteType} onChange={e => { const anteType = e.target.value as TournamentStructure["anteType"]; setS({ ...s, anteType, periods: s.periods.map(p => ({ ...p, ante: anteType === "none" ? 0 : p.ante })) }); }}><option value="none">なし</option><option value="bb">BBアンティ</option><option value="per-player">全員アンティ</option></select></label>
             <label className={layout.field}>レイトレジスト終了レベル（0＝開始時）<NumberStepper label="レイトレジスト終了レベル" increment={1} max={s.periods.filter(p => p.kind === "level").length} value={s.lateRegLevel} onChange={lateRegLevel => setS({ ...s, lateRegLevel })}/></label>
             <div className={layout.field}><span>リエントリー</span><label className={layout.checkbox}><input type="checkbox" checked={s.reentry} onChange={e => setS({ ...s, reentry: e.target.checked })}/>締切までリエントリー可</label></div>
+            <label className={layout.field}>持ち時間<select value={s.turnSeconds ?? 20} onChange={e => setS({ ...s, turnSeconds: Number(e.target.value) as 20 | 30 })}><option value={20}>20秒</option><option value={30}>30秒</option></select></label>
+            <label className={layout.field}>タイムバンクカード（開始時）<select value={s.timeBankCards ?? 2} onChange={e => setS({ ...s, timeBankCards: Number(e.target.value) })}>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}枚</option>)}</select></label>
+            <div className={layout.field}><span>ファイナルテーブルでカード追加</span><label className={layout.checkbox}><input type="checkbox" checked={(s.finalTableCards ?? 0) > 0} onChange={e => setS({ ...s, finalTableCards: e.target.checked ? 1 : 0 })}/>追加する</label>{(s.finalTableCards ?? 0) > 0 && <select aria-label="ファイナルテーブルで追加する枚数" value={s.finalTableCards} onChange={e => setS({ ...s, finalTableCards: Number(e.target.value) })}>{[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n}枚</option>)}</select>}</div>
         </div>
+        <p className={layout.hint}>タイムバンクカードは1枚で持ち時間1回分（{s.turnSeconds ?? 20}秒）延ばせます。1ターンに1枚まで使えます。</p>
         <p className={layout.hint}>初期スタック：{(s.startingStack / (s.periods.find(p => p.kind === "level")?.bb || 1)).toFixed(1)} BB。推奨値は大会形式により異なり、固定制限は設けていません。</p>
         <div className={layout.bulk}>
             <div className={layout.group}><label className={layout.field}>レベル時間一括設定（分）<NumberStepper label="一括設定の分" min={1} max={240} increment={1} value={minutes} onChange={setMinutes}/></label><button type="button" className="btn" onClick={() => setS({ ...s, periods: s.periods.map(p => p.kind === "level" ? { ...p, minutes } : p) })}>レベルに適用</button></div>

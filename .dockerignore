@@ -1,0 +1,7 @@
+.git
+node_modules
+.next
+.poker-server
+tests
+db/tests
+docs

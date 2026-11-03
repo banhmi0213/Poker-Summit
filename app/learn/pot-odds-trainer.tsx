@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./pot-odds-trainer.module.css";
+import { toQuizTop } from "@/lib/ui/quiz-top";
 
 type Scenario = { pot: number; bet: number; outs: number; streets: 1 | 2; label: string; note: string };
 const challenges: Scenario[] = [
@@ -73,7 +74,7 @@ export function PotOddsTrainer() {
     <p className={styles.scenario}>{current.label}</p><div className={styles.chips}><span>ポット <b>{fmt(current.pot)}</b></span><span>相手のベット <b>{fmt(current.bet)}</b></span><span>アウト <b>{current.outs}枚</b></span></div>
     <p className={styles.scenarioNote}>{current.note}</p><p className={styles.question}>追加のベットや将来のアクションを無視した場合、コールとフォールドのどちらが計算上有利？</p>
     <div className={styles.answers}><button type="button" disabled={answer!==null} onClick={()=>choose("call")}>コール</button><button type="button" disabled={answer!==null} onClick={()=>choose("fold")}>フォールド</button></div>
-    {answer!==null&&<div className={styles.feedback} role="status"><strong>{answer===correct?"正解！":"惜しい！"} この条件では{correct==="call"?"コール":"フォールド"}が計算上有利です。</strong><p>必要勝率は {pct(qm.required)}、完成確率は {pct(qm.equity)}。{qm.equity>=qm.required?"完成確率が必要勝率を上回っています。":"完成確率が必要勝率を下回っています。"}</p><button type="button" onClick={next}>{quizIndex===challenges.length-1?"結果を見る":"次の問題へ"}</button></div>}
+    {answer!==null&&<div className={styles.feedback} role="status"><strong>{answer===correct?"正解！":"惜しい！"} この条件では{correct==="call"?"コール":"フォールド"}が計算上有利です。</strong><p>必要勝率は {pct(qm.required)}、完成確率は {pct(qm.equity)}。{qm.equity>=qm.required?"完成確率が必要勝率を上回っています。":"完成確率が必要勝率を下回っています。"}</p><button type="button" onClick={e=>{next();toQuizTop(e.currentTarget);}}>{quizIndex===challenges.length-1?"結果を見る":"次の問題へ"}</button></div>}
    </>}
   </div>
   <p className={styles.disclaimer}>※アウトがすべて勝ちにつながり、完成しなければ負けるという簡略化したドローの教材です。相手のハンド・リバースインプライドオッズ・将来のベット・レーキなどは考慮しません。2枚の完成確率は最後まで追加コストなしでカードを見られる場合の理論値であり、通常のフロップでの単発コール判断にそのまま使えません。実戦ではハンドエクイティや相手のレンジも考慮してください。</p>

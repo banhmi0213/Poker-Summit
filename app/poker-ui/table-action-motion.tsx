@@ -25,13 +25,16 @@ export function useTableActionMotion(ref:RefObject<HTMLDivElement>,frame:TableMo
   // Re-measure on the next state transition; never finish a flight at obsolete
   // viewport coordinates after scrolling/resizing the table.
   capture.current=()=>{geometry.current={holes:new Map(),bets:new Map(),stacks:new Map()};};
-  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+  if(document.visibilityState==='hidden'||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
   const originNode=root.querySelector('[data-motion-origin]'),potNode=root.querySelector('[data-pot-source]');if(!originNode||!potNode)return;
   const origin=center(originNode),pot=center(potNode),muck={x:pot.x-44,y:pot.y-28};
   const track=(node:HTMLElement,frames:Keyframe[],options:KeyframeAnimationOptions,remove=false)=>{
    if(typeof node.animate!=='function'){if(remove)node.remove();return;}
    let animation:Animation;try{animation=node.animate(frames,options);}catch{if(remove)node.remove();return;}
-   const clean=()=>{running.current.delete(clean);animation.cancel();if(remove)node.remove();};running.current.add(clean);void animation.finished.then(clean,clean);
+   const clean=()=>{window.clearTimeout(watchdog);running.current.delete(clean);animation.cancel();if(remove)node.remove();};
+   // A paused compositor animation must not outlive its short visual effect.
+   const watchdog=window.setTimeout(clean,Number(options.duration??0)+Number(options.delay??0)+250);
+   running.current.add(clean);void animation.finished.then(clean,clean);
   };
   const ghost=(kind:'card'|'chip',start:Point,end:Point,delay:number,duration:number,turn=0)=>{
    if(running.current.size>120)return;const node=document.createElement('span');node.className=kind==='card'?styles.flyingCard:styles.chip;node.dataset.motionGhost=kind;
@@ -42,7 +45,8 @@ export function useTableActionMotion(ref:RefObject<HTMLDivElement>,frame:TableMo
   };
   for(const e of events){
    if(e.kind==='deal'&&e.player!==undefined){const cards=root.querySelector<HTMLElement>(`[data-motion-hole="${e.player}"]`),target=current.holes.get(e.player)?.[e.index!];if(!target||!cards)continue;
-    ghost('card',origin,target,e.delay??0,350,(e.index??0)===0?-4:4);const card=cards.children[e.index!] as HTMLElement;if(card)track(card,[{opacity:0,transform:'rotateY(85deg) scale(.92)'},{opacity:1,transform:'none'}],{duration:170,delay:(e.delay??0)+290,fill:'backwards',easing:'ease-out'});
+    ghost('card',origin,target,e.delay??0,350,(e.index??0)===0?-4:4);const card=cards.children[e.index!] as HTMLElement;// Keep authoritative hole cards visible even if the browser pauses a flight.
+    if(card)track(card,[{boxShadow:'0 0 10px #e4c47799'},{boxShadow:'0 0 0px transparent'}],{duration:170,delay:(e.delay??0)+290,easing:'ease-out'});
    }else if(e.kind==='fold'&&e.player!==undefined){const points=current.holes.get(e.player)??old.holes.get(e.player)??[];points.slice(0,2).forEach((p,i)=>ghost('card',p,{x:muck.x+i*5,y:muck.y+i*3},i*40,420,i===0?-24:18));
    }else if((e.kind==='bet'||e.kind==='collect')&&e.player!==undefined){const start=e.kind==='bet'?(current.stacks.get(e.player)??old.stacks.get(e.player)):(old.bets.get(e.player)??current.bets.get(e.player));const end=e.kind==='collect'?pot:(current.bets.get(e.player)??{x:pot.x+(start&&start.x<pot.x?-35:35),y:pot.y+25});if(!start)continue;
     for(let i=0;i<3;i++)ghost('chip',{x:start.x+i*3,y:start.y-i*2},end,(e.delay??0)+i*45,360,i*35);
@@ -51,5 +55,5 @@ export function useTableActionMotion(ref:RefObject<HTMLDivElement>,frame:TableMo
    }
   }
  },[ref,stamp]);
- useLayoutEffect(()=>{if(typeof window==='undefined'||!ref.current)return;const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');const stop=()=>{for(const cancel of [...running.current])cancel();capture.current?.();};window.addEventListener('resize',stop);window.addEventListener('scroll',stop,true);media?.addEventListener?.('change',stop);return()=>{stop();prior.current=null;window.removeEventListener('resize',stop);window.removeEventListener('scroll',stop,true);media?.removeEventListener?.('change',stop);};},[ref]);
+ useLayoutEffect(()=>{if(typeof window==='undefined'||!ref.current)return;const media=window.matchMedia?.('(prefers-reduced-motion: reduce)');const stop=()=>{for(const cancel of [...running.current])cancel();capture.current?.();};window.addEventListener('resize',stop);window.addEventListener('scroll',stop,true);document.addEventListener('visibilitychange',stop);window.addEventListener('pagehide',stop);window.addEventListener('pageshow',stop);media?.addEventListener?.('change',stop);return()=>{stop();prior.current=null;window.removeEventListener('resize',stop);window.removeEventListener('scroll',stop,true);document.removeEventListener('visibilitychange',stop);window.removeEventListener('pagehide',stop);window.removeEventListener('pageshow',stop);media?.removeEventListener?.('change',stop);};},[ref]);
 }

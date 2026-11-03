@@ -13,7 +13,15 @@ export type TournamentStructure = {
     lateRegLevel: number;
     reentry: boolean;
     periods: BlindPeriod[];
+    /** Seconds per decision (20 or 30). Missing = 20. */
+    turnSeconds?: 20 | 30;
+    /** Time bank cards each player gets at the start (1-5); one card adds one turn's worth of time. Missing (older tournaments) = none. */
+    timeBankCards?: number;
+    /** Extra cards given when the final table forms (0 = none, up to 5). Missing = none. */
+    finalTableCards?: number;
 };
+export const tournamentTiming = (s: Pick<TournamentStructure, "turnSeconds" | "timeBankCards" | "finalTableCards">) =>
+    ({ turnSeconds: s.turnSeconds ?? 20, timeBankCards: s.timeBankCards ?? 0, finalTableCards: s.finalTableCards ?? 0 });
 export type TournamentPrize = { rank: number; kind: "chips" | "text"; chips: number; description: string };
 export function validateTournamentDetails(organizer: unknown, raw: unknown) {
     if (typeof organizer !== "string" || organizer.trim().length > 200) throw new Error("主催者名は200文字以内で入力してください。");
@@ -64,7 +72,10 @@ export function validateStructure(raw: unknown): TournamentStructure {
     for (let i = 1; i < levels.length; i++)
         if (levels[i].sb < levels[i - 1].sb || levels[i].bb < levels[i - 1].bb)
             throw new Error("ブラインドは前のレベル以上にしてください。");
-    return { startingStack: s.startingStack, anteType: s.anteType, lateRegLevel: s.lateRegLevel, reentry: s.reentry, periods };
+    if ((s.turnSeconds !== undefined && s.turnSeconds !== 20 && s.turnSeconds !== 30) || (s.timeBankCards !== undefined && !int(s.timeBankCards, 1, 5)) || (s.finalTableCards !== undefined && !int(s.finalTableCards, 0, 5)))
+        throw new Error("持ち時間（20秒か30秒）・タイムバンクカード（1〜5枚）・ファイナルテーブルの追加（0〜5枚）を確認してください。");
+    return { startingStack: s.startingStack, anteType: s.anteType, lateRegLevel: s.lateRegLevel, reentry: s.reentry, periods,
+        ...(s.turnSeconds !== undefined ? { turnSeconds: s.turnSeconds } : {}), ...(s.timeBankCards !== undefined ? { timeBankCards: s.timeBankCards } : {}), ...(s.finalTableCards !== undefined ? { finalTableCards: s.finalTableCards } : {}) };
 }
 export const defaultStructure: TournamentStructure = {
     startingStack: 10000, anteType: "bb", lateRegLevel: 4, reentry: false,

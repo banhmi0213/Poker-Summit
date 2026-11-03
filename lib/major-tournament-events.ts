@@ -56,7 +56,8 @@ export async function getDomesticTournamentEvents(db: SupabaseClient, now: strin
   const { data, error } = await db.from("major_tournaments")
     .select("id,title,scope,active,location,venue,description,start_date,end_date")
     .eq("scope", "国内").eq("active", true).order("start_date");
-  if (error) throw new Error("国内大型大会を読み込めませんでした。");
+  // A failed read must not take the whole page down (e.g. the staging database has no major_tournaments table): show no domestic majors instead.
+  if (error) { console.error("国内大型大会を読み込めませんでした。", error.code ?? ""); return []; }
   return (data ?? []).map(row => toDomesticTournamentEvent(row, now)).filter((e): e is NonNullable<typeof e> => e !== null);
 }
 

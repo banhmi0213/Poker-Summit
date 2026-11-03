@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import styles from "./position-trainer.module.css";
+import { toQuizTop } from "@/lib/ui/quiz-top";
 
 type Seat = "UTG" | "HJ" | "CO" | "BTN" | "SB" | "BB";
 const seats: { id: Seat; name: string; zone: string; x: number; y: number; info: string; tip: string }[] = [
@@ -46,7 +47,7 @@ export function PositionTrainer(){
    <div className={styles.detail} aria-live="polite"><span className={styles.zone}>{selected.zone}ポジション</span><h3>{selected.id} <small>{selected.name}</small></h3><p>{selected.info}</p><div className={styles.tip}><strong>覚えておきたいポイント</strong><p>{selected.tip}</p></div><div className={styles.order}><strong>プリフロップの行動順</strong><div>UTG → HJ → CO → BTN → SB → BB</div><small>※レイズなどがあればアクションは再び回ります。</small></div></div>
   </div>
   <div className={styles.quiz}><div className={styles.quizHead}><div><span className={styles.eyebrow}>QUICK CHALLENGE</span><h3>3問で理解度チェック</h3></div><span className={styles.progress}>{complete?"結果":`${index+1} / ${questions.length}`}</span></div>
-   {complete?<div className={styles.result} role="status"><strong>{score} / {questions.length} 問正解！</strong><p>{score===questions.length?"全問正解です！ポジションの基本を理解できています。":"席の説明をもう一度確認して、再チャレンジしてみましょう。"}</p><button type="button" onClick={reset}>もう一度挑戦する ↻</button></div>:<><p className={styles.question}>{question.question}</p><div className={styles.answers}>{question.options.map(id=><button type="button" key={id} disabled={answer!==null} onClick={()=>choose(id)} className={answer!==null&&id===question.answer?styles.correct:answer===id?styles.incorrect:styles.option}>{id}</button>)}</div>{answer!==null&&<div className={styles.feedback} role="status"><strong>{answer===question.answer?"正解！":"惜しい！正解は "+question.answer+" です。"}</strong><p>{question.explain}</p><button type="button" onClick={next}>{index===questions.length-1?"結果を見る":"次の問題へ"}</button></div>}</>}
+   {complete?<div className={styles.result} role="status"><strong>{score} / {questions.length} 問正解！</strong><p>{score===questions.length?"全問正解です！ポジションの基本を理解できています。":"席の説明をもう一度確認して、再チャレンジしてみましょう。"}</p><button type="button" onClick={reset}>もう一度挑戦する ↻</button></div>:<><p className={styles.question}>{question.question}</p><div className={styles.answers}>{question.options.map(id=><button type="button" key={id} disabled={answer!==null} onClick={()=>choose(id)} className={answer!==null&&id===question.answer?styles.correct:answer===id?styles.incorrect:styles.option}>{id}</button>)}</div>{answer!==null&&<div className={styles.feedback} role="status"><strong>{answer===question.answer?"正解！":"惜しい！正解は "+question.answer+" です。"}</strong><p>{question.explain}</p><button type="button" onClick={e=>{next();toQuizTop(e.currentTarget);}}>{index===questions.length-1?"結果を見る":"次の問題へ"}</button></div>}</>}
   </div>
   <p className={styles.note}>※一般的な6人制テキサスホールデムを想定した初心者向け教材です。戦略はスタック・参加人数・相手の行動によって変わります。</p>
  </section>;

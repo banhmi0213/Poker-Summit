@@ -1,0 +1,3 @@
+/** Header icons drawn as SVG so every phone shows the same gold line icon (the ↪ character became a blue emoji on iPhone). */
+export function MenuIcon(){return <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none"/></svg>;}
+export function ExitIcon(){return <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 4.5H6.5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2H14M10.5 12H20m0 0-3.5-3.5M20 12l-3.5 3.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none"/></svg>;}

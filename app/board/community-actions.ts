@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "@/lib/revalidate";
 import { BOARD_REACTIONS, UUID_PATTERN } from "@/lib/board-community";
+import { validCode } from "@/lib/cosmetics";
 
 async function member() {
   const db = await createClient();
@@ -83,8 +84,15 @@ export async function loadBoardChildren(postId: string, parentId: string, page: 
     db.from("profiles").select("user_id,avatar_url,role").in("user_id",(data ?? []).map(r=>r.author_user_id).filter(Boolean)),
   ]);
   if (reactionError) throw new Error("リアクションを読み込めませんでした。");
-  const {data:official}=await db.rpc("official_board_user_ids",{p_ids:(profiles ?? []).map(p=>p.user_id)});
-  return { replies: data ?? [], total: count ?? 0, reactions:reactions ?? [], authors:Object.fromEntries((profiles ?? []).map(p=>[p.user_id,{avatar:p.avatar_url,role:p.role,official:(official ?? []).includes(p.user_id)}])) };
+  const memberIds=(profiles ?? []).map(p=>p.user_id);
+  const [{data:official},{data:cosmetics}]=await Promise.all([
+    db.rpc("official_board_user_ids",{p_ids:memberIds}),
+    // アイコン枠は返信の返信にも出す(2026/11/01)。
+    memberIds.length?db.rpc("poker_cosmetics_for",{p_members:memberIds}):Promise.resolve({data:[]}),
+  ]);
+  const frames:Record<string,string|null>={};
+  (Array.isArray(cosmetics)?(cosmetics as {userId?:unknown;frame?:unknown}[]):[]).forEach(c=>{if(typeof c?.userId==="string")frames[c.userId]=validCode(c.frame,"frame");});
+  return { replies: data ?? [], total: count ?? 0, reactions:reactions ?? [], authors:Object.fromEntries((profiles ?? []).map(p=>[p.user_id,{avatar:p.avatar_url,role:p.role,official:(official ?? []).includes(p.user_id),frame:frames[p.user_id]??null}])) };
 }
 export async function markBoardNotificationsRead(notificationId?: string, ownPostsOnly = false) {
   const { db, user } = await member();

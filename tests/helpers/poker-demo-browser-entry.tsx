@@ -1,0 +1,10 @@
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import PokerTablePreview from '../../app/poker-demo/poker-table-preview';
+import GameNavigation from '../../app/poker-demo/game-navigation';
+import {GameCommunity} from '../../app/poker-ui/game-community';
+import {defaultStructure} from '../../lib/poker/tournament';
+import {initialDeal} from './poker-demo-browser-actions';
+import styles from '../../app/poker-demo/poker-table.module.css';
+const now=Date.now(),tournament=location.search.includes('tournament')?{id:'sample',title:'スマホ検証大会',owner_store_id:null,starts_at:new Date(now).toISOString(),published:false,structure:defaultStructure,image_url:null}:undefined;
+createRoot(document.getElementById('root')!).render(<div className={`${styles.gamePage} ${styles.demoViewport}`}><GameNavigation header={<a href="/">サイトトップ</a>} footer={<a href="/">サイト情報</a>}/><GameCommunity><main className={styles.gameMain}><details className={styles.previewLinks}><summary>開発用テーブルを選択</summary></details><PokerTablePreview member={{displayName:'スマホ確認',avatarUrl:null}} initialDeal={initialDeal} tournament={tournament} serverNow={now} cpuMode="calling"/></main></GameCommunity></div>);

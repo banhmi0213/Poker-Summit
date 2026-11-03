@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
+import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 
 // 以前は求人・クーポン・イベント・お知らせ・写真・プランを/store/profile
 // 1ページ内のアンカーリンク(#jobs等)としてまとめていたが、「求人を押した
@@ -51,6 +52,7 @@ export function StoreSidebar({ tournamentEnabled = false }: { tournamentEnabled?
       <div className={`app-menu-links${menuOpen ? " open" : ""}`}>
       {STORE_LINKS.map((l) => {
         const active = l.href === "/store/profile" ? pathname === "/store/profile" : pathname?.startsWith(l.href);
+        if (l.href === "/store/profile/poker-tournaments" && !POKER_TOURNAMENTS_ENABLED) return null;
         if (l.href === "/store/profile/poker-tournaments" && !tournamentEnabled) return <span key={l.href} className="side-link" aria-disabled="true" title="運営から利用を許可された店舗のみ使用できます" style={{ color: "#777", background: "#eee", opacity: .65, cursor: "not-allowed" }}>{l.label}<small style={{ display: "block", fontSize: 11 }}>運営の利用許可が必要です</small></span>;
         return (
           <Link

@@ -9,6 +9,7 @@ import { BottomTabs } from "@/app/bottom-tabs";
 import { toggleFavoriteStore } from "@/app/member-actions";
 import type { Metadata } from "next";
 import { staticPageMetadata } from "@/lib/seo";
+import { getPublicStoreRankings, getFavoriteStoreIds } from "@/lib/public-store-rankings";
 
 export const dynamic = "force-dynamic";
 
@@ -35,25 +36,24 @@ export default async function StoreRankingPage({ searchParams }: {
   const supabase = await createClient();
   const [auth, result] = await Promise.all([
     supabase.auth.getUser(),
-    supabase.rpc("public_store_rankings", { p_prefs: prefs }),
+    getPublicStoreRankings(supabase, prefs),
   ]);
-  if (result.error) throw result.error;
   const stores = result.data ?? [];
   const user = auth.data.user;
   const [photos, favorites] = await Promise.all([
     stores.length ? supabase.from("store_photos").select("store_id, url")
       .in("store_id", stores.map((s: any) => s.id)).order("sort_order").order("created_at") : Promise.resolve({ data: [] }),
-    user ? supabase.from("favorite_stores").select("store_id").eq("user_id", user.id) : Promise.resolve({ data: [] }),
+    getFavoriteStoreIds(supabase, user?.id),
   ]);
   const covers = new Map<string, string>();
   (photos.data ?? []).forEach((p: any) => { if (!covers.has(p.store_id)) covers.set(p.store_id, p.url); });
-  const favoriteIds = new Set((favorites.data ?? []).map((f: any) => f.store_id));
+  const favoriteIds = favorites;
   const storeContentCounts = await getStoreContentCounts(supabase, stores.map((s: any) => s.id));
   return <div>
     <PortalHeader userEmail={user?.email} />
     <main className="container">
       <Link href={query ? "/stores?" + query : "/"} className="btn">{query ? "店舗を探す" : "TOPに戻る"}</Link>
-      <section className="home-section">
+      {result.available && <section className="home-section">
         <div className="home-section-head"><h1>店舗ランキング{pref || region ? "（" + (pref || region) + "）" : "（全国）"}</h1></div>
         {!stores.length && <p className="muted">まだ店舗がありません。</p>}
         <div className="home-grid home-grid-four">{stores.map((s: any, index: number) =>
@@ -63,7 +63,7 @@ export default async function StoreRankingPage({ searchParams }: {
               await toggleFavoriteStore(s.id, path);
             }} />
         )}</div>
-      </section>
+      </section>}
     </main>
     <PortalFooter />
     <BottomTabs active="stores" />

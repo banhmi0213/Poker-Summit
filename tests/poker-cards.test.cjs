@@ -120,3 +120,15 @@ test('card colors, face ranks and role labels match settlement', () => {
     const royal = [c(10, 'c'), c(11, 'c'), c(12, 'c'), c(13, 'c'), c(14, 'c')];
     assert.equal(handLabel(entries[0].hole, royal), 'ロイヤルフラッシュ');
 });
+
+test('made hand under the chip count: nothing preflop, best hand so far on flop, turn and river', () => {
+  const { madeHandLabel } = require('../lib/poker/card-display.ts');
+  const c = (rank, suit) => ({ rank, suit });
+  const hole = [c(7, 'h'), c(2, 's')];
+  assert.equal(madeHandLabel(hole, []), null);
+  assert.equal(madeHandLabel(null, [c(7, 'd'), c(9, 'c'), c(13, 's')]), null);
+  assert.equal(madeHandLabel(hole, [c(9, 'd'), c(3, 'c'), c(13, 's')]), 'ハイカード（K）');
+  assert.equal(madeHandLabel(hole, [c(7, 'd'), c(9, 'c'), c(13, 's')]), 'ワンペア（7）');
+  assert.equal(madeHandLabel(hole, [c(7, 'd'), c(2, 'c'), c(13, 's'), c(4, 'h')]), 'ツーペア（7）');
+  assert.equal(madeHandLabel(hole, [c(7, 'd'), c(2, 'c'), c(13, 's'), c(4, 'h'), c(7, 'c')]), 'フルハウス（7）');
+});

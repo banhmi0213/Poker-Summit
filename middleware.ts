@@ -14,6 +14,8 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   if (
     process.env.VERCEL_ENV === "production" &&
     host.endsWith(".vercel.app") &&
+    // 運営の確認用アドレス（11/5 公開前、lib/supabase/middleware.ts の staffHost）はそのまま見せる。
+    host !== process.env.STAFF_PREVIEW_HOST &&
     (request.method === "GET" || request.method === "HEAD") &&
     !request.nextUrl.pathname.startsWith("/api/")
   ) {
@@ -62,6 +64,6 @@ async function ipBlocked(ip: string): Promise<boolean> {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp3)$).*)",
   ],
 };

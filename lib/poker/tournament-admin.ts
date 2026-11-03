@@ -120,7 +120,7 @@ export async function saveManagedTournament(scope: "admin" | "store", form: Form
             await client.storage.from("poker-tournament-images").remove([existing.image_path]);
         for (const path of ["/admin/poker-tournaments", "/store/profile/poker-tournaments", "/poker-lobby", "/poker-demo"])
             revalidatePath(path);
-        return { ok: true, message: published ? "大会設定を公開しました。参加受付・実際の対戦はまだ提供していません。" : "下書きとして保存しました。", id: result.data.id };
+        return { ok: true, message: published ? (process.env.POKER_ROOM_SERVICE_ORIGIN ? "大会設定を公開しました。参加受付・参加者確定は専用の操作欄で設定してください。" : "大会設定を公開しました。参加受付・実際の対戦はまだ提供していません。") : "下書きとして保存しました。", id: result.data.id };
     }
     catch (error) {
         if (uploaded && cleanup)

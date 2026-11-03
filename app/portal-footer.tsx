@@ -34,7 +34,7 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
 
   return (
     <div className="portal-footer">
-      <div className={styles.discovery}>
+      <div className={`${styles.discovery} footer-discovery`}>
       {areaRows.length > 0 && (
         <nav className="footer-areas" aria-label="都道府県からポーカー店を探す">
           <p className="footer-areas__title">都道府県からポーカー店を探す</p>
@@ -50,7 +50,7 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
           ))}
         </nav>
       )}
-        <nav className={styles.social} aria-label="Poker Summit公式SNS">
+        <nav className={`${styles.social} footer-social`} aria-label="Poker Summit公式SNS">
           <p className={styles.socialTitle}>公式SNS</p>
           <div className={styles.socialLinks}>
             <a href="https://x.com/Poker_Summit" target="_blank" rel="noopener noreferrer" aria-label="Poker Summit公式X（新しいタブで開きます）" title="公式X">
@@ -116,3 +116,4 @@ export async function PortalFooter({ hideManagementLinks = false }: { hideManage
     </div>
   );
 }
+

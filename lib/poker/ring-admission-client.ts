@@ -1,0 +1,50 @@
+/** Browser transport: no credentials in storage; ambiguous mutations retain one exact receipt. */
+import {parseRingCommand,parseRingLobbyState,type RingLobbyState,type RingLobbyCommand} from './ring-admission';
+class RingAuthenticationError extends Error{}
+type View={state:RingLobbyState|null;pending:RingLobbyCommand|null;working:boolean;storageBlocked:boolean;problem:string|null;/** The table socket is open: moves arrive without asking. */live?:boolean};
+export const RING_EVENTS_PATH='/api/poker/ring/events';
+type Storage={getItem(key:string):string|null;setItem(key:string,value:string):void;removeItem(key:string):void};
+export class RingAdmissionClient{
+ #view:View={state:null,pending:null,working:false,storageBlocked:false,problem:null};#listeners=new Set<()=>void>();#member:string|null=null;#epoch=0;#generation=0;#reading=false;#controller:AbortController|null=null;#retryAt=0;#retryFailures=0;
+ /** Server clock (ms) of the play now shown, and when a socket push last set it: an older answer never replaces a newer push. */
+ #playAt:number|null=null;#pushAt=0;
+ constructor(private options:{session:()=>Promise<{memberId:string;token:string}|null>;storage:Storage;fetch?:typeof fetch;now?:()=>number}){}
+ getSnapshot=()=>this.#view;
+ subscribe=(listener:()=>void)=>{this.#listeners.add(listener);return()=>{this.#listeners.delete(listener);};};
+ #set(change:Partial<View>){this.#view={...this.#view,...change};this.#listeners.forEach(fn=>fn());}
+ #key(){return 'poker-ring-pending-v1:'+this.#member;}
+ setMember(member:string|null){if(member===this.#member)return;this.#epoch++;this.#generation++;this.#controller?.abort();this.#member=member;this.#reading=false;this.#retryAt=0;this.#retryFailures=0;this.#playAt=null;this.#pushAt=0;let pending:RingLobbyCommand|null=null,problem:string|null=null;if(member){try{const raw=this.options.storage.getItem(this.#key());if(raw)pending=parseRingCommand(JSON.parse(raw));}catch{problem='操作記録を確認できません。ブラウザのストレージ設定をご確認ください。';}}this.#set({state:null,pending,working:false,storageBlocked:Boolean(problem),problem});}
+ close(){this.setMember(null);this.#epoch++;this.#controller?.abort();}
+ async #request(body:unknown,signal?:AbortSignal){const session=await this.options.session();if(!session||session.memberId!==this.#member)throw new RingAuthenticationError('ログイン状態を確認してください。');const response=await(this.options.fetch??fetch)('/api/poker/ring',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.token},body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.any([AbortSignal.timeout((body as {type?:string})?.type==='act'?25000:10000),...(signal?[signal]:[])])});if(response.status===409){let reason='';try{reason=String((await response.json())?.error??'');}catch{}return {conflict:true as const,reason};}if(response.status===401||response.status===403)throw new RingAuthenticationError('ログイン状態を確認してください。');if(!response.ok)throw Error('接続を確認できません。再度お試しください。');const json=await response.json();if(json.ok!==true)throw Error('接続を確認できません。');return {state:parseRingLobbyState(json.result)};}
+ /** An HTTP answer keeps the newer play a socket push may already have shown. */
+ #fresh(next:RingLobbyState|undefined):RingLobbyState|null{if(!next)return null;const current=this.#view.state,at=next.play?.serverNow??null;
+  if(current&&this.#playAt!==null&&(at===null?(this.options.now??Date.now)()-this.#pushAt<1500:at<this.#playAt))return {...next,play:current.play};
+  this.#playAt=at;return next;}
+ /** Open the table socket (owner 2026/10/29: 相手の動きを早く映す). Returns the closer; reconnects by itself. */
+ listen(eventsOrigin:string,tableId:string,Socket:typeof WebSocket=WebSocket){
+  let origin:URL;try{origin=new URL(eventsOrigin);}catch{return ()=>{};}
+  if(origin.origin!==eventsOrigin||origin.username||origin.password||!(origin.protocol==='wss:'||origin.protocol==='ws:'&&['localhost','127.0.0.1','[::1]'].includes(origin.hostname)))return ()=>{};
+  const epoch=this.#epoch;let socket:WebSocket|null=null,stopped=false,failures=0,timer:ReturnType<typeof setTimeout>|null=null;
+  const live=(value:boolean)=>{if(epoch===this.#epoch&&Boolean(this.#view.live)!==value)this.#set({live:value});};
+  const again=()=>{live(false);if(stopped||epoch!==this.#epoch)return;failures++;timer=setTimeout(connect,Math.min(10000,500*2**Math.min(failures,5)));};
+  const connect=()=>{timer=null;if(stopped||epoch!==this.#epoch)return;let ws:WebSocket;try{ws=new Socket(eventsOrigin+RING_EVENTS_PATH);}catch{again();return;}socket=ws;
+   ws.onopen=()=>{void this.options.session().then(session=>{if(stopped||socket!==ws)return;if(!session||session.memberId!==this.#member){ws.close();return;}ws.send(JSON.stringify({type:'subscribe',token:session.token,tableId}));},()=>ws.close());};
+   ws.onmessage=event=>{if(stopped||socket!==ws||epoch!==this.#epoch)return;let m:{type?:unknown;tableId?:unknown;at?:unknown;play?:unknown;stamps?:unknown;shows?:unknown};try{m=JSON.parse(String(event.data));}catch{return;}
+    if(m.type==='ready'){failures=0;live(true);return;}
+    if(m.type!=='table'||m.tableId!==tableId)return;const state=this.#view.state;if(!state||(state.table?.id!==tableId&&state.membership?.tableId!==tableId))return;
+    const at=typeof m.at==='number'&&Number.isFinite(m.at)?m.at:null,takePlay='play'in m&&at!==null&&(this.#playAt===null||at>=this.#playAt);
+    try{const next=parseRingLobbyState({...state,play:takePlay?m.play:state.play,stamps:m.stamps,shows:m.shows});if(takePlay){this.#playAt=at;this.#pushAt=(this.options.now??Date.now)();}this.#set({state:{...next,...(state.rabbit?{rabbit:state.rabbit}:{})}});}catch{/* a malformed push is ignored; the next read corrects it */}
+   };
+   ws.onclose=()=>{if(socket===ws){socket=null;again();}};ws.onerror=()=>{try{ws.close();}catch{}};
+  };
+  connect();
+  return ()=>{stopped=true;if(timer)clearTimeout(timer);const ws=socket;socket=null;try{ws?.close();}catch{}live(false);};
+ }
+ async refresh(tableId:string|null){if(!this.#member||this.#reading||this.#view.working)return;if(this.#view.pending?.type==='act'){if((this.options.now??Date.now)()>=this.#retryAt)await this.retry();return;}this.#reading=true;const epoch=this.#epoch,generation=this.#generation;try{const result=await this.#request({type:'state',tableId});if(epoch===this.#epoch&&generation===this.#generation&&'state'in result)this.#set({state:this.#fresh(result.state),problem:this.#view.storageBlocked||this.#view.pending?this.#view.problem:null});}catch(error){if(epoch===this.#epoch&&generation===this.#generation)this.#set({...(error instanceof RingAuthenticationError?{state:null}:{}),problem:error instanceof Error?error.message:'接続を確認できません。'});}finally{if(epoch===this.#epoch)this.#reading=false;}}
+ /** Stamps are fire-and-forget: never recorded as a pending command, so a lost stamp cannot block play. */
+ async stamp(command:Extract<RingLobbyCommand,{type:'stamp'}|{type:'show'}>){if(!this.#member)return;const epoch=this.#epoch;try{const result=await this.#request(parseRingCommand(command));if(epoch!==this.#epoch||!('state'in result))return;
+  // Stamps and shown cards never wait for a move in flight (owner 2026/10/28: スタンプも出やん): take just those parts while a move is pending.
+  if(!this.#view.working&&!this.#view.pending)this.#set({state:this.#fresh(result.state)});else if(this.#view.state)this.#set({state:{...this.#view.state,stamps:result.state.stamps,shows:result.state.shows}});}catch{}}
+ async perform(command:RingLobbyCommand){if(!this.#member||this.#view.working||this.#view.pending||this.#view.storageBlocked)return;let parsed:RingLobbyCommand;try{parsed=parseRingCommand(command);this.options.storage.setItem(this.#key(),JSON.stringify(parsed));}catch{this.#set({storageBlocked:true,problem:'操作を安全に記録できません。ブラウザのストレージ設定をご確認ください。'});return;}this.#retryAt=0;this.#retryFailures=0;this.#set({pending:parsed});await this.retry();}
+ async retry(){if(!this.#member||this.#view.working||!this.#view.pending)return;const command=this.#view.pending,epoch=this.#epoch;this.#generation++;this.#controller=new AbortController();this.#set({working:true,problem:null});try{const result=await this.#request(command,this.#controller.signal);if(epoch!==this.#epoch)return;this.options.storage.removeItem(this.#key());this.#retryAt=0;this.#retryFailures=0;this.#set({pending:null,...('state'in result?{state:this.#fresh(result.state),problem:null}:{...(command.type==='act'||command.type==='rabbit'||command.type==='ticket-bank'||command.type==='stamp'?{}:{state:null}),problem:result.reason==='ticket_required'?(command.type==='ticket-bank'?'タイムバンクのチケットがありません。プレイヤーページの「チップ交換所」で交換できます。':'ラビットのチケットがありません。プレイヤーページの「チップ交換所」で交換できます。'):command.type==='rabbit'?'このハンドのラビットは見られません。':'操作は受け付けられませんでした。更新して現在の手番・席・残高をご確認ください。'})});}catch(error){if(epoch===this.#epoch){this.#retryFailures++;this.#retryAt=error instanceof RingAuthenticationError?Infinity:(this.options.now??Date.now)()+Math.min(10000,1000*2**Math.min(this.#retryFailures-1,4));this.#set({...((command.type!=='act'&&command.type!=='rabbit'&&command.type!=='ticket-bank'||error instanceof RingAuthenticationError)?{state:null}:{}),problem:error instanceof RingAuthenticationError?error.message:command.type==='act'?'操作結果を自動確認しています。確認完了まで操作をお待ちください。':'操作結果が未確認です。同じ操作の結果を確認してください。'});}}finally{if(epoch===this.#epoch)this.#set({working:false});}}
+}

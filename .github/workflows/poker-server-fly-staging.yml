@@ -1,0 +1,79 @@
+name: Deploy poker server to Fly (staging, Tokyo)
+
+# Runs on every push to the staging branch and deploys once "Poker engine tests" pass for that commit, like the
+# Railway auto deploy. (A workflow_run trigger would only fire from main, where this file is not yet.)
+# Needs only two repository secrets (owner 2026/10/28: 貼るのは2つだけ):
+#   FLY_API_TOKEN    - the Fly.io deploy token
+#   POKER_SERVER_ENV - the whole Railway Variables text (Raw Editor, ENV or JSON tab) pasted as is;
+#                      POKER_ROOM_KEYS_JSON must stay exactly the same as on Railway, or saved hands cannot be read.
+# Without FLY_API_TOKEN the job is skipped.
+on:
+  push:
+    branches: [chatgpt/poker-authoritative-hand]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+  actions: read
+
+concurrency:
+  group: fly-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - name: Check the Fly token
+        id: token
+        run: if [ -n "$FLY_API_TOKEN" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "FLY_API_TOKEN is not set; skipping."; fi
+      - name: Wait for Poker engine tests on this commit
+        if: steps.token.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 120); do
+            runs=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=${{ github.sha }}" --jq '[.workflow_runs[]|select(.name=="Poker engine tests")|.status+":"+(.conclusion//"")]|join(",")')
+            echo "Poker engine tests: ${runs:-not started}"
+            case "$runs" in *completed:success*) exit 0;; *completed:*) echo "::error::Poker engine tests did not pass; not deploying."; exit 1;; esac
+            sleep 30
+          done
+          echo "::error::Poker engine tests did not finish in 60 minutes."; exit 1
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.ok == 'true'
+      - uses: superfly/flyctl-actions/setup-flyctl@1.5
+        if: steps.token.outputs.ok == 'true'
+      - name: Create the app once
+        if: steps.token.outputs.ok == 'true'
+        run: flyctl apps list --json | grep -q '"poker-room-server-staging"' || flyctl apps create poker-room-server-staging
+      - name: Server secrets (from the pasted Railway variables)
+        if: steps.token.outputs.ok == 'true'
+        env:
+          POKER_SERVER_ENV: ${{ secrets.POKER_SERVER_ENV }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "$POKER_SERVER_ENV" ]; then echo "::error::POKER_SERVER_ENV is not set (paste the Railway Variables Raw Editor text)."; exit 1; fi
+          { printf '%s\n' "$POKER_SERVER_ENV" | python3 -I deploy/fly-staging/railway-env-to-fly.py; echo "POKER_SERVER_COMMIT=$COMMIT"; } \
+            | flyctl secrets import --stage --app poker-room-server-staging
+      - name: Deploy (one machine in Tokyo)
+        if: steps.token.outputs.ok == 'true'
+        run: flyctl deploy --remote-only --ha=false --config deploy/fly-staging/fly.toml --dockerfile deploy/fly-staging/Dockerfile --app poker-room-server-staging
+      - name: Confirm the new server answers with this commit
+        if: steps.token.outputs.ok == 'true'
+        env:
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            v=$(curl -fsS https://poker-room-server-staging.fly.dev/version || true)
+            r=$(curl -fsS https://poker-room-server-staging.fly.dev/readyz || true)
+            echo "version=$v readyz=$r"
+            if echo "$v" | grep -qi "\"commit\":\"$COMMIT\"" && echo "$r" | grep -q '"ok":true'; then exit 0; fi
+            sleep 10
+          done
+          echo "::error::The Tokyo server did not report commit $COMMIT as ready."; exit 1
