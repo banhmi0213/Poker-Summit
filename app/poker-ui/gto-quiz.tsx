@@ -1,10 +1,13 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {GTO_SPOTS,loadFlop,loadFlopIndex} from '@/lib/poker/gto-spots';
 import type {PreflopData} from '@/lib/poker/gto-bot';
 import {PREFLOP_CATEGORY,explainQuiz,flopQuestion,gradeQuiz,preflopQuestion,type QuizGrade,type QuizQuestion} from '@/lib/poker/gto-quiz';
 import styles from './gto-chart.module.css';
 import { toQuizTop } from '@/lib/ui/quiz-top';
+import {MobilePlaySurface} from './mobile-play-surface';
+import {GtoAnswerBars} from './gto-answer-bars';
 
 /** GTO practice (2026/10/27): preflop questions from the 6-max chart and flop questions from the computed flops.
  * The answer is graded against how often GTO takes each action with that hand, with an explanation.
@@ -83,7 +86,7 @@ export function GtoQuiz(){
   else{setScore(emptyScore);writeLocal(emptyScore);}
  };
  const spotsWithData=GTO_SPOTS.filter(s=>index[s.id]?.length);
- return <div className={styles.wrap} data-quiz-top>
+ return <MobilePlaySurface label="GTO練習クイズ"><MobilePlayGuard active={Boolean(q)||loading}/><div className={styles.wrap} data-quiz-top>
   <p>GTOの計算結果から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。いちばん多い打ち方を選べば100点、GTOが混ぜて使う打ち方は割合に応じた点数です。</p>
   <div className={styles.form}>
    <label>出題する場面<select value={mode} onChange={e=>setMode(e.target.value)}>
@@ -104,9 +107,10 @@ export function GtoQuiz(){
    <div className={styles.path}>{q.options.map((label,i)=><button key={i} type="button" disabled={Boolean(graded)} aria-pressed={graded?.choice===i} onClick={()=>answer(i)}>{label}</button>)}</div>
    {graded&&<div role="status">
     <p><b>{graded.verdict}</b>（{graded.points}点）</p>
+    <GtoAnswerBars options={q.options.map((text,i)=>({text,freq:q.freqs[i]}))} chosen={q.options[graded.choice]}/>
     <ul style={{margin:'6px 0 10px',paddingLeft:18,display:'grid',gap:4}}>{explainQuiz(q,graded).map((line,i)=><li key={i}>{line}</li>)}</ul>
     <button type="button" onClick={e=>{const t=e.currentTarget.closest('[data-quiz-top]');void next().then(()=>toQuizTop(t));}}>次の問題</button>
    </div>}
   </>}
- </div>;
+ </div></MobilePlaySurface>;
 }

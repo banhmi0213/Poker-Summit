@@ -60,7 +60,13 @@ jobs:
       - name: Build poker server
         run: npm run build:poker-server
       - name: Run poker regression tests
-        run: npm run test:poker
+        run: |
+          set +e
+          npm run test:poker > poker-unit.log 2>&1; code=$?
+          tail -n 5 poker-unit.log
+          grep -E "not ok|^# (pass|fail)" poker-unit.log | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          grep -A14 "not ok" poker-unit.log | grep -E "AssertionError|Error|expected|actual|message|location" | head -20 | while IFS= read -r l; do echo "::notice::${l:0:300}"; done
+          exit $code
       - name: Install isolated test runtimes
         run: npm install --prefix "$RUNNER_TEMP/poker-sql" --no-audit --no-fund @electric-sql/pglite@0.5.10 react-test-renderer@18.3.1 esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
       - name: Verify tournament ownership and permission policies
@@ -174,6 +180,20 @@ jobs:
         run: |
           set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Show ring table screenshots
+        if: always()
+        env:
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+        run: node .github/scripts/shots-to-annotations.cjs "$RUNNER_TEMP/poker-full-ring-browser-e2e" mobile-375-667.png desktop.png mobile-wager-editor.png
+      - name: Keep ring table screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ring-table-screenshots
+          path: ${{ runner.temp }}/poker-full-ring-browser-e2e/*.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Verify selected seats and per-hand timebank in browsers
         env:
           POKER_TABLE_UI: "1"
@@ -234,7 +254,14 @@ jobs:
           POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
           POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
           POKER_E2E_OUTPUT: ${{ runner.temp }}/poker-browser-e2e
-        run: node tests/poker-browser-e2e.cjs
+        shell: bash
+        run: |
+          set +e
+          node tests/poker-browser-e2e.cjs > "$RUNNER_TEMP/e2e6.log" 2>&1
+          code=$?
+          cat "$RUNNER_TEMP/e2e6.log"
+          if [ $code -ne 0 ]; then echo "::error title=six-browser e2e::$(tail -c 2500 "$RUNNER_TEMP/e2e6.log" | tr '\n\r' '  ')"; fi
+          exit $code
       - name: Verify a 24-player multi-table tournament end to end
         timeout-minutes: 10
         env:

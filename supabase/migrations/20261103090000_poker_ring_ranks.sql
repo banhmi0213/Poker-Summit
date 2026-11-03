@@ -203,7 +203,7 @@ grant execute on function public.poker_admin_ring_pair_flows(integer,integer) to
 update public.poker_ring_tables set max_tier=3,updated_at=now() where deleted_at is null and sb=1 and bb=2 and title like 'SUMMIT 1/2%';
 update public.poker_ring_tables set min_tier=4,updated_at=now() where deleted_at is null and sb=5 and bb=10 and title like 'SUMMIT 5/10%';
 insert into public.poker_ring_tables(title,capacity,sb,bb,min_buy_in,max_buy_in,note,published,sort_order,rake_bps,rake_cap_bb,min_tier)
-select v.title,6,10,20,800,2000,'プラチナ以上の卓',true,v.sort_order,v.rake_bps,v.rake_cap_bb,4
+select v.title,6,10,20,800,2000,'プラチナ以上のテーブル',true,v.sort_order,v.rake_bps,v.rake_cap_bb,4
 from (values('SUMMIT 10/20 #1 · 低レーキ（5%・上限5BB）',40,500,5),('SUMMIT 10/20 #2 · 高レーキ（10%・上限10BB）',41,1000,10)) v(title,sort_order,rake_bps,rake_cap_bb)
 where not exists(select 1 from public.poker_ring_tables t where t.title=v.title and t.deleted_at is null)
   and exists(select 1 from public.poker_ring_tables t where t.title like 'SUMMIT 5/10%' and t.deleted_at is null);

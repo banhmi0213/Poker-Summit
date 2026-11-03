@@ -35,6 +35,7 @@ import { bannersForDevice } from "@/lib/banners";
 import { HomeBannerSlider, type HomeBanner } from "./home-banner-slider";
 import { HomeSectionBanners } from "./home-section-banners";
 import { HomeRankingBanner } from "./home-ranking-banner";
+import { getPublicStoreRankings, getFavoriteStoreIds } from "@/lib/public-store-rankings";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/seo";
@@ -141,11 +142,10 @@ export default async function HomePage({
     supabase.auth.getUser(),
     getHomePublicData(currentPref ?? null),
     // TOPのランキングは訪問者の地域に関係なく全国
-    supabase.rpc("public_store_rankings"),
+    getPublicStoreRankings(supabase),
     getStoreCardExtras(),
     getPrefStoreCounts().catch(() => ({} as Record<string, number>)),
   ]);
-  if (rankingResult.error) throw rankingResult.error;
   const featuredStores = assemblePickup(home.pickupPool).slice(0, 4);
   const rankedStores = (rankingResult.data ?? []).slice(0, 4);
 
@@ -194,14 +194,7 @@ export default async function HomePage({
   const jobsBanners = sectionBanners(jobsBannerRows);
 
   // --- Favorites (人によって変わるのでキャッシュしない) ---
-  let favoriteStoreIds = new Set<string>();
-  if (user) {
-    const { data: favs } = await supabase
-      .from("favorite_stores")
-      .select("store_id")
-      .eq("user_id", user.id);
-    favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
-  }
+  const favoriteStoreIds = await getFavoriteStoreIds(supabase, user?.id);
 
   return (
     <div>
@@ -345,6 +338,7 @@ export default async function HomePage({
           {!latestPosts?.length && <p className="muted">まだ投稿がありません。</p>}
           <div className="home-post-grid">{latestPosts?.map(p => <Link href={`/board/${p.id}`} key={p.id} className="home-post"><span className="home-post-icon">💬</span><div><h3>{p.title}</h3><p>{p.author_name} · 返信 {replyCounts[p.id] ?? 0}</p></div><b>›</b></Link>)}</div>
         </section>
+        {rankingResult.available && <>
         {rankingBanners.length > 0 && <div className="home-section"><HomeSectionBanners banners={rankingBanners} layout="wide" /></div>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>🏅</span> 店舗ランキング</h2><Link href="/stores/ranking">すべての店舗ランキングを見る</Link></div>
@@ -352,6 +346,7 @@ export default async function HomePage({
           <div className="home-grid home-grid-four">{rankedStores.map((s,idx) => <HomeStoreCard key={s.id} store={s} contentCounts={homeContentCounts.get(s.id)} coverPhoto={homeCoverPhotos.get(s.id)} rank={idx+1} flags={homeStoreFlags.get(s.id)} isFavorite={favoriteStoreIds.has(s.id)} favoriteAction={async () => { "use server"; await toggleFavoriteStore(s.id, "/"); }} />)}</div>
         </section>
         <div className="home-section"><HomeRankingBanner stores={rankedStores} /></div>
+        </>}
         <section className="home-section">
           <div className="home-section-head"><h2><span>💼</span> 求人・スポット求人</h2><Link href="/jobs">求人・スポット求人を見る</Link></div>
           <JobCategoryEntrances pref={pref || currentPref || ""} />

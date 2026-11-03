@@ -938,11 +938,11 @@
 .seatAvatarRow:has([data-stamp-anchor]) .seatTimerRing,.activeAvatar:has([data-stamp-anchor]){filter:brightness(.45)}
 /* The seat showing a stamp comes in front of the cards for those 3 seconds. */
 
-/* 練習卓のスタンプ(2026/10/27): 自分のアイコンにも被せる */
+/* 練習テーブルのスタンプ(2026/10/27): 自分のアイコンにも被せる */
 .activeAvatar{position:relative}
 .demoStampBar{display:flex;justify-content:flex-start}
 
-/* ブラインドとポットを卓の中で分かりやすく (owner 2026/10/27, リング・トーナメントとも) */
+/* ブラインドとポットをテーブルの中で分かりやすく (owner 2026/10/27, リング・トーナメントとも) */
 .blindsInfo{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--skin-table-text,#51432e);opacity:.85;text-shadow:0 1px #fff5;white-space:nowrap}
 .table[data-table-skin] .blindsInfo{text-shadow:0 1px 2px #0008}
 .pot strong{font-size:1.15em}
@@ -1258,3 +1258,7 @@
 .rankBadge[data-side="left"]{left:-10%}.rankBadge[data-side="right"]{right:-10%}
 .rankBadgeSelf{position:absolute;left:-18px;top:-18px;width:38px;height:38px;z-index:3;pointer-events:none;filter:drop-shadow(0 2px 3px #0009)}
 @media(max-width:899px){.rankBadge{width:24px;top:-6px}.rankBadge[data-side="left"]{left:-6px}.rankBadge[data-side="right"]{right:-6px}.rankBadgeSelf{width:22px;height:22px;left:-10px;top:-10px}}
+/* Phone only (owner 2026/11/03): fold/call/raise about 70% of their old height, never under 44px, so the table keeps its room. PC unchanged. */
+@media(max-width:700px){.controls.controls .actions button{min-height:44px;height:44px;padding:2px 4px;font-size:16px;line-height:1.1}.controls.controls .actions button small{margin-top:1px;font-size:11px;line-height:1.1}}
+/* Phone: the frame around the buttons hugs them too (owner 2026/11/03). */
+@media(max-width:700px){.controls.controls{padding:4px 6px;gap:0}.controls.controls>.actions{margin:0 0 4px}}

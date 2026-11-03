@@ -28,10 +28,10 @@ export function RingRankView(){
   <section><h3 style={{margin:'0 0 10px'}}>段位の一覧</h3><div style={{display:'flex',gap:12,alignItems:'flex-end',flexWrap:'wrap'}}>{AT.map((at,t)=><figure key={t} style={{margin:0,textAlign:'center',opacity:t===rank.tier?1:.55}}><img src={rankBadgeSrc(t)} alt="" width={t===rank.tier?80:64} height={t===rank.tier?80:64}/><figcaption style={{fontSize:11,fontWeight:t===rank.tier?700:400}}>{tierName(t)}{at?` ${at.toLocaleString()}`:''}</figcaption></figure>)}</div></section>
   <section><h3 style={{margin:'0 0 6px'}}>段位の決まり方</h3>
    <ul style={{margin:0,paddingLeft:'1.2em',fontSize:13,lineHeight:1.9}}>
-    <li>リングゲームの勝ち負けを、その卓のBBで数えた通算（レーキを引いた後）で決まります。大会のハンドは数えません。</li>
+    <li>リングゲームの勝ち負けを、そのテーブルのBBで数えた通算（レーキを引いた後）で決まります。大会のハンドは数えません。</li>
     <li>リングで100ハンドまではルーキー。そのあと：ブロンズ（〜99BB）{STEPS.map(s=>`・${tierName(s.tier)}（${s.at.toLocaleString()}BB〜）`).join('')}</li>
     <li>下限を下回ると、その場で1つ下がります。</li>
-    <li>プラチナ以上：毎月1日の配布が3,000 chipになります。5/10・10/20の卓に座れ、1/2の卓には座れません。2/5で勝った分は半分だけ数えます。</li>
+    <li>プラチナ以上：毎月1日の配布が3,000 chipになります。5/10・10/20のテーブルに座れ、1/2のテーブルには座れません。2/5で勝った分は半分だけ数えます。</li>
     <li>補充は1日1回、段位で打つレートの100BBまで（ルーキー〜シルバー200・ゴールド500・プラチナ1,000・ダイヤ以上2,000）。</li>
     <li>通算BBは月が替わってもそのまま続きます（マイナスも）。</li>
     <li>区切りの数字は、遊ばれ方を見て調整することがあります。</li>

@@ -1,6 +1,6 @@
 'use client';
 // Ring auto move (owner 2026/11/01): a short table moves its players to a busier table. Same rate (blinds and
-// rake): automatic after a short countdown, with 「この卓に残る」. Another rate: the player is asked first.
+// rake): automatic after a short countdown, with 「このテーブルに残る」. Another rate: the player is asked first.
 // The move is the normal leave (chips back to the wallet after the hand) and a join at the new table.
 import {useEffect,useMemo,useRef,useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
@@ -55,13 +55,13 @@ export function RingAutoMove({auth,data,own,tableId,blocked,leave}:{auth:Supabas
   window.location.assign(`/poker-ring/${saved.to}?view=table&buyin=${saved.amount}&auto=1`);
  // eslint-disable-next-line react-hooks/exhaustive-deps
  },[data.membership,tableId,moving]);
- if(moving)return <div className={styles.autoMove} role="status">{moving.target.title}へ移動しています。このハンドが終わるとチップを精算して、新しい卓に {moving.amount.toLocaleString()} chip で着席します。</div>;
+ if(moving)return <div className={styles.autoMove} role="status">{moving.target.title}へ移動しています。このハンドが終わるとチップを精算して、新しいテーブルに {moving.amount.toLocaleString()} chip で着席します。</div>;
  if(!shown)return null;
  const t=shown.target,rate=`${t.sb}/${t.bb}${rakeLabel(rakes.get(t.id))?`・${rakeLabel(rakes.get(t.id))}`:''}`;
- if(shown.sameRate)return <div className={styles.autoMove} role="status"><p>この卓の人数が少なくなりました。{left}秒後に、同じレートの卓（{t.title}・{t.occupied}人）へ移動します。</p><button type="button" onClick={()=>setDeclined(key)}>この卓に残る</button></div>;
- return <div className={styles.overlay}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="ring-move-heading"><h3 id="ring-move-heading">レートの違う卓へ移りますか？</h3>
-  <p>この卓の人数が少なくなりました。同じレートで人のいる卓が空いていません。</p>
+ if(shown.sameRate)return <div className={styles.autoMove} role="status"><p>このテーブルの人数が少なくなりました。{left}秒後に、同じレートのテーブル（{t.title}・{t.occupied}人）へ移動します。</p><button type="button" onClick={()=>setDeclined(key)}>このテーブルに残る</button></div>;
+ return <div className={styles.overlay}><section className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="ring-move-heading"><h3 id="ring-move-heading">レートの違うテーブルへ移りますか？</h3>
+  <p>このテーブルの人数が少なくなりました。同じレートで人のいるテーブルが空いていません。</p>
   <p><strong>{t.title}</strong>（{rate}・{t.occupied}人）へ、{shown.amount.toLocaleString()} chip を持って移ります。{shown.amount>stack?`足りない ${(shown.amount-stack).toLocaleString()} chip は残高から持ち込みます。`:shown.amount<stack?`残りの ${(stack-shown.amount).toLocaleString()} chip は残高に戻ります。`:''}</p>
-  <div className={styles.actions}><button type="button" disabled={blocked} onClick={()=>void go(shown)}>移る</button><button type="button" onClick={()=>setDeclined(key)}>この卓に残る</button></div>
+  <div className={styles.actions}><button type="button" disabled={blocked} onClick={()=>void go(shown)}>移る</button><button type="button" onClick={()=>setDeclined(key)}>このテーブルに残る</button></div>
  </section></div>;
 }

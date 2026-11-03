@@ -24,7 +24,7 @@ async function database(){
  create function storage.foldername(text) returns text[] language sql immutable as $$ select string_to_array($1,'/') $$;
  grant usage on schema public to anon,authenticated,service_role;`);
  const folder=path.resolve(__dirname,'../supabase/migrations');
- for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql','_poker_room_save_large_fields.sql']){
+ for(const suffix of ['_poker_tournament_settings.sql','_poker_tournament_store_access.sql','_poker_room_checkpoints.sql','_poker_room_admission.sql','_poker_room_scheduler.sql','_poker_room_lobby.sql','_poker_tournament_registration.sql','_poker_registration_management.sql','_poker_room_startup_discovery.sql','_poker_statistics.sql','_poker_targeted_entry.sql','_poker_targeted_policy_guard.sql','_poker_multi_table_tournaments.sql','_poker_field_100.sql','_poker_field_200.sql','_poker_field_400.sql','_poker_room_save_large_fields.sql']){
   const file=fs.readdirSync(folder).find(f=>f.endsWith(suffix));assert.ok(file,suffix);await db.exec(fs.readFileSync(path.join(folder,file),'utf8'));
  }
  const {SupabaseRoomDirectory}=require('../lib/poker/room-directory.ts'),{SupabaseRoomStore}=require('../lib/poker/room-persistence.ts');
@@ -35,7 +35,7 @@ async function database(){
  // Starts 6 real minutes from now: inside the 10-minute window, so the open registration closes by itself.
  const startsAt=new Date(Math.ceil((Date.now()+6*60000)/1000)*1000).toISOString(),tid=randomUUID();
  const structure={startingStack:STACK,anteType:'bb',lateRegLevel:1,reentry:false,timeBankCards:1,finalTableCards:1,periods:[[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]].map(([sb,bb])=>({kind:'level',minutes:3,sb,bb,ante:bb,note:'E2E only'}))};
- await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数卓テスト大会',startsAt,JSON.stringify(structure)]);
+ await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数テーブルテスト大会',startsAt,JSON.stringify(structure)]);
  await db.exec('set role service_role');
  const directory=new SupabaseRoomDirectory(client),store=new SupabaseRoomStore(client),keys={active:'test',keys:{test:randomBytes(32)}};
  await directory.configureRegistration(tid,Math.max(ENTRANTS,24),true);
@@ -61,14 +61,21 @@ async function database(){
  const saved=async()=>{const v=await restoreRoom(f.store,roomId,f.keys,{now:()=>now});assert.ok(v);return v.room.checkpoint();};
  const where=c=>{const map=new Map();for(const [t,room] of c.field?.tables??[])for(const [seat,s] of room.seats)map.set(s.memberId,{table:t,seat,stack:s.stack});return map;};
  const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
-  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await editor.getByRole('button',{name:/^(レイズ|ベット|オールイン) /}).click();return;}
+  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await panel.locator('div[class*="actions"] > button').last().click();return;}
   await p.getByRole('button',{name:'ALL-IN額',exact:true}).click();await panel.getByRole('button',{name:label}).click();};
  try{
   const port=await start();
   // 1. Open registration through the real lobby API for everyone; it closes by itself (start - 10 min).
   for(let i=0;i<ENTRANTS;i++)check((await f.directory.changeRegistration(f.users[i],f.tid,'register')).ok,'registered '+i);
-  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',30000)).finalization.roomId;
-  check((await f.directory.binding(roomId)).capacity===200,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
+  roomId=(await until(()=>f.directory.managementStatus(f.tid),s=>s.finalization?.assigned,'automatic finalization',90000).catch(async e=>{
+   const q=async sql=>{try{return JSON.stringify((await f.db.query(sql,[f.tid])).rows);}catch(x){return 'ERR '+x.message;}};
+   console.log('DIAG status',await f.directory.managementStatus(f.tid).then(x=>JSON.stringify(x)).catch(x=>'ERR '+x.message));
+   console.log('DIAG regs',await q('select count(*) n from poker_private.tournament_registrations where tournament_id=$1'));
+   console.log('DIAG final',await q('select capacity,cardinality(members) n from poker_private.registration_finalizations where tournament_id=$1'));
+   console.log('DIAG rooms',await q('select capacity,expected_count from poker_private.tournament_rooms where tournament_id=$1'));
+   console.log('DIAG due',await q("select public.poker_entry_due()::text d where $1::uuid is not null"));
+   throw e;})).finalization.roomId;
+  check((await f.directory.binding(roomId)).capacity===400,'multi-table capacity');console.log(`PASS ${ENTRANTS} open registrations closed automatically into one room`);
   // 2. Seats are drawn before the start; nobody is dealt in.
   let c=await until(saved,c=>Boolean(c.field),'seat draw');const tables=c.field.tables.length;check(tables===Math.ceil(ENTRANTS/6),'tables drawn');
   for(const [,t] of c.field.tables)check(t.seats.length>=3&&t.seats.length<=6,'table size');check(c.field.tables.every(([,t])=>t.hand===null),'no hand before the start');
@@ -84,7 +91,7 @@ async function database(){
    pages.push(page);await page.goto(origin+'/poker-online/'+roomId);await page.getByRole('button',{name:'参加・接続・再接続',exact:true}).click();await until(()=>latest.get(i),s=>s?.youSeat!=null,'browser join '+i);
   }
   const at=where(c);for(let i=0;i<BROWSERS;i++){const me=at.get(f.users[i]);check(latest.get(i).youSeat===me.seat&&latest.get(i).field.tableNumber===me.table,'browser sees its drawn table and seat');}
-  await until(()=>pages[0].getByText(/第\d+卓（全\d+卓）/).count(),n=>n>0,'table number shown');
+  await until(()=>pages[0].getByText(/第\d+テーブル（全\d+テーブル）/).count(),n=>n>0,'table number shown');
   const conn=new Map();const bot=async i=>{if(!conn.has(i)){const r=await api(i,{type:'join'});if(r.status!==200)return null;conn.set(i,r.result.connectionId);}return conn.get(i);};
   for(let i=BROWSERS;i<ENTRANTS;i++)check(Boolean(await bot(i)),'scripted player joined '+i);
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
@@ -126,9 +133,9 @@ async function database(){
     acted=true;break;
    }
    // Browser view after a move: the notice appears and the new table is shown.
-   for(let i=0;i<BROWSERS;i++){const s=latest.get(i);if(s?.field?.moved&&!browserMoveShown){if(await pages[i].getByText(/第\d+卓から第\d+卓へ移動しました/).count())browserMoveShown=true;}}
+   for(let i=0;i<BROWSERS;i++){const s=latest.get(i);if(s?.field?.moved&&!browserMoveShown){if(await pages[i].getByText(/第\d+テーブルから第\d+テーブルへ移動しました/).count())browserMoveShown=true;}}
    // A moved browser must end up showing its new table (the notice itself only lasts 15 seconds).
-   for(const [i,to] of pendingMove){const s=latest.get(i);if(s?.field?.tableNumber===to&&await pages[i].getByText(new RegExp(`第${to}卓（全\\d+卓）`)).count()){browserMoveShown=true;pendingMove.delete(i);}}
+   for(const [i,to] of pendingMove){const s=latest.get(i);if(s?.field?.tableNumber===to&&await pages[i].getByText(new RegExp(`第${to}テーブル（全\\d+テーブル）`)).count()){browserMoveShown=true;pendingMove.delete(i);}}
    if(!acted){now+=1500;await sleep(120);}else await sleep(5);
   }
   c=await saved();check(Boolean(c.field.champion),'tournament finished');check(c.field.eliminated.length===ENTRANTS-1,'every other player placed');

@@ -85,7 +85,8 @@ export async function MyPageContent({
     supabase
       .from("coupon_uses")
       .select("coupon_id, used_at")
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .eq("status", "used"),
     supabase
       .from("coupons")
       .select("id, title, valid_until, expires_at, usage_limit, used_count, store_id, stores(name)")
@@ -285,7 +286,7 @@ export async function MyPageContent({
               サミット（掲示板）の投稿一覧・詳細に表示されます（5MBまで）。
             </span>
           </div>
-          {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーの卓で共通。 */}
+          {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーのテーブルで共通。 */}
           {/* Hidden while paid features are off (lib/billing/visibility.ts). */}
           {paidFeaturesVisible() && (
           <details style={{ padding: "10px 0", borderBottom: "1px solid var(--grid)" }}>

@@ -43,7 +43,7 @@
 
 @media(max-width:899px){.compactShell .onlineHeading button,.compactShell .onlineHeading a{height:28px;min-height:28px!important;padding:0;line-height:1;box-sizing:border-box;display:grid;place-items:center}.compactShell:has([class*="inlineAlert"]) .onlineHeading>span{visibility:hidden}}
 
-/* 未接続時の参加ボタン・結果確認ボタン。卓の表示が下段にはみ出しても押せるよう卓より前面に出す(2026/10/26) */
+/* 未接続時の参加ボタン・結果確認ボタン。テーブルの表示が下段にはみ出しても押せるようテーブルより前面に出す(2026/10/26) */
 .joinBar{position:relative;z-index:9;flex-shrink:0}
 
 /* Use the same fixed five-card footprint for every street, including preflop. */
@@ -92,3 +92,6 @@
 .runBoards{display:flex;flex-direction:column;gap:6px;align-items:center}
 .runRow{display:flex;align-items:center;gap:8px}.runRow>small{font-size:11px;font-weight:700;color:#f3dcaa;background:#30261bd9;border:1px solid #b79754;border-radius:999px;padding:2px 8px;white-space:nowrap}
 .runRow [data-motion-board],.runRow>div{transform:scale(.86);transform-origin:center}
+/* PC ring/tournament table (owner 2026/11/03): the top seat's wager sits just under its name plate (as on the phone),
+   clear of the pot text. The plate ends about 144-162px down the table; the pot and board move 8-11px down (more on narrow PCs) to make room. */
+@media(min-width:900px){.onlineFelt .topBet{top:clamp(148px,26.5%,166px)!important;translate:0 0!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}

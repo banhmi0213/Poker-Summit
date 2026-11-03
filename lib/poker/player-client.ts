@@ -47,17 +47,17 @@ export class PokerPlayerClient {
  }
  disconnect(){return this.#serial(async()=>{if(this.#pending)throw new PlayerClientError(409);this.#disconnecting=true;try{return await this.#send({type:'disconnect'},true);}finally{this.#disconnecting=false;this.#stopUpdates?.();this.#state=null;this.#connection=null;}});}
  /** Optional invalidation channel. State still comes from serialized authenticated HTTP reads. */
- watch(eventsOrigin:string,onChange:()=>void,onLost:()=>void,Socket:typeof WebSocket=WebSocket){return this.#serial(async()=>{
+ watch(eventsOrigin:string,onChange:()=>void,onLost:(replaced?:boolean)=>void,Socket:typeof WebSocket=WebSocket){return this.#serial(async()=>{
   this.#stopUpdates?.();const origin=new URL(eventsOrigin);
   if(origin.origin!==eventsOrigin||origin.username||origin.password||!(origin.protocol==='wss:'||origin.protocol==='ws:'&&['localhost','127.0.0.1','[::1]'].includes(origin.hostname)))throw Error('Invalid event origin');
   const token=await this.#token(),connection=this.#connection;if(!token||!connection||this.#closed)throw new PlayerClientError(401);
   let disposed=false,ready=false,lastRevision=-1;const socket=new Socket(eventsOrigin+this.#endpoint+'/events');
   const stop=()=>{if(disposed)return;disposed=true;clearTimeout(deadline);socket.close();if(this.#stopUpdates===stop)this.#stopUpdates=null;};
-  const lost=()=>{if(disposed)return;stop();if(this.#disconnecting)return;this.#generation++;this.#connection=null;this.#state=null;onLost();};
-  const deadline=setTimeout(lost,10000);
+  const lost=(code?:unknown)=>{if(disposed)return;stop();if(this.#disconnecting)return;this.#generation++;this.#connection=null;this.#state=null;onLost(code===4009);};
+  const deadline=setTimeout(()=>lost(),10000);
   socket.onopen=()=>{if(!disposed)socket.send(JSON.stringify({type:'subscribe',token,connectionId:connection}));};
   socket.onmessage=event=>{if(disposed)return;try{const value=JSON.parse(event.data);if(!value||Object.keys(value).sort().join(',')!=='revision,type'||!['ready','changed'].includes(value.type)||!Number.isSafeInteger(value.revision)||value.revision<0||value.revision<lastRevision)throw Error();if(!ready&&value.type!=='ready')throw Error();ready=true;lastRevision=value.revision;clearTimeout(deadline);onChange();}catch{lost();}};
-  socket.onerror=lost;socket.onclose=lost;this.#stopUpdates=stop;return stop;
+  socket.onerror=()=>lost();socket.onclose=event=>lost((event as CloseEvent|undefined)?.code);this.#stopUpdates=stop;return stop;
  });}
  /** Local teardown is synchronous; late network responses cannot repopulate private cards. */
  close(){this.#closed=true;this.#stopUpdates?.();this.#connection=null;this.#state=null;this.#pending=null;}

@@ -1,4 +1,4 @@
-/** Multi-table tournament field (owner 2026/10/30: 20人以上、卓分け・移動・統合).
+/** Multi-table tournament field (owner 2026/10/30: 20人以上、テーブル分け・移動・統合).
  * One tournament = one room = one durable owner; every table lives inside it, so a move between tables
  * is a single in-memory step committed with one checkpoint (no cross-room transfer can lose chips).
  * Rules: 6-max tables, random draw; between hands a table sheds busted players, breaks when the field
@@ -13,8 +13,8 @@ import type {HandTerms} from './tournament-hand';
 import {runoutDuration,PAYOUT_ANIMATION_MS} from './presentation-timing';
 
 export const FIELD_TABLE_SIZE=6;
-/** Owner 2026/10/31 (100人きたらええな, then 200人でもいけるように): up to 200 players (34 tables of 6). */
-export const FIELD_MAX_PLAYERS=200;
+/** Owner 2026/10/31 (100人きたらええな, then 200人でもいけるように) and 2026/11/02 (200人以上きたら回るか): up to 400 players (67 tables of 6). */
+export const FIELD_MAX_PLAYERS=400;
 /** Rosters above this size use the field; 2–6 keep the single-table room. */
 export const FIELD_MIN_PLAYERS=7;
 /** One row of the field's standings (entry ids only). stack/table are null once out. */

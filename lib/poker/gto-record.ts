@@ -8,7 +8,7 @@ import {gradeChoice,type TrainerLevel} from './gto-trainer';
  * 弱点分析 groups them by `spot`. Pure functions here; the browser sender is sendGtoRecords below. */
 export const RECORD_SOURCES=['ring','tournament','practice','trainer','drill','quiz','daily'] as const;
 export type GtoRecordSource=typeof RECORD_SOURCES[number];
-export const SOURCE_TEXT:Record<GtoRecordSource,string>={ring:'リング',tournament:'大会',practice:'練習卓',trainer:'GTOと対戦',drill:'プリフロップ連打',quiz:'GTO練習クイズ',daily:'毎日のクイズ'};
+export const SOURCE_TEXT:Record<GtoRecordSource,string>={ring:'リング',tournament:'大会',practice:'練習テーブル',trainer:'GTOと対戦',drill:'プリフロップ連打',quiz:'GTO練習クイズ',daily:'毎日のクイズ'};
 export type GtoRecordRow={source:GtoRecordSource;
  /** The hand (or question) id, with step = the decision's place in it, so a decision sent twice is kept once. */
  ref?:string;step?:number;

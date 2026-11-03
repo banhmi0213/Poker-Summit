@@ -16,7 +16,7 @@ export default async function Page(){
  if(error||!Array.isArray(data))return <main className="container"><h1>ポーカーの通報</h1><p>運営権限をご確認ください。データを取得できませんでした。</p></main>;
  const rows=data as Row[];
  return <main className="container"><h1>ポーカーの通報</h1>
-  <p>会員からの通報をプレイヤーごとにまとめています。利用停止にすると、リング卓に新しく着席できなくなります（サイトの他の機能はそのまま使えます）。</p>
+  <p>会員からの通報をプレイヤーごとにまとめています。利用停止にすると、リングテーブルに新しく着席できなくなります（サイトの他の機能はそのまま使えます）。</p>
   {!rows.length&&<p>通報はまだありません。</p>}
   {rows.map(r=><section key={r.memberId} style={{border:'1px solid #ddd',borderRadius:8,padding:12,margin:'12px 0'}}>
    <h2 style={{fontSize:16,margin:'0 0 6px'}}>{r.name}{r.ban&&<small style={{color:'#b42318',marginLeft:8}}>利用停止中（{r.ban.until?`${jst(r.ban.until)}まで`:'解除するまで'}）</small>}</h2>
