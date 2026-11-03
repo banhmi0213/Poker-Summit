@@ -1854,9 +1854,20 @@
       "stageReadbackVerified": true,
       "mergedAt": "2026-11-03T05:20:00.031Z",
       "checks": "all success",
-      "ownerIphoneCheckPending": true,
+      "ownerIphoneCheckPending": false,
       "startUrl": "/mypage/poker",
-      "followupPr": 769
+      "followupPr": 769,
+      "ownerIphoneResult": "Owner confirmed iPhone launches the page where Add to Home Screen is used; adding from /mypage/poker opens GTO.",
+      "iosGuidance": {
+        "pr": 771,
+        "state": "merged",
+        "head": "4b45b5620cf144a92e1ad39c81849d9e13c4f667",
+        "merge": "d45c6a14f5c9e9379517724d54b3f38694b8b543",
+        "text": "このGTOのページをSafariで開いた状態で、「共有」から「ホーム画面に追加」を選んでください。",
+        "dismissalKeyUnchanged": true,
+        "gtoOnly": true,
+        "verified": "375/320 no clipping;44px;dismiss remains after reload;1280 hidden;allchecks success;stage readback verified"
+      }
     },
     "step6": {
       "state": "merged",
