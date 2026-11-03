@@ -1,4 +1,5 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import type {Card} from '@/lib/poker/engine';
@@ -168,7 +169,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
   </section>
  </>;
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
- return <div className={chart.wrap}>
+ return <div className={chart.wrap}><MobilePlayGuard active={Boolean(hand)}/>
   {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
   {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}

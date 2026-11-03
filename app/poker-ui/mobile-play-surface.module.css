@@ -41,3 +41,4 @@
 }
 @keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.sheet[open]{animation:none}}
+@media(max-width:700px){.root:has([data-gto-playing]) .content{overscroll-behavior:none}}
