@@ -144,7 +144,7 @@ require('node:test').test('scheduled and break pages keep full stacks, no forced
  const tournament={id:'sample',title:'WAIT',owner_store_id:null,starts_at:'2026-10-16T10:00:00Z',published:false,structure:defaultStructure,image_url:null};
  for(const offset of [-1,80*60000]){
   const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:fixtureDeal,tournament,serverNow:Date.parse(tournament.starts_at)+offset}));
-  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000/);assert.match(html,/ポット <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">大会デモを開始/);
+  assert.match(html,/未開始（強制ベット未徴収）/);assert.match(html,/10,000/);assert.match(html,/ポット <strong>0/);assert.doesNotMatch(html,/class="hole"/);assert.doesNotMatch(html,/class="cardBack"/);assert.match(html,/<button class="reset" type="button" disabled="">ハンドを開始/);assert.doesNotMatch(html,/デモ検証操作|デモをリセット/);
  }
 });
 require('node:test').test('heads-up render combines BTN/SB, deals only two live hands and marks unused seats empty',()=>{
@@ -161,5 +161,11 @@ require('node:test').test('when your seat is outside the current hand, cards and
  const html=renderToStaticMarkup(React.createElement(Component,{member:{displayName:'TEST',avatarUrl:null},initialDeal:dealDemoHandAtTable(['you','p5','p3','p2','p4','p6'],ids,'p2'),tournament,initialSeatIds:ids,serverNow:Date.parse(tournament.starts_at)}));
  assert.doesNotMatch(html,/class="hole"/);assert.match(html,/脱落・進行確認中/);
  const block=html.match(/<div class="actions">([\s\S]*?)<\/div>/)[1];assert.equal((block.match(/disabled=""/g)||[]).length,3);
- assert.match(html,/<button class="reset" type="button">デモをリセット<\/button>/);
+ assert.doesNotMatch(html,/デモ検証操作|デモをリセット/);
+});
+require('node:test').test('debug controls are absent for customers and available only with the explicit server-authorized prop',()=>{
+ const r=createBettingRound([{id:'you',stack:1000,committed:50},{id:'p5',stack:1000,committed:100}],100,'you');
+ assert.doesNotMatch(render(r).html,/デモ検証操作|相手のフォールド確認|デモをリセット/);
+ const html=render(r,{showDemoTools:true}).html;
+ assert.match(html,/デモ検証操作/);assert.match(html,/相手のフォールド確認/);assert.match(html,/デモをリセット/);
 });
