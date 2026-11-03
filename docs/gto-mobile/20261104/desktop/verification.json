@@ -1,0 +1,643 @@
+{
+  "geometry": [
+    {
+      "pane": "flop",
+      "width": 375,
+      "table": {
+        "x": 7,
+        "y": 1189.9375,
+        "width": 361,
+        "height": 445,
+        "top": 1189.9375,
+        "right": 368,
+        "bottom": 1634.9375,
+        "left": 7
+      },
+      "cell": {
+        "x": 10,
+        "y": 1192.9375,
+        "width": 25.453125,
+        "height": 32,
+        "top": 1192.9375,
+        "right": 35.453125,
+        "bottom": 1224.9375,
+        "left": 10
+      },
+      "font": 11.5,
+      "overflow": false,
+      "picker": 383.25,
+      "rankRows": 3,
+      "watch": null
+    },
+    {
+      "pane": "flop",
+      "width": 768,
+      "table": {
+        "x": 43,
+        "y": 1452.984375,
+        "width": 682,
+        "height": 434.4375,
+        "top": 1452.984375,
+        "right": 725,
+        "bottom": 1887.421875,
+        "left": 43
+      },
+      "cell": {
+        "x": 46,
+        "y": 1455.984375,
+        "width": 50.140625,
+        "height": 31.1875,
+        "top": 1455.984375,
+        "right": 96.140625,
+        "bottom": 1487.171875,
+        "left": 46
+      },
+      "font": 12,
+      "overflow": false,
+      "picker": 383.25,
+      "rankRows": 3,
+      "watch": null
+    },
+    {
+      "pane": "flop",
+      "width": 1280,
+      "table": {
+        "x": 477,
+        "y": 397.421875,
+        "width": 754,
+        "height": 538,
+        "top": 397.421875,
+        "right": 1231,
+        "bottom": 935.421875,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 401.421875,
+        "width": 54.609375,
+        "height": 38,
+        "top": 401.421875,
+        "right": 535.609375,
+        "bottom": 439.421875,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "picker": 250.25,
+      "rankRows": 1,
+      "watch": null
+    },
+    {
+      "pane": "flop",
+      "width": 1600,
+      "table": {
+        "x": 477,
+        "y": 403,
+        "width": 1074,
+        "height": 538,
+        "top": 403,
+        "right": 1551,
+        "bottom": 941,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 407,
+        "width": 79.21875,
+        "height": 38,
+        "top": 407,
+        "right": 560.21875,
+        "bottom": 445,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "picker": 250.25,
+      "rankRows": 1,
+      "watch": null
+    },
+    {
+      "pane": "flop",
+      "width": 1920,
+      "table": {
+        "x": 537,
+        "y": 403,
+        "width": 1274,
+        "height": 538,
+        "top": 403,
+        "right": 1811,
+        "bottom": 941,
+        "left": 537
+      },
+      "cell": {
+        "x": 541,
+        "y": 407,
+        "width": 94.609375,
+        "height": 38,
+        "top": 407,
+        "right": 635.609375,
+        "bottom": 445,
+        "left": 541
+      },
+      "font": 16,
+      "overflow": false,
+      "picker": 250.25,
+      "rankRows": 1,
+      "watch": null
+    },
+    {
+      "pane": "pre",
+      "width": 375,
+      "table": {
+        "x": 7,
+        "y": 457.28125,
+        "width": 361,
+        "height": 445,
+        "top": 457.28125,
+        "right": 368,
+        "bottom": 902.28125,
+        "left": 7
+      },
+      "cell": {
+        "x": 10,
+        "y": 460.28125,
+        "width": 25.453125,
+        "height": 32,
+        "top": 460.28125,
+        "right": 35.453125,
+        "bottom": 492.28125,
+        "left": 10
+      },
+      "font": 11.5,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "pre",
+      "width": 768,
+      "table": {
+        "x": 43,
+        "y": 882.484375,
+        "width": 682,
+        "height": 434.4375,
+        "top": 882.484375,
+        "right": 725,
+        "bottom": 1316.921875,
+        "left": 43
+      },
+      "cell": {
+        "x": 46,
+        "y": 885.484375,
+        "width": 50.140625,
+        "height": 31.1875,
+        "top": 885.484375,
+        "right": 96.140625,
+        "bottom": 916.671875,
+        "left": 46
+      },
+      "font": 12,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "pre",
+      "width": 1280,
+      "table": {
+        "x": 477,
+        "y": 397.421875,
+        "width": 754,
+        "height": 538,
+        "top": 397.421875,
+        "right": 1231,
+        "bottom": 935.421875,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 401.421875,
+        "width": 54.609375,
+        "height": 38,
+        "top": 401.421875,
+        "right": 535.609375,
+        "bottom": 439.421875,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "pre",
+      "width": 1600,
+      "table": {
+        "x": 477,
+        "y": 403,
+        "width": 1074,
+        "height": 538,
+        "top": 403,
+        "right": 1551,
+        "bottom": 941,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 407,
+        "width": 79.21875,
+        "height": 38,
+        "top": 407,
+        "right": 560.21875,
+        "bottom": 445,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "pre",
+      "width": 1920,
+      "table": {
+        "x": 537,
+        "y": 403,
+        "width": 1274,
+        "height": 538,
+        "top": 403,
+        "right": 1811,
+        "bottom": 941,
+        "left": 537
+      },
+      "cell": {
+        "x": 541,
+        "y": 407,
+        "width": 94.609375,
+        "height": 38,
+        "top": 407,
+        "right": 635.609375,
+        "bottom": 445,
+        "left": 541
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "trainer",
+      "width": 375,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": {
+        "checked": false,
+        "width": 0,
+        "height": 0
+      }
+    },
+    {
+      "pane": "trainer",
+      "width": 768,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": {
+        "checked": false,
+        "width": 156,
+        "height": 42
+      }
+    },
+    {
+      "pane": "trainer",
+      "width": 1280,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": {
+        "checked": false,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "pane": "trainer",
+      "width": 1600,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": {
+        "checked": false,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "pane": "trainer",
+      "width": 1920,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": {
+        "checked": false,
+        "width": 20,
+        "height": 20
+      }
+    },
+    {
+      "pane": "drill",
+      "width": 375,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "drill",
+      "width": 768,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "drill",
+      "width": 1280,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "drill",
+      "width": 1600,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "drill",
+      "width": 1920,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "ranges",
+      "width": 375,
+      "table": {
+        "x": 7,
+        "y": 635.6875,
+        "width": 361,
+        "height": 445,
+        "top": 635.6875,
+        "right": 368,
+        "bottom": 1080.6875,
+        "left": 7
+      },
+      "cell": {
+        "x": 10,
+        "y": 638.6875,
+        "width": 25.453125,
+        "height": 32,
+        "top": 638.6875,
+        "right": 35.453125,
+        "bottom": 670.6875,
+        "left": 10
+      },
+      "font": 11.5,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "ranges",
+      "width": 768,
+      "table": {
+        "x": 43,
+        "y": 727.484375,
+        "width": 682,
+        "height": 434.4375,
+        "top": 727.484375,
+        "right": 725,
+        "bottom": 1161.921875,
+        "left": 43
+      },
+      "cell": {
+        "x": 46,
+        "y": 730.484375,
+        "width": 50.140625,
+        "height": 31.1875,
+        "top": 730.484375,
+        "right": 96.140625,
+        "bottom": 761.671875,
+        "left": 46
+      },
+      "font": 12,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "ranges",
+      "width": 1280,
+      "table": {
+        "x": 477,
+        "y": 397.421875,
+        "width": 754,
+        "height": 538,
+        "top": 397.421875,
+        "right": 1231,
+        "bottom": 935.421875,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 401.421875,
+        "width": 54.609375,
+        "height": 38,
+        "top": 401.421875,
+        "right": 535.609375,
+        "bottom": 439.421875,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "ranges",
+      "width": 1600,
+      "table": {
+        "x": 477,
+        "y": 403,
+        "width": 1074,
+        "height": 538,
+        "top": 403,
+        "right": 1551,
+        "bottom": 941,
+        "left": 477
+      },
+      "cell": {
+        "x": 481,
+        "y": 407,
+        "width": 79.21875,
+        "height": 38,
+        "top": 407,
+        "right": 560.21875,
+        "bottom": 445,
+        "left": 481
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "ranges",
+      "width": 1920,
+      "table": {
+        "x": 537,
+        "y": 403,
+        "width": 1274,
+        "height": 538,
+        "top": 403,
+        "right": 1811,
+        "bottom": 941,
+        "left": 537
+      },
+      "cell": {
+        "x": 541,
+        "y": 407,
+        "width": 94.609375,
+        "height": 38,
+        "top": 407,
+        "right": 635.609375,
+        "bottom": 445,
+        "left": 541
+      },
+      "font": 16,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "weak",
+      "width": 375,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "weak",
+      "width": 768,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "weak",
+      "width": 1280,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "weak",
+      "width": 1600,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    },
+    {
+      "pane": "weak",
+      "width": 1920,
+      "font": null,
+      "overflow": false,
+      "rankRows": null,
+      "watch": null
+    }
+  ],
+  "mobileComparison": [
+    {
+      "pane": "flop",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "flop",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "pre",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "pre",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "trainer",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "trainer",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "drill",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "drill",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "ranges",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "ranges",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "weak",
+      "width": 375,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    },
+    {
+      "pane": "weak",
+      "width": 768,
+      "sameDimensions": true,
+      "maximumChannelDifference": 0
+    }
+  ]
+}

@@ -43,3 +43,9 @@
 /* Headline and importance per spot (2026/11/1). */
 .stars{font-style:normal;margin-left:8px;color:#e6bd70;font-size:13px;letter-spacing:1px;white-space:nowrap}.stars s{text-decoration:none;color:#ffffff30}
 .spot{font-style:normal;font-size:14px;color:#d2e0e7}
+@media (min-width:1100px){
+ .wrap{max-width:none;width:100%;min-width:0}
+ .wrap :is(p,small,span,select,button,.note,.spot){font-size:15px!important;overflow-wrap:anywhere}
+ .wrap :is(h2,h3,.title>b){font-size:18px!important}
+ .wrap .tabs{flex-wrap:wrap}.wrap .filters{flex-wrap:wrap}
+}
