@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T11:01:21.018Z",
+  "checkedAt": "2026-11-03T17:01:18.676Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,183 +104,165 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-03T10:55:16.386Z",
+    "checkedAt": "2026-11-03T16:50:13.036Z",
     "runs": [
       {
         "id": 41604956412,
         "spot": "utg-btn",
+        "totalJobs": 201,
         "total": 200,
-        "success": 20,
-        "running": 5,
-        "queued": 175,
-        "failed": [],
-        "remaining": 180,
-        "increment": 12,
-        "rate": 9.99617044858972
+        "success": 82,
+        "running": 7,
+        "queued": 111,
+        "failed": []
       },
       {
         "id": 41486979979,
         "spot": "co-btn",
+        "totalJobs": 201,
         "total": 200,
-        "success": 155,
-        "running": 7,
-        "queued": 38,
-        "failed": [],
-        "remaining": 45,
-        "increment": 11,
-        "rate": 9.163156244540575
+        "success": 200,
+        "running": 0,
+        "queued": 0,
+        "failed": []
       },
       {
         "id": 41486975878,
         "spot": "hj-bb",
+        "totalJobs": 201,
         "total": 200,
-        "success": 119,
+        "success": 158,
         "running": 7,
-        "queued": 74,
-        "failed": [],
-        "remaining": 81,
-        "increment": 8,
-        "rate": 6.664113632393146
+        "queued": 35,
+        "failed": []
       },
       {
         "id": 41464873348,
         "spot": "utg-bb",
+        "totalJobs": 201,
         "total": 200,
-        "success": 142,
+        "success": 187,
         "running": 7,
-        "queued": 51,
-        "failed": [],
-        "remaining": 58,
-        "increment": 8,
-        "rate": 6.664113632393146
+        "queued": 6,
+        "failed": []
+      },
+      {
+        "id": 41459846661,
+        "spot": "sb-limp",
+        "totalJobs": 201,
+        "total": 200,
+        "success": 92,
+        "running": 7,
+        "queued": 101,
+        "failed": []
       },
       {
         "id": 41459848850,
         "spot": "sb-iso",
+        "totalJobs": 201,
         "total": 200,
-        "success": 124,
+        "success": 162,
         "running": 7,
-        "queued": 68,
+        "queued": 30,
         "failed": [
           {
             "id": 125325997317,
             "name": "Solve sb-iso QhTh8c",
             "result": "failure"
           }
-        ],
-        "remaining": 76,
-        "increment": 8,
-        "rate": 6.664113632393146
-      },
-      {
-        "id": 41459846661,
-        "spot": "sb-limp",
-        "total": 200,
-        "success": 71,
-        "running": 7,
-        "queued": 122,
-        "failed": [],
-        "remaining": 129,
-        "increment": 3,
-        "rate": 2.49904261214743
+        ]
       }
     ]
   },
   "eta": {
-    "observedAt": "2026-11-03T10:55:16.386Z",
-    "previousAt": "2026-11-03T09:43:14.731Z",
-    "elapsedHours": 1.2004597222222222,
-    "increment": 50,
-    "ratePerHour": 41.65071020245716,
-    "proxySpotRate": 6.94178503374286,
+    "observedAt": "2026-11-03T16:50:13.036Z",
+    "previousAt": "2026-11-03T10:55:16.386Z",
+    "elapsedHours": 5.915736111111111,
+    "increment": 250,
+    "ratePerHour": 42.2601676789542,
+    "proxySpotRate": 7.0433612798256995,
     "spots": [
       {
         "spot": "utg-btn",
-        "eta": "2026-11-04T04:55:41.211Z",
-        "proxy": false
-      },
-      {
-        "spot": "co-btn",
-        "eta": "2026-11-03T15:49:55.883Z",
-        "proxy": false
+        "eta": "2026-11-04T04:05:45.369Z",
+        "rate": 10.480521584380641
       },
       {
         "spot": "hj-bb",
-        "eta": "2026-11-03T23:04:33.142Z",
-        "proxy": false
+        "eta": "2026-11-03T23:12:27.889Z",
+        "rate": 6.592586157916855
       },
       {
         "spot": "utg-bb",
-        "eta": "2026-11-03T19:37:28.384Z",
-        "proxy": false
-      },
-      {
-        "spot": "sb-iso",
-        "eta": "2026-11-03T22:19:32.108Z",
-        "proxy": false
+        "eta": "2026-11-03T18:32:45.401Z",
+        "rate": 7.606830182211756
       },
       {
         "spot": "sb-limp",
-        "eta": "2026-11-05T14:32:27.551Z",
-        "proxy": false
+        "eta": "2026-11-04T23:15:38.664Z",
+        "rate": 3.5498540850321527
+      },
+      {
+        "spot": "sb-iso",
+        "eta": "2026-11-03T22:45:09.686Z",
+        "rate": 6.4235454872010385
       },
       {
         "spot": "btn-bb-3bet",
-        "start": "2026-11-03T15:49:55.883Z",
-        "eta": "2026-11-04T20:38:35.603Z",
-        "proxy": true
+        "eta": "2026-11-04T21:17:17.090Z",
+        "rate": 7.0433612798256995
       },
       {
         "spot": "co-bb-3bet",
-        "start": "2026-11-03T19:37:28.384Z",
-        "eta": "2026-11-05T00:26:08.104Z",
+        "start": "2026-11-03T18:32:45.401Z",
+        "eta": "2026-11-04T22:56:29.321Z",
         "proxy": true
       },
       {
         "spot": "btn-sb-3bet",
-        "start": "2026-11-03T22:19:32.108Z",
-        "eta": "2026-11-05T03:08:11.828Z",
+        "start": "2026-11-03T22:45:09.686Z",
+        "eta": "2026-11-05T03:08:53.606Z",
         "proxy": true
       },
       {
         "spot": "utg-bb-3bet",
-        "start": "2026-11-03T23:04:33.142Z",
-        "eta": "2026-11-05T03:53:12.862Z",
+        "start": "2026-11-03T23:12:27.889Z",
+        "eta": "2026-11-05T03:36:11.809Z",
         "proxy": true
       },
       {
         "spot": "co-btn-3bet",
-        "start": "2026-11-04T04:55:41.211Z",
-        "eta": "2026-11-05T09:44:20.931Z",
+        "start": "2026-11-04T04:05:45.369Z",
+        "eta": "2026-11-05T08:29:29.289Z",
         "proxy": true
       },
       {
         "spot": "btn-bb-4bet",
-        "start": "2026-11-04T20:38:35.603Z",
-        "eta": "2026-11-06T01:27:15.323Z",
+        "start": "2026-11-04T21:17:17.090Z",
+        "eta": "2026-11-06T01:41:01.010Z",
         "proxy": true
       },
       {
         "spot": "co-btn-bb",
-        "start": "2026-11-05T00:26:08.104Z",
-        "eta": "2026-11-06T05:14:47.824Z",
+        "start": "2026-11-04T22:56:29.321Z",
+        "eta": "2026-11-06T03:20:13.241Z",
         "proxy": true
       },
       {
         "spot": "btn-sb-bb",
-        "start": "2026-11-05T03:08:11.828Z",
-        "eta": "2026-11-06T07:56:51.548Z",
+        "start": "2026-11-04T23:15:38.664Z",
+        "eta": "2026-11-06T03:39:22.584Z",
         "proxy": true
       },
       {
         "spot": "utg-btn-bb",
-        "start": "2026-11-05T03:53:12.862Z",
-        "eta": "2026-11-06T08:41:52.582Z",
+        "start": "2026-11-05T03:08:53.606Z",
+        "eta": "2026-11-06T07:32:37.526Z",
         "proxy": true
       }
     ],
-    "initial21x200": "2026-11-06T08:41:52.582Z",
-    "assumptions": "Six spots maintained within40 repo runners, future spots measured aggregate /6 in specified order;±24h or more for short observation and different board cost. Initial21x200 only, not1755."
+    "initial21x200": "2026-11-06T07:32:37.526Z",
+    "assumptions": "6spot maintained with40-runner demand; failed sb-iso board needs one retry after parent finishes; new/unstarted spots use aggregate measured rate/6, specified start order, ±24h or more; initial21x200 only, not1755."
   },
   "flopPR": {
     "number": 756,
@@ -2042,16 +2024,93 @@
         "tree": "cf6184ba3bc78d3b664547160a5fcdf0e6fd76db"
       },
       "validatedImportedCount": "200/1755"
+    },
+    "coBtn": {
+      "solveRun": 41486979979,
+      "collectRun": 41678509875,
+      "pr": 781,
+      "head": "9f1409b8c443a48d8ffe05e8ffa1f8b7ee5a8956",
+      "state": "validated-await-merge-readback",
+      "verified": "200unique v3/250 finiteoop/iphandEv;67tests pass;explicitoutfetch;index regenerated"
     }
   },
   "concurrency": {
-    "checkedAt": "2026-11-03T10:55:16.386Z",
+    "checkedAt": "2026-11-03T16:53:55.713Z",
+    "runs": [
+      {
+        "id": 41678509875,
+        "branch": "gto-flop-collect/41486979979",
+        "running": 1,
+        "solveRunning": 0,
+        "total": 1
+      },
+      {
+        "id": 41677916245,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "running": 1,
+        "solveRunning": 0,
+        "total": 1
+      },
+      {
+        "id": 41677915814,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "running": 1,
+        "solveRunning": 0,
+        "total": 1
+      },
+      {
+        "id": 41675658307,
+        "branch": "claude/demo-hide",
+        "running": 1,
+        "solveRunning": 0,
+        "total": 1
+      },
+      {
+        "id": 41678529089,
+        "branch": "gto-flop-solve/btn-bb-3bet/v3b",
+        "running": 1,
+        "solveRunning": 1,
+        "total": 201
+      },
+      {
+        "id": 41604956412,
+        "branch": "gto-flop-solve/utg-btn/v3b",
+        "running": 7,
+        "solveRunning": 7,
+        "total": 201
+      },
+      {
+        "id": 41486975878,
+        "branch": "gto-flop-solve/hj-bb/v3b",
+        "running": 7,
+        "solveRunning": 7,
+        "total": 201
+      },
+      {
+        "id": 41464873348,
+        "branch": "gto-flop-solve/utg-bb/v3b",
+        "running": 7,
+        "solveRunning": 7,
+        "total": 201
+      },
+      {
+        "id": 41459848850,
+        "branch": "gto-flop-solve/sb-iso/v3b",
+        "running": 7,
+        "solveRunning": 7,
+        "total": 201
+      },
+      {
+        "id": 41459846661,
+        "branch": "gto-flop-solve/sb-limp/v3b",
+        "running": 7,
+        "solveRunning": 7,
+        "total": 201
+      }
+    ],
+    "errors": [],
     "repoRunning": 40,
-    "flopRunning": 40,
-    "otherCI": 0,
-    "allJobsPagesMatched": true,
-    "proEffective": true,
-    "note": "Measured before cache PR update launched CI; six active spots, no free spot."
+    "flopRunning": 36
   },
   "flopObservations": [
     {
@@ -2446,6 +2505,77 @@
           "rate": 2.49904261214743
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-03T16:50:13.036Z",
+      "runs": [
+        {
+          "id": 41604956412,
+          "spot": "utg-btn",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 82,
+          "running": 7,
+          "queued": 111,
+          "failed": []
+        },
+        {
+          "id": 41486979979,
+          "spot": "co-btn",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 200,
+          "running": 0,
+          "queued": 0,
+          "failed": []
+        },
+        {
+          "id": 41486975878,
+          "spot": "hj-bb",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 158,
+          "running": 7,
+          "queued": 35,
+          "failed": []
+        },
+        {
+          "id": 41464873348,
+          "spot": "utg-bb",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 187,
+          "running": 7,
+          "queued": 6,
+          "failed": []
+        },
+        {
+          "id": 41459846661,
+          "spot": "sb-limp",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 92,
+          "running": 7,
+          "queued": 101,
+          "failed": []
+        },
+        {
+          "id": 41459848850,
+          "spot": "sb-iso",
+          "totalJobs": 201,
+          "total": 200,
+          "success": 162,
+          "running": 7,
+          "queued": 30,
+          "failed": [
+            {
+              "id": 125325997317,
+              "name": "Solve sb-iso QhTh8c",
+              "result": "failure"
+            }
+          ]
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -2520,5 +2650,35 @@
     "deployment": "Vercel success on merge1a84e0b",
     "stagingSourceReadbackVerified": true
   },
-  "nextUnstartedFlop": "btn-bb-3bet"
+  "nextUnstartedFlop": "co-bb-3bet",
+  "desktopGtoWide": {
+    "state": "merged",
+    "pr": 779,
+    "head": "155c28e17b1751aaaf6c43278888738fa538cf50",
+    "merge": "313472f6716622cedb3de4cd4e93143e2c0d8790",
+    "verified": "6screens at1280/1600/1920;375/768 pixel comparison, max1/255 dithering;CSS only min1100;40files saved and verified",
+    "screenshots": "docs/gto-mobile/20261104/desktop"
+  },
+  "mobileStartFlow": {
+    "state": "merged",
+    "pr": 780,
+    "head": "46e1842f8d3a6cb1a17973db3936f14443ea4ee2",
+    "merge": "0755ebf9015d2c416b8c084815625b7f288d70cb",
+    "verified": "Actual Chromium375/320 and GTOworker: start actualhand, foldgrade+Next,stop clears hand;manual grade retained3.2sec;auto>=2.5sec,touchstops,mistakesstay;legacy preference migratesoff,newchoicepersists;reviewbadge;8tests pass",
+    "screenshots": "docs/gto-mobile/20261104/start-flow",
+    "workspace": "/workspace/scratch/181a490d1af4/gto-mobile-start"
+  },
+  "prefetchCache": {
+    "pr": 768,
+    "state": "merged",
+    "merge": "4c655444074cb22468af3194522aed1cbe9c5571",
+    "checks": "engine regression andVercel success"
+  },
+  "newFlopStarted": {
+    "spot": "btn-bb-3bet",
+    "run": 41678529089,
+    "branch": "gto-flop-solve/btn-bb-3bet/v3b",
+    "base": "f8e300b6d6589597482053bb981289b9d627594f",
+    "state": "solve inprogress jobs observed;no duplicate"
+  }
 }
