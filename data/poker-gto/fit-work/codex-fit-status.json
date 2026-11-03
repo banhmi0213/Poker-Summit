@@ -1866,7 +1866,7 @@
       "verified": "375/320/1280 play/tab/unmount/resize cleanup;allchecks success"
     },
     "step7": {
-      "state": "fixed-CI-running",
+      "state": "checks-success-needs-latest-staging-integration",
       "pr": 768,
       "head": "769a114b6fb9144ac53c9b3884e40b5759a3497a",
       "branch": "chatgpt/gto-prefetch-cache-20261103-w",
@@ -1879,8 +1879,9 @@
       "checks": {
         "vercel": "success",
         "previewComments": "success",
-        "engine": "in_progress"
-      }
+        "engine": "success"
+      },
+      "note": "PR mergeable false after other staging changes; integrate latest stage and recheck; do not merge until green and conflict-free."
     }
   },
   "mobileUsabilityPhase1": {
