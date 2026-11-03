@@ -8,4 +8,6 @@
  .editor .confirm{min-height:46px!important;background:linear-gradient(150deg,#ddc283,#a98643)!important;color:#211b11!important;font-weight:700!important;font-size:16px!important}
  .chosen{display:flex;flex-direction:column;min-width:0;line-height:1.1}.chosen>small{font-size:10px;color:#cdbb91}.heading .chosen>strong{font-size:30px;color:#ffe29b;font-variant-numeric:tabular-nums;letter-spacing:.01em}.chosen>span{font-size:13px;color:#e8d6a8;font-variant-numeric:tabular-nums}
  .heading{align-items:flex-start}.hint{margin:0;text-align:center;font-size:10px;color:#cdbb91}
+ /* Owner 2026/11/03: the confirm button is gone, so the typed amount gets the room. */
+ .exact{font-size:12px;gap:8px}.editor .exact input{height:48px!important;font-size:22px!important;padding:6px 8px!important}
 }

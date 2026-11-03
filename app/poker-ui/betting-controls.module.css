@@ -56,3 +56,5 @@
 @media(prefers-reduced-motion:reduce){.orbit{animation:none;background:linear-gradient(#f3c663,#f3c663)}}
 /* Phone only (owner 2026/11/03): fold/call/raise about 70% of their old height, never under 44px, so the table keeps its room. PC unchanged. */
 @media(max-width:700px){.panel.panel.panel .actions button{min-height:44px;height:44px;padding:2px 4px;font-size:16px;line-height:1.1}.panel.panel.panel .actions small{margin-top:1px;font-size:11px;line-height:1.1}}
+/* Phone: the frame around the buttons hugs them too (owner 2026/11/03). */
+@media(max-width:700px){.panel.panel.panel{padding:4px 6px;gap:0}.panel.panel.panel>.actions{margin:0 0 4px}}
