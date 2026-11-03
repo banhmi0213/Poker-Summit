@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          flyctl deploy --remote-only --ha=false --config deploy/fly-production/fly.toml --dockerfile deploy/fly-staging/Dockerfile --app "$APP" > "$RUNNER_TEMP/deploy.log" 2>&1
+          flyctl deploy --remote-only --ha=false --config deploy/fly-production/fly.toml --app "$APP" > "$RUNNER_TEMP/deploy.log" 2>&1
           code=$?
           cat "$RUNNER_TEMP/deploy.log"
           if [ $code -ne 0 ]; then echo "::error title=fly deploy::$(tail -c 2500 "$RUNNER_TEMP/deploy.log" | tr '\n\r' '  ')"; fi

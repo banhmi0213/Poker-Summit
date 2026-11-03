@@ -5,7 +5,7 @@ app = "poker-room-server-prod"
 primary_region = "nrt"
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "../fly-staging/Dockerfile"
 
 [env]
   POKER_ROOM_HOST = "0.0.0.0"
