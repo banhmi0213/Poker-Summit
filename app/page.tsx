@@ -209,7 +209,7 @@ export default async function HomePage({
       description: "開催中・開催予定のトーナメントやイベントをチェック。",
       image: "/images/navigation/events-v1.webp", href: "/events" },
     { id: "summit-online", category: "SummitPokerオンライン", title: "SummitPokerオンライン",
-      description: "オンライン対戦とGTO学習。公開準備中です。",
+      description: "オンライン対戦とGTO学習。",
       image: "/images/navigation/summit-online-v1.webp" },
     { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
       description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
