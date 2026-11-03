@@ -12,7 +12,7 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
-import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback,MobilePlaySettings} from './mobile-play-surface';
+import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback,MobilePlaySettings,useMobilePlayStop} from './mobile-play-surface';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
 
@@ -65,7 +65,7 @@ export function GtoTrainer({standard=false,upsell=false,practiceSpot}:{standard?
  const [kind,setKind]=useState<'hand'|'drill'>(target?'drill':'hand');
  return <MobilePlaySurface label="GTOと対戦" startFullscreen={Boolean(target)}><div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
-   <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
+   <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して対戦</button>
    <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
   </div>
   {kind==='hand'?<GtoHandTrainer initialMode={practiceSpot==='flop'?'flop':'all'}/>:<PreflopDrill weak={standard} upsell={upsell} practiceSpot={target??undefined}/>}
@@ -79,6 +79,8 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
  const [mode,setMode]=useState<TrainerMode>(initialMode),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
  const worker=useRef<Worker|null>(null),seq=useRef(0),counted=useRef<number|null>(null);
+ const stopVersion=useMobilePlayStop(),lastStop=useRef(stopVersion),generation=useRef(0);
+ useEffect(()=>{if(lastStop.current===stopVersion)return;lastStop.current=stopVersion;generation.current++;setHand(null);setSpot(null);setFeedback([]);setFoldPaused(false);setSeeking(false);setError('');startRef.current=null;},[stopVersion]);
  useEffect(()=>{setStats(readStats());return()=>worker.current?.terminate();},[]);
  const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
   if(!worker.current){const {createGtoWorker}=await import('@/app/poker-demo/gto-worker-client');worker.current=createGtoWorker();}
@@ -91,10 +93,12 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  // 練習の始め方: everyone (the hero too) plays GTO in the worker until the hero reaches the chosen spot; seats where the
  // spot cannot happen (e.g. BB for an open) are skipped, so the seat still moves round the table.
  const deal=async(n:number,seed:number)=>{
+  const version=generation.current;
   if(mode==='all'){setHandNo(n);begin(startTrainerHand(seed,buttonIndexFor(n)));return;}
   let k=n;for(let i=0;i<6&&!MODE_POSITIONS[mode].includes(startTrainerHand(1,buttonIndexFor(k)).heroPos);i++)k++;
   setHandNo(k);setSeeking(true);setError('');
   const r=await ask(id=>({type:'trainerStart',id,mode,seed,buttonIndex:buttonIndexFor(k),tries:40}));
+  if(version!==generation.current)return;
   setSeeking(false);
   if(r.type==='trainerStart'&&r.hand)begin(r.hand);else setError('この場面になる配牌が見つかりませんでした。もう一度押してください。');
  };
@@ -156,7 +160,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
- const formBox=<MobilePlaySettings active={true} reviewCount={0} onOpenChange={setSettingsOpen} label="対戦の設定">
+ const formBox=<MobilePlaySettings active={Boolean(hand)} reviewCount={0} onOpenChange={setSettingsOpen} label="対戦の設定">
   <div className={`${chart.form} ${styles.formBig} ${styles.settings}`}>
    <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>

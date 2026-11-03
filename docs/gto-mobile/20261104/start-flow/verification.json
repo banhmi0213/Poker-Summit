@@ -1,0 +1,29 @@
+{
+  "baseStaging": "f8e300b6d6589597482053bb981289b9d627594f",
+  "viewports": [
+    375,
+    320
+  ],
+  "environment": "Chromium138; actual React components and GTO WebWorker; public chart JSON; authenticated record API fixture returns401",
+  "manual": [
+    "full screen start controls visible; no Settings trigger",
+    "start actual hand and render table",
+    "stop returns before-start and clears hand",
+    "manual drill grading visible after3.2seconds; Next advances",
+    "no horizontal overflow"
+  ],
+  "automatic": [
+    "legacy auto-on preference migrated to off once",
+    "user can enable and persist auto-on after reload",
+    "grade visible at1.8seconds; automatic next no earlier than2.5seconds",
+    "pointer interaction on grading stops automatic next for at least3.1seconds",
+    "mistake/blunder never automatically advances (verified after3.1seconds)",
+    "stop preserves review question count and renders badge on before-start review button"
+  ],
+  "tests": {
+    "pass": 8,
+    "fail": 0
+  },
+  "desktop": "No desktop layout/style edits in this PR. The requested label rename and auto-advance preference/behavior also apply on desktop. Existing PR779 desktop media block retained unchanged.",
+  "latestGlobalCSSRechecked": true
+}
