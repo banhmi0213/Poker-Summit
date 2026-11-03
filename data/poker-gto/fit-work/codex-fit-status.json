@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T04:49:06.786Z",
+  "checkedAt": "2026-11-03T04:57:03.446Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,233 +104,229 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-03T04:49:06.786Z",
+    "checkedAt": "2026-11-03T04:57:03.446Z",
     "runs": [
       {
         "id": 41486979979,
-        "branch": "gto-flop-solve/co-btn/v3b",
-        "total": 201,
-        "running": 6,
-        "success": 100,
-        "queued": 94,
-        "failed": [],
         "spot": "co-btn",
-        "remaining": 100,
-        "rate": 8.495658280350655,
-        "etaJst": "2026-11-04T01:35:21.371+09:00"
+        "total": 201,
+        "success": 102,
+        "running": 5,
+        "queued": 93,
+        "failed": [],
+        "remaining": 98,
+        "rate": 8.643983554397563,
+        "etaJst": "2026-11-04T01:17:17.961+09:00"
       },
       {
         "id": 41486975878,
-        "branch": "gto-flop-solve/hj-bb/v3b",
+        "spot": "hj-bb",
         "total": 201,
-        "running": 7,
         "success": 79,
+        "running": 7,
         "queued": 114,
         "failed": [],
-        "spot": "hj-bb",
         "remaining": 121,
-        "rate": 7.108612030497487,
-        "etaJst": "2026-11-04T06:50:24.571+09:00"
+        "rate": 6.949084818241178,
+        "etaJst": "2026-11-04T07:21:47.959+09:00"
       },
       {
         "id": 41464873348,
-        "branch": "gto-flop-solve/utg-bb/v3b",
-        "total": 201,
-        "running": 7,
-        "success": 99,
-        "queued": 94,
-        "failed": [],
         "spot": "utg-bb",
-        "remaining": 101,
-        "rate": 6.935231249265841,
-        "etaJst": "2026-11-04T04:22:54.742+09:00"
+        "total": 201,
+        "success": 100,
+        "running": 7,
+        "queued": 93,
+        "failed": [],
+        "remaining": 100,
+        "rate": 6.949084818241178,
+        "etaJst": "2026-11-04T04:20:28.828+09:00"
       },
       {
         "id": 41459848850,
-        "branch": "gto-flop-solve/sb-iso/v3b",
-        "total": 201,
-        "running": 7,
-        "success": 86,
-        "queued": 106,
-        "failed": [
-          "failure"
-        ],
         "spot": "sb-iso",
-        "remaining": 114,
-        "rate": 5.721565780644319,
-        "etaJst": "2026-11-04T09:44:35.402+09:00"
+        "total": 201,
+        "success": 87,
+        "running": 7,
+        "queued": 105,
+        "failed": [
+          {
+            "id": 125325997317,
+            "name": "Solve sb-iso QhTh8c",
+            "conclusion": "failure"
+          }
+        ],
+        "remaining": 113,
+        "rate": 5.762655702931709,
+        "etaJst": "2026-11-04T09:33:35.898+09:00"
       },
       {
         "id": 41459846661,
-        "branch": "gto-flop-solve/sb-limp/v3b",
-        "total": 201,
-        "running": 6,
-        "success": 48,
-        "queued": 146,
-        "failed": [],
         "spot": "sb-limp",
-        "remaining": 152,
-        "rate": 3.6409964058645663,
-        "etaJst": "2026-11-05T07:33:55.316+09:00"
+        "total": 201,
+        "success": 49,
+        "running": 6,
+        "queued": 145,
+        "failed": [],
+        "remaining": 151,
+        "rate": 3.728777219544047,
+        "etaJst": "2026-11-05T06:26:48.503+09:00"
       },
       {
         "id": 41279680906,
-        "branch": "gto-flop-solve/sb-bb/v3b",
-        "total": 201,
-        "running": 5,
-        "success": 188,
-        "queued": 7,
-        "failed": [],
         "spot": "sb-bb",
-        "remaining": 12,
-        "rate": 4.1611387495595045,
-        "etaJst": "2026-11-03T16:42:08.559+09:00"
+        "total": 201,
+        "success": 189,
+        "running": 6,
+        "queued": 5,
+        "failed": [],
+        "remaining": 11,
+        "rate": 4.237246840390962,
+        "etaJst": "2026-11-03T16:32:49.137+09:00"
       }
     ]
   },
   "eta": {
-    "checkedAt": "2026-11-03T04:49:06.786Z",
+    "checkedAt": "2026-11-03T04:57:03.446Z",
     "previousAt": "2026-11-02T23:03:03.239Z",
-    "hours": 5.767651944444444,
-    "delta": 208,
-    "speed": 36.06320249618237,
-    "proxySpotRate": 6.010533749363728,
+    "hours": 5.9000575,
+    "delta": 214,
+    "speed": 36.270832953746634,
+    "proxySpotRate": 6.045138825624439,
     "rows": [
       {
         "id": 41486979979,
-        "branch": "gto-flop-solve/co-btn/v3b",
-        "total": 201,
-        "running": 6,
-        "success": 100,
-        "queued": 94,
-        "failed": [],
         "spot": "co-btn",
-        "remaining": 100,
-        "rate": 8.495658280350655,
-        "etaJst": "2026-11-04T01:35:21.371+09:00"
+        "total": 201,
+        "success": 102,
+        "running": 5,
+        "queued": 93,
+        "failed": [],
+        "remaining": 98,
+        "rate": 8.643983554397563,
+        "etaJst": "2026-11-04T01:17:17.961+09:00"
       },
       {
         "id": 41486975878,
-        "branch": "gto-flop-solve/hj-bb/v3b",
+        "spot": "hj-bb",
         "total": 201,
-        "running": 7,
         "success": 79,
+        "running": 7,
         "queued": 114,
         "failed": [],
-        "spot": "hj-bb",
         "remaining": 121,
-        "rate": 7.108612030497487,
-        "etaJst": "2026-11-04T06:50:24.571+09:00"
+        "rate": 6.949084818241178,
+        "etaJst": "2026-11-04T07:21:47.959+09:00"
       },
       {
         "id": 41464873348,
-        "branch": "gto-flop-solve/utg-bb/v3b",
-        "total": 201,
-        "running": 7,
-        "success": 99,
-        "queued": 94,
-        "failed": [],
         "spot": "utg-bb",
-        "remaining": 101,
-        "rate": 6.935231249265841,
-        "etaJst": "2026-11-04T04:22:54.742+09:00"
+        "total": 201,
+        "success": 100,
+        "running": 7,
+        "queued": 93,
+        "failed": [],
+        "remaining": 100,
+        "rate": 6.949084818241178,
+        "etaJst": "2026-11-04T04:20:28.828+09:00"
       },
       {
         "id": 41459848850,
-        "branch": "gto-flop-solve/sb-iso/v3b",
-        "total": 201,
-        "running": 7,
-        "success": 86,
-        "queued": 106,
-        "failed": [
-          "failure"
-        ],
         "spot": "sb-iso",
-        "remaining": 114,
-        "rate": 5.721565780644319,
-        "etaJst": "2026-11-04T09:44:35.402+09:00"
+        "total": 201,
+        "success": 87,
+        "running": 7,
+        "queued": 105,
+        "failed": [
+          {
+            "id": 125325997317,
+            "name": "Solve sb-iso QhTh8c",
+            "conclusion": "failure"
+          }
+        ],
+        "remaining": 113,
+        "rate": 5.762655702931709,
+        "etaJst": "2026-11-04T09:33:35.898+09:00"
       },
       {
         "id": 41459846661,
-        "branch": "gto-flop-solve/sb-limp/v3b",
-        "total": 201,
-        "running": 6,
-        "success": 48,
-        "queued": 146,
-        "failed": [],
         "spot": "sb-limp",
-        "remaining": 152,
-        "rate": 3.6409964058645663,
-        "etaJst": "2026-11-05T07:33:55.316+09:00"
+        "total": 201,
+        "success": 49,
+        "running": 6,
+        "queued": 145,
+        "failed": [],
+        "remaining": 151,
+        "rate": 3.728777219544047,
+        "etaJst": "2026-11-05T06:26:48.503+09:00"
       },
       {
         "id": 41279680906,
-        "branch": "gto-flop-solve/sb-bb/v3b",
-        "total": 201,
-        "running": 5,
-        "success": 188,
-        "queued": 7,
-        "failed": [],
         "spot": "sb-bb",
-        "remaining": 12,
-        "rate": 4.1611387495595045,
-        "etaJst": "2026-11-03T16:42:08.559+09:00"
+        "total": 201,
+        "success": 189,
+        "running": 6,
+        "queued": 5,
+        "failed": [],
+        "remaining": 11,
+        "rate": 4.237246840390962,
+        "etaJst": "2026-11-03T16:32:49.137+09:00"
       }
     ],
     "planned": [
       {
         "spot": "utg-btn",
-        "startJst": "2026-11-03T16:42:08.559+09:00",
-        "etaJst": "2026-11-05T01:58:38.253+09:00"
+        "startJst": "2026-11-03T16:32:49.137+09:00",
+        "etaJst": "2026-11-05T01:37:53.101+09:00"
       },
       {
         "spot": "btn-bb-3bet",
-        "startJst": "2026-11-04T01:35:21.371+09:00",
-        "etaJst": "2026-11-05T10:51:51.065+09:00"
+        "startJst": "2026-11-04T01:17:17.961+09:00",
+        "etaJst": "2026-11-05T10:22:21.925+09:00"
       },
       {
         "spot": "co-bb-3bet",
-        "startJst": "2026-11-04T04:22:54.742+09:00",
-        "etaJst": "2026-11-05T13:39:24.436+09:00"
+        "startJst": "2026-11-04T04:20:28.828+09:00",
+        "etaJst": "2026-11-05T13:25:32.793+09:00"
       },
       {
         "spot": "btn-sb-3bet",
-        "startJst": "2026-11-04T06:50:24.571+09:00",
-        "etaJst": "2026-11-05T16:06:54.265+09:00"
+        "startJst": "2026-11-04T07:21:47.959+09:00",
+        "etaJst": "2026-11-05T16:26:51.923+09:00"
       },
       {
         "spot": "utg-bb-3bet",
-        "startJst": "2026-11-04T09:44:35.402+09:00",
-        "etaJst": "2026-11-05T19:01:05.097+09:00"
+        "startJst": "2026-11-04T09:33:35.898+09:00",
+        "etaJst": "2026-11-05T18:38:39.863+09:00"
       },
       {
         "spot": "co-btn-3bet",
-        "startJst": "2026-11-05T01:58:38.253+09:00",
-        "etaJst": "2026-11-06T11:15:07.947+09:00"
+        "startJst": "2026-11-05T01:37:53.101+09:00",
+        "etaJst": "2026-11-06T10:42:57.066+09:00"
       },
       {
         "spot": "btn-bb-4bet",
-        "startJst": "2026-11-05T07:33:55.316+09:00",
-        "etaJst": "2026-11-06T16:50:25.010+09:00"
+        "startJst": "2026-11-05T06:26:48.503+09:00",
+        "etaJst": "2026-11-06T15:31:52.467+09:00"
       },
       {
         "spot": "co-btn-bb",
-        "startJst": "2026-11-05T10:51:51.065+09:00",
-        "etaJst": "2026-11-06T20:08:20.760+09:00"
+        "startJst": "2026-11-05T10:22:21.925+09:00",
+        "etaJst": "2026-11-06T19:27:25.890+09:00"
       },
       {
         "spot": "btn-sb-bb",
-        "startJst": "2026-11-05T13:39:24.436+09:00",
-        "etaJst": "2026-11-06T22:55:54.130+09:00"
+        "startJst": "2026-11-05T13:25:32.793+09:00",
+        "etaJst": "2026-11-06T22:30:36.757+09:00"
       },
       {
         "spot": "utg-btn-bb",
-        "startJst": "2026-11-05T16:06:54.265+09:00",
-        "etaJst": "2026-11-07T01:23:23.959+09:00"
+        "startJst": "2026-11-05T16:26:51.923+09:00",
+        "etaJst": "2026-11-07T01:31:55.888+09:00"
       }
     ],
-    "allInitial200EtaJst": "2026-11-07T01:23:23.959+09:00",
-    "assumption": "6spots;40repojobs;new spots use observed average;initial200 only;+/-12h or more;failed board retry pending"
+    "allInitial200EtaJst": "2026-11-07T01:31:55.888+09:00",
+    "assumption": "6 spots stay active; completed spots replaced in required order; new spots use observed mean per-spot speed; repo 40 running jobs incl CI; initial200 only; +/-12h or more; sb-iso one failed board awaits parent completion then one retry."
   },
   "flopPR": {
     "number": 756,
@@ -1859,16 +1855,21 @@
       "verified": "375/320/1280 play/tab/unmount/resize cleanup;allchecks success"
     },
     "step7": {
-      "state": "fixed-CI-type-error-awaiting-checks",
+      "state": "fixed-CI-running",
       "pr": 768,
       "head": "769a114b6fb9144ac53c9b3884e40b5759a3497a",
       "branch": "chatgpt/gto-prefetch-cache-20261103-w",
-      "ciRun": 41580084014,
+      "ciRun": 41580443921,
       "verified": "375px 40BB+index545952bytes;reload0network;privateAPIexcluded;3tests;build/diff pass",
       "ciFailure": "Readonly Cache.keys result reverse; fixed by copying before reverse",
       "successfulCiRetries": 0,
       "fixPush": 1,
-      "localVerification": "66 GTO/flop tests pass; cache module strict TypeScript passes;375px real JSON cache test pass"
+      "localVerification": "66 GTO/flop tests pass; cache module strict TypeScript passes;375px real JSON cache test pass",
+      "checks": {
+        "vercel": "success",
+        "previewComments": "success",
+        "engine": "in_progress"
+      }
     }
   },
   "mobileUsabilityPhase1": {
@@ -2032,11 +2033,12 @@
     "importedValidatedCount": 5
   },
   "concurrency": {
-    "checkedAt": "2026-11-03T04:49:06.786Z",
+    "checkedAt": "2026-11-03T04:57:03.446Z",
     "repoInProgressJobs": 40,
     "flopInProgressJobs": 38,
     "otherInProgressJobs": 2,
-    "proEffective": true
+    "proEffective": true,
+    "note": "Active/queued/waiting parent runs enumerated; all job pages fetched and total_count matched."
   },
   "flopObservations": [
     {
@@ -2095,6 +2097,91 @@
           "solveRunning": 5,
           "queued": 144,
           "failed": []
+        }
+      ]
+    },
+    {
+      "checkedAt": "2026-11-03T04:49:06.786Z",
+      "runs": [
+        {
+          "id": 41486979979,
+          "branch": "gto-flop-solve/co-btn/v3b",
+          "total": 201,
+          "running": 6,
+          "success": 100,
+          "queued": 94,
+          "failed": [],
+          "spot": "co-btn",
+          "remaining": 100,
+          "rate": 8.495658280350655,
+          "etaJst": "2026-11-04T01:35:21.371+09:00"
+        },
+        {
+          "id": 41486975878,
+          "branch": "gto-flop-solve/hj-bb/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 79,
+          "queued": 114,
+          "failed": [],
+          "spot": "hj-bb",
+          "remaining": 121,
+          "rate": 7.108612030497487,
+          "etaJst": "2026-11-04T06:50:24.571+09:00"
+        },
+        {
+          "id": 41464873348,
+          "branch": "gto-flop-solve/utg-bb/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 99,
+          "queued": 94,
+          "failed": [],
+          "spot": "utg-bb",
+          "remaining": 101,
+          "rate": 6.935231249265841,
+          "etaJst": "2026-11-04T04:22:54.742+09:00"
+        },
+        {
+          "id": 41459848850,
+          "branch": "gto-flop-solve/sb-iso/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 86,
+          "queued": 106,
+          "failed": [
+            "failure"
+          ],
+          "spot": "sb-iso",
+          "remaining": 114,
+          "rate": 5.721565780644319,
+          "etaJst": "2026-11-04T09:44:35.402+09:00"
+        },
+        {
+          "id": 41459846661,
+          "branch": "gto-flop-solve/sb-limp/v3b",
+          "total": 201,
+          "running": 6,
+          "success": 48,
+          "queued": 146,
+          "failed": [],
+          "spot": "sb-limp",
+          "remaining": 152,
+          "rate": 3.6409964058645663,
+          "etaJst": "2026-11-05T07:33:55.316+09:00"
+        },
+        {
+          "id": 41279680906,
+          "branch": "gto-flop-solve/sb-bb/v3b",
+          "total": 201,
+          "running": 5,
+          "success": 188,
+          "queued": 7,
+          "failed": [],
+          "spot": "sb-bb",
+          "remaining": 12,
+          "rate": 4.1611387495595045,
+          "etaJst": "2026-11-03T16:42:08.559+09:00"
         }
       ]
     }
