@@ -2242,5 +2242,15 @@
         "display": "standalone"
       }
     }
+  },
+  "foldNext": {
+    "state": "pr-checks-running",
+    "pr": 772,
+    "head": "1ea9a379bc91eac09c1376f1a8b7f6756c900af5",
+    "branch": "chatgpt/gto-fold-next-20261103-z",
+    "verified": "375px actual Chromium/worker/engine: paused fold grading+next,no hand result or opponent cards,no CPU progression,persistent watch-to-end,hands counted once;7 engine tests incl folded loss conserved",
+    "workspace": "/workspace/scratch/181a490d1af4/poker-fold",
+    "screenshots": "docs/gto-mobile/20261103/fold-next/",
+    "note": "Only explicit source/test/docs entries saved. Do not commit local node_modules,package-lock,out. All checks success before stage merge."
   }
 }
