@@ -1250,3 +1250,5 @@
  .demoShell .table [data-name-size=s]{font-size:24px!important;line-height:1.2}
  .demoShell .table [data-name-size=m]{font-size:21px!important;line-height:1.2}
 }
+/* Phone only (owner 2026/11/03): fold/call/raise about 70% of their old height, never under 44px, so the table keeps its room. PC unchanged. */
+@media(max-width:700px){.controls.controls .actions button{min-height:44px;height:44px;padding:2px 4px;font-size:16px;line-height:1.1}.controls.controls .actions button small{margin-top:1px;font-size:11px;line-height:1.1}}

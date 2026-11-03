@@ -8,7 +8,7 @@ const {runoutDuration,PAYOUT_ANIMATION_MS}=require('../lib/poker/presentation-ti
 const until=async(read,predicate,label,ms=12000)=>{const end=Date.now()+ms;do{const v=await read();if(predicate(v))return v;await new Promise(r=>setTimeout(r,40));}while(Date.now()<end);throw Error('Timed out: '+label);};
 // All-in from the action panel. The phone player (390px) picks amounts in the bet editor dialog instead of the desktop quick buttons.
 const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
- if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await editor.getByRole('button',{name:/^(レイズ|ベット|オールイン) /}).click();return;}
+ if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await panel.locator('div[class*="actions"] > button').last().click();return;}
  await p.getByRole('button',{name:'ALL-IN額',exact:true}).click();await panel.getByRole('button',{name:label}).click();};
 (async()=>{
  const esbuild=require(process.env.POKER_ESBUILD_MODULE||'esbuild'),raw=require(process.env.POKER_CHROMIUM_MODULE),chromium=raw.default??raw,{chromium:pw}=require(process.env.POKER_PLAYWRIGHT_MODULE),output=process.env.POKER_E2E_OUTPUT??'/tmp/poker-e2e';fs.mkdirSync(output,{recursive:true});
