@@ -1859,12 +1859,16 @@
       "verified": "375/320/1280 play/tab/unmount/resize cleanup;allchecks success"
     },
     "step7": {
-      "state": "pr-checks-pending",
+      "state": "fixed-CI-type-error-awaiting-checks",
       "pr": 768,
-      "head": "13ddb204da440834abb5b2649f0628b65fc531f9",
+      "head": "769a114b6fb9144ac53c9b3884e40b5759a3497a",
       "branch": "chatgpt/gto-prefetch-cache-20261103-w",
       "ciRun": 41580084014,
-      "verified": "375px 40BB+index545952bytes;reload0network;privateAPIexcluded;3tests;build/diff pass"
+      "verified": "375px 40BB+index545952bytes;reload0network;privateAPIexcluded;3tests;build/diff pass",
+      "ciFailure": "Readonly Cache.keys result reverse; fixed by copying before reverse",
+      "successfulCiRetries": 0,
+      "fixPush": 1,
+      "localVerification": "66 GTO/flop tests pass; cache module strict TypeScript passes;375px real JSON cache test pass"
     }
   },
   "mobileUsabilityPhase1": {
