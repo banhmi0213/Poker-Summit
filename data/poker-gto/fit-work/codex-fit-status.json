@@ -1841,11 +1841,15 @@
       "notes": "Existing standalone/name/icons192/512/apple180 verified. Draft viewportFit cover/theme current navy/install hint durable dismissal/header safearea. Actualstandalone notyettested. Headlessshell lacksPWA CDP; fullChrome downloaded /workspace/scratch/181a490d1af4/chrome-full but launchfailed; don'tmislabel normalviewport as home launch."
     },
     "step5": {
-      "state": "draft-pr-awaiting-real-home-launch-evidence",
+      "state": "ready-for-review-checks-pending",
       "pr": 765,
-      "head": "d3305919e9be27129a76fcf0587a9d781ced5345",
+      "head": "0d5862875f89b71a696382a530776036acd203ea",
       "branch": "chatgpt/gto-home-install-20261103-u",
-      "verified": "375/320 hint44px,dismiss survives reload;PC1280unchanged;actual standalone screenshot missing"
+      "verified": "manifest standalone/Poker Summit;192/512/apple180;theme203e51;375/320 hint/durable dismissal;safe-area screenshot simulated top44/bottom34: header links/fullscreen close y>=44;PC1280 unchanged",
+      "ownerRule": "11/3 owner explicitly allows staging merge without actual home-launch screenshot after manifest/icons/theme/simulated-safe-area checks and all CI success; owner checks on iPhone after merge.",
+      "actualHomeLaunchScreenshotRequiredBeforeMerge": false,
+      "screenshots": "docs/gto-mobile/20261103/install/safe-{header,full}-{375,320}.png",
+      "stagingUrl": "https://poker-summit-git-chatgpt-poker-authoritative-hand-poker-summit.vercel.app/"
     },
     "step6": {
       "state": "merged",
