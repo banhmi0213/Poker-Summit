@@ -1,5 +1,6 @@
 'use client';
 import {MyAvatar} from '@/app/poker-ui/my-avatar';
+import {RingRankView} from '@/app/poker-ui/ring-rank-view';
 
 import {useState,type ReactNode} from 'react';
 import Link from 'next/link';
@@ -19,7 +20,7 @@ import PokerLobbyPreview from './poker-lobby-preview';
 import styles from './lobby-dashboard.module.css';
 import {MonthlyRanking,MonthlyRankingHeading} from './monthly-ranking';
 
-type PageId='lobby'|'assigned'|'tournaments'|'ranking'|'champions'|'skins';
+type PageId='lobby'|'assigned'|'tournaments'|'ranking'|'champions'|'ranks'|'skins';
 type GameTab='ring'|'tournament'|'practice';
 type TournamentCard={id:string;title:string;starts_at:string;image_url:string|null};
 type Props={guest:boolean;admin:boolean;memberName:string;ringEnabled:boolean;tournamentsEnabled:boolean;rings:RingTable[];ringError:boolean;tournaments:TournamentCard[];assigned:ReactNode;registration:ReactNode;board:ReactNode};
@@ -43,7 +44,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
  const router=useRouter();
  const [active,setActive]=useState<PageId>('lobby'),[gameTab,setGameTab]=useState<GameTab>('ring'),[menuOpen,setMenuOpen]=useState(false),[ringState,setRingState]=useState<RingLobbyState|null>(null);
  const go=(id:PageId)=>{setActive(id);setMenuOpen(false);};
- const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中のテーブル',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'チップ獲得ランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'skins',label:'デザイン変更',icon:'cards'}];
+ const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中のテーブル',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'チップ獲得ランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'ranks',label:'ランク表',icon:'trophy'},{id:'skins',label:'デザイン変更',icon:'cards'}];
  const title=navigation.find(item=>item.id===active)?.label??'ポーカーロビー';
  const upcoming=tournaments.filter(t=>Date.parse(t.starts_at)>Date.now()).slice(0,2);
  const configured=rings.map(t=>({id:t.id,title:t.title,sb:t.sb,bb:t.bb,capacity:t.capacity,minBuyIn:t.min_buy_in,maxBuyIn:t.max_buy_in,occupied:null}));
@@ -72,7 +73,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
        {tournamentsEnabled&&<section className={styles.upcoming} aria-labelledby="lobby-upcoming-title"><h2 id="lobby-upcoming-title"><LobbyIcon name="trophy"/>開催予定のトーナメント</h2>{upcoming.length?<div className={styles.upcomingGrid}>{upcoming.map(t=><article key={t.id} className={styles.eventCard}>{t.image_url?<img src={t.image_url} alt="" width="72" height="72"/>:<span className={styles.trophyArt}><LobbyIcon name="trophy"/></span>}<div><h3>{t.title}</h3><p>{formatDate(t.starts_at)}（日本時間）</p><button type="button" className={styles.outlineButton} onClick={()=>go('tournaments')}>詳細を見る</button></div></article>)}</div>:<p className={styles.emptyMessage}>現在、開催予定の大会はありません。受付が始まるとここに表示します。</p>}</section>}
        {board&&<div className={`${styles.panel} ${styles.board}`}>{board}</div>}
       </>:<section className={`${styles.panel} ${styles.detailPane}`} aria-label={title}><h2><LobbyIcon name={navigation.find(item=>item.id===active)?.icon??'home'}/>{title}</h2>
-       {active==='assigned'?<><h3>リングの参加テーブル</h3>{own?<div className={styles.ownTable}><strong>{own.title}</strong><p>{own.status==='seated'?`席 ${own.seat} に着席済み`:'持ち込み予約中'} · {own.stack.toLocaleString()} chip</p><Link className={styles.goldButton} href={`/poker-ring/${own.tableId}?view=table`}>着席中のテーブルへ</Link></div>:<p className={styles.lead}>リングゲームのタブで現在の着席状況を確認できます。</p>}<button type="button" className={styles.outlineButton} onClick={()=>{go('lobby');setGameTab('ring');}}>リングテーブルを確認する</button>{tournamentsEnabled&&<div className={styles.embedded}>{assigned}</div>}</>:active==='tournaments'?<div className={styles.embedded}>{registration}</div>:active==='skins'?<TablePreferences><SkinPicker/></TablePreferences>:<>{active==='ranking'?<MonthlyRanking limit={50} expanded/>:<RecordPlaceholder kind="champions" expanded/>}{active==='ranking'&&!guest&&<Link className={styles.outlineButton} href="/mypage/poker">自分の残高・順位を見る</Link>}</>}
+       {active==='assigned'?<><h3>リングの参加テーブル</h3>{own?<div className={styles.ownTable}><strong>{own.title}</strong><p>{own.status==='seated'?`席 ${own.seat} に着席済み`:'持ち込み予約中'} · {own.stack.toLocaleString()} chip</p><Link className={styles.goldButton} href={`/poker-ring/${own.tableId}?view=table`}>着席中のテーブルへ</Link></div>:<p className={styles.lead}>リングゲームのタブで現在の着席状況を確認できます。</p>}<button type="button" className={styles.outlineButton} onClick={()=>{go('lobby');setGameTab('ring');}}>リングテーブルを確認する</button>{tournamentsEnabled&&<div className={styles.embedded}>{assigned}</div>}</>:active==='tournaments'?<div className={styles.embedded}>{registration}</div>:active==='ranks'?<RingRankView/>:active==='skins'?<TablePreferences><SkinPicker/></TablePreferences>:<>{active==='ranking'?<MonthlyRanking limit={50} expanded/>:<RecordPlaceholder kind="champions" expanded/>}{active==='ranking'&&!guest&&<Link className={styles.outlineButton} href="/mypage/poker">自分の残高・順位を見る</Link>}</>}
       </section>}
      </div>
      <aside className={styles.rightRail} aria-label="ランキングと優勝記録">

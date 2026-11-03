@@ -7,6 +7,8 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import type {RingLobbyState} from '@/lib/poker/ring-admission';
 import {pickRingMove,RING_MOVE_COUNTDOWN_MS,RING_SHORT_WAIT_MS,type RingMove,type RingRake} from '@/lib/poker/ring-auto-move';
 import styles from './ring-admission.module.css';
+import {useRingTiers} from './use-ring-tiers';
+import {tierAllowed} from '@/lib/poker/ring-rank';
 
 type Own=NonNullable<RingLobbyState['membership']>;
 const rakeLabel=(r:RingRake|undefined)=>!r?'':r.bps<=500?'低レーキ':'高レーキ';
@@ -21,9 +23,10 @@ export function RingAutoMove({auth,data,own,tableId,blocked,leave}:{auth:Supabas
    setRakes(new Map((rows as {id:string;rake_bps:number;rake_cap_bb:number}[]).map(r=>[r.id,{bps:r.rake_bps,capBb:r.rake_cap_bb}])));},()=>{});
   return()=>{live=false;};},[auth,ids]);
  const current=data.tables.find(t=>t.id===tableId)??null;
+ const tiers=useRingTiers(auth,own?.tableId?'member':null,ids);
  const seated=Boolean(own&&own.tableId===tableId&&own.status==='seated'&&!own.exitRequested);
  const stack=own?.stack??0;
- const move=useMemo(()=>seated&&current?pickRingMove(current,data.tables,rakes,stack,data.wallet.available):null,[seated,current,data.tables,rakes,stack,data.wallet.available]);
+ const move=useMemo(()=>seated&&current?pickRingMove(current,data.tables,rakes,stack,data.wallet.available,t=>tierAllowed(tiers.rank?.tier??null,tiers.limits.get(t.id))):null,[seated,current,data.tables,rakes,stack,data.wallet.available,tiers]);
  const key=move?`${move.target.id}:${current?.occupied}:${move.target.occupied}`:null;
  // The table must stay short for a while (someone may be sitting down) before anything shows.
  const [ready,setReady]=useState<string|null>(null);
