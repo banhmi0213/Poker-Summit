@@ -301,8 +301,8 @@ export default async function CouponsPage({
               <span className="coupon-step__num">3</span>
               <span className="coupon-step__icon">🏪</span>
               <div>
-                <div className="coupon-step__title">店頭で提示</div>
-                <div className="coupon-step__desc">お店でクーポン画面を提示して特典を受けましょう</div>
+                <div className="coupon-step__title">お店で使う</div>
+                <div className="coupon-step__desc">お店で「お店で使う」を押し、出てきた画面を店員さんに見せて「使用済みにする」を押してもらいましょう</div>
               </div>
             </div>
           </div>

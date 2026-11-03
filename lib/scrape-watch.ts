@@ -1,4 +1,5 @@
-// スクレイピング（自動収集）の見張り（オーナー指示 2026/10/30：スクレイピングされたら速攻わかるように。遮断はせず、記録して知らせる）。
+// スクレイピング（自動収集）の見張り（オーナー指示 2026/10/30：スクレイピングされたら速攻わかるように）。
+// 2026/11/02 から遮断もする（オーナー：スクレイピングきたらすぐ止めなあかん）。止め方は middleware.ts。
 // middleware から呼ぶので、サーバー専用の物は読み込まない（Edge で動く）。
 /** AI の学習用に集める収集ロボット。robots.txt で全ページ禁止にしている（app/robots.ts）。 */
 export const AI_CRAWLERS = [
@@ -22,16 +23,24 @@ const TOOLS: [RegExp, string][] = [[/curl\//i, "curl"], [/wget/i, "wget"], [/pyt
   [/mechanize/i, "mechanize"], [/^ruby/i, "Ruby"], [/^php\//i, "PHP"]];
 const HEADLESS: [RegExp, string][] = [[/headlesschrome/i, "HeadlessChrome"], [/phantomjs/i, "PhantomJS"], [/puppeteer/i, "Puppeteer"], [/playwright/i, "Playwright"], [/selenium/i, "Selenium"]];
 
+/** 名乗って来る収集ロボットで、止めると決めたもの（名前の一部で見る）。見つけたら最初の1回から止める。 */
+export const BLOCKED_BOTS = ["FREEZEOUTResearch"];
+
 export type ScrapeCategory = "ai" | "tool" | "headless" | "no-ua" | "no-browser";
 export const SCRAPE_CATEGORY_LABEL: Record<ScrapeCategory, string> = {
   ai: "AIの収集ロボット", tool: "プログラム・ツール", headless: "自動操作のブラウザ", "no-ua": "名乗らないアクセス", "no-browser": "ブラウザらしくないアクセス",
 };
+
+/** 最初の1回から止める種類。「ブラウザらしくないアクセス」は量で判断する（同じIPから10分で30ページを超えたら止める）。 */
+export const BLOCK_AT_ONCE: ScrapeCategory[] = ["ai", "tool", "headless", "no-ua"];
 
 /** 疑わしいアクセスなら種類と名前、普通のアクセスなら null。 */
 export function classifyScrape(userAgent: string | null, headers: { acceptLanguage: string | null; secFetchSite: string | null }): { category: ScrapeCategory; bot: string } | null {
   const ua = (userAgent ?? "").trim();
   if (!ua) return { category: "no-ua", bot: "(なし)" };
   const lower = ua.toLowerCase();
+  const named = BLOCKED_BOTS.find((name) => lower.includes(name.toLowerCase()));
+  if (named) return { category: "tool", bot: named };
   if (AI_SEARCH_BOTS.some((name) => lower.includes(name.toLowerCase()))) return null;
   const ai = AI_CRAWLERS.find((name) => lower.includes(name.toLowerCase()));
   if (ai) return { category: "ai", bot: ai };
