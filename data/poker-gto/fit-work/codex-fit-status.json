@@ -2208,11 +2208,27 @@
   },
   "homeLaunchRecovery": {
     "pr": 769,
-    "state": "merged-deploy-pending",
+    "state": "merged-deployed-verified",
     "head": "6fa60b0bf69ab4f44d0c4f654b42fba08df6eeaf",
     "merge": "99f0b7ae46d4a20d3b84d837e8cbe076ac7ecdec",
     "verified": "3 real pages tested missing RPC/table, rejected reads, normal rankings/favorites, favorites-only failure; public preview pages return content; manifest start_url/mypage/poker; staging source readback verified",
     "databaseChanged": false,
-    "ownerAction": "Delete existing home icon and add staging again after deployment. Verify login/GTO launch and TOP/store pages."
+    "ownerAction": "Delete existing home icon and add staging again after deployment. Verify login/GTO launch and TOP/store pages.",
+    "deployment": "Vercel success",
+    "stageHttpVerified": {
+      "checkedAt": "2026-11-03T06:03:46.371Z",
+      "paths": [
+        "/",
+        "/stores?pref=東京都",
+        "/stores/ranking"
+      ],
+      "applicationError": false,
+      "oldDigest": false,
+      "rankingHeadingsAbsent": true,
+      "manifest": {
+        "start_url": "/mypage/poker",
+        "display": "standalone"
+      }
+    }
   }
 }
