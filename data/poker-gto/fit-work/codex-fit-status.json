@@ -1854,7 +1854,9 @@
       "stageReadbackVerified": true,
       "mergedAt": "2026-11-03T05:20:00.031Z",
       "checks": "all success",
-      "ownerIphoneCheckPending": true
+      "ownerIphoneCheckPending": true,
+      "startUrl": "/mypage/poker",
+      "followupPr": 769
     },
     "step6": {
       "state": "merged",
@@ -2203,5 +2205,14 @@
     "successfulRetries": 0,
     "attemptResult": "GitHub403 workflow already running; no retry started",
     "logResult": "BlobNotFound404"
+  },
+  "homeLaunchRecovery": {
+    "pr": 769,
+    "state": "merged-deploy-pending",
+    "head": "6fa60b0bf69ab4f44d0c4f654b42fba08df6eeaf",
+    "merge": "99f0b7ae46d4a20d3b84d837e8cbe076ac7ecdec",
+    "verified": "3 real pages tested missing RPC/table, rejected reads, normal rankings/favorites, favorites-only failure; public preview pages return content; manifest start_url/mypage/poker; staging source readback verified",
+    "databaseChanged": false,
+    "ownerAction": "Delete existing home icon and add staging again after deployment. Verify login/GTO launch and TOP/store pages."
   }
 }
