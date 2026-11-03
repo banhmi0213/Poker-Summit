@@ -25,7 +25,7 @@ import {paidFeaturesVisible} from '@/lib/billing/visibility';
 import {getGtoPlanStatus} from '@/lib/billing/plan';
 import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
 export const dynamic='force-dynamic';
-export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string;practice?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
+export default async function Page({searchParams}:{searchParams?:{pane?:string;billing?:string;practice?:string;before?:string}}={}){const [data,hands,tendencies,monthly,plan]=await Promise.all([loadPokerStatistics(),loadHandHistories(false,searchParams?.before),loadHandStats(),loadRingMonthly(),getGtoPlanStatus()]);
  const gto=gtoAccess(plan?.tier);
  const unavailable=<p>成績を取得できません。<a href="/login">ログイン状態</a>をご確認ください。</p>;
  const panes=[
@@ -46,7 +46,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'equity',label:'勝率計算機',eyebrow:'EQUITY & POT ODDS',description:'ハンド同士の勝率と、リバーまでにできる役の確率。ポットオッズからコールが得かも確かめられます。',content:<EquityCalculator/>},
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'looks',label:'アイコン枠・プレート',eyebrow:'LOOKS',description:'テーブルで他の会員にも見える、アイコン枠とネームプレートを選びます（2026/11/01）。',content:<CosmeticsSettings kinds={['frame','plate']}/>},
- {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker/hands?before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
+ {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker?pane=hands&before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
  {id:'plan',label:'GTOプラン',eyebrow:'GTO PLAN',description:'ご利用中のGTOプランと、お支払い・解約。',content:<GtoPlanPanel status={plan} message={searchParams?.billing}/>},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
@@ -55,5 +55,5 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
- return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
+ return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}:${searchParams?.before??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
 }
