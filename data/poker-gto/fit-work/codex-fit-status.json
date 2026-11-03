@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T17:01:18.676Z",
+  "checkedAt": "2026-11-03T23:09:27.107Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,165 +104,200 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-03T16:50:13.036Z",
+    "checkedAt": "2026-11-03T23:02:28.095Z",
     "runs": [
       {
         "id": 41604956412,
         "spot": "utg-btn",
-        "totalJobs": 201,
-        "total": 200,
-        "success": 82,
+        "total": 201,
+        "success": 154,
         "running": 7,
-        "queued": 111,
-        "failed": []
+        "solveRunning": 7,
+        "queued": 39,
+        "failed": [],
+        "remaining": 46,
+        "increment": 72,
+        "rate": 11.605073440817865
       },
       {
         "id": 41486979979,
         "spot": "co-btn",
-        "totalJobs": 201,
-        "total": 200,
+        "total": 201,
         "success": 200,
         "running": 0,
+        "solveRunning": 0,
         "queued": 0,
-        "failed": []
+        "failed": [],
+        "remaining": 0,
+        "increment": 0,
+        "rate": 0
       },
       {
         "id": 41486975878,
         "spot": "hj-bb",
-        "totalJobs": 201,
-        "total": 200,
-        "success": 158,
-        "running": 7,
-        "queued": 35,
-        "failed": []
+        "total": 201,
+        "success": 200,
+        "running": 0,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": [],
+        "remaining": 0,
+        "increment": 42,
+        "rate": 6.769626173810421
       },
       {
         "id": 41464873348,
         "spot": "utg-bb",
-        "totalJobs": 201,
-        "total": 200,
-        "success": 187,
-        "running": 7,
-        "queued": 6,
-        "failed": []
+        "total": 201,
+        "success": 200,
+        "running": 0,
+        "solveRunning": 0,
+        "queued": 0,
+        "failed": [],
+        "remaining": 0,
+        "increment": 13,
+        "rate": 2.0953604823698924
       },
       {
         "id": 41459846661,
         "spot": "sb-limp",
-        "totalJobs": 201,
-        "total": 200,
-        "success": 92,
+        "total": 201,
+        "success": 113,
         "running": 7,
-        "queued": 101,
-        "failed": []
+        "solveRunning": 7,
+        "queued": 80,
+        "failed": [],
+        "remaining": 87,
+        "increment": 21,
+        "rate": 3.3848130869052104
       },
       {
         "id": 41459848850,
         "spot": "sb-iso",
-        "totalJobs": 201,
-        "total": 200,
-        "success": 162,
-        "running": 7,
-        "queued": 30,
+        "total": 201,
+        "success": 199,
+        "running": 0,
+        "solveRunning": 0,
+        "queued": 0,
         "failed": [
           {
             "id": 125325997317,
             "name": "Solve sb-iso QhTh8c",
-            "result": "failure"
+            "conclusion": "failure"
           }
-        ]
+        ],
+        "remaining": 1,
+        "increment": 37,
+        "rate": 5.9637182959758475
+      },
+      {
+        "id": 41678529089,
+        "spot": "btn-bb-3bet",
+        "total": 201,
+        "success": 88,
+        "running": 7,
+        "solveRunning": 7,
+        "queued": 105,
+        "failed": [],
+        "remaining": 112,
+        "increment": 88,
+        "rate": 14.183978649888502
+      },
+      {
+        "id": 41735950412,
+        "spot": "co-bb-3bet",
+        "total": 201,
+        "totalSolve": 200,
+        "success": 0,
+        "running": 7,
+        "queued": 193,
+        "remaining": 200,
+        "failed": []
+      },
+      {
+        "id": 41735951806,
+        "spot": "btn-sb-3bet",
+        "total": 201,
+        "totalSolve": 200,
+        "success": 0,
+        "running": 7,
+        "queued": 193,
+        "remaining": 200,
+        "failed": []
       }
     ]
   },
   "eta": {
-    "observedAt": "2026-11-03T16:50:13.036Z",
-    "previousAt": "2026-11-03T10:55:16.386Z",
-    "elapsedHours": 5.915736111111111,
-    "increment": 250,
-    "ratePerHour": 42.2601676789542,
-    "proxySpotRate": 7.0433612798256995,
+    "observedAt": "2026-11-03T23:02:28.095Z",
+    "previousAt": "2026-11-03T16:50:13.036Z",
+    "elapsedHours": 6.204183055555555,
+    "increment": 273,
+    "ratePerHour": 44.00257012976773,
+    "proxySpotRate": 7.333761688294622,
     "spots": [
       {
         "spot": "utg-btn",
-        "eta": "2026-11-04T04:05:45.369Z",
-        "rate": 10.480521584380641
-      },
-      {
-        "spot": "hj-bb",
-        "eta": "2026-11-03T23:12:27.889Z",
-        "rate": 6.592586157916855
-      },
-      {
-        "spot": "utg-bb",
-        "eta": "2026-11-03T18:32:45.401Z",
-        "rate": 7.606830182211756
+        "eta": "2026-11-04T03:00:17.716Z"
       },
       {
         "spot": "sb-limp",
-        "eta": "2026-11-04T23:15:38.664Z",
-        "rate": 3.5498540850321527
+        "eta": "2026-11-05T00:44:39.053Z"
       },
       {
         "spot": "sb-iso",
-        "eta": "2026-11-03T22:45:09.686Z",
-        "rate": 6.4235454872010385
+        "eta": "2026-11-03T23:10:38.975Z"
       },
       {
         "spot": "btn-bb-3bet",
-        "eta": "2026-11-04T21:17:17.090Z",
-        "rate": 7.0433612798256995
+        "eta": "2026-11-04T06:56:14.533Z"
       },
       {
         "spot": "co-bb-3bet",
-        "start": "2026-11-03T18:32:45.401Z",
-        "eta": "2026-11-04T22:56:29.321Z",
-        "proxy": true
+        "eta": "2026-11-05T02:18:44.178Z"
       },
       {
         "spot": "btn-sb-3bet",
-        "start": "2026-11-03T22:45:09.686Z",
-        "eta": "2026-11-05T03:08:53.606Z",
-        "proxy": true
+        "eta": "2026-11-05T02:18:44.178Z"
       },
       {
         "spot": "utg-bb-3bet",
-        "start": "2026-11-03T23:12:27.889Z",
-        "eta": "2026-11-05T03:36:11.809Z",
+        "start": "2026-11-03T23:10:38.975Z",
+        "eta": "2026-11-05T02:26:55.058Z",
         "proxy": true
       },
       {
         "spot": "co-btn-3bet",
-        "start": "2026-11-04T04:05:45.369Z",
-        "eta": "2026-11-05T08:29:29.289Z",
+        "start": "2026-11-04T03:00:17.716Z",
+        "eta": "2026-11-05T06:16:33.799Z",
         "proxy": true
       },
       {
         "spot": "btn-bb-4bet",
-        "start": "2026-11-04T21:17:17.090Z",
-        "eta": "2026-11-06T01:41:01.010Z",
+        "start": "2026-11-04T06:56:14.533Z",
+        "eta": "2026-11-05T10:12:30.617Z",
         "proxy": true
       },
       {
         "spot": "co-btn-bb",
-        "start": "2026-11-04T22:56:29.321Z",
-        "eta": "2026-11-06T03:20:13.241Z",
+        "start": "2026-11-05T00:44:39.053Z",
+        "eta": "2026-11-06T04:00:55.137Z",
         "proxy": true
       },
       {
         "spot": "btn-sb-bb",
-        "start": "2026-11-04T23:15:38.664Z",
-        "eta": "2026-11-06T03:39:22.584Z",
+        "start": "2026-11-05T02:18:44.178Z",
+        "eta": "2026-11-06T05:35:00.262Z",
         "proxy": true
       },
       {
         "spot": "utg-btn-bb",
-        "start": "2026-11-05T03:08:53.606Z",
-        "eta": "2026-11-06T07:32:37.526Z",
+        "start": "2026-11-05T02:18:44.178Z",
+        "eta": "2026-11-06T05:35:00.262Z",
         "proxy": true
       }
     ],
-    "initial21x200": "2026-11-06T07:32:37.526Z",
-    "assumptions": "6spot maintained with40-runner demand; failed sb-iso board needs one retry after parent finishes; new/unstarted spots use aggregate measured rate/6, specified start order, ±24h or more; initial21x200 only, not1755."
+    "initial21x200": "2026-11-06T05:35:00.262Z",
+    "assumptions": "6slots, measured aggregate/6 for new/unstarted/retry, specified order; sb-iso queued restart waits may delay; ±24h or more. Initial21x200 only, not1755."
   },
   "flopPR": {
     "number": 756,
@@ -1731,17 +1766,44 @@
   ],
   "newFlopRuns": [
     {
-      "spot": "hj-bb",
-      "run": 41486975878
+      "branch": "gto-flop-collect/41486975878",
+      "runs": [
+        {
+          "id": 41735946083,
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
     },
     {
-      "spot": "co-btn",
-      "run": 41486979979
+      "branch": "gto-flop-collect/41464873348",
+      "runs": [
+        {
+          "id": 41735948690,
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
     },
     {
-      "spot": "utg-btn",
-      "run": 41604956412,
-      "startedFromStage": "9704db404c7f7c145150ffbc34df9b6bf29a7446"
+      "branch": "gto-flop-solve/co-bb-3bet/v3b",
+      "runs": [
+        {
+          "id": 41735950412,
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
+    },
+    {
+      "branch": "gto-flop-solve/btn-sb-3bet/v3b",
+      "runs": [
+        {
+          "id": 41735951806,
+          "status": "in_progress",
+          "conclusion": null
+        }
+      ]
     }
   ],
   "recoveredWorkspace": "/workspace/scratch/181a490d1af4/gto-recovered",
@@ -2002,9 +2064,10 @@
       "hu-srp",
       "hu-limp",
       "co-bb",
-      "sb-bb"
+      "sb-bb",
+      "co-btn"
     ],
-    "importedValidatedCount": 6,
+    "importedValidatedCount": 7,
     "sbBb": {
       "solveRun": 41279680906,
       "solveConclusion": "success",
@@ -2030,87 +2093,93 @@
       "collectRun": 41678509875,
       "pr": 781,
       "head": "9f1409b8c443a48d8ffe05e8ffa1f8b7ee5a8956",
-      "state": "validated-await-merge-readback",
-      "verified": "200unique v3/250 finiteoop/iphandEv;67tests pass;explicitoutfetch;index regenerated"
+      "state": "merged-validated",
+      "verified": "200unique v3/250 finiteoop/iphandEv;67tests pass;explicitoutfetch;index regenerated",
+      "mergeCommit": "db1a02e9a9f37581e37bd6f6b27a1aaeb330a09c"
+    },
+    "utgHj": {
+      "pr": 784,
+      "head": "c9f560f0be1b1439599a1d2ee563e9df22bbe322",
+      "tree": "6fd8d7dd2acd3d4f2518fef821946b4bb3c95aa6",
+      "state": "awaiting-checks",
+      "branch": "chatgpt/gto-flops-utg-hj-20261104-d",
+      "collectRuns": [
+        41735948690,
+        41735946083
+      ],
+      "solveRuns": [
+        41464873348,
+        41486975878
+      ],
+      "verified": "Each200canonicalunique/v3/250/nonemptyfinitehandEv;67tests;tree readbackmatch",
+      "workspace": "/workspace/scratch/7d368c3d87fa/gto"
     }
   },
   "concurrency": {
-    "checkedAt": "2026-11-03T16:53:55.713Z",
+    "checkedAt": "2026-11-03T23:06:07.708Z",
     "runs": [
       {
-        "id": 41678509875,
-        "branch": "gto-flop-collect/41486979979",
-        "running": 1,
-        "solveRunning": 0,
-        "total": 1
+        "id": 41735951806,
+        "branch": "gto-flop-solve/btn-sb-3bet/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193
       },
       {
-        "id": 41677916245,
-        "branch": "chatgpt/poker-authoritative-hand",
-        "running": 1,
-        "solveRunning": 0,
-        "total": 1
-      },
-      {
-        "id": 41677915814,
-        "branch": "chatgpt/poker-authoritative-hand",
-        "running": 1,
-        "solveRunning": 0,
-        "total": 1
-      },
-      {
-        "id": 41675658307,
-        "branch": "claude/demo-hide",
-        "running": 1,
-        "solveRunning": 0,
-        "total": 1
+        "id": 41735950412,
+        "branch": "gto-flop-solve/co-bb-3bet/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193
       },
       {
         "id": 41678529089,
         "branch": "gto-flop-solve/btn-bb-3bet/v3b",
-        "running": 1,
-        "solveRunning": 1,
-        "total": 201
+        "total": 201,
+        "running": 7,
+        "success": 89,
+        "queued": 104
       },
       {
         "id": 41604956412,
         "branch": "gto-flop-solve/utg-btn/v3b",
+        "total": 201,
         "running": 7,
-        "solveRunning": 7,
-        "total": 201
-      },
-      {
-        "id": 41486975878,
-        "branch": "gto-flop-solve/hj-bb/v3b",
-        "running": 7,
-        "solveRunning": 7,
-        "total": 201
-      },
-      {
-        "id": 41464873348,
-        "branch": "gto-flop-solve/utg-bb/v3b",
-        "running": 7,
-        "solveRunning": 7,
-        "total": 201
-      },
-      {
-        "id": 41459848850,
-        "branch": "gto-flop-solve/sb-iso/v3b",
-        "running": 7,
-        "solveRunning": 7,
-        "total": 201
+        "success": 154,
+        "queued": 39
       },
       {
         "id": 41459846661,
         "branch": "gto-flop-solve/sb-limp/v3b",
+        "total": 201,
         "running": 7,
-        "solveRunning": 7,
-        "total": 201
+        "success": 113,
+        "queued": 80
+      },
+      {
+        "id": 41459848850,
+        "branch": "gto-flop-solve/sb-iso/v3b",
+        "total": 201,
+        "running": 0,
+        "success": 199,
+        "queued": 1,
+        "retry": [
+          {
+            "id": 126265100256,
+            "status": "queued",
+            "conclusion": null
+          }
+        ]
       }
     ],
-    "errors": [],
-    "repoRunning": 40,
-    "flopRunning": 36
+    "errors": [
+      "Error: jobs unavailable 41459848850"
+    ],
+    "repoRunning": 35,
+    "allJobsPagesMatched": true,
+    "note": "sb-iso per_page100 ReadTimeout; fell back30 and fetched all7pages,201uniquejobs=total_count."
   },
   "flopObservations": [
     {
@@ -2576,16 +2645,140 @@
           ]
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-03T23:02:28.095Z",
+      "runs": [
+        {
+          "id": 41604956412,
+          "spot": "utg-btn",
+          "total": 201,
+          "success": 154,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 39,
+          "failed": [],
+          "remaining": 46,
+          "increment": 72,
+          "rate": 11.605073440817865
+        },
+        {
+          "id": 41486979979,
+          "spot": "co-btn",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "remaining": 0,
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41486975878,
+          "spot": "hj-bb",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "remaining": 0,
+          "increment": 42,
+          "rate": 6.769626173810421
+        },
+        {
+          "id": 41464873348,
+          "spot": "utg-bb",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "remaining": 0,
+          "increment": 13,
+          "rate": 2.0953604823698924
+        },
+        {
+          "id": 41459846661,
+          "spot": "sb-limp",
+          "total": 201,
+          "success": 113,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 80,
+          "failed": [],
+          "remaining": 87,
+          "increment": 21,
+          "rate": 3.3848130869052104
+        },
+        {
+          "id": 41459848850,
+          "spot": "sb-iso",
+          "total": 201,
+          "success": 199,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [
+            {
+              "id": 125325997317,
+              "name": "Solve sb-iso QhTh8c",
+              "conclusion": "failure"
+            }
+          ],
+          "remaining": 1,
+          "increment": 37,
+          "rate": 5.9637182959758475
+        },
+        {
+          "id": 41678529089,
+          "spot": "btn-bb-3bet",
+          "total": 201,
+          "success": 88,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 105,
+          "failed": [],
+          "remaining": 112,
+          "increment": 88,
+          "rate": 14.183978649888502
+        },
+        {
+          "id": 41735950412,
+          "spot": "co-bb-3bet",
+          "total": 201,
+          "totalSolve": 200,
+          "success": 0,
+          "running": 7,
+          "queued": 193,
+          "remaining": 200,
+          "failed": []
+        },
+        {
+          "id": 41735951806,
+          "spot": "btn-sb-3bet",
+          "total": 201,
+          "totalSolve": 200,
+          "success": 0,
+          "running": 7,
+          "queued": 193,
+          "remaining": 200,
+          "failed": []
+        }
+      ]
     }
   ],
   "flopRetryPending": {
     "run": 41459848850,
     "job": 125325997317,
+    "rerunJob": 126265100256,
     "board": "QhTh8c",
-    "state": "wait-parent-completion-before-single-retry",
-    "successfulRetries": 0,
-    "attemptResult": "GitHub403 workflow already running; no retry started",
-    "logResult": "BlobNotFound404"
+    "retryCount": 1,
+    "state": "queued",
+    "note": "Parentcompleted attempt1 failure;singlejobrerun started;do not retryagain."
   },
   "homeLaunchRecovery": {
     "pr": 769,
@@ -2650,7 +2843,7 @@
     "deployment": "Vercel success on merge1a84e0b",
     "stagingSourceReadbackVerified": true
   },
-  "nextUnstartedFlop": "co-bb-3bet",
+  "nextUnstartedFlop": "utg-bb-3bet",
   "desktopGtoWide": {
     "state": "merged",
     "pr": 779,
@@ -2680,5 +2873,9 @@
     "branch": "gto-flop-solve/btn-bb-3bet/v3b",
     "base": "f8e300b6d6589597482053bb981289b9d627594f",
     "state": "solve inprogress jobs observed;no duplicate"
+  },
+  "freeze": {
+    "until": "2026-11-05T00:00:00+09:00",
+    "scope": "Only flop data intake; UIexception handled separately,no UI/code changes in thisrun."
   }
 }
