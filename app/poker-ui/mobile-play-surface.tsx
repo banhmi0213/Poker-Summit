@@ -13,7 +13,7 @@ export function MobilePlayFeedback({children}:{children:ReactNode}){
  const slots=useContext(PlaySlots);
  return slots.mobile&&slots.feedback?createPortal(children,slots.feedback):<>{children}</>;
 }
-export function MobilePlaySettings({children,active,reviewCount,onOpenChange}:{children:ReactNode;active:boolean;reviewCount:number;onOpenChange:(open:boolean)=>void}){
+export function MobilePlaySettings({children,active,reviewCount,onOpenChange,label='連打の設定'}:{label?:string;children:ReactNode;active:boolean;reviewCount:number;onOpenChange:(open:boolean)=>void}){
  const slots=useContext(PlaySlots),sheet=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null);
  const [open,setOpen]=useState(false),enabled=slots.mobile&&active;
  useEffect(()=>{
@@ -25,8 +25,8 @@ export function MobilePlaySettings({children,active,reviewCount,onOpenChange}:{c
  useEffect(()=>{if(!enabled)setOpen(false);},[enabled]);
  if(!enabled)return <>{children}</>;
  const button=<button ref={trigger} type="button" className={styles.settingsButton} aria-label={reviewCount?`設定・復習 ${reviewCount}問`:'設定'} aria-haspopup="dialog" aria-expanded={open} onClick={()=>setOpen(true)}>設定{reviewCount>0&&<span className={styles.reviewBadge} aria-hidden="true">{reviewCount}</span>}</button>;
- return <>{slots.tools?createPortal(button,slots.tools):button}<dialog ref={sheet} className={styles.sheet} aria-label="連打の設定" onClose={()=>{setOpen(false);trigger.current?.focus();}} onClick={e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientY<r.top)setOpen(false);}}}>
-  <header><strong>連打の設定</strong><button type="button" autoFocus onClick={()=>setOpen(false)}>閉じる</button></header>
+ return <>{slots.tools?createPortal(button,slots.tools):button}<dialog ref={sheet} className={styles.sheet} aria-label={label} onClose={()=>{setOpen(false);trigger.current?.focus();}} onClick={e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientY<r.top)setOpen(false);}}}>
+  <header><strong>{label}</strong><button type="button" autoFocus onClick={()=>setOpen(false)}>閉じる</button></header>
   <div onClick={e=>{if((e.target as HTMLElement).closest('button'))setOpen(false);}}>{children}</div>
  </dialog></>;
 }
