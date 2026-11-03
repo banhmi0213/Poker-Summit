@@ -11,7 +11,8 @@ name: Deploy poker server to Fly (production, Tokyo)
 # Without the secrets the job is skipped, so main keeps deploying normally on Vercel.
 on:
   push:
-    branches: [main]
+    # ops/poker-server-prod: start the production server before the site release (owner 2026/11/03: 今晩から始めてもええで).
+    branches: [main, ops/poker-server-prod]
   workflow_dispatch:
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
         id: token
         run: if [ -n "$FLY_API_TOKEN" ] && [ -n "$SUPABASE_SECRET" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "Production poker server secrets are not all set; skipping."; fi
       - name: Wait for Poker engine tests on this commit
-        if: steps.token.outputs.ok == 'true' && github.event_name == 'push'
+        if: steps.token.outputs.ok == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
