@@ -163,6 +163,7 @@ jobs:
           code=$?
           cat "$RUNNER_TEMP/life.log"
           grep -B2 -A18 "^not ok\|^    not ok" "$RUNNER_TEMP/life.log" | grep -E "not ok|message|expected|actual|Error|location" | head -12 | while IFS= read -r l; do echo "::notice::${l:0:400}"; done
+          if [ $code -ne 0 ]; then echo "::error title=lifecycle::$(grep -v "^ok \|^    ok \|^# Subtest" "$RUNNER_TEMP/life.log" | tail -c 2500 | tr '\n\r' '  ')"; fi
           exit $code
       - name: Verify ring seating and chip return in real browsers
         timeout-minutes: 4
