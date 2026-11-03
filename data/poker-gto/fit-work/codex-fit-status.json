@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T09:08:04.676Z",
+  "checkedAt": "2026-11-03T09:10:19.144Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -2321,7 +2321,7 @@
     "pr": 773,
     "branch": "chatgpt/practice-fold-tools-20261103-aa",
     "head": "c82a7639ff051c15e20f91196c3e77c3b100f5e9",
-    "state": "merged-deployment-checking",
+    "state": "merged-deployed-verified",
     "scope": "Only practice table1/3; no shared table components or CSS or ring changes",
     "verified": "375/1280 actual component Chromium,15 controls/accounting+2 lifecycle tests. Public preview cloud Chrome: debug absent, fold immediately next real deal/no result,watch persists after reload.",
     "screenshots": "docs/gto-mobile/20261103/practice-fold",
@@ -2339,7 +2339,9 @@
     "merge": "1a84e0b0afe42ebbd58b12ac797ad79a1c1f80d8",
     "tree": "1839a0fe40c1f9e45eec6c47790a63e2db50cbdc",
     "checks": "All check runs and Vercel status success on c82a7639; merged PR readback true; actual merge tree matched expected combined stage tree, preserving sb-bb200",
-    "ringHandoff": "Ring branch91cedaa also edits practice preview; integrate latest stage1a84e0b before preserving watchToEnd/choose/reset/server gate changes. Shared table/CSS/ring untouched in773."
+    "ringHandoff": "Ring branch91cedaa also edits practice preview; integrate latest stage1a84e0b before preserving watchToEnd/choose/reset/server gate changes. Shared table/CSS/ring untouched in773.",
+    "deployment": "Vercel success on merge1a84e0b",
+    "stagingSourceReadbackVerified": true
   },
   "nextUnstartedFlop": "btn-bb-3bet"
 }
