@@ -170,6 +170,10 @@
 .practiceTarget>span{min-width:0}.practiceTarget small{display:block;color:#d2e0e7;font-weight:400;font-size:12px}
 .drillRules,.mobileWaiting{display:none}
 @media(max-width:700px){
+ :global([data-mobile-play-fullscreen]) .trainer .formBig{align-items:stretch!important}
+ :global([data-mobile-play-fullscreen]) .trainer .formBig>label{width:100%;min-width:0}
+ :global([data-mobile-play-fullscreen]) .trainer .formBig>button{width:100%;min-height:52px!important}
+ :global([data-mobile-play-fullscreen]) .drill>.drillIntro{display:none!important}
  .rulesWide,.desktopNext{display:none!important}
  .drillRules{display:block;color:#c9d6e0;font-size:13px}
  .drillRules summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#f1d18a}
@@ -218,4 +222,20 @@
  .trainer .table :is(.badge,.stack,.bet){font-size:16px!important}
  .trainer .playSide{min-width:0}.trainer .playSide button{min-height:44px!important;font-size:16px!important;white-space:normal}
  .trainer .log li{white-space:normal}.trainer .rules{font-size:15px}
+}
+
+.reviewCount{display:none}
+@media(max-width:700px){
+ .reviewCountLegacy{display:none}.reviewCount{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:8px;padding:0 5px;border-radius:10px;background:#f7f7ef;color:#18364b;font-size:12px}
+ :global([data-mobile-play-fullscreen]) .trainer:has([data-gto-playing]) .kinds,
+ :global([data-mobile-play-fullscreen]) .trainer:has([data-gto-playing]) .log,
+ :global([data-mobile-play-fullscreen]) .trainer:has([data-gto-playing]) .rules,
+ :global([data-mobile-play-fullscreen]) .drill[data-drill-playing]>.stats,
+ :global([data-mobile-play-fullscreen]) .drill[data-drill-playing]>.drillRules{display:none!important}
+ :global([data-mobile-play-fullscreen]) .trainer:not(:has([data-gto-playing])) .settings{display:flex!important;flex-direction:column;gap:12px}
+ :global([data-mobile-play-fullscreen]) .trainer .settings input[type=checkbox]{width:20px!important;height:20px!important;min-height:20px!important;flex:none}
+ :global([data-mobile-play-fullscreen]) .trainer .settings label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:10px}
+ :global([data-mobile-play-fullscreen]) .trainer .settings>button{width:100%;min-height:52px!important}
+ :global([data-mobile-play-fullscreen]) .drill:not([data-drill-playing]) .formBig{display:flex;flex-direction:column;gap:12px}
+ :global([data-mobile-play-fullscreen]) :global([data-play-controls]) .formBig>button+button{display:none}
 }

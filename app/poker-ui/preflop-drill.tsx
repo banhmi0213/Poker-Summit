@@ -10,7 +10,7 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
-import {MobilePlayControls,MobilePlayFeedback,MobilePlaySettings} from './mobile-play-surface';
+import {MobilePlayControls,MobilePlayFeedback,MobilePlaySettings,useMobilePlayStop} from './mobile-play-surface';
 import {DrillSeatMap,drillWhy} from './drill-seat-map';
 
 /** プリフロップ連打 (owner 2026/10/31, against Olympia's FastFold-style preflop trainer): one preflop decision after
@@ -34,9 +34,13 @@ const DRILLABLE=/^pre:(open|vsOpen|vs3bet):/;
 export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot}:{weak?:boolean;upsell?:boolean;practiceSpot?:string}={}){
  const practiceSpot=preflopPracticeSpot(requestedSpot),targetStarted=useRef<string|null>(null);
  const [weakSpots,setWeakSpots]=useState<string[]|null>(null);
- const [modeKey,setModeKey]=useState(practiceSpot?'target':'mix'),[auto,setAuto]=useState(!practiceSpot),[cur,setCur]=useState<Drill|null>(null),[result,setResult]=useState<Result|null>(null),[settingsOpen,setSettingsOpen]=useState(false);
+ const [modeKey,setModeKey]=useState(practiceSpot?'target':'mix'),[auto,setAuto]=useState(false),[cur,setCur]=useState<Drill|null>(null),[result,setResult]=useState<Result|null>(null),[settingsOpen,setSettingsOpen]=useState(false),[autoInterrupted,setAutoInterrupted]=useState(false);
  const [stats,setStats]=useState<Stats>(empty),[review,setReview]=useState<Drill[]>([]),[reviewing,setReviewing]=useState(false),[loading,setLoading]=useState(false),[error,setError]=useState('');
  const worker=useRef<Worker|null>(null),seq=useRef(0),next=useRef<Promise<Drill|null>|null>(null),timer=useRef<number|null>(null);
+ const stopVersion=useMobilePlayStop(),lastStop=useRef(stopVersion),generation=useRef(0);
+ // Versioned preference resets previous automatic-advance choices once for this release.
+ useEffect(()=>{try{const key='poker-preflop-drill-auto-v2',saved=localStorage.getItem(key);if(saved===null)localStorage.setItem(key,'0');else setAuto(saved==='1');}catch{/* Initial value remains off. */}},[]);
+ useEffect(()=>{if(lastStop.current===stopVersion)return;lastStop.current=stopVersion;generation.current++;if(timer.current)window.clearTimeout(timer.current);timer.current=null;next.current=null;setCur(null);setResult(null);setLoading(false);setError('');setReviewing(false);},[stopVersion]);
  useEffect(()=>{setStats(read());return()=>{worker.current?.terminate();if(timer.current)window.clearTimeout(timer.current);};},[]);
  const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
   if(!worker.current){const {createGtoWorker}=await import('@/app/poker-demo/gto-worker-client');worker.current=createGtoWorker();}
@@ -57,11 +61,14 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
   .then(r=>r.type==='drill'&&r.drill&&r.drill.spot.source!=='none'?r.drill as Drill:null);},[ask,loadWeak,practiceSpot]);
  // The next spot is fetched while the current one is on screen, so the next hand comes up at once.
  const show=useCallback(async(key:string,fromReview:Drill[]|null)=>{
+  const version=generation.current;
   if(timer.current){window.clearTimeout(timer.current);timer.current=null;}
-  setResult(null);setError('');
+  setResult(null);setError('');setAutoInterrupted(false);
   if(fromReview){setReviewing(fromReview.length>0);if(fromReview.length){setCur(fromReview[0]);return;}}
   setLoading(true);
-  const d=await (next.current??fetchOne(key));next.current=fetchOne(key);
+  const d=await (next.current??fetchOne(key));
+  if(version!==generation.current)return;
+  next.current=fetchOne(key);
   setLoading(false);
   if(d)setCur(d);else{if(key==='target')setCur(null);setError(key==='target'?'この場面の問題を用意できませんでした。もう一度始めてください。':key==='weak'?'弱点の場面がまだありません。GTOと対戦やリングで打つと、弱点分析に自分の苦手な場面が集まります。':'問題を作れませんでした。もう一度押してください。');}
  },[fetchOne]);
@@ -82,7 +89,12 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
   setReview(rest);
  },[cur,result,review,reviewing,loading,settingsOpen]);
  const goNext=()=>{if(!loading)void show(modeKey,reviewing?review:null);};
- useEffect(()=>{if(!auto||!result||settingsOpen)return;const ok=result.level==='best'||result.level==='correct';timer.current=window.setTimeout(()=>{void show(modeKey,reviewing?review:null);},ok?600:1800);return()=>{if(timer.current)window.clearTimeout(timer.current);timer.current=null;};},[auto,result,settingsOpen,show,modeKey,reviewing,review]);
+ useEffect(()=>{if(!auto||!result||settingsOpen||autoInterrupted||result.level==='mistake'||result.level==='blunder')return;
+  const cancel=()=>{if(timer.current)window.clearTimeout(timer.current);timer.current=null;setAutoInterrupted(true);};
+  window.addEventListener('pointerdown',cancel,{capture:true,once:true});
+  timer.current=window.setTimeout(()=>{void show(modeKey,reviewing?review:null);},2500);
+  return()=>{if(timer.current)window.clearTimeout(timer.current);timer.current=null;window.removeEventListener('pointerdown',cancel,true);};
+ },[auto,result,settingsOpen,autoInterrupted,show,modeKey,reviewing,review]);
 
  useEffect(()=>{
   const on=(e:KeyboardEvent)=>{if(settingsOpen)return;if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
@@ -92,15 +104,16 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
 
  const scene=cur?cur.hand.log.filter(a=>a.street==='preflop'&&(!practiceSpot||modeKey!=='target'||a.type!=='fold')).map(a=>`${cur.hand.positions[a.id]} ${actText(a.type,a.to,a.allIn)}`):[];
  const choices=cur?<div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={Boolean(result)||loading} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>:null;
- const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&<small>自動で次の手に進みます</small>}</div>;
+ const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&result&&!autoInterrupted&&result.level!=='mistake'&&result.level!=='blunder'&&<small>2.5秒後に次へ進みます。画面に触れると止まります。</small>}</div>;
  return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}><MobilePlayGuard active={Boolean(cur)}/>
   {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人テーブル・100BB）</small></span></div>}
+  {!cur&&<p className={styles.introShort}>場面を選んで、プリフロップの判断を練習します。採点を読んでから「次へ」で進めます。</p>}
   <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。<span className={styles.keyboardHint}>キーボードの1〜4でも選べます。</span></p>
   <MobilePlaySettings active={Boolean(cur)} reviewCount={review.length} onOpenChange={setSettingsOpen}><div className={`${chart.form} ${styles.formBig}`}>
    <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{practiceSpot&&<option value="target">この弱点の場面</option>}{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（弱点分析から）{weak?'':'（スタンダード）'}</option>}</select></label>
-   <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>setAuto(e.target.value==='on')}><option value="on">する</option><option value="off">しない</option></select></label>
+   <label>自動で次へ<select value={auto?'on':'off'} onChange={e=>{const enabled=e.target.value==='on';setAuto(enabled);try{localStorage.setItem('poker-preflop-drill-auto-v2',enabled?'1':'0');}catch{/* Convenience only. */}}}><option value="on">する</option><option value="off">しない</option></select></label>
    {!cur&&<button type="button" disabled={loading} onClick={()=>start()}>連打を始める</button>}
-   {review.length>0&&!reviewing&&<button type="button" onClick={()=>void show(modeKey,review)}>外した手を復習する（{review.length}）</button>}
+   {review.length>0&&!reviewing&&<button type="button" onClick={()=>void show(modeKey,review)}>外した手を復習する<span className={styles.reviewCountLegacy}>（{review.length}）</span><span className={styles.reviewCount} aria-label={`復習 ${review.length}問`}>{review.length}</span></button>}
    {reviewing&&<button type="button" onClick={()=>start()}>復習をやめる</button>}
   </div></MobilePlaySettings>
   {modeKey==='weak'&&!weak&&<div className={chart.storeInvite}><b>自分の弱点の練習はスタンダードプランで使えます</b><span>リング・大会・練習で外した場面だけを集めて、集中して出題します。</span>{upsell&&<a href="/pricing">プランを見る</a>}</div>}
@@ -116,7 +129,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
     <p className={`${chart.note} ${styles.answerText}`}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
     <GtoAnswerBars options={cur.spot.options} chosen={cur.spot.options[result.choice]?.text}/>
     {result.level!=='best'&&result.level!=='correct'&&<p className={styles.why}>{drillWhy(cur.spot.options,result.choice)}</p>}
-    {!auto&&<p className={styles.desktopNext}><button type="button" onClick={goNext}>次の手</button></p>}
+    {(!auto||autoInterrupted||result.level==='mistake'||result.level==='blunder')&&<p className={styles.desktopNext}><button type="button" onClick={goNext}>次の手</button></p>}
    </div></MobilePlayFeedback>}
   </section>}
   <section className={styles.stats} aria-label="連打の成績">
