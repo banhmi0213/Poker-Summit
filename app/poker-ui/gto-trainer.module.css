@@ -237,4 +237,5 @@
  :global([data-mobile-play-fullscreen]) .trainer .settings label:has(input[type=checkbox]){flex-direction:row;align-items:center;gap:10px}
  :global([data-mobile-play-fullscreen]) .trainer .settings>button{width:100%;min-height:52px!important}
  :global([data-mobile-play-fullscreen]) .drill:not([data-drill-playing]) .formBig{display:flex;flex-direction:column;gap:12px}
+ :global([data-mobile-play-fullscreen]) :global([data-play-controls]) .formBig>button+button{display:none}
 }
