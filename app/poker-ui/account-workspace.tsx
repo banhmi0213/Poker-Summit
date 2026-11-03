@@ -5,9 +5,11 @@ import {MyFrame} from './my-cosmetics';
 import type {PokerPane} from './workspace';
 import {LobbyIcon,type LobbyIconName} from '@/app/poker-lobby/lobby-icon';
 import styles from './account-workspace.module.css';
+import {GtoInstallHint} from './gto-install-hint';
 const icons:Record<string,LobbyIconName>={ring:'chart',summary:'trophy',upcoming:'people',history:'trophy',tendencies:'chart',gto:'cards',preflop:'cards',flop:'cards',quiz:'cards',river:'cards',hands:'cards',replay:'cards'};
 /** Owner 2026/10/31 (スクロールせんでいいように): on PC these tools are shown whole on one screen. */
 const FIT_TO_SCREEN=new Set(['gto','preflop','flop','trainer','ranges']);
+const GTO_PANES=new Set([...FIT_TO_SCREEN,'weak','quiz','river','equity','icm']);
 /** Shrinks its content (never enlarges) so it ends above the bottom of the window on PC. Phones scroll as usual.
  * Owner 2026/10/31 (「半分開いてから全部開く」): measured before paint, and the pane stays hidden until its height has
  * settled and its chart has loaded (charts load after the first render), so it never shows at one size and then jumps to another. */
@@ -58,7 +60,7 @@ export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
      <section className={styles.summaryCard}><span className={styles.summaryIcon}><LobbyIcon name="cards"/></span><div><h2>学ぶ・練習する</h2><p>GTOの表とクイズで振り返り。</p>{shortcut(learn,'学習メニューを開く')}</div></section>
      <section className={styles.summaryCard}><span className={styles.summaryIcon}><LobbyIcon name="chart"/></span><div><h2>ハンドを振り返る</h2><p>履歴から一手ずつ再生。</p><Link href="/mypage/poker/hands">ハンド履歴を見る</Link></div></section>
     </div>
-    <div ref={top} className={styles.contentGrid}><section className={styles.content}><header className={styles.panelHeading}><div><p className={styles.eyebrow}>{pane?.eyebrow}</p><h2>{pane?.label}</h2><p>{pane?.description}</p></div><span className={styles.panelIcon} aria-hidden="true"><LobbyIcon name={icons[pane?.id??'']??'cards'}/></span></header><div key={pane?.id} className={styles.panel} aria-label={pane?.label}><FitToScreen key={pane?.id} on={fitting}>{pane?.content}</FitToScreen></div></section>
+    <div ref={top} className={styles.contentGrid}><section className={styles.content}><header className={styles.panelHeading}><div><p className={styles.eyebrow}>{pane?.eyebrow}</p><h2>{pane?.label}</h2><p>{pane?.description}</p></div><span className={styles.panelIcon} aria-hidden="true"><LobbyIcon name={icons[pane?.id??'']??'cards'}/></span></header><div key={pane?.id} className={styles.panel} aria-label={pane?.label}>{GTO_PANES.has(pane?.id??'')&&<GtoInstallHint/>}<FitToScreen key={pane?.id} on={fitting}>{pane?.content}</FitToScreen></div></section>
      <aside className={styles.guide} aria-label="プレイのヒント"><div className={styles.guideHeading}><LobbyIcon name="finger"/><h2>次の一手につなげる</h2></div><p>記録を見直して、気になる場面から少しずつ。</p><section><span>01</span><h3>自分の傾向を知る</h3><p>参加率やレイズの割合を、ハンド数と一緒に確認。</p>{panes.some(p=>p.id==='tendencies')&&<button type="button" onClick={()=>choose('tendencies')}>成績・癖の分析を見る</button>}</section><section><span>02</span><h3>一手ずつ振り返る</h3><p>ハンドを再生して、ベットやフォールドの場面を見直す。</p><Link href="/mypage/poker/hands">ハンド履歴を開く</Link></section><Link className={styles.returnLink} href="/poker-lobby">ロビーに戻る</Link></aside>
     </div><footer className={styles.footer}><span>POKER SUMMIT · PLAYER CENTER</span><span>仮想チップでプレイ · 時刻は日本時間</span></footer>
    </main>
