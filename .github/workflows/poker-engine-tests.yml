@@ -180,6 +180,12 @@ jobs:
         run: |
           set +e; node tests/poker-ring-browser-e2e.cjs 2>&1 | tee e2e.log; code=${PIPESTATUS[0]}; set -e
           if [ "$code" -ne 0 ]; then grep -nE "Error|assert|e2e.cjs:[0-9]+|Timeout|waiting for|expected|actual" e2e.log | grep -v node_modules | head -12 | while IFS= read -r l; do echo "::error::${l:0:600}"; done; exit "$code"; fi
+      - name: Show ring table screenshots
+        if: always()
+        env:
+          POKER_CHROMIUM_MODULE: ${{ runner.temp }}/poker-sql/node_modules/@sparticuz/chromium/build/index.js
+          POKER_PLAYWRIGHT_MODULE: ${{ runner.temp }}/poker-sql/node_modules/playwright-core
+        run: node .github/scripts/shots-to-annotations.cjs "$RUNNER_TEMP/poker-full-ring-browser-e2e" mobile-375-667.png desktop.png mobile-wager-editor.png
       - name: Keep ring table screenshots
         if: always()
         uses: actions/upload-artifact@v4
