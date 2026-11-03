@@ -29,7 +29,7 @@ export const levelThreeLessons: readonly LevelThreeLesson[] = [
   ],
   takeaway: "相手の手札を断定せず、強いハンド・中程度のハンド・ドロー・ブラフの候補を残す。",
   questions: [
-   { id: "ranges-practice-1", topic: "レンジ", situation: "6人卓。UTGが最初にレイズし、あなたはBTNで判断しています。相手の手札は見えていません。", question: "最初の考え方として適切なのは？", choices: ["相手はAAと断定する", "UTGの参加候補とサイズから複数のハンドを考える", "レイズした人は全員同じレンジと考える"], answer: 1, explanation: "席順と行動は候補を考える材料です。AAも候補になり得ますが、情報だけで1つの手札に確定はできません。" },
+   { id: "ranges-practice-1", topic: "レンジ", situation: "6人テーブル。UTGが最初にレイズし、あなたはBTNで判断しています。相手の手札は見えていません。", question: "最初の考え方として適切なのは？", choices: ["相手はAAと断定する", "UTGの参加候補とサイズから複数のハンドを考える", "レイズした人は全員同じレンジと考える"], answer: 1, explanation: "席順と行動は候補を考える材料です。AAも候補になり得ますが、情報だけで1つの手札に確定はできません。" },
    { id: "ranges-practice-2", topic: "レンジの更新", situation: "相手がフロップでチェックしました。まだショーダウンしていません。", question: "チェックから必ず言えることは？", choices: ["セットは絶対にない", "必ずノーペア", "強いハンドも残り得るので候補を見直す"], answer: 2, explanation: "強いハンドでもチェックすることがあります。チェックだけで強い候補をすべて除くと、相手のレンジを狭めすぎます。" },
   ],
  },

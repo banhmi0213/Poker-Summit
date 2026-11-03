@@ -12,7 +12,7 @@ export function preflopPracticeSpot(value:string|undefined|null):string|null{
 }
 export function weakPracticeLink(spot:string){
  const target=preflopPracticeSpot(spot);
- if(target)return {href:`/mypage/poker?pane=trainer&practice=${encodeURIComponent(target)}`,label:'この場面を練習',note:'同じ席・相手の6人卓100BBで練習します。'};
+ if(target)return {href:`/mypage/poker?pane=trainer&practice=${encodeURIComponent(target)}`,label:'この場面を練習',note:'同じ席・相手の6人テーブル100BBで練習します。'};
  if(spot.startsWith('flop:'))return {href:'/mypage/poker?pane=trainer&practice=flop',label:'フロップから練習',note:'席・相手・ボードは毎回変わります。'};
  return {href:'/mypage/poker?pane=trainer',label:'対戦で練習',note:'この場面だけの出題には未対応です。1ハンド通して練習できます。'};
 }

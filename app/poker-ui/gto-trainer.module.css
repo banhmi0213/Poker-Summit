@@ -1,4 +1,4 @@
-/* 「GTOと対戦」練習卓 (2026/10/30). Same navy and gold as the GTO chart panels. */
+/* 「GTOと対戦」練習テーブル (2026/10/30). Same navy and gold as the GTO chart panels. */
 .log{display:flex;flex-wrap:wrap;gap:5px;list-style:none;margin:0;padding:0;font-size:14px;color:#c9d6e0}
 .log li{background:#1b3448;border-radius:6px;padding:4px 9px;white-space:nowrap}
 .log li b{color:#e6bd70;margin-right:4px}
@@ -149,7 +149,7 @@
 @media (max-width:700px){
  .answerText{display:none!important}
  :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
- :global([data-mobile-play-fullscreen]) .trainer .play .settings,
+ :global([data-mobile-play-fullscreen]) .trainer .playSide>.settings,
  :global([data-mobile-play-fullscreen]) .trainer .stats,
  :global([data-mobile-play-fullscreen]) .trainer .history,
  :global([data-mobile-play-fullscreen]) .trainer .rules{display:none}

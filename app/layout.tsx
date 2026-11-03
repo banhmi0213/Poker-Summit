@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "black" },
 };
 
-export const viewport: Viewport = { themeColor: "#0d1b28" };
+export const viewport: Viewport = { themeColor: "#203e51", viewportFit: "cover" };
 
 export default function RootLayout({
   children,

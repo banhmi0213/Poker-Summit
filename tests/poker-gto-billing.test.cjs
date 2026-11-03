@@ -44,7 +44,7 @@ test('cancel: free during the trial; paid plans stop renewing and keep access to
 test('pricing text for プロ is the GTO chat wording (スタート記念価格)',()=>{
  assert.equal(PRO_PRICE_LINES.month.head,'プロ　月1,980円（スタート記念価格）');
  assert.equal(PRO_PRICE_LINES.month.change,'2027年2月末までのスタート記念価格です。2027年3月1日から月2,980円になります（今入った方も、この日から新しい料金です）。');
- assert.equal(proRoadmapLine(),'スタート記念価格のあいだに、次の内容を順番に追加します：8〜9人卓のフロップ戦略／大会の振り返りにICM／ポストフロップのベット額を増やした計算データ／「改良中」の場面（SBのリンプ・スクイーズ・3人のポット）の対応');
+ assert.equal(proRoadmapLine(),'スタート記念価格のあいだに、次の内容を順番に追加します：8〜9人テーブルのフロップ戦略／大会の振り返りにICM／ポストフロップのベット額を増やした計算データ／「改良中」の場面（SBのリンプ・スクイーズ・3人のポット）の対応');
 });
 test('price switch: monthly at the first charge on/after 2027-03-01, yearly at the next renewal, once, shortly before the charge',()=>{
  const jst=d=>Date.parse(d+'+09:00');

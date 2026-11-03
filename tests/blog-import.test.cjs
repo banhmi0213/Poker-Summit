@@ -31,7 +31,7 @@ test('imports article, SEO, H2/H3, list, table and manual image placeholders', (
   assert.equal(draft.seo_title, BLOG_IMPORT_EXAMPLE.seoTitle);
   assert.equal(draft.meta_description, BLOG_IMPORT_EXAMPLE.metaDescription);
   assert.deepEqual(draft.body.map(b => b.type), ['paragraph', 'heading', 'list', 'heading3', 'paragraph', 'image', 'table']);
-  assert.equal(draft.body[5].alt, '卓上に並んだポーカーチップ');
+  assert.equal(draft.body[5].alt, 'テーブル上に並んだポーカーチップ');
 });
 test('accepts code-fenced JSON and BOM', () => {
   assert.equal(parseBlogImport('\uFEFF```json\n' + JSON.stringify(example()) + '\n```').draft.slug, BLOG_IMPORT_EXAMPLE.slug);

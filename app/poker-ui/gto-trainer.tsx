@@ -1,4 +1,5 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import type {Card} from '@/lib/poker/engine';
@@ -11,13 +12,13 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
-import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback} from './mobile-play-surface';
+import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback,MobilePlaySettings} from './mobile-play-surface';
 import {GtoAnswerBars} from './gto-answer-bars';
 import {preflopPracticeSpot} from './gto-practice-target';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
- * often GTO takes that action with that hand; the hand plays on to the end, then all cards are shown. */
+ * often GTO takes that action with that hand. A fold pauses at grading by default; watching to the end is optional. */
 const SUIT:Record<Card['suit'],string>={s:'♠',h:'♥',d:'♦',c:'♣'};
 const RANK:Record<number,string>={10:'T',11:'J',12:'Q',13:'K',14:'A'};
 const bb=(chips:number)=>Math.round(chips/TRAINER_BB*10)/10;
@@ -72,6 +73,8 @@ export function GtoTrainer({standard=false,upsell=false,practiceSpot}:{standard?
 }
 function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
+ const [watch,setWatch]=useState(false),[foldPaused,setFoldPaused]=useState(false),[settingsOpen,setSettingsOpen]=useState(false);
+ useEffect(()=>{try{setWatch(localStorage.getItem('poker-gto-watch-after-fold')==='1');}catch{/* default: next after grading */}},[]);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
  const [mode,setMode]=useState<TrainerMode>(initialMode),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
@@ -84,7 +87,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    const on=(e:MessageEvent<GtoReply>)=>{if(e.data.id!==id)return;window.clearTimeout(guard);w.removeEventListener('message',on);resolve(e.data);};
    w.addEventListener('message',on);w.postMessage(build(id));});
  },[]);
- const begin=(h:TrainerHand)=>{startRef.current=h;setHand(h);setFeedback([]);setSpot(null);setError('');counted.current=null;};
+ const begin=(h:TrainerHand)=>{startRef.current=h;setFoldPaused(false);setHand(h);setFeedback([]);setSpot(null);setError('');counted.current=null;};
  // 練習の始め方: everyone (the hero too) plays GTO in the worker until the hero reaches the chosen spot; seats where the
  // spot cannot happen (e.g. BB for an open) are skipped, so the seat still moves round the table.
  const deal=async(n:number,seed:number)=>{
@@ -100,7 +103,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
 
  // CPU turns: the GTO bot decides in the worker; a short pause so the action can be followed.
  useEffect(()=>{
-  if(!hand||hand.result||heroOut(hand)||hand.round.toAct===HERO||!hand.round.toAct)return;
+  if(!hand||hand.result||foldPaused||settingsOpen||hand.round.toAct===HERO||!hand.round.toAct)return;
   const id=hand.round.toAct,view=trainerView(hand,id);if(!view)return;
   let live=true;
   const timer=window.setTimeout(async()=>{
@@ -111,7 +114,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    catch{action=view.legal.check?{type:'check'}:{type:'fold'};setHand(h=>h===hand?trainerAct(hand,id,action):h);}
   },speed==='fast'?150:650);
   return ()=>{live=false;window.clearTimeout(timer);};
- },[hand,ask,speed]);
+ },[hand,ask,speed,foldPaused,settingsOpen]);
 
  // Hero's turn: fetch the GTO menu for this hand (the buttons are its options).
  useEffect(()=>{
@@ -146,20 +149,22 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    sendGtoRecords([recordRow(view,'trainer',{freqs:menu.map(x=>x.freq),chosen:i,action:fb.played,evLoss:loss})]);
    setStats(s=>{const n={...s,decisions:s.decisions+1,score:s.score+g.score,levels:{...s.levels,[g.level]:s.levels[g.level]+1},
     ...(loss!==null?{evLoss:Math.round((s.evLoss+loss)*100)/100,evCount:s.evCount+1}:{})};writeStats(n);return n;});}
+  setFoldPaused(action.type==='fold'&&!watch);
   setFeedback(f=>[...f,fb]);setSpot(null);setHand(next);
  };
 
  const resetStats=()=>{const s=emptyStats();setStats(s);writeStats(s);};
  const menu=hand&&spot&&spot!=='loading'?(spot.source==='none'?basicMenu(hand):spot.options):[];
  const heroIdx=0,board=hand?visibleBoard(hand):[],pot=hand?hand.round.players.reduce((s,p)=>s+p.totalCommitted,0):0;
- const formBox=<>
+ const formBox=<MobilePlaySettings active={true} reviewCount={0} onOpenChange={setSettingsOpen} label="対戦の設定">
   <div className={`${chart.form} ${styles.formBig} ${styles.settings}`}>
    <label>練習の始め方<select value={mode} onChange={e=>setMode(e.target.value as TrainerMode)}>{(Object.keys(MODE_TEXT) as TrainerMode[]).map(m=><option key={m} value={m}>{MODE_TEXT[m]}</option>)}</select></label>
    <label>CPUの速さ<select value={speed} onChange={e=>setSpeed(e.target.value as 'normal'|'fast')}><option value="normal">ふつう</option><option value="fast">はやい</option></select></label>
+   <label><input type="checkbox" role="switch" checked={watch} onChange={e=>{setWatch(e.target.checked);try{localStorage.setItem('poker-gto-watch-after-fold',e.target.checked?'1':'0');}catch{/* convenience only */}}}/>最後まで見る</label>
    {!hand&&<button type="button" disabled={seeking} onClick={nextHand}>対戦を始める</button>}
    {seeking&&<p role="status">場面を探しています…</p>}
   </div>
- </>;
+ </MobilePlaySettings>;
  const statsBox=<>
   <section className={styles.stats} aria-label="練習の成績">
    <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
@@ -167,18 +172,18 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
   </section>
  </>;
- const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
- return <div className={chart.wrap}>
+ const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||foldPaused));
+ return <div className={chart.wrap}><MobilePlayGuard active={Boolean(hand)}/>
   {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
-  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
+  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}
   {hand&&<div className={styles.play} data-hide-back-to-top>
-   <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
+   <div className={styles.table} role="group" aria-label={`練習テーブル・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
-     <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
+     <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&!foldPaused&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
     </div>
-    {TRAINER_SEATS.map((id,k)=>{const p=hand.round.players.find(x=>x.id===id)!,spotXY=SPOTS[(k-heroIdx+6)%6],me=id===HERO,show=me||done;
-     const won=hand.result?.winners.includes(id);
+    {TRAINER_SEATS.map((id,k)=>{const p=hand.round.players.find(x=>x.id===id)!,spotXY=SPOTS[(k-heroIdx+6)%6],me=id===HERO,show=me||(done&&!foldPaused);
+     const won=!foldPaused&&hand.result?.winners.includes(id);
      return <div key={id} className={styles.seat} style={{left:`${spotXY.x}%`,top:`${spotXY.y}%`}} data-hero={me||undefined} data-folded={p.folded||undefined} data-turn={!done&&hand.round.toAct===id||undefined} data-won={won||undefined}>
       <div className={styles.cards}><CardChip card={hand.holes[id][0]} hidden={!show}/><CardChip card={hand.holes[id][1]} hidden={!show}/></div>
       <span className={styles.badge}>{hand.positions[id]}{hand.button===id&&<i aria-label="ボタン">D</i>}</span>
@@ -196,7 +201,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    {!done&&hand.round.toAct!==HERO&&<MobilePlayControls><p className={styles.mobileWaiting}>GTOが考えています…</p></MobilePlayControls>}
    {error&&<p role="alert">{error}</p>}
    {(last||done)&&<MobilePlayFeedback><section className={`${styles.feedback} ${!last?styles.mobileOnlyFeedback:''}`} aria-live="polite" data-level={last?.level??'none'}>
-    {done&&<p className={styles.mobileHandResult}>このハンド：{heroNet(hand)>0?'+':''}{heroNet(hand)}BB</p>}
+    {done&&!foldPaused&&<p className={styles.mobileHandResult}>このハンド：{heroNet(hand)>0?'+':''}{heroNet(hand)}BB</p>}
     {last&&<>
     <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
     {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
@@ -204,7 +209,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
     </>}
    </section></MobilePlayFeedback>}
    {done&&<MobilePlayControls><div className={`${chart.form} ${styles.formBig}`}>
-    <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
+    <button type="button" disabled={seeking} onClick={nextHand}>{foldPaused?'次へ':'次のハンド'}</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
    </div></MobilePlayControls>}
    {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.evLoss!==null&&`（EV損失 ${f.evLoss.toFixed(2)}BB）`}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}

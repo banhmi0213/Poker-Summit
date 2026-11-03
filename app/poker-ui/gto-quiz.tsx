@@ -1,4 +1,5 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {GTO_SPOTS,loadFlop,loadFlopIndex} from '@/lib/poker/gto-spots';
 import type {PreflopData} from '@/lib/poker/gto-bot';
@@ -85,7 +86,7 @@ export function GtoQuiz(){
   else{setScore(emptyScore);writeLocal(emptyScore);}
  };
  const spotsWithData=GTO_SPOTS.filter(s=>index[s.id]?.length);
- return <MobilePlaySurface label="GTO練習クイズ"><div className={styles.wrap} data-quiz-top>
+ return <MobilePlaySurface label="GTO練習クイズ"><MobilePlayGuard active={Boolean(q)||loading}/><div className={styles.wrap} data-quiz-top>
   <p>GTOの計算結果から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。いちばん多い打ち方を選べば100点、GTOが混ぜて使う打ち方は割合に応じた点数です。</p>
   <div className={styles.form}>
    <label>出題する場面<select value={mode} onChange={e=>setMode(e.target.value)}>

@@ -4,8 +4,8 @@ import styles from './gto-trainer.module.css';
 const PLACES=[[50,87],[14,67],[14,28],[50,11],[86,28],[86,67]];
 /** The actual dealt hand and preflop log, never an illustrative replacement. */
 export function DrillSeatMap({hand}:{hand:TrainerHand}){
- return <div className={styles.miniTable} role="img" aria-label={`6人卓・あなたは${hand.heroPos}。先のアクションと席`}>
-  <div className={styles.miniFelt}><span>あなたの番<small>6人卓・100BB</small></span></div>
+ return <div className={styles.miniTable} role="img" aria-label={`6人テーブル・あなたは${hand.heroPos}。先のアクションと席`}>
+  <div className={styles.miniFelt}><span>あなたの番<small>6人テーブル・100BB</small></span></div>
   {TRAINER_SEATS.map((id,i)=>{const action=hand.log.filter(a=>a.street==='preflop'&&a.id===id).at(-1);return <span key={id} className={styles.miniSeat} style={{left:`${PLACES[i][0]}%`,top:`${PLACES[i][1]}%`}} data-hero={id===HERO||undefined} data-folded={action?.type==='fold'||undefined}><b>{id===HERO?'自分・':''}{hand.positions[id]}</b><small>{action?(action.allIn?'オールイン':actText(action.type,action.to,false)):id===HERO?'あなたの番':'待ち'}</small></span>;})}
  </div>;
 }

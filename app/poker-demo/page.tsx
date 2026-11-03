@@ -20,6 +20,12 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
   if (!user && !isPreview) redirect("/signup");
   if (user && pokerAccess(user) === "verify") redirect("/mypage?poker=verify");
+  // Preview deployment alone must not expose customer-facing debug controls.
+  let showDemoTools = process.env.POKER_DEMO_TOOLS === "1" && process.env.VERCEL_ENV !== "production" && isPreview;
+  if (user && !showDemoTools) {
+    try { const { data, error } = await supabase.rpc("is_admin"); showDemoTools = !error && data === true; }
+    catch { showDemoTools = false; }
+  }
   const { data: profile } = user ? await supabase.from("profiles").select("avatar_url").eq("user_id", user.id).maybeSingle() : { data: null };
   const serverNow = Date.now();
   let tournament: PokerTournament | undefined;
@@ -49,12 +55,12 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
   return <div className={`${styles.gamePage} ${styles.demoViewport}`}>
     <GameNavigation header={<PortalHeader userEmail={user?.email}/>} footer={<PortalFooter/>}/>
     <GameCommunity><main className={styles.gameMain}>
-      {isPreview && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>
+      {showDemoTools && <details className={styles.previewLinks}><summary>開発用テーブルを選択</summary>
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast">1分レベル・BBアンティ検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&ante=per-player">1分レベル・全員アンティ検証</a></p>}
-      {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast&scenario=short">200チップ・脱落検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&scenario=heads-up">2人卓・優勝確定の検証</a></p>}
+      {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast&scenario=short">200チップ・脱落検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&scenario=heads-up">2人テーブル・優勝確定の検証</a></p>}
       {shortScenario && <p>検証専用：開始{initialSeatIds.length}人・各200チップ。保存された大会設定・会員残高には影響しません。</p>}
       </details>}
-      <PokerTablePreview initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={!tournament && searchParams?.mode === "spectate"} />
+      <PokerTablePreview showDemoTools={showDemoTools} initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={!tournament && searchParams?.mode === "spectate"} />
     </main></GameCommunity>
   </div>;
 }

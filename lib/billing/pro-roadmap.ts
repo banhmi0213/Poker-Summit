@@ -3,7 +3,7 @@
  * 2027-02-01 / 2027-02-22 emails read it. If an item cannot ship by 2027-03-01, talk about moving the price date. */
 export type RoadmapItem={label:string;done:boolean;doneAt?:string};
 export const PRO_ROADMAP:readonly RoadmapItem[]=[
- {label:'8〜9人卓のフロップ戦略',done:false},
+ {label:'8〜9人テーブルのフロップ戦略',done:false},
  {label:'大会の振り返りにICM',done:false},
  {label:'ポストフロップのベット額を増やした計算データ',done:false},
  {label:'「改良中」の場面（SBのリンプ・スクイーズ・3人のポット）の対応',done:false},

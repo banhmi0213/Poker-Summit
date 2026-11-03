@@ -35,7 +35,7 @@ async function database(){
  // Starts 6 real minutes from now: inside the 10-minute window, so the open registration closes by itself.
  const startsAt=new Date(Math.ceil((Date.now()+6*60000)/1000)*1000).toISOString(),tid=randomUUID();
  const structure={startingStack:STACK,anteType:'bb',lateRegLevel:1,reentry:false,timeBankCards:1,finalTableCards:1,periods:[[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000]].map(([sb,bb])=>({kind:'level',minutes:3,sb,bb,ante:bb,note:'E2E only'}))};
- await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数卓テスト大会',startsAt,JSON.stringify(structure)]);
+ await db.query('insert into public.poker_tournaments(id,title,owner_store_id,starts_at,published,structure) values($1,$2,null,$3,true,$4)',[tid,'複数テーブルテスト大会',startsAt,JSON.stringify(structure)]);
  await db.exec('set role service_role');
  const directory=new SupabaseRoomDirectory(client),store=new SupabaseRoomStore(client),keys={active:'test',keys:{test:randomBytes(32)}};
  await directory.configureRegistration(tid,Math.max(ENTRANTS,24),true);
@@ -61,7 +61,7 @@ async function database(){
  const saved=async()=>{const v=await restoreRoom(f.store,roomId,f.keys,{now:()=>now});assert.ok(v);return v.room.checkpoint();};
  const where=c=>{const map=new Map();for(const [t,room] of c.field?.tables??[])for(const [seat,s] of room.seats)map.set(s.memberId,{table:t,seat,stack:s.stack});return map;};
  const allIn=async(p,legal)=>{const panel=p.getByRole('region',{name:'操作パネル',exact:true}),label=legal.shortAllInOnly?/^オールイン(?!コール)/:/^(レイズ|ベット)/;
-  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await editor.getByRole('button',{name:/^(レイズ|ベット|オールイン) /}).click();return;}
+  if((p.viewportSize()?.width??1280)<900){await panel.getByRole('button',{name:label}).first().click();const editor=panel.getByRole('dialog',{name:'ベット額を選択'});await editor.getByRole('button',{name:/^ALL-IN額/}).click();await panel.locator('div[class*="actions"] > button').last().click();return;}
   await p.getByRole('button',{name:'ALL-IN額',exact:true}).click();await panel.getByRole('button',{name:label}).click();};
  try{
   const port=await start();
@@ -91,7 +91,7 @@ async function database(){
    pages.push(page);await page.goto(origin+'/poker-online/'+roomId);await page.getByRole('button',{name:'参加・接続・再接続',exact:true}).click();await until(()=>latest.get(i),s=>s?.youSeat!=null,'browser join '+i);
   }
   const at=where(c);for(let i=0;i<BROWSERS;i++){const me=at.get(f.users[i]);check(latest.get(i).youSeat===me.seat&&latest.get(i).field.tableNumber===me.table,'browser sees its drawn table and seat');}
-  await until(()=>pages[0].getByText(/第\d+卓（全\d+卓）/).count(),n=>n>0,'table number shown');
+  await until(()=>pages[0].getByText(/第\d+テーブル（全\d+テーブル）/).count(),n=>n>0,'table number shown');
   const conn=new Map();const bot=async i=>{if(!conn.has(i)){const r=await api(i,{type:'join'});if(r.status!==200)return null;conn.set(i,r.result.connectionId);}return conn.get(i);};
   for(let i=BROWSERS;i<ENTRANTS;i++)check(Boolean(await bot(i)),'scripted player joined '+i);
   console.log(`PASS ${tables} tables drawn before the start; browsers see their own table`);
@@ -133,9 +133,9 @@ async function database(){
     acted=true;break;
    }
    // Browser view after a move: the notice appears and the new table is shown.
-   for(let i=0;i<BROWSERS;i++){const s=latest.get(i);if(s?.field?.moved&&!browserMoveShown){if(await pages[i].getByText(/第\d+卓から第\d+卓へ移動しました/).count())browserMoveShown=true;}}
+   for(let i=0;i<BROWSERS;i++){const s=latest.get(i);if(s?.field?.moved&&!browserMoveShown){if(await pages[i].getByText(/第\d+テーブルから第\d+テーブルへ移動しました/).count())browserMoveShown=true;}}
    // A moved browser must end up showing its new table (the notice itself only lasts 15 seconds).
-   for(const [i,to] of pendingMove){const s=latest.get(i);if(s?.field?.tableNumber===to&&await pages[i].getByText(new RegExp(`第${to}卓（全\\d+卓）`)).count()){browserMoveShown=true;pendingMove.delete(i);}}
+   for(const [i,to] of pendingMove){const s=latest.get(i);if(s?.field?.tableNumber===to&&await pages[i].getByText(new RegExp(`第${to}テーブル（全\\d+テーブル）`)).count()){browserMoveShown=true;pendingMove.delete(i);}}
    if(!acted){now+=1500;await sleep(120);}else await sleep(5);
   }
   c=await saved();check(Boolean(c.field.champion),'tournament finished');check(c.field.eliminated.length===ENTRANTS-1,'every other player placed');
