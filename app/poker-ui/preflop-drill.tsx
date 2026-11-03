@@ -22,7 +22,7 @@ type Result={choice:number;level:TrainerLevel;score:number;loss:number|null};
 type Stats={n:number;best:number;good:number;score:number;evLoss:number;evCount:number};
 const empty=():Stats=>({n:0,best:0,good:0,score:0,evLoss:0,evCount:0});
 const KEY='poker-preflop-drill-stats';
-const DRILL_RULES='6人卓・100BB・レーキなしの表で採点します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。△惜しい以下の手が復習に入り、復習で○良い以上を選ぶと外れます。成績はこのブラウザに保存されます。';
+const DRILL_RULES='6人テーブル・100BB・レーキなしの表で採点します（いちばん多い打ち方＝◎完璧、25%以上＝○良い、8%以上＝△惜しい、2%以上＝×ミス、それ未満＝××大きなミス）。△惜しい以下の手が復習に入り、復習で○良い以上を選ぶと外れます。成績はこのブラウザに保存されます。';
 const MODES:Record<string,{text:string;modes:DrillMode[]}>={mix:{text:'すべて（混ぜて出す）',modes:['rfi','vsOpen','vs3bet']},rfi:{text:'オープンするか',modes:['rfi']},vsOpen:{text:'オープンされた',modes:['vsOpen']},vs3bet:{text:'オープンして3ベットされた',modes:['vs3bet']}};
 const read=():Stats=>{try{const v=JSON.parse(window.localStorage.getItem(KEY)??'null');return v&&typeof v.n==='number'?{...empty(),...v}:empty();}catch{return empty();}};
 const write=(s:Stats)=>{try{window.localStorage.setItem(KEY,JSON.stringify(s));}catch{/* convenience only */}};
@@ -94,7 +94,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
  const choices=cur?<div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={Boolean(result)||loading} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>:null;
  const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&<small>自動で次の手に進みます</small>}</div>;
  return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}><MobilePlayGuard active={Boolean(cur)}/>
-  {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人卓・100BB）</small></span></div>}
+  {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人テーブル・100BB）</small></span></div>}
   <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。<span className={styles.keyboardHint}>キーボードの1〜4でも選べます。</span></p>
   <MobilePlaySettings active={Boolean(cur)} reviewCount={review.length} onOpenChange={setSettingsOpen}><div className={`${chart.form} ${styles.formBig}`}>
    <label>出す場面<select value={modeKey} onChange={e=>{setModeKey(e.target.value);if(cur)start(e.target.value);}}>{practiceSpot&&<option value="target">この弱点の場面</option>}{Object.entries(MODES).map(([k,m])=><option key={k} value={k}>{m.text}</option>)}{(weak||upsell)&&<option value="weak">自分の弱点（弱点分析から）{weak?'':'（スタンダード）'}</option>}</select></label>

@@ -33,12 +33,12 @@ export function SkinStarter({variant='card',onDone}:{variant?:'card'|'note';onDo
  if(!open)return variant==='note'
   ?<p style={{fontSize:12,margin:'0 0 10px',display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>はじめの着せ替えを1つずつ無料で選べます。<button type="button" onClick={()=>setOpen(true)} style={{...openButton,minHeight:32,padding:'5px 12px',fontSize:12}}>無料で選べます</button></p>
   :<section aria-label="はじめの着せ替え" style={{border:'1px solid #d6b364',borderRadius:12,padding:'14px 16px',margin:'0 0 16px',background:'#fbf5e8',color:'#203e51',display:'flex',gap:14,alignItems:'center',justifyContent:'space-between',flexWrap:'wrap'}}>
-   <div><h2 style={{fontSize:17,margin:0}}>最初の着せ替えを1つずつ無料で選べます</h2><p style={{fontSize:12,margin:'4px 0 0',lineHeight:1.7}}>卓・カードの表・カードの裏から、好きなデザインを選べます（1回だけ）。選ばなくてもそのまま遊べます。</p></div>
+   <div><h2 style={{fontSize:17,margin:0}}>最初の着せ替えを1つずつ無料で選べます</h2><p style={{fontSize:12,margin:'4px 0 0',lineHeight:1.7}}>テーブル・カードの表・カードの裏から、好きなデザインを選べます（1回だけ）。選ばなくてもそのまま遊べます。</p></div>
    <button type="button" onClick={()=>setOpen(true)} style={openButton}>デザインを選ぶ</button></section>;
  return <section aria-labelledby={`skin-starter-title-${variant}`} style={{border:'1px solid #d6b364',borderRadius:12,padding:'14px 16px',margin:'0 0 16px',background:'#fbf5e8',color:'#203e51'}}>
   <h2 id={`skin-starter-title-${variant}`} style={{fontSize:17,margin:0}}>はじめに、好きなデザインを選んでください</h2>
-  <p style={{fontSize:12,margin:'6px 0 0',lineHeight:1.7}}>卓・カードの表・カードの裏を1つずつ、無料で差し上げます（1回だけ）。ほかのデザインは、チップ交換所での交換や、リングのハンド数の特典で手に入ります。</p>
-  {group('卓',TABLE_SKINS,'tableSkin')}{group('カードの表',CARD_SKINS,'cardSkin')}{group('カードの裏',BACK_SKINS,'backSkin')}
+  <p style={{fontSize:12,margin:'6px 0 0',lineHeight:1.7}}>テーブル・カードの表・カードの裏を1つずつ、無料で差し上げます（1回だけ）。ほかのデザインは、チップ交換所での交換や、リングのハンド数の特典で手に入ります。</p>
+  {group('テーブル',TABLE_SKINS,'tableSkin')}{group('カードの表',CARD_SKINS,'cardSkin')}{group('カードの裏',BACK_SKINS,'backSkin')}
   <div style={{display:'flex',gap:12,alignItems:'center',marginTop:12,flexWrap:'wrap'}}><button type="button" disabled={busy} onClick={()=>void confirm()} style={openButton}>{busy?'保存中':'このデザインに決める'}</button><button type="button" disabled={busy} onClick={()=>setOpen(false)} style={{...openButton,background:'transparent'}}>あとで選ぶ</button>{message&&<span role="status" style={{fontSize:12}}>{message}</span>}</div>
  </section>;
 }

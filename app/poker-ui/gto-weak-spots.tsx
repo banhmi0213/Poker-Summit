@@ -14,7 +14,7 @@ type Spot={spot:string;n:number;misses:number;close:number;good:number;evLoss:nu
 type Data={days:number;total:{decisions:number;graded:number;misses:number;evLoss:number;evN:number};bySource:Partial<Record<GtoRecordSource,number>>;spots:Spot[];more?:number};
 const FILTERS:{id:string;label:string;sources:GtoRecordSource[]|null}[]=[
  {id:'all',label:'全部',sources:null},{id:'ring',label:'リング',sources:['ring']},{id:'tournament',label:'大会',sources:['tournament']},
- {id:'practice',label:'練習卓',sources:['practice']},{id:'training',label:'GTOと対戦・連打',sources:['trainer','drill']}];
+ {id:'practice',label:'練習テーブル',sources:['practice']},{id:'training',label:'GTOと対戦・連打',sources:['trainer','drill']}];
 const pct=(a:number,b:number)=>b?`${Math.round(a/b*100)}%`:'-';
 const bb=(v:number)=>`${v.toFixed(2)}BB`;
 const SUIT:Record<string,string>={c:'♣',d:'♦',h:'♥',s:'♠'};

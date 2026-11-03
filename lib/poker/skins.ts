@@ -1,4 +1,4 @@
-/** Table, card-face and card-back skins (owner 2026/10/27: 卓4・カード表3・裏4, some free, some from the shop).
+/** Table, card-face and card-back skins (owner 2026/10/27: テーブル4・カード表3・裏4, some free, some from the shop).
  * Designs come from Daniel (images under public/images/skins/<id>/); "standard" is the current design and uses the
  * stylesheet as it is. A shop skin carries shopCode: owning one (ticket count > 0 in poker_shop) unlocks it for good. */
 export type TableSkin={id:string;name:string;free:boolean;shopCode?:string;thumb?:string;desktop:string;mobile:string;textColor?:string};
@@ -8,7 +8,7 @@ export type CardSkin={id:string;name:string;free:boolean;shopCode?:string;thumb?
  art?:Partial<Record<number,Partial<Record<'s'|'h'|'d'|'c',string>>>>};
 /** Card backs are chosen separately from the faces. image undefined = the current Summit design. */
 export type BackSkin={id:string;name:string;free:boolean;shopCode?:string;thumb?:string;image?:string};
-// Designs by Daniel (2026/10/27). Shop prices: 卓 3,000 chip, 表 4色 1,500 / ロイヤル 2,500, 裏 1,500.
+// Designs by Daniel (2026/10/27). Shop prices: テーブル 3,000 chip, 表 4色 1,500 / ロイヤル 2,500, 裏 1,500.
 export const TABLE_SKINS:readonly TableSkin[]=[
  {id:'standard',name:'クラシックベージュ',free:true,thumb:'/images/skins/standard/table-thumb.png',desktop:'/images/poker-table-desktop.png',mobile:'/images/poker-table-mobile.png'},
  {id:'forest',name:'フォレスト',free:false,shopCode:'table_forest',thumb:'/images/skins/forest/thumb.png',desktop:'/images/skins/forest/table-desktop.webp',mobile:'/images/skins/forest/table-mobile.webp',textColor:'#F8EBD0'},
@@ -31,7 +31,7 @@ export const BACK_SKINS:readonly BackSkin[]=[
 ];
 /** Every shop code with its price (chips), for the shop catalogue. */
 export const SKIN_SHOP_ITEMS:readonly {code:string;label:string;price:number}[]=[
- ...TABLE_SKINS.filter(s=>s.shopCode).map(s=>({code:s.shopCode!,label:`卓の着せ替え：${s.name}`,price:3000})),
+ ...TABLE_SKINS.filter(s=>s.shopCode).map(s=>({code:s.shopCode!,label:`テーブルの着せ替え：${s.name}`,price:3000})),
  {code:'card_front_fourcolor',label:'カードの表：4カラージャンボ',price:1500},
  {code:'card_front_royal',label:'カードの表：ロイヤル絵札',price:2500},
  ...BACK_SKINS.filter(s=>s.shopCode).map(s=>({code:s.shopCode!,label:`カードの裏：${s.name}`,price:1500})),
