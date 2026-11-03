@@ -65,3 +65,8 @@
  .shell:has(.panel:is([aria-label="GTOと対戦"],[aria-label="プリフロップ表"],[aria-label="フロップ戦略"],[aria-label="レンジ練習"],[aria-label="弱点分析"])) :is(.panelHeading h2,.panel h2,.panel h3){font-size:20px}
  .shell:has(.panel:is([aria-label="GTOと対戦"],[aria-label="プリフロップ表"],[aria-label="フロップ戦略"],[aria-label="レンジ練習"],[aria-label="弱点分析"])) .panelHeading p:last-child{font-size:15px}
 }
+/* Menu links on single-pane pages (owner 2026/11/03): they look and size like the menu buttons. */
+.panes>a{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px;border:1px solid transparent;border-radius:7px;color:#f1f5f2;background:none;text-align:left;font-size:12px;font-weight:700;line-height:1.5;text-decoration:none;box-sizing:border-box}
+.panes>a>svg{width:22px;height:22px;flex-shrink:0;color:#dce5e9}
+.panes>a:hover{background:#ffffff0c;border-color:#d3c29555}
+@media(min-width:901px){.panes>a{font-size:14px;min-height:52px}}
