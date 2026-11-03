@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: SITE_NAME,
     description: SITE_DESCRIPTION,
     id: "/",
-    start_url: "/",
+    start_url: "/mypage/poker",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
