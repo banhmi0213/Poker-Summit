@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T08:41:55.168Z",
+  "checkedAt": "2026-11-03T08:53:25.201Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -292,7 +292,8 @@
     "btn-bb",
     "hu-3bet",
     "hu-srp",
-    "hu-limp"
+    "hu-limp",
+    "sb-bb"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -984,7 +985,8 @@
     "btn-bb",
     "hu-3bet",
     "hu-srp",
-    "hu-limp"
+    "hu-limp",
+    "sb-bb"
   ],
   "stagingVerified": {
     "spotCounts": {
@@ -2004,16 +2006,29 @@
       "hu-3bet",
       "hu-srp",
       "hu-limp",
-      "co-bb"
+      "co-bb",
+      "sb-bb"
     ],
-    "importedValidatedCount": 5,
+    "importedValidatedCount": 6,
     "sbBb": {
       "solveRun": 41279680906,
       "solveConclusion": "success",
       "solvedBoards": 200,
       "collectRun": 41604956284,
       "collectState": "in_progress",
-      "state": "collecting-not-validated-not-imported"
+      "state": "merged-validated",
+      "pr": 774,
+      "head": "60d5370a157ada9eb027a4e536bed5b92b91faf2",
+      "mergeCommit": "c3ac9e437b5f0e708d1624c476fc967c9582a6bc",
+      "validated": {
+        "canonicalUnique": 200,
+        "version": 3,
+        "iterations": 250,
+        "handEv": "oop/ip nonempty finite",
+        "tests": "67/67 retry once serial after66/67",
+        "tree": "cf6184ba3bc78d3b664547160a5fcdf0e6fd76db"
+      },
+      "validatedImportedCount": "200/1755"
     }
   },
   "concurrency": {
@@ -2302,12 +2317,22 @@
   "practiceTableUX": {
     "pr": 773,
     "branch": "chatgpt/practice-fold-tools-20261103-aa",
-    "head": "ca826bbc93694cd112347483d08b42d2e0b49da0",
-    "state": "checks-running",
+    "head": "c82a7639ff051c15e20f91196c3e77c3b100f5e9",
+    "state": "checks-retry-1-queued",
     "scope": "Only practice table1/3; no shared table components or CSS or ring changes",
     "verified": "375/1280 Chromium: customer tools hidden, watch persists, immediate next-deal,no skipped result,failed deal retry safe,record once; server admin/dev gating;48 accounting cases+unequal all-in tests",
     "screenshots": "docs/gto-mobile/20261103/practice-fold",
-    "workspace": "/workspace/scratch/181a490d1af4/practice-fold"
+    "workspace": "/workspace/scratch/181a490d1af4/practice-fold",
+    "ciRun": 41606433156,
+    "ciJob": 125817303272,
+    "retryCount": 1,
+    "initialFailure": "Old SSR tests required public demo reset. Updated expected customer hidden/admin visible;15 controls/accounting+2 lifecycle tests pass; stage9704 included",
+    "changedSourceFiles": [
+      "app/poker-demo/page.tsx",
+      "app/poker-demo/poker-table-preview.tsx",
+      "app/poker-demo/finish-folded-hand.ts"
+    ],
+    "ringSharedOverlap": "Ring branch91cedaa edits same practice preview file for banner; owner copy supplied, do not overwrite ring changes"
   },
   "nextUnstartedFlop": "btn-bb-3bet"
 }
