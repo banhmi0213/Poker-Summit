@@ -9,6 +9,21 @@ const {decideGto}=require('../lib/poker/gto-bot.ts');
 const {trainerSpot}=require('../lib/poker/gto-review.ts');
 const {loadGtoData}=require('../lib/poker/gto-data-node.ts');
 
+test('folding loss is final immediately, unchanged by watching opponents finish, with all chips conserved',()=>{
+ let checked=0;
+ for(let seat=0;seat<6;seat++)for(let seed=1;seed<=8;seed++){
+  let h=startTrainerHand(seed,buttonIndexFor(seat));
+  while(!h.result&&h.round.toAct!==HERO){const id=h.round.toAct,L=legalBettingActions(h.round,id);h=trainerAct(h,id,L.check?{type:'check'}:{type:'call'});}
+  if(h.result||legalBettingActions(h.round,HERO).check)continue;
+  const me=h.round.players.find(p=>p.id===HERO),loss=me.totalCommitted/(TRAINER_STACK/100);
+  h=trainerAct(h,HERO,{type:'fold'});const frozen=JSON.stringify(h);
+  let watched=h;for(let n=0;!watched.result&&n<100;n++){const id=watched.round.toAct,L=legalBettingActions(watched.round,id);watched=trainerAct(watched,id,L.check?{type:'check'}:{type:'call'});}
+  assert(watched.result);assert(netBB(watched,HERO)===-loss);assert.equal(JSON.stringify(h),frozen);
+  assert.equal(watched.round.players.reduce((s,p)=>s+p.stack+(watched.result.payouts[p.id]??0),0),6*TRAINER_STACK);checked++;
+ }
+ assert(checked>=32);
+});
+
 function randomAction(h,id,r){
  const L=legalBettingActions(h.round,id),x=r();
  if(L.raise&&x<0.25){const lo=L.minRaiseTo,hi=L.maxRaiseTo,amt=x<0.05?hi:Math.min(hi,lo+Math.floor(r()*(hi-lo+1)));return {type:h.round.currentBet===0?'bet':'raise',amount:amt};}

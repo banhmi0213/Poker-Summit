@@ -149,7 +149,7 @@
 @media (max-width:700px){
  .answerText{display:none!important}
  :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
- :global([data-mobile-play-fullscreen]) .trainer .play .settings,
+ :global([data-mobile-play-fullscreen]) .trainer .playSide>.settings,
  :global([data-mobile-play-fullscreen]) .trainer .stats,
  :global([data-mobile-play-fullscreen]) .trainer .history,
  :global([data-mobile-play-fullscreen]) .trainer .rules{display:none}
