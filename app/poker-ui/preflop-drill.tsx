@@ -1,4 +1,5 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {GtoReply,GtoRequest,DrillMode} from '@/lib/poker/gto.worker';
 import type {TrainerSpot} from '@/lib/poker/gto-review';
@@ -92,7 +93,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
  const scene=cur?cur.hand.log.filter(a=>a.street==='preflop'&&(!practiceSpot||modeKey!=='target'||a.type!=='fold')).map(a=>`${cur.hand.positions[a.id]} ${actText(a.type,a.to,a.allIn)}`):[];
  const choices=cur?<div className={styles.actions}>{cur.spot.options.map((o,i)=><button key={i} type="button" data-kind={o.kind} disabled={Boolean(result)||loading} aria-pressed={result?.choice===i} onClick={()=>choose(i)}>{o.text}</button>)}</div>:null;
  const nextControls=<div className={styles.mobileNext}><button type="button" disabled={loading} onClick={goNext}>次へ</button>{auto&&<small>自動で次の手に進みます</small>}</div>;
- return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}>
+ return <div className={`${chart.wrap} ${styles.drill}`} data-drill-playing={Boolean(cur)||undefined}><MobilePlayGuard active={Boolean(cur)}/>
   {practiceSpot&&modeKey==='target'&&<div className={styles.practiceTarget}><span>弱点からの練習<small>{spotLabel(practiceSpot)}（6人卓・100BB）</small></span></div>}
   <p className={`${styles.drillIntro} ${practiceSpot?styles.intro:''}`}>プリフロップの判断だけを、テンポよく続けて練習します。座る場所と場面は毎回変わります。選ぶとすぐに採点し（GTOがその手で選ぶ割合とEV損失）、次の手が出ます。外した手は「復習」でもう一度出せます。<span className={styles.keyboardHint}>キーボードの1〜4でも選べます。</span></p>
   <MobilePlaySettings active={Boolean(cur)} reviewCount={review.length} onOpenChange={setSettingsOpen}><div className={`${chart.form} ${styles.formBig}`}>
