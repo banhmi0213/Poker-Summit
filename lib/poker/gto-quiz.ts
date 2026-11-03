@@ -80,7 +80,7 @@ export function preflopQuestion(data:PreflopData,random:()=>number=Math.random,k
   const cls=pick(classes,c=>handWeight(reach[c],combosOf(c),node.strategy[c],fold),random);if(!cls)continue;
   const cards=cardsFor(cls,[],random);if(!cards)continue;
   const range=node.actions.map((_,k)=>classes.reduce((s,c)=>s+reach[c]*combosOf(c)*(node.strategy[c][k]??0),0));
-  return {kind:'preflop',category:`preflop-${node.kind.toLowerCase()}`,title:`6人卓・100BB・プリフロップ`,scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
+  return {kind:'preflop',category:`preflop-${node.kind.toLowerCase()}`,title:`6人テーブル・100BB・プリフロップ`,scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
    options:node.actions.map(a=>a.label),freqs:norm(node.strategy[cls]),rangeFreqs:norm(range),made:null};
  }
  return null;

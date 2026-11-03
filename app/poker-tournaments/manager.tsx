@@ -15,7 +15,7 @@ export default async function TournamentManager({ scope, action, removeAction }:
     const locked = !admin && allowedStores.length === 0;
     return <section><h1>オンライン・トーナメント設定</h1>
         <p>開催日時、画像、ブラインド・ストラクチャー、公開状態を管理します。</p>
-        {admin && <p><Link className="btn" href="/admin/poker-tournaments/access">店舗ごとの利用許可を管理</Link> <Link className="btn" href="/admin/poker-rings">リング卓設定</Link></p>}
+        {admin && <p><Link className="btn" href="/admin/poker-tournaments/access">店舗ごとの利用許可を管理</Link> <Link className="btn" href="/admin/poker-rings">リングテーブル設定</Link></p>}
         {error && <p role="alert">{error}</p>}
         {accessError && <p role="alert">利用許可を確認できないため、設定変更を停止しています。再読み込みしてお試しください。</p>}
         {locked && <p role="status">{TOURNAMENT_ACCESS_MESSAGE}</p>}

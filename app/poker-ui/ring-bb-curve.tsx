@@ -36,6 +36,6 @@ export function RingBbCurve(){
    <span><i aria-hidden="true" style={{display:'inline-block',width:18,borderTop:'2px solid #203a4c',verticalAlign:'middle',marginRight:5}}/>実際の収支</span>
    <span><i aria-hidden="true" style={{display:'inline-block',width:18,borderTop:'2px dashed #c9a04e',verticalAlign:'middle',marginRight:5}}/>GTOどおりなら（目安）</span></p>}
   {ev&&<p style={{fontSize:14,margin:'6px 0 0'}}>GTOと違う打ち方で、合わせて <b>{last[3].toLocaleString('ja-JP',{maximumFractionDigits:1})} BB</b> 損した計算です。<a href="/mypage/poker?pane=weak" style={{fontWeight:700}}>弱点分析を見る</a></p>}
-  <p style={{fontSize:12,margin:'6px 0 0'}}>レーキを引いた後の勝ち負けを、その卓のBBで数えています。大会のハンドは入りません。{ev&&'点線は、GTOと比べられた判断の損（EV損失）を足し戻した目安です。'}</p>
+  <p style={{fontSize:12,margin:'6px 0 0'}}>レーキを引いた後の勝ち負けを、そのテーブルのBBで数えています。大会のハンドは入りません。{ev&&'点線は、GTOと比べられた判断の損（EV損失）を足し戻した目安です。'}</p>
  </figure>;
 }

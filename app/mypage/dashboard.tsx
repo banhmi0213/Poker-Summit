@@ -286,7 +286,7 @@ export async function MyPageContent({
               サミット（掲示板）の投稿一覧・詳細に表示されます（5MBまで）。
             </span>
           </div>
-          {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーの卓で共通。 */}
+          {/* アイコン枠・ネームプレート・スレッドデザイン(2026/11/01)。アイコン枠はマイページ・サミット・ポーカーのテーブルで共通。 */}
           {/* Hidden while paid features are off (lib/billing/visibility.ts). */}
           {paidFeaturesVisible() && (
           <details style={{ padding: "10px 0", borderBottom: "1px solid var(--grid)" }}>

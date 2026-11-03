@@ -97,7 +97,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
   const [announcement,setAnnouncement]=useState<{kind:ActionKind;text:string;key:number}|null>(null);
   useEffect(()=>{if(!announcement)return;const id=setTimeout(()=>setAnnouncement(null),2600);return()=>clearTimeout(id);},[announcement]);
   const [lastActions, setLastActions] = useState<Record<string, string>>({});
-  // スタンプ(2026/10/27): 練習卓でも見えるように。自分のスタンプと、ハンド後のCPUのひとこと。この画面の中だけ。
+  // スタンプ(2026/10/27): 練習テーブルでも見えるように。自分のスタンプと、ハンド後のCPUのひとこと。この画面の中だけ。
   const [demoStamps, setDemoStamps] = useState<Record<string, { stamp: StampId; key: number }>>({});
   const showStamp = (seat: string, stamp: StampId) => { setDemoStamps(prev => ({ ...prev, [seat]: { stamp, key: Date.now() + Math.random() } })); stampSoundRef.current?.(); };
   // GTO CPUs (2026/10/27): every voluntary action of the hand, for the CPUs' range reading.
@@ -300,7 +300,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     }
   };
   const owedForYou = Math.max(0, betting.currentBet - playerAt("you").committed);
-  // 練習ヒント(2026/10/26): 自分の番だけ、見えているカードから必要勝率と推定勝率を出す。デモ卓専用。
+  // 練習ヒント(2026/10/26): 自分の番だけ、見えているカードから必要勝率と推定勝率を出す。デモテーブル専用。
   const [hintsOn, setHintsOn] = useState(true);
   const [rowHintOpen, setRowHintOpen] = useState(false);
   const hintBoard = deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5);
@@ -318,7 +318,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       positions: positionsFor(live, handPositions), players: betting.players.map(p => ({ id: p.id, stack: p.stack, committed: p.committed, totalCommitted: p.totalCommitted, folded: p.folded, allIn: p.allIn })),
       legal: legalYou, log: actionLog, startStacks: handStartingStacks };
   };
-  // ハンド後の「GTOで振り返る」(2026/10/27): 練習卓だけ。保存はせず、この画面の中で見る。
+  // ハンド後の「GTOで振り返る」(2026/10/27): 練習テーブルだけ。保存はせず、この画面の中で見る。
   const myDecisions = useRef<LiveDecision[]>([]);
   const [liveRangeAt, setLiveRangeAt] = useState<number | null>(null);
   const [liveReview, setLiveReview] = useState<{status:"running"}|{status:"done";reviews:LiveReview[]}|{status:"error"}|null>(null);
@@ -332,7 +332,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
     worker.addEventListener("message", onReply);
     worker.postMessage({ type: "reviewLive", id, items, budgetMs: 1500 } satisfies GtoRequest);
   };
-  // GTOヒント(2026/10/27): 練習卓だけ、自分の番で「GTOならどう打つか」を割合で出す。読みは自分の手札と公開情報だけ。
+  // GTOヒント(2026/10/27): 練習テーブルだけ、自分の番で「GTOならどう打つか」を割合で出す。読みは自分の手札と公開情報だけ。
   const [gtoHint, setGtoHint] = useState<{status:"running"}|{status:"done";advice:GtoAdvice}|{status:"error"}|null>(null);
   useEffect(() => {
     const worker = gtoWorker.current, legalYou = isYourTurn ? legalBettingActions(betting, "you") : null;
@@ -400,7 +400,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
       }, CPU_STYLES[cpuStyles[actorId] ?? "standard"]) : (owed > 0 ? { type: "call" } : { type: "check" });
     };
     const worker = gtoWorker.current, legal = legalBettingActions(betting, actorId);
-    // 練習卓のCPUはGTO通りに打つ（プリフロップ表・フロップの事前計算・ターンとリバーはその場で計算）。読みは自分の手札と公開情報だけ。
+    // 練習テーブルのCPUはGTO通りに打つ（プリフロップ表・フロップの事前計算・ターンとリバーはその場で計算）。読みは自分の手札と公開情報だけ。
     if (worker && cpuMode !== "calling" && legal && deal.holes[actorId]) {
       const id = ++gtoRequest.current, live = clockwiseSeats.filter(x => betting.players.some(p => p.id === x));
       const view = { handKey: `demo-${motionHand}`, bb: betting.bigBlind, hero: actorId, hole: deal.holes[actorId], board: deal.board.slice(0, streetStep === 0 ? 0 : streetStep === 1 ? 3 : streetStep === 2 ? 4 : 5),
@@ -444,7 +444,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           setTournamentOutcome(outcome);
         }
         setLastHandResult({winners:result.winners.map(playerName),rows:betting.players.map(p=>({id:p.id,name:playerName(p.id),delta:p.stack+(result.payouts[p.id]??0)-handStartingStacks[p.id]}))});
-        // GTOの記録(2026/11/1): 練習卓のハンドと自分の判断をログイン中だけ保存（GTOチャット担当、卓の動きには影響しない）。
+        // GTOの記録(2026/11/1): 練習テーブルのハンドと自分の判断をログイン中だけ保存（GTOチャット担当、テーブルの動きには影響しない）。
         if (!tournament) { const me = betting.players.find(p => p.id === "you"); if (me) recordPracticeHand(gtoWorker.current, { decisions: [...myDecisions.current], seats: betting.players.length, net: (me.stack + (result.payouts.you ?? 0) - handStartingStacks.you) / betting.bigBlind, hand: { bb: betting.bigBlind, positions: handPositions, startStacks: handStartingStacks, hole: deal.holes.you ?? null, log: actionLog, payouts: result.payouts } }); }
         setPayouts(result.payouts);
         {
@@ -571,7 +571,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
           <BetSizeSettings/>
           <small>BB表示と倍率はデモに反映。効果音は各場面で再生されます。レイズ額の設定は会員ごとに保存できます。</small>
         </div>}
-        {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リングテーブル情報</h2><p>SB 50 / BB 100</p><p>6人卓・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
+        {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リングテーブル情報</h2><p>SB 50 / BB 100</p><p>6人テーブル・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
         {menuPage === "community" && <div className={styles.menuFields}><h2>サミット連携</h2><section><h3>チップ残高</h3><p>デモの持ち点と会員の残高は別です。</p><a href="/mypage/chips" target="_blank" rel="noreferrer">会員のチップ残高・付与履歴を確認</a></section><details onToggle={e=>setCommunityOpen(e.currentTarget.open)}><summary>掲示板を開く</summary>{communityOpen&&<iframe title="サミット掲示板" src="/poker-community" style={{width:"100%",height:"55dvh",border:"1px solid #9b8354",borderRadius:8}}/>}</details></div>}
         {menuPage === "site" && <div className={styles.menuFields}><h2>サイト</h2><p>プレイ画面を残して別タブで開きます。</p><p><a href="/" target="_blank" rel="noreferrer">Poker Summit トップ</a></p><p><a href="/poker-lobby" target="_blank" rel="noreferrer">ポーカーロビー</a></p><p><a href="/mypage/poker" target="_blank" rel="noreferrer">プレイヤーページ</a></p><p><a href="/mypage" target="_blank" rel="noreferrer">マイページ</a></p></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}

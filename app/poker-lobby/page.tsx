@@ -28,7 +28,7 @@ export default async function PokerLobbyPage() {
     tournamentsEnabled={POKER_TOURNAMENTS_ENABLED}
     rings={(ringRows??[]) as RingTable[]} ringError={Boolean(ringError)}
     tournaments={tournaments??[]} board={boardFeed}
-    assigned={user?<AssignedRooms enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>:<p>参加卓の確認には<a href="/login">ログイン</a>してください。</p>}
+    assigned={user?<AssignedRooms enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>:<p>参加テーブルの確認には<a href="/login">ログイン</a>してください。</p>}
     registration={user?<TournamentRegistration enabled={Boolean(process.env.POKER_ROOM_SERVICE_ORIGIN)}/>:<p>大会への登録には<a href="/login">ログイン</a>してください。</p>}
   />;
 }

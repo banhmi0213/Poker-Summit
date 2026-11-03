@@ -17,7 +17,7 @@ export type PreflopDecision={type:'decision';id:number;player:number;history:str
 export type PreflopTerminal={type:'terminal';invested:number[];winner?:number;showdown?:{a:number;b:number;kind:'limp'|'srp'|'3bp'|'4bp'|'allin';aggr?:number};threeWay?:[number,number,number]};
 export type PreflopNode=PreflopDecision|PreflopTerminal;
 export const POSITIONS=['UTG','HJ','CO','BTN','SB','BB'] as const;
-/** Seat names for 6, 8 and 9 players (owner 2026/11/1: 大会・リングは8〜9人卓が基本). */
+/** Seat names for 6, 8 and 9 players (owner 2026/11/1: 大会・リングは8〜9人テーブルが基本). */
 export function positionsFor(seats:number):readonly string[]{
  if(seats===9)return ['UTG','UTG+1','UTG+2','LJ','HJ','CO','BTN','SB','BB'];
  if(seats===8)return ['UTG','UTG+1','LJ','HJ','CO','BTN','SB','BB'];

@@ -45,7 +45,7 @@ export function IcmPanel(){
    <label>人数<select value={count} onChange={e=>setN(Number(e.target.value))}>{[2,3,4,5,6,7,8,9].map(n=><option key={n} value={n}>{n}人</option>)}</select></label>
    <label>アンティ（BB）<input inputMode="decimal" value={ante} onChange={e=>setAnte(e.target.value)}/></label>
    <label>順位ごとの配分（1位から順に）<input value={payouts} onChange={e=>setPayouts(e.target.value)} placeholder="50,30,20"/></label>
-   <label>ほかの卓の人のスタック（BB、任意）<input value={others} onChange={e=>setOthers(e.target.value)} placeholder="例：30,12,45"/></label>
+   <label>ほかのテーブルの人のスタック（BB、任意）<input value={others} onChange={e=>setOthers(e.target.value)} placeholder="例：30,12,45"/></label>
   </div>
   <div className={styles.form}>{seats.map((pos,i)=><label key={pos}>{pos}のスタック（BB）<input inputMode="decimal" value={stacks[i]} onChange={e=>setStacks(s=>s.map((x,j)=>j===i?e.target.value:x))}/></label>)}</div>
   <div className={styles.form}><button type="button" onClick={run} disabled={busy}>計算する</button></div>

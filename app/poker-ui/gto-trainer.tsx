@@ -171,10 +171,10 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
  return <div className={chart.wrap}><MobilePlayGuard active={Boolean(hand)}/>
   {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
-  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
+  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}
   {hand&&<div className={styles.play} data-hide-back-to-top>
-   <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
+   <div className={styles.table} role="group" aria-label={`練習テーブル・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
      <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
     </div>

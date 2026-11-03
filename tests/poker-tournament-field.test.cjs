@@ -1,4 +1,4 @@
-// Multi-table tournaments (owner 2026/10/30: 20人以上、卓分け・移動・統合).
+// Multi-table tournaments (owner 2026/10/30: 20人以上、テーブル分け・移動・統合).
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript'),{randomUUID}=require('node:crypto');
 require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,f);
 const {ScheduledTournamentRoom}=require('../lib/poker/scheduled-tournament-room.ts');

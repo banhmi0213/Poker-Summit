@@ -117,7 +117,7 @@ export const BLOG_IMPORT_EXAMPLE = {
     { type: "list", items: ["参加にかかる合計料金と追加費用", "初心者講習の有無と開始時間", "遊べる形式と必要な滞在時間"] },
     { type: "heading3", text: "分からないことは着席前に聞く" },
     { type: "paragraph", text: "料金や進行方法は店舗によって異なります。予算と帰りたい時間を伝えて、自分に合う遊び方をスタッフに相談してください。" },
-    { type: "image", alt: "卓上に並んだポーカーチップ", caption: "ここに手動で画像を登録してください。不要なら写真ブロックを削除できます。" },
+    { type: "image", alt: "テーブル上に並んだポーカーチップ", caption: "ここに手動で画像を登録してください。不要なら写真ブロックを削除できます。" },
     { type: "table", rows: [["確認する項目", "聞き方の例"], ["合計料金", "初めての場合、全部でいくらかかりますか？"], ["講習", "ルール説明を受けられますか？"]] },
   ],
   relatedArticles: [], references: [], showToc: true, showBreadcrumbs: true,
