@@ -25,7 +25,10 @@ type TournamentCard={id:string;title:string;starts_at:string;image_url:string|nu
 type Props={guest:boolean;admin:boolean;memberName:string;ringEnabled:boolean;tournamentsEnabled:boolean;rings:RingTable[];ringError:boolean;tournaments:TournamentCard[];assigned:ReactNode;registration:ReactNode;board:ReactNode};
 const formatDate=(value:string)=>new Date(value).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
 
-function SkinPicker(){const {save,status}=useTablePreferences();return <><p className={styles.lead}>{SKINS_FREE_FOR_NOW?'テーブル・カードの着せ替えは、現在すべて無料で選べます。':'持っているテーブル・カードの着せ替えを選べます。ほかのデザインは、チップ交換所での交換やハンド数の特典で手に入ります。'}選んだデザインを保存すると、ゲーム画面に反映されます。</p><div className={styles.skinPicker}><SkinSettings/></div><div className={styles.paneActions}><button type="button" className={styles.goldButton} onClick={()=>void save()}>着せ替えを保存</button><Link href="/mypage/chips" className={styles.outlineButton}>チップ交換所</Link><span role="status">{status}</span></div></>;}
+function SkinPicker(){const {save,status}=useTablePreferences();return <><p className={styles.lead}>{SKINS_FREE_FOR_NOW?'テーブル・カードの着せ替えは、現在すべて無料で選べます。':'持っているテーブル・カードのデザインを選べます。ほかのデザインは、リングのハンド数の特典で手に入ります。'}選んだデザインを保存すると、ゲーム画面に反映されます。</p>
+ {/* Owner 2026/11/03: the buttons sit beside the free-pick note; デザイン選択 jumps to the list. */}
+ <div className={`${styles.paneActions} ${styles.skinActions}`}><SkinStarter variant="note"/><button type="button" className={styles.goldButton} onClick={()=>void save()}>デザインを保存</button><button type="button" className={styles.outlineButton} onClick={()=>document.getElementById('skin-design-list')?.scrollIntoView({behavior:'smooth',block:'start'})}>デザイン選択</button><span role="status">{status}</span></div>
+ <div className={styles.skinPicker} id="skin-design-list"><SkinSettings starter={false}/></div></>;}
 
 function RecordPlaceholder({kind,expanded=false}:{kind:'ranking'|'champions';expanded?:boolean}){
  const ranking=kind==='ranking';
@@ -40,7 +43,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
  const router=useRouter();
  const [active,setActive]=useState<PageId>('lobby'),[gameTab,setGameTab]=useState<GameTab>('ring'),[menuOpen,setMenuOpen]=useState(false),[ringState,setRingState]=useState<RingLobbyState|null>(null);
  const go=(id:PageId)=>{setActive(id);setMenuOpen(false);};
- const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中のテーブル',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'チップ獲得ランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'skins',label:'着せ替え交換',icon:'cards'}];
+ const navigation:{id:PageId;label:string;icon:LobbyIconName}[]=[{id:'lobby',label:'ロビー',icon:'home'},{id:'assigned',label:'参加中のテーブル',icon:'people'},...(tournamentsEnabled?[{id:'tournaments' as const,label:'トーナメント',icon:'trophy' as const}]:[]),{id:'ranking',label:'チップ獲得ランキング',icon:'chart'},{id:'champions',label:'歴代大会優勝者',icon:'trophy'},{id:'skins',label:'デザイン変更',icon:'cards'}];
  const title=navigation.find(item=>item.id===active)?.label??'ポーカーロビー';
  const upcoming=tournaments.filter(t=>Date.parse(t.starts_at)>Date.now()).slice(0,2);
  const configured=rings.map(t=>({id:t.id,title:t.title,sb:t.sb,bb:t.bb,capacity:t.capacity,minBuyIn:t.min_buy_in,maxBuyIn:t.max_buy_in,occupied:null}));
@@ -54,7 +57,7 @@ export default function LobbyDashboard({guest,admin,memberName,ringEnabled,tourn
     <div className={styles.summaryGrid}>
      <div className={styles.summaryCard}><img className={styles.chipArt} src="/images/poker-lobby/chip-stacks-finger.webp" alt="" width="100" height="100"/>{guest?<div className={styles.guestBalance}><span>あなたの持ちチップ</span><strong>— <small>chip</small></strong><Link href="/login">ログインして残高を確認</Link></div>:<SummitChipBalance presentation="lobby"/>}</div>
      <div className={`${styles.summaryCard} ${styles.tableSummary}`}><LobbyIcon className={styles.peopleArt} name="people"/><div><h2>参加中のテーブル</h2><strong className={styles.tableCount}>{ringState?own?'1':'0':'—'}<small>テーブル</small></strong><button type="button" className={styles.goldButton} onClick={()=>go('assigned')}>参加テーブルを開く</button></div></div>
-     <div className={`${styles.summaryCard} ${styles.skinSummary}`}><img className={styles.cardArt} src="/images/skins/back-onyx/back.svg" alt="" width="58" height="82"/><div><h2>着せ替え交換</h2><p>{SKINS_FREE_FOR_NOW?'現在は無料で選択できます':'チップで交換'}</p><button type="button" className={styles.goldButton} onClick={()=>go('skins')}>着せ替えを見る</button></div><span className={styles.tableArt} aria-hidden="true"><img src="/images/skins/standard/table-thumb.png" alt="" width="130" height="74"/><img className={styles.tableWordmark} src="/images/logo.png" alt="" width="800" height="267"/></span></div>
+     <div className={`${styles.summaryCard} ${styles.skinSummary}`}><img className={styles.cardArt} src="/images/skins/back-onyx/back.svg" alt="" width="58" height="82"/><div><h2>デザイン変更</h2><p>{SKINS_FREE_FOR_NOW?'現在は無料で選択できます':'ハンド数の特典で増えます'}</p><button type="button" className={styles.goldButton} onClick={()=>go('skins')}>デザインを見る</button></div><span className={styles.tableArt} aria-hidden="true"><img src="/images/skins/standard/table-thumb.png" alt="" width="130" height="74"/><img className={styles.tableWordmark} src="/images/logo.png" alt="" width="800" height="267"/></span></div>
     </div>
     <div className={styles.contentGrid}>
      <div className={styles.center}>

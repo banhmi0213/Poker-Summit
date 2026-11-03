@@ -27,7 +27,7 @@ export function MonthlyRanking({limit,expanded=false}:{limit:number;expanded?:bo
    <span style={{fontWeight:800,color:'#ffd987',fontVariantNumeric:'tabular-nums',whiteSpace:'nowrap'}}>+{r.gain.toLocaleString()}</span>
   </div>:<div key={i} aria-hidden="true"><span className={styles.medal} data-place={i+1}>{i+1}</span><span className={styles.avatarGhost}/><span className={styles.nameGhost}/><span className={styles.valueGhost}/></div>)}</div>
   <p>{data===null?'読み込み中です。':data==='error'?'ランキングを読み込めませんでした。':rows.length?`${monthLabel(data.month)}にリングで獲得したチップの多い順です（プラスの人だけ）。`:'今月はまだ、チップを増やした人がいません。'}</p>
-  {expanded&&<p className={styles.lead}>毎月1日0時（日本時間）にチップは1,000にリセットされ、ランキングも新しい月から数え直します。</p>}
+  {expanded&&<p className={styles.lead}>毎月1日0時（日本時間）にチップは1,000（プラチナ以上は3,000）にリセットされ、ランキングも新しい月から数え直します。</p>}
  </div>;
 }
 export function MonthlyRankingHeading(){return <h2><LobbyIcon name="chart"/>{`${monthLabel()} チップ獲得ランキング`}</h2>;}
