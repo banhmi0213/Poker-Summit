@@ -15,8 +15,8 @@ const GROUPS: MenuGroup[] = [
     { label: "トーナメント・イベント", href: "/events", image: "/images/navigation/events-v1.webp", description: "開催中・開催予定の情報をチェック" },
   ] },
   { label: "Summit Poker", links: [
-    { label: "ポーカーロビー", href: "/poker-lobby", image: "/images/navigation/poker-lobby-v1.webp", description: "オンライン対戦・卓への参加" },
-    { label: "プレイヤーページ／GTO", href: "/mypage/poker", image: "/images/navigation/player-gto-v1.webp", description: "成績の確認・GTO表・GTOと対戦" },
+    { label: "ポーカーロビー", href: "/poker-lobby", image: "/images/navigation/poker-lobby-wide-v2.webp", description: "オンライン対戦・卓への参加" },
+    { label: "プレイヤーページ／GTO", href: "/mypage/poker", image: "/images/navigation/player-gto-wide-v2.webp", description: "成績の確認・GTO表・GTOと対戦" },
   ] },
   { label: "求人", links: JOB_ENTRANCES.map(entry => ({ label: entry.label, href: jobEntranceHref(entry), image: "/images/job-categories-photo-v1.webp", description: entry.label + "の募集を見る" })) },
   { label: "国内外大型大会", links: [
