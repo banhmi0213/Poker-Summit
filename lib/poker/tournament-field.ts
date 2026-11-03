@@ -1,4 +1,4 @@
-/** Multi-table tournament field (owner 2026/10/30: 20人以上、卓分け・移動・統合).
+/** Multi-table tournament field (owner 2026/10/30: 20人以上、テーブル分け・移動・統合).
  * One tournament = one room = one durable owner; every table lives inside it, so a move between tables
  * is a single in-memory step committed with one checkpoint (no cross-room transfer can lose chips).
  * Rules: 6-max tables, random draw; between hands a table sheds busted players, breaks when the field

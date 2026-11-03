@@ -1,0 +1,33 @@
+[
+  {
+    "width": 375,
+    "tableHeight": 507,
+    "boardHeroGap": 97.625,
+    "miniUsesActualSixSeats": true,
+    "whyBelowShares": true,
+    "zeroBBInResultPanel": true,
+    "selectedHandSheet": true,
+    "stackLabel": "100BB",
+    "swipeHint": true,
+    "weakExplanationOnce": true,
+    "errors": []
+  },
+  {
+    "width": 320,
+    "tableHeight": 263,
+    "boardHeroGap": 9.78125,
+    "miniUsesActualSixSeats": true,
+    "whyBelowShares": true,
+    "zeroBBInResultPanel": true,
+    "selectedHandSheet": true,
+    "stackLabel": "100BB",
+    "swipeHint": true,
+    "weakExplanationOnce": true,
+    "errors": []
+  },
+  {
+    "width": 1280,
+    "desktopTableLeftActionsRight": true,
+    "desktopConditionsLeftGridRight": true
+  }
+]

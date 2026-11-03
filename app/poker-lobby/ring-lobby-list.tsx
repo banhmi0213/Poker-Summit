@@ -10,9 +10,9 @@ export function RingLobbyList<T extends LobbyRingRow>({rows,renderActions,onRefr
  const filtered=rows.filter(row=>(rate==='all'||`${row.sb}/${row.bb}`===rate)&&(!onlyAvailable||row.occupied!==null&&row.occupied<row.capacity));
  const pages=Math.max(1,Math.ceil(filtered.length/5)),current=Math.min(page,pages-1);
  return <div className={styles.list}>
-  <div className={styles.filters}><label><span className={styles.srOnly}>ブラインドで絞り込み</span><select value={rate} onChange={e=>{setRate(e.target.value);setPage(0);}}><option value="all">すべてのレート</option>{rates.map(r=><option key={r.key} value={r.key}>{r.label}</option>)}</select></label><label><span className={styles.srOnly}>空席で絞り込み</span><select value={onlyAvailable?'available':'all'} onChange={e=>{setOnlyAvailable(e.target.value==='available');setPage(0);}}><option value="all">すべての卓</option><option value="available">空席あり</option></select></label>{onRefresh&&<button type="button" className={styles.refresh} disabled={refreshing} onClick={onRefresh}>更新</button>}</div>
-  <div role="table" aria-label="リング卓一覧" className={styles.table}>
-   <div role="row" className={styles.head}><span role="columnheader">卓名</span><span role="columnheader">ブラインド</span><span role="columnheader">人数</span><span role="columnheader">持込チップ</span><span role="columnheader" className={styles.srOnly}>操作</span></div>
+  <div className={styles.filters}><label><span className={styles.srOnly}>ブラインドで絞り込み</span><select value={rate} onChange={e=>{setRate(e.target.value);setPage(0);}}><option value="all">レート</option>{rates.map(r=><option key={r.key} value={r.key}>{r.label}</option>)}</select></label><label><span className={styles.srOnly}>空席で絞り込み</span><select value={onlyAvailable?'available':'all'} onChange={e=>{setOnlyAvailable(e.target.value==='available');setPage(0);}}><option value="all">テーブル</option><option value="available">空席あり</option></select></label>{onRefresh&&<button type="button" className={styles.refresh} disabled={refreshing} onClick={onRefresh}>更新</button>}</div>
+  <div role="table" aria-label="リングテーブル一覧" className={styles.table}>
+   <div role="row" className={styles.head}><span role="columnheader">テーブル名</span><span role="columnheader">ブラインド</span><span role="columnheader">人数</span><span role="columnheader">持込チップ</span><span role="columnheader" className={styles.srOnly}>操作</span></div>
    {filtered.slice(current*5,current*5+5).map(row=><div role="row" className={styles.row} key={row.id}>
     <div role="cell" className={styles.name}><span className={styles.emblem}><LobbyIcon name="finger"/></span><strong>{row.title}</strong></div>
     <div role="cell" className={styles.blind}><small>ブラインド</small>{row.sb.toLocaleString()} / {row.bb.toLocaleString()}</div>
@@ -21,7 +21,7 @@ export function RingLobbyList<T extends LobbyRingRow>({rows,renderActions,onRefr
     <div role="cell" className={styles.actions}>{renderActions(row)}</div>
    </div>)}
   </div>
-  {!filtered.length&&<p className={styles.empty} role="status">{unavailable?'卓設定を読み込めませんでした。時間をおいて更新してください。':rows.length?'条件に合う卓はありません。絞り込みを変更してください。':'現在、公開中のリング卓はありません。'}</p>}
-  {pages>1&&<nav className={styles.pagination} aria-label="リング卓一覧のページ"><span>{filtered.length}卓中 {current*5+1}〜{Math.min(current*5+5,filtered.length)}卓</span><button type="button" disabled={current===0} onClick={()=>setPage(current-1)}>前へ</button><span>{current+1} / {pages}</span><button type="button" disabled={current===pages-1} onClick={()=>setPage(current+1)}>次へ</button></nav>}
+  {!filtered.length&&<p className={styles.empty} role="status">{unavailable?'テーブル設定を読み込めませんでした。時間をおいて更新してください。':rows.length?'条件に合うテーブルはありません。絞り込みを変更してください。':'現在、公開中のリングテーブルはありません。'}</p>}
+  {pages>1&&<nav className={styles.pagination} aria-label="リングテーブル一覧のページ"><span>{filtered.length}テーブル中 {current*5+1}〜{Math.min(current*5+5,filtered.length)}テーブル</span><button type="button" disabled={current===0} onClick={()=>setPage(current-1)}>前へ</button><span>{current+1} / {pages}</span><button type="button" disabled={current===pages-1} onClick={()=>setPage(current+1)}>次へ</button></nav>}
  </div>;
 }

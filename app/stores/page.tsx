@@ -1,4 +1,5 @@
 import { CompactPortalBanner } from "@/app/compact-portal-banner";
+import { getPublicStoreRankings, getFavoriteStoreIds } from "@/lib/public-store-rankings";
 import { WrapParts } from "@/app/wrap-parts";
 import { STORES_PER_PAGE, paginateStores, storePageHref } from "@/lib/store-pagination";
 import Link from "next/link";
@@ -174,11 +175,10 @@ export default async function StoresPage({
     supabase.auth.getUser(),
     getStoreListData({ q, category, pref, region, city, area }),
     pref || isKnownRegion
-      ? supabase.rpc("public_store_rankings", { p_prefs: pref ? [pref] : regionPrefs })
-      : Promise.resolve({ data: [] as any[], error: null }),
+      ? getPublicStoreRankings(supabase, pref ? [pref] : regionPrefs)
+      : Promise.resolve({ data: [] as any[], available: true }),
     getStoreCardExtras(),
   ]);
-  if (rankingResult.error) throw rankingResult.error;
   const stores = list.stores;
   const storeListBanner = list.storeListBanner;
   const rankedStores = (rankingResult.data ?? []).slice(0, 4);
@@ -189,14 +189,7 @@ export default async function StoresPage({
     ? []
     : Array.from(countCityPages(list.prefCities)).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"));
 
-  let favoriteStoreIds = new Set<string>();
-  if (user) {
-    const { data: favs } = await supabase
-      .from("favorite_stores")
-      .select("store_id")
-      .eq("user_id", user.id);
-    favoriteStoreIds = new Set((favs ?? []).map((f) => f.store_id));
-  }
+  const favoriteStoreIds = await getFavoriteStoreIds(supabase, user?.id);
 
   // 「現在地から探す」で来たときは、いつもの新しい順ではなく現在地から近い順に並べる。
   // 座標がまだ無い店舗は距離を出せないので、外さずに最後に回す。
@@ -469,7 +462,7 @@ export default async function StoresPage({
           </section>
         )}
 
-        {(pref || isKnownRegion) && (
+        {(pref || isKnownRegion) && rankingResult.available && (
           <section className="home-section" style={{ marginTop: 36 }}>
             <div className="home-section-head"><h2>🏅 店舗ランキング（{pref || region}）</h2><Link href={`/stores/ranking?${pref ? `pref=${encodeURIComponent(pref)}` : `region=${encodeURIComponent(region)}`}`}>すべての店舗ランキングを見る</Link></div>
             {!rankedStores.length && <p className="muted">まだ店舗がありません。</p>}

@@ -1,4 +1,4 @@
-/* 「GTOと対戦」練習卓 (2026/10/30). Same navy and gold as the GTO chart panels. */
+/* 「GTOと対戦」練習テーブル (2026/10/30). Same navy and gold as the GTO chart panels. */
 .log{display:flex;flex-wrap:wrap;gap:5px;list-style:none;margin:0;padding:0;font-size:14px;color:#c9d6e0}
 .log li{background:#1b3448;border-radius:6px;padding:4px 9px;white-space:nowrap}
 .log li b{color:#e6bd70;margin-right:4px}
@@ -146,6 +146,15 @@
 /* スマホ (owner 2026/11/1「スマホの部分もっと改善」): the buttons right under the table, then the result of the last
    decision and the action log; the settings and the totals move to the bottom. PC is unchanged. */
 .introShort{display:none}
+@media (max-width:700px){
+ .answerText{display:none!important}
+ :global([data-mobile-play-fullscreen]) .trainer .table{width:calc(100% - 12px);height:min(38dvh,280px);aspect-ratio:auto;margin:32px auto 26px}
+ :global([data-mobile-play-fullscreen]) .trainer .play .settings,
+ :global([data-mobile-play-fullscreen]) .trainer .stats,
+ :global([data-mobile-play-fullscreen]) .trainer .history,
+ :global([data-mobile-play-fullscreen]) .trainer .rules{display:none}
+ :global([data-mobile-play-fullscreen]) .trainer .log{max-height:65px;overflow:auto}
+}
 @media (max-width:650px){
  .introShort{display:block}
  .intro{display:none}
@@ -157,3 +166,39 @@
  .playSide>.settings{order:6}
  .playSide>.stats{order:7}
 }
+.practiceTarget{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;padding:10px 12px;border:1px solid #d6b36480;border-radius:8px;color:#f1d18a!important;background:#193a4c;font-weight:700;font-size:13px;line-height:1.6}
+.practiceTarget>span{min-width:0}.practiceTarget small{display:block;color:#d2e0e7;font-weight:400;font-size:12px}
+.drillRules,.mobileWaiting{display:none}
+@media(max-width:700px){
+ .rulesWide,.desktopNext{display:none!important}
+ .drillRules{display:block;color:#c9d6e0;font-size:13px}
+ .drillRules summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#f1d18a}
+ :global([data-mobile-play-fullscreen]) .drill[data-drill-playing] .drillIntro{display:none!important}
+ .mobileNext{display:grid;gap:5px;text-align:center}
+ .mobileNext button{width:100%;min-height:52px!important}
+ .mobileNext small{font-size:11px;color:#b8cbd5}
+ .mobileWaiting{display:grid;place-items:center;min-height:44px;margin:0;color:#d2e0e7}
+}
+/* Phone polish: use the space above the fixed controls, without changing the PC columns. */
+.mobileHandResult,.mobileOnlyFeedback,.miniTable,.why{display:none}
+@media(max-width:700px){
+ :global([data-mobile-play-fullscreen]) .trainer .table{height:max(263px,calc(100dvh - var(--play-dock-height,0px) - 176px));max-height:680px;margin:24px auto 14px}
+ .trainer .center{padding-bottom:20px}
+ .trainer .pot{font-size:14px!important;line-height:1.4;padding:2px 10px!important}
+ .trainer .board{min-height:50px}
+ .trainer .center>.result{display:none}
+ .mobileHandResult{display:block;color:#f1d18a!important;font-weight:800}
+ .mobileOnlyFeedback{display:block}
+ .keyboardHint{display:none}
+ .miniTable{display:block;position:relative;height:154px;width:min(100%,320px);margin:10px auto 14px}
+ .miniFelt{position:absolute;inset:20% 15%;border:2px solid #9d824c;border-radius:50%;background:#1b4147;display:grid;place-items:center;text-align:center;font-size:11px;color:#f1d18a}
+ .miniFelt small{display:block;font-size:10px;color:#b8cbd5}
+ .miniSeat{position:absolute;transform:translate(-50%,-50%);width:78px;text-align:center;display:grid;gap:2px;border:1px solid #78909e;border-radius:6px;background:#203e51;color:#d2e0e7;padding:3px 2px;line-height:1.3}
+ .miniSeat b{font-size:11px}.miniSeat small{font-size:9px;white-space:nowrap}
+ .miniSeat[data-hero]{background:#d6b364;color:#18364b;border-color:#f1d18a}.miniSeat[data-folded]{opacity:.6}
+ .drill .drillHead{display:none}
+ .why{display:block;font-size:12px!important;line-height:1.6!important;margin:7px 0 0!important;color:#f1d18a!important}
+}
+@media(max-width:360px){.trainer .kinds button{font-size:13px!important;padding:8px 4px!important;min-height:44px!important}.miniTable{height:144px}.miniSeat{width:69px}}
+.feedback .mobileHandResult,.feedback .why{display:none}
+@media(max-width:700px){.feedback .mobileHandResult,.feedback .why{display:block}}

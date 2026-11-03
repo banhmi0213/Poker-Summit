@@ -1,4 +1,5 @@
 'use client';
+import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
 import type {Card} from '@/lib/poker/engine';
@@ -11,6 +12,9 @@ import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
 import {PreflopDrill} from './preflop-drill';
+import {MobilePlaySurface,MobilePlayControls,MobilePlayFeedback} from './mobile-play-surface';
+import {GtoAnswerBars} from './gto-answer-bars';
+import {preflopPracticeSpot} from './gto-practice-target';
 
 /** 「GTOと対戦」(owner 2026/10/30: GTOと対戦がいっちゃん勉強になる): six-handed table, five GTO CPUs, the hero's cards
  * face up and the hero's seat moving one position every hand. Every hero decision is graded on the spot against how
@@ -56,21 +60,22 @@ const heroOut=(h:TrainerHand)=>!h.result&&Boolean(h.round.players.find(p=>p.id==
 const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p=>p.id===HERO)!.totalCommitted);
 
 /** Two ways to practise (2026/10/31): a whole hand against GTO, or プリフロップ連打 (preflop decisions one after another). */
-export function GtoTrainer({standard=false,upsell=false}:{standard?:boolean;upsell?:boolean}={}){
- const [kind,setKind]=useState<'hand'|'drill'>('hand');
- return <div className={styles.trainer}>
+export function GtoTrainer({standard=false,upsell=false,practiceSpot}:{standard?:boolean;upsell?:boolean;practiceSpot?:string}={}){
+ const target=preflopPracticeSpot(practiceSpot);
+ const [kind,setKind]=useState<'hand'|'drill'>(target?'drill':'hand');
+ return <MobilePlaySurface label="GTOと対戦" startFullscreen={Boolean(target)}><div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
    <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して打つ</button>
    <button type="button" role="tab" aria-selected={kind==='drill'} onClick={()=>setKind('drill')}>プリフロップ連打</button>
   </div>
-  {kind==='hand'?<GtoHandTrainer/>:<PreflopDrill weak={standard} upsell={upsell}/>}
- </div>;
+  {kind==='hand'?<GtoHandTrainer initialMode={practiceSpot==='flop'?'flop':'all'}/>:<PreflopDrill weak={standard} upsell={upsell} practiceSpot={target??undefined}/>}
+ </div></MobilePlaySurface>;
 }
-function GtoHandTrainer(){
+function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  const [handNo,setHandNo]=useState(0),[hand,setHand]=useState<TrainerHand|null>(null);
  const [spot,setSpot]=useState<TrainerSpot|'loading'|null>(null),[feedback,setFeedback]=useState<Feedback[]>([]);
  const [stats,setStats]=useState<Stats>(emptyStats),[speed,setSpeed]=useState<'normal'|'fast'>('normal'),[error,setError]=useState('');
- const [mode,setMode]=useState<TrainerMode>('all'),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
+ const [mode,setMode]=useState<TrainerMode>(initialMode),[seeking,setSeeking]=useState(false),startRef=useRef<TrainerHand|null>(null);
  const worker=useRef<Worker|null>(null),seq=useRef(0),counted=useRef<number|null>(null);
  useEffect(()=>{setStats(readStats());return()=>worker.current?.terminate();},[]);
  const ask=useCallback(async(build:(id:number)=>GtoRequest):Promise<GtoReply>=>{
@@ -164,12 +169,12 @@ function GtoHandTrainer(){
   </section>
  </>;
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||heroOut(hand)));
- return <div className={chart.wrap}>
+ return <div className={chart.wrap}><MobilePlayGuard active={Boolean(hand)}/>
   {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
-  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人卓で1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
+  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}
   {hand&&<div className={styles.play} data-hide-back-to-top>
-   <div className={styles.table} role="group" aria-label={`練習卓・あなたは${hand.heroPos}`}>
+   <div className={styles.table} role="group" aria-label={`練習テーブル・あなたは${hand.heroPos}`}>
     <div className={styles.felt}>
      <div className={styles.center}><span className={styles.pot}>ポット {bb(pot)}BB</span><div className={styles.board}>{board.map((c,i)=><CardChip key={i} card={c}/>)}</div>{done&&<strong className={styles.result}>{heroNet(hand)>0?`+${heroNet(hand)}`:heroNet(hand)}BB</strong>}</div>
     </div>
@@ -185,20 +190,24 @@ function GtoHandTrainer(){
    <div className={styles.playSide}>
    {formBox}
    <ol className={styles.log} aria-label="このハンドのアクション">{hand.log.map((a,i)=><li key={i} data-hero={a.id===HERO||undefined}><b>{hand.positions[a.id]}</b>{actText(a.type,a.to,a.allIn)}</li>)}{!done&&hand.round.toAct&&<li data-turn><b>{hand.positions[hand.round.toAct]}</b>{hand.round.toAct===HERO?'あなたの番':'考え中…'}</li>}</ol>
-   {!done&&hand.round.toAct===HERO&&<div className={styles.actions}>
+   {!done&&hand.round.toAct===HERO&&<MobilePlayControls><div className={styles.actions}>
     {spot==='loading'&&<p role="status">GTOを計算中…</p>}
     {menu.map((o,i)=><button key={i} type="button" data-kind={o.kind} onClick={()=>choose(i)}>{o.text}</button>)}
-   </div>}
+   </div></MobilePlayControls>}
+   {!done&&hand.round.toAct!==HERO&&<MobilePlayControls><p className={styles.mobileWaiting}>GTOが考えています…</p></MobilePlayControls>}
    {error&&<p role="alert">{error}</p>}
-   {last&&<section className={styles.feedback} aria-live="polite" data-level={last.level??'none'}>
+   {(last||done)&&<MobilePlayFeedback><section className={`${styles.feedback} ${!last?styles.mobileOnlyFeedback:''}`} aria-live="polite" data-level={last?.level??'none'}>
+    {done&&<p className={styles.mobileHandResult}>このハンド：{heroNet(hand)>0?'+':''}{heroNet(hand)}BB</p>}
+    {last&&<>
     <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
-    {last.options.length>0&&<p className={chart.note}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p>}
+    {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
-   </section>}
-   {done&&<div className={`${chart.form} ${styles.formBig}`}>
+    </>}
+   </section></MobilePlayFeedback>}
+   {done&&<MobilePlayControls><div className={`${chart.form} ${styles.formBig}`}>
     <button type="button" disabled={seeking} onClick={nextHand}>次のハンド</button>
     <button type="button" onClick={replay}>同じハンドをやり直す</button>
-   </div>}
+   </div></MobilePlayControls>}
    {done&&feedback.length>0&&<ol className={styles.history} aria-label="このハンドの採点">{feedback.map((f,i)=><li key={i} data-level={f.level??'none'}><b>{f.level?LEVEL_TEXT[f.level]:'採点なし'}</b>{f.street}：{f.played}{f.evLoss!==null&&`（EV損失 ${f.evLoss.toFixed(2)}BB）`}{f.options.length>0&&<small>GTO：{f.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</small>}</li>)}</ol>}
    {statsBox}
    </div>

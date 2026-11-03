@@ -41,3 +41,7 @@
  .main[data-fit] .panelHeading p:last-child{display:none}
  .main[data-fit] .panel{padding:12px 10px}
 }
+/* Installed apps reserve the system status area. */
+@media(display-mode:standalone) and (max-width:900px){.header{padding-top:calc(7px + env(safe-area-inset-top,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}}
+/* Keep the navigation within the smallest phone width; desktop sizing is unchanged. */
+@media(max-width:360px){.header{padding-inline:10px;gap:6px}.brand img{width:128px}}

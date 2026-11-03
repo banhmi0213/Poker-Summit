@@ -17,7 +17,7 @@ export function PushFoldChart(){
  const [stack,setStack]=useState('10');
  const s=spots[stack];
  return <div className={styles.wrap}>
-  <p>2人卓で、お互いのチップが少ないとき（25BB以下）に「オールインかフォールドだけ」で戦う場合の正解（ナッシュ均衡）です。SB（ボタン）はオールインするか降りるか、BBはそのオールインにコールするか降りるかを選びます。</p>
+  <p>2人テーブルで、お互いのチップが少ないとき（25BB以下）に「オールインかフォールドだけ」で戦う場合の正解（ナッシュ均衡）です。SB（ボタン）はオールインするか降りるか、BBはそのオールインにコールするか降りるかを選びます。</p>
   <label className={styles.stack}>持っているチップ（少ない方）<select value={stack} onChange={e=>setStack(e.target.value)}>{stacks.map(v=><option key={v} value={v}>{v}BB</option>)}</select></label>
   <div className={styles.pair}>
    <Grid freq={s.push} caption={`SB：オールインする手（全体の${s.pushPct}%）`}/>
