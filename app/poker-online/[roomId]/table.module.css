@@ -92,3 +92,6 @@
 .runBoards{display:flex;flex-direction:column;gap:6px;align-items:center}
 .runRow{display:flex;align-items:center;gap:8px}.runRow>small{font-size:11px;font-weight:700;color:#f3dcaa;background:#30261bd9;border:1px solid #b79754;border-radius:999px;padding:2px 8px;white-space:nowrap}
 .runRow [data-motion-board],.runRow>div{transform:scale(.86);transform-origin:center}
+/* PC ring/tournament table (owner 2026/11/03): the top seat's wager sits just under its name plate (as on the phone),
+   clear of the pot text. The plate ends about 144-162px down the table; the pot and board move 8-11px down (more on narrow PCs) to make room. */
+@media(min-width:900px){.onlineFelt .topBet{top:clamp(148px,26.5%,166px)!important;translate:0 0!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}
