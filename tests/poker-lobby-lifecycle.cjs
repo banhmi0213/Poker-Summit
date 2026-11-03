@@ -26,7 +26,7 @@ test('available-seat filter excludes unknown and full tables, and rate filter re
 test('guest dashboard keeps the approved sections and exposes practice without fake public records',()=>{
  const Dashboard=require('../app/poker-lobby/lobby-dashboard.tsx').default;
  const html=renderToStaticMarkup(React.createElement(Dashboard,{guest:true,admin:false,memberName:'会員',ringEnabled:false,tournamentsEnabled:true,rings:[],ringError:false,tournaments:[],assigned:null,registration:null,board:null}));
- for(const label of ['あなたの持ちチップ','参加中のテーブル','着せ替え交換','チップ獲得ランキング','歴代大会優勝者','練習テーブル'])assert.ok(html.includes(label),label);
+ for(const label of ['あなたの持ちチップ','参加中のテーブル','デザイン変更','チップ獲得ランキング','歴代大会優勝者','練習テーブル'])assert.ok(html.includes(label),label);
  assert.match(html,/月 チップ獲得ランキング/);assert.match(html,/優勝者一覧は公開準備中/);
  assert.ok(!html.includes('SUMMIT ACE'));assert.ok(!html.includes('128,400'));
 });

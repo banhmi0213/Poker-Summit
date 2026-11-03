@@ -1,6 +1,6 @@
 import type {RingMonth} from '@/lib/poker/ring-monthly';
 /** 月ごとの増減 (owner 2026/10/31: リセットされても増減数は各会員しっかりマイページに反映). */
-export const CHIP_RESET_NOTICE='チップは毎月1日0時（日本時間）に、増えていても減っていても1,000にリセットされます。月ごとの増減はプレイヤーページに残ります。';
+export const CHIP_RESET_NOTICE='チップは毎月1日0時（日本時間）に、増えていても減っていても1,000（プラチナ以上は3,000）にリセットされます。月ごとの増減はプレイヤーページに残ります。';
 export function RingMonthlyView({rows}:{rows:RingMonth[]|null}){
  const label=(m:string)=>`${m.slice(0,4)}年${Number(m.slice(5))}月`;
  return <section aria-label="月ごとの増減" style={{marginTop:18}}>
