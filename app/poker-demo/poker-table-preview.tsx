@@ -606,7 +606,6 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してロビーへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
       </div>
     </div>
-    <details className={styles.demoInfo}><summary>デモについて</summary><h1>オンラインポーカー テーブル試作</h1><p>チップと進行はブラウザ内のデモです。会員残高とは連携していません。</p></details>
 
     {tournament && <div className={styles.gameClock}><TournamentPanel tournament={tournament} serverNow={serverNow} gameLinked/></div>}
     {tournament && <div className={styles.statusDock}><details className={styles.tournamentStatus} open={tournamentComplete}><summary>大会状況・結果：残り {remainingIds.length}人{tournamentComplete?"・大会終了":""}</summary><div role="status">
