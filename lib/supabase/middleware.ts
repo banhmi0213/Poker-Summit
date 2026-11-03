@@ -88,8 +88,12 @@ export async function updateSession(request: NextRequest) {
   // 期限内なら通信なし)。ページ側のログイン判定は各ページの getUser で行うので、
   // ここで毎回認証サーバーへ問い合わせる必要はない(2026/10、表示速度対策)。
   // メンテナンスモードの確認もこれと同時に行う。
+  // 運営の確認用アドレス(オーナー 2026/11/03：5日の公開前に、運営だけ本番で新しい画面とポーカーを確かめる)。
+  // Vercel の環境変数 STAFF_PREVIEW_HOST に入れたアドレスでは、ログインした運営だけがページを見られる。
+  const staffHost = !!process.env.STAFF_PREVIEW_HOST && (request.headers.get("host") ?? "") === process.env.STAFF_PREVIEW_HOST;
+  const staffExempt = pathname === "/admin-login" || pathname === "/login" || pathname.startsWith("/api") || pathname.startsWith("/auth");
   const [user, flags] = await Promise.all([
-    isProtectedPath
+    isProtectedPath || staffHost
       ? supabase.auth.getUser().then(({ data }) => data.user)
       : // session.user には触らない(サーバー側で触ると supabase-js が毎回警告を出すため)
         supabase.auth.getSession().then(() => null),
@@ -122,6 +126,19 @@ export async function updateSession(request: NextRequest) {
       response.cookies.set(name, value, options)
     );
     return response;
+  }
+
+  if (staffHost && !staffExempt) {
+    const staff = user ? (await supabase.rpc("is_admin")).data === true : false;
+    if (!staff) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin-login";
+      url.search = "";
+      url.searchParams.set("next", pathname);
+      const denied = user ? new NextResponse("運営専用です", { status: 403, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } }) : NextResponse.redirect(url);
+      pendingCookies.forEach(({ name, value, options }) => denied.cookies.set(name, value, options));
+      return denied;
+    }
   }
 
   let response = NextResponse.next({ request });

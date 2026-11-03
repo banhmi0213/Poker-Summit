@@ -1,4 +1,11 @@
 .desktop{display:flex;align-items:center}.mobile{display:none}
+.tagline{display:none}
+@media(min-width:1101px){
+ .tagline{display:block;flex:1;min-width:0;container-type:inline-size;margin:0 16px;text-align:center;white-space:nowrap;color:#fff5e5;font-family:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;font-weight:600;line-height:1.6;letter-spacing:.025em}
+ .taglineCopy{font-size:min(24px,4cqw)}
+ .tagline strong{color:#d7b36b;font-weight:inherit}
+ .header :global(.portal-logo){width:clamp(180px,17vw,260px);flex:0 0 clamp(180px,17vw,260px)}
+}
 .header :global(.ps-pref-selector){margin:0;padding:4px 0 2px;border:1px solid var(--border-strong);border-radius:6px;background:#f8f5ee;flex-wrap:nowrap;flex-direction:column;gap:0}
 .header :global(.ps-pref-selector__label){display:block;color:#cf2525;font-size:10px;font-weight:700;line-height:1.3;padding:0 8px;align-self:flex-start}
 .header :global(.ps-pref-selector__select){width:94px;min-height:28px;padding:3px 8px;font-size:13px;background:transparent;border:0}
@@ -33,3 +40,147 @@
  .header :global(.mobile-nav-drawer) :global(.portal-cta:active){filter:brightness(1.09);box-shadow:0 0 12px rgba(218,173,70,.32)}
  .header :global(.ps-pref-selector:active){border-color:#c99a3d;box-shadow:0 0 10px rgba(218,173,70,.23)}
 }
+
+/* Preview: five navigation titles, with panels opening outwards from the centre. */
+.header .megaNav{position:relative;width:calc(100% - 40px);max-width:1140px;margin:0 auto;padding-bottom:12px}
+.titles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.title{appearance:none;display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:52px;padding:12px 8px;box-sizing:border-box;border:1px solid #e8dcc5;border-radius:7px;background:#faf6ec;color:#49351d;font:inherit;font-size:14px;font-weight:700;text-decoration:none;cursor:pointer;transition:background .18s,border-color .18s}
+.title:hover,.activeTitle{background:#f0e2c3;border-color:#bd964b;color:#705019}
+.caret{font-size:16px;color:#9b7635;transition:transform .18s}
+.activeTitle .caret{transform:rotate(180deg)}
+.megaPanel{position:absolute;z-index:110;top:calc(100% - 12px);left:0;width:100%;box-sizing:border-box;padding:24px;background:#fffdf8;border:1px solid #ceb079;border-top:3px solid #bb9344;border-radius:0 0 12px 12px;box-shadow:0 14px 28px #684b2021;opacity:0;visibility:hidden;pointer-events:none;transform:scaleX(.82);transform-origin:center top;transition:transform .22s ease,opacity .15s ease,visibility .22s}
+.openPanel{opacity:1;visibility:visible;pointer-events:auto;transform:scaleX(1)}
+.panelHeading{font-size:12px;font-weight:700;color:#9b783a;margin-bottom:14px;letter-spacing:.07em}
+.menuGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.menuLink,.disabled{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px;padding:16px 18px;box-sizing:border-box;border:1px solid #e8dcc7;border-radius:7px;background:#f8f2e5;color:#523b1b;font-size:14px;font-weight:700;text-decoration:none}
+.menuLink>span:first-child{position:relative}
+.menuLink>span:last-child{color:#a57f36;font-size:20px}
+.menuLink:hover{background:#eee0bf;border-color:#c5a263}
+.disabled{color:#a6a39d;background:#f2f1ee;border-color:#e5e3de;cursor:not-allowed}
+.title:focus-visible,.menuLink:focus-visible,.mobileGroup summary:focus-visible{outline:3px solid #b98a32;outline-offset:3px}
+.mobileGroup{border-bottom:1px solid #e8dcc7}
+.mobileGroup summary,.mobileDirect{list-style:none;display:flex;align-items:center;justify-content:space-between;padding:16px 12px;color:#49351d;font-size:14px;font-weight:700;cursor:pointer}
+.mobileGroup summary::-webkit-details-marker{display:none}
+.mobileGroup[open] summary{color:#8a6528;background:#faf4e5}
+.mobileLinks{display:grid;gap:8px;padding:8px 12px 14px}
+.mobileLinks .menuLink,.mobileLinks .disabled{min-height:48px;font-size:13px;padding:10px 14px}
+@media(min-width:1101px){.header :global(.portal-nav-inner){flex-wrap:nowrap;justify-content:space-between}.header :global(.portal-logo){flex-shrink:0}.header :global(.portal-auth-actions){margin-left:auto}}
+@media(max-width:1100px){.header .megaNav{display:none}}
+@media(prefers-reduced-motion:reduce){.megaPanel,.title,.caret{transition:none}}
+
+/* Image-led, full-width mega-menu content. */
+.menuGrid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.megaPanel{padding:22px 24px 26px}
+.menuLink{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:0;padding:0;overflow:hidden;background:#faf6ec}
+.menuArtwork{display:flex;align-items:center;justify-content:center;position:relative;width:100%;height:148px;background:#f1e6cf;overflow:hidden;border-bottom:1px solid #e8dcc7}
+.menuArtwork img{display:block;width:100%;height:100%;object-fit:contain}
+.menuCopy{display:flex;flex-direction:column;gap:8px;padding:17px 28px 18px 16px}
+.menuCopy strong{position:relative;font-size:14px;color:#523b1b;line-height:1.5}
+.menuCopy small{font-size:12px;font-weight:400;color:#85704d;line-height:1.65}
+.menuLink>.menuArrow{position:absolute;right:12px;bottom:20px;color:#a57f36;font-size:22px}
+.disabled{display:flex;align-items:center;justify-content:center;min-height:148px}
+.learningArtwork{display:flex;flex-direction:column;justify-content:center;gap:12px;padding:16px;background:linear-gradient(110deg,#fff9e8,#ecdbb1);box-sizing:border-box;width:100%;height:100%;color:#705020}
+.learningArtwork>span{font-size:8px;letter-spacing:.1em}
+.learningArtwork strong{font-size:20px;line-height:1.6}
+.jobArtwork{display:block;width:100%;height:100%;background-image:url('/images/job-categories-photo-v1.webp');background-repeat:no-repeat;background-size:207% 360%}
+.mobileLinks .menuLink{flex-direction:row;align-items:center;padding:12px 14px}
+.mobileLinks .menuCopy{padding:0}
+.mobileLinks .menuLink>.menuArrow{position:static}
+.mobileLinks .disabled{min-height:48px;justify-content:flex-start}
+@media(max-width:1100px){.header :global(.portal-auth-actions){display:none!important}}
+
+.jobArtwork{position:relative;display:block;width:100%;height:auto;aspect-ratio:742/284;overflow:hidden;background:none}
+.menuArtwork .jobArtwork img{position:absolute;max-width:none;width:calc(1536 / 742 * 100%);height:calc(1024 / 284 * 100%);object-fit:fill}
+
+
+/* Warm, light header; navy is reserved for the open menu and active title. */
+.header :global(.portal-nav-inner){padding-block:14px}
+.header :global(.ps-pref-selector){background:#fffdf8;border-color:#d5c5a4;box-shadow:none}
+.header :global(.ps-pref-selector__label){color:#7a602f}
+.header :global(.ps-pref-selector__select){color:#21394b;color-scheme:light}
+.header :global(.portal-cta){background:linear-gradient(140deg,#f9e6b4,#dfbd70);color:#233a4a}
+.title{min-height:48px;background:linear-gradient(135deg,#fffdf7,#f3e9d4);border-color:#daccad;border-radius:9px;color:#263f51;box-shadow:0 2px 5px #74562208}
+.title:hover,.activeTitle{background:linear-gradient(125deg,#284456,#3e596a);border-color:#c7ac6f;color:#fff4d8;box-shadow:0 4px 10px #1a354318}
+.caret{display:block;width:7px;height:7px;border-right:1.5px solid #a18041;border-bottom:1.5px solid #a18041;transform:rotate(45deg);font-size:0;margin-top:-4px}
+.activeTitle .caret{transform:rotate(225deg);border-color:#f5d994;margin-top:4px}
+.megaPanel{background:linear-gradient(130deg,#203c4e,#355060);border-color:#bba06a;border-top-color:#e4c681;border-radius:0 0 15px 15px;box-shadow:0 18px 40px #102b3b30}
+.panelHeading{color:#e8cf97;font-size:13px}
+.menuLink{background:#fdfaf3;border-color:#d8c8a9;border-radius:10px;transition:box-shadow .2s,background .2s,border-color .2s}
+.menuArtwork{background:#f1e8d6;border-bottom-color:#e0d4bd}
+.menuCopy strong{color:#203a4e}.menuCopy small{color:#566875}
+.menuLink:hover{background:#fff3d7;border-color:#dfc486;box-shadow:0 5px 16px #081b2726}
+.disabled{background:#314a5b;border-color:#647782;color:#b8c7ce;border-radius:10px}
+.learningArtwork{background:linear-gradient(125deg,#fffaed,#e6d5ad);color:#274253}
+.mobileGroup{border-color:#dacbac}.mobileGroup summary,.mobileDirect{color:#243f51}
+.mobileGroup[open] summary{background:#e9dcc0;color:#5e4725}
+.header :global(.nav-hamburger){color:#263f51}
+.header.header :global(.mobile-nav-drawer) :global(.plink){color:#263f51}
+.mobileLinks .disabled{color:#60717b;background:#e5e8e6;border-color:#c6cfce}
+
+.mobileGroup summary>span{display:block;width:8px;height:8px;border-right:1.5px solid #92733b;border-bottom:1.5px solid #92733b;transform:rotate(45deg);margin-right:4px}
+.mobileGroup[open] summary>span{transform:rotate(225deg)}
+
+/* Shared navy navigation; menu content stays on a light reading surface. */
+.title{background:#ffffff07;border-color:#ffffff20;color:#e6edf6;box-shadow:inset 0 1px #ffffff08}
+.title:hover,.activeTitle{background:#294567;border-color:#cbb99488;color:#eadcc1}
+.caret{color:#d7c6a5}
+.megaPanel{background:#fff;border-color:#dce4ed;border-top-color:#c7b18a;box-shadow:0 18px 40px #07132630}
+.menuLink{background:#f2f5f9;border-color:#dce4ed;color:#18304f}
+.menuLink:hover{background:#e8eef5;border-color:#b9c9dc}
+.panelHeading{color:#806a45}
+.mobileGroup{border-color:#ffffff20}
+.mobileGroup summary,.mobileDirect{color:#ecf1f8}
+.mobileGroup[open] summary{color:#deccaa}
+
+.header :global(.portal-nav-inner),.header .megaNav{width:var(--header-content-width);max-width:none}
+
+/* Compact spacing shared by all public pages. */
+.header .megaNav{padding-bottom:8px}
+.title{min-height:44px;padding-block:9px}
+.megaPanel{top:calc(100% - 8px)}
+
+
+/* Purpose-made navigation photography: full-bleed crops, untouched job artwork. */
+.fittedArtwork{height:clamp(148px,13vw,200px);background:#203a4c}
+.menuArtwork.fittedArtwork>img{width:100%;height:100%;max-width:none;object-fit:cover;object-position:center;transition:transform .35s ease}
+@media(hover:hover) and (pointer:fine){.menuLink:hover .fittedArtwork>img{transform:scale(1.025)}}
+.disabled.disabledCard{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;padding:0;overflow:hidden;opacity:1;background:#eaf0f5;border-color:#dce4ed}
+.disabledCard .menuCopy strong{color:#536477}
+.disabledCard .menuCopy small{color:#68798c}
+@media(prefers-reduced-motion:reduce){.menuArtwork.fittedArtwork>img{transition:none}.menuLink:hover .fittedArtwork>img{transform:none}}
+
+/* Shared masthead: keep page body themes independent of navigation. */
+.header.header{
+ --header-content-width:min(1440px,77.4vw);
+ --accent-gradient:linear-gradient(130deg,#e4d9c2,#c9b38a);
+ background:linear-gradient(90deg,#203a4c 0%,#2a4657 55%,#395462 100%);
+ border-bottom:0;box-shadow:none;color:#f5f7fb;
+}
+.header.header :global(.portal-nav-inner){padding-block:7px}
+.header.header :global(.logo-img){filter:drop-shadow(0 2px 8px #0005)}
+.header.header :global(.portal-cta){background:transparent;color:#f4eee2;border:1px solid #a99b8277;box-shadow:none}
+.header.header :global(.portal-cta):first-of-type{background:var(--accent-gradient);color:#101e32;border-color:#e0cfac}
+.header.header :global(.ps-pref-selector){background:#ffffff0d;border-color:#ffffff30}
+.header.header :global(.ps-pref-selector__label){color:#d8c7a5}
+.header.header :global(.ps-pref-selector__select){color:#fff}
+.header.header :global(.ps-pref-selector__select) option{background:#fff;color:#13253d}
+.header.header :global(.nav-hamburger){color:#f5f7fb}
+.header.header :global(.mobile-nav-drawer){background:linear-gradient(135deg,#203a4c,#395462);color:#fff;border-color:#ffffff24}
+.header .mobileGroup[open] summary{background:#ffffff0d;color:#deccaa}
+@media(min-width:1101px){
+ .header.header :global(.portal-logo){width:260px;max-width:34%;flex:0 1 260px}
+ .header.header :global(.portal-logo) :global(.logo-img){width:260px;max-width:100%;height:auto;max-height:none}
+}
+@media(min-width:768px) and (max-width:1100px){
+ .header.header{--header-content-width:calc((100vw - 40px) * .9)}
+ .header.header :global(.portal-logo) :global(.logo-img){width:220px;max-width:100%;height:auto}
+}
+@media(max-width:767px){
+ .header.header{--header-content-width:calc(100vw - 24px)}
+ .header.header :global(.portal-nav-inner){padding-block:6px}
+ .header.header :global(.portal-logo) :global(.logo-img){width:210px;max-width:100%;height:auto}
+}
+
+/* Disabled game entrances show the product preview without exposing navigation. */
+.header .pokerArtwork{height:auto;aspect-ratio:16/9;filter:grayscale(.65);opacity:.76}
+.disabled.disabledCard{cursor:not-allowed}
