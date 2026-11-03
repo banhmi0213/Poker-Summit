@@ -570,73 +570,61 @@
     {
       "pane": "flop",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "flop",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "pre",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "pre",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "trainer",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "trainer",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "drill",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "drill",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "ranges",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "ranges",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "weak",
       "width": 375,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     },
     {
       "pane": "weak",
       "width": 768,
-      "sameDimensions": true,
       "maximumChannelDifference": 0
     }
   ]
