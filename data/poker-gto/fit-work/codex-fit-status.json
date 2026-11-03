@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T08:53:25.201Z",
+  "checkedAt": "2026-11-03T09:08:04.676Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -998,7 +998,10 @@
     "initialComplete": 4,
     "totalSpots": 21,
     "huLimpTreeMatched": true,
-    "sha": "f5f108ffe46dda1cc6be4b06e32df1106721ef7c"
+    "sha": "f5f108ffe46dda1cc6be4b06e32df1106721ef7c",
+    "head": "1a84e0b0afe42ebbd58b12ac797ad79a1c1f80d8",
+    "tree": "1839a0fe40c1f9e45eec6c47790a63e2db50cbdc",
+    "sbBb200Preserved": true
   },
   "conditionalAcceptance": {
     "rule": "\n【最新40BB条件付き合格ルール】追加の当て直しは全面禁止。再生成8maxのBB守り4席が参考BTN84/CO78/HJ70/UTG57%から各±4ptなら合格。UTGだけ±5pt以内(52〜62%)で他3席が±4pt以内なら条件付き合格として20/60BB表と一緒にstageへ入れてよい。PR本文へ必ず「40BB の UTG 相手は参考から −4.5 前後。GTO Wizard で最終確認する項目」と記載。より外れたらマージせず結果のみ報告。6/9人卓は訂正後の位置比較基準を維持。Wizardの課金を今勧める指示ではない。全CI成功後のみstage merge、本番main/DB/課金/公開は操作しない。",
@@ -2318,9 +2321,9 @@
     "pr": 773,
     "branch": "chatgpt/practice-fold-tools-20261103-aa",
     "head": "c82a7639ff051c15e20f91196c3e77c3b100f5e9",
-    "state": "checks-retry-1-queued",
+    "state": "merged-deployment-checking",
     "scope": "Only practice table1/3; no shared table components or CSS or ring changes",
-    "verified": "375/1280 Chromium: customer tools hidden, watch persists, immediate next-deal,no skipped result,failed deal retry safe,record once; server admin/dev gating;48 accounting cases+unequal all-in tests",
+    "verified": "375/1280 actual component Chromium,15 controls/accounting+2 lifecycle tests. Public preview cloud Chrome: debug absent, fold immediately next real deal/no result,watch persists after reload.",
     "screenshots": "docs/gto-mobile/20261103/practice-fold",
     "workspace": "/workspace/scratch/181a490d1af4/practice-fold",
     "ciRun": 41606433156,
@@ -2332,7 +2335,11 @@
       "app/poker-demo/poker-table-preview.tsx",
       "app/poker-demo/finish-folded-hand.ts"
     ],
-    "ringSharedOverlap": "Ring branch91cedaa edits same practice preview file for banner; owner copy supplied, do not overwrite ring changes"
+    "ringSharedOverlap": "Ring branch91cedaa edits same practice preview file for banner; owner copy supplied, do not overwrite ring changes",
+    "merge": "1a84e0b0afe42ebbd58b12ac797ad79a1c1f80d8",
+    "tree": "1839a0fe40c1f9e45eec6c47790a63e2db50cbdc",
+    "checks": "All check runs and Vercel status success on c82a7639; merged PR readback true; actual merge tree matched expected combined stage tree, preserving sb-bb200",
+    "ringHandoff": "Ring branch91cedaa also edits practice preview; integrate latest stage1a84e0b before preserving watchToEnd/choose/reset/server gate changes. Shared table/CSS/ring untouched in773."
   },
   "nextUnstartedFlop": "btn-bb-3bet"
 }
