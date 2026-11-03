@@ -71,7 +71,7 @@ jobs:
             "POKER_SUPABASE_PUBLIC_KEY=sb_publishable_y6CMbe42q_9gvwJRZi_etg_F6gEdfKt" \
             "POKER_SUPABASE_SECRET_KEY=$SUPABASE_SECRET" \
             "POKER_ROOM_ACTIVE_KEY=prod1" \
-            'POKER_ROOM_ORIGINS=["https://pokersummit.jp","https://www.pokersummit.jp"]' \
+            'POKER_ROOM_ORIGINS=["https://pokersummit.jp","https://www.pokersummit.jp","https://pokersummit-staff.vercel.app"]' \
             "POKER_SERVER_COMMIT=$COMMIT" \
             | flyctl secrets import --stage --app "$APP"
       - name: Deploy (one machine in Tokyo)
