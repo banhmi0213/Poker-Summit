@@ -76,7 +76,14 @@ jobs:
             | flyctl secrets import --stage --app "$APP"
       - name: Deploy (one machine in Tokyo)
         if: steps.token.outputs.ok == 'true'
-        run: flyctl deploy --remote-only --ha=false --config deploy/fly-production/fly.toml --dockerfile deploy/fly-staging/Dockerfile --app "$APP"
+        shell: bash
+        run: |
+          set +e
+          flyctl deploy --remote-only --ha=false --config deploy/fly-production/fly.toml --dockerfile deploy/fly-staging/Dockerfile --app "$APP" > "$RUNNER_TEMP/deploy.log" 2>&1
+          code=$?
+          cat "$RUNNER_TEMP/deploy.log"
+          if [ $code -ne 0 ]; then echo "::error title=fly deploy::$(tail -c 2500 "$RUNNER_TEMP/deploy.log" | tr '\n\r' '  ')"; fi
+          exit $code
       - name: Confirm the new server answers with this commit
         if: steps.token.outputs.ok == 'true'
         env:
