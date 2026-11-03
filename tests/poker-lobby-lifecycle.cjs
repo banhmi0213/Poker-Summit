@@ -46,7 +46,7 @@ test('account theme switches the selected detail without leaking other pane cont
  assert.match(JSON.stringify(r.toJSON()),/balance detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('history detail'));
  await act(async()=>r.root.findAllByType('button').find(b=>b.props['aria-pressed']===false&&b.findAllByType('span').some(n=>n.children.join('')==='ハンド履歴')).props.onClick());
  assert.match(JSON.stringify(r.toJSON()),/history detail/);assert.ok(!JSON.stringify(r.toJSON()).includes('balance detail'));
- assert.ok(r.root.findAllByType('button').some(b=>JSON.stringify(b.props.children)===JSON.stringify('ハンド履歴を見る')),'hand history opens inside the player page (menu stays whole)');
+ assert.ok(r.root.findAllByType('button').some(b=>b.props.children==='ハンド履歴を見る'),'hand history opens inside the player page (menu stays whole)');
  await act(async()=>r.unmount());
 });
 test('single hand replay uses the same account theme and preserves the supplied controls',()=>{
