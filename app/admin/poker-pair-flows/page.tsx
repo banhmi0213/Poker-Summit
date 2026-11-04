@@ -12,7 +12,7 @@ export default async function Page({searchParams}:{searchParams:{days?:string}})
  const rows=(Array.isArray(data)?data:[]) as Flow[];
  return <main className="container">
   <h1>リングの同じ相手とのやり取り</h1>
-  <p className="muted">同じ2人の間で、チップが片方へ流れ続けていないかを見る画面です（わざと負けて段位を上げさせる・チップを渡す行為の確認用）。勝った人が1人のハンドで、負けた人から勝った人へ移ったBBを、2人の組ごとに差し引きして多い順に並べています。</p>
+  <p className="muted">同じ2人の間で、チップが片方へ流れ続けていないかを見る画面です（わざと負けてランクを上げさせる・チップを渡す行為の確認用）。勝った人が1人のハンドで、負けた人から勝った人へ移ったBBを、2人の組ごとに差し引きして多い順に並べています。</p>
   <p className="muted">目安：同じ組が何十ハンドも続けて片方だけ勝っている、2人だけの対戦（ヘッズアップ）が多い、深夜に集中している、などは要確認です。上に出ること自体は不正の証拠ではありません。ハンド履歴で中身を確かめてください。</p>
   <form method="get" style={{margin:'12px 0'}}><label>期間 <select name="days" defaultValue={String(days)}><option value="1">24時間</option><option value="7">7日</option><option value="30">30日</option></select></label> <button className="btn" type="submit">表示</button></form>
   {error&&<p>データを取得できませんでした。運営権限をご確認ください。</p>}
