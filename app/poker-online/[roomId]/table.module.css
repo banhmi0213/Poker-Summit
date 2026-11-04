@@ -94,4 +94,18 @@
 .runRow [data-motion-board],.runRow>div{transform:scale(.86);transform-origin:center}
 /* PC ring/tournament table (owner 2026/11/03): the top seat's wager sits just under its name plate (as on the phone),
    clear of the pot text. The plate ends about 144-162px down the table; the pot and board move 8-11px down (more on narrow PCs) to make room. */
-@media(min-width:900px){.onlineFelt .topBet{top:clamp(148px,26.5%,166px)!important;translate:0 0!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}
+@media(min-width:900px){.onlineFelt .topBet{top:clamp(96px,19%,112px)!important;left:calc(50% - 160px)!important;translate:0 0!important;transform:none!important}.onlineFelt [data-dealer-seat=p2]{left:calc(50% + 92px)!important;top:clamp(108px,21%,124px)!important;translate:none!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}
+@media(max-width:899px){.onlineFelt [data-dealer-seat=p2]{left:calc(50% + 68px)!important;top:76px!important;translate:none!important}}
+
+/* Keep connected tables anchored to the shell even when the shared practice
+   stylesheet is loaded last (spectator pages load a different CSS order).
+   A relative .table rule otherwise shifts the felt right and down. */
+@media(min-width:900px){
+ .compactShell.compactShell{display:block;position:relative}
+ .compactShell > .onlineFelt{
+  position:absolute;top:118px;left:0;right:0;bottom:auto;transform:none;
+  width:min(calc(100% - 40px),calc((100dvh - 220px)*16/9));
+  height:auto!important;min-height:0!important;max-height:none;
+  aspect-ratio:16/9;box-sizing:border-box;margin:0 auto;padding:0;
+ }
+}
