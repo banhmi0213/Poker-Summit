@@ -9,7 +9,7 @@ import type {Card} from './engine';
 import type {BettingAction} from './betting';
 import {estimateEquity,requiredEquity} from './equity';
 
-export type CpuStyle={name:string;looseness:number;aggression:number;bluff:number};
+export type CpuStyle={name:string;looseness:number;aggression:number;bluff:number;riverBluff?:number};
 export const CPU_STYLES:Record<string,CpuStyle>={
  standard:{name:'標準',looseness:1,aggression:1,bluff:0.08},
  tight:{name:'堅実',looseness:0.75,aggression:0.8,bluff:0.04},
@@ -88,6 +88,8 @@ function postflop(ctx:CpuContext,s:CpuStyle,random:()=>number):BettingAction{
  if(ctx.toCall===0){
   if(ctx.legal.raise&&eq>0.62/s.aggression*0.95)return sized(eq>0.8?0.75:0.55);
   if(ctx.legal.raise&&!river&&eq<0.35&&random()<s.bluff)return sized(0.5);
+  // River bluff with air when checked to, heads-up or 3-way only (owner 2026/11/04「ブラフもする感じで」): big sizing so it is credible.
+  if(ctx.legal.raise&&river&&raw<0.22&&ctx.opponents<=2&&random()<(s.riverBluff??0))return sized(0.75);
   return {type:'check'};
  }
  const need=requiredEquity(ctx.toCall,ctx.pot);

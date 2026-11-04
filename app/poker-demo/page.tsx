@@ -14,7 +14,7 @@ import styles from "./poker-table.module.css";
 
 export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
 
-export default async function PokerDemoPage({ searchParams }: { searchParams?: { mode?: string; game?: string; tournament?: string; pace?: string; ante?: string; scenario?: string } }) {
+export default async function PokerDemoPage({ searchParams }: { searchParams?: { mode?: string; stakes?: string; game?: string; tournament?: string; pace?: string; ante?: string; scenario?: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const isPreview = process.env.VERCEL_ENV === "preview" || process.env.NODE_ENV === "development";
@@ -57,7 +57,7 @@ export default async function PokerDemoPage({ searchParams }: { searchParams?: {
       {isPreview && <p><a href="/poker-demo?game=tournament&pace=fast&scenario=short">200チップ・脱落検証</a> ／ <a href="/poker-demo?game=tournament&pace=fast&scenario=heads-up">2人テーブル・優勝確定の検証</a></p>}
       {shortScenario && <p>検証専用：開始{initialSeatIds.length}人・各200チップ。保存された大会設定・会員残高には影響しません。</p>}
       </details>}
-      <PokerTablePreview showDemoTools={showDemoTools} initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={!tournament && searchParams?.mode === "spectate"} />
+      <PokerTablePreview showDemoTools={showDemoTools} initialSeatIds={initialSeatIds} tournament={tournament} serverNow={serverNow} initialDeal={dealDemoHandAtTable(seats,initialSeatIds,button)} member={{ displayName, avatarUrl: profile?.avatar_url ?? null }} isGuestPreview={!user} initialSpectating={false} practiceStakes={searchParams?.stakes === "2-5" ? {sb:2,bb:5} : {sb:1,bb:2}} />
     </main></GameCommunity>
   </div>;
 }

@@ -56,8 +56,8 @@ const SUITS='cdhs';
 const code=(c:Card)=>(c.rank-2)*4+SUITS.indexOf(c.suit);
 const key2=(a:number,b:number)=>a<b?a*52+b:b*52+a;
 const POST_ORDER:Pos[]=['SB','BB','UTG','HJ','CO','BTN'],HU_POST_ORDER:Pos[]=['BB','SB'];
-/** The fallback CPU: strong regular, rarely bluffs. */
-const EXPERT:CpuStyle={name:'GTO補助',looseness:0.95,aggression:1.2,bluff:0.1};
+/** The fallback CPU: the strongest style, balanced with bluffs on every street (owner 2026/11/04「最強の強さで ブラフもする」). */
+const EXPERT:CpuStyle={name:'GTO補助',looseness:0.95,aggression:1.25,bluff:0.16,riverBluff:0.18};
 
 // ---------- preflop chart ----------
 type Tok={pos:Pos;kind:'F'|'C'|'R';to:number};
