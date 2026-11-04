@@ -25,7 +25,7 @@ jobs:
         run: |
           spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
           node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
-          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flops.json');const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version>=3;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
+          flops=$(node -e "const fs=require('fs');const all=require('./data/poker-gto/flop-batches/co-bb-100bb-20261105-01.json').flops;const dir='public/poker-gto/flops/$spot';const done=f=>{try{return JSON.parse(fs.readFileSync(dir+'/'+f+'.json','utf8')).version===3;}catch{return false;}};console.log(JSON.stringify(all.filter(f=>!done(f))))")
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
@@ -49,7 +49,7 @@ jobs:
       - name: Solve
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0' }} --max-iters ${{ vars.GTO_FLOP_ITERS || '250' }} --check-every 50 --max-minutes 320 --threads $(nproc) --out out
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target 0 --max-iters 250 --check-every 50 --max-minutes 320 --threads $(nproc) --out out
       - uses: actions/upload-artifact@v4
         with:
           name: flop-${{ needs.plan.outputs.spot }}-${{ matrix.flop }}
