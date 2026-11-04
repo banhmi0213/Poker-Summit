@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-04T05:16:42.702Z",
+  "checkedAt": "2026-11-04T05:24:10.680Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,220 +104,141 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-04T05:01:32.326Z",
+    "checkedAt": "2026-11-04T05:20:33.415Z",
     "runs": [
       {
         "id": 41735951806,
         "spot": "btn-sb-3bet",
         "total": 201,
-        "success": 77,
+        "success": 80,
         "running": 7,
-        "solveRunning": 7,
-        "queued": 116,
+        "queued": 113,
         "failed": [],
-        "pageSize": 100,
-        "remaining": 123,
-        "increment": 77,
-        "rate": 12.866553463894812
+        "increment": 3,
+        "rate": 9.464642985779372,
+        "remaining": 120
       },
       {
         "id": 41735950412,
         "spot": "co-bb-3bet",
         "total": 201,
-        "success": 138,
-        "running": 7,
-        "solveRunning": 7,
-        "queued": 55,
+        "success": 145,
+        "running": 6,
+        "queued": 49,
         "failed": [],
-        "pageSize": 100,
-        "remaining": 62,
-        "increment": 138,
-        "rate": 23.059537376850443
+        "increment": 7,
+        "rate": 22.084166966818536,
+        "remaining": 55
       },
       {
         "id": 41678529089,
         "spot": "btn-bb-3bet",
         "total": 201,
-        "success": 186,
-        "running": 7,
-        "solveRunning": 7,
-        "queued": 7,
+        "success": 192,
+        "running": 5,
+        "queued": 3,
         "failed": [],
-        "pageSize": 100,
-        "remaining": 14,
-        "increment": 98,
-        "rate": 16.37561349950249
+        "increment": 6,
+        "rate": 18.929285971558745,
+        "remaining": 8
       },
       {
         "id": 41459846661,
         "spot": "sb-limp",
         "total": 201,
-        "success": 136,
+        "success": 137,
         "running": 7,
-        "solveRunning": 7,
-        "queued": 57,
+        "queued": 56,
         "failed": [],
-        "pageSize": 100,
-        "remaining": 64,
-        "increment": 23,
-        "rate": 3.843256229475074
-      },
-      {
-        "id": 41604956412,
-        "spot": "utg-btn",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "pageSize": 100,
-        "remaining": 0,
-        "increment": 46,
-        "rate": 7.686512458950148
-      },
-      {
-        "id": 41486979979,
-        "spot": "co-btn",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "pageSize": 100,
-        "remaining": 0,
-        "increment": 0,
-        "rate": 0
-      },
-      {
-        "id": 41486975878,
-        "spot": "hj-bb",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "pageSize": 100,
-        "remaining": 0,
-        "increment": 0,
-        "rate": 0
-      },
-      {
-        "id": 41464873348,
-        "spot": "utg-bb",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "pageSize": 100,
-        "remaining": 0,
-        "increment": 0,
-        "rate": 0
-      },
-      {
-        "id": 41459848850,
-        "spot": "sb-iso",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "solveRunning": 0,
-        "queued": 0,
-        "failed": [],
-        "pageSize": 30,
-        "verifiedOutput": true,
-        "remaining": 0,
         "increment": 1,
-        "rate": 0.16709809693369887
+        "rate": 3.154880995259791,
+        "remaining": 63
       },
       {
         "id": 41776528800,
         "spot": "utg-bb-3bet",
-        "success": 0,
-        "running": 7,
-        "queued": 193,
         "total": 201,
+        "success": 9,
+        "running": 6,
+        "queued": 185,
         "failed": [],
-        "remaining": 200,
-        "increment": 0,
-        "rate": 0
+        "increment": 9,
+        "rate": 28.39392895733812,
+        "remaining": 191
       },
       {
         "id": 41776531045,
         "spot": "co-btn-3bet",
-        "success": 0,
-        "running": 2,
-        "queued": 198,
         "total": 201,
+        "success": 0,
+        "running": 7,
+        "queued": 193,
         "failed": [],
-        "remaining": 200,
         "increment": 0,
-        "rate": 0
+        "rate": 0,
+        "remaining": 200
       }
     ]
   },
   "eta": {
-    "observedAt": "2026-11-04T05:01:32.326Z",
-    "previousAt": "2026-11-03T23:02:28.095Z",
-    "elapsedHours": 5.984508611111111,
-    "increment": 383,
-    "ratePerHour": 63.99857112560667,
-    "proxySpotRate": 10.666428520934444,
+    "observedAt": "2026-11-04T05:20:33.415Z",
+    "previousAt": "2026-11-04T05:01:32.326Z",
+    "elapsedHours": 0.3169691666666667,
+    "increment": 26,
+    "ratePerHour": 82.02690587675457,
+    "proxySpotRate": 13.671150979459094,
     "spots": [
       {
         "spot": "btn-sb-3bet",
-        "eta": "2026-11-04T14:35:07.136Z"
+        "eta": "2026-11-04T18:01:16.975Z"
       },
       {
         "spot": "co-bb-3bet",
-        "eta": "2026-11-04T07:42:51.618Z"
+        "eta": "2026-11-04T07:49:59.114Z"
       },
       {
         "spot": "btn-bb-3bet",
-        "eta": "2026-11-04T05:52:50.073Z"
+        "eta": "2026-11-04T05:45:54.867Z"
       },
       {
         "spot": "sb-limp",
-        "eta": "2026-11-04T21:40:41.490Z"
+        "eta": "2026-11-05T01:18:42.022Z"
       },
       {
         "spot": "utg-bb-3bet",
-        "eta": "2026-11-04T23:46:33.833Z"
+        "eta": "2026-11-04T12:04:09.859Z"
       },
       {
         "spot": "co-btn-3bet",
-        "eta": "2026-11-04T23:46:33.833Z"
+        "eta": "2026-11-04T19:58:19.061Z"
       },
       {
         "spot": "btn-bb-4bet",
-        "start": "2026-11-04T05:52:50.073Z",
-        "eta": "2026-11-05T00:37:51.580Z",
+        "start": "2026-11-04T05:45:54.867Z",
+        "eta": "2026-11-04T20:23:40.513Z",
         "proxy": true
       },
       {
         "spot": "co-btn-bb",
-        "start": "2026-11-04T07:42:51.618Z",
-        "eta": "2026-11-05T02:27:53.125Z",
+        "start": "2026-11-04T07:49:59.114Z",
+        "eta": "2026-11-04T22:27:44.760Z",
         "proxy": true
       },
       {
         "spot": "btn-sb-bb",
-        "start": "2026-11-04T14:35:07.136Z",
-        "eta": "2026-11-05T09:20:08.643Z",
+        "start": "2026-11-04T12:04:09.859Z",
+        "eta": "2026-11-05T02:41:55.505Z",
         "proxy": true
       },
       {
         "spot": "utg-btn-bb",
-        "start": "2026-11-04T21:40:41.490Z",
-        "eta": "2026-11-05T16:25:42.997Z",
+        "start": "2026-11-04T18:01:16.975Z",
+        "eta": "2026-11-05T08:39:02.621Z",
         "proxy": true
       }
     ],
-    "initial21x200": "2026-11-05T16:25:42.997Z",
-    "assumptions": "6spot operation incl40runner capacity; new/unstarted use measured aggregate/6; specified start order; ±24h or more due different spots/short interval. Initial21x200 only,not1755."
+    "initial21x200": "2026-11-05T08:39:02.621Z",
+    "assumptions": "6slots,40runners,new/unstarted=aggregate measured/6;short19min26board window so±24h or more;initial21x200 not1755"
   },
   "flopPR": {
     "number": 756,
@@ -2173,83 +2094,65 @@
     }
   },
   "concurrency": {
-    "checkedAt": "2026-11-04T05:01:32.326Z",
+    "checkedAt": "2026-11-04T05:23:43.919Z",
     "runs": [
       {
-        "id": 41776525988,
-        "branch": "gto-flop-collect/41459848850",
-        "total": 1,
-        "running": 1,
-        "success": 0,
-        "queued": 0
-      },
-      {
-        "id": 41775897084,
+        "id": 41778834218,
         "branch": "chatgpt/poker-authoritative-hand",
         "total": 1,
-        "running": 1,
-        "success": 0,
-        "queued": 0
+        "running": 0
       },
       {
-        "id": 41775897095,
+        "id": 41778826515,
         "branch": "chatgpt/poker-authoritative-hand",
         "total": 1,
-        "running": 1,
-        "success": 0,
-        "queued": 0
+        "running": 0
+      },
+      {
+        "id": 41778826488,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 0
       },
       {
         "id": 41776531045,
         "branch": "gto-flop-solve/co-btn-3bet/v3b",
         "total": 201,
-        "running": 2,
-        "success": 0,
-        "queued": 198
+        "running": 7
       },
       {
         "id": 41776528800,
         "branch": "gto-flop-solve/utg-bb-3bet/v3b",
         "total": 201,
-        "running": 7,
-        "success": 0,
-        "queued": 193
+        "running": 7
       },
       {
         "id": 41735951806,
         "branch": "gto-flop-solve/btn-sb-3bet/v3b",
         "total": 201,
-        "running": 7,
-        "success": 77,
-        "queued": 116
+        "running": 6
       },
       {
         "id": 41735950412,
         "branch": "gto-flop-solve/co-bb-3bet/v3b",
         "total": 201,
-        "running": 7,
-        "success": 138,
-        "queued": 55
+        "running": 7
       },
       {
         "id": 41678529089,
         "branch": "gto-flop-solve/btn-bb-3bet/v3b",
         "total": 201,
-        "running": 7,
-        "success": 186,
-        "queued": 7
+        "running": 6
       },
       {
         "id": 41459846661,
         "branch": "gto-flop-solve/sb-limp/v3b",
         "total": 201,
-        "running": 7,
-        "success": 136,
-        "queued": 57
+        "running": 7
       }
     ],
-    "repoRunning": 40,
-    "allPagesMatched": true
+    "errors": [],
+    "repoRunning": 40
   },
   "flopObservations": [
     {
@@ -2995,6 +2898,83 @@
           "rate": 0
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-04T05:20:33.415Z",
+      "runs": [
+        {
+          "id": 41735951806,
+          "spot": "btn-sb-3bet",
+          "total": 201,
+          "success": 80,
+          "running": 7,
+          "queued": 113,
+          "failed": [],
+          "increment": 3,
+          "rate": 9.464642985779372,
+          "remaining": 120
+        },
+        {
+          "id": 41735950412,
+          "spot": "co-bb-3bet",
+          "total": 201,
+          "success": 145,
+          "running": 6,
+          "queued": 49,
+          "failed": [],
+          "increment": 7,
+          "rate": 22.084166966818536,
+          "remaining": 55
+        },
+        {
+          "id": 41678529089,
+          "spot": "btn-bb-3bet",
+          "total": 201,
+          "success": 192,
+          "running": 5,
+          "queued": 3,
+          "failed": [],
+          "increment": 6,
+          "rate": 18.929285971558745,
+          "remaining": 8
+        },
+        {
+          "id": 41459846661,
+          "spot": "sb-limp",
+          "total": 201,
+          "success": 137,
+          "running": 7,
+          "queued": 56,
+          "failed": [],
+          "increment": 1,
+          "rate": 3.154880995259791,
+          "remaining": 63
+        },
+        {
+          "id": 41776528800,
+          "spot": "utg-bb-3bet",
+          "total": 201,
+          "success": 9,
+          "running": 6,
+          "queued": 185,
+          "failed": [],
+          "increment": 9,
+          "rate": 28.39392895733812,
+          "remaining": 191
+        },
+        {
+          "id": 41776531045,
+          "spot": "co-btn-3bet",
+          "total": 201,
+          "success": 0,
+          "running": 7,
+          "queued": 193,
+          "failed": [],
+          "increment": 0,
+          "rate": 0,
+          "remaining": 200
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -3148,33 +3128,14 @@
     "deadline": "2026-11-04T15:00:00Z",
     "noAutoMerge": true,
     "staff": "Not repointed;browserGTO redirectslogin,noauthentered;onlyMitchell changesaliasaftermainmerge",
-    "latestChecks": [
-      {
-        "name": "Vercel Preview Comments",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "Poker engine regression tests",
-        "status": "queued",
-        "conclusion": null
-      },
-      {
-        "name": "deploy",
-        "status": "queued",
-        "conclusion": null
-      },
-      {
-        "name": "Poker engine regression tests",
-        "status": "in_progress",
-        "conclusion": null
-      }
-    ],
     "oldCancelledHeads": [
       "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
       "c440eec78d940121b8445c58d5cb696b862aeba0"
     ],
     "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
-    "retryCount": 0
+    "retryCount": 0,
+    "lastObservedAt": "2026-11-04T05:24:10.681Z",
+    "mainUnchanged": true,
+    "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads."
   }
 }
