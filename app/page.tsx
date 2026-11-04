@@ -210,7 +210,7 @@ export default async function HomePage({
       image: "/images/navigation/events-v1.webp", href: "/events" },
     { id: "summit-online", category: "SummitPokerオンライン", title: "SummitPokerオンライン",
       description: "オンライン対戦とGTO学習。",
-      image: "/images/navigation/summit-online-v1.webp" },
+      image: "/images/navigation/summit-online-v1.webp", href: "/poker-lobby" },
     { id: "summit", category: "サミット", title: "ポーカー好きと、もっとつながる。",
       description: "全国の仲間と、店舗やイベント、ポーカーの話題を情報交換。",
       image: "/images/navigation/community-v1.webp", href: "/board" },
