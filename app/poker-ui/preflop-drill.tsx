@@ -1,4 +1,5 @@
 'use client';
+import {trackGtoUsage} from '@/app/gto-usage-tracker';
 import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import type {GtoReply,GtoRequest,DrillMode} from '@/lib/poker/gto.worker';
@@ -64,19 +65,20 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
   const version=generation.current;
   if(timer.current){window.clearTimeout(timer.current);timer.current=null;}
   setResult(null);setError('');setAutoInterrupted(false);
-  if(fromReview){setReviewing(fromReview.length>0);if(fromReview.length){setCur(fromReview[0]);return;}}
+  if(fromReview){setReviewing(fromReview.length>0);if(fromReview.length){trackGtoUsage('drill','start');setCur(fromReview[0]);return;}}
   setLoading(true);
   const d=await (next.current??fetchOne(key));
   if(version!==generation.current)return;
   next.current=fetchOne(key);
   setLoading(false);
-  if(d)setCur(d);else{if(key==='target')setCur(null);setError(key==='target'?'この場面の問題を用意できませんでした。もう一度始めてください。':key==='weak'?'弱点の場面がまだありません。GTOと対戦やリングで打つと、弱点分析に自分の苦手な場面が集まります。':'問題を作れませんでした。もう一度押してください。');}
+  if(d){trackGtoUsage('drill','start');setCur(d);}else{if(key==='target')setCur(null);setError(key==='target'?'この場面の問題を用意できませんでした。もう一度始めてください。':key==='weak'?'弱点の場面がまだありません。GTOと対戦やリングで打つと、弱点分析に自分の苦手な場面が集まります。':'問題を作れませんでした。もう一度押してください。');}
  },[fetchOne]);
  const start=(key=modeKey)=>{if(key==='weak'&&!weak){setCur(null);return;}next.current=null;setReviewing(false);void show(key,null);};
  useEffect(()=>{if(!practiceSpot||targetStarted.current===practiceSpot)return;targetStarted.current=practiceSpot;next.current=null;void show('target',null);},[practiceSpot,show]);
 
  const choose=useCallback((i:number)=>{
   if(!cur||result||loading||settingsOpen)return;const o=cur.spot.options;if(!o[i])return;
+  trackGtoUsage('drill','answer');
   const g=gradeChoice(o.map(x=>x.freq),i),raw=evLoss(o,i),loss=raw===null?null:g.level==='best'?0:raw;
   setResult({choice:i,level:g.level,score:g.score,loss});
   {const v=trainerView(cur.hand,HERO);if(v)sendGtoRecords([recordRow(v,'drill',{freqs:o.map(x=>x.freq),chosen:i,action:o[i].text,evLoss:loss})]);}

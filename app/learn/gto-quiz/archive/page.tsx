@@ -1,3 +1,4 @@
+import {GtoUsageOpen} from '@/app/gto-usage-tracker';
 import Link from 'next/link';
 import {createClient} from '@/lib/supabase/server';
 import {PortalHeader} from '@/app/portal-header';
@@ -26,7 +27,7 @@ export default async function Page({searchParams}:{searchParams?:{page?:string}}
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
    <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">GTO・学習</Link> <span>›</span> <Link href="/learn/gto-quiz">今日のGTOクイズ</Link> <span>›</span> 過去の問題</nav>
-   <h1 className={styles.title}>過去のGTOクイズ（答えと解説付き）</h1>
+   <GtoUsageOpen tool="quiz"/><h1 className={styles.title}>過去のGTOクイズ（答えと解説付き）</h1>
    <p className={styles.lead}>これまでに出題した「今日のGTOクイズ」の問題です。6人テーブル・100BBのキャッシュゲームの場面で、GTO（相手にどう打たれても大きく損をしない打ち方）がその手でそれぞれの打ち方を選ぶ割合と、その理由を載せています。今日の問題は<Link href="/learn/gto-quiz">今日のGTOクイズ</Link>で解けます。</p>
    {!shown.length&&<p>過去の問題はまだありません。</p>}
    {shown.map(date=>{const [,m,d]=date.split('-').map(Number),qs=dailyQuestions(date)??[];

@@ -1,4 +1,5 @@
 "use client";
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 
 import { AcademyHero } from "@/app/academy-hero";
 import { useEffect, useState } from "react";
@@ -51,6 +52,7 @@ export function Academy() {
   setCompleted(next);
   try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch { /* Browsers may disable storage. */ }
  }
+ useGtoUsage(course==='beginner'?'lesson':null,`beginner:${selected}`);
  const active = lessons.find(l => l.id === selected)!;
  const index = lessons.findIndex(l => l.id === selected);
  const percent = Math.round(completed.length / courseLessons.length * 100);

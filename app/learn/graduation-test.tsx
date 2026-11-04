@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 import {useState} from "react";
 import Link from "next/link";
 import {createClient} from "@/lib/supabase/client";
@@ -24,10 +25,11 @@ const questions:Q[]=[
 ];
 export const GRADUATION_PASS_SCORE=12;
 export function GraduationTest({onPass}:{onPass?:(score:number)=>void}){
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [index,setIndex]=useState(0),[answers,setAnswers]=useState<number[]>([]),[finished,setFinished]=useState(false);
  const [saveStatus,setSaveStatus]=useState<"idle"|"saving"|"saved"|"login"|"error">("idle");
  const score=answers.reduce((s,a,i)=>s+(a===questions[i].answer?1:0),0),passed=score>=GRADUATION_PASS_SCORE;
- function choose(a:number){if(answers.length!==index)return;const next=[...answers,a];setAnswers(next);if(index===questions.length-1){setFinished(true);if(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0)>=GRADUATION_PASS_SCORE)onPass?.(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0));} }
+ function choose(a:number){if(answers.length!==index)return;usageAnswer();const next=[...answers,a];setAnswers(next);if(index===questions.length-1){setFinished(true);if(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0)>=GRADUATION_PASS_SCORE)onPass?.(next.reduce((s,v,i)=>s+(v===questions[i].answer?1:0),0));} }
  async function saveBadge(){setSaveStatus("saving");try{const supabase=createClient();const {data:{user}}=await supabase.auth.getUser();if(!user){setSaveStatus("login");return;}const {data,error}=await supabase.rpc("submit_academy_graduation",{p_answers:answers});if(error||!data?.[0]?.passed){setSaveStatus("error");return;}setSaveStatus("saved");}catch{setSaveStatus("error");}}
  function reset(){setIndex(0);setAnswers([]);setFinished(false);setSaveStatus("idle")}
  const q=questions[index],selected=answers[index];

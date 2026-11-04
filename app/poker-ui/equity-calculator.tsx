@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,trackGtoUsage} from '@/app/gto-usage-tracker';
 import {useMemo,useState} from 'react';
 import {MADE_NAMES,handEquity,potOdds} from '@/lib/poker/hand-equity';
 import {CardGrid,CardSlot,cardsText,parseCards} from './card-picker';
@@ -14,6 +15,7 @@ const small=(v:number)=>v>0&&v<0.001?'<0.1%':pct(v);
 const fmt=(v:number)=>new Intl.NumberFormat('ja-JP',{maximumFractionDigits:2}).format(v);
 
 export function EquityCalculator(){
+ useGtoUsage('calculator');
  const [tab,setTab]=useState<'equity'|'odds'>('equity');
  const [hands,setHands]=useState<(number|null)[][]>(()=>[parseCards('Ah Kd')!,parseCards('Js Jc')!]);
  const [board,setBoard]=useState<(number|null)[]>([null,null,null,null,null]);
@@ -22,7 +24,7 @@ export function EquityCalculator(){
 
  const all=[...hands.flat(),...board].filter((c):c is number=>c!==null);
  const cardAt=(t:Target)=>t.g==='board'?board[t.i]:hands[t.h][t.i];
- const set=(t:Target,c:number|null)=>{if(t.g==='board'){const b=board.slice();b[t.i]=c;setBoard(b);return b;}const hs=hands.map(h=>h.slice());hs[t.h][t.i]=c;setHands(hs);return hs;};
+ const set=(t:Target,c:number|null)=>{trackGtoUsage('calculator','start');if(t.g==='board'){const b=board.slice();b[t.i]=c;setBoard(b);return b;}const hs=hands.map(h=>h.slice());hs[t.h][t.i]=c;setHands(hs);return hs;};
  // After a pick, move to the next empty place in the same group (the board, or that hand).
  const pick=(c:number)=>{if(!target)return;set(target,c);
   if(target.g==='board'){const b=board.slice();b[target.i]=c;const e=b.findIndex(x=>x===null);setTarget(e>=0?{g:'board',i:e}:null);}
