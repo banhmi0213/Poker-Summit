@@ -13,4 +13,4 @@
 .skinActions{margin:12px 0 14px}.skinActions>p{margin:0!important}.skinActions>section{flex-basis:100%;margin:0!important}
 /* Phone (owner 2026/11/04): every summary card takes the full row like デザイン変更, so the chip card's reset note is not squeezed. */
 @media(max-width:650px){.summaryGrid>.summaryCard{grid-column:1/-1}}
-@media(max-width:650px){.shell{overflow-x:clip}.header{gap:8px;padding-inline:10px}.brand{flex:0 1 auto;min-width:0}.brand img{width:112px;height:auto;max-width:100%}.header nav{gap:9px;font-size:10px;letter-spacing:0;min-width:0}.memberAvatar{flex:none}}
+@media(max-width:650px){.shell{overflow-x:clip}.header{gap:8px;padding-inline:12px}.brand{flex:0 1 auto;min-width:0}.brand img{width:140px;height:auto;max-width:100%}.header nav{gap:10px;font-size:10px;letter-spacing:.02em}.header nav>:not(a){display:none}}@media(max-width:380px){.header{padding-inline:10px;gap:6px}.brand img{width:118px}.header nav{gap:8px;letter-spacing:0}}
