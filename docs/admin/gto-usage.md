@@ -42,3 +42,9 @@
 - `tests/sql/gto-usage.sql`：ステージングで実行済み。RLS・直接アクセス不可・重複ID・制約を確認し、テスト行は全てROLLBACK。
 - Next.js本番ビルド成功（ステージングの公開URL／公開キーで検証）。
 - リポジトリ全体のtscは既存エラー34件あり。変更前と同じ依存関係で比較し、新規エラーなし。既存のNext設定は型エラーをビルドの妨げにしない設定。アクセス統計等の既存ファイルの型修正は範囲外。
+
+## Previewの接続先（11/4確認）
+
+VercelのPreviewには現状、本番DB `tjmeqnzvuoguoffltxrp` の公開URLが埋め込まれていることを確認しました。Preview上からの書き込みテストは実施していません。
+誤混入を防ぐため `VERCEL_ENV=preview` ではステージングDB `mjdgylgzhsygcgtuceow` 以外へのGTO計測の読み書きを止めます。本番はこのPreview専用ガードの対象外です。
+Previewの環境変数（Supabase URL・公開キー・サービス用キー）をステージング用へ揃えて再デプロイした後、Previewからの書き込みを通した確認が必要です。本番の環境変数は変えません。

@@ -1,4 +1,5 @@
 import 'server-only';
+import {gtoUsageDatabaseReady} from './gto-usage-environment';
 import {createClient} from '@/lib/supabase/server';
 import {createServiceRoleClient} from '@/lib/supabase/service-role';
 import {usageReport,type UsageEvent,type UsagePeriod} from './gto-usage';
@@ -7,6 +8,7 @@ export async function isUsageAdmin(){
  const {data,error}=await auth.from('admin_users').select('user_id').eq('user_id',user.id).maybeSingle();return !error&&!!data;
 }
 export async function loadUsage(period:UsagePeriod){
+ if(!gtoUsageDatabaseReady())throw new Error('このPreviewはステージングDBに接続されていません。VercelのPreview用DB設定を確認してください。');
  const svc=createServiceRoleClient();
  const {data:first,error:firstError}=await svc.from('gto_usage_events').select('created_at').order('created_at').limit(1).maybeSingle();
  if(firstError)throw new Error('利用記録を読み込めませんでした。DBの準備状況をご確認ください。');

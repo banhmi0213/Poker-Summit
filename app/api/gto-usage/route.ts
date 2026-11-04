@@ -3,11 +3,13 @@ import {createClient} from '@/lib/supabase/server';
 import {createServiceRoleClient} from '@/lib/supabase/service-role';
 import {classifyDevice,isBotUserAgent} from '@/lib/device';
 import {getVisitorId} from '@/lib/visitor';
+import {gtoUsageDatabaseReady} from '@/lib/gto-usage-environment';
 import {isTool,isAction} from '@/lib/gto-usage';
 export const dynamic='force-dynamic';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export async function POST(req:NextRequest){
  try{
+  if(!gtoUsageDatabaseReady())return new NextResponse(null,{status:204});
   const ua=req.headers.get('user-agent');
   if(isBotUserAgent(ua)||req.cookies.get('ps_staff')?.value==='1')return new NextResponse(null,{status:204});
   const origin=req.headers.get('origin');
