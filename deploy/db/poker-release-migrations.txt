@@ -65,4 +65,6 @@
 20261102100000_poker_ring_refill_daily
 20261102120000_poker_field_400
 20261102180000_scrape_block
+20261103090000_poker_ring_ranks
 20261103120000_wording_table_not_taku
+20261103230000_poker_skins_hands_only
