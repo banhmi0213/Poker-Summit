@@ -19,3 +19,15 @@
 .typed{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-size:13px;color:#9fb6c6}
 .typed input{background:#203e51;color:#f7f7ee;border:1px solid #93a9b6;border-radius:8px;padding:9px 11px;font:inherit;font-size:15px;min-height:42px}
 @media(max-width:650px){.grid{gap:3px}.card{font-size:12px!important}.card span{font-size:11px}.slot{width:46px;height:64px}}
+
+/* Mobile card cells must fit both the rank and suit inside their border. */
+@media(max-width:650px){
+ .panel .grid .card{
+  gap:0!important;row-gap:0!important;line-height:1!important;
+  min-height:32px!important;box-sizing:border-box;overflow:hidden;
+ }
+ .panel .grid .card span{
+  display:block;flex:0 0 auto;line-height:1!important;
+  margin:0!important;padding:0!important;
+ }
+}
