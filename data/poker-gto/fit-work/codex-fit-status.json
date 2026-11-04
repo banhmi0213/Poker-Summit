@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-04T05:03:52.547Z",
+  "checkedAt": "2026-11-04T05:07:14.233Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -340,7 +340,9 @@
     "sb-bb",
     "co-btn",
     "utg-bb",
-    "hj-bb"
+    "hj-bb",
+    "utg-btn",
+    "sb-iso"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -1037,7 +1039,9 @@
     "sb-bb",
     "co-btn",
     "utg-bb",
-    "hj-bb"
+    "hj-bb",
+    "utg-btn",
+    "sb-iso"
   ],
   "stagingVerified": {
     "spotCounts": {
@@ -2095,9 +2099,11 @@
       "sb-bb",
       "co-btn",
       "utg-bb",
-      "hj-bb"
+      "hj-bb",
+      "utg-btn",
+      "sb-iso"
     ],
-    "importedValidatedCount": 9,
+    "importedValidatedCount": 11,
     "sbBb": {
       "solveRun": 41279680906,
       "solveConclusion": "success",
@@ -2151,7 +2157,7 @@
       "pr": 788,
       "head": "1dd66ca14d06f77f67bd3cca248cc13824d730c0",
       "tree": "91a2399925102a1a3cd5dacffd7c3e81ebbb1f68",
-      "state": "await-checks",
+      "state": "merged-validated",
       "solveRuns": [
         41604956412,
         41459848850
@@ -2161,7 +2167,9 @@
         41776525988
       ],
       "verified": "Each200canonicalunique/v3/250/finitehandEv;67tests;tree match",
-      "workspace": "/workspace/scratch/7d368c3d87fa/gto"
+      "workspace": "/workspace/scratch/7d368c3d87fa/gto",
+      "mergeCommit": "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
+      "checks": "Allchecks success and mergeTree matched"
     }
   },
   "concurrency": {
@@ -3125,5 +3133,20 @@
     "existingPR785Included783784": true,
     "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
     "staffAliasOwner": "Mitchell;requestownerforwardcopyaftermainmerge;do notclaimstaffupdatedwithoutverification"
+  },
+  "mainPromotion": {
+    "pr": 789,
+    "state": "checks-pending",
+    "head": "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
+    "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
+    "workflowRuns": [
+      41777225069,
+      41777218276,
+      41777218272
+    ],
+    "preMergeCopyShared": true,
+    "deadline": "2026-11-04T15:00:00Z",
+    "noAutoMerge": true,
+    "staff": "Browser observed login wall;no credentials entered;Mitchell alias switch required after main."
   }
 }
