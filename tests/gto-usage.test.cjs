@@ -1,6 +1,6 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript');
 function load(file,stubs={}){const mod={exports:{}};const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;new Function('require','module','exports',code)(name=>name in stubs?stubs[name]:require(name),mod,mod.exports);return mod.exports;}
-const usage=load('lib/gto-usage.ts');
+const usage=load('lib/gto-usage.ts'),environment=load('lib/gto-usage-environment.ts');
 const event=(time,visitor='v1',tool='preflop',action='open',member=null,device='pc')=>({created_at:time,visitor_id:visitor,tool,action,member_id:member,device});
 test('JST boundaries include midnight, exclude next midnight, and compare previous day',()=>{
  const p=usage.usagePeriod('daily','2026-11-05');assert.equal(new Date(p.start).toISOString(),'2026-11-04T15:00:00.000Z');
@@ -25,7 +25,7 @@ const UUID='00000000-0000-4000-8000-000000000001';
 function recorder(options={}){
  const rows=new Map(),writes=[];
  const {POST}=load('app/api/gto-usage/route.ts',{
-  'next/server':require('next/server'),'@/lib/gto-usage':usage,
+  'next/server':require('next/server'),'@/lib/gto-usage-environment':environment,'@/lib/gto-usage':usage,
   '@/lib/device':{isBotUserAgent:ua=>!ua||/bot/.test(ua),classifyDevice:ua=>/mobile/.test(ua)?'mobile':'pc'},
   '@/lib/visitor':{getVisitorId:()=>options.visitor===false?null:UUID},
   '@/lib/supabase/server':{createClient:async()=>({rpc:async()=>({data:!!options.admin,error:options.authFailure?'error':null}),auth:{getUser:async()=>({data:{user:options.user??null},error:null})}})},
@@ -47,7 +47,7 @@ test('bot, staff, admin, cross-origin, invalid enum and missing visitor are excl
 test('missing table or network failure returns 204 without blocking the UI',async()=>{const r=recorder({dbFailure:true});assert.equal((await r.POST(r.request())).status,204);});
 test('admin authorization rejects guests and normal members',async()=>{
  for(const [user,admin,expected] of [[null,false,false],[{id:'m'},false,false],[{id:'a'},true,true]]){
-  const server=load('lib/gto-usage-server.ts',{'server-only':{},'./gto-usage':usage,'@/lib/supabase/service-role':{},'@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:admin?{user_id:'a'}:null,error:null})})})})})}});assert.equal(await server.isUsageAdmin(),expected);
+  const server=load('lib/gto-usage-server.ts',{'server-only':{},'./gto-usage-environment':environment,'./gto-usage':usage,'@/lib/supabase/service-role':{},'@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user}})},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:admin?{user_id:'a'}:null,error:null})})})})})}});assert.equal(await server.isUsageAdmin(),expected);
  }
 });
 test('the existing analytics page has zero changes and the new menu follows it',()=>{
@@ -57,9 +57,16 @@ test('the existing analytics page has zero changes and the new menu follows it',
 test('dashboard loads beyond 1,000 rows and returns only aggregate data',async()=>{
  const rows=Array.from({length:1037},(_,i)=>({...event('2026-11-05T00:00:00Z','v'+i),id:String(i).padStart(5,'0')}));let pages=0;
  const svc={from:()=>{let selection='',after='';const q={select:s=>{selection=s;return q},order:()=>q,limit:()=>q,gte:()=>q,lt:()=>q,gt:(_,v)=>{after=v;return q},maybeSingle:async()=>({data:{created_at:rows[0].created_at},error:null}),then:(resolve,reject)=>{pages++;return Promise.resolve({data:rows.filter(r=>r.id>after).slice(0,1000),error:null}).then(resolve,reject)}};return q;}};
- const server=load('lib/gto-usage-server.ts',{'server-only':{},'./gto-usage':usage,'@/lib/supabase/server':{},'@/lib/supabase/service-role':{createServiceRoleClient:()=>svc}});
+ const server=load('lib/gto-usage-server.ts',{'server-only':{},'./gto-usage-environment':environment,'./gto-usage':usage,'@/lib/supabase/server':{},'@/lib/supabase/service-role':{createServiceRoleClient:()=>svc}});
  const out=await server.loadUsage(usage.usagePeriod('daily','2026-11-05'));assert.equal(out.report.total.pv,1037);assert.equal(out.report.total.uu,1037);assert.equal(pages,2);assert.equal(JSON.stringify(out).includes('visitor_id'),false);
 });
 test('CSV route denies unauthorized users before querying usage records',async()=>{
- let queried=false;const route=load('app/admin/gto-usage/csv/route.ts',{'next/server':require('next/server'),'@/lib/gto-usage':usage,'@/lib/gto-usage-server':{isUsageAdmin:async()=>false,loadUsage:async()=>{queried=true;throw Error('must not query')}}});assert.equal((await route.GET({nextUrl:new URL('https://test/admin/gto-usage/csv')})).status,403);assert.equal(queried,false);
+ let queried=false;const route=load('app/admin/gto-usage/csv/route.ts',{'next/server':require('next/server'),'@/lib/gto-usage-environment':environment,'@/lib/gto-usage':usage,'@/lib/gto-usage-server':{isUsageAdmin:async()=>false,loadUsage:async()=>{queried=true;throw Error('must not query')}}});assert.equal((await route.GET({nextUrl:new URL('https://test/admin/gto-usage/csv')})).status,403);assert.equal(queried,false);
+});
+
+test('Preview can only record/read the separate staging DB, never inherited production DB',()=>{
+ assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'preview',NEXT_PUBLIC_SUPABASE_URL:'https://mjdgylgzhsygcgtuceow.supabase.co'}),true);
+ assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'preview',NEXT_PUBLIC_SUPABASE_URL:'https://tjmeqnzvuoguoffltxrp.supabase.co'}),false);
+ assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'preview'}),false);
+ assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'production',NEXT_PUBLIC_SUPABASE_URL:'https://tjmeqnzvuoguoffltxrp.supabase.co'}),true);
 });
