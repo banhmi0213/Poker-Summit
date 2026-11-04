@@ -38,8 +38,8 @@
 .picker .slots button[aria-pressed=true],
 .picker .ranks button[aria-pressed=true],
 .picker .suits button[aria-pressed=true] {
- background:#173e59!important;color:#fff!important;border-color:#ffe3a0!important;
- box-shadow:inset 0 0 0 2px #ffe3a0,0 0 0 1px #173e59;
+ background:#637a7c!important;color:#fff!important;border-color:#ffe3a0!important;
+ box-shadow:inset 0 0 0 2px #ffe3a0,0 0 0 1px #304e60;
 }
 .picker .ranks button,.picker .suits button{position:relative}
 .picker .ranks button[aria-pressed=true]::after,
