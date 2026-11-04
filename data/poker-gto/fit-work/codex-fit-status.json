@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-04T11:36:03.719Z",
+  "checkedAt": "2026-11-04T17:05:45.634Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,210 +104,156 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-04T11:33:59.537Z",
+    "checkedAt": "2026-11-04T17:05:45.634Z",
     "runs": [
+      {
+        "id": 41873282774,
+        "branch": "gto-flop-solve/utg-btn-bb/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193,
+        "failed": [],
+        "spot": "utg-btn-bb",
+        "remaining": 200,
+        "status": "queued",
+        "increment": 0,
+        "rate": 0
+      },
       {
         "id": 41817944946,
         "branch": "gto-flop-solve/btn-sb-bb/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 6,
-        "success": 6,
-        "queued": 188,
+        "running": 7,
+        "success": 93,
+        "queued": 100,
         "failed": [],
         "spot": "btn-sb-bb",
-        "remaining": 194
+        "remaining": 107,
+        "status": "queued",
+        "increment": 87,
+        "rate": 15.733872893315047
       },
       {
         "id": 41817943251,
         "branch": "gto-flop-solve/co-btn-bb/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 7,
-        "success": 9,
-        "queued": 184,
+        "running": 6,
+        "success": 112,
+        "queued": 82,
         "failed": [],
         "spot": "co-btn-bb",
-        "remaining": 191
-      },
-      {
-        "id": 41817941822,
-        "branch": "gto-flop-solve/btn-bb-4bet/v3b",
+        "remaining": 88,
         "status": "queued",
-        "total": 201,
-        "running": 5,
-        "success": 44,
-        "queued": 151,
-        "failed": [],
-        "spot": "btn-bb-4bet",
-        "remaining": 156
+        "increment": 103,
+        "rate": 18.627458712775287
       },
       {
         "id": 41776531045,
         "branch": "gto-flop-solve/co-btn-3bet/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 7,
-        "success": 89,
-        "queued": 104,
+        "running": 6,
+        "success": 170,
+        "queued": 24,
         "failed": [],
         "spot": "co-btn-3bet",
-        "remaining": 111
-      },
-      {
-        "id": 41735951806,
-        "branch": "gto-flop-solve/btn-sb-3bet/v3b",
+        "remaining": 30,
         "status": "queued",
-        "total": 201,
-        "running": 7,
-        "success": 170,
-        "queued": 23,
-        "failed": [],
-        "spot": "btn-sb-3bet",
-        "remaining": 30
+        "increment": 81,
+        "rate": 14.648778211017458
       },
       {
         "id": 41459846661,
         "branch": "gto-flop-solve/sb-limp/v3b",
-        "status": "queued",
         "total": 201,
         "running": 7,
-        "success": 159,
-        "queued": 34,
+        "success": 179,
+        "queued": 14,
         "failed": [],
         "spot": "sb-limp",
-        "remaining": 41
+        "remaining": 21,
+        "status": "queued",
+        "increment": 20,
+        "rate": 3.616982274325298
       },
       {
-        "id": 41735950412,
-        "spot": "co-bb-3bet",
+        "id": 41817941822,
+        "spot": "btn-bb-4bet",
         "total": 201,
         "success": 200,
         "running": 0,
         "queued": 0,
         "failed": [],
-        "increment": 55,
-        "rate": 9.729058974459893,
-        "remaining": 0
+        "remaining": 0,
+        "increment": 156,
+        "rate": 28.212461739737325
       },
       {
-        "id": 41678529089,
-        "spot": "btn-bb-3bet",
+        "id": 41735951806,
+        "spot": "btn-sb-3bet",
         "total": 201,
         "success": 200,
         "running": 0,
         "queued": 0,
         "failed": [],
-        "increment": 8,
-        "rate": 1.4151358508305298,
-        "remaining": 0
-      },
-      {
-        "id": 41776528800,
-        "spot": "utg-bb-3bet",
-        "total": 201,
-        "success": 200,
-        "running": 0,
-        "queued": 0,
-        "failed": [],
-        "increment": 191,
-        "rate": 33.786368438578904,
-        "remaining": 0
+        "remaining": 0,
+        "increment": 30,
+        "rate": 5.425473411487947
       }
     ]
   },
   "eta": {
-    "observedAt": "2026-11-04T11:33:59.537Z",
-    "previousAt": "2026-11-04T05:20:33.415Z",
-    "elapsedHours": 6.223922777777778,
-    "increment": 514,
-    "ratePerHour": 82.58457219861607,
-    "proxySpotRate": 13.764095366436012,
+    "observedAt": "2026-11-04T17:05:45.634Z",
+    "previousAt": "2026-11-04T11:33:59.537Z",
+    "elapsedHours": 5.529471388888889,
+    "increment": 477,
+    "ratePerHour": 86.26502724265836,
+    "proxySpotRate": 14.377504540443061,
     "spots": [
-      {
-        "spot": "btn-sb-bb",
-        "success": 6,
-        "remaining": 194,
-        "rate": 11.709690744898964,
-        "baseline": "2026-11-04T11:03:14.911Z",
-        "elapsedHours": 0.5123961111111112,
-        "increment": 6,
-        "shortObservation": true,
-        "proxy": false,
-        "eta": "2026-11-05T04:08:02.444Z"
-      },
-      {
-        "spot": "co-btn-bb",
-        "success": 9,
-        "remaining": 191,
-        "rate": 17.564536117348446,
-        "baseline": "2026-11-04T11:03:14.911Z",
-        "elapsedHours": 0.5123961111111112,
-        "increment": 9,
-        "shortObservation": true,
-        "proxy": false,
-        "eta": "2026-11-04T22:26:26.599Z"
-      },
-      {
-        "spot": "btn-bb-4bet",
-        "success": 44,
-        "remaining": 156,
-        "rate": 81.96783521429275,
-        "baseline": "2026-11-04T11:03:14.911Z",
-        "elapsedHours": 0.5123961111111112,
-        "increment": 42,
-        "shortObservation": true,
-        "proxy": false,
-        "eta": "2026-11-04T13:28:11.005Z"
-      },
-      {
-        "spot": "co-btn-3bet",
-        "success": 89,
-        "remaining": 111,
-        "rate": 14.299663279526907,
-        "baseline": "2026-11-04T05:20:33.415Z",
-        "elapsedHours": 6.223922777777778,
-        "increment": 89,
-        "shortObservation": false,
-        "proxy": false,
-        "eta": "2026-11-04T19:19:44.250Z"
-      },
-      {
-        "spot": "btn-sb-3bet",
-        "success": 170,
-        "remaining": 30,
-        "rate": 14.460333653454176,
-        "baseline": "2026-11-04T05:20:33.415Z",
-        "elapsedHours": 6.223922777777778,
-        "increment": 90,
-        "shortObservation": false,
-        "proxy": false,
-        "eta": "2026-11-04T13:38:28.244Z"
-      },
-      {
-        "spot": "sb-limp",
-        "success": 159,
-        "remaining": 41,
-        "rate": 3.5347482263999095,
-        "baseline": "2026-11-04T05:20:33.415Z",
-        "elapsedHours": 6.223922777777778,
-        "increment": 22,
-        "shortObservation": false,
-        "proxy": false,
-        "eta": "2026-11-04T23:09:56.400Z"
-      },
       {
         "spot": "utg-btn-bb",
         "success": 0,
         "remaining": 200,
-        "rate": 13.764095366436012,
+        "rate": 14.377504540443061,
         "proxy": true,
-        "start": "2026-11-04T13:28:11.005Z",
-        "eta": "2026-11-05T04:00:01.017Z"
+        "eta": "2026-11-05T07:00:23.865Z"
+      },
+      {
+        "spot": "btn-sb-bb",
+        "success": 93,
+        "remaining": 107,
+        "rate": 15.733872893315047,
+        "proxy": false,
+        "eta": "2026-11-04T23:53:47.845Z"
+      },
+      {
+        "spot": "co-btn-bb",
+        "success": 112,
+        "remaining": 88,
+        "rate": 18.627458712775287,
+        "proxy": false,
+        "eta": "2026-11-04T21:49:12.784Z"
+      },
+      {
+        "spot": "co-btn-3bet",
+        "success": 170,
+        "remaining": 30,
+        "rate": 14.648778211017458,
+        "proxy": false,
+        "eta": "2026-11-04T19:08:38.262Z"
+      },
+      {
+        "spot": "sb-limp",
+        "success": 179,
+        "remaining": 21,
+        "rate": 3.616982274325298,
+        "proxy": false,
+        "eta": "2026-11-04T22:54:07.035Z"
       }
     ],
-    "initial21x200": "2026-11-05T04:08:02.444Z",
-    "assumptions": "6spots/~40runners; existing per-spot rates measured since05:20UTC; new three spots measured since11:03UTC (short31min); unstarted uses aggregate/6 and waits for first free slot; ±24h or more; initial21x200 not1755"
+    "initial21x200": "2026-11-05T07:00:23.865Z",
+    "expansionBatch": "2026-11-05T07:00:23.865Z",
+    "assumptions": "6spots/~40runners; measured completed delta since preceding checkpoint; utg-btn-bb and expansion use totalrate/6; all initial spots now started, no startwait; +/-24h or more; final1755coverage separate"
   },
   "flopPR": {
     "number": 756,
@@ -1576,15 +1522,15 @@
     "rules": "\n【最新11/2オーナー指示・1,755全網羅計画】最終目標は各場面1,755スート同型クラスすべて。まず100BB21場面×200枚=4,200枚を優先し、6slot運用を維持。初期200枚の未開始spotがある間は拡充分を開始しない。未開始spotがなく枠が空いたら追加batchを最大200枚ずつ、btn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順で計算する。最後の余りは1755まで。allTextures()の1,755クラスと実フロップ出現数weightを使い、version3/250iter/handEv完了済みと実行中manifestのcanonical keyを除外。ペア/モノトーン/ツートーン/レインボー/コネクトなどの層を偏らせず、各層内は出現頻度を考慮して未計算盤面を選ぶ。各batchのmanifestとrunを保存し重複を防ぐ。既存workflowはdata/poker-gto/flops.jsonの初期200枚だけを読むため、そのまま再pushして追加分を計算できると誤認しない。拡充開始時に専用manifestを読む計算branch/workflowを用意し初期200を勝手に置換しない。\n浅いスタック/8〜9人卓を始めたら6slotのうち約2slotを追加flopbatchへ配分し、残り4slotで新条件を並行。拡充分もversion3/iterations250/handEv検証→flop-index.cjs（全JSON列挙）→GTO/フロップtests→新PR全checks成功→stage merge。1755件はファイル件数ではなくcanonical keyのユニーク数で数え、stack/seats別に混ぜない。次から各場面を『検証/取り込み済み数 / 1,755』（初期200完成度も併記可）で報告し、計算済み未回収/未検証は別記。ETAは初期21×200完了と最終1755網羅を混同しない。\nアプリ確認結果：flop-index.cjsは全JSONを索引化。gto-bot.tsはcanonical同形をnearestより優先、flop-strategy-panelのtyped検索も索引全体をnearestへ渡すので追加済み同形を直接使う。一方dropdownだけ初期200に固定されており修正PR754を作成済み。head596a05914357ad9ab2f44110fe0c693246f6cbb3、branchchatgpt/gto-flop-expanded-picker-20261102-j、ローカル4floptests成功。計算済み索引全件を選択肢にし、初期200以外の盤面が直接選ばれる回帰テスト追加。全checks成功後だけstage merge。重複PR禁止。\n今は拡充batchを開始せず、初期21×200の既存計画を進める。詳細は最新checkpoint.flopExpansionPlanを優先。共有事項はコピー可能な形で自発的に提示する。",
     "stagedValidatedCounts": {
       "utg-bb": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "hj-bb": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "co-bb": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "btn-bb": {
@@ -1592,27 +1538,27 @@
         "total": 1755
       },
       "sb-bb": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "utg-btn": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "co-btn": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "utg-bb-3bet": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "co-bb-3bet": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "btn-bb-3bet": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "btn-sb-3bet": {
@@ -1632,7 +1578,7 @@
         "total": 1755
       },
       "sb-iso": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "hu-srp": {
@@ -1640,7 +1586,7 @@
         "total": 1755
       },
       "hu-limp": {
-        "validated": 0,
+        "validated": 200,
         "total": 1755
       },
       "hu-3bet": {
@@ -1672,7 +1618,29 @@
       "state": "PRopen awaitingallchecks;notmerged",
       "followupCardPickerPR": 755,
       "longListIsTemporary": true
-    }
+    },
+    "batches": [
+      {
+        "id": "btn-bb-100bb-20261105-01",
+        "spot": "btn-bb",
+        "stackBB": 100,
+        "seats": 6,
+        "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+        "head": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5",
+        "run": 41873590700,
+        "manifest": "data/poker-gto/flop-batches/btn-bb-100bb-20261105-01.json",
+        "planned": 200,
+        "excludedValidated": 200,
+        "strata": 43,
+        "version": 3,
+        "iterations": 250,
+        "state": "running",
+        "planJobs": 201,
+        "firstObservedRunning": 7,
+        "observedAt": "2026-11-04T17:05:45.634Z"
+      }
+    ],
+    "state": "first-expansion-started-after-all21-initial-started"
   },
   "flopCardPicker": {
     "pr": 755,
@@ -1767,34 +1735,22 @@
   ],
   "pendingCollections": [
     {
-      "spot": "hu-limp",
-      "solveRun": 40922261771,
-      "collectRun": 41486981128,
-      "collectState": "success",
-      "validated": {
-        "version": 3,
-        "iterations": 250,
-        "handEv": true,
-        "uniqueCanonical": 200
-      },
-      "pr": 756,
-      "head": "6f4cf19ad081fceb9da229ebb6b06762d8654a0f",
-      "state": "merged-and-stage-index-verified",
-      "tests": 66,
-      "tree": "01b58909e67197c3531322f447857e36a0f4915b",
-      "merge": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd"
+      "spot": "btn-bb-4bet",
+      "solveRun": 41817941822,
+      "collectRun": 41873275503,
+      "state": "collected-and-validated200-await-sourcePR"
     },
     {
-      "spot": "co-bb",
-      "solveRun": 41279681140,
-      "collectRun": 41487113673,
-      "state": "merged-previously",
-      "job": 125420255718,
-      "verifiedOutput": true
+      "spot": "btn-sb-3bet",
+      "solveRun": 41735951806,
+      "collectRun": 41873277486,
+      "state": "retry-attempt2-queued",
+      "retryCount": 1,
+      "error": "GitHub artifact HTTP504 on AhQdTc"
     }
   ],
-  "newFlopRuns": [
-    {
+  "newFlopRuns": {
+    "0": {
       "branch": "gto-flop-collect/41604956412",
       "runs": [
         {
@@ -1804,7 +1760,7 @@
         }
       ]
     },
-    {
+    "1": {
       "branch": "gto-flop-collect/41459848850",
       "runs": [
         {
@@ -1814,7 +1770,7 @@
         }
       ]
     },
-    {
+    "2": {
       "branch": "gto-flop-solve/utg-bb-3bet/v3b",
       "runs": [
         {
@@ -1824,7 +1780,7 @@
         }
       ]
     },
-    {
+    "3": {
       "branch": "gto-flop-solve/co-btn-3bet/v3b",
       "runs": [
         {
@@ -1834,7 +1790,7 @@
         }
       ]
     },
-    {
+    "4": {
       "branch": "gto-flop-collect/41735950412",
       "runs": [
         {
@@ -1844,7 +1800,7 @@
         }
       ]
     },
-    {
+    "5": {
       "branch": "gto-flop-collect/41678529089",
       "runs": [
         {
@@ -1854,7 +1810,7 @@
         }
       ]
     },
-    {
+    "6": {
       "branch": "gto-flop-collect/41776528800",
       "runs": [
         {
@@ -1864,7 +1820,7 @@
         }
       ]
     },
-    {
+    "7": {
       "branch": "gto-flop-solve/btn-bb-4bet/v3b",
       "runs": [
         {
@@ -1874,7 +1830,7 @@
         }
       ]
     },
-    {
+    "8": {
       "branch": "gto-flop-solve/co-btn-bb/v3b",
       "runs": [
         {
@@ -1884,7 +1840,7 @@
         }
       ]
     },
-    {
+    "9": {
       "branch": "gto-flop-solve/btn-sb-bb/v3b",
       "runs": [
         {
@@ -1893,8 +1849,15 @@
           "conclusion": null
         }
       ]
+    },
+    "utg-btn-bb": {
+      "run": 41873282774,
+      "branch": "gto-flop-solve/utg-btn-bb/v3b",
+      "state": "running",
+      "planJobs": 201,
+      "firstObservedRunning": 7
     }
-  ],
+  },
   "recoveredWorkspace": {
     "0": "/",
     "1": "w",
@@ -2208,9 +2171,12 @@
       "utg-bb",
       "hj-bb",
       "utg-btn",
-      "sb-iso"
+      "sb-iso",
+      "btn-bb-3bet",
+      "co-bb-3bet",
+      "utg-bb-3bet"
     ],
-    "importedValidatedCount": 11,
+    "importedValidatedCount": 14,
     "sbBb": {
       "solveRun": 41279680906,
       "solveConclusion": "success",
@@ -2280,81 +2246,80 @@
     }
   },
   "concurrency": {
-    "checkedAt": "2026-11-04T11:33:59.537Z",
+    "checkedAt": "2026-11-04T17:05:45.634Z",
     "runs": [
       {
-        "id": 41818892587,
-        "branch": "chatgpt/poker-authoritative-hand",
-        "status": "in_progress",
-        "total": 1,
-        "running": 1,
+        "id": 41873590700,
+        "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+        "total": 201,
+        "running": 7,
         "success": 0,
-        "queued": 0,
+        "queued": 193,
+        "failed": []
+      },
+      {
+        "id": 41873282774,
+        "branch": "gto-flop-solve/utg-btn-bb/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193,
+        "failed": []
+      },
+      {
+        "id": 41873277486,
+        "branch": "gto-flop-collect/41735951806",
+        "total": 1,
+        "running": 0,
+        "success": 0,
+        "queued": 1,
         "failed": []
       },
       {
         "id": 41817944946,
         "branch": "gto-flop-solve/btn-sb-bb/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 6,
-        "success": 6,
-        "queued": 188,
+        "running": 7,
+        "success": 93,
+        "queued": 100,
         "failed": []
       },
       {
         "id": 41817943251,
         "branch": "gto-flop-solve/co-btn-bb/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 7,
-        "success": 9,
-        "queued": 184,
-        "failed": []
-      },
-      {
-        "id": 41817941822,
-        "branch": "gto-flop-solve/btn-bb-4bet/v3b",
-        "status": "queued",
-        "total": 201,
-        "running": 5,
-        "success": 44,
-        "queued": 151,
+        "running": 6,
+        "success": 112,
+        "queued": 82,
         "failed": []
       },
       {
         "id": 41776531045,
         "branch": "gto-flop-solve/co-btn-3bet/v3b",
-        "status": "queued",
         "total": 201,
-        "running": 7,
-        "success": 89,
-        "queued": 104,
-        "failed": []
-      },
-      {
-        "id": 41735951806,
-        "branch": "gto-flop-solve/btn-sb-3bet/v3b",
-        "status": "queued",
-        "total": 201,
-        "running": 7,
+        "running": 6,
         "success": 170,
-        "queued": 23,
+        "queued": 24,
         "failed": []
       },
       {
         "id": 41459846661,
         "branch": "gto-flop-solve/sb-limp/v3b",
-        "status": "queued",
         "total": 201,
         "running": 7,
-        "success": 159,
-        "queued": 34,
+        "success": 179,
+        "queued": 14,
         "failed": []
       }
     ],
     "errors": [],
-    "repoRunning": 40
+    "repoRunning": 40,
+    "allRunStatuses": [
+      "in_progress",
+      "queued",
+      "waiting"
+    ],
+    "jobPagination": "per_page100 all pages; every total_count matched"
   },
   "flopObservations": [
     {
@@ -3480,6 +3445,105 @@
           "remaining": 0
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-04T17:05:45.634Z",
+      "runs": [
+        {
+          "id": 41873282774,
+          "branch": "gto-flop-solve/utg-btn-bb/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 0,
+          "queued": 193,
+          "failed": [],
+          "spot": "utg-btn-bb",
+          "remaining": 200,
+          "status": "queued",
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41817944946,
+          "branch": "gto-flop-solve/btn-sb-bb/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 93,
+          "queued": 100,
+          "failed": [],
+          "spot": "btn-sb-bb",
+          "remaining": 107,
+          "status": "queued",
+          "increment": 87,
+          "rate": 15.733872893315047
+        },
+        {
+          "id": 41817943251,
+          "branch": "gto-flop-solve/co-btn-bb/v3b",
+          "total": 201,
+          "running": 6,
+          "success": 112,
+          "queued": 82,
+          "failed": [],
+          "spot": "co-btn-bb",
+          "remaining": 88,
+          "status": "queued",
+          "increment": 103,
+          "rate": 18.627458712775287
+        },
+        {
+          "id": 41776531045,
+          "branch": "gto-flop-solve/co-btn-3bet/v3b",
+          "total": 201,
+          "running": 6,
+          "success": 170,
+          "queued": 24,
+          "failed": [],
+          "spot": "co-btn-3bet",
+          "remaining": 30,
+          "status": "queued",
+          "increment": 81,
+          "rate": 14.648778211017458
+        },
+        {
+          "id": 41459846661,
+          "branch": "gto-flop-solve/sb-limp/v3b",
+          "total": 201,
+          "running": 7,
+          "success": 179,
+          "queued": 14,
+          "failed": [],
+          "spot": "sb-limp",
+          "remaining": 21,
+          "status": "queued",
+          "increment": 20,
+          "rate": 3.616982274325298
+        },
+        {
+          "id": 41817941822,
+          "spot": "btn-bb-4bet",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "queued": 0,
+          "failed": [],
+          "remaining": 0,
+          "increment": 156,
+          "rate": 28.212461739737325
+        },
+        {
+          "id": 41735951806,
+          "spot": "btn-sb-3bet",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "queued": 0,
+          "failed": [],
+          "remaining": 0,
+          "increment": 30,
+          "rate": 5.425473411487947
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -3554,7 +3618,7 @@
     "deployment": "Vercel success on merge1a84e0b",
     "stagingSourceReadbackVerified": true
   },
-  "nextUnstartedFlop": "utg-btn-bb",
+  "nextUnstartedFlop": null,
   "desktopGtoWide": {
     "state": "merged",
     "pr": 779,
@@ -3589,7 +3653,7 @@
     "until": "2026-11-05T00:00:00+09:00",
     "scope": "Only flop data intake; UIexception handled separately,no UI/code changes in thisrun."
   },
-  "currentStage": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
+  "currentStage": "75610a3edf0a52e121cfefea49aa82171a3c56b4",
   "chartRechecked": {
     "at": "2026-11-03T23:10:54.209Z",
     "eightMaxBB": "82.825/78.594/73.091/55.459;83.148/77.060/68.187/52.507;83.710/77.205/70.126/56.807",
@@ -3621,99 +3685,115 @@
   },
   "mainPromotion": {
     "previous": {
-      "pr": 789,
-      "state": "merged-by-existing-operation-verified",
-      "head": "58d301c3c8ae2e5f9240d8883487d070bae2ef23",
-      "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
-      "workflowRuns": [
-        41777225069,
-        41777218276,
-        41777218272
-      ],
-      "preMergeCopyShared": true,
+      "previous": {
+        "pr": 789,
+        "state": "merged-by-existing-operation-verified",
+        "head": "58d301c3c8ae2e5f9240d8883487d070bae2ef23",
+        "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
+        "workflowRuns": [
+          41777225069,
+          41777218276,
+          41777218272
+        ],
+        "preMergeCopyShared": true,
+        "deadline": "2026-11-04T15:00:00Z",
+        "noAutoMerge": true,
+        "staff": "Alias switch and post-switch GTOview notyetverified;Mitchellownerhandoffneeded",
+        "oldCancelledHeads": [
+          "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
+          "c440eec78d940121b8445c58d5cb696b862aeba0"
+        ],
+        "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
+        "retryCount": 0,
+        "lastObservedAt": "2026-11-04T11:07:30.376Z",
+        "mainUnchanged": false,
+        "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads.",
+        "latestChecks": [
+          {
+            "name": "Vercel Preview Comments",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Poker engine regression tests",
+            "status": "queued",
+            "conclusion": null
+          },
+          {
+            "name": "deploy",
+            "status": "queued",
+            "conclusion": null
+          },
+          {
+            "name": "Poker engine regression tests",
+            "status": "queued",
+            "conclusion": null
+          }
+        ],
+        "mergeCommit": "c3ef6166134abc44c3281eea83d9ab8c2f25dcaa",
+        "mergedAt": "2026-11-04T06:43:21Z",
+        "mergedVerified": true,
+        "mainCurrent": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
+        "mainCurrentChecks": "Not remeasured this checkpoint",
+        "noDuplicateMerge": true
+      },
+      "pr": 794,
+      "state": "blocked-after-one-retry",
+      "head": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
+      "mainBefore": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
       "deadline": "2026-11-04T15:00:00Z",
+      "retryCount": 1,
       "noAutoMerge": true,
-      "staff": "Alias switch and post-switch GTOview notyetverified;Mitchellownerhandoffneeded",
-      "oldCancelledHeads": [
-        "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
-        "c440eec78d940121b8445c58d5cb696b862aeba0"
+      "preMergeCopyShared": true,
+      "workflowRuns": [
+        41818943029,
+        41818892587,
+        41818892417
       ],
-      "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
-      "retryCount": 0,
-      "lastObservedAt": "2026-11-04T11:07:30.376Z",
-      "mainUnchanged": false,
-      "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads.",
-      "latestChecks": [
-        {
-          "name": "Vercel Preview Comments",
-          "status": "completed",
-          "conclusion": "success"
-        },
-        {
-          "name": "Poker engine regression tests",
-          "status": "queued",
-          "conclusion": null
-        },
-        {
-          "name": "deploy",
-          "status": "queued",
-          "conclusion": null
-        },
-        {
-          "name": "Poker engine regression tests",
-          "status": "queued",
-          "conclusion": null
+      "lastObservedAt": "2026-11-04T11:36:03.719Z",
+      "staff": "Not updated for PR794 because main merge blocked; do not request alias switch until successful merge",
+      "retriedRuns": [
+        41818943029,
+        41818892587
+      ],
+      "failure": {
+        "test": "tests/poker-lobby-lifecycle.cjs:39",
+        "expected": "href === /poker-demo",
+        "actual": "/poker-demo?stakes=1-2",
+        "source": "app/poker-lobby/poker-lobby-preview.tsx:50",
+        "sameFailureBothRuns": true,
+        "copySharedWithOwner": true,
+        "frozenNonFlopFilesNotModified": true,
+        "mainAndStageSourceIdentical": {
+          "previewBlob": "c1ce1ee2ccb3f2746580d669c41c4b77bba368b3",
+          "testBlob": "f2fc51559585cd946609402b570da7d450aeed3a"
         }
-      ],
-      "mergeCommit": "c3ef6166134abc44c3281eea83d9ab8c2f25dcaa",
-      "mergedAt": "2026-11-04T06:43:21Z",
-      "mergedVerified": true,
-      "mainCurrent": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
-      "mainCurrentChecks": "Not remeasured this checkpoint",
-      "noDuplicateMerge": true
+      },
+      "retryResult": {
+        "prRun": 41818943029,
+        "prJob": 126541962827,
+        "pushRun": 41818892587,
+        "pushJob": 126541976751,
+        "conclusion": "failure",
+        "sameLobbyUrlAssertion": true
+      },
+      "latestStageAlreadyHead": true,
+      "reintegration": "No additional staging commits to integrate: main PR head equals latest stage a719d8bd; no empty retry commit and no failing merge"
     },
-    "pr": 794,
-    "state": "blocked-after-one-retry",
-    "head": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
-    "mainBefore": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
+    "pr": 799,
+    "state": "owner-and-preview-db-confirmation-required",
+    "draft": true,
+    "head": "75610a3edf0a52e121cfefea49aa82171a3c56b4",
     "deadline": "2026-11-04T15:00:00Z",
-    "retryCount": 1,
     "noAutoMerge": true,
-    "preMergeCopyShared": true,
-    "workflowRuns": [
-      41818943029,
-      41818892587,
-      41818892417
-    ],
-    "lastObservedAt": "2026-11-04T11:36:03.719Z",
-    "staff": "Not updated for PR794 because main merge blocked; do not request alias switch until successful merge",
-    "retriedRuns": [
-      41818943029,
-      41818892587
-    ],
-    "failure": {
-      "test": "tests/poker-lobby-lifecycle.cjs:39",
-      "expected": "href === /poker-demo",
-      "actual": "/poker-demo?stakes=1-2",
-      "source": "app/poker-lobby/poker-lobby-preview.tsx:50",
-      "sameFailureBothRuns": true,
-      "copySharedWithOwner": true,
-      "frozenNonFlopFilesNotModified": true,
-      "mainAndStageSourceIdentical": {
-        "previewBlob": "c1ce1ee2ccb3f2746580d669c41c4b77bba368b3",
-        "testBlob": "f2fc51559585cd946609402b570da7d450aeed3a"
-      }
+    "cutoffPassed": true,
+    "mainCurrent": "53e6e898c59492cc23d3b99d57126802fbe8e87d",
+    "prior794": {
+      "state": "merged-by-other-actor-verified",
+      "head": "44158e151bea3c97db93a3bf455fd404f94ae85e",
+      "merge": "6492d740e68e71a51fb96ba0a6930a5a1304f630"
     },
-    "retryResult": {
-      "prRun": 41818943029,
-      "prJob": 126541962827,
-      "pushRun": 41818892587,
-      "pushJob": 126541976751,
-      "conclusion": "failure",
-      "sameLobbyUrlAssertion": true
-    },
-    "latestStageAlreadyHead": true,
-    "reintegration": "No additional staging commits to integrate: main PR head equals latest stage a719d8bd; no empty retry commit and no failing merge"
+    "staff": "Mitchell alias verification pending; do not assume latest"
   },
   "reportingPolicy": {
     "alwaysListAll21": true,
@@ -3763,7 +3843,7 @@
     "mergeReadback": true
   },
   "full21Status": {
-    "observedAt": "2026-11-04T11:33:59.537Z",
+    "observedAt": "2026-11-04T17:05:45.634Z",
     "imported": [
       "btn-bb",
       "hu-3bet",
@@ -3780,52 +3860,53 @@
       "co-bb-3bet",
       "utg-bb-3bet"
     ],
-    "calculatedNotImported": [],
+    "calculatedNotImported": [
+      "btn-bb-4bet",
+      "btn-sb-3bet"
+    ],
     "calculating": [
+      "utg-btn-bb",
       "btn-sb-bb",
       "co-btn-bb",
-      "btn-bb-4bet",
       "co-btn-3bet",
-      "btn-sb-3bet",
       "sb-limp"
     ],
-    "notStarted": [
-      "utg-btn-bb"
-    ],
+    "notStarted": [],
     "total": 21,
     "eachImported": 200,
     "denominator": 1755,
     "calculationSuccessUnverified": [
       {
+        "spot": "utg-btn-bb",
+        "success": 0,
+        "remaining": 200
+      },
+      {
         "spot": "btn-sb-bb",
-        "success": 6,
-        "remaining": 194
+        "success": 93,
+        "remaining": 107
       },
       {
         "spot": "co-btn-bb",
-        "success": 9,
-        "remaining": 191
-      },
-      {
-        "spot": "btn-bb-4bet",
-        "success": 44,
-        "remaining": 156
+        "success": 112,
+        "remaining": 88
       },
       {
         "spot": "co-btn-3bet",
-        "success": 89,
-        "remaining": 111
-      },
-      {
-        "spot": "btn-sb-3bet",
         "success": 170,
         "remaining": 30
       },
       {
         "spot": "sb-limp",
-        "success": 159,
-        "remaining": 41
+        "success": 179,
+        "remaining": 21
       }
-    ]
+    ],
+    "expansionSeparate": {
+      "spot": "btn-bb",
+      "batch": 200,
+      "run": 41873590700,
+      "success": 0
+    }
   }
 }
