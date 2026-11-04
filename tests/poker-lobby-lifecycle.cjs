@@ -30,13 +30,14 @@ test('guest dashboard keeps the approved sections and exposes practice without f
  assert.match(html,/月 チップ獲得ランキング/);assert.match(html,/優勝者一覧は公開準備中/);
  assert.ok(!html.includes('SUMMIT ACE'));assert.ok(!html.includes('128,400'));
 });
-test('practice tab retains join/watch confirmation and does not show member ring tables',async()=>{
+test('practice tab: 1-2 and 2-5 tables join with their stake, no watch, no member ring tables',async()=>{
  const Dashboard=require('../app/poker-lobby/lobby-dashboard.tsx').default;let r;
  await act(async()=>{r=create(React.createElement(Dashboard,{guest:true,admin:false,memberName:'会員',ringEnabled:false,tournamentsEnabled:true,rings:[],ringError:false,tournaments:[],assigned:null,registration:null,board:null}));});
  await act(async()=>r.root.findAllByProps({role:'tab'}).find(t=>t.children.join('')==='練習テーブル').props.onClick());
  let output=JSON.stringify(r.toJSON());assert.match(output,/SUMMIT BLUE 01/);assert.match(output,/会員チップの残高と連動しません/);assert.ok(!output.includes('公開リングテーブル'));
  await act(async()=>r.root.findAllByType('button').find(b=>b.children.join('')==='参加する').props.onClick());
- const dialog=r.root.findByProps({role:'dialog'});assert.ok(dialog.findAllByType('a').some(a=>a.props.href==='/poker-demo'));
+ const dialog=r.root.findByProps({role:'dialog'});assert.ok(dialog.findAllByType('a').some(a=>a.props.href==='/poker-demo?stakes=1-2'));
+ assert.match(output,/ブラインド 1 \/ 2/);assert.match(output,/ブラインド 2 \/ 5/);assert.ok(!output.includes('観戦する'));
  await act(async()=>r.unmount());
 });
 test('account theme switches the selected detail without leaking other pane content',async()=>{
