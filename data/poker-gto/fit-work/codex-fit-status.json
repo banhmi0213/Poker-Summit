@@ -3117,7 +3117,7 @@
   "mainPromotion": {
     "pr": 789,
     "state": "pending-latest-head-CI-after-peer-updates",
-    "head": "515e7cf493a688c8a7c3d6c33d6b236fd22b9205",
+    "head": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83",
     "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
     "workflowRuns": [
       41777225069,
@@ -3134,8 +3134,30 @@
     ],
     "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
     "retryCount": 0,
-    "lastObservedAt": "2026-11-04T05:24:10.681Z",
+    "lastObservedAt": "2026-11-04T05:24:28.689Z",
     "mainUnchanged": true,
-    "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads."
+    "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads.",
+    "latestChecks": [
+      {
+        "name": "Vercel Preview Comments",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Poker engine regression tests",
+        "status": "queued",
+        "conclusion": null
+      },
+      {
+        "name": "deploy",
+        "status": "queued",
+        "conclusion": null
+      },
+      {
+        "name": "Poker engine regression tests",
+        "status": "queued",
+        "conclusion": null
+      }
+    ]
   }
 }
