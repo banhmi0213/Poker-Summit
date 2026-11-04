@@ -11,3 +11,10 @@ test('wallet accepts the free refill and the monthly reset (owner 2026/10/31)',(
  assert.throws(()=>parseRingWallet({...base,history:[h('reset',-100,100)]}));
  assert.throws(()=>parseRingWallet({...base,history:[h('refill',-5,0)]}));
 });
+
+test('chip top-up entries (2026/11/04) are accepted: chips move from the balance onto the table',()=>{
+
+ const w=parseRingWallet({available:900,inPlay:300,total:1200,rank:1,welcomeGranted:true,asOf:new Date().toISOString(),history:[{kind:'topup',availableDelta:-100,inPlayDelta:100,createdAt:new Date().toISOString()}]});
+ assert.equal(w.history[0].kind,'topup');
+ assert.throws(()=>parseRingWallet({available:900,inPlay:300,total:1200,rank:1,welcomeGranted:true,asOf:new Date().toISOString(),history:[{kind:'topup',availableDelta:100,inPlayDelta:-100,createdAt:new Date().toISOString()}]}));
+});
