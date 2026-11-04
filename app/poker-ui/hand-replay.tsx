@@ -55,7 +55,7 @@ export function gtoText(r:GtoReview){
 }
 
 /** Step through a finished hand. step 0 = forced bets posted, step N = hand finished. */
-export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boolean}){
+export function HandReplay({hand,shared=false,backHref}:{hand:HandHistoryView;shared?:boolean;backHref?:string}){
  const forced=hand.actions.findIndex(a=>!['ante','sb','bb'].includes(a.type));
  const first=forced<0?hand.actions.length:forced,last=hand.actions.length;
  const [step,setStep]=useState(first),[rangeAt,setRangeAt]=useState<number|null>(null);
@@ -93,6 +93,7 @@ export function HandReplay({hand,shared=false}:{hand:HandHistoryView;shared?:boo
    <button type="button" onClick={()=>setStep(s=>Math.min(last,s+1))} disabled={finished}>次へ</button>
    <button type="button" onClick={()=>setStep(last)} disabled={finished}>最後</button>
    <span>{step-first} / {last-first}</span>
+   {backHref&&<a className={styles.backButton} href={backHref}>ハンド履歴<br className={styles.mobileBreak}/>に戻る</a>}
   </div>
   <div>{(['preflop','flop','turn','river'] as const).filter(s=>hand.actions.some(a=>a.street===s)).map(s=><section key={s} aria-label={streetNames[s]}>
    <p className={styles.street}>{streetNames[s]}</p>

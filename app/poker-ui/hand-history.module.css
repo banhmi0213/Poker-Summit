@@ -43,3 +43,29 @@
 
 /* 10件ずつのページ送り (owner 2026/10/31) */
 .pager{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 4px}.pager :is(button,a){min-height:38px;padding:7px 16px;border:1px solid #c9a856;border-radius:7px;background:#ffffff0d;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}.pager button:disabled{opacity:.4;cursor:default}.pager span{font-variant-numeric:tabular-nums;min-width:56px;text-align:center}
+
+/* Return links share the playback buttons' visual weight and align right. */
+.controls .backButton,.backFooter .backButton{
+ display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;
+ min-height:40px;padding:8px 12px;border:1px solid #d9b368;border-radius:8px;
+ background:#d9b368;color:#14283a!important;font-size:13px;font-weight:700;
+ text-decoration:none!important;white-space:nowrap;margin-left:auto;
+}
+.backFooter{display:flex;justify-content:flex-end;margin-top:12px}
+.backButton:focus-visible{outline:3px solid #fff1c7;outline-offset:3px}
+@media(max-width:700px){.controls .backButton{font-size:12px;padding:8px;}}
+
+.mobileBreak{display:none}
+.replayFooter{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;margin-top:12px}
+.replayFooter>.result{border-top:0;padding-top:0;min-width:0}
+.replayFooter>.backButton{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:40px;padding:8px 12px;border:1px solid #d9b368;border-radius:8px;background:#d9b368;color:#14283a!important;font-size:13px;font-weight:700;text-decoration:none!important;white-space:nowrap}
+.replayFooter>.result:has(.share){grid-column:1/-1}
+.replayFooter>.result:has(.share)+.backButton{grid-column:2}
+@media(max-width:700px){
+ .controls:has(>.backButton){flex-wrap:nowrap;gap:5px}
+ .controls:has(>.backButton)>button{flex:1 1 0;min-width:0;padding:8px 3px;font-size:12px}
+ .controls:has(>.backButton)>span{flex:0 0 auto;margin-left:0;font-size:12px;white-space:nowrap}
+ .controls .backButton{flex:0 0 64px;width:64px;height:40px;min-height:40px;padding:3px 2px;display:block;text-align:center;align-content:center;white-space:normal;font-size:11px;line-height:1.25}
+ .mobileBreak{display:inline}
+ .replayFooter{gap:8px}
+}
