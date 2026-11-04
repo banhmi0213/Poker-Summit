@@ -94,8 +94,7 @@
 .runRow [data-motion-board],.runRow>div{transform:scale(.86);transform-origin:center}
 /* PC ring/tournament table (owner 2026/11/03): the top seat's wager sits just under its name plate (as on the phone),
    clear of the pot text. The plate ends about 144-162px down the table; the pot and board move 8-11px down (more on narrow PCs) to make room. */
-@media(min-width:900px){.onlineFelt .topBet{top:clamp(96px,19%,112px)!important;left:calc(50% - 160px)!important;translate:0 0!important;transform:none!important}.onlineFelt [data-dealer-seat=p2]{left:calc(50% + 92px)!important;top:clamp(108px,21%,124px)!important;translate:none!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}
-@media(max-width:899px){.onlineFelt [data-dealer-seat=p2]{left:calc(50% + 68px)!important;top:76px!important;translate:none!important}}
+@media(min-width:900px){.onlineFelt .topBet{top:calc(84px + 16%)!important;translate:0 0!important}.onlineFelt>div[class*="felt"]{translate:0 clamp(8px,calc((1280px - 100vw) * .01 + 8px),11px)}}
 
 /* Keep connected tables anchored to the shell even when the shared practice
    stylesheet is loaded last (spectator pages load a different CSS order).
@@ -109,3 +108,15 @@
   aspect-ratio:16/9;box-sizing:border-box;margin:0 auto;padding:0;
  }
 }
+/* PC (owner 2026/11/04): the top seat's wager sits in front of its plate, so the pot moves out of its way —
+   below it before the flop, to the right of the board once cards are out. */
+@media(min-width:900px){
+ .onlineFelt>div[class*="felt"]{position:relative;translate:0 34px!important}
+ .onlineFelt>div[class*="felt"]:has(>[class*="communityCards"]>*){translate:0 44px!important}
+ .onlineFelt>div[class*="felt"]:has(>[class*="communityCards"]>*)>:first-child{position:absolute;left:calc(50% + 140px);top:50%;translate:0 -50%;white-space:nowrap;text-align:left;z-index:3;color:#f3e6c8!important;background:#1d1812e6!important;border:1px solid #b99a5b88!important;border-radius:12px!important;padding:6px 12px!important}
+}
+/* Your own rank badge (owner 2026/11/04「見切れてた」): beside the name plate, not under your hole cards. */
+.onlineFelt [class*="rankBadgeSelf"]{left:-44px!important;top:calc(50% - 19px)!important;z-index:6!important}
+@media(max-width:899px){.onlineFelt [class*="rankBadgeSelf"]{left:-26px!important;top:calc(50% - 11px)!important}}
+.onlineFelt span:has(>[class*="rankBadgeSelf"]){overflow:visible!important}
+@media(min-width:900px){.onlineFelt>div[class*="felt"]:has(>[class*="communityCards"]>*)>:first-child *{color:#f3e6c8!important}}
