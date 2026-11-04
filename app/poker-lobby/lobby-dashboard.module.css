@@ -11,3 +11,5 @@
 .memberAvatar{overflow:hidden}.memberAvatarImage{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 /* デザイン変更 (owner 2026/11/03): the free-pick note and the save / select buttons share one row above the list. */
 .skinActions{margin:12px 0 14px}.skinActions>p{margin:0!important}.skinActions>section{flex-basis:100%;margin:0!important}
+/* Phone (owner 2026/11/04): the chip card takes the full row, so its reset note is not squeezed beside the chip art. */
+@media(max-width:650px){.summaryGrid>.summaryCard:has(.chipArt){grid-column:1/-1}}

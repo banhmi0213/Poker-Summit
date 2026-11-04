@@ -15,7 +15,7 @@ export function RefillConfirm({open,lead,onYes,onNo}:{open:boolean;lead?:string;
   <section role="dialog" aria-modal="true" aria-labelledby="refill-confirm-heading" style={{width:'min(420px,100%)',background:'#152e43',border:'1px solid #b4985a',borderRadius:16,padding:24,color:'#eef3f7',boxShadow:'0 20px 80px #0008'}}>
    <h3 id="refill-confirm-heading" style={{margin:'0 0 12px'}}>補充しますか？</h3>
    {lead&&<p style={{fontSize:13,lineHeight:1.8,color:'#cad6df',margin:'0 0 8px'}}>{lead}</p>}
-   <p style={{fontSize:13,lineHeight:1.8,color:'#cad6df',margin:0}}>{used?'今日の補充はもう使っています。明日また補充できます。':`今日の補充（1日1回）を使って、残高を${amount===null?'段位のレートの100BB':` ${amount.toLocaleString()} chip `}にします。`}</p>
+   <p style={{fontSize:13,lineHeight:1.8,color:'#cad6df',margin:0}}>{used?'今日の補充はもう使っています。明日また補充できます。':`今日の補充（1日1回）を使って、残高を${amount===null?'ランクのレートの100BB':` ${amount.toLocaleString()} chip `}にします。`}</p>
    <div style={{display:'flex',justifyContent:'flex-end',gap:12,marginTop:22}}>
     <button type="button" onClick={onNo} style={{padding:'10px 14px',border:'1px solid #61788a',borderRadius:8,background:'transparent',color:'#eef3f7',font:'inherit',cursor:'pointer'}}>{used?'閉じる':'やめる'}</button>
     {!used&&<button type="button" autoFocus onClick={onYes} style={{padding:'10px 14px',border:'1px solid #a58a52',borderRadius:8,background:'#234156',color:'#fff0ca',font:'inherit',cursor:'pointer'}}>補充する</button>}

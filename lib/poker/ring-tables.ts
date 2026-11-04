@@ -16,6 +16,6 @@ export function validateRingSettings(value:unknown):RingSettings{
  if(typeof v.note!=='string'||v.note.length>500||typeof v.published!=='boolean')throw Error('説明文と公開設定を確認してください。');
  const rake=TABLE_RAKES.find(r=>r.bps===(v.rake_bps??TABLE_RAKES[0].bps)&&r.capBb===(v.rake_cap_bb??TABLE_RAKES[0].capBb));if(!rake)throw Error('レーキは低レーキ（5%・上限5BB）か高レーキ（10%・上限10BB）を選んでください。');
  const minTier=v.min_tier??0,maxTier=v.max_tier??6;
- if(!Number.isSafeInteger(minTier)||!Number.isSafeInteger(maxTier)||Number(minTier)<0||Number(maxTier)>6||Number(minTier)>Number(maxTier))throw Error('段位の条件を確認してください（下限は上限以下）。');
+ if(!Number.isSafeInteger(minTier)||!Number.isSafeInteger(maxTier)||Number(minTier)<0||Number(maxTier)>6||Number(minTier)>Number(maxTier))throw Error('ランクの条件を確認してください（下限は上限以下）。');
  return {min_tier:Number(minTier),max_tier:Number(maxTier),rake_bps:rake.bps,rake_cap_bb:rake.capBb,title,capacity:v.capacity,sb:Number(v.sb),bb:Number(v.bb),min_buy_in:Number(v.min_buy_in),max_buy_in:Number(v.max_buy_in),sort_order:Number(v.sort_order),note:v.note.trim(),published:v.published};
 }
