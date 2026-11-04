@@ -43,8 +43,21 @@
 - Next.js本番ビルド成功（ステージングの公開URL／公開キーで検証）。
 - リポジトリ全体のtscは既存エラー34件あり。変更前と同じ依存関係で比較し、新規エラーなし。既存のNext設定は型エラーをビルドの妨げにしない設定。アクセス統計等の既存ファイルの型修正は範囲外。
 
-## Previewの接続先（11/4確認）
+## Previewの接続先と通し確認（11/5完了）
 
-VercelのPreviewには現状、本番DB `tjmeqnzvuoguoffltxrp` の公開URLが埋め込まれていることを確認しました。Preview上からの書き込みテストは実施していません。
-誤混入を防ぐため `VERCEL_ENV=preview` ではステージングDB `mjdgylgzhsygcgtuceow` 以外へのGTO計測の読み書きを止めます。本番はこのPreview専用ガードの対象外です。
-Previewの環境変数（Supabase URL・公開キー・サービス用キー）をステージング用へ揃えて再デプロイした後、Previewからの書き込みを通した確認が必要です。本番の環境変数は変えません。
+Vercelの環境変数はブランチ別です。ステージング `chatgpt/poker-authoritative-hand` には、Supabase URL・公開キー・サービス用キーの専用設定が既にありました。作業ブランチのPreviewが本番DBを継承していることから、ステージングも同じだと判断した前の記述は訂正します。環境変数の変更は不要でした。本番設定は変更していません。
+
+誤混入防止のガードは残します。`VERCEL_ENV=preview` ではステージングDB `mjdgylgzhsygcgtuceow` 以外へのGTO計測の読み書きを止め、本番はこのガードの対象外です。
+
+実際のステージング配信で、未ログインのブラウザから以下を操作し、ステージングDBの行と突き合わせて確認しました。
+
+- GTOクイズを開く：`quiz/open` 1行と、自動提示された問題の `quiz/start` 1行。
+- 1問に回答：`quiz/answer` が1行だけ追加。全て `member_id=null`、端末PC。
+- 「1ハンド通して対戦」を開き「プリフロップ連打」へ切り替え：`hand/open` と `drill/open` が各1行。読み込み・ポータルの再描画による重複なし。
+- 未ログインで `/admin/gto-usage` を開く：総合管理ログインへ移動し、集計を表示しない。
+
+配信確認URL： https://poker-summit-git-chatgpt-poker-authoritative-hand-poker-summit.vercel.app
+
+管理画面の数値表示・グラフ切替・日次月次・CSV・運営以外の拒否は、自動テストで検証済みです。実際の運営アカウントでの画面操作は今回の未ログインの通し確認には含みません。
+
+最新ステージング `75610a3` のGTO利用状況、Academy、Poker engineのGitHub ActionsとVercelビルドは全て成功。残る本番操作は、オーナーによる「本番DBへ追加SQL」→「ステージング最新をmainに入れるPRのマージ」です。
