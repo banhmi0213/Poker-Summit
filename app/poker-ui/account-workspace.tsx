@@ -55,7 +55,7 @@ export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
  // スマホ (owner 2026/11/1): a bar fixed at the bottom with the most used panes, so any of them is one tap away.
  const top=useRef<HTMLDivElement>(null),menu=useRef<HTMLElement>(null);
  const go=(id:string)=>{choose(id);requestAnimationFrame(()=>top.current?.scrollIntoView({block:'start'}));};
- const dock=([[record,'成績','trophy'],['preflop','表','cards'],['trainer','対戦','people'],['weak','弱点','chart']] as [string|undefined,string,LobbyIconName][]).filter(([id])=>id&&panes.some(p=>p.id===id)) as [string,string,LobbyIconName][];
+ const dock=([[record,'成績','trophy'],['preflop','GTO','cards'],['trainer','対戦','people'],['weak','弱点','chart']] as [string|undefined,string,LobbyIconName][]).filter(([id])=>id&&panes.some(p=>p.id===id)) as [string,string,LobbyIconName][];
  function shortcut(id:string|undefined,label:string):ReactNode{return id?<button type="button" onClick={()=>choose(id)}>{label}</button>:<Link href="/mypage/poker">プレイヤーページを開く</Link>;}
  return <div className={styles.shell} data-poker-account="champagne">
   <header className={styles.header}><Link href="/poker-lobby" className={styles.brand}><img src="/images/logo.png" alt="Poker Summit" width="300" height="64"/></Link><nav aria-label="ポーカーナビゲーション"><Link href="/poker-lobby">ロビー</Link><Link href="/mypage">マイページ</Link><Link href="/">サイトトップ</Link><MyFrame><span className={styles.avatar} aria-hidden="true"><MyAvatar className={styles.avatarImage}/></span></MyFrame></nav></header>
