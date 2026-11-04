@@ -1,6 +1,7 @@
 'use client';
 import {useEffect,useState} from 'react';
-import {HUD_COLORS,HUD_COLOR_LABELS,HUD_COLOR_VALUES,hudRows,isHudColor,type HudColor,type HudPlayer} from '@/lib/poker/player-hud';
+import {HudStatsGrid} from './hud-stats-grid';
+import {HUD_COLORS,HUD_COLOR_LABELS,HUD_COLOR_VALUES,isHudColor,type HudColor,type HudPlayer} from '@/lib/poker/player-hud';
 import styles from './player-hud.module.css';
 // Opponent stats (ring hands only) with a private note and colour label that only the viewer can see.
 export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:number;name:string;onClose:()=>void;onSaved:(seat:number,color:HudColor|null)=>void}){
@@ -18,7 +19,7 @@ export function PlayerHud({table,seat,name,onClose,onSaved}:{table:string;seat:n
   <div className={styles.panel} role="dialog" aria-modal="true" aria-label={`${name}の成績`}>
    <div className={styles.top}><strong>{name}</strong><button type="button" aria-label="閉じる" onClick={onClose}>×</button></div>
    {error?<p className={styles.message} role="alert">{error}</p>:!player?<p className={styles.message} role="status">読み込み中…</p>:<>
-    <div className={styles.grid}>{[['ハンド数',player.stats.hands.toLocaleString()] as [string,string],...hudRows(player.stats)].map(([label,rate])=><div key={label} className={styles.stat}><span>{label}</span><b>{rate}</b></div>)}</div>
+    <HudStatsGrid stats={player.stats}/>
     {!player.you&&<div className={styles.note}>
      <label htmlFor="player-hud-note">自分だけのメモ</label>
      <textarea id="player-hud-note" maxLength={500} value={note} onChange={e=>setNote(e.target.value)} placeholder="プレイの特徴など"/>

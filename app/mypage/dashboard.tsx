@@ -1,3 +1,4 @@
+import {OwnHudSummary} from '@/app/poker-ui/own-hud-summary';
 import { BoardNotificationLink } from "@/app/board/notification-controls";
 import { BoardPanel } from "./board-panel";
 import { ReadableName } from "@/app/readable-name";
@@ -333,6 +334,8 @@ export async function MyPageContent({
             </div>
           </div>
         )}
+
+        {!profileEdit&&!dealerRegistration&&<OwnHudSummary/>}
 
         <div className={styles.tiles}>
           {tabs.map((t) => (
