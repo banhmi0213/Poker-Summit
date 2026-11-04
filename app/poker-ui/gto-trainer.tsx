@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,trackGtoUsage} from '@/app/gto-usage-tracker';
 import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {recordRow,sendGtoRecords} from '@/lib/poker/gto-record';
@@ -63,6 +64,7 @@ const heroNet=(h:TrainerHand)=>h.result?netBB(h,HERO):-bb(h.round.players.find(p
 export function GtoTrainer({standard=false,upsell=false,practiceSpot}:{standard?:boolean;upsell?:boolean;practiceSpot?:string}={}){
  const target=preflopPracticeSpot(practiceSpot);
  const [kind,setKind]=useState<'hand'|'drill'>(target?'drill':'hand');
+ useGtoUsage(kind==='hand'?'hand':'drill',kind);
  return <MobilePlaySurface label="GTOと対戦" startFullscreen={Boolean(target)}><div className={styles.trainer}>
   <div className={styles.kinds} role="tablist" aria-label="練習の形">
    <button type="button" role="tab" aria-selected={kind==='hand'} onClick={()=>setKind('hand')}>1ハンド通して対戦</button>
@@ -89,7 +91,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    const on=(e:MessageEvent<GtoReply>)=>{if(e.data.id!==id)return;window.clearTimeout(guard);w.removeEventListener('message',on);resolve(e.data);};
    w.addEventListener('message',on);w.postMessage(build(id));});
  },[]);
- const begin=(h:TrainerHand)=>{startRef.current=h;setFoldPaused(false);setHand(h);setFeedback([]);setSpot(null);setError('');counted.current=null;};
+ const begin=(h:TrainerHand)=>{trackGtoUsage('hand','start');startRef.current=h;setFoldPaused(false);setHand(h);setFeedback([]);setSpot(null);setError('');counted.current=null;};
  // 練習の始め方: everyone (the hero too) plays GTO in the worker until the hero reaches the chosen spot; seats where the
  // spot cannot happen (e.g. BB for an open) are skipped, so the seat still moves round the table.
  const deal=async(n:number,seed:number)=>{
@@ -144,6 +146,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
   const menu=known?spot.options:basicMenu(hand),o=menu[i];if(!o)return;
   const action=toTable(view,o.kind,o.label,o.to);
   let next:TrainerHand;try{next=trainerAct(hand,HERO,action);}catch{return;}
+  trackGtoUsage('hand','answer');
   const played=next.log[next.log.length-1];
   const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,evLoss:null,
    options:known?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],

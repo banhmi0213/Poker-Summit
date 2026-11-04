@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 // 収支グラフ (owner 2026/11/01): your lifetime ring result in BB, hand by hand. Only your own numbers.
 import {useEffect,useMemo,useState} from 'react';
 import {createClient} from '@/lib/supabase/client';
@@ -6,6 +7,7 @@ import {createClient} from '@/lib/supabase/client';
 // [hand number, total BB, time, total EV loss vs GTO in BB (from the 弱点分析 records; 0 when none)]
 type Point=[number,number,string,number];
 export function RingBbCurve(){
+ useGtoUsage('curve');
  const auth=useMemo(()=>createClient(),[]);
  const [points,setPoints]=useState<Point[]|null>(null),[failed,setFailed]=useState(false);
  useEffect(()=>{let live=true;void auth.rpc('poker_ring_bb_curve').then(({data,error})=>{if(!live)return;if(error||!Array.isArray(data)){setFailed(true);return;}

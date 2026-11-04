@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {GTO_FLOPS,GTO_SPOTS,cachedFlop,cachedFlopIndex,loadFlop,loadFlopIndex,seatOf,sizeNote,type FlopData} from '@/lib/poker/gto-spots';
 import {resolveFlopSelection} from '@/lib/poker/flop-selection';
@@ -18,6 +19,7 @@ const flopText=(f:string)=>[0,2,4].map(i=>f[i]+SUIT[f[i+1]]).join(' ');
 const pct=(v:number)=>`${Math.round(v*100)}%`;
 
 export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
+ useGtoUsage('flop');
  const view=useRef<HTMLDivElement>(null);
  useLayoutEffect(()=>{
   const media=window.matchMedia('(min-width:1100px)');

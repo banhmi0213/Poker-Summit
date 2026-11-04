@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import type { PracticeQuestion } from "./level-three-content";
@@ -8,6 +9,7 @@ import { toQuizTop } from "@/lib/ui/quiz-top";
 export function LessonQuiz({ questions, exam = false, level = 3, examTitle = "実戦判断テスト", passScore = 10, onFinish }: {
  questions: readonly PracticeQuestion[]; exam?: boolean; level?: number; examTitle?: string; passScore?: number; onFinish: (score: number) => void;
 }) {
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [index, setIndex] = useState(0);
  const [answers, setAnswers] = useState<number[]>([]);
  const [finished, setFinished] = useState(false);
@@ -29,7 +31,7 @@ export function LessonQuiz({ questions, exam = false, level = 3, examTitle = "�
    <button type="button" onClick={() => { setIndex(0); setAnswers([]); setFinished(false); }}>もう一度挑戦する</button>
   </div> : <>
    <p className={styles.topic}>{question.topic}</p><p className={styles.situation}>{question.situation}</p><h4 id={`level${level}-question-title`} tabIndex={-1}>{question.question}</h4>
-   <div className={styles.choices}>{question.choices.map((choice, i) => <button key={choice} type="button" disabled={selected !== undefined} aria-pressed={selected === i} onClick={() => setAnswers(previous => previous.length === index ? [...previous, i] : previous)}>{choice}</button>)}</div>
+   <div className={styles.choices}>{question.choices.map((choice, i) => <button key={choice} type="button" disabled={selected !== undefined} aria-pressed={selected === i} onClick={() => {if(answers.length!==index)return;usageAnswer();setAnswers([...answers,i]);}}>{choice}</button>)}</div>
    {selected !== undefined && <div className={styles.feedback}><div role="status"><strong>{selected === question.answer ? "正解" : "復習ポイント"}：{question.choices[question.answer]}</strong><p>{question.explanation}</p></div><button type="button" onClick={e=>{next();toQuizTop(e.currentTarget);}}>{index === questions.length - 1 ? "結果を見る" : "次の問題へ"}</button></div>}
   </>}
  </section>;

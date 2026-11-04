@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 import {useEffect,useId,useMemo,useState} from 'react';
 import {cachedJson,loadJson} from '@/lib/poker/gto-spots';
 import {preferredGtoDepth,rememberGtoDepth} from '@/lib/poker/gto-public-cache';
@@ -28,6 +29,7 @@ type Table='6max'|'8max'|'9max'|'hu';
 /** standard / pro: the member's plan (lib/poker/gto-access). 8/9-max charts are スタンダード (tournament depths プロ); with
  * upsell a free member sees them in the menu with a button to /pricing instead of the chart. All off while paid features are hidden. */
 export function PreflopChartPanel({standard=false,pro=false,upsell=false}:{standard?:boolean;pro?:boolean;upsell?:boolean}={}){
+ useGtoUsage('preflop');
  const [controlsOpen,setControlsOpen]=useState(false),controlId=useId();
  const [table,setTable]=useState<Table>('6max'),[depth,setDepth]=useState<number>(100),[rake,setRake]=useState(''),[data,setData]=useState<Data|null>(()=>cachedJson<Data>('/poker-gto/preflop.json')??null),[error,setError]=useState(''),[kind,setKind]=useState<string>('open'),[id,setId]=useState<number|null>(null),[pick,setPick]=useState<string|null>(null);
  const KINDS=table==='hu'?KINDSHU:KINDS6;

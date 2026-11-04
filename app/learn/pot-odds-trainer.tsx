@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import styles from "./pot-odds-trainer.module.css";
@@ -35,6 +36,7 @@ function NumberField({label,value,onChange,min=0,max=1000000,step=50}: {label:st
  </div></div>;
 }
 export function PotOddsTrainer() {
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [pot,setPot] = useState(1000);
  const [bet,setBet] = useState(500);
  const [outs,setOuts] = useState(9);
@@ -47,7 +49,7 @@ export function PotOddsTrainer() {
  const current = challenges[quizIndex];
  const qm = metrics(current.pot,current.bet,current.outs,current.streets);
  const correct = qm.equity >= qm.required ? "call" : "fold";
- function choose(choice:"call"|"fold"){if(answer!==null)return;setAnswer(choice);if(choice===correct)setScore(s=>s+1);}
+ function choose(choice:"call"|"fold"){if(answer!==null)return;usageAnswer();setAnswer(choice);if(choice===correct)setScore(s=>s+1);}
  function next(){if(quizIndex===challenges.length-1){setFinished(true);return;}setQuizIndex(i=>i+1);setAnswer(null);}
  function restart(){setQuizIndex(0);setAnswer(null);setScore(0);setFinished(false);}
  return <section className={styles.trainer} aria-labelledby="pot-odds-title">

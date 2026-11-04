@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 import {useCallback,useEffect,useState} from 'react';
 import Link from 'next/link';
 import {SOURCE_TEXT,spotLabel,type GtoRecordSource} from '@/lib/poker/gto-record';
@@ -34,6 +35,7 @@ function weight(s:Spot,top:Spot|undefined):number{
 const boardText=(b:string)=>b.match(/../g)?.map(c=>(c[0]==='T'?'10':c[0])+SUIT[c[1]]).join(' ')??'';
 
 export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean}={}){
+ useGtoUsage('weak');
  const [days,setDays]=useState(90),[filter,setFilter]=useState('all'),[data,setData]=useState<Data|null>(null),[error,setError]=useState('');
  const [sync,setSync]=useState<'running'|'done'|null>(null),[open,setOpen]=useState<string|null>(null);
  const load=useCallback(async()=>{

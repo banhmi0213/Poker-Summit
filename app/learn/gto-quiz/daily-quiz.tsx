@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,useGtoAnswer} from '@/app/gto-usage-tracker';
 import Link from 'next/link';
 import {useEffect,useRef,useState} from 'react';
 import {explainQuiz,gradeQuiz,type QuizGrade,type QuizQuestion} from '@/lib/poker/gto-quiz';
@@ -15,6 +16,7 @@ function load(date:string):number[]{try{const v=JSON.parse(window.localStorage.g
 function save(date:string,answers:number[]){try{window.localStorage.setItem(KEY,JSON.stringify({date,answers}));}catch{/* convenience only */}}
 
 export function DailyQuiz({date,questions,member,url}:{date:string;questions:QuizQuestion[];member:boolean;url:string}){
+ useGtoUsage('quiz');const usageAnswer=useGtoAnswer('quiz');
  const [answers,setAnswers]=useState<number[]>([]),[at,setAt]=useState(0),top=useRef<HTMLOListElement>(null);
  // Moving to another question starts it from its top (owner 2026/11/1「次の問題は上から」).
  const go=(i:number)=>{setAt(i);requestAnimationFrame(()=>top.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
@@ -22,7 +24,7 @@ export function DailyQuiz({date,questions,member,url}:{date:string;questions:Qui
  const grades:QuizGrade[]=answers.map((c,i)=>gradeQuiz(questions[i],c));
  const done=answers.length>=questions.length,correct=grades.filter(g=>g.verdict==='正解').length;
  const q=questions[at],g=answers[at]!==undefined?grades[at]:null;
- const answer=(i:number)=>{if(answers.length!==at)return;const a=[...answers,i];setAnswers(a);save(date,a);};
+ const answer=(i:number)=>{if(answers.length!==at)return;usageAnswer();const a=[...answers,i];setAnswers(a);save(date,a);};
  const shareText=`今日のGTOクイズ ${questions.length}問中${correct}問正解でした #PokerSummit`;
  const share=`https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(url)}`;
  return <div className={styles.quiz}>

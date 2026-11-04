@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import Link from "next/link";
@@ -48,6 +49,7 @@ const descriptions: Record<Hand["kind"], string> = {
 };
 
 export function PreflopRangeTrainer() {
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [position, setPosition] = useState<Position>("UTG");
  const [selected, setSelected] = useState<Hand>(handAt(0, 1));
  const [questionIndex, setQuestionIndex] = useState(0);
@@ -63,7 +65,7 @@ export function PreflopRangeTrainer() {
  const question = questions[questionIndex];
  const correct = ranges[question.position].has(question.hand);
  function choose(value: boolean) {
-  if (answer !== null) return;
+  if (answer !== null) return;usageAnswer();
   setAnswer(value);
   if (value === correct) setScore(prev => prev + 1);
  }

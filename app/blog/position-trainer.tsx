@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import styles from "./position-trainer.module.css";
@@ -20,6 +21,7 @@ const questions: {question:string; options:Seat[]; answer:Seat; explain:string}[
 ];
 
 export function PositionTrainer(){
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [active,setActive]=useState<Seat>("BTN");
  const [index,setIndex]=useState(0);
  const [answer,setAnswer]=useState<Seat|null>(null);
@@ -27,7 +29,7 @@ export function PositionTrainer(){
  const [complete,setComplete]=useState(false);
  const selected=seats.find(s=>s.id===active)!;
  const question=questions[index];
- function choose(id:Seat){if(answer!==null)return;setAnswer(id);if(id===question.answer)setScore(s=>s+1);}
+ function choose(id:Seat){if(answer!==null)return;usageAnswer();setAnswer(id);if(id===question.answer)setScore(s=>s+1);}
  function next(){if(index===questions.length-1){setComplete(true);return;}setIndex(i=>i+1);setAnswer(null);}
  function reset(){setIndex(0);setAnswer(null);setScore(0);setComplete(false);}
  return <section className={styles.trainer} aria-labelledby="position-trainer-title">

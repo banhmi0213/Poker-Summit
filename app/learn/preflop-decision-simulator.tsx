@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import styles from "./preflop-decision-simulator.module.css";
@@ -22,13 +23,14 @@ const cases:Case[] = [
 const actionLabel:Record<Action,string>={fold:"フォールド",call:"コール",raise:"レイズ"};
 const seats:Seat[]=["UTG","HJ","CO","BTN","SB","BB"];
 export function PreflopDecisionSimulator(){
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [index,setIndex]=useState(0);
  const [choice,setChoice]=useState<Action|null>(null);
  const [score,setScore]=useState(0);
  const [done,setDone]=useState(false);
  const item=cases[index];
  const correct=choice===item.best;
- function answer(action:Action){if(choice!==null)return;setChoice(action);if(action===item.best)setScore(v=>v+1);}
+ function answer(action:Action){if(choice!==null)return;usageAnswer();setChoice(action);if(action===item.best)setScore(v=>v+1);}
  function next(){if(index===cases.length-1){setDone(true);return;}setIndex(v=>v+1);setChoice(null);}
  function reset(){setIndex(0);setChoice(null);setScore(0);setDone(false);}
  return <section className={styles.root} aria-labelledby="simulator-title">

@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,trackGtoUsage} from '@/app/gto-usage-tracker';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import rank from '@/data/poker-gto/preflop-rank.json';
 import type {Combo,SolverSpot} from '@/lib/poker/postflop-solver';
@@ -28,6 +29,7 @@ const LIMITS={turn:{target:0.01,maxIterations:150},river:{target:0.002,maxIterat
 type Status={state:'idle'}|{state:'running';iterations:number;exploitability:number|null}|{state:'done';iterations:number;exploitability:number};
 
 export function RiverSolverPanel(){
+ useGtoUsage('calculator');
  const [cards,setCards]=useState<(number|null)[]>(()=>parseCards('Ah Td 7c 4s 2h')!),[active,setActive]=useState<number|null>(null);
  const [pot,setPot]=useState(10),[stack,setStack]=useState(50),[oop,setOop]=useState('50'),[ip,setIp]=useState('50');
  const [status,setStatus]=useState<Status>({state:'idle'}),[error,setError]=useState(''),[solvedBoard,setSolvedBoard]=useState<number[]>([]);
@@ -43,7 +45,7 @@ export function RiverSolverPanel(){
  const start=()=>{
   if(!board){setError('ボードはフロップ3枚とターンの4枚（ターンから解く）か、リバーまでの5枚（リバーから解く）を左から順に選んでください。');return;}
   if(!(pot>0)||!(stack>0)){setError('ポットと残りチップは0より大きい数にしてください。');return;}
-  setError('');const top=(id:string)=>PRESETS.find(p=>p.id===id)!.top,street=board.length===4?'turn':'river';
+  trackGtoUsage('calculator','start');setError('');const top=(id:string)=>PRESETS.find(p=>p.id===id)!.top,street=board.length===4?'turn':'river';
   const spot:SolverSpot={board,pot,stack,...SIZES[street],ranges:[rangeCombos(top(oop),board),rangeCombos(top(ip),board)]};
   worker.current?.terminate();
   const w=new Worker(new URL('../../lib/poker/solver.worker.ts',import.meta.url));worker.current=w;
