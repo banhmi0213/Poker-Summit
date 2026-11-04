@@ -28,16 +28,18 @@ export async function POST(req: NextRequest) {
   const { data, error } = await svc.rpc("record_scrape_hit", hit);
   if (error) return NextResponse.json({ ok: false }, { status: 503 });
   const result = data as { alert?: boolean; recent?: number } | null;
-  let blocked = body.blocked === true;
+  let blocked = body.blocked === true, newlyBlocked = false;
   // ブラウザらしくないアクセスが多いとき（10分で30ページ以上）は、そのIPを7日間止める。
   if (!blocked && category === "no-browser" && (result?.recent ?? 0) >= 30 && hit.p_ip) {
     const { data: ok } = await svc.rpc("block_scrape_ip", { p_ip: hit.p_ip, p_reason: `${hit.p_bot || "不明"} 10分で${result?.recent ?? 0}ページ`, p_days: 7 });
-    blocked = ok === true;
+    blocked = ok === true; newlyBlocked = blocked;
   }
-  if (result?.alert) {
+  // すぐのメールは「量が多くて新しくIPを止めたとき」だけ（オーナー 2026/11/04：メールが多すぎる）。
+  // 最初から断る種類（AI・ツール・自動ブラウザ・名乗らない）や止めていない少量のものは、毎朝のまとめ（/api/cron/scrape-digest）へ。
+  if (newlyBlocked && result?.alert) {
     await alertAdmin(`スクレイピングの疑い（${SCRAPE_CATEGORY_LABEL[category]}：${hit.p_bot || "不明"}）`, [
       "サイトの情報を自動で集めている疑いのあるアクセスがありました。",
-      blocked ? (category === "no-browser" ? "このIPアドレスからのアクセスは自動で止めました（7日間）。" : "このアクセスは自動で止めました。") : "まだ止めていません（ブラウザらしくないアクセスは、同じIPから10分で30ページを超えたら止めます）。",
+      "このIPアドレスからのアクセスは自動で止めました（7日間）。",
       "",
       `種類：${SCRAPE_CATEGORY_LABEL[category]}`,
       `名前：${hit.p_bot || "不明"}`,
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
       `同じIPからの直近10分：${result.recent ?? 0}ページ`,
       `ユーザーエージェント：${hit.p_ua || "(なし)"}`,
       "",
-      "同じ相手のお知らせは1時間に1回までです。一覧は管理画面の「スクレイピング監視」で見られます。",
+      "ほかの自動アクセス（最初から断っているものなど）は、毎朝のまとめメールでお知らせします。一覧は管理画面の「スクレイピング監視」で見られます。",
     ], "/admin/security");
   }
   return NextResponse.json({ ok: true });
