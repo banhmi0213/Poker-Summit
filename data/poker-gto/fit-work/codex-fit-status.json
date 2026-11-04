@@ -3109,15 +3109,15 @@
   "mainStaffPolicy": {
     "before": "2026-11-04T15:00:00Z",
     "allowMainMergeBeforeDeadline": true,
-    "afterDeadline": "Ownerpressesmergeonly;noautomerge",
+    "afterDeadline": "Ownerpressesmergeonly;say押してください;noautomerge",
     "existingPR785Included783784": true,
     "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
     "staffAliasOwner": "Mitchell;requestownerforwardcopyaftermainmerge;do notclaimstaffupdatedwithoutverification"
   },
   "mainPromotion": {
     "pr": 789,
-    "state": "pending-latest-head-CI-after-peer-updates",
-    "head": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83",
+    "state": "merged-by-existing-operation-verified",
+    "head": "58d301c3c8ae2e5f9240d8883487d070bae2ef23",
     "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
     "workflowRuns": [
       41777225069,
@@ -3127,7 +3127,7 @@
     "preMergeCopyShared": true,
     "deadline": "2026-11-04T15:00:00Z",
     "noAutoMerge": true,
-    "staff": "Not repointed;browserGTO redirectslogin,noauthentered;onlyMitchell changesaliasaftermainmerge",
+    "staff": "Alias switch and post-switch GTOview notyetverified;Mitchellownerhandoffneeded",
     "oldCancelledHeads": [
       "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
       "c440eec78d940121b8445c58d5cb696b862aeba0"
@@ -3158,6 +3158,24 @@
         "status": "queued",
         "conclusion": null
       }
-    ]
+    ],
+    "mergeCommit": "c3ef6166134abc44c3281eea83d9ab8c2f25dcaa",
+    "mergedAt": "2026-11-04T06:43:21Z",
+    "mergedVerified": true,
+    "mainCurrent": "78fd20fd0c3363f9a8c6a7a3e3052f26a2541984",
+    "mainCurrentChecks": "Vercelsuccess;engineanddeployinprogress observed",
+    "noDuplicateMerge": true
+  },
+  "reportingPolicy": {
+    "alwaysListAll21": true,
+    "categories": [
+      "imported",
+      "calculating",
+      "not-started"
+    ],
+    "completedUnimported": "separately stated, no doublecount",
+    "includeEachSpotName": true,
+    "include1755Counts": true,
+    "updatedAt": "2026-11-04T07:11:46.356Z"
   }
 }
