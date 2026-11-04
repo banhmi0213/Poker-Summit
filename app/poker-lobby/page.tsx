@@ -8,7 +8,7 @@ import TournamentRegistration from "./tournament-registration";
 import AssignedRooms from "./assigned-rooms";
 import {POKER_TOURNAMENTS_ENABLED} from "@/lib/poker/features";
 
-export const metadata: Metadata = { title: "オンラインポーカー ロビー試作 | Poker Summit", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "ポーカーロビー | Poker Summit", robots: { index: false, follow: false } };
 
 export default async function PokerLobbyPage() {
   const supabase = await createClient();

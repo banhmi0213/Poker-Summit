@@ -2,3 +2,5 @@
 .body input[type=number]{width:84px;background:#28231c;color:#f8e5be;border:1px solid #aa8a4e;border-radius:6px;padding:7px;font:inherit}
 /* Owner 2026/10/29 (設定枠小さ過ぎる): the bet-size boxes became text inputs (free retyping) and lost their size. */
 .body input[inputmode=decimal]{width:84px;min-height:38px;box-sizing:border-box;background:#28231c;color:#f8e5be;border:1px solid #aa8a4e;border-radius:6px;padding:7px 10px;font:inherit;font-size:16px;text-align:center}
+
+.feedback{display:flex;flex-wrap:wrap;gap:16px}.feedback a{color:#f2d590;font-weight:700;text-decoration:underline}

@@ -35,7 +35,7 @@ const PAGE_SIZE = 100;
 export default async function BoardPage({
   searchParams,
 }: {
-  searchParams: { category?: string; page?: string; q?: string; sort?: string };
+  searchParams: { category?: string; page?: string; q?: string; sort?: string; compose?: string };
 }) {
   const category = searchParams.category ?? "";
   const q = searchParams.q?.trim() ?? "";
@@ -235,7 +235,7 @@ export default async function BoardPage({
         </form>
 
         {user ? (
-          <details className={`card ${compose.compose}`}>
+          <details className={`card ${compose.compose}`} open={searchParams.compose === "1"}>
             <summary><span className={compose.plus} aria-hidden>＋</span>新しく投稿する</summary>
             <div className={compose.body}>
             <form action={createPost}>
@@ -253,7 +253,7 @@ export default async function BoardPage({
               )}
               <div className="field">
                 <span className="muted">カテゴリ</span>
-                <select name="category" defaultValue="">
+                <select name="category" defaultValue={searchParams.compose === "1" && BOARD_CATEGORIES.includes(category) ? category : ""}>
                   <option value="">選択してください</option>
                   {BOARD_CATEGORIES.map((c) => (
                     <option key={c} value={c}>

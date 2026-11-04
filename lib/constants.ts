@@ -223,6 +223,7 @@ export const BOARD_CATEGORIES = [
   "大会情報",
   "おすすめ店舗",
   "攻略・戦略",
+  "ポーカー要望",
 ];
 
 export const EVENT_CATEGORIES = ["トーナメント", "大会", "体験会", "講座", "交流会"];
@@ -234,6 +235,9 @@ export const EVENT_CATEGORIES = ["トーナメント", "大会", "体験会", "�
 // 「すべて」にのみ表示される。
 export const COUPON_OFFER_TYPE_OPTIONS = ["参加費割引", "ドリンク", "初回来店", "友達紹介"];
 
+/** ポーカーの「不具合を報告」「要望を書く」(オーナー 2026/11/04)：不具合はお問い合わせ(非公開)、要望はサミット(公開)。 */
+export const POKER_BUG_REPORT_HREF = "/contact?category=poker-bug";
+export const POKER_REQUEST_HREF = `/board?category=${encodeURIComponent("ポーカー要望")}&compose=1`;
 export const INQUIRY_CATEGORIES = [
   "掲載について",
   "広告掲載について",

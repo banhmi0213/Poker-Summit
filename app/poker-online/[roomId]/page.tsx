@@ -8,7 +8,7 @@ import {PortalHeader} from '@/app/portal-header';
 import {PortalFooter} from '@/app/portal-footer';
 import GameNavigation from '../../poker-demo/game-navigation';
 import styles from '../../poker-demo/poker-table.module.css';
-export const metadata={title:'オンラインポーカー | Poker Summit',robots:{index:false,follow:false}};
+export const metadata={title:'ポーカーテーブル | Poker Summit',robots:{index:false,follow:false}};
 export const dynamic='force-dynamic';
 export default async function OnlineRoomPage({params}:{params:{roomId:string}}){
  // Tournament rooms stay closed while only ring games are public.

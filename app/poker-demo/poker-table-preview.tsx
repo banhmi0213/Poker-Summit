@@ -41,6 +41,7 @@ import TournamentPanel from "@/app/poker-tournaments/clock-panel";
 import { requestDemoDeal } from "./actions";
 import { finishFoldedPracticeHand } from "./finish-folded-hand";
 import { GtoRangeDialog } from "@/app/poker-ui/gto-range-grid";
+import { POKER_BUG_REPORT_HREF, POKER_REQUEST_HREF } from "@/lib/constants";
 import chartStyles from "@/app/poker-ui/gto-chart.module.css";
 
 type Action = "FOLD" | "CHECK" | "CALL" | "RAISE";
@@ -603,7 +604,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         </div>}
         {menuPage === "structure" && <div className={styles.menuFields}>{tournament?<TournamentPanel tournament={tournament} serverNow={serverNow} mode="structure"/>:<><h2>リングテーブル情報</h2><p>SB {practiceStakes.sb} / BB {practiceStakes.bb}</p><p>6人テーブル・テキサスホールデム</p><p>デモでは退出予約・精算は発生しません。</p></>}</div>}
         {menuPage === "community" && <div className={styles.menuFields}><h2>サミット連携</h2><section><h3>チップ残高</h3><p>デモの持ち点と会員の残高は別です。</p><a href="/mypage/chips" target="_blank" rel="noreferrer">会員のチップ残高・付与履歴を確認</a></section><details onToggle={e=>setCommunityOpen(e.currentTarget.open)}><summary>掲示板を開く</summary>{communityOpen&&<iframe title="サミット掲示板" src="/poker-community" style={{width:"100%",height:"55dvh",border:"1px solid #9b8354",borderRadius:8}}/>}</details></div>}
-        {menuPage === "site" && <div className={styles.menuFields}><h2>サイト</h2><p>プレイ画面を残して別タブで開きます。</p><p><a href="/" target="_blank" rel="noreferrer">Poker Summit トップ</a></p><p><a href="/poker-lobby" target="_blank" rel="noreferrer">ポーカーロビー</a></p><p><a href="/mypage/poker" target="_blank" rel="noreferrer">プレイヤーページ</a></p><p><a href="/mypage" target="_blank" rel="noreferrer">マイページ</a></p></div>}
+        {menuPage === "site" && <div className={styles.menuFields}><h2>サイト</h2><p>プレイ画面を残して別タブで開きます。</p><p><a href="/" target="_blank" rel="noreferrer">Poker Summit トップ</a></p><p><a href="/poker-lobby" target="_blank" rel="noreferrer">ポーカーロビー</a></p><p><a href="/mypage/poker" target="_blank" rel="noreferrer">プレイヤーページ</a></p><p><a href="/mypage" target="_blank" rel="noreferrer">マイページ</a></p><p><a href={POKER_BUG_REPORT_HREF} target="_blank" rel="noreferrer">不具合を報告</a></p><p><a href={POKER_REQUEST_HREF} target="_blank" rel="noreferrer">要望を書く</a></p></div>}
         {menuPage === "spectate" && <div className={styles.menuFields}><h2>観戦（リングゲーム）</h2><p>席を離れてもテーブル画面はそのまま表示します。</p><button type="button" onClick={() => { setSpectating(v => !v); setMenuOpen(false); setRunning(false); setSeatConfirm(false); }}>{spectating ? "デモの席に戻る" : "席を離れて観戦する"}</button><small>デモ表示のみ。実際のチップ精算や観戦通信は行いません。</small></div>}
         {menuPage === "exit" && <div className={styles.menuFields}><h2>退出</h2><p>ゲーム画面を終了しますか？（デモのためチップ精算はありません）</p>{!exitConfirm && <button type="button" onClick={() => setExitConfirm(true)}>退出する</button>}{exitConfirm && <><button type="button" onClick={() => { window.location.assign("/poker-lobby"); }}>退出してロビーへ</button><button type="button" onClick={() => setExitConfirm(false)}>キャンセル</button></>}</div>}
       </div>

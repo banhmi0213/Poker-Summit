@@ -12,7 +12,7 @@ import { PortalFooter } from "@/app/portal-footer";
 import GameNavigation from "./game-navigation";
 import styles from "./poker-table.module.css";
 
-export const metadata: Metadata = { title: "オンラインポーカー UI試作 | Poker Summit", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "練習テーブル | Poker Summit", robots: { index: false, follow: false } };
 
 export default async function PokerDemoPage({ searchParams }: { searchParams?: { mode?: string; stakes?: string; game?: string; tournament?: string; pace?: string; ante?: string; scenario?: string } }) {
   const supabase = await createClient();
