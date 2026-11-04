@@ -93,7 +93,7 @@ export function HandReplay({hand,shared=false,backHref}:{hand:HandHistoryView;sh
    <button type="button" onClick={()=>setStep(s=>Math.min(last,s+1))} disabled={finished}>次へ</button>
    <button type="button" onClick={()=>setStep(last)} disabled={finished}>最後</button>
    <span>{step-first} / {last-first}</span>
-   {backHref&&<a className={styles.backButton} href={backHref}>ハンド履歴に戻る</a>}
+   {backHref&&<a className={styles.backButton} href={backHref}>ハンド履歴<br className={styles.mobileBreak}/>に戻る</a>}
   </div>
   <div>{(['preflop','flop','turn','river'] as const).filter(s=>hand.actions.some(a=>a.street===s)).map(s=><section key={s} aria-label={streetNames[s]}>
    <p className={styles.street}>{streetNames[s]}</p>

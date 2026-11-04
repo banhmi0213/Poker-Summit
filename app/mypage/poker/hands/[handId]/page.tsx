@@ -10,5 +10,5 @@ function shareTitle(hand:NonNullable<Awaited<ReturnType<typeof loadHandHistory>>
 export default async function Page({params,searchParams}:{params:{handId:string};searchParams?:{share?:string}}){
  const hand=await loadHandHistory(params.handId);
  return <PokerWorkspace kind="account" panes={[{id:'replay',label:'ハンドを再生',eyebrow:'HAND REPLAY',description:'自分の手札と、ショーダウンで公開された手札だけが表示されます。',
-  content:<>{hand?<><HandReplay hand={hand} backHref="/mypage/poker?pane=hands"/><ShareToBoard handId={hand.handId} defaultTitle={shareTitle(hand)} startOpen={searchParams?.share==='1'}/></>:<p>{searchParams?.share==='1'?'ハンドを保存しています。数秒後にこのページを再読み込みしてください。':'このハンドは表示できません。参加したハンドのみ確認できます。'}</p>}<div className={styles.backFooter}><a className={styles.backButton} href="/mypage/poker?pane=hands">ハンド履歴に戻る</a></div></>}]}/>;
+  content:<>{hand?<><HandReplay hand={hand} backHref="/mypage/poker?pane=hands"/><div className={styles.replayFooter}><ShareToBoard handId={hand.handId} defaultTitle={shareTitle(hand)} startOpen={searchParams?.share==='1'}/><a className={styles.backButton} href="/mypage/poker?pane=hands">ハンド履歴に戻る</a></div></>:<p>{searchParams?.share==='1'?'ハンドを保存しています。数秒後にこのページを再読み込みしてください。':'このハンドは表示できません。参加したハンドのみ確認できます。'}</p>}{!hand&&<div className={styles.backFooter}><a className={styles.backButton} href="/mypage/poker?pane=hands">ハンド履歴に戻る</a></div>}</>}]}/>;
 }
