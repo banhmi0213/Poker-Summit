@@ -140,3 +140,34 @@
  .wrap .handDetail b{font-size:22px}.wrap .handDetail :is(span,small,li){font-size:16px!important}
  .wrap .path button{font-size:15px!important;min-height:40px}
 }
+
+/* Owner 11/4: desktop-only three-column flop view. Keep the mobile DOM flow and palette. */
+@media (min-width:1100px){
+ .wrap[data-flop-view] .split[data-on]{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(0,1.4fr) minmax(300px,1.15fr);gap:16px;align-items:start}
+ .wrap[data-flop-view] .split[data-on] .splitSide{display:flex;flex-direction:column;gap:8px;grid-column:1;grid-row:1;min-width:0}
+ .wrap[data-flop-view] .split[data-on] .splitSide>*{margin:0!important}
+ .wrap[data-flop-view] .splitSide :is(.intro,[data-flop-inline]){display:none!important}
+ .wrap[data-flop-view] .flopAbout{display:block;position:relative;color:#c9d6e0;font-size:14px;order:10}
+ .wrap[data-flop-view] .flopAbout summary{cursor:pointer;color:#d9b368;min-height:28px}
+ .wrap[data-flop-view] .flopAbout[open]>p{position:absolute;bottom:100%;left:0;width:min(520px,70vw);z-index:10;padding:14px;background:#203e51;border:1px solid #d9b368;border-radius:8px;box-shadow:0 4px 20px #0005}
+ .wrap[data-flop-view] .split[data-on] .form{grid-template-columns:1fr}
+ .wrap[data-flop-view] .split[data-on] .splitMain{grid-column:2;grid-row:1;container-type:inline-size;min-width:0;display:flex;justify-content:center}
+ .wrap[data-flop-view] .splitMain>:is(.strategyLegend,.handDetail,.handDetailHint){display:none}
+ .wrap[data-flop-view] .splitMain .grid{width:min(100cqw,var(--flop-room,calc(100vh - 290px)) );height:min(100cqw,var(--flop-room,calc(100vh - 290px)) );flex:none;border-spacing:2px;font-size:14px!important}
+ .wrap[data-flop-view] .splitMain .grid td{height:auto;min-height:0;padding:0;font-size:14px;line-height:1.2}
+ .wrap[data-flop-view] .flopDetails{display:flex;grid-column:3;grid-row:1;min-width:0;flex-direction:column;gap:6px}
+ .wrap[data-flop-view] .flopDetails p{margin:0!important;font-size:14px!important;line-height:1.4!important}
+ .wrap[data-flop-view] .flopDetails .strategyLegend{padding:8px 10px}
+ .wrap[data-flop-view] .flopDetails .strategyLegend>p{margin-top:6px!important}
+ .wrap[data-flop-view] .flopDetails .legendItems{gap:6px 10px}
+ .wrap[data-flop-view] .flopDetails .path{gap:5px}
+ .wrap[data-flop-view] .flopDetails .path button{min-height:30px;padding:4px 8px;font-size:14px!important}
+ .wrap[data-flop-view] .flopDetails .handDetail{margin:0;padding:8px 10px;gap:5px}
+ .wrap[data-flop-view] .flopDetails .handDetail b{font-size:18px}
+ .wrap[data-flop-view] .flopDetails .handDetail :is(span,small,li){font-size:14px!important}
+}
+
+@media (min-width:1100px){
+ .wrap[data-flop-view] .splitSide>p{line-height:1.4!important;font-size:14px!important}
+ .wrap[data-flop-view] .splitSide .path button{min-height:34px;padding:5px 8px;font-size:14px!important}
+}

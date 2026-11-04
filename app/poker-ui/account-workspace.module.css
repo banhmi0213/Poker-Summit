@@ -70,3 +70,24 @@
 .panes>a>svg{width:22px;height:22px;flex-shrink:0;color:#dce5e9}
 .panes>a:hover{background:#ffffff0c;border-color:#d3c29555}
 @media(min-width:901px){.panes>a{font-size:14px;min-height:52px}}
+
+/* Only the active flop tool uses this compact desktop shell; other panes and phones keep their layout. */
+@media (min-width:1100px){
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .main{padding:8px 20px 10px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .heading{margin-bottom:6px;align-items:center}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .heading h1{font-size:20px;line-height:1.3}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .heading p{margin:0;font-size:14px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panelHeading{padding:6px 16px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panelHeading :is(.eyebrow,p:last-child,.panelIcon){display:none}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panelHeading h2{font-size:18px;margin:0;line-height:1.4}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panel{padding:10px 14px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .sidebar{padding:6px 20px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panes{gap:4px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panes :is(button,a){width:auto;min-height:32px;padding:4px 8px;font-size:14px;line-height:1.4}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panes svg{width:18px;height:18px}
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .panel>aside[aria-label="ホーム画面への追加方法"]{display:none}
+}
+
+@media (min-width:1100px){
+ .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .heading{display:none}
+}

@@ -27,3 +27,9 @@
  .picker .suits button{min-height:40px!important;padding:3px!important;flex-direction:row;justify-content:center;font-size:20px!important}.picker .suits small{font-size:14px}
  .picker .actions{gap:6px;margin-top:8px}.picker .actions button{min-height:36px!important;padding:5px!important;font-size:15px!important}
 }
+@media (min-width:1100px){
+ .picker .slots small{white-space:nowrap;font-size:14px}
+ .picker .slots button{gap:4px}
+ .picker .suits button{flex-direction:column;gap:0;line-height:1.1}
+ .picker .suits small{white-space:nowrap;font-size:14px}
+}
