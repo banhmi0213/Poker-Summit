@@ -8,7 +8,7 @@ import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
 import {GtoDeviationView} from '@/app/poker-ui/gto-deviation-view';
-import {HandStatsView} from '@/app/poker-ui/hand-stats-view';
+import {HandStatsByStake} from '@/app/poker-ui/hand-stats-by-stake';
 import {PushFoldChart} from '@/app/poker-ui/gto-pushfold-chart';
 import {RiverSolverPanel} from '@/app/poker-ui/river-solver-panel';
 import {EquityCalculator} from '@/app/poker-ui/equity-calculator';
@@ -36,7 +36,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'summary',label:'通算成績',eyebrow:'PLAYER RECORD',description:'終了・確定した大会の成績を振り返る。',content:data?<StatisticsView data={data} section="summary"/>:unavailable},
  {id:'upcoming',label:'参加予定の大会',eyebrow:'YOUR NEXT TOURNAMENT',description:'登録済み・進行中の大会と参加テーブルを確認。',content:data?<StatisticsView data={data} section="upcoming"/>:unavailable},
  {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
- {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<><HandStatsView stats={tendencies.ring}/><GtoDeviationView/></>:unavailable},
+ {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<><HandStatsByStake all={tendencies.ring} stakes={tendencies.stakes??[]}/><GtoDeviationView/></>:unavailable},
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'計算で求めた正解の表。チップの量ごとに、参加する手・降りる手を確認できます。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PushFoldChart/>},
  {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'6人テーブル・100BBで、立場ごとのオープン・コール・3ベットなどの正解の割合。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
  {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'6人テーブル・2人・リンプ・3人のポットの場面×代表的なフロップ（200枚まで順次計算中）を前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめ。好きなフロップは近いものを表示。（改良中：SBのリンプ・スクイーズ・3人以上のポットは今後対応します）',content:<FlopStrategyPanel/>},

@@ -29,7 +29,9 @@ export async function loadHandHistory(handId:string,admin=false):Promise<HandHis
 /** Totals from public.poker_hand_stats. Rates are numerator/denominator counts (see lib/poker/hand-stats.ts). */
 export type HandStatsSummary={hands:number;net:number;bb100:number;vpip:number;pfr:number;three_bet_opp:number;three_bet:number;fold_to_3bet_opp:number;fold_to_3bet:number;cbet_opp:number;cbet:number;fold_to_cbet_opp:number;fold_to_cbet:number;saw_flop:number;wtsd:number;wsd:number;
  positions:{position:string;hands:number;net:number;bb100:number;vpip:number;pfr:number}[]};
-export async function loadHandStats():Promise<{asOf:string;ring:HandStatsSummary;all:HandStatsSummary}|null>{
+/** One ring stake (SB/BB) and the member's stats at it (2026/11/04). */
+export type StakeStats={sb:number;bb:number;stats:HandStatsSummary};
+export async function loadHandStats():Promise<{asOf:string;ring:HandStatsSummary;all:HandStatsSummary;stakes?:StakeStats[]}|null>{
  const client=await createClient();const {data:{user},error:authError}=await client.auth.getUser();if(authError||!user)return null;
  const {data,error}=await client.rpc('poker_hand_stats',{p_admin:false});
  if(error||!data?.ring)return null;
