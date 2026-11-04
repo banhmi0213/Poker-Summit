@@ -247,7 +247,9 @@
     },
     "expansionBatch": "2026-11-05T07:20:01.710Z",
     "full100BB1755All6Slots": "2026-11-20T21:00:49.417Z",
-    "assumptions": "Sixspots/~40runners; existing ownrates over5.7hours; utg-btn-bb/expansion aggregate/6 proxy. Adjacent10min delta also saved but short. All21initial started, no startwait. +/-24h or more. Full1755 assumes all6slots100BB; shallow/89max2expansion4newcondition allocation extends estimate."
+    "assumptions": "Sixspots/~40runners; existing ownrates over5.7hours; utg-btn-bb/expansion aggregate/6 proxy. Adjacent10min delta also saved but short. All21initial started, no startwait. +/-24h or more. Full1755 assumes all6slots100BB; shallow/89max2expansion4newcondition allocation extends estimate.",
+    "full100BB1755Planned2SlotsAfterInitial": "2026-12-23T03:05:21.329Z",
+    "full100BB1755Planned2SlotsNote": "After initial21x200, 2of6slots expansion and4 new shallow/89max conditions perowner; current85.34/h scaled to28.45/h proxy. Earlybatchprogress ignored conservatively; costs/batchselection may differ greatly, weeks uncertainty."
   },
   "flopPR": {
     "number": 756,
