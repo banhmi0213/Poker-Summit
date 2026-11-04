@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-03T23:10:54.209Z",
+  "checkedAt": "2026-11-04T05:03:52.547Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,20 +104,77 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-03T23:02:28.095Z",
+    "checkedAt": "2026-11-04T05:01:32.326Z",
     "runs": [
+      {
+        "id": 41735951806,
+        "spot": "btn-sb-3bet",
+        "total": 201,
+        "success": 77,
+        "running": 7,
+        "solveRunning": 7,
+        "queued": 116,
+        "failed": [],
+        "pageSize": 100,
+        "remaining": 123,
+        "increment": 77,
+        "rate": 12.866553463894812
+      },
+      {
+        "id": 41735950412,
+        "spot": "co-bb-3bet",
+        "total": 201,
+        "success": 138,
+        "running": 7,
+        "solveRunning": 7,
+        "queued": 55,
+        "failed": [],
+        "pageSize": 100,
+        "remaining": 62,
+        "increment": 138,
+        "rate": 23.059537376850443
+      },
+      {
+        "id": 41678529089,
+        "spot": "btn-bb-3bet",
+        "total": 201,
+        "success": 186,
+        "running": 7,
+        "solveRunning": 7,
+        "queued": 7,
+        "failed": [],
+        "pageSize": 100,
+        "remaining": 14,
+        "increment": 98,
+        "rate": 16.37561349950249
+      },
+      {
+        "id": 41459846661,
+        "spot": "sb-limp",
+        "total": 201,
+        "success": 136,
+        "running": 7,
+        "solveRunning": 7,
+        "queued": 57,
+        "failed": [],
+        "pageSize": 100,
+        "remaining": 64,
+        "increment": 23,
+        "rate": 3.843256229475074
+      },
       {
         "id": 41604956412,
         "spot": "utg-btn",
         "total": 201,
-        "success": 154,
-        "running": 7,
-        "solveRunning": 7,
-        "queued": 39,
+        "success": 200,
+        "running": 0,
+        "solveRunning": 0,
+        "queued": 0,
         "failed": [],
-        "remaining": 46,
-        "increment": 72,
-        "rate": 11.605073440817865
+        "pageSize": 100,
+        "remaining": 0,
+        "increment": 46,
+        "rate": 7.686512458950148
       },
       {
         "id": 41486979979,
@@ -128,6 +185,7 @@
         "solveRunning": 0,
         "queued": 0,
         "failed": [],
+        "pageSize": 100,
         "remaining": 0,
         "increment": 0,
         "rate": 0
@@ -141,9 +199,10 @@
         "solveRunning": 0,
         "queued": 0,
         "failed": [],
+        "pageSize": 100,
         "remaining": 0,
-        "increment": 42,
-        "rate": 6.769626173810421
+        "increment": 0,
+        "rate": 0
       },
       {
         "id": 41464873348,
@@ -154,151 +213,111 @@
         "solveRunning": 0,
         "queued": 0,
         "failed": [],
+        "pageSize": 100,
         "remaining": 0,
-        "increment": 13,
-        "rate": 2.0953604823698924
-      },
-      {
-        "id": 41459846661,
-        "spot": "sb-limp",
-        "total": 201,
-        "success": 113,
-        "running": 7,
-        "solveRunning": 7,
-        "queued": 80,
-        "failed": [],
-        "remaining": 87,
-        "increment": 21,
-        "rate": 3.3848130869052104
+        "increment": 0,
+        "rate": 0
       },
       {
         "id": 41459848850,
         "spot": "sb-iso",
         "total": 201,
-        "success": 199,
+        "success": 200,
         "running": 0,
         "solveRunning": 0,
         "queued": 0,
-        "failed": [
-          {
-            "id": 125325997317,
-            "name": "Solve sb-iso QhTh8c",
-            "conclusion": "failure"
-          }
-        ],
-        "remaining": 1,
-        "increment": 37,
-        "rate": 5.9637182959758475
-      },
-      {
-        "id": 41678529089,
-        "spot": "btn-bb-3bet",
-        "total": 201,
-        "success": 88,
-        "running": 7,
-        "solveRunning": 7,
-        "queued": 105,
         "failed": [],
-        "remaining": 112,
-        "increment": 88,
-        "rate": 14.183978649888502
+        "pageSize": 30,
+        "verifiedOutput": true,
+        "remaining": 0,
+        "increment": 1,
+        "rate": 0.16709809693369887
       },
       {
-        "id": 41735950412,
-        "spot": "co-bb-3bet",
-        "total": 201,
-        "totalSolve": 200,
+        "id": 41776528800,
+        "spot": "utg-bb-3bet",
         "success": 0,
         "running": 7,
         "queued": 193,
+        "total": 201,
+        "failed": [],
         "remaining": 200,
-        "failed": []
+        "increment": 0,
+        "rate": 0
       },
       {
-        "id": 41735951806,
-        "spot": "btn-sb-3bet",
-        "total": 201,
-        "totalSolve": 200,
+        "id": 41776531045,
+        "spot": "co-btn-3bet",
         "success": 0,
-        "running": 7,
-        "queued": 193,
+        "running": 2,
+        "queued": 198,
+        "total": 201,
+        "failed": [],
         "remaining": 200,
-        "failed": []
+        "increment": 0,
+        "rate": 0
       }
     ]
   },
   "eta": {
-    "observedAt": "2026-11-03T23:02:28.095Z",
-    "previousAt": "2026-11-03T16:50:13.036Z",
-    "elapsedHours": 6.204183055555555,
-    "increment": 273,
-    "ratePerHour": 44.00257012976773,
-    "proxySpotRate": 7.333761688294622,
+    "observedAt": "2026-11-04T05:01:32.326Z",
+    "previousAt": "2026-11-03T23:02:28.095Z",
+    "elapsedHours": 5.984508611111111,
+    "increment": 383,
+    "ratePerHour": 63.99857112560667,
+    "proxySpotRate": 10.666428520934444,
     "spots": [
       {
-        "spot": "utg-btn",
-        "eta": "2026-11-04T03:00:17.716Z"
-      },
-      {
-        "spot": "sb-limp",
-        "eta": "2026-11-05T00:44:39.053Z"
-      },
-      {
-        "spot": "sb-iso",
-        "eta": "2026-11-04T01:07:23.489Z",
-        "note": "single board runner duration ~7/proxySpotRate plus1h queue allowance; no completed rate from retry yet"
-      },
-      {
-        "spot": "btn-bb-3bet",
-        "eta": "2026-11-04T06:56:14.533Z"
+        "spot": "btn-sb-3bet",
+        "eta": "2026-11-04T14:35:07.136Z"
       },
       {
         "spot": "co-bb-3bet",
-        "eta": "2026-11-05T02:18:44.178Z"
+        "eta": "2026-11-04T07:42:51.618Z"
       },
       {
-        "spot": "btn-sb-3bet",
-        "eta": "2026-11-05T02:18:44.178Z"
+        "spot": "btn-bb-3bet",
+        "eta": "2026-11-04T05:52:50.073Z"
+      },
+      {
+        "spot": "sb-limp",
+        "eta": "2026-11-04T21:40:41.490Z"
       },
       {
         "spot": "utg-bb-3bet",
-        "start": "2026-11-03T23:10:38.975Z",
-        "eta": "2026-11-05T02:26:55.058Z",
-        "proxy": true
+        "eta": "2026-11-04T23:46:33.833Z"
       },
       {
         "spot": "co-btn-3bet",
-        "start": "2026-11-04T03:00:17.716Z",
-        "eta": "2026-11-05T06:16:33.799Z",
-        "proxy": true
+        "eta": "2026-11-04T23:46:33.833Z"
       },
       {
         "spot": "btn-bb-4bet",
-        "start": "2026-11-04T06:56:14.533Z",
-        "eta": "2026-11-05T10:12:30.617Z",
+        "start": "2026-11-04T05:52:50.073Z",
+        "eta": "2026-11-05T00:37:51.580Z",
         "proxy": true
       },
       {
         "spot": "co-btn-bb",
-        "start": "2026-11-05T00:44:39.053Z",
-        "eta": "2026-11-06T04:00:55.137Z",
+        "start": "2026-11-04T07:42:51.618Z",
+        "eta": "2026-11-05T02:27:53.125Z",
         "proxy": true
       },
       {
         "spot": "btn-sb-bb",
-        "start": "2026-11-05T02:18:44.178Z",
-        "eta": "2026-11-06T05:35:00.262Z",
+        "start": "2026-11-04T14:35:07.136Z",
+        "eta": "2026-11-05T09:20:08.643Z",
         "proxy": true
       },
       {
         "spot": "utg-btn-bb",
-        "start": "2026-11-05T02:18:44.178Z",
-        "eta": "2026-11-06T05:35:00.262Z",
+        "start": "2026-11-04T21:40:41.490Z",
+        "eta": "2026-11-05T16:25:42.997Z",
         "proxy": true
       }
     ],
-    "initial21x200": "2026-11-06T05:35:00.262Z",
-    "assumptions": "6slots, measured aggregate/6 for new/unstarted/retry, specified order; sb-iso queued restart waits may delay; ±24h or more. Initial21x200 only, not1755. sb-iso ETA uses single-runner board duration7/proxy plus1h queue; recalculated Nov4JST."
+    "initial21x200": "2026-11-05T16:25:42.997Z",
+    "assumptions": "6spot operation incl40runner capacity; new/unstarted use measured aggregate/6; specified start order; ±24h or more due different spots/short interval. Initial21x200 only,not1755."
   },
   "flopPR": {
     "number": 756,
@@ -1775,41 +1794,41 @@
   ],
   "newFlopRuns": [
     {
-      "branch": "gto-flop-collect/41486975878",
+      "branch": "gto-flop-collect/41604956412",
       "runs": [
         {
-          "id": 41735946083,
+          "id": 41776524546,
           "status": "in_progress",
           "conclusion": null
         }
       ]
     },
     {
-      "branch": "gto-flop-collect/41464873348",
+      "branch": "gto-flop-collect/41459848850",
       "runs": [
         {
-          "id": 41735948690,
+          "id": 41776525988,
           "status": "in_progress",
           "conclusion": null
         }
       ]
     },
     {
-      "branch": "gto-flop-solve/co-bb-3bet/v3b",
+      "branch": "gto-flop-solve/utg-bb-3bet/v3b",
       "runs": [
         {
-          "id": 41735950412,
-          "status": "in_progress",
+          "id": 41776528800,
+          "status": "queued",
           "conclusion": null
         }
       ]
     },
     {
-      "branch": "gto-flop-solve/btn-sb-3bet/v3b",
+      "branch": "gto-flop-solve/co-btn-3bet/v3b",
       "runs": [
         {
-          "id": 41735951806,
-          "status": "in_progress",
+          "id": 41776531045,
+          "status": "queued",
           "conclusion": null
         }
       ]
@@ -2127,73 +2146,102 @@
       "mergeCommit": "27c84a4fa8c8989fcebbf62567fb855f55c63817",
       "stageTreeMatches": true,
       "checks": "Allcheckruns andVercelsuccess"
+    },
+    "utgBtnSbIso": {
+      "pr": 788,
+      "head": "1dd66ca14d06f77f67bd3cca248cc13824d730c0",
+      "tree": "91a2399925102a1a3cd5dacffd7c3e81ebbb1f68",
+      "state": "await-checks",
+      "solveRuns": [
+        41604956412,
+        41459848850
+      ],
+      "collectRuns": [
+        41776524546,
+        41776525988
+      ],
+      "verified": "Each200canonicalunique/v3/250/finitehandEv;67tests;tree match",
+      "workspace": "/workspace/scratch/7d368c3d87fa/gto"
     }
   },
   "concurrency": {
-    "checkedAt": "2026-11-03T23:06:07.708Z",
+    "checkedAt": "2026-11-04T05:01:32.326Z",
     "runs": [
+      {
+        "id": 41776525988,
+        "branch": "gto-flop-collect/41459848850",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0
+      },
+      {
+        "id": 41775897084,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0
+      },
+      {
+        "id": 41775897095,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0
+      },
+      {
+        "id": 41776531045,
+        "branch": "gto-flop-solve/co-btn-3bet/v3b",
+        "total": 201,
+        "running": 2,
+        "success": 0,
+        "queued": 198
+      },
+      {
+        "id": 41776528800,
+        "branch": "gto-flop-solve/utg-bb-3bet/v3b",
+        "total": 201,
+        "running": 7,
+        "success": 0,
+        "queued": 193
+      },
       {
         "id": 41735951806,
         "branch": "gto-flop-solve/btn-sb-3bet/v3b",
         "total": 201,
         "running": 7,
-        "success": 0,
-        "queued": 193
+        "success": 77,
+        "queued": 116
       },
       {
         "id": 41735950412,
         "branch": "gto-flop-solve/co-bb-3bet/v3b",
         "total": 201,
         "running": 7,
-        "success": 0,
-        "queued": 193
+        "success": 138,
+        "queued": 55
       },
       {
         "id": 41678529089,
         "branch": "gto-flop-solve/btn-bb-3bet/v3b",
         "total": 201,
         "running": 7,
-        "success": 89,
-        "queued": 104
-      },
-      {
-        "id": 41604956412,
-        "branch": "gto-flop-solve/utg-btn/v3b",
-        "total": 201,
-        "running": 7,
-        "success": 154,
-        "queued": 39
+        "success": 186,
+        "queued": 7
       },
       {
         "id": 41459846661,
         "branch": "gto-flop-solve/sb-limp/v3b",
         "total": 201,
         "running": 7,
-        "success": 113,
-        "queued": 80
-      },
-      {
-        "id": 41459848850,
-        "branch": "gto-flop-solve/sb-iso/v3b",
-        "total": 201,
-        "running": 0,
-        "success": 199,
-        "queued": 1,
-        "retry": [
-          {
-            "id": 126265100256,
-            "status": "queued",
-            "conclusion": null
-          }
-        ]
+        "success": 136,
+        "queued": 57
       }
     ],
-    "errors": [
-      "Error: jobs unavailable 41459848850"
-    ],
-    "repoRunning": 35,
-    "allJobsPagesMatched": true,
-    "note": "sb-iso per_page100 ReadTimeout; fell back30 and fetched all7pages,201uniquejobs=total_count."
+    "repoRunning": 40,
+    "allPagesMatched": true
   },
   "flopObservations": [
     {
@@ -2783,6 +2831,162 @@
           "failed": []
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-04T05:01:32.326Z",
+      "runs": [
+        {
+          "id": 41735951806,
+          "spot": "btn-sb-3bet",
+          "total": 201,
+          "success": 77,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 116,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 123,
+          "increment": 77,
+          "rate": 12.866553463894812
+        },
+        {
+          "id": 41735950412,
+          "spot": "co-bb-3bet",
+          "total": 201,
+          "success": 138,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 55,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 62,
+          "increment": 138,
+          "rate": 23.059537376850443
+        },
+        {
+          "id": 41678529089,
+          "spot": "btn-bb-3bet",
+          "total": 201,
+          "success": 186,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 7,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 14,
+          "increment": 98,
+          "rate": 16.37561349950249
+        },
+        {
+          "id": 41459846661,
+          "spot": "sb-limp",
+          "total": 201,
+          "success": 136,
+          "running": 7,
+          "solveRunning": 7,
+          "queued": 57,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 64,
+          "increment": 23,
+          "rate": 3.843256229475074
+        },
+        {
+          "id": 41604956412,
+          "spot": "utg-btn",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 0,
+          "increment": 46,
+          "rate": 7.686512458950148
+        },
+        {
+          "id": 41486979979,
+          "spot": "co-btn",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 0,
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41486975878,
+          "spot": "hj-bb",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 0,
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41464873348,
+          "spot": "utg-bb",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "pageSize": 100,
+          "remaining": 0,
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41459848850,
+          "spot": "sb-iso",
+          "total": 201,
+          "success": 200,
+          "running": 0,
+          "solveRunning": 0,
+          "queued": 0,
+          "failed": [],
+          "pageSize": 30,
+          "verifiedOutput": true,
+          "remaining": 0,
+          "increment": 1,
+          "rate": 0.16709809693369887
+        },
+        {
+          "id": 41776528800,
+          "spot": "utg-bb-3bet",
+          "success": 0,
+          "running": 7,
+          "queued": 193,
+          "total": 201,
+          "failed": [],
+          "remaining": 200,
+          "increment": 0,
+          "rate": 0
+        },
+        {
+          "id": 41776531045,
+          "spot": "co-btn-3bet",
+          "success": 0,
+          "running": 2,
+          "queued": 198,
+          "total": 201,
+          "failed": [],
+          "remaining": 200,
+          "increment": 0,
+          "rate": 0
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -2791,8 +2995,8 @@
     "rerunJob": 126265100256,
     "board": "QhTh8c",
     "retryCount": 1,
-    "state": "queued",
-    "note": "Parentcompleted attempt1 failure;singlejobrerun started;do not retryagain."
+    "state": "resolved-output-verified",
+    "note": "Parentattempt2 completed success; API jobs contains stale queued QhTh8c, but collectedQ and all200files validatedv3/250/finitehandEv. No additionalretry."
   },
   "homeLaunchRecovery": {
     "pr": 769,
@@ -2857,7 +3061,7 @@
     "deployment": "Vercel success on merge1a84e0b",
     "stagingSourceReadbackVerified": true
   },
-  "nextUnstartedFlop": "utg-bb-3bet",
+  "nextUnstartedFlop": "btn-bb-4bet",
   "desktopGtoWide": {
     "state": "merged",
     "pr": 779,
@@ -2913,5 +3117,13 @@
     ],
     "nineUtgBelowEight": true,
     "noFitStarted": true
+  },
+  "mainStaffPolicy": {
+    "before": "2026-11-04T15:00:00Z",
+    "allowMainMergeBeforeDeadline": true,
+    "afterDeadline": "Ownerpressesmergeonly;noautomerge",
+    "existingPR785Included783784": true,
+    "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
+    "staffAliasOwner": "Mitchell;requestownerforwardcopyaftermainmerge;do notclaimstaffupdatedwithoutverification"
   }
 }
