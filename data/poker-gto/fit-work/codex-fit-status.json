@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-04T11:07:30.376Z",
+  "checkedAt": "2026-11-04T11:09:33.905Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -245,7 +245,10 @@
     "utg-bb",
     "hj-bb",
     "utg-btn",
-    "sb-iso"
+    "sb-iso",
+    "btn-bb-3bet",
+    "co-bb-3bet",
+    "utg-bb-3bet"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -944,7 +947,10 @@
     "utg-bb",
     "hj-bb",
     "utg-btn",
-    "sb-iso"
+    "sb-iso",
+    "btn-bb-3bet",
+    "co-bb-3bet",
+    "utg-bb-3bet"
   ],
   "stagingVerified": {
     "spotCounts": {
@@ -3198,7 +3204,7 @@
     "until": "2026-11-05T00:00:00+09:00",
     "scope": "Only flop data intake; UIexception handled separately,no UI/code changes in thisrun."
   },
-  "currentStage": "d549b20516d7e5ee726a5418ab3c895d4da99974",
+  "currentStage": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
   "chartRechecked": {
     "at": "2026-11-03T23:10:54.209Z",
     "eightMaxBB": "82.825/78.594/73.091/55.459;83.148/77.060/68.187/52.507;83.710/77.205/70.126/56.807",
@@ -3229,56 +3235,73 @@
     "staffAliasOwner": "Mitchell;requestownerforwardcopyaftermainmerge;do notclaimstaffupdatedwithoutverification"
   },
   "mainPromotion": {
-    "pr": 789,
-    "state": "merged-by-existing-operation-verified",
-    "head": "58d301c3c8ae2e5f9240d8883487d070bae2ef23",
-    "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
-    "workflowRuns": [
-      41777225069,
-      41777218276,
-      41777218272
-    ],
-    "preMergeCopyShared": true,
+    "previous": {
+      "pr": 789,
+      "state": "merged-by-existing-operation-verified",
+      "head": "58d301c3c8ae2e5f9240d8883487d070bae2ef23",
+      "mainBefore": "15a24d42da64e1e93ea52c6f1d890d33b5909322",
+      "workflowRuns": [
+        41777225069,
+        41777218276,
+        41777218272
+      ],
+      "preMergeCopyShared": true,
+      "deadline": "2026-11-04T15:00:00Z",
+      "noAutoMerge": true,
+      "staff": "Alias switch and post-switch GTOview notyetverified;Mitchellownerhandoffneeded",
+      "oldCancelledHeads": [
+        "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
+        "c440eec78d940121b8445c58d5cb696b862aeba0"
+      ],
+      "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
+      "retryCount": 0,
+      "lastObservedAt": "2026-11-04T11:07:30.376Z",
+      "mainUnchanged": false,
+      "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads.",
+      "latestChecks": [
+        {
+          "name": "Vercel Preview Comments",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Poker engine regression tests",
+          "status": "queued",
+          "conclusion": null
+        },
+        {
+          "name": "deploy",
+          "status": "queued",
+          "conclusion": null
+        },
+        {
+          "name": "Poker engine regression tests",
+          "status": "queued",
+          "conclusion": null
+        }
+      ],
+      "mergeCommit": "c3ef6166134abc44c3281eea83d9ab8c2f25dcaa",
+      "mergedAt": "2026-11-04T06:43:21Z",
+      "mergedVerified": true,
+      "mainCurrent": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
+      "mainCurrentChecks": "Not remeasured this checkpoint",
+      "noDuplicateMerge": true
+    },
+    "pr": 794,
+    "state": "checks-pending",
+    "head": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
+    "mainBefore": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
     "deadline": "2026-11-04T15:00:00Z",
-    "noAutoMerge": true,
-    "staff": "Alias switch and post-switch GTOview notyetverified;Mitchellownerhandoffneeded",
-    "oldCancelledHeads": [
-      "731ce1078469f7d9dccdb34194adfcd8d4b307d0",
-      "c440eec78d940121b8445c58d5cb696b862aeba0"
-    ],
-    "oldDeployFailure": "41777275112 failed waiting for cancelled oldheadengineCI;do notrerun obsolete commit.",
     "retryCount": 0,
-    "lastObservedAt": "2026-11-04T11:07:30.376Z",
-    "mainUnchanged": false,
-    "additionalPeerUpdate": "cc30933d91e1ad6bc2248181f29b7d5698cb7f83 superseded515e;currentCIqueued,Vercelpending; do notrerun obsoleteheads.",
-    "latestChecks": [
-      {
-        "name": "Vercel Preview Comments",
-        "status": "completed",
-        "conclusion": "success"
-      },
-      {
-        "name": "Poker engine regression tests",
-        "status": "queued",
-        "conclusion": null
-      },
-      {
-        "name": "deploy",
-        "status": "queued",
-        "conclusion": null
-      },
-      {
-        "name": "Poker engine regression tests",
-        "status": "queued",
-        "conclusion": null
-      }
+    "noAutoMerge": true,
+    "preMergeCopyShared": true,
+    "workflowRuns": [
+      41818943029,
+      41818892587,
+      41818892417
     ],
-    "mergeCommit": "c3ef6166134abc44c3281eea83d9ab8c2f25dcaa",
-    "mergedAt": "2026-11-04T06:43:21Z",
-    "mergedVerified": true,
-    "mainCurrent": "fee82d7f6ca1cd0a5b83200b0456a10d3d59fbc2",
-    "mainCurrentChecks": "Not remeasured this checkpoint",
-    "noDuplicateMerge": true
+    "lastObservedAt": "2026-11-04T11:09:33.905Z",
+    "staff": "Mitchell alias switch required after main merge; not verified"
   },
   "reportingPolicy": {
     "alwaysListAll21": true,
@@ -3297,7 +3320,7 @@
     "head": "72d5e7443f55f75ab024f407b8bcba6dd28491ca",
     "tree": "11a5ad41c8f4786a35123c8c3c1840db9c7bc4cf",
     "branch": "chatgpt/gto-threebet-flops-20261104-f",
-    "state": "checks-pending",
+    "state": "merged",
     "spots": [
       "btn-bb-3bet",
       "co-bb-3bet",
@@ -3322,7 +3345,10 @@
       "pass": 67,
       "fail": 0
     },
-    "githubLocalTreeMatch": true
+    "githubLocalTreeMatch": true,
+    "merge": "a719d8bdb6200625c1462ebcc78d5f62a52db01a",
+    "checks": "Vercel and Preview Comments success; PR workflows total_count=0",
+    "mergeReadback": true
   },
   "full21Status": {
     "observedAt": "2026-11-04T11:03:14.911Z",
@@ -3337,13 +3363,12 @@
       "utg-bb",
       "hj-bb",
       "utg-btn",
-      "sb-iso"
-    ],
-    "calculatedNotImported": [
+      "sb-iso",
       "btn-bb-3bet",
       "co-bb-3bet",
       "utg-bb-3bet"
     ],
+    "calculatedNotImported": [],
     "calculating": [
       "sb-limp",
       "btn-sb-3bet",
