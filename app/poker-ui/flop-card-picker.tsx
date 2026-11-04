@@ -17,8 +17,8 @@ export function FlopCardPicker({initialFlop,onChoose,disabled=false}:{initialFlo
  }
  return <fieldset className={styles.picker} disabled={disabled}>
   <legend>フロップの3枚を選ぶ</legend>
-  <div className={styles.slots}>{cards.map((card,i)=><button key={i} type="button" aria-label={`${i+1}枚目のカード：${text(card)}`} aria-pressed={active===i} onClick={()=>{setActive(i);setRank(card[0]??'A');}}><small>{i+1}枚目</small><strong>{text(card)}</strong></button>)}</div>
-  <p>{active+1}枚目のランクとスートを選んでください</p>
+  <div className={styles.slots}>{cards.map((card,i)=><button key={i} type="button" aria-label={`${i+1}枚目のカード：${text(card)}`} aria-pressed={active===i} onClick={()=>{setActive(i);setRank(card[0]??'A');}}><small>{i+1}枚目{active===i?'・選択中':''}</small><strong>{text(card)}</strong></button>)}</div>
+  <p className={styles.selectionStatus} role="status"><strong>{active+1}枚目を編集中</strong><span>ランク：{rank} ／ スート：{cards[active]?.[0]===rank ? (SUITS.find(s=>s[0]===cards[active]?.[1])?.[2]??"未選択") : "未選択"}</span><span>{active+1}枚目のランクとスートを選んでください</span></p>
   <div className={styles.ranks} role="group" aria-label="ランク">{[...RANKS].map(r=><button type="button" key={r} aria-label={`ランク ${r}`} aria-pressed={rank===r} onClick={()=>setRank(r)}>{r}</button>)}</div>
   <div className={styles.suits} role="group" aria-label="スート">{SUITS.map(([s,symbol,label])=><button type="button" key={s} aria-label={`スート ${label}`} aria-pressed={cards[active]===rank+s} disabled={duplicate(rank+s)} onClick={()=>chooseSuit(s)}>{symbol}<small>{label}</small></button>)}</div>
   <div className={styles.actions}><button type="button" onClick={()=>{setCards(['','','']);setActive(0);setRank('A');}}>選び直す</button><button type="button" disabled={!ready} onClick={()=>onChoose(cards.join(''))}>このフロップを表示</button></div>
