@@ -1,3 +1,4 @@
+import {GtoUsageOpen} from '@/app/gto-usage-tracker';
 import Link from 'next/link';
 import {notFound} from 'next/navigation';
 import {staticPageMetadata} from '@/lib/seo';
@@ -28,7 +29,7 @@ export default function Page({params}:{params:{pos:string}}){
  if(!slug||!node)return notFound();
  const t=POSITION_TEXT[slug];
  const totals=actionTotals(node),info=chartAssumptions();
- const tool=<div className={chart.wrap}>
+ const tool=<div className={chart.wrap}><GtoUsageOpen tool="preflop" viewKey={slug}/>
   <p className={styles.chartHead}><b>{t.chartTitle}</b><br/>全体では {node.actions.map((a,i)=>`${a.label} ${pct(totals[i]??0)}`).join('・')}</p>
   <StrategyLegend actions={node.actions}/>
   <table className={chart.grid} aria-label={`${POSITION_NAME[slug]}の手札ごとの打ち方`}><tbody>{[...RANKS].map((_,i)=><tr key={i}>{[...RANKS].map((_,j)=>{

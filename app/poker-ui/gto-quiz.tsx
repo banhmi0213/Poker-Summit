@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,trackGtoUsage} from '@/app/gto-usage-tracker';
 import {MobilePlayGuard} from './mobile-play-guard';
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {GTO_SPOTS,loadFlop,loadFlopIndex} from '@/lib/poker/gto-spots';
@@ -40,6 +41,7 @@ function Cards({cards}:{cards:readonly number[]}){
 }
 
 export function GtoQuiz(){
+ useGtoUsage('quiz');
  const [mode,setMode]=useState<string>('all'),[index,setIndex]=useState<Record<string,string[]>>({});
  const [q,setQ]=useState<QuizQuestion|null>(null),[graded,setGraded]=useState<QuizGrade|null>(null);
  const [loading,setLoading]=useState(false),[error,setError]=useState('');
@@ -61,12 +63,12 @@ export function GtoQuiz(){
    const target=mode==='weak'&&weak.length?weak[Math.floor(Math.random()*weak.length)].category:null;
    const flopPool=Object.entries(flopIndex).filter(([id,f])=>f.length&&(target?target===`flop-${id}`:mode==='all'||mode==='weak'||id===mode));
    const wantPreflop=target?target.startsWith('preflop-'):mode==='preflop'||((mode==='all'||mode==='weak')&&(Math.random()<0.4||!flopPool.length));
-   if(wantPreflop){const data=await loadPreflop();const made=data&&preflopQuestion(data,Math.random,target?target.slice('preflop-'.length):undefined);if(made){setQ(made);return;}}
+   if(wantPreflop){const data=await loadPreflop();const made=data&&preflopQuestion(data,Math.random,target?target.slice('preflop-'.length):undefined);if(made){trackGtoUsage('quiz','start');setQ(made);return;}}
    for(let attempt=0;attempt<8&&flopPool.length;attempt++){
     const [spot,list]=flopPool[Math.floor(Math.random()*flopPool.length)],flop=list[Math.floor(Math.random()*list.length)];
     const data=await loadFlop(spot,flop);if(!data)continue;
     const info=GTO_SPOTS.find(s=>s.id===spot);
-    const made=flopQuestion(data,spot,`${info?.label??spot}・フロップ`,info?.detail??'');if(made){setQ(made);return;}
+    const made=flopQuestion(data,spot,`${info?.label??spot}・フロップ`,info?.detail??'');if(made){trackGtoUsage('quiz','start');setQ(made);return;}
    }
    setError('問題を用意できませんでした。通信が不安定かもしれません。しばらくしてから試してください。');
   }catch{setError('問題を用意できませんでした。通信が不安定かもしれません。しばらくしてから試してください。');}
@@ -76,7 +78,7 @@ export function GtoQuiz(){
  const asked=useRef('');
  useEffect(()=>{if(asked.current===mode)return;asked.current=mode;void next();},[mode,next]);
  const answer=(i:number)=>{
-  if(!q||graded)return;const g=gradeQuiz(q,i);setGraded(g);
+  if(!q||graded)return;trackGtoUsage('quiz','answer');const g=gradeQuiz(q,i);setGraded(g);
   const local=addLocal(score,q.category,g.points);setScore(local);
   if(saved==='member')rpc('poker_gto_quiz_record',{p_category:q.category,p_points:g.points}).then(s=>{if(s)setScore(s);}).catch(()=>{});
   else writeLocal(local);

@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage,trackGtoUsage} from '@/app/gto-usage-tracker';
 import {useEffect,useRef,useState} from 'react';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import type {IcmResult} from '@/lib/poker/icm';
@@ -16,6 +17,7 @@ const nums=(t:string)=>t.split(/[,、\s]+/).map(Number).filter(x=>Number.isFinit
 type Results={icm:IcmResult;chip:IcmResult};
 
 export function IcmPanel(){
+ useGtoUsage('calculator');
  const [count,setCount]=useState(6),[stacks,setStacks]=useState<string[]>(['15','25','8','12','20','10']);
  const [ante,setAnte]=useState('1'),[payouts,setPayouts]=useState('50,30,20'),[others,setOthers]=useState('');
  const [res,setRes]=useState<Results|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -27,7 +29,7 @@ export function IcmPanel(){
  const run=async()=>{
   const st=stacks.map(Number);if(st.some(x=>!(x>0)))return setError('スタックは0より大きいBBの数で入れてください。');
   const pay=nums(payouts);if(!pay.length)return setError('順位ごとの配分を「50,30,20」のように入れてください（ポイントでも割合でも大丈夫です）。');
-  setError('');setBusy(true);
+  trackGtoUsage('calculator','start');setError('');setBusy(true);
   try{
    if(!worker.current){const {createGtoWorker}=await import('@/app/poker-demo/gto-worker-client');worker.current=createGtoWorker();}
    const w=worker.current!,id=++seq.current;

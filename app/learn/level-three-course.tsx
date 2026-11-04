@@ -1,4 +1,5 @@
 "use client";
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 
 import { useEffect, useState } from "react";
 import {
@@ -87,6 +88,7 @@ export function LevelThreeCourse() {
   setSelected(id); setPracticeDone(false);
   requestAnimationFrame(() => { const heading = document.getElementById("level-three-current-title"); heading?.focus({ preventScroll: true }); heading?.scrollIntoView({ behavior: "auto", block: "start" }); });
  }
+ useGtoUsage('lesson',selected);
  const lesson = levelThreeLessons.find(item => item.id === selected);
  const index = levelThreeLessons.findIndex(item => item.id === selected);
  const complete = lesson ? progress.completed.includes(lesson.id) : false;

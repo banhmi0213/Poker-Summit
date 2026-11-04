@@ -7,6 +7,7 @@ import { CountBadge, useAttentionCounts } from "@/app/attention-counts";
 const ADMIN_LINKS: { href: string; label: string }[] = [
   { href: "/admin", label: "ダッシュボード" },
   { href: "/admin/analytics", label: "アクセス統計" },
+  { href: "/admin/gto-usage", label: "GTO利用状況" },
   { href: "/admin/stores", label: "店舗管理" },
   { href: "/admin/stores/import", label: "店舗取込(Google)" },
   { href: "/admin/stores/google-match", label: "Googleマップ照合" },

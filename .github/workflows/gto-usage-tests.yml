@@ -1,0 +1,38 @@
+name: GTO usage analytics tests
+on:
+  pull_request:
+    paths:
+      - 'app/admin/gto-usage/**'
+      - 'app/admin/admin-sidebar.tsx'
+      - 'app/api/gto-usage/**'
+      - 'app/gto-usage-tracker.ts'
+      - 'app/poker-ui/**'
+      - 'app/learn/**'
+      - 'app/blog/*trainer*'
+      - 'app/blog/hand-strength-quiz.tsx'
+      - 'lib/gto-usage*'
+      - 'supabase/migrations/*gto_usage*'
+      - 'tests/gto-usage*'
+      - '.github/workflows/gto-usage-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gto-usage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install dependencies
+        run: npm install --include=dev --no-audit --no-fund
+      - name: Verify aggregation and endpoint authorization
+        run: node --test tests/gto-usage.test.cjs
+      - name: Install isolated browser runtimes
+        run: npm install --prefix "$RUNNER_TEMP/gto-qa" --no-audit --no-fund esbuild@0.28.2 @sparticuz/chromium@153.0.0 playwright-core@1.62.1
+      - name: Verify recording, tabs and responsive dashboard
+        env:
+          GTO_QA_DEPS: ${{ runner.temp }}/gto-qa/node_modules
+        run: node tests/gto-usage-browser.cjs

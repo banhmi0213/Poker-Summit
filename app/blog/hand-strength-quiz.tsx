@@ -1,4 +1,5 @@
 "use client";
+import {useGtoAnswer} from '@/app/gto-usage-tracker';
 
 import { useState } from "react";
 import styles from "./hand-strength-quiz.module.css";
@@ -28,13 +29,14 @@ function CardFace({ card }: { card: Card }) {
  return <span className={styles.card} data-red={suit === "♥" || suit === "♦" ? "true" : undefined} aria-label={rank + suit}><span>{rank}<small>{suit}</small></span><b>{suit}</b></span>;
 }
 export function HandStrengthQuiz() {
+ const usageAnswer=useGtoAnswer('lesson',true);
  const [index, setIndex] = useState(0);
  const [choice, setChoice] = useState<Winner | null>(null);
  const [score, setScore] = useState(0);
  const [done, setDone] = useState(false);
  const current = questions[index];
  const answered = choice !== null;
- function select(value: Winner) { if (answered) return; setChoice(value); if (value === current.winner) setScore(s => s + 1); }
+ function select(value: Winner) { if (answered) return;usageAnswer(); setChoice(value); if (value === current.winner) setScore(s => s + 1); }
  function next() { if (index === questions.length - 1) { setDone(true); return; } setIndex(i => i + 1); setChoice(null); }
  function restart() { setIndex(0); setChoice(null); setScore(0); setDone(false); }
  return <section className={styles.quiz} aria-labelledby="hand-quiz-title">

@@ -1,4 +1,5 @@
 "use client";
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 
 import {useEffect,useState} from "react";
 import {LessonQuiz} from "./lesson-quiz";
@@ -72,6 +73,7 @@ export function LevelFourCourse(){
  useEffect(()=>{try{setProgress(parseLevelFourProgress(localStorage.getItem(LEVEL_FOUR_STORAGE_KEY)));}catch{setStorageAvailable(false);}setLoaded(true);},[]);
  function persist(next:LevelFourProgress){setProgress(next);try{localStorage.setItem(LEVEL_FOUR_STORAGE_KEY,JSON.stringify(next));}catch{setStorageAvailable(false);}}
  function goTo(id:string){setSelected(id);setPracticeDone(false);requestAnimationFrame(()=>{const h=document.getElementById("level-four-current-title");h?.focus({preventScroll:true});h?.scrollIntoView({behavior:"auto",block:"start"});});}
+ useGtoUsage('lesson',selected);
  const lesson=levelFourLessons.find(l=>l.id===selected),index=levelFourLessons.findIndex(l=>l.id===selected),complete=lesson?progress.completed.includes(lesson.id):false;
  return <section id="level-four-course" className={styles.course} aria-labelledby="level-four-title">
   <header className={styles.header}><span>LEVEL 4 · STRATEGY MASTER</span><h2 id="level-four-title">戦略マスター</h2><p>6レッスンで期待値・GTO・ソルバー出力の読み方を学び、12問の戦略・確率テストに挑戦します。Lv.3相当の実戦判断を理解した方におすすめです。</p><p className={styles.note}>計算演習と出力読解のための教材です。実戦の最適戦略を計算するソルバーや、対戦中の支援機能ではありません。</p></header>

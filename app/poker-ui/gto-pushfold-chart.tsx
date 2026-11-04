@@ -1,4 +1,5 @@
 'use client';
+import {useGtoUsage} from '@/app/gto-usage-tracker';
 import {useState} from 'react';
 import data from '@/data/poker-gto/hu-pushfold.json';
 import styles from './gto-chart.module.css';
@@ -13,6 +14,7 @@ function Grid({freq,caption}:{freq:Record<string,number>;caption:string}){
   return <td key={j} data-on={f>=0.99?'all':f>=0.01?'mix':'fold'} style={f>=0.01&&f<0.99?{background:`linear-gradient(90deg,var(--gto-on) ${Math.round(f*100)}%,var(--gto-fold) ${Math.round(f*100)}%)`}:undefined} title={`${l}：${Math.round(f*100)}%`}>{l}</td>;})}</tr>)}</tbody></table>;
 }
 export function PushFoldChart(){
+ useGtoUsage('preflop');
  const stacks=data.stacks.map(String);
  const [stack,setStack]=useState('10');
  const s=spots[stack];
