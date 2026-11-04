@@ -17,6 +17,7 @@ export default async function ContactPage({
 }) {
   const params = searchParams;
   const advertising = params.category === "advertising";
+  const pokerBug = params.category === "poker-bug";
   const categories = advertising
     ? INQUIRY_CATEGORIES.filter(c => c !== "不具合報告").map(c => c === "掲載について" ? "店舗掲載について" : c)
     : INQUIRY_CATEGORIES;
@@ -71,7 +72,7 @@ export default async function ContactPage({
               </div>
               <div className="field">
                 <span className="muted">カテゴリ</span>
-                <select name="category" defaultValue={advertising ? "広告掲載について" : ""}>
+                <select name="category" defaultValue={advertising ? "広告掲載について" : pokerBug ? "不具合報告" : ""}>
                   <option value="">選択してください</option>
                   {categories.map((c) => (
                     <option key={c} value={c}>
@@ -82,7 +83,7 @@ export default async function ContactPage({
               </div>
               <div className="field">
                 <span className="muted">件名 *</span>
-                <input type="text" name="subject" required defaultValue={advertising ? "広告掲載のご相談" : ""} />
+                <input type="text" name="subject" required defaultValue={advertising ? "広告掲載のご相談" : pokerBug ? "ポーカーの不具合" : ""} />
               </div>
               <div className="field">
                 <span className="muted">お問い合わせ内容 *</span>

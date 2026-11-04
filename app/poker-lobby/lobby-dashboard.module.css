@@ -14,3 +14,7 @@
 /* Phone (owner 2026/11/04): every summary card takes the full row like デザイン変更, so the chip card's reset note is not squeezed. */
 @media(max-width:650px){.summaryGrid>.summaryCard{grid-column:1/-1}}
 @media(max-width:650px){.shell{overflow-x:clip}.header{gap:8px;padding-inline:12px}.brand{flex:0 1 auto;min-width:0}.brand img{width:140px;height:auto;max-width:100%}.header nav{gap:10px;font-size:10px;letter-spacing:.02em}.header nav>:not(a){display:none}}@media(max-width:380px){.header{padding-inline:10px;gap:6px}.brand img{width:118px}.header nav{gap:8px;letter-spacing:0}}
+
+/* 不具合を報告・要望を書く(2026/11/04): メニューのボタンと同じ見た目のリンク */
+.navigation .navLink{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;min-height:54px;padding:12px 10px;white-space:nowrap;color:#f0f5f3;text-decoration:none;border:1px solid transparent;border-radius:7px;font-weight:700;font-size:13px}.navigation .navLink>svg{width:23px;height:23px;flex-shrink:0;color:#dae5e9}.navigation .navLink:hover{background:#ffffff0c;border-color:#d3c29555}
+@media(max-width:900px){.navigation .navLink{min-height:46px;font-size:12px;gap:8px}}
