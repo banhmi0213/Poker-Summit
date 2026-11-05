@@ -229,6 +229,15 @@ export class MultiwaySolver{
   const ca=this.#compatible(hero,o[0],this.sides[o[0]].w),cb=this.#compatible(hero,o[1],this.sides[o[1]].w);
   let num=0,den=0;for(let h=0;h<H.n;h++){num+=H.w[h]*v[h];den+=H.w[h]*ca[h]*cb[h];}return num/den;
  }
+ /** Per combo of `hero`: average-strategy value per compatible pair of opponent hands (BB, the pot counted as won).
+  * This is the three-way equivalent of PostflopSolver.handValues(). The solver deliberately treats the two
+  * opponents as independent, so the normalising reach is the product of the two hero-compatible reaches. */
+ handValues(hero:0|1|2){
+  const o=this.#opps(hero),ra=Float64Array.from(this.sides[o[0]].w),rb=Float64Array.from(this.sides[o[1]].w);
+  const v=this.#cfr(this.tree,hero,[ra,rb],o,'avg',NO_CARDS),ca=this.#compatible(hero,o[0],ra),cb=this.#compatible(hero,o[1],rb);
+  for(let h=0;h<v.length;h++){const reach=ca[h]*cb[h];v[h]=reach>0?v[h]/reach:0;}
+  return v;
+ }
  values(){return [0,1,2].map(p=>this.#value(p,'avg'));}
  /** Each player's gain from best-responding alone, as a share of the starting pot (0 at an equilibrium). */
  exploitability(){const avg=this.values();return [0,1,2].map(p=>(this.#value(p,'br')-avg[p])/this.spot.pot);}

@@ -37,7 +37,7 @@ export type FlopSizes={betSizes:number[];raiseSizes:number[];turnBetSizes?:numbe
 /** Three-way files (multiway: true) have `order` (seats in acting order) instead of oop/ip; node.player indexes it. */
 export type FlopData={flop:string;board:number[];multiway?:boolean;version?:number;spot:{id?:string;name:string;pot:number;stack:number;oop?:string;ip?:string;order?:string[];note?:string;sizes?:FlopSizes};iterations:number;exploitability:number;nodes:FlopNode[];
  /** Version 3: value of each range from the flop (BB, pot counted as won), overall and per starting-hand class. */
- ev?:{oop:number;ip:number};handEv?:{oop:Record<string,number>;ip:Record<string,number>}};
+ ev?:Record<string,number>;handEv?:Record<string,Record<string,number>>};
 /** Seat of the player to act at a node (0 = first to act). */
 export function seatOf(file:FlopData,player:number):string{return file.spot.order?.[player]??(player===0?file.spot.oop:file.spot.ip)??'';}
 /** The bet menu the file was solved with, in words (2026/10/29: shown from the file, so it always matches). */

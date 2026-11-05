@@ -1,5 +1,5 @@
 // Precompute three-way flop solutions (2026/10/29). Called by flop-solve.cjs for spots with players:3.
-// Same output layout as the heads-up files (version 2, multiway: true): nodes along the flop tree with, per starting-hand
+// Same output layout as the heads-up files (version 3, multiway: true): nodes along the flop tree with, per starting-hand
 // class, [reach weight, action shares]. After the flop the pot is shared by equity over every runout (depth limit).
 const fs=require('fs'),path=require('path');require('./common.cjs');
 const {MultiwaySolver}=require(path.resolve(__dirname,'../../lib/poker/multiway-solver.ts'));
@@ -39,8 +39,14 @@ function visit(node,reach,steps){
 }
 visit(solver.tree,solver.sides.map(s=>Float64Array.from(s.w)),[]);
 const ev=solver.values();
+// Version 3 hand values use the same class-weighted format as the heads-up solver. Multiway keys are the seat names in
+// spot.order because there is no single OOP/IP pair.
+function handEv(p){const v=solver.handValues(p),side=solver.sides[p],acc={};
+ for(let h=0;h<side.n;h++){const e=acc[classOf(side.c1[h],side.c2[h])]??=[0,0];e[0]+=side.w[h]*v[h];e[1]+=side.w[h];}
+ return Object.fromEntries(Object.entries(acc).map(([l,[s,w]])=>[l,Math.round(s/w*100)/100]));}
 const out={version:3,multiway:true,flop,board,spot:{id:spotId,name:SPOT.name,pot:chart.pot,stack:chart.stack,order:SPOT.order,note:SPOT.note,line:SPOT.line,chartRanges:chart.ranges,sizes:SPOT.sizes,
  model:'3人のポット：フロップの打ち合いを計算し、そのあとは残りのカードを全部配ったときの勝率で分配。相手2人どうしのカードのかぶりは無視。'},
- iterations:solver.iterations,exploitability:+(Math.max(...expl)*100).toFixed(3),checks,ev:Object.fromEntries(SPOT.order.map((p,i)=>[p,round(ev[i])])),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
+ iterations:solver.iterations,exploitability:+(Math.max(...expl)*100).toFixed(3),checks,ev:Object.fromEntries(SPOT.order.map((p,i)=>[p,round(ev[i])])),
+ handEv:Object.fromEntries(SPOT.order.map((p,i)=>[p,handEv(i)])),minutes:+((Date.now()-t0)/60000).toFixed(1),nodes};
 fs.mkdirSync(outDir,{recursive:true});fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
 log(`saved ${path.join(outDir,flop+'.json')} · ${nodes.length} flop decisions · best-response gain ${out.exploitability}%`);
