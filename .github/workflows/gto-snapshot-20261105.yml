@@ -1,0 +1,25 @@
+name: GTO snapshot artifact collect
+on:
+  push:
+    branches: ["gto-flop-snapshot/20261106-0505"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect only pinned snapshot-success artifact IDs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/poker-gto/collect-snapshot-20261105.py
+      - name: Save snapshot outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b gto-flop-partial-out/20261106-0505
+          git add public/poker-gto/flops
+          git commit -m "Collect successful flop artifacts at 2026-11-05 20:00 UTC"
+          git push origin gto-flop-partial-out/20261106-0505
