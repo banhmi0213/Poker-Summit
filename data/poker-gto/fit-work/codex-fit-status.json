@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T03:15:42.213Z",
+  "checkedAt": "2026-11-05T05:10:00.000Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -3796,6 +3796,86 @@
           "pagesVerified": true
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-05T05:10:00.000Z",
+      "runs": [
+        {
+          "id": 41954936687,
+          "branch": "gto-flop-solve/co-btn-bb/handev-v3c",
+          "spot": "co-btn-bb",
+          "total": 201,
+          "success": 50,
+          "running": 5,
+          "queued": 146,
+          "remaining": 150,
+          "failed": [],
+          "pagesVerified": true
+        },
+        {
+          "id": 41954939826,
+          "branch": "gto-flop-solve/btn-sb-bb/handev-v3c",
+          "spot": "btn-sb-bb",
+          "total": 201,
+          "success": 37,
+          "running": 7,
+          "queued": 157,
+          "remaining": 163,
+          "failed": [],
+          "pagesVerified": true
+        },
+        {
+          "id": 41954938742,
+          "branch": "gto-flop-solve/utg-btn-bb/handev-v3c",
+          "spot": "utg-btn-bb",
+          "total": 201,
+          "success": 54,
+          "running": 7,
+          "queued": 140,
+          "remaining": 146,
+          "failed": [],
+          "pagesVerified": true
+        },
+        {
+          "id": 41873590700,
+          "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+          "spot": "btn-bb",
+          "batch": "batch-20261105-01",
+          "total": 201,
+          "success": 54,
+          "running": 7,
+          "queued": 140,
+          "remaining": 146,
+          "failed": [],
+          "pagesVerified": true
+        },
+        {
+          "id": 41930872021,
+          "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+          "spot": "co-bb",
+          "batch": "batch-20261105-01",
+          "total": 201,
+          "success": 32,
+          "running": 7,
+          "queued": 162,
+          "remaining": 168,
+          "failed": [],
+          "pagesVerified": true
+        },
+        {
+          "id": 41930883732,
+          "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+          "spot": "sb-bb",
+          "batch": "batch-20261105-01",
+          "total": 201,
+          "success": 22,
+          "running": 7,
+          "queued": 172,
+          "remaining": 178,
+          "failed": [],
+          "pagesVerified": true
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -4275,17 +4355,15 @@
     "readbackMerged": true
   },
   "repoConcurrencyLatest": {
-    "checkedAt": "2026-11-05T03:16:43.344Z",
+    "checkedAt": "2026-11-05T05:10:00.000Z",
     "runningJobs": 40,
-    "queuedJobs": 1042,
+    "queuedJobs": 916,
+    "waitingJobs": 0,
     "allActiveRunJobPagesMatchedTotalCount": true,
     "breakdown": {
-      "flopSolve": 38,
-      "stageDeploy": 1,
-      "mainEngineCI": 1
+      "flopSolve": 40
     },
-    "stageEngineCIQueued": 1,
-    "activeRunCount": 9
+    "activeRunCount": 6
   },
   "multiwayHandEvBlocker": {
     "observedAt": "2026-11-04T23:10:01.807Z",
@@ -4302,7 +4380,7 @@
   },
   "stageHead": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
   "inventory": {
-    "at": "2026-11-05T03:15:42.213Z",
+    "at": "2026-11-05T05:10:00.000Z",
     "initial21": {
       "imported": [
         "btn-bb",
@@ -4414,9 +4492,9 @@
       }
     },
     "calculateSuccessUnvalidated": {
-      "co-btn-bb": 9,
-      "btn-sb-bb": 7,
-      "utg-btn-bb": 11
+      "co-btn-bb": 50,
+      "btn-sb-bb": 37,
+      "utg-btn-bb": 54
     },
     "expansion": {
       "active": [
@@ -4425,9 +4503,9 @@
         "sb-bb"
       ],
       "successUnvalidated": {
-        "btn-bb": 43,
-        "co-bb": 19,
-        "sb-bb": 14
+        "btn-bb": 54,
+        "co-bb": 32,
+        "sb-bb": 22
       }
     },
     "note": "Initial categories mutually exclusive sum21. Old multiway outputs without handEv are excluded; corrected handEv-v3c reruns are calculating. Expansion is separate and not double-counted."
@@ -4498,9 +4576,9 @@
     "dbChanges": "none"
   },
   "concurrencySnapshot": {
-    "checkedAt": "2026-11-05T03:15:42.213Z",
+    "checkedAt": "2026-11-05T05:10:00.000Z",
     "runningJobs": 40,
-    "queuedOrWaitingJobs": 1057,
+    "queuedOrWaitingJobs": 916,
     "allActiveRunJobPagesMatchedTotalCount": true,
     "activeSolveSpots": [
       "btn-bb batch-01",
@@ -4510,7 +4588,7 @@
       "btn-sb-bb handev-v3c",
       "utg-btn-bb handev-v3c"
     ],
-    "note": "Six solve spots; exact current job-page measurement. CI/collect outside these may share runners and must be remeasured globally before claiming repo total."
+    "note": "Six active solve runs; all job pages per_page=100 fetched, total_count and unique IDs matched."
   },
   "sbLimp": {
     "solveRun": 41459846661,
@@ -4546,16 +4624,48 @@
   "mainPromotion815": {
     "pr": 815,
     "url": "https://github.com/banhmi0213/Poker-Summit/pull/815",
-    "state": "checks-running-owner-merge-after-success",
+    "state": "merged-main-postmerge-checks-queued",
     "head": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
-    "base": "d9bda806579778a9d3828b67f9a0ba34285f2298",
-    "cutoffPassed": true,
-    "noAutoMerge": true,
-    "checks": {
-      "vercel": "success",
-      "engine": "in_progress",
-      "deploy": "in_progress"
+    "merge": "da5bb1ac786ce6b3e828a2575875d71e08c68720",
+    "mergedAt": "2026-11-05T05:08:41Z",
+    "premergeChecks": "engine regression success; deploy success; Vercel success",
+    "postMergeChecks": {
+      "engine": "queued",
+      "deploy": "queued",
+      "vercel": "pending"
     },
-    "ownerAction": "Only after all checks success: owner presses merge. Then ask Mitchell to switch staff alias."
+    "productionVerification": "pending; do not claim functionality verified until deployment completes and actual route checked",
+    "staffAliasPolicy": "abolished; no Mitchell request"
+  },
+  "etaLatest": {
+    "observedAt": "2026-11-05T05:10:00.000Z",
+    "previousAt": "2026-11-05T03:15:42.213Z",
+    "elapsedHours": 1.90494,
+    "initialCorrectedDelta": 114,
+    "initialCorrectedRatePerHour": 59.844,
+    "initialRemaining": 459,
+    "spotEtaJst": [
+      {
+        "spot": "co-btn-bb",
+        "remaining": 150,
+        "eta": "2026-11-05T21:58:00+09:00"
+      },
+      {
+        "spot": "utg-btn-bb",
+        "remaining": 146,
+        "eta": "2026-11-05T20:38:00+09:00"
+      },
+      {
+        "spot": "btn-sb-bb",
+        "remaining": 163,
+        "eta": "2026-11-06T00:31:00+09:00"
+      }
+    ],
+    "initialValidatedAll21Eta": "2026-11-06T00:31:00+09:00",
+    "uncertainty": "+/-24h; corrected multiway short-window observed rates including queueing",
+    "expansionDelta": 32,
+    "expansionRatePerHour": 16.798,
+    "expansionRemainingActiveBatches": 492,
+    "activeExpansionBatchesEta": "2026-11-06T19:28:00+09:00"
   }
 }
