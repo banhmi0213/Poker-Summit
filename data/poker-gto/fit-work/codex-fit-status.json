@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T05:10:00.000Z",
+  "checkedAt": "2026-11-05T05:17:00.000Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -3876,6 +3876,83 @@
           "pagesVerified": true
         }
       ]
+    },
+    {
+      "checkedAt": "2026-11-05T05:17:00.000Z",
+      "runs": [
+        {
+          "id": 41954936687,
+          "spot": "co-btn-bb",
+          "branch": "gto-flop-solve/co-btn-bb/handev-v3c",
+          "total": 200,
+          "success": 50,
+          "running": 6,
+          "queued": 144,
+          "remaining": 150,
+          "failed": [],
+          "allJobPagesVerified": true
+        },
+        {
+          "id": 41954939826,
+          "spot": "btn-sb-bb",
+          "branch": "gto-flop-solve/btn-sb-bb/handev-v3c",
+          "total": 200,
+          "success": 36,
+          "running": 7,
+          "queued": 157,
+          "remaining": 164,
+          "failed": [],
+          "allJobPagesVerified": true
+        },
+        {
+          "id": 41954938742,
+          "spot": "utg-btn-bb",
+          "branch": "gto-flop-solve/utg-btn-bb/handev-v3c",
+          "total": 200,
+          "success": 56,
+          "running": 5,
+          "queued": 139,
+          "remaining": 144,
+          "failed": [],
+          "allJobPagesVerified": true
+        },
+        {
+          "id": 41873590700,
+          "spot": "btn-bb",
+          "batch": "batch-20261105-01",
+          "total": 200,
+          "success": 53,
+          "running": 7,
+          "queued": 140,
+          "remaining": 147,
+          "failed": [],
+          "allJobPagesVerified": true
+        },
+        {
+          "id": 41930872021,
+          "spot": "co-bb",
+          "batch": "batch-20261105-01",
+          "total": 200,
+          "success": 31,
+          "running": 7,
+          "queued": 162,
+          "remaining": 169,
+          "failed": [],
+          "allJobPagesVerified": true
+        },
+        {
+          "id": 41930883732,
+          "spot": "sb-bb",
+          "batch": "batch-20261105-01",
+          "total": 200,
+          "success": 21,
+          "running": 7,
+          "queued": 172,
+          "remaining": 179,
+          "failed": [],
+          "allJobPagesVerified": true
+        }
+      ]
     }
   ],
   "flopRetryPending": {
@@ -4380,7 +4457,7 @@
   },
   "stageHead": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
   "inventory": {
-    "at": "2026-11-05T05:10:00.000Z",
+    "at": "2026-11-05T05:17:00.000Z",
     "initial21": {
       "imported": [
         "btn-bb",
@@ -4493,8 +4570,8 @@
     },
     "calculateSuccessUnvalidated": {
       "co-btn-bb": 50,
-      "btn-sb-bb": 37,
-      "utg-btn-bb": 54
+      "btn-sb-bb": 36,
+      "utg-btn-bb": 56
     },
     "expansion": {
       "active": [
@@ -4503,9 +4580,9 @@
         "sb-bb"
       ],
       "successUnvalidated": {
-        "btn-bb": 54,
-        "co-bb": 32,
-        "sb-bb": 22
+        "btn-bb": 53,
+        "co-bb": 31,
+        "sb-bb": 21
       }
     },
     "note": "Initial categories mutually exclusive sum21. Old multiway outputs without handEv are excluded; corrected handEv-v3c reruns are calculating. Expansion is separate and not double-counted."
@@ -4638,34 +4715,48 @@
     "staffAliasPolicy": "abolished; no Mitchell request"
   },
   "etaLatest": {
-    "observedAt": "2026-11-05T05:10:00.000Z",
+    "observedAt": "2026-11-05T05:17:00.000Z",
     "previousAt": "2026-11-05T03:15:42.213Z",
-    "elapsedHours": 1.90494,
-    "initialCorrectedDelta": 114,
-    "initialCorrectedRatePerHour": 59.844,
-    "initialRemaining": 459,
+    "elapsedHours": 2.0216075,
+    "initialCorrectedDelta": 115,
+    "initialCorrectedRatePerHour": 56.885,
+    "initialRemaining": 458,
     "spotEtaJst": [
       {
         "spot": "co-btn-bb",
         "remaining": 150,
-        "eta": "2026-11-05T21:58:00+09:00"
+        "eta": "2026-11-05T21:41:00+09:00"
       },
       {
         "spot": "utg-btn-bb",
-        "remaining": 146,
-        "eta": "2026-11-05T20:38:00+09:00"
+        "remaining": 144,
+        "eta": "2026-11-05T20:45:00+09:00"
       },
       {
         "spot": "btn-sb-bb",
-        "remaining": 163,
-        "eta": "2026-11-06T00:31:00+09:00"
+        "remaining": 164,
+        "eta": "2026-11-06T01:43:00+09:00"
       }
     ],
-    "initialValidatedAll21Eta": "2026-11-06T00:31:00+09:00",
+    "initialValidatedAll21Eta": "2026-11-06T01:43:00+09:00",
     "uncertainty": "+/-24h; corrected multiway short-window observed rates including queueing",
-    "expansionDelta": 32,
-    "expansionRatePerHour": 16.798,
-    "expansionRemainingActiveBatches": 492,
-    "activeExpansionBatchesEta": "2026-11-06T19:28:00+09:00"
+    "expansionSpotEtaJst": [
+      {
+        "spot": "btn-bb",
+        "remaining": 147,
+        "eta": "2026-11-06T19:58:00+09:00"
+      },
+      {
+        "spot": "co-bb",
+        "remaining": 169,
+        "eta": "2026-11-06T18:44:00+09:00"
+      },
+      {
+        "spot": "sb-bb",
+        "remaining": 179,
+        "eta": "2026-11-07T18:00:00+09:00"
+      }
+    ],
+    "expansionUncertainty": "short two-hour per-spot rate, multiple days uncertainty; not full1755 ETA"
   }
 }
