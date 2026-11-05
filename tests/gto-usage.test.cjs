@@ -70,3 +70,14 @@ test('Preview can only record/read the separate staging DB, never inherited prod
  assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'preview'}),false);
  assert.equal(environment.gtoUsageDatabaseReady({VERCEL_ENV:'production',NEXT_PUBLIC_SUPABASE_URL:'https://tjmeqnzvuoguoffltxrp.supabase.co'}),true);
 });
+
+test('withdrawal retains the production function body and only anonymizes GTO usage after practice cleanup',()=>{
+ const old=fs.readFileSync('supabase/migrations/20261101110000_withdraw_member_poker.sql','utf8');
+ const next=fs.readFileSync('supabase/migrations/20261105021924_withdraw_member_gto_usage.sql','utf8');
+ const body=s=>s.split('as $function$')[1].split('$function$;')[0];
+ const addition="  if to_regclass('public.gto_usage_events') is not null then\n    execute 'update public.gto_usage_events set member_id = null where member_id = $1' using p_uid;\n  end if;\n";
+ assert.equal(body(next).split(addition).length,2);
+ assert.equal(body(next).replace(addition,''),body(old));
+ assert.ok(body(next).includes("    execute 'delete from public.poker_gto_practice_hands where member_id = $1' using p_uid;\n  end if;\n"+addition));
+ assert.match(next,/revoke all on function private\.withdraw_member\(uuid\) from public,anon,authenticated;/);
+});
