@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T14:28:11Z",
+  "checkedAt": "2026-11-05T20:08:01Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -4506,17 +4506,17 @@
         "co-btn-bb",
         "utg-btn-bb"
       ],
-      "calculating": [
+      "calculating": [],
+      "calculatedUnimported": [
         "btn-sb-bb"
       ],
-      "calculatedUnimported": [],
       "notStarted": [],
       "total": 21
     },
     "counts": {
       "imported": 20,
-      "calculating": 1,
-      "calculatedUnimported": 0,
+      "calculating": 0,
+      "calculatedUnimported": 1,
       "notStarted": 0,
       "total": 21
     },
@@ -4544,7 +4544,7 @@
       "btn-sb-bb": 0
     },
     "calculateSuccessUnvalidated": {
-      "btn-sb-bb": 174
+      "btn-sb-bb": 200
     },
     "expansion": {
       "active": [
@@ -4576,7 +4576,7 @@
         "hj-bb": 0
       }
     },
-    "note": "Imported means validated staging; production still at main815 while main817 checks pending. Categories describe initial200, expansion active separately. 20+1+0+0=21."
+    "note": "Initial200:20 imported+0 calculating+1 complete locally validated awaiting PR+0 unstarted=21. Expansions separate."
   },
   "monitoring": {
     "existingGtoWatchEnabled": true,
@@ -4647,79 +4647,89 @@
     "dbChanges": "none"
   },
   "concurrencySnapshot": {
-    "checkedAt": "2026-11-05T14:12:40Z",
-    "results": [
+    "at": "2026-11-05T20:08:01Z",
+    "running": 40,
+    "runs": [
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 42042087498,
-          "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
-          "total": 201,
-          "running": 6,
-          "success": 0
-        }
+        "id": 42099477034,
+        "branch": "main",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 42042078557,
-          "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
-          "total": 201,
-          "running": 7,
-          "success": 0
-        }
+        "id": 42099476877,
+        "branch": "main",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "queued": 0
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 41972127210,
-          "branch": "main",
-          "total": 1,
-          "running": 0,
-          "success": 0
-        }
+        "id": 42100374604,
+        "branch": "gto-flop-snapshot/20261106-0505",
+        "total": 1,
+        "running": 0,
+        "success": 0,
+        "queued": 1
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 41954939826,
-          "branch": "gto-flop-solve/btn-sb-bb/handev-v3c",
-          "total": 201,
-          "running": 7,
-          "success": 174
-        }
+        "id": 42099699418,
+        "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+        "total": 201,
+        "running": 4,
+        "success": 0,
+        "queued": 196
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 41930883732,
-          "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
-          "total": 201,
-          "running": 6,
-          "success": 58
-        }
+        "id": 42042087498,
+        "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
+        "total": 201,
+        "running": 7,
+        "success": 40,
+        "queued": 153
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 41930872021,
-          "branch": "gto-flop-solve/co-bb/batch-20261105-01",
-          "total": 201,
-          "running": 7,
-          "success": 85
-        }
+        "id": 42042078557,
+        "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
+        "total": 201,
+        "running": 6,
+        "success": 21,
+        "queued": 173
       },
       {
-        "status": "fulfilled",
-        "value": {
-          "id": 41873590700,
-          "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
-          "total": 201,
-          "running": 7,
-          "success": 92
-        }
+        "id": 41930883732,
+        "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+        "total": 201,
+        "running": 7,
+        "success": 81,
+        "queued": 112
+      },
+      {
+        "id": 41930872021,
+        "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+        "total": 201,
+        "running": 7,
+        "success": 119,
+        "queued": 74
+      },
+      {
+        "id": 41873590700,
+        "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+        "total": 201,
+        "running": 7,
+        "success": 119,
+        "queued": 74
       }
-    ]
+    ],
+    "listStatuses": [
+      "in_progress",
+      "queued",
+      "waiting"
+    ],
+    "perPage": 100,
+    "allPagesTotalAndUniqueVerified": true
   },
   "sbLimp": {
     "solveRun": 41459846661,
@@ -5102,11 +5112,14 @@
   },
   "mainPromotion817": {
     "pr": 817,
-    "state": "open",
+    "state": "merged",
     "head": "a7237536a408eca953dbce67c56c228b47902e9b",
     "base": "da5bb1ac786ce6b3e828a2575875d71e08c68720",
     "checks": "Vercel success, stage engine/deploy queued",
-    "production": "Not reflected yet; current public GTO redirects to login, authenticated feature operation not checked"
+    "production": "Not reflected yet; current public GTO redirects to login, authenticated feature operation not checked",
+    "mergeSha": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
+    "mergedReadback": true,
+    "productionVerification": "pending fresh public-data confirmation; authenticated UI not tested"
   },
   "expansionBatches": [
     {
@@ -5132,6 +5145,228 @@
       "status": "queued parent, solves running",
       "baselineValidated": 200,
       "exclusion": "Exact baseline texture-key equality checked against audited co-bb manifest; no active same-spot batch. Next 200 stratified classes unique and disjoint."
+    },
+    {
+      "spot": "utg-bb",
+      "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+      "sha": "fa5d4cf9eb6ef630fde8e3717f551d2d43ce448c",
+      "manifest": "data/poker-gto/flop-batches/utg-bb-100bb-20261106-01.json",
+      "planned": 200,
+      "run": 42099699418,
+      "startedAt": "2026-11-05T20:02:20Z",
+      "baselineValidated": 200,
+      "exclusion": "Exact local validated200 canonical equality with manifest.excludedValidatedKeys checked; no active same-spot batch; stratified frequency-weighted selection preserved; readback exact."
     }
-  ]
+  ],
+  "initialFinalCollection": {
+    "spot": "btn-sb-bb",
+    "solveRun": 41954939826,
+    "solveSuccess": 200,
+    "collectRun": 42099575907,
+    "collectConclusion": "success",
+    "outBranch": "gto-flop-out/41954939826",
+    "localValidation": {
+      "version": 3,
+      "iterations": 250,
+      "canonicalUnique": 200,
+      "allThreeSeatHandEv": true
+    },
+    "state": "awaiting combined data PR"
+  },
+  "snapshotCollectionPending": {
+    "snapshotAt": "2026-11-05T20:00:14.471Z",
+    "branch": "gto-flop-snapshot/20261106-0505",
+    "commit": "753e18308408b497f50330174cfcfa2a82a4f7d5",
+    "manifest": "data/poker-gto/fit-work/partial-20261106-0505.json",
+    "manifestBlob": "a14c07d28ec9c50ed972883b4c63cbbf97941269",
+    "manifestReadback": true,
+    "run": 42100374604,
+    "state": "queued",
+    "outputBranch": "gto-flop-partial-out/20261106-0505",
+    "selected": [
+      {
+        "spot": "hj-bb",
+        "runId": 42042087498,
+        "count": 40,
+        "artifactIds": [
+          13449060863,
+          13448071690,
+          13446123705,
+          13446013564,
+          13445384417,
+          13445382290,
+          13444254562,
+          13443877371,
+          13443665615,
+          13441811722,
+          13441555174,
+          13441514705,
+          13441395042,
+          13441149206,
+          13441023348,
+          13439319488,
+          13439025126,
+          13438567154,
+          13437692854,
+          13436976264,
+          13436953759,
+          13435516774,
+          13435300968,
+          13434190698,
+          13434014437,
+          13433570144,
+          13431951241,
+          13430773924,
+          13430762115,
+          13430455832,
+          13430447864,
+          13430135006,
+          13429898016,
+          13429870005,
+          13428141392,
+          13427809211,
+          13427450296,
+          13426668974,
+          13425068200,
+          13425032871
+        ]
+      },
+      {
+        "spot": "hu-srp",
+        "runId": 42042078557,
+        "count": 20,
+        "artifactIds": [
+          13448405099,
+          13448072076,
+          13446381076,
+          13445494261,
+          13444322940,
+          13442651867,
+          13440582422,
+          13440438789,
+          13439422973,
+          13438656462,
+          13437363744,
+          13436776944,
+          13436432716,
+          13432632055,
+          13431749713,
+          13430503660,
+          13430443471,
+          13429132935,
+          13428946848,
+          13427548903
+        ]
+      },
+      {
+        "spot": "co-bb",
+        "runId": 41930872021,
+        "count": 35,
+        "artifactIds": [
+          13447349183,
+          13446114316,
+          13445961850,
+          13445951941,
+          13445871498,
+          13445520748,
+          13445119268,
+          13443993747,
+          13443906122,
+          13440037188,
+          13439958792,
+          13439939825,
+          13439863350,
+          13439504934,
+          13438599335,
+          13437720633,
+          13437619504,
+          13436178163,
+          13434894258,
+          13434880945,
+          13434751270,
+          13433575221,
+          13433306483,
+          13433028410,
+          13431863342,
+          13429228383,
+          13428603394,
+          13427774576,
+          13427209824,
+          13426911547,
+          13426669039,
+          13425842521,
+          13425643441,
+          13422225470,
+          13421558991
+        ]
+      },
+      {
+        "spot": "btn-bb",
+        "runId": 41873590700,
+        "count": 28,
+        "artifactIds": [
+          13448133690,
+          13447100011,
+          13446062769,
+          13445506294,
+          13445327468,
+          13443408350,
+          13442758411,
+          13442161090,
+          13441907183,
+          13439230990,
+          13437969753,
+          13437616700,
+          13437437572,
+          13436610481,
+          13435258402,
+          13433661149,
+          13432956733,
+          13432125647,
+          13431815663,
+          13431737940,
+          13431661893,
+          13428523674,
+          13428243171,
+          13424762749,
+          13424688236,
+          13423573403,
+          13423245089,
+          13423239893
+        ]
+      },
+      {
+        "spot": "sb-bb",
+        "runId": 41930883732,
+        "count": 25,
+        "artifactIds": [
+          13448865886,
+          13447229405,
+          13447206933,
+          13447029144,
+          13444242666,
+          13442738219,
+          13441985702,
+          13441795886,
+          13441292926,
+          13439967843,
+          13439640172,
+          13438383060,
+          13435817552,
+          13434906653,
+          13433228059,
+          13433048942,
+          13432045268,
+          13431678270,
+          13430396047,
+          13428207283,
+          13424970560,
+          13424437251,
+          13424000451,
+          13423464680,
+          13423086076
+        ]
+      }
+    ]
+  }
 }
