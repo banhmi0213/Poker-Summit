@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T02:26:46.836Z",
+  "checkedAt": "2026-11-05T03:15:42.213Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -104,32 +104,19 @@
   "refinementInit": "gto-preflop-fit-out/41385060824:fit2-40.json, selected round2 copied exactly and read-back verified",
   "refinementState": "1000iteration3round fit and collect succeeded; only round0 BB-qualified. Selected exact snapshot verified; parameters same as prior400iteration round2. Table regeneration required for final gate.",
   "flops": {
-    "checkedAt": "2026-11-04T23:11:55.436Z",
+    "checkedAt": "2026-11-05T03:15:42.213Z",
     "runs": [
       {
-        "id": 41459846661,
-        "branch": "gto-flop-solve/sb-limp/v3b",
-        "spot": "sb-limp",
-        "status": "in_progress",
-        "total": 201,
-        "success": 199,
-        "running": 1,
-        "queued": 0,
-        "remaining": 1,
-        "failed": [],
-        "pagesVerified": true
-      },
-      {
-        "id": 41930883732,
-        "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
-        "spot": "sb-bb",
-        "status": "queued",
+        "id": 41873590700,
+        "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+        "spot": "btn-bb",
         "batch": "batch-20261105-01",
+        "status": "queued",
         "total": 201,
-        "success": 0,
+        "success": 43,
         "running": 7,
-        "queued": 193,
-        "remaining": 200,
+        "queued": 150,
+        "remaining": 157,
         "failed": [],
         "pagesVerified": true
       },
@@ -137,53 +124,66 @@
         "id": 41930872021,
         "branch": "gto-flop-solve/co-bb/batch-20261105-01",
         "spot": "co-bb",
-        "status": "queued",
         "batch": "batch-20261105-01",
+        "status": "queued",
         "total": 201,
-        "success": 0,
+        "success": 19,
         "running": 7,
-        "queued": 193,
-        "remaining": 200,
+        "queued": 174,
+        "remaining": 181,
         "failed": [],
         "pagesVerified": true
       },
       {
-        "id": 41873590700,
-        "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
-        "spot": "btn-bb",
-        "status": "queued",
+        "id": 41930883732,
+        "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+        "spot": "sb-bb",
         "batch": "batch-20261105-01",
-        "total": 201,
-        "success": 28,
-        "running": 7,
-        "queued": 165,
-        "remaining": 172,
-        "failed": [],
-        "pagesVerified": true
-      },
-      {
-        "id": 41873282774,
-        "branch": "gto-flop-solve/utg-btn-bb/v3b",
-        "spot": "utg-btn-bb",
         "status": "queued",
         "total": 201,
-        "success": 145,
+        "success": 14,
         "running": 7,
-        "queued": 48,
-        "remaining": 55,
+        "queued": 179,
+        "remaining": 186,
         "failed": [],
         "pagesVerified": true
       },
       {
-        "id": 41817944946,
-        "branch": "gto-flop-solve/btn-sb-bb/v3b",
+        "id": 41954936687,
+        "branch": "gto-flop-solve/co-btn-bb/handev-v3c",
+        "spot": "co-btn-bb",
+        "status": "queued",
+        "total": 201,
+        "success": 9,
+        "running": 7,
+        "queued": 184,
+        "remaining": 191,
+        "failed": [],
+        "pagesVerified": true
+      },
+      {
+        "id": 41954939826,
+        "branch": "gto-flop-solve/btn-sb-bb/handev-v3c",
         "spot": "btn-sb-bb",
         "status": "queued",
         "total": 201,
-        "success": 187,
+        "success": 7,
         "running": 7,
-        "queued": 6,
-        "remaining": 13,
+        "queued": 186,
+        "remaining": 193,
+        "failed": [],
+        "pagesVerified": true
+      },
+      {
+        "id": 41954938742,
+        "branch": "gto-flop-solve/utg-btn-bb/handev-v3c",
+        "spot": "utg-btn-bb",
+        "status": "queued",
+        "total": 201,
+        "success": 11,
+        "running": 5,
+        "queued": 184,
+        "remaining": 189,
         "failed": [],
         "pagesVerified": true
       }
@@ -233,13 +233,13 @@
     "assumptions": "Initial solve completion only, excludes handEv-blocked intake. Per-spot delta/elapsed; short ~6h window, +/-24h initial. Expansion new observed28/5.93h replaces optimistic initial-board proxy; single batch, queued time and texture costs included, multiple weeks uncertainty. Full100BB with2slots after shallow/89max starts;6slots comparison also saved. Missing multiway handEv may delay validated completion."
   },
   "flopPR": {
-    "number": 756,
+    "number": 814,
     "state": "merged",
-    "url": "https://github.com/banhmi0213/Poker-Summit/pull/756",
-    "head": "6f4cf19ad081fceb9da229ebb6b06762d8654a0f",
-    "merge": "f7fb4042b72cbfb0310ac88e5abfc9ad850155cd",
-    "tests": 66,
-    "allChecks": "success"
+    "url": "https://github.com/banhmi0213/Poker-Summit/pull/814",
+    "head": "cc1ddafe7beac8c5c15d8421535526a50bbae9d0",
+    "merge": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
+    "tests": "67/68 then one allowed focused retry 13/13",
+    "allChecks": "Vercel success; data-only PR had zero Actions runs"
   },
   "notes": [
     "2026-11-02T17:08Z: owner added mobile phase2 (5/6/7) gated on all4 earlier items staged; prerequisite not yet verified, requirements queued. hu-limp validated200+66tests; PR756 awaiting Vercel. co-bb collect queued, no duplicate."
@@ -261,7 +261,8 @@
     "utg-bb-3bet",
     "btn-bb-4bet",
     "btn-sb-3bet",
-    "co-btn-3bet"
+    "co-btn-3bet",
+    "sb-limp"
   ],
   "roundSelectionPolicy": {
     "stack": 40,
@@ -4396,9 +4397,9 @@
     ],
     "action": "Do not import until valid per-hand EV evidence; share with Claude/owner. Active calculations left running, no duplicate reruns launched."
   },
-  "stageHead": "e830bb314dfdc8b5f5edaf47514753ba6749cca1",
+  "stageHead": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
   "inventory": {
-    "at": "2026-11-04T23:11:55.436Z",
+    "at": "2026-11-05T03:15:42.213Z",
     "initial21": {
       "imported": [
         "btn-bb",
@@ -4417,23 +4418,22 @@
         "utg-bb-3bet",
         "btn-bb-4bet",
         "btn-sb-3bet",
-        "co-btn-3bet"
+        "co-btn-3bet",
+        "sb-limp"
       ],
       "calculating": [
-        "sb-limp",
+        "co-btn-bb",
         "btn-sb-bb",
         "utg-btn-bb"
       ],
-      "calculatedUnimported": [
-        "co-btn-bb"
-      ],
+      "calculatedUnimported": [],
       "notStarted": [],
       "total": 21
     },
     "counts": {
-      "imported": 17,
+      "imported": 18,
       "calculating": 3,
-      "calculatedUnimported": 1,
+      "calculatedUnimported": 0,
       "notStarted": 0
     },
     "validatedImportedPer1755": {
@@ -4504,13 +4504,16 @@
       "co-btn-3bet": {
         "validated": 200,
         "denominator": 1755
+      },
+      "sb-limp": {
+        "validated": 200,
+        "denominator": 1755
       }
     },
     "calculateSuccessUnvalidated": {
-      "sb-limp": 199,
-      "btn-sb-bb": 187,
-      "utg-btn-bb": 145,
-      "co-btn-bb": 200
+      "co-btn-bb": 9,
+      "btn-sb-bb": 7,
+      "utg-btn-bb": 11
     },
     "expansion": {
       "active": [
@@ -4519,12 +4522,12 @@
         "sb-bb"
       ],
       "successUnvalidated": {
-        "btn-bb": 28,
-        "co-bb": 0,
-        "sb-bb": 0
+        "btn-bb": 43,
+        "co-bb": 19,
+        "sb-bb": 14
       }
     },
-    "note": "Initial categories mutually exclusive sum21; expansion same spot not double-counted. Multiway handEv missing blocks co-btn-bb; btn-sb-bb and utg-btn-bb same script at risk."
+    "note": "Initial categories mutually exclusive sum21. Old multiway outputs without handEv are excluded; corrected handEv-v3c reruns are calculating. Expansion is separate and not double-counted."
   },
   "monitoring": {
     "existingGtoWatchEnabled": true,
@@ -4592,9 +4595,9 @@
     "dbChanges": "none"
   },
   "concurrencySnapshot": {
-    "checkedAt": "2026-11-05T02:26:46.836Z",
+    "checkedAt": "2026-11-05T03:15:42.213Z",
     "runningJobs": 40,
-    "queuedOrWaitingJobs": 1097,
+    "queuedOrWaitingJobs": 1057,
     "allActiveRunJobPagesMatchedTotalCount": true,
     "activeSolveSpots": [
       "btn-bb batch-01",
@@ -4604,13 +4607,37 @@
       "btn-sb-bb handev-v3c",
       "utg-btn-bb handev-v3c"
     ],
-    "note": "6 solve spots; expansion3 plus corrected multiway3. CI and collect jobs share the40 runner limit."
+    "note": "Six solve spots; exact current job-page measurement. CI/collect outside these may share runners and must be remeasured globally before claiming repo total."
   },
   "sbLimp": {
     "solveRun": 41459846661,
     "solve": "completed success",
     "collectRun": 41955184474,
-    "collect": "queued",
-    "integrated": false
+    "collect": "completed success",
+    "validation": {
+      "files": 200,
+      "version": 3,
+      "iterations": 250,
+      "spot": "sb-limp",
+      "handEv": "oop/ip nonempty finite all200",
+      "canonicalUnique": 200
+    },
+    "tests": {
+      "full": {
+        "passed": 67,
+        "failed": 1,
+        "flaky": "tests/poker-gto-review.test.cjs solver grid has classes"
+      },
+      "singleRetry": {
+        "passed": 13,
+        "failed": 0
+      }
+    },
+    "pr": 814,
+    "head": "cc1ddafe7beac8c5c15d8421535526a50bbae9d0",
+    "merge": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
+    "checks": "Vercel success; no Actions runs for data-only PR",
+    "integrated": true,
+    "mergedAt": "2026-11-05T03:14:47Z"
   }
 }
