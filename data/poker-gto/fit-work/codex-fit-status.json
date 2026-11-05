@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-04T23:12:26.691Z",
+  "checkedAt": "2026-11-05T02:02:50.652Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -4529,5 +4529,51 @@
   "monitoring": {
     "existingGtoWatchEnabled": true,
     "duplicateTaskCreated": false
+  },
+  "multiwayHandEv": {
+    "state": "pilot-running",
+    "codeBranch": "chatgpt/gto-multiway-handev-20261105-a",
+    "codeCommit": "af21a31cb130a4edb5b57be6fed86f70e3b9cae6",
+    "pr": 811,
+    "pilotRun": 41951846910,
+    "pilotBoards": [
+      "Ah7d2c",
+      "Kh7d2c",
+      "QhTh8c"
+    ],
+    "pilotIterations": 250,
+    "localSmoke": {
+      "spot": "co-btn-bb",
+      "flop": "Kh7d2c",
+      "version": 3,
+      "iterations": 1,
+      "handEvKeys": [
+        "BB",
+        "CO",
+        "BTN"
+      ],
+      "finite": true
+    },
+    "tests": {
+      "passed": 68,
+      "failed": 0
+    },
+    "invalidOldRuns": {
+      "co-btn-bb": "completed but all 200 lack handEv; do not collect or integrate",
+      "btn-sb-bb": 41817944946,
+      "utg-btn-bb": 41873282774
+    },
+    "policy": "Do not integrate old multiway outputs. Wait for pilot 3x250 version3 finite handEv, then rerun all 200 for co-btn-bb, btn-sb-bb, utg-btn-bb from fixed code. Keep UI improved/experimental state.",
+    "updatedAt": "2026-11-05T02:02:50.652Z"
+  },
+  "mainPromotion810": {
+    "pr": 810,
+    "state": "merged",
+    "head": "e830bb314dfdc8b5f5edaf47514753ba6749cca1",
+    "merge": "ed13c687bbb97e2113d6bae72119dd95b7cca331",
+    "mergedAt": "2026-11-05T01:56:39Z",
+    "vercel": "success",
+    "productionRoute": "/mypage/poker redirects to login without credentials",
+    "postMergeChecks": "in_progress at last observation"
   }
 }
