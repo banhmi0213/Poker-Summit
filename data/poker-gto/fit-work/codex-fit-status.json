@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T20:27:23.886Z",
+  "checkedAt": "2026-11-05T20:33:53.524Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -4551,14 +4551,14 @@
         "co-bb",
         "btn-bb"
       ],
-      "observedAt": "2026-11-05T20:19:51.314Z",
+      "observedAt": "2026-11-05T20:31:59.748Z",
       "successTotal": {
         "utg-bb": 0,
         "hj-bb": 43,
         "hu-srp": 21,
         "sb-bb": 83,
-        "co-bb": 120,
-        "btn-bb": 119
+        "co-bb": 122,
+        "btn-bb": 121
       },
       "importedAdditional": {
         "utg-bb": 0,
@@ -4573,8 +4573,8 @@
         "hj-bb": 3,
         "hu-srp": 1,
         "sb-bb": 2,
-        "co-bb": 1,
-        "btn-bb": 0
+        "co-bb": 3,
+        "btn-bb": 2
       }
     },
     "note": "Initial200 all21 validated staging; expansion6 spots separate; main819 checks pending. All4579 canonical JSON v3/250/finite handEv; multiway600 all3seats."
@@ -4653,89 +4653,90 @@
     "dbChanges": "none"
   },
   "concurrencySnapshot": {
-    "at": "2026-11-05T20:19:51.314Z",
+    "at": "2026-11-05T20:31:59.748Z",
     "running": 40,
     "runs": [
       {
+        "id": 42102457742,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 0,
+        "success": 0,
+        "remaining": 0,
+        "failed": []
+      },
+      {
         "id": 42099699418,
         "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
-        "parentStatus": "queued",
         "total": 201,
         "running": 7,
         "success": 0,
-        "solveTotal": 200,
         "remaining": 200,
-        "failed": [],
-        "allPagesVerified": true
+        "failed": []
       },
       {
         "id": 42042087498,
         "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
-        "parentStatus": "queued",
         "total": 201,
-        "running": 6,
+        "running": 7,
         "success": 43,
-        "solveTotal": 200,
         "remaining": 157,
-        "failed": [],
-        "allPagesVerified": true
+        "failed": []
       },
       {
         "id": 42042078557,
         "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
-        "parentStatus": "queued",
         "total": 201,
         "running": 7,
         "success": 21,
-        "solveTotal": 200,
         "remaining": 179,
-        "failed": [],
-        "allPagesVerified": true
+        "failed": []
       },
       {
         "id": 41930883732,
         "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
-        "parentStatus": "queued",
         "total": 201,
         "running": 7,
         "success": 83,
-        "solveTotal": 200,
         "remaining": 117,
-        "failed": [],
-        "allPagesVerified": true
+        "failed": []
       },
       {
         "id": 41930872021,
         "branch": "gto-flop-solve/co-bb/batch-20261105-01",
-        "parentStatus": "queued",
         "total": 201,
         "running": 6,
-        "success": 120,
-        "solveTotal": 200,
-        "remaining": 80,
-        "failed": [],
-        "allPagesVerified": true
+        "success": 122,
+        "remaining": 78,
+        "failed": []
       },
       {
         "id": 41873590700,
         "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
-        "parentStatus": "queued",
         "total": 201,
-        "running": 7,
-        "success": 119,
-        "solveTotal": 200,
-        "remaining": 81,
-        "failed": [],
-        "allPagesVerified": true
+        "running": 5,
+        "success": 121,
+        "remaining": 79,
+        "failed": []
+      },
+      {
+        "id": 42102457792,
+        "branch": "chatgpt/poker-authoritative-hand",
+        "total": 1,
+        "running": 1,
+        "success": 0,
+        "remaining": 0,
+        "failed": []
       }
     ],
+    "allPagesTotalAndUniqueVerified": true,
     "perPage": 100,
-    "totalAndUniqueMatched": true,
-    "statuses": [
+    "listStatuses": [
       "in_progress",
       "queued",
       "waiting"
-    ]
+    ],
+    "knownPendingCiAlsoChecked": true
   },
   "sbLimp": {
     "solveRun": 41459846661,
@@ -4796,11 +4797,18 @@
     }
   },
   "etaLatest": {
-    "observedAt": "2026-11-05T20:19:51.314Z",
+    "observedAt": "2026-11-05T20:31:59.748Z",
     "previousAt": "2026-11-05T14:12:40Z",
-    "elapsedHours": 6.119809444444445,
+    "elapsedHours": 6.322152222222222,
+    "shortInterval": {
+      "previousAt": "2026-11-05T20:19:51.314Z",
+      "hours": 0.2023427777777778,
+      "completedDelta": 4,
+      "ratePerHour": 19.768434751810048,
+      "note": "~12min interval too short for per-spot ETA; extend the previous six-hour trend window."
+    },
     "initialRemaining": 0,
-    "initial21x200": "completed, all21 imported staging in PR818",
+    "initial21x200": "all21 imported stage via818; main819 pending",
     "expansionSpotEtas": [
       {
         "spot": "hj-bb",
@@ -4808,8 +4816,8 @@
         "success": 43,
         "remaining": 157,
         "delta": 43,
-        "ratePerHour": 7.026362567389307,
-        "etaUtc": "2026-11-06T18:40:31.227Z"
+        "ratePerHour": 6.801481281778691,
+        "etaUtc": "2026-11-06T19:36:59.293Z"
       },
       {
         "spot": "hu-srp",
@@ -4817,8 +4825,8 @@
         "success": 21,
         "remaining": 179,
         "delta": 21,
-        "ratePerHour": 3.4314793933761734,
-        "etaUtc": "2026-11-08T00:29:42.038Z"
+        "ratePerHour": 3.3216536492407562,
+        "etaUtc": "2026-11-08T02:25:19.504Z"
       },
       {
         "spot": "sb-bb",
@@ -4826,26 +4834,26 @@
         "success": 83,
         "remaining": 117,
         "delta": 25,
-        "ratePerHour": 4.085094515924016,
-        "etaUtc": "2026-11-07T00:58:17.863Z"
+        "ratePerHour": 3.954349582429472,
+        "etaUtc": "2026-11-07T02:07:15.368Z"
       },
       {
         "spot": "co-bb",
         "run": 41930872021,
-        "success": 120,
-        "remaining": 80,
-        "delta": 35,
-        "ratePerHour": 5.719132322293622,
-        "etaUtc": "2026-11-06T10:19:08.603Z"
+        "success": 122,
+        "remaining": 78,
+        "delta": 37,
+        "ratePerHour": 5.852437381995618,
+        "etaUtc": "2026-11-06T09:51:39.757Z"
       },
       {
         "spot": "btn-bb",
         "run": 41873590700,
-        "success": 119,
-        "remaining": 81,
-        "delta": 27,
-        "ratePerHour": 4.411902077197937,
-        "etaUtc": "2026-11-06T14:41:25.256Z"
+        "success": 121,
+        "remaining": 79,
+        "delta": 29,
+        "ratePerHour": 4.587045515618187,
+        "etaUtc": "2026-11-06T13:45:20.440Z"
       },
       {
         "spot": "utg-bb",
@@ -4853,14 +4861,14 @@
         "success": 0,
         "remaining": 200,
         "proxy": true,
-        "ratePerHour": 4.69980397641544,
-        "etaUtc": "2026-11-07T14:53:09.192Z"
+        "ratePerHour": 4.669898554488138,
+        "etaUtc": "2026-11-07T15:21:38.686Z"
       }
     ],
     "full1755": {
-      "remainingComputedProxy": 32269,
-      "rateAssumed6Slots": 28.198823858492638,
-      "etaUtc": "2026-12-23T12:40:09.940Z",
+      "remainingComputedProxy": 32265,
+      "rateAssumed6Slots": 28.019391326928826,
+      "etaUtc": "2026-12-23T20:03:25.945Z",
       "assumptions": "5 measured spot delta rates over6.12h; mean ×6slots ×40/42 runner demand adjustment. UTG uses proxy. Same mean class cost, six slots inclCI, continuation byClaude afterNov7; +/-2weeks or more."
     },
     "notSameAsInitial200": true
@@ -5339,6 +5347,236 @@
           "waiting"
         ]
       }
+    },
+    {
+      "at": "2026-11-05T20:31:59.748Z",
+      "expansion": {
+        "active": [
+          "utg-bb",
+          "hj-bb",
+          "hu-srp",
+          "sb-bb",
+          "co-bb",
+          "btn-bb"
+        ],
+        "observedAt": "2026-11-05T20:31:59.748Z",
+        "successTotal": {
+          "utg-bb": 0,
+          "hj-bb": 43,
+          "hu-srp": 21,
+          "sb-bb": 83,
+          "co-bb": 122,
+          "btn-bb": 121
+        },
+        "importedAdditional": {
+          "utg-bb": 0,
+          "hj-bb": 40,
+          "hu-srp": 20,
+          "sb-bb": 81,
+          "co-bb": 119,
+          "btn-bb": 119
+        },
+        "successUnvalidated": {
+          "utg-bb": 0,
+          "hj-bb": 3,
+          "hu-srp": 1,
+          "sb-bb": 2,
+          "co-bb": 3,
+          "btn-bb": 2
+        }
+      },
+      "eta": {
+        "observedAt": "2026-11-05T20:31:59.748Z",
+        "previousAt": "2026-11-05T14:12:40Z",
+        "elapsedHours": 6.322152222222222,
+        "shortInterval": {
+          "previousAt": "2026-11-05T20:19:51.314Z",
+          "hours": 0.2023427777777778,
+          "completedDelta": 4,
+          "ratePerHour": 19.768434751810048,
+          "note": "~12min interval too short for per-spot ETA; extend the previous six-hour trend window."
+        },
+        "initialRemaining": 0,
+        "initial21x200": "all21 imported stage via818; main819 pending",
+        "expansionSpotEtas": [
+          {
+            "spot": "hj-bb",
+            "run": 42042087498,
+            "success": 43,
+            "remaining": 157,
+            "delta": 43,
+            "ratePerHour": 6.801481281778691,
+            "etaUtc": "2026-11-06T19:36:59.293Z"
+          },
+          {
+            "spot": "hu-srp",
+            "run": 42042078557,
+            "success": 21,
+            "remaining": 179,
+            "delta": 21,
+            "ratePerHour": 3.3216536492407562,
+            "etaUtc": "2026-11-08T02:25:19.504Z"
+          },
+          {
+            "spot": "sb-bb",
+            "run": 41930883732,
+            "success": 83,
+            "remaining": 117,
+            "delta": 25,
+            "ratePerHour": 3.954349582429472,
+            "etaUtc": "2026-11-07T02:07:15.368Z"
+          },
+          {
+            "spot": "co-bb",
+            "run": 41930872021,
+            "success": 122,
+            "remaining": 78,
+            "delta": 37,
+            "ratePerHour": 5.852437381995618,
+            "etaUtc": "2026-11-06T09:51:39.757Z"
+          },
+          {
+            "spot": "btn-bb",
+            "run": 41873590700,
+            "success": 121,
+            "remaining": 79,
+            "delta": 29,
+            "ratePerHour": 4.587045515618187,
+            "etaUtc": "2026-11-06T13:45:20.440Z"
+          },
+          {
+            "spot": "utg-bb",
+            "run": 42099699418,
+            "success": 0,
+            "remaining": 200,
+            "proxy": true,
+            "ratePerHour": 4.669898554488138,
+            "etaUtc": "2026-11-07T15:21:38.686Z"
+          }
+        ],
+        "full1755": {
+          "remainingComputedProxy": 32265,
+          "rateAssumed6Slots": 28.019391326928826,
+          "etaUtc": "2026-12-23T20:03:25.945Z",
+          "assumptions": "5 measured spot delta rates over6.12h; mean ×6slots ×40/42 runner demand adjustment. UTG uses proxy. Same mean class cost, six slots inclCI, continuation byClaude afterNov7; +/-2weeks or more."
+        },
+        "notSameAsInitial200": true
+      },
+      "concurrency": {
+        "at": "2026-11-05T20:31:59.748Z",
+        "running": 40,
+        "runs": [
+          {
+            "id": 42102457742,
+            "branch": "chatgpt/poker-authoritative-hand",
+            "total": 1,
+            "running": 0,
+            "success": 0,
+            "remaining": 0,
+            "failed": []
+          },
+          {
+            "id": 42099699418,
+            "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+            "total": 201,
+            "running": 7,
+            "success": 0,
+            "remaining": 200,
+            "failed": []
+          },
+          {
+            "id": 42042087498,
+            "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
+            "total": 201,
+            "running": 7,
+            "success": 43,
+            "remaining": 157,
+            "failed": []
+          },
+          {
+            "id": 42042078557,
+            "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
+            "total": 201,
+            "running": 7,
+            "success": 21,
+            "remaining": 179,
+            "failed": []
+          },
+          {
+            "id": 41930883732,
+            "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+            "total": 201,
+            "running": 7,
+            "success": 83,
+            "remaining": 117,
+            "failed": []
+          },
+          {
+            "id": 41930872021,
+            "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+            "total": 201,
+            "running": 6,
+            "success": 122,
+            "remaining": 78,
+            "failed": []
+          },
+          {
+            "id": 41873590700,
+            "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+            "total": 201,
+            "running": 5,
+            "success": 121,
+            "remaining": 79,
+            "failed": []
+          },
+          {
+            "id": 42102457792,
+            "branch": "chatgpt/poker-authoritative-hand",
+            "total": 1,
+            "running": 1,
+            "success": 0,
+            "remaining": 0,
+            "failed": []
+          }
+        ],
+        "allPagesTotalAndUniqueVerified": true,
+        "perPage": 100,
+        "listStatuses": [
+          "in_progress",
+          "queued",
+          "waiting"
+        ],
+        "knownPendingCiAlsoChecked": true
+      },
+      "main819": {
+        "at": "2026-11-05T20:33:53.524Z",
+        "pr": 819,
+        "head": "706106d1288681f13cb01609bdb234b1e8c3c035",
+        "base": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
+        "mergeable": true,
+        "merged": false,
+        "checks": [
+          {
+            "id": 127509131947,
+            "name": "Vercel Preview Comments",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "id": 127508506429,
+            "name": "deploy",
+            "status": "in_progress",
+            "conclusion": null
+          },
+          {
+            "id": 127508506209,
+            "name": "Poker engine regression tests",
+            "status": "in_progress",
+            "conclusion": null
+          }
+        ],
+        "combinedStatus": "success"
+      }
     }
   ],
   "snapshotCollection": {
@@ -5697,7 +5935,7 @@
       13423086076
     ],
     "stagePR": 818,
-    "outputCommit": "",
+    "outputCommit": "d5b9e2fbffb31bdb77b7281c1dcddd9cadf7984c",
     "exactRecoveredCount": 148,
     "recoveryExcludedAlreadyImported": true
   },
@@ -5854,7 +6092,7 @@
     "dataOnly": true
   },
   "mainPromotion819": {
-    "state": "checks-queued-no-merge",
+    "state": "checks-in-progress-no-merge",
     "pr": 819,
     "base": "main",
     "baseSha": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
@@ -5863,15 +6101,12 @@
     "engineRun": 42102457792,
     "deployRun": 42102457742,
     "lastVerified": {
-      "at": "2026-11-05T20:27:23.886Z",
-      "pr": {
-        "number": 819,
-        "head": "706106d1288681f13cb01609bdb234b1e8c3c035",
-        "base": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
-        "mergeable": true,
-        "mergeableState": "unstable",
-        "merged": false
-      },
+      "at": "2026-11-05T20:33:53.524Z",
+      "pr": 819,
+      "head": "706106d1288681f13cb01609bdb234b1e8c3c035",
+      "base": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
+      "mergeable": true,
+      "merged": false,
       "checks": [
         {
           "id": 127509131947,
@@ -5882,19 +6117,17 @@
         {
           "id": 127508506429,
           "name": "deploy",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null
         },
         {
           "id": 127508506209,
           "name": "Poker engine regression tests",
-          "status": "queued",
+          "status": "in_progress",
           "conclusion": null
         }
       ],
-      "combinedStatus": "success",
-      "main": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
-      "stage": "706106d1288681f13cb01609bdb234b1e8c3c035"
+      "combinedStatus": "success"
     },
     "retryCount": 0,
     "ownerActionRequired": false,
@@ -5913,7 +6146,7 @@
       "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
       "manifest": "data/poker-gto/flop-batches/utg-bb-100bb-20261106-01.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
+      "observedAt": "2026-11-05T20:31:59.748Z",
       "success": 0,
       "remaining": 200,
       "running": 7,
@@ -5939,10 +6172,10 @@
       "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
       "manifest": "data/poker-gto/flop-batches/hj-bb-100bb-20261105-02.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
+      "observedAt": "2026-11-05T20:31:59.748Z",
       "success": 43,
       "remaining": 157,
-      "running": 6,
+      "running": 7,
       "failed": [],
       "validatedImportedFromBatch": 40,
       "recoveredSnapshotArtifactCount": 40,
@@ -5958,7 +6191,7 @@
       "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
       "manifest": "data/poker-gto/flop-batches/hu-srp-100bb-20261105-02.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
+      "observedAt": "2026-11-05T20:31:59.748Z",
       "success": 21,
       "remaining": 179,
       "running": 7,
@@ -5977,7 +6210,7 @@
       "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
       "manifest": "data/poker-gto/flop-batches/sb-bb-100bb-20261105-01.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
+      "observedAt": "2026-11-05T20:31:59.748Z",
       "success": 83,
       "remaining": 117,
       "running": 7,
@@ -5996,9 +6229,9 @@
       "branch": "gto-flop-solve/co-bb/batch-20261105-01",
       "manifest": "data/poker-gto/flop-batches/co-bb-100bb-20261105-01.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
-      "success": 120,
-      "remaining": 80,
+      "observedAt": "2026-11-05T20:31:59.748Z",
+      "success": 122,
+      "remaining": 78,
       "running": 6,
       "failed": [],
       "validatedImportedFromBatch": 119,
@@ -6015,10 +6248,10 @@
       "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
       "manifest": "data/poker-gto/flop-batches/btn-bb-100bb-20261105-01.json",
       "planned": 200,
-      "observedAt": "2026-11-05T20:19:51.314Z",
-      "success": 119,
-      "remaining": 81,
-      "running": 7,
+      "observedAt": "2026-11-05T20:31:59.748Z",
+      "success": 121,
+      "remaining": 79,
+      "running": 5,
       "failed": [],
       "validatedImportedFromBatch": 119,
       "recoveredSnapshotArtifactCount": 28,
@@ -6030,9 +6263,67 @@
     }
   ],
   "nextActions": [
-    "Existing main PR819 engine42102457792/deploy42102457742 queued at20:27UTC; Vercel success. No failure/retry yet. Must recheck head/main/mergeable and every check before main merge; then production public index/JSON verification.",
+    "Existing main PR819 engine42102457792 and deploy42102457742 in_progress at20:33UTC; Vercel success. Recheck latest main/head/conflict/all checks; merge only all success and verify production. Retry only a failed check once.",
     "Continue six active expansion runs; no new UI/features/fit/DB work. No additional batch now because six spots/40 actual running; check registry and manifests before replenishment.",
-    "Initial200 all21 stage imported; do not rerun or recollect initial200. Expansion unvalidated7 at20:19UTC separate from4579 validated stage.",
+    "Initial200 all21 stage imported; never rerun. Expanded successful-unvalidated11 pinned in partial-20261106-0532-pending.json; after main819 merge recover these exact artifact IDs or deduplicate them in the next larger snapshot.",
     "Final handoff at2026-11-07T08:00Z: no new batches, leave all solves running, report registry/manifests/recovered artifact ranges, disable only automation6ae76f9802748191b3487089ae17ebac after handoff."
-  ]
+  ],
+  "intakePending": {
+    "state": "pinned-successful-not-downloaded-not-validated",
+    "snapshotAt": "2026-11-05T20:31:59.748Z",
+    "branch": "chatgpt/gto-stack-fit-20261102-a",
+    "path": "data/poker-gto/fit-work/partial-20261106-0532-pending.json",
+    "manifestBlob": "64a2401d4e1778f9d25fb7d911ea1b7f70da7d02",
+    "readback": true,
+    "count": 11,
+    "batches": [
+      {
+        "spot": "hj-bb",
+        "run": 42042087498,
+        "count": 3,
+        "artifactIds": [
+          13449987037,
+          13449324216,
+          13449143919
+        ]
+      },
+      {
+        "spot": "hu-srp",
+        "run": 42042078557,
+        "count": 1,
+        "artifactIds": [
+          13448303755
+        ]
+      },
+      {
+        "spot": "sb-bb",
+        "run": 41930883732,
+        "count": 2,
+        "artifactIds": [
+          13449292731,
+          13449244072
+        ]
+      },
+      {
+        "spot": "co-bb",
+        "run": 41930872021,
+        "count": 3,
+        "artifactIds": [
+          13449379452,
+          13448918842,
+          13448688625
+        ]
+      },
+      {
+        "spot": "btn-bb",
+        "run": 41873590700,
+        "count": 2,
+        "artifactIds": [
+          13450189043,
+          13449969661
+        ]
+      }
+    ],
+    "reason": "Keep stage head stable while existing main819 required checks run; combine with next intake after main819 promotion; do not create duplicate collector/PR for these IDs."
+  }
 }
