@@ -1702,7 +1702,22 @@
       }
     }
   ],
-  "pendingCollections": [],
+  "pendingCollections": {
+    "expansionPartial": {
+      "state": "collect-triggered",
+      "sourceRuns": [
+        41873590700,
+        41930872021,
+        41930883732
+      ],
+      "spots": [
+        "btn-bb",
+        "co-bb",
+        "sb-bb"
+      ],
+      "note": "Inprogress partial artifact snapshot;validate actual unique new count before merge;latercollectmustavoidduplicate."
+    }
+  },
   "newFlopRuns": {
     "0": {
       "branch": "gto-flop-collect/41604956412",
