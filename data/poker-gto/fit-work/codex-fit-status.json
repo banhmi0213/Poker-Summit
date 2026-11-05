@@ -4771,8 +4771,8 @@
     "deadlineUtc": "2026-11-07T08:00:00Z",
     "dateInterpretation": "Explicit 11/7 date takes priority over weekday label.",
     "destination": "Claude",
-    "noNewWork": true,
-    "noNewRuns": true,
+    "noNewWork": false,
+    "noNewRuns": false,
     "continueOnly": [
       {
         "kind": "multiway-handev-rerun",
@@ -4815,8 +4815,12 @@
       "1755 expansion completed/imported per spot",
       "open PR/main/production verification",
       "latest work branch and commit",
-      "checkpoint branch/path/blob readback"
+      "checkpoint branch/path/blob readback",
+      "Each spot validated imported count/1755 and active run IDs"
     ],
-    "afterDeadline": "Disable GTO watch and do no further GTO work."
+    "afterDeadline": "Disable GTO watch and do no further GTO work.",
+    "noNewUiFeatureWork": true,
+    "allowExpansionUntilDeadline": true,
+    "latestOwnerClarification": "【最優先・11/5オーナー訂正】『新しい作業を始めない』は画面・機能の新しい修正のみ。フロップの見回りと1755網羅追加は11/7 17:00日本時間の引継ぎまで継続し、新しい計算runの開始禁止は撤回。重複・計算済みを避け、空き枠にはbtn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順で追加batchを補充し、他CIも数えて同時40jobsを活用する。部分完了した追加分も回収・検証してmainと本番まで反映する。稼働中runを回収する際はsnapshotの成功artifactだけを対象とし、再回収時の重複を除く。全ファイルv3/250/handEv/canonical unique、index、テスト、全CI成功を必須とする。最終引継ぎには全場面の取り込み済み枚数/1755と計算中runIDを載せる。staff依頼不要、本番pokersummit.jpを検証。"
   }
 }
