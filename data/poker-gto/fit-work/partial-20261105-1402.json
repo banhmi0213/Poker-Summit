@@ -1,0 +1,1641 @@
+{
+  "snapshotAt": "2026-11-05T14:02:00.035Z",
+  "base": "bc541d24f055d6432f4fc2e0bdb3ce93791c76c5",
+  "batches": [
+    {
+      "spot": "sb-bb",
+      "runId": 41930883732,
+      "selected": [
+        {
+          "id": 13377205326,
+          "name": "flop-sb-bb-5h3d2h",
+          "flop": "5h3d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13376108574,
+          "name": "flop-sb-bb-QhTd9h",
+          "flop": "QhTd9h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13377091663,
+          "name": "flop-sb-bb-QhTd8h",
+          "flop": "QhTd8h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13377429666,
+          "name": "flop-sb-bb-4h3d2h",
+          "flop": "4h3d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13383492248,
+          "name": "flop-sb-bb-7h3d2h",
+          "flop": "7h3d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13377364773,
+          "name": "flop-sb-bb-Th8d7h",
+          "flop": "Th8d7h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13386077922,
+          "name": "flop-sb-bb-Th6d3h",
+          "flop": "Th6d3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13383157502,
+          "name": "flop-sb-bb-Th5d3h",
+          "flop": "Th5d3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13375322370,
+          "name": "flop-sb-bb-Th7d6h",
+          "flop": "Th7d6h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13380247860,
+          "name": "flop-sb-bb-QhTd6h",
+          "flop": "QhTd6h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13378589450,
+          "name": "flop-sb-bb-QhTd7h",
+          "flop": "QhTd7h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13385361913,
+          "name": "flop-sb-bb-Th5d4h",
+          "flop": "Th5d4h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13383895146,
+          "name": "flop-sb-bb-QhJd6h",
+          "flop": "QhJd6h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13383616985,
+          "name": "flop-sb-bb-Th4d3h",
+          "flop": "Th4d3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13386471042,
+          "name": "flop-sb-bb-Th6d4h",
+          "flop": "Th6d4h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13374589026,
+          "name": "flop-sb-bb-QhTd5h",
+          "flop": "QhTd5h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13382425002,
+          "name": "flop-sb-bb-QhJd5h",
+          "flop": "QhJd5h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13388104714,
+          "name": "flop-sb-bb-Th6d5h",
+          "flop": "Th6d5h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13387299472,
+          "name": "flop-sb-bb-QhTd3h",
+          "flop": "QhTd3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13389316946,
+          "name": "flop-sb-bb-QhTd2h",
+          "flop": "QhTd2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13388304065,
+          "name": "flop-sb-bb-QhJd2h",
+          "flop": "QhJd2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13389997601,
+          "name": "flop-sb-bb-QhJd4h",
+          "flop": "QhJd4h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13390373063,
+          "name": "flop-sb-bb-QhJd3h",
+          "flop": "QhJd3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13393955471,
+          "name": "flop-sb-bb-Qh4d2h",
+          "flop": "Qh4d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13392066713,
+          "name": "flop-sb-bb-Qh3d2h",
+          "flop": "Qh3d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13393189514,
+          "name": "flop-sb-bb-Qh5d2h",
+          "flop": "Qh5d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13393945777,
+          "name": "flop-sb-bb-Qh4d3h",
+          "flop": "Qh4d3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13396975507,
+          "name": "flop-sb-bb-Th4d2h",
+          "flop": "Th4d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13395739960,
+          "name": "flop-sb-bb-Qh5d4h",
+          "flop": "Qh5d4h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13398531037,
+          "name": "flop-sb-bb-QhJhTc",
+          "flop": "QhJhTc",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13393355909,
+          "name": "flop-sb-bb-Qh5d3h",
+          "flop": "Qh5d3h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13398326386,
+          "name": "flop-sb-bb-Th3d2h",
+          "flop": "Th3d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13396098017,
+          "name": "flop-sb-bb-Qh6d2h",
+          "flop": "Qh6d2h",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13397692431,
+          "name": "flop-sb-bb-QhTh9c",
+          "flop": "QhTh9c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13402783320,
+          "name": "flop-sb-bb-Th7h6c",
+          "flop": "Th7h6c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13399397047,
+          "name": "flop-sb-bb-4h3h2c",
+          "flop": "4h3h2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13399119662,
+          "name": "flop-sb-bb-Th8h7c",
+          "flop": "Th8h7c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13402861563,
+          "name": "flop-sb-bb-QhTh5c",
+          "flop": "QhTh5c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13404040045,
+          "name": "flop-sb-bb-QhTh6c",
+          "flop": "QhTh6c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13404938138,
+          "name": "flop-sb-bb-QhJh5c",
+          "flop": "QhJh5c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13401446874,
+          "name": "flop-sb-bb-QhTh7c",
+          "flop": "QhTh7c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13405785350,
+          "name": "flop-sb-bb-7h3h2c",
+          "flop": "7h3h2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13406423853,
+          "name": "flop-sb-bb-Th4h3c",
+          "flop": "Th4h3c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13407151015,
+          "name": "flop-sb-bb-QhJh6c",
+          "flop": "QhJh6c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13410811045,
+          "name": "flop-sb-bb-Th5h3c",
+          "flop": "Th5h3c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13410642655,
+          "name": "flop-sb-bb-Th5h4c",
+          "flop": "Th5h4c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13408031432,
+          "name": "flop-sb-bb-Th6h4c",
+          "flop": "Th6h4c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13412284311,
+          "name": "flop-sb-bb-Th6h5c",
+          "flop": "Th6h5c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13412638628,
+          "name": "flop-sb-bb-Th7h3c",
+          "flop": "Th7h3c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13413598850,
+          "name": "flop-sb-bb-QhTh2c",
+          "flop": "QhTh2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13410657880,
+          "name": "flop-sb-bb-QhTh4c",
+          "flop": "QhTh4c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13411577405,
+          "name": "flop-sb-bb-QhJh2c",
+          "flop": "QhJh2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13418427078,
+          "name": "flop-sb-bb-QhJh3c",
+          "flop": "QhJh3c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13414443179,
+          "name": "flop-sb-bb-QhJh4c",
+          "flop": "QhJh4c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13419316030,
+          "name": "flop-sb-bb-Qh3h2c",
+          "flop": "Qh3h2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        },
+        {
+          "id": 13417079076,
+          "name": "flop-sb-bb-Qh4h2c",
+          "flop": "Qh4h2c",
+          "runId": 41930883732,
+          "sha": "1b4d86936dd8408b87d4eaa9359e5bc05ac3f70b"
+        }
+      ]
+    },
+    {
+      "spot": "co-bb",
+      "runId": 41930872021,
+      "selected": [
+        {
+          "id": 13375718260,
+          "name": "flop-co-bb-QhTd9h",
+          "flop": "QhTd9h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13377126729,
+          "name": "flop-co-bb-5h3d2h",
+          "flop": "5h3d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13381840507,
+          "name": "flop-co-bb-Th4d3h",
+          "flop": "Th4d3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13378366651,
+          "name": "flop-co-bb-QhTd6h",
+          "flop": "QhTd6h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13374179747,
+          "name": "flop-co-bb-QhTd8h",
+          "flop": "QhTd8h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13375984216,
+          "name": "flop-co-bb-4h3d2h",
+          "flop": "4h3d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13383365447,
+          "name": "flop-co-bb-Th6d3h",
+          "flop": "Th6d3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13376108446,
+          "name": "flop-co-bb-Th8d7h",
+          "flop": "Th8d7h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13380467758,
+          "name": "flop-co-bb-QhJd6h",
+          "flop": "QhJd6h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13381369206,
+          "name": "flop-co-bb-Th6d4h",
+          "flop": "Th6d4h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13376496756,
+          "name": "flop-co-bb-QhTd5h",
+          "flop": "QhTd5h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13379678654,
+          "name": "flop-co-bb-7h3d2h",
+          "flop": "7h3d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13379884474,
+          "name": "flop-co-bb-QhJd5h",
+          "flop": "QhJd5h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13381497376,
+          "name": "flop-co-bb-Th5d3h",
+          "flop": "Th5d3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13380642709,
+          "name": "flop-co-bb-Th5d4h",
+          "flop": "Th5d4h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13374242933,
+          "name": "flop-co-bb-Th7d6h",
+          "flop": "Th7d6h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13378943921,
+          "name": "flop-co-bb-QhTd7h",
+          "flop": "QhTd7h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13382204586,
+          "name": "flop-co-bb-Th6d5h",
+          "flop": "Th6d5h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13384895416,
+          "name": "flop-co-bb-QhJd2h",
+          "flop": "QhJd2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13383654622,
+          "name": "flop-co-bb-QhTd3h",
+          "flop": "QhTd3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13382983348,
+          "name": "flop-co-bb-QhTd2h",
+          "flop": "QhTd2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13386425783,
+          "name": "flop-co-bb-QhJd4h",
+          "flop": "QhJd4h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13385556730,
+          "name": "flop-co-bb-QhJd3h",
+          "flop": "QhJd3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13386853225,
+          "name": "flop-co-bb-Qh3d2h",
+          "flop": "Qh3d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13385899361,
+          "name": "flop-co-bb-Qh4d2h",
+          "flop": "Qh4d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13387443697,
+          "name": "flop-co-bb-Qh4d3h",
+          "flop": "Qh4d3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13388691438,
+          "name": "flop-co-bb-Qh5d2h",
+          "flop": "Qh5d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13387577470,
+          "name": "flop-co-bb-Qh5d3h",
+          "flop": "Qh5d3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13387529499,
+          "name": "flop-co-bb-Qh5d4h",
+          "flop": "Qh5d4h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13388485666,
+          "name": "flop-co-bb-Qh6d2h",
+          "flop": "Qh6d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13389344568,
+          "name": "flop-co-bb-Th4d2h",
+          "flop": "Th4d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13390736231,
+          "name": "flop-co-bb-Th3d2h",
+          "flop": "Th3d2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13391460358,
+          "name": "flop-co-bb-QhJhTc",
+          "flop": "QhJhTc",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13390623924,
+          "name": "flop-co-bb-QhTh9c",
+          "flop": "QhTh9c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13390268721,
+          "name": "flop-co-bb-4h3h2c",
+          "flop": "4h3h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13390032783,
+          "name": "flop-co-bb-Th7h6c",
+          "flop": "Th7h6c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13390857480,
+          "name": "flop-co-bb-Th8h7c",
+          "flop": "Th8h7c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13394006518,
+          "name": "flop-co-bb-QhTh6c",
+          "flop": "QhTh6c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13393092409,
+          "name": "flop-co-bb-QhTh5c",
+          "flop": "QhTh5c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13392367683,
+          "name": "flop-co-bb-QhJh5c",
+          "flop": "QhJh5c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13393767353,
+          "name": "flop-co-bb-QhTh7c",
+          "flop": "QhTh7c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13394168377,
+          "name": "flop-co-bb-QhJh6c",
+          "flop": "QhJh6c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13393397019,
+          "name": "flop-co-bb-7h3h2c",
+          "flop": "7h3h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13394057830,
+          "name": "flop-co-bb-Th4h3c",
+          "flop": "Th4h3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13396141940,
+          "name": "flop-co-bb-Th6h4c",
+          "flop": "Th6h4c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13397146043,
+          "name": "flop-co-bb-Th5h3c",
+          "flop": "Th5h3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13397190398,
+          "name": "flop-co-bb-Th5h4c",
+          "flop": "Th5h4c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13396992360,
+          "name": "flop-co-bb-Th6h5c",
+          "flop": "Th6h5c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13398125081,
+          "name": "flop-co-bb-Th7h3c",
+          "flop": "Th7h3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13398135392,
+          "name": "flop-co-bb-QhTh4c",
+          "flop": "QhTh4c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13396606754,
+          "name": "flop-co-bb-QhTh2c",
+          "flop": "QhTh2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13400790552,
+          "name": "flop-co-bb-QhJh2c",
+          "flop": "QhJh2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13400801362,
+          "name": "flop-co-bb-QhJh3c",
+          "flop": "QhJh3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13400965970,
+          "name": "flop-co-bb-QhJh4c",
+          "flop": "QhJh4c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13401651487,
+          "name": "flop-co-bb-Qh3h2c",
+          "flop": "Qh3h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13402171579,
+          "name": "flop-co-bb-Qh4h2c",
+          "flop": "Qh4h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13402132792,
+          "name": "flop-co-bb-Qh4h3c",
+          "flop": "Qh4h3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13402733197,
+          "name": "flop-co-bb-Qh5h2c",
+          "flop": "Qh5h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13406316183,
+          "name": "flop-co-bb-Qh5h4c",
+          "flop": "Qh5h4c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13403817232,
+          "name": "flop-co-bb-Th3h2c",
+          "flop": "Th3h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13408365101,
+          "name": "flop-co-bb-Th4h2c",
+          "flop": "Th4h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13406131899,
+          "name": "flop-co-bb-Qh6h2c",
+          "flop": "Qh6h2c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13403774922,
+          "name": "flop-co-bb-Qh6h3c",
+          "flop": "Qh6h3c",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13407013518,
+          "name": "flop-co-bb-QhTh9h",
+          "flop": "QhTh9h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13405767139,
+          "name": "flop-co-bb-4h3h2h",
+          "flop": "4h3h2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13409033348,
+          "name": "flop-co-bb-Th7h6h",
+          "flop": "Th7h6h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13409355974,
+          "name": "flop-co-bb-QhTh5h",
+          "flop": "QhTh5h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13411042912,
+          "name": "flop-co-bb-7h3h2h",
+          "flop": "7h3h2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13411182582,
+          "name": "flop-co-bb-Th4h3h",
+          "flop": "Th4h3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13411020669,
+          "name": "flop-co-bb-Th5h3h",
+          "flop": "Th5h3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13412647513,
+          "name": "flop-co-bb-QhTh2h",
+          "flop": "QhTh2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13411582082,
+          "name": "flop-co-bb-QhTh3h",
+          "flop": "QhTh3h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13413583887,
+          "name": "flop-co-bb-QhTh4h",
+          "flop": "QhTh4h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13415001644,
+          "name": "flop-co-bb-QhJh2h",
+          "flop": "QhJh2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13416577601,
+          "name": "flop-co-bb-QhTd8d",
+          "flop": "QhTd8d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13415432650,
+          "name": "flop-co-bb-Th3h2h",
+          "flop": "Th3h2h",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13415184961,
+          "name": "flop-co-bb-QhTd9d",
+          "flop": "QhTd9d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13418290563,
+          "name": "flop-co-bb-4h3d2d",
+          "flop": "4h3d2d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13417649514,
+          "name": "flop-co-bb-Th7d6d",
+          "flop": "Th7d6d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13417529871,
+          "name": "flop-co-bb-QhTd5d",
+          "flop": "QhTd5d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13418033608,
+          "name": "flop-co-bb-QhTd7d",
+          "flop": "QhTd7d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13419527830,
+          "name": "flop-co-bb-Th8d7d",
+          "flop": "Th8d7d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13419868920,
+          "name": "flop-co-bb-QhJd5d",
+          "flop": "QhJd5d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        },
+        {
+          "id": 13420522119,
+          "name": "flop-co-bb-QhJd7d",
+          "flop": "QhJd7d",
+          "runId": 41930872021,
+          "sha": "9c60eaa41bd9c077813ca3c23407f8df0e6cd121"
+        }
+      ]
+    },
+    {
+      "spot": "btn-bb",
+      "runId": 41873590700,
+      "selected": [
+        {
+          "id": 13356113289,
+          "name": "flop-btn-bb-ThTd2c",
+          "flop": "ThTd2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13353312425,
+          "name": "flop-btn-bb-3h3d2c",
+          "flop": "3h3d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13353728653,
+          "name": "flop-btn-bb-7h2d2c",
+          "flop": "7h2d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13351569740,
+          "name": "flop-btn-bb-2h2d2c",
+          "flop": "2h2d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13362751959,
+          "name": "flop-btn-bb-QhQd3h",
+          "flop": "QhQd3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13355611909,
+          "name": "flop-btn-bb-ThTd4h",
+          "flop": "ThTd4h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13354671296,
+          "name": "flop-btn-bb-3h2h2c",
+          "flop": "3h2h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13350451160,
+          "name": "flop-btn-bb-3h3d2h",
+          "flop": "3h3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13358105415,
+          "name": "flop-btn-bb-ThTd2h",
+          "flop": "ThTd2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13360168991,
+          "name": "flop-btn-bb-QhQd2c",
+          "flop": "QhQd2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13357984978,
+          "name": "flop-btn-bb-QhQd2h",
+          "flop": "QhQd2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13351357916,
+          "name": "flop-btn-bb-4h2d2c",
+          "flop": "4h2d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13354347146,
+          "name": "flop-btn-bb-7h2h2c",
+          "flop": "7h2h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13361272115,
+          "name": "flop-btn-bb-ThTd4c",
+          "flop": "ThTd4c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13353085155,
+          "name": "flop-btn-bb-4h3d3c",
+          "flop": "4h3d3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13357971996,
+          "name": "flop-btn-bb-JhJd2c",
+          "flop": "JhJd2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13363156759,
+          "name": "flop-btn-bb-QhQd3c",
+          "flop": "QhQd3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13362774931,
+          "name": "flop-btn-bb-4h3h2h",
+          "flop": "4h3h2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13363414343,
+          "name": "flop-btn-bb-4h3d2h",
+          "flop": "4h3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13365818057,
+          "name": "flop-btn-bb-4h3h2c",
+          "flop": "4h3h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13368482862,
+          "name": "flop-btn-bb-4h3d2d",
+          "flop": "4h3d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13366243243,
+          "name": "flop-btn-bb-7h3h2h",
+          "flop": "7h3h2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13367478799,
+          "name": "flop-btn-bb-Th3h2h",
+          "flop": "Th3h2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13371891150,
+          "name": "flop-btn-bb-Th4h2h",
+          "flop": "Th4h2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13366489703,
+          "name": "flop-btn-bb-5h3d2h",
+          "flop": "5h3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13370990264,
+          "name": "flop-btn-bb-5h3d2d",
+          "flop": "5h3d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13370599879,
+          "name": "flop-btn-bb-7h3d2h",
+          "flop": "7h3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13371892463,
+          "name": "flop-btn-bb-Th3d2h",
+          "flop": "Th3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13375678060,
+          "name": "flop-btn-bb-Th4d2h",
+          "flop": "Th4d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13375297584,
+          "name": "flop-btn-bb-Th3d2d",
+          "flop": "Th3d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13373729186,
+          "name": "flop-btn-bb-Th3h2c",
+          "flop": "Th3h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13376239540,
+          "name": "flop-btn-bb-Th4h2c",
+          "flop": "Th4h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13377780334,
+          "name": "flop-btn-bb-Th4d2d",
+          "flop": "Th4d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13377087668,
+          "name": "flop-btn-bb-Th4d3h",
+          "flop": "Th4d3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13378362052,
+          "name": "flop-btn-bb-Th4h3c",
+          "flop": "Th4h3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13378845942,
+          "name": "flop-btn-bb-Th5d2h",
+          "flop": "Th5d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13379296863,
+          "name": "flop-btn-bb-Th4d3d",
+          "flop": "Th4d3d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13380419451,
+          "name": "flop-btn-bb-Th5h2c",
+          "flop": "Th5h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13382758678,
+          "name": "flop-btn-bb-Th5d2d",
+          "flop": "Th5d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13381255003,
+          "name": "flop-btn-bb-Th5h3c",
+          "flop": "Th5h3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13382200753,
+          "name": "flop-btn-bb-Th5d3h",
+          "flop": "Th5d3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13384400351,
+          "name": "flop-btn-bb-Th5d3d",
+          "flop": "Th5d3d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13383648709,
+          "name": "flop-btn-bb-Th5d4h",
+          "flop": "Th5d4h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13385565104,
+          "name": "flop-btn-bb-Th5h4c",
+          "flop": "Th5h4c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13384288206,
+          "name": "flop-btn-bb-Th6d2h",
+          "flop": "Th6d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13384711577,
+          "name": "flop-btn-bb-Th5d4d",
+          "flop": "Th5d4d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13386503058,
+          "name": "flop-btn-bb-Th6h2c",
+          "flop": "Th6h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13387615179,
+          "name": "flop-btn-bb-Th6d2d",
+          "flop": "Th6d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13387250312,
+          "name": "flop-btn-bb-Th6d3h",
+          "flop": "Th6d3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13388290745,
+          "name": "flop-btn-bb-Th6d4h",
+          "flop": "Th6d4h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13389915230,
+          "name": "flop-btn-bb-Th6h4c",
+          "flop": "Th6h4c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13388728931,
+          "name": "flop-btn-bb-JhTh2h",
+          "flop": "JhTh2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13389149778,
+          "name": "flop-btn-bb-JhTd2h",
+          "flop": "JhTd2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13390882776,
+          "name": "flop-btn-bb-JhTh2c",
+          "flop": "JhTh2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13391024708,
+          "name": "flop-btn-bb-QhTh3h",
+          "flop": "QhTh3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13392905759,
+          "name": "flop-btn-bb-QhJh2h",
+          "flop": "QhJh2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13390904126,
+          "name": "flop-btn-bb-QhTh2h",
+          "flop": "QhTh2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13393276554,
+          "name": "flop-btn-bb-QhTd2h",
+          "flop": "QhTd2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13394406599,
+          "name": "flop-btn-bb-QhTd2d",
+          "flop": "QhTd2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13394221665,
+          "name": "flop-btn-bb-QhTh2c",
+          "flop": "QhTh2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13395107710,
+          "name": "flop-btn-bb-QhTd3h",
+          "flop": "QhTd3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13396657108,
+          "name": "flop-btn-bb-QhJh2c",
+          "flop": "QhJh2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13397045627,
+          "name": "flop-btn-bb-QhJd2h",
+          "flop": "QhJd2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13398451383,
+          "name": "flop-btn-bb-QhJd3h",
+          "flop": "QhJd3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13395904946,
+          "name": "flop-btn-bb-QhJd2d",
+          "flop": "QhJd2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13399063480,
+          "name": "flop-btn-bb-QhJd3d",
+          "flop": "QhJd3d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13398987973,
+          "name": "flop-btn-bb-QhJh3c",
+          "flop": "QhJh3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13398587548,
+          "name": "flop-btn-bb-Qh3d2h",
+          "flop": "Qh3d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13401958472,
+          "name": "flop-btn-bb-Qh3h2c",
+          "flop": "Qh3h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13401984209,
+          "name": "flop-btn-bb-Qh4d2h",
+          "flop": "Qh4d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13400388917,
+          "name": "flop-btn-bb-Qh3d2d",
+          "flop": "Qh3d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13403814450,
+          "name": "flop-btn-bb-Qh4h2c",
+          "flop": "Qh4h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13402719121,
+          "name": "flop-btn-bb-Qh4h3c",
+          "flop": "Qh4h3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13405226238,
+          "name": "flop-btn-bb-Qh4d2d",
+          "flop": "Qh4d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13402168642,
+          "name": "flop-btn-bb-Qh4d3h",
+          "flop": "Qh4d3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13408840137,
+          "name": "flop-btn-bb-Qh4d3d",
+          "flop": "Qh4d3d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13407847526,
+          "name": "flop-btn-bb-Qh5d2h",
+          "flop": "Qh5d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13410146458,
+          "name": "flop-btn-bb-Qh5d2d",
+          "flop": "Qh5d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13410151082,
+          "name": "flop-btn-bb-Qh5h2c",
+          "flop": "Qh5h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13407821967,
+          "name": "flop-btn-bb-Qh5d3h",
+          "flop": "Qh5d3h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13410237109,
+          "name": "flop-btn-bb-Qh6d2h",
+          "flop": "Qh6d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13413694990,
+          "name": "flop-btn-bb-Qh6d2d",
+          "flop": "Qh6d2d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13415101693,
+          "name": "flop-btn-bb-Qh6h3c",
+          "flop": "Qh6h3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13411733949,
+          "name": "flop-btn-bb-Qh6h2c",
+          "flop": "Qh6h2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13414902938,
+          "name": "flop-btn-bb-Qh6d3d",
+          "flop": "Qh6d3d",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13415749038,
+          "name": "flop-btn-bb-Qh7d2h",
+          "flop": "Qh7d2h",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13414839081,
+          "name": "flop-btn-bb-5h3d2c",
+          "flop": "5h3d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13417377346,
+          "name": "flop-btn-bb-4h3d2c",
+          "flop": "4h3d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13418679504,
+          "name": "flop-btn-bb-Th3d2c",
+          "flop": "Th3d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13419981784,
+          "name": "flop-btn-bb-Th4d2c",
+          "flop": "Th4d2c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        },
+        {
+          "id": 13419687880,
+          "name": "flop-btn-bb-Th4d3c",
+          "flop": "Th4d3c",
+          "runId": 41873590700,
+          "sha": "cca6b74b264fd8bd10c93866fdc4619d8fb929f5"
+        }
+      ]
+    }
+  ]
+}
