@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T14:16:33Z",
+  "checkedAt": "2026-11-05T14:28:11Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -1376,7 +1376,22 @@
     "observedRepositoryJobs": 39,
     "observedFlopJobs": 38,
     "checkedAt": "2026-11-02T14:46:45.531Z",
-    "replenish": "After a spot finishes addone next unstarted spot,keeping6active;queueabove40explicitlyallowed"
+    "replenish": "After a spot finishes addone next unstarted spot,keeping6active;queueabove40explicitlyallowed",
+    "targetRunningJobs": 40,
+    "scope": "repository all active/queued/waiting runs and complete job pages; include CI",
+    "replenishExpansion": true,
+    "priority": [
+      "btn-bb",
+      "co-bb",
+      "sb-bb",
+      "hu-srp",
+      "hj-bb",
+      "utg-bb",
+      "co-btn",
+      "others"
+    ],
+    "smallQueuedDemandAllowed": true,
+    "doNotCancelAtHandoff": true
   },
   "utgBbStart": {
     "run": 41464873348,
@@ -4826,7 +4841,7 @@
     "destination": "Claude",
     "noNewWork": false,
     "noNewRuns": false,
-    "allowedUntilDeadline": "Monitor and replenish stratified nonduplicate expansion batches in priority order, snapshot collect partial successes, validate, reindex, tests, stage/main green merges and production verification; no new UI/features. Deadline Nov7 17:00JST then handoff and disable watch.",
+    "allowedUntilDeadline": "Replenish expansion batches in owner priority order to use40 total jobs including other CI; monitor, snapshot collect partial successes, deduplicate, validate, reindex, test, stage/main merge after all checks, verify production.",
     "finalReportMustInclude": [
       "all21 mutually-exclusive named categories",
       "multiway run IDs and remaining",
@@ -4836,10 +4851,22 @@
       "checkpoint branch/path/blob readback",
       "Each spot validated imported count/1755 and active run IDs"
     ],
-    "afterDeadline": "Disable GTO watch and do no further GTO work.",
+    "afterDeadline": "Leave all ongoing GitHub Actions calculations running; report IDs, successful/remaining counts, manifests and collection ranges to Claude. Disable only the GTO monitoring automation after final handoff; perform no further GTO work.",
     "noNewUiFeatureWork": true,
     "allowExpansionUntilDeadline": true,
-    "latestOwnerClarification": "【最優先・11/5オーナー訂正】『新しい作業を始めない』は画面・機能の新しい修正のみ。フロップの見回りと1755網羅追加は11/7 17:00日本時間の引継ぎまで継続し、新しい計算runの開始禁止は撤回。重複・計算済みを避け、空き枠にはbtn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順で追加batchを補充し、他CIも数えて同時40jobsを活用する。部分完了した追加分も回収・検証してmainと本番まで反映する。稼働中runを回収する際はsnapshotの成功artifactだけを対象とし、再回収時の重複を除く。全ファイルv3/250/handEv/canonical unique、index、テスト、全CI成功を必須とする。最終引継ぎには全場面の取り込み済み枚数/1755と計算中runIDを載せる。staff依頼不要、本番pokersummit.jpを検証。"
+    "latestOwnerClarification": "【最優先・2026-11-05オーナー再訂正】止めるのは画面・機能の新しい修正だけ。フロップの見回り、追加batchの開始、部分回収・検証・反映は2026-11-07 17:00日本時間（2026-11-07T08:00:00Z）まで継続する。空き枠へ1,755通りの追加計算をbtn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順に補充し、他CIを含め同時40jobsを使い切るよう計画する。期限時点の計算中runはキャンセルせず、そのまま稼働させる。最終引き継ぎにrun ID・成功/残り枚数・manifest・既回収範囲を記録し、Claudeが回収を引き継ぐ。最終報告後は見回りautomationのみ無効化し、以後こちらからGTO作業を行わない。",
+    "keepRunningJobsAtDeadline": true,
+    "cancelRunningJobsAtDeadline": false,
+    "priority": [
+      "btn-bb",
+      "co-bb",
+      "sb-bb",
+      "hu-srp",
+      "hj-bb",
+      "utg-bb",
+      "co-btn",
+      "others"
+    ]
   },
   "observationHistory": [
     {
