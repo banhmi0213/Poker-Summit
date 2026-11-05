@@ -4758,5 +4758,59 @@
       }
     ],
     "expansionUncertainty": "short two-hour per-spot rate, multiple days uncertainty; not full1755 ETA"
+  },
+  "handoffPolicy": {
+    "ownerInstructionDate": "2026-11-05",
+    "deadlineJst": "2026-11-07T17:00:00+09:00",
+    "deadlineUtc": "2026-11-07T08:00:00Z",
+    "dateInterpretation": "Explicit 11/7 date takes priority over weekday label.",
+    "destination": "Claude",
+    "noNewWork": true,
+    "noNewRuns": true,
+    "continueOnly": [
+      {
+        "kind": "multiway-handev-rerun",
+        "spot": "co-btn-bb",
+        "run": 41954936687
+      },
+      {
+        "kind": "multiway-handev-rerun",
+        "spot": "btn-sb-bb",
+        "run": 41954939826
+      },
+      {
+        "kind": "multiway-handev-rerun",
+        "spot": "utg-btn-bb",
+        "run": 41954938742
+      },
+      {
+        "kind": "1755-expansion-existing-batch",
+        "spot": "btn-bb",
+        "run": 41873590700,
+        "batch": "btn-bb-100bb-20261105-01"
+      },
+      {
+        "kind": "1755-expansion-existing-batch",
+        "spot": "co-bb",
+        "run": 41930872021,
+        "batch": "co-bb-100bb-20261105-01"
+      },
+      {
+        "kind": "1755-expansion-existing-batch",
+        "spot": "sb-bb",
+        "run": 41930883732,
+        "batch": "sb-bb-100bb-20261105-01"
+      }
+    ],
+    "allowedUntilDeadline": "Monitor, collect completed runs, validate version3/250iter/handEv/canonical uniqueness, regenerate index, tests, separate PRs, all checks, stage/main merge, production verification.",
+    "finalReportMustInclude": [
+      "all21 mutually-exclusive named categories",
+      "multiway run IDs and remaining",
+      "1755 expansion completed/imported per spot",
+      "open PR/main/production verification",
+      "latest work branch and commit",
+      "checkpoint branch/path/blob readback"
+    ],
+    "afterDeadline": "Disable GTO watch and do no further GTO work."
   }
 }
