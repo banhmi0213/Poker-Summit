@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-05T20:22:00Z",
+  "checkedAt": "2026-11-05T20:27:23.886Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -4587,7 +4587,9 @@
     "handoffUtc": "2026-11-07T08:00:00Z",
     "verifiedEnabled": true,
     "actualSchedule": "BEGIN:VEVENT\nDTSTART:20261105T080000Z\nRRULE:FREQ=HOURLY;INTERVAL=6\nEND:VEVENT",
-    "finalDisableNotYetDue": true
+    "finalDisableNotYetDue": true,
+    "promptLatestOwnerInstructionVerified": true,
+    "noScheduleMutation": true
   },
   "multiwayHandEv": {
     "state": "full-reruns-running",
@@ -5694,7 +5696,10 @@
       13423464680,
       13423086076
     ],
-    "stagePR": 818
+    "stagePR": 818,
+    "outputCommit": "",
+    "exactRecoveredCount": 148,
+    "recoveryExcludedAlreadyImported": true
   },
   "flopImport816": {
     "pr": 816,
@@ -5849,13 +5854,185 @@
     "dataOnly": true
   },
   "mainPromotion819": {
-    "state": "checks-pending",
+    "state": "checks-queued-no-merge",
     "pr": 819,
     "base": "main",
     "baseSha": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
     "head": "chatgpt/poker-authoritative-hand",
     "headSha": "706106d1288681f13cb01609bdb234b1e8c3c035",
-    "engineRun": 42102457742,
-    "deployRun": 42102457792
-  }
+    "engineRun": 42102457792,
+    "deployRun": 42102457742,
+    "lastVerified": {
+      "at": "2026-11-05T20:27:23.886Z",
+      "pr": {
+        "number": 819,
+        "head": "706106d1288681f13cb01609bdb234b1e8c3c035",
+        "base": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
+        "mergeable": true,
+        "mergeableState": "unstable",
+        "merged": false
+      },
+      "checks": [
+        {
+          "id": 127509131947,
+          "name": "Vercel Preview Comments",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "id": 127508506429,
+          "name": "deploy",
+          "status": "queued",
+          "conclusion": null
+        },
+        {
+          "id": 127508506209,
+          "name": "Poker engine regression tests",
+          "status": "queued",
+          "conclusion": null
+        }
+      ],
+      "combinedStatus": "success",
+      "main": "b6c118bc7c993e609b55a70d6967d09d6ff36728",
+      "stage": "706106d1288681f13cb01609bdb234b1e8c3c035"
+    },
+    "retryCount": 0,
+    "ownerActionRequired": false,
+    "next": "Recheck existing PR819 latest main/head/conflict/all checks; merge only all success. Do not create a duplicate PR."
+  },
+  "workBranch": {
+    "name": "chatgpt/gto-flops-snapshot-20261106-j",
+    "head": "5bc176b915bc10c8bfe8936a7a2950c80f5dfb14",
+    "tree": "17b981b86d29ccce7424ce3af3079a65e2049cab",
+    "githubLocalTreeMatch": true
+  },
+  "expansionRunRegistry": [
+    {
+      "spot": "utg-bb",
+      "run": 42099699418,
+      "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+      "manifest": "data/poker-gto/flop-batches/utg-bb-100bb-20261106-01.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 0,
+      "remaining": 200,
+      "running": 7,
+      "failed": [],
+      "validatedImportedFromBatch": 0,
+      "recoveredSnapshotArtifactCount": 0,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      },
+      "audit": {
+        "manifestReadbackExact": true,
+        "canonicalUniverse": 1755,
+        "selectedUnique": 200,
+        "baselineDisjoint": true,
+        "strata": 67
+      }
+    },
+    {
+      "spot": "hj-bb",
+      "run": 42042087498,
+      "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
+      "manifest": "data/poker-gto/flop-batches/hj-bb-100bb-20261105-02.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 43,
+      "remaining": 157,
+      "running": 6,
+      "failed": [],
+      "validatedImportedFromBatch": 40,
+      "recoveredSnapshotArtifactCount": 40,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      }
+    },
+    {
+      "spot": "hu-srp",
+      "run": 42042078557,
+      "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
+      "manifest": "data/poker-gto/flop-batches/hu-srp-100bb-20261105-02.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 21,
+      "remaining": 179,
+      "running": 7,
+      "failed": [],
+      "validatedImportedFromBatch": 20,
+      "recoveredSnapshotArtifactCount": 20,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      }
+    },
+    {
+      "spot": "sb-bb",
+      "run": 41930883732,
+      "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+      "manifest": "data/poker-gto/flop-batches/sb-bb-100bb-20261105-01.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 83,
+      "remaining": 117,
+      "running": 7,
+      "failed": [],
+      "validatedImportedFromBatch": 81,
+      "recoveredSnapshotArtifactCount": 25,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      }
+    },
+    {
+      "spot": "co-bb",
+      "run": 41930872021,
+      "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+      "manifest": "data/poker-gto/flop-batches/co-bb-100bb-20261105-01.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 120,
+      "remaining": 80,
+      "running": 6,
+      "failed": [],
+      "validatedImportedFromBatch": 119,
+      "recoveredSnapshotArtifactCount": 35,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      }
+    },
+    {
+      "spot": "btn-bb",
+      "run": 41873590700,
+      "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+      "manifest": "data/poker-gto/flop-batches/btn-bb-100bb-20261105-01.json",
+      "planned": 200,
+      "observedAt": "2026-11-05T20:19:51.314Z",
+      "success": 119,
+      "remaining": 81,
+      "running": 7,
+      "failed": [],
+      "validatedImportedFromBatch": 119,
+      "recoveredSnapshotArtifactCount": 28,
+      "exactCurrentRecoveryManifest": {
+        "branch": "chatgpt/gto-stack-fit-20261102-a",
+        "path": "data/poker-gto/fit-work/partial-20261106-0505-evidence.json",
+        "blob": "070d9011d2809b9a53aff77f8bbe1790d3ae1f15"
+      }
+    }
+  ],
+  "nextActions": [
+    "Existing main PR819 engine42102457792/deploy42102457742 queued at20:27UTC; Vercel success. No failure/retry yet. Must recheck head/main/mergeable and every check before main merge; then production public index/JSON verification.",
+    "Continue six active expansion runs; no new UI/features/fit/DB work. No additional batch now because six spots/40 actual running; check registry and manifests before replenishment.",
+    "Initial200 all21 stage imported; do not rerun or recollect initial200. Expansion unvalidated7 at20:19UTC separate from4579 validated stage.",
+    "Final handoff at2026-11-07T08:00Z: no new batches, leave all solves running, report registry/manifests/recovered artifact ranges, disable only automation6ae76f9802748191b3487089ae17ebac after handoff."
+  ]
 }
