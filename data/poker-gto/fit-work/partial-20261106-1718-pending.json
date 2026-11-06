@@ -1,0 +1,145 @@
+{
+  "observedAt": "2026-11-06T08:18:52.503Z",
+  "batches": [
+    {
+      "spot": "utg-bb",
+      "selected": []
+    },
+    {
+      "spot": "hj-bb",
+      "runId": 42042087498,
+      "manifest": "data/poker-gto/flop-batches/hj-bb-100bb-20261105-02.json",
+      "selected": [
+        {
+          "spot": "hj-bb",
+          "runId": 42042087498,
+          "flop": "QhJd7c",
+          "id": 13486823638,
+          "name": "flop-hj-bb-QhJd7c",
+          "successfulJobId": 127295393954,
+          "successfulJobName": "Solve hj-bb QhJd7c",
+          "jobCompletedAt": "2026-11-06T08:06:36Z",
+          "artifactCreatedAt": "2026-11-06T08:06:32Z",
+          "digest": "sha256:a9b3a5938e48ed6ddf18ce11787788aa09d228bf9148136a0276a44804a306dc",
+          "canonicalKey": "12-11-7:r"
+        },
+        {
+          "spot": "hj-bb",
+          "runId": 42042087498,
+          "flop": "Qh6d5c",
+          "id": 13486139914,
+          "name": "flop-hj-bb-Qh6d5c",
+          "successfulJobId": 127295394212,
+          "successfulJobName": "Solve hj-bb Qh6d5c",
+          "jobCompletedAt": "2026-11-06T08:05:27Z",
+          "artifactCreatedAt": "2026-11-06T08:05:25Z",
+          "digest": "sha256:ae75b6c4a09dffa9ef65fce369f903f29a7e59bce06d2fcc45aca0acebb4f4e8",
+          "canonicalKey": "12-6-5:r"
+        },
+        {
+          "spot": "hj-bb",
+          "runId": 42042087498,
+          "flop": "Qh8d7c",
+          "id": 13488020577,
+          "name": "flop-hj-bb-Qh8d7c",
+          "successfulJobId": 127295394959,
+          "successfulJobName": "Solve hj-bb Qh8d7c",
+          "jobCompletedAt": "2026-11-06T08:12:24Z",
+          "artifactCreatedAt": "2026-11-06T08:12:21Z",
+          "digest": "sha256:48fb71d60553e06e48335ed36861f2e809cf4f7d65dd16a2ddbf3eaaa0e9fd8d",
+          "canonicalKey": "12-8-7:r"
+        }
+      ]
+    },
+    {
+      "spot": "hu-srp",
+      "selected": []
+    },
+    {
+      "spot": "sb-bb",
+      "runId": 41930883732,
+      "manifest": "data/poker-gto/flop-batches/sb-bb-100bb-20261105-01.json",
+      "selected": [
+        {
+          "spot": "sb-bb",
+          "runId": 41930883732,
+          "flop": "7h4d2c",
+          "id": 13487765913,
+          "name": "flop-sb-bb-7h4d2c",
+          "successfulJobId": 126927364832,
+          "successfulJobName": "Solve sb-bb 7h4d2c",
+          "jobCompletedAt": "2026-11-06T08:10:27Z",
+          "artifactCreatedAt": "2026-11-06T08:10:25Z",
+          "digest": "sha256:3499cc9d4b5e8a4e5e2345296480c084998cde2d05a62da332dabdcabb49a641",
+          "canonicalKey": "7-4-2:r"
+        },
+        {
+          "spot": "sb-bb",
+          "runId": 41930883732,
+          "flop": "Th5d3c",
+          "id": 13488070991,
+          "name": "flop-sb-bb-Th5d3c",
+          "successfulJobId": 126927365772,
+          "successfulJobName": "Solve sb-bb Th5d3c",
+          "jobCompletedAt": "2026-11-06T08:16:20Z",
+          "artifactCreatedAt": "2026-11-06T08:16:18Z",
+          "digest": "sha256:09562f6b80cb133fa527271b3792349b633dcb9b730ea07954bea7089cc3b4b2",
+          "canonicalKey": "10-5-3:r"
+        }
+      ]
+    },
+    {
+      "spot": "co-bb",
+      "runId": 41930872021,
+      "manifest": "data/poker-gto/flop-batches/co-bb-100bb-20261105-01.json",
+      "selected": [
+        {
+          "spot": "co-bb",
+          "runId": 41930872021,
+          "flop": "4h2d2c",
+          "id": 13487397360,
+          "name": "flop-co-bb-4h2d2c",
+          "successfulJobId": 126927395791,
+          "successfulJobName": "Solve co-bb 4h2d2c",
+          "jobCompletedAt": "2026-11-06T08:12:08Z",
+          "artifactCreatedAt": "2026-11-06T08:12:05Z",
+          "digest": "sha256:71f317f7a9ba0a34037566d0d50f07c3f8507231bf87945a356b3a9bb28d9a13",
+          "canonicalKey": "4-2-2:r"
+        },
+        {
+          "spot": "co-bb",
+          "runId": 41930872021,
+          "flop": "ThTd6c",
+          "id": 13486812628,
+          "name": "flop-co-bb-ThTd6c",
+          "successfulJobId": 126927396608,
+          "successfulJobName": "Solve co-bb ThTd6c",
+          "jobCompletedAt": "2026-11-06T08:01:59Z",
+          "artifactCreatedAt": "2026-11-06T08:01:57Z",
+          "digest": "sha256:c2f870c8e01a00d2ce107221d6b4ca8956e9530fd885f1e9cb696ed67392eab8",
+          "canonicalKey": "10-10-6:r"
+        }
+      ]
+    },
+    {
+      "spot": "btn-bb",
+      "runId": 41873590700,
+      "manifest": "data/poker-gto/flop-batches/btn-bb-100bb-20261105-01.json",
+      "selected": [
+        {
+          "spot": "btn-bb",
+          "runId": 41873590700,
+          "flop": "QhJd6c",
+          "id": 13487317920,
+          "name": "flop-btn-bb-QhJd6c",
+          "successfulJobId": 126727321528,
+          "successfulJobName": "Solve btn-bb QhJd6c",
+          "jobCompletedAt": "2026-11-06T08:17:19Z",
+          "artifactCreatedAt": "2026-11-06T08:17:17Z",
+          "digest": "sha256:51111b266d6bebf3d843ae9d4b9bc7913fda7a30da3215803ab1e467e76b2111",
+          "canonicalKey": "12-11-6:r"
+        }
+      ]
+    }
+  ]
+}
