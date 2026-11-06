@@ -45,8 +45,6 @@ export function PreflopChartPanel({standard=false,pro=false,upsell=false}:{stand
  const mine=node?options.filter(n=>n.player===node.player):[];
  const totals=useMemo(()=>{if(!node)return [];const k=node.actions.length,t=new Array(k).fill(0);let all=0;for(const [l,v] of Object.entries(node.strategy)){const c=combos(l);all+=c;for(let a=0;a<k;a++)t[a]+=c*v[a];}return t.map(x=>x/all);},[node]);
  return <div className={styles.wrap} data-controls-collapsed={!controlsOpen||undefined}><div className={styles.split} data-on={data&&node&&!locked?'':undefined}><div className={styles.splitSide}>
-  <p className={styles.intro}>プリフロップの打ち方を、計算で求めた表です（6人テーブルと2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人テーブルは100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p>
-  <details className={styles.aboutMobile}><summary>この表について</summary><p>プリフロップの打ち方を、計算で求めた表です（6人テーブルと2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人テーブルは100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。</p></details>
   {error&&<p role="alert">{error}</p>}
   {!data&&!error&&<p role="status" data-loading>読み込み中…</p>}
   {data&&<>

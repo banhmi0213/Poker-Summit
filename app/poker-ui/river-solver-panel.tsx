@@ -59,8 +59,7 @@ export function RiverSolverPanel(){
  };
  const running=status.state==='running';
  return <div className={styles.wrap}>
-  <p>ターン（4枚目）かリバー（5枚目）からの2人勝負を、近似なしで解きます。ボード・ポット・残りチップ・お互いのレンジを決めると、手札ごとの正解の打ち方（チェック・ベット・コール・フォールドの割合）が出ます。</p>
-  <p className={styles.note}>ベット額の前提：ターンはポットの33%・75%・オールイン、その後のリバーは75%・オールイン。リバーから解くときは33%・75%・3倍レイズ・オールイン。ターンからの計算はリバーのカードを全部解くので、20〜40秒ほどかかります。</p>
+  <p className={styles.note}>ベット額：ターン33%・75%・オールイン、続くリバー75%・オールイン（リバーからは33%・75%・3倍レイズ・オールイン）。</p>
   <div role="group" aria-label="ボード"><p className={styles.note}>ボード（4枚ならターンから、5枚ならリバーから解きます）</p>
    <div className={picker.slots}>{cards.map((c,i)=><CardSlot key={i} card={c} name={`ボードの${i+1}枚目`} active={active===i} label={['','','フロップ','ターン','リバー'][i]} onClick={()=>setActive(a=>a===i?null:i)}/>)}</div>
    {active!==null&&<CardGrid title={`${['フロップの1枚目','フロップの2枚目','フロップの3枚目','ターン','リバー'][active]}`} blocked={new Set([...used].filter(x=>x!==cards[active]))} onPick={pick} onDone={()=>setActive(null)} onClear={()=>{const next=cards.slice();next[active]=null;setCards(next);}} typedPlaceholder="Ah Td 7c 4s 2h" onTyped={cs=>{if(cs.length>=4&&cs.length<=5){setCards([...cs,...new Array(5-cs.length).fill(null)]);}}}/>}

@@ -95,6 +95,8 @@ export function netBB(h:TrainerHand,id:string){
 export type TrainerLevel='best'|'correct'|'inaccurate'|'mistake'|'blunder';
 /** Our own grade names (owner 2026/10/30). */
 export const LEVEL_TEXT:Record<TrainerLevel,string>={best:'◎完璧',correct:'○良い',inaccurate:'△惜しい',mistake:'×ミス',blunder:'××大きなミス'};
+/** The mark alone, for tallies (owner 2026/11/06: スコアは記号＋数字). */
+export const LEVEL_MARK:Record<TrainerLevel,string>={best:'◎',correct:'○',inaccurate:'△',mistake:'×',blunder:'××'};
 export const TRAINER_LEVELS:TrainerLevel[]=['best','correct','inaccurate','mistake','blunder'];
 /** Graded by how often GTO takes the chosen action with this hand here (frequencies, not EV):
  * the most frequent choice is ◎完璧, 25% or more ○良い, 8% or more △惜しい, 2% or more ×ミス, below that ××大きなミス.

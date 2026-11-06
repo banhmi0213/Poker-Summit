@@ -50,8 +50,6 @@ export function RangeTrainer(){
  const paint=(l:string)=>{if(!shown&&!usageStarted.current){usageStarted.current=true;trackGtoUsage('ranges','start');}if(shown){setLook(l);return;}setPick(p=>{const n={...p};if(n[l]===brush)delete n[l];else n[l]=brush;return n;});};
  const all=node?.actions??[];
  return <div className={styles.wrap}><div className={styles.split} data-on={node?'':undefined}><div className={styles.splitSide}>
-  <p className={styles.intro}>場面を選んで、自分ならプレイする手をマスを押して塗ってください。「答え合わせ」でGTOの表と比べて採点します（塗らなかった手はフォールド）。</p>
-  <details className={styles.aboutMobile}><summary>遊び方</summary><p>自分ならプレイする手をマスを押して塗ります。「答え合わせ」でGTOの表と比べて採点します（塗らなかった手はフォールド）。答え合わせのあとにマスを押すと、その手のGTOの割合が出ます。</p></details>
   <div className={styles.form}>
    <label>スタック<select value={depth} onChange={e=>{setDepth(Number(e.target.value));setId(null);}}><option value={100}>100BB</option><option value={60}>60BB（大会）</option><option value={40}>40BB（大会）</option><option value={20}>20BB（大会）</option><option value={10}>10BB（大会）</option></select></label>
    <label className={styles.desktopOnly}>状況<select value={kind} onChange={e=>{setKind(e.target.value);setId(null);}}>{SPOT_KINDS.map(([k,t])=><option key={k} value={k}>{t}</option>)}</select></label>

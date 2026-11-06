@@ -8,7 +8,7 @@ import type {BettingAction} from '@/lib/poker/betting';
 import {toTable} from '@/lib/poker/gto-bot';
 import type {GtoReply,GtoRequest} from '@/lib/poker/gto.worker';
 import {reasonText,type TrainerSpot} from '@/lib/poker/gto-review';
-import {HERO,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,evLoss,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
+import {HERO,LEVEL_MARK,LEVEL_TEXT,MODE_POSITIONS,MODE_TEXT,TRAINER_BB,TRAINER_LEVELS,TRAINER_SEATS,buttonIndexFor,evLoss,gradeChoice,netBB,startTrainerHand,trainerAct,trainerView,visibleBoard,type TrainerHand,type TrainerLevel,type TrainerMode} from '@/lib/poker/gto-trainer';
 import chart from './gto-chart.module.css';
 import styles from './gto-trainer.module.css';
 import {StoreInvite} from './store-invite';
@@ -174,15 +174,14 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
  </MobilePlaySettings>;
  const statsBox=<>
   <section className={styles.stats} aria-label="練習の成績">
-   <p><b>成績</b><span>ハンド {stats.hands}</span><span>採点 {stats.decisions}回</span><span>平均スコア {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>収支 {stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB（{stats.evCount}回）</span>}</p>
-   <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l}><b>{LEVEL_TEXT[l]}</b>{stats.levels[l]}</li>)}</ul>
-   <button type="button" className={styles.reset} onClick={resetStats}>成績をリセット</button>
+   <p><b>成績</b><span>{stats.hands}ハンド</span><span>採点 {stats.decisions}</span><span>平均 {stats.decisions?Math.round(stats.score/stats.decisions):0}点</span><span>{stats.net>0?'+':''}{stats.net}BB</span>{stats.evCount>0&&<span title={`EV損失の平均（${stats.evCount}回）`}>EV損失 {(stats.evLoss/stats.evCount).toFixed(2)}BB</span>}</p>
+   <ul>{TRAINER_LEVELS.map(l=><li key={l} data-level={l} title={LEVEL_TEXT[l]} aria-label={`${LEVEL_TEXT[l]} ${stats.levels[l]}`}><b>{LEVEL_MARK[l]}</b>{stats.levels[l]}</li>)}</ul>
+   <button type="button" className={styles.reset} onClick={resetStats}>リセット</button>
   </section>
  </>;
  const last=feedback[feedback.length-1],done=Boolean(hand&&(hand.result||foldPaused));
  return <div className={chart.wrap}><MobilePlayGuard active={Boolean(hand)}/>
   {!hand&&<p className={styles.introShort}>GTOで打つCPU5人と1ハンドずつ対戦。自分が打つたびに採点します。</p>}
-  {!hand&&<p className={styles.intro}>GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN→CO→HJ→UTG→BB→SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。</p>}
   {!hand&&formBox}
   {hand&&<div className={styles.play} data-hide-back-to-top>
    <div className={styles.table} role="group" aria-label={`練習テーブル・あなたは${hand.heroPos}`}>
@@ -210,7 +209,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
    {(last||done)&&<MobilePlayFeedback><section className={`${styles.feedback} ${!last?styles.mobileOnlyFeedback:''}`} aria-live="polite" data-level={last?.level??'none'}>
     {done&&!foldPaused&&<p className={styles.mobileHandResult}>このハンド：{heroNet(hand)>0?'+':''}{heroNet(hand)}BB</p>}
     {last&&<>
-    <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>スコア {last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTOがこの手で選ぶ割合 ${Math.round(last.freq*100)}%）`}</small></p>
+    <p><b>{last.level?LEVEL_TEXT[last.level]:'採点なし'}</b>{last.score!==null&&<span>{last.score}点</span>}{last.evLoss!==null&&<span>{last.evLoss>0?`EV損失 ${last.evLoss.toFixed(2)}BB`:'EV損失なし'}</span>}<small>{last.street}：{last.played}{last.freq!==null&&`（GTO ${Math.round(last.freq*100)}%）`}</small></p>
     {last.options.length>0&&<><p className={`${chart.note} ${styles.answerText}`}>GTO：{last.options.map(o=>`${o.text} ${Math.round(o.freq*100)}%`).join('・')}</p><GtoAnswerBars options={last.options} chosen={last.played}/></>}
     {last.note&&<p className={chart.note}>{last.note}</p>}
     </>}
