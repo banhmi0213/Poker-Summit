@@ -391,32 +391,249 @@
         },
         "notSameAsInitial200": true
       }
+    },
+    {
+      "observedAt": "2026-11-06T02:15:55.527Z",
+      "initial21Imported": 21,
+      "importedStagePer1755": {
+        "btn-bb": 346,
+        "btn-bb-3bet": 200,
+        "btn-bb-4bet": 200,
+        "btn-sb-3bet": 200,
+        "btn-sb-bb": 200,
+        "co-bb": 351,
+        "co-bb-3bet": 200,
+        "co-btn": 200,
+        "co-btn-3bet": 200,
+        "co-btn-bb": 200,
+        "hj-bb": 280,
+        "hu-3bet": 200,
+        "hu-limp": 200,
+        "hu-srp": 242,
+        "sb-bb": 301,
+        "sb-iso": 200,
+        "sb-limp": 200,
+        "utg-bb": 237,
+        "utg-bb-3bet": 200,
+        "utg-btn": 200,
+        "utg-btn-bb": 200
+      },
+      "mainVerifiedTotal": 4579,
+      "stageTotal": 4757,
+      "runs": [
+        {
+          "id": 42147838281,
+          "branch": "main",
+          "parentStatus": "in_progress",
+          "total": 1,
+          "running": 1,
+          "success": 0,
+          "remaining": 0,
+          "failed": [],
+          "jobPages": 1
+        },
+        {
+          "id": 42147838294,
+          "branch": "main",
+          "parentStatus": "in_progress",
+          "total": 1,
+          "running": 1,
+          "success": 0,
+          "remaining": 0,
+          "failed": [],
+          "jobPages": 1
+        },
+        {
+          "id": 42149013770,
+          "branch": "chatgpt/poker-authoritative-hand",
+          "parentStatus": "queued",
+          "total": 1,
+          "running": 0,
+          "success": 0,
+          "remaining": 0,
+          "failed": [],
+          "jobPages": 1
+        },
+        {
+          "id": 42149013617,
+          "branch": "chatgpt/poker-authoritative-hand",
+          "parentStatus": "queued",
+          "total": 1,
+          "running": 0,
+          "success": 0,
+          "remaining": 0,
+          "failed": [],
+          "jobPages": 1
+        },
+        {
+          "id": 42099699418,
+          "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 6,
+          "success": 40,
+          "remaining": 160,
+          "failed": [],
+          "jobPages": 3
+        },
+        {
+          "id": 42042087498,
+          "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 6,
+          "success": 81,
+          "remaining": 119,
+          "failed": [],
+          "jobPages": 3
+        },
+        {
+          "id": 42042078557,
+          "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 7,
+          "success": 42,
+          "remaining": 158,
+          "failed": [],
+          "jobPages": 3
+        },
+        {
+          "id": 41930883732,
+          "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 7,
+          "success": 104,
+          "remaining": 96,
+          "failed": [],
+          "jobPages": 3
+        },
+        {
+          "id": 41930872021,
+          "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 6,
+          "success": 153,
+          "remaining": 47,
+          "failed": [],
+          "jobPages": 3
+        },
+        {
+          "id": 41873590700,
+          "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+          "parentStatus": "queued",
+          "total": 201,
+          "running": 6,
+          "success": 148,
+          "remaining": 52,
+          "failed": [],
+          "jobPages": 3
+        }
+      ],
+      "repoConcurrency": 40,
+      "allPagesVerified": true,
+      "stagePR": 820,
+      "mainPR": 821,
+      "eta": {
+        "observedAt": "2026-11-06T02:15:55.527Z",
+        "previousAt": "2026-11-05T20:31:59.748Z",
+        "elapsedHours": 5.732160833333333,
+        "completedDelta": 178,
+        "initialRemaining": 0,
+        "initial21x200": "all21 imported stage/main819; already complete",
+        "expansionSpotEtas": [
+          {
+            "spot": "utg-bb",
+            "run": 42099699418,
+            "success": 40,
+            "remaining": 160,
+            "delta": 40,
+            "ratePerHour": 6.978171262640485,
+            "etaUtc": "2026-11-07T01:11:38.643Z"
+          },
+          {
+            "spot": "hj-bb",
+            "run": 42042087498,
+            "success": 81,
+            "remaining": 119,
+            "delta": 38,
+            "ratePerHour": 6.629262699508461,
+            "etaUtc": "2026-11-06T20:12:58.098Z"
+          },
+          {
+            "spot": "hu-srp",
+            "run": 42042078557,
+            "success": 42,
+            "remaining": 158,
+            "delta": 21,
+            "ratePerHour": 3.6635399128862547,
+            "etaUtc": "2026-11-07T21:23:35.197Z"
+          },
+          {
+            "spot": "sb-bb",
+            "run": 41930883732,
+            "success": 104,
+            "remaining": 96,
+            "delta": 21,
+            "ratePerHour": 3.6635399128862547,
+            "etaUtc": "2026-11-07T04:28:10.516Z"
+          },
+          {
+            "spot": "co-bb",
+            "run": 41930872021,
+            "success": 153,
+            "remaining": 47,
+            "delta": 31,
+            "ratePerHour": 5.4080827285463755,
+            "etaUtc": "2026-11-06T10:57:22.030Z"
+          },
+          {
+            "spot": "btn-bb",
+            "run": 41873590700,
+            "success": 148,
+            "remaining": 52,
+            "delta": 27,
+            "ratePerHour": 4.710265602282327,
+            "etaUtc": "2026-11-06T13:18:18.508Z"
+          }
+        ],
+        "full1755": {
+          "remainingComputedProxy": 32087,
+          "rateAssumed6Slots": 31.052862118750156,
+          "etaUtc": "2026-12-19T03:34:04.520Z",
+          "assumptions": "Six-spot actual board success delta over5.73h, including actual40runner contention. No42/40 extrapolation. Assume same class cost,6slots maintained byClaude afterNov7 handoff; +/-2weeks or more."
+        },
+        "notSameAsInitial200": true
+      }
     }
   ],
   "estimate": {
-    "observedAt": "2026-11-06T02:03:01.991Z",
+    "observedAt": "2026-11-06T02:15:55.527Z",
     "previousAt": "2026-11-05T20:31:59.748Z",
-    "elapsedHours": 5.517289722222222,
+    "elapsedHours": 5.732160833333333,
+    "completedDelta": 178,
     "initialRemaining": 0,
-    "initial21x200": "complete all21 imported stage/main via818/819",
+    "initial21x200": "all21 imported stage/main819; already complete",
     "expansionSpotEtas": [
       {
         "spot": "utg-bb",
         "run": 42099699418,
-        "success": 37,
-        "remaining": 163,
-        "delta": 37,
-        "ratePerHour": 6.706191239327804,
-        "etaUtc": "2026-11-07T02:21:23.223Z"
+        "success": 40,
+        "remaining": 160,
+        "delta": 40,
+        "ratePerHour": 6.978171262640485,
+        "etaUtc": "2026-11-07T01:11:38.643Z"
       },
       {
         "spot": "hj-bb",
         "run": 42042087498,
-        "success": 80,
-        "remaining": 120,
-        "delta": 37,
-        "ratePerHour": 6.706191239327804,
-        "etaUtc": "2026-11-06T19:56:40.076Z"
+        "success": 81,
+        "remaining": 119,
+        "delta": 38,
+        "ratePerHour": 6.629262699508461,
+        "etaUtc": "2026-11-06T20:12:58.098Z"
       },
       {
         "spot": "hu-srp",
@@ -424,42 +641,42 @@
         "success": 42,
         "remaining": 158,
         "delta": 21,
-        "ratePerHour": 3.806216649348213,
-        "etaUtc": "2026-11-07T19:33:41.724Z"
+        "ratePerHour": 3.6635399128862547,
+        "etaUtc": "2026-11-07T21:23:35.197Z"
       },
       {
         "spot": "sb-bb",
         "run": 41930883732,
-        "success": 101,
-        "remaining": 99,
-        "delta": 18,
-        "ratePerHour": 3.26247141372704,
-        "etaUtc": "2026-11-07T08:23:44.327Z"
+        "success": 104,
+        "remaining": 96,
+        "delta": 21,
+        "ratePerHour": 3.6635399128862547,
+        "etaUtc": "2026-11-07T04:28:10.516Z"
       },
       {
         "spot": "co-bb",
         "run": 41930872021,
-        "success": 151,
-        "remaining": 49,
-        "delta": 29,
-        "ratePerHour": 5.256203944338009,
-        "etaUtc": "2026-11-06T11:22:22.332Z"
+        "success": 153,
+        "remaining": 47,
+        "delta": 31,
+        "ratePerHour": 5.4080827285463755,
+        "etaUtc": "2026-11-06T10:57:22.030Z"
       },
       {
         "spot": "btn-bb",
         "run": 41873590700,
-        "success": 146,
-        "remaining": 54,
-        "delta": 25,
-        "ratePerHour": 4.531210296843111,
-        "etaUtc": "2026-11-06T13:58:04.435Z"
+        "success": 148,
+        "remaining": 52,
+        "delta": 27,
+        "ratePerHour": 4.710265602282327,
+        "etaUtc": "2026-11-06T13:18:18.508Z"
       }
     ],
     "full1755": {
-      "remainingComputedProxy": 32098,
-      "rateAssumed6Slots": 30.268484782911976,
-      "etaUtc": "2026-12-20T06:29:36.456Z",
-      "assumptions": "Measured six-spot successful-board differences over5.52h; includes actual40-runner contention, no extra42/40 multiplier. Same average cost and6slots maintained byClaude afterNov7. +/-2weeks or more."
+      "remainingComputedProxy": 32087,
+      "rateAssumed6Slots": 31.052862118750156,
+      "etaUtc": "2026-12-19T03:34:04.520Z",
+      "assumptions": "Six-spot actual board success delta over5.73h, including actual40runner contention. No42/40 extrapolation. Assume same class cost,6slots maintained byClaude afterNov7 handoff; +/-2weeks or more."
     },
     "notSameAsInitial200": true
   }

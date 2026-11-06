@@ -1,0 +1,185 @@
+{
+  "snapshotAt": "2026-11-06T02:15:55.527Z",
+  "baseStage": "ff0b69ba50ccfe5d23c29d3fc0a5adfef9bdb383",
+  "state": "pinned-successful-not-downloaded-not-validated",
+  "batches": [
+    {
+      "spot": "utg-bb",
+      "runId": 42099699418,
+      "selected": [
+        {
+          "spot": "utg-bb",
+          "runId": 42099699418,
+          "flop": "Th8h7c",
+          "id": 13470418272,
+          "name": "flop-utg-bb-Th8h7c",
+          "successfulJobId": 127499175850,
+          "successfulJobName": "Solve utg-bb Th8h7c",
+          "jobCompletedAt": "2026-11-06T02:09:41Z",
+          "artifactCreatedAt": "2026-11-06T02:09:38Z",
+          "digest": "sha256:b85c384234a6cc6262a8cc815471d180f737e2434cd638f04fec87d0f1083db7",
+          "canonicalKey": "10-8-7:hm"
+        },
+        {
+          "spot": "utg-bb",
+          "runId": 42099699418,
+          "flop": "QhTh5c",
+          "id": 13470903231,
+          "name": "flop-utg-bb-QhTh5c",
+          "successfulJobId": 127499176199,
+          "successfulJobName": "Solve utg-bb QhTh5c",
+          "jobCompletedAt": "2026-11-06T02:06:50Z",
+          "artifactCreatedAt": "2026-11-06T02:06:49Z",
+          "digest": "sha256:86ce73cbc07eb24b49000245ed0a29649f80d4d10d18f4277659c8b7bec613b0",
+          "canonicalKey": "12-10-5:hm"
+        },
+        {
+          "spot": "utg-bb",
+          "runId": 42099699418,
+          "flop": "QhTh7c",
+          "id": 13470564549,
+          "name": "flop-utg-bb-QhTh7c",
+          "successfulJobId": 127499176244,
+          "successfulJobName": "Solve utg-bb QhTh7c",
+          "jobCompletedAt": "2026-11-06T02:11:30Z",
+          "artifactCreatedAt": "2026-11-06T02:11:27Z",
+          "digest": "sha256:374ec664e7aef0f54115d4319cebb2d816825ad29e2ed8d805c20b67618c1542",
+          "canonicalKey": "12-10-7:hm"
+        }
+      ]
+    },
+    {
+      "spot": "hj-bb",
+      "runId": 42042087498,
+      "selected": [
+        {
+          "spot": "hj-bb",
+          "runId": 42042087498,
+          "flop": "Th8d7d",
+          "id": 13471391841,
+          "name": "flop-hj-bb-Th8d7d",
+          "successfulJobId": 127295381641,
+          "successfulJobName": "Solve hj-bb Th8d7d",
+          "jobCompletedAt": "2026-11-06T02:15:13Z",
+          "artifactCreatedAt": "2026-11-06T02:15:12Z",
+          "digest": "sha256:bbe63c7e3d9fff84ba7113854d877a67282e330df9166cbcd4c9fe7ee7e9e986",
+          "canonicalKey": "10-8-7:ml"
+        }
+      ]
+    },
+    {
+      "spot": "hu-srp",
+      "runId": 42042078557,
+      "selected": []
+    },
+    {
+      "spot": "sb-bb",
+      "runId": 41930883732,
+      "selected": [
+        {
+          "spot": "sb-bb",
+          "runId": 41930883732,
+          "flop": "Qh5d4d",
+          "id": 13471130803,
+          "name": "flop-sb-bb-Qh5d4d",
+          "successfulJobId": 126927358891,
+          "successfulJobName": "Solve sb-bb Qh5d4d",
+          "jobCompletedAt": "2026-11-06T02:03:34Z",
+          "artifactCreatedAt": "2026-11-06T02:03:31Z",
+          "digest": "sha256:c6c37a6da7aa5027d12dee93f41099fa7f98703ecfb817e7a7b381afa6a395ad",
+          "canonicalKey": "12-5-4:ml"
+        },
+        {
+          "spot": "sb-bb",
+          "runId": 41930883732,
+          "flop": "Qh6d2d",
+          "id": 13471635379,
+          "name": "flop-sb-bb-Qh6d2d",
+          "successfulJobId": 126927358958,
+          "successfulJobName": "Solve sb-bb Qh6d2d",
+          "jobCompletedAt": "2026-11-06T02:07:35Z",
+          "artifactCreatedAt": "2026-11-06T02:07:33Z",
+          "digest": "sha256:a2542aa3bddbae2b736a1cd05e853eb4c183cf19f65b5ced9a2a6a15e290a3e3",
+          "canonicalKey": "12-6-2:ml"
+        },
+        {
+          "spot": "sb-bb",
+          "runId": 41930883732,
+          "flop": "Th4d2d",
+          "id": 13470882807,
+          "name": "flop-sb-bb-Th4d2d",
+          "successfulJobId": 126927359155,
+          "successfulJobName": "Solve sb-bb Th4d2d",
+          "jobCompletedAt": "2026-11-06T02:03:20Z",
+          "artifactCreatedAt": "2026-11-06T02:03:17Z",
+          "digest": "sha256:8039eee287cbf8e32c11128b6d6438d2831cad3411f6e3c98b74e71e76aad734",
+          "canonicalKey": "10-4-2:ml"
+        }
+      ]
+    },
+    {
+      "spot": "co-bb",
+      "runId": 41930872021,
+      "selected": [
+        {
+          "spot": "co-bb",
+          "runId": 41930872021,
+          "flop": "Qh7d4c",
+          "id": 13471003430,
+          "name": "flop-co-bb-Qh7d4c",
+          "successfulJobId": 126927386577,
+          "successfulJobName": "Solve co-bb Qh7d4c",
+          "jobCompletedAt": "2026-11-06T02:10:38Z",
+          "artifactCreatedAt": "2026-11-06T02:10:36Z",
+          "digest": "sha256:de7a3f0c7a2c89df5b7033b7079ff8c11fb2022005166c9378b6248bbb17c68f",
+          "canonicalKey": "12-7-4:r"
+        },
+        {
+          "spot": "co-bb",
+          "runId": 41930872021,
+          "flop": "Qh8d4c",
+          "id": 13470794380,
+          "name": "flop-co-bb-Qh8d4c",
+          "successfulJobId": 126927386870,
+          "successfulJobName": "Solve co-bb Qh8d4c",
+          "jobCompletedAt": "2026-11-06T02:12:01Z",
+          "artifactCreatedAt": "2026-11-06T02:11:58Z",
+          "digest": "sha256:7b76d948141d375f5ab3f65ab75f957015e6cc3f65f8e06635c20f32bbb2ac0c",
+          "canonicalKey": "12-8-4:r"
+        }
+      ]
+    },
+    {
+      "spot": "btn-bb",
+      "runId": 41873590700,
+      "selected": [
+        {
+          "spot": "btn-bb",
+          "runId": 41873590700,
+          "flop": "QhTh5c",
+          "id": 13471551886,
+          "name": "flop-btn-bb-QhTh5c",
+          "successfulJobId": 126727311830,
+          "successfulJobName": "Solve btn-bb QhTh5c",
+          "jobCompletedAt": "2026-11-06T02:13:10Z",
+          "artifactCreatedAt": "2026-11-06T02:13:07Z",
+          "digest": "sha256:e95e61fe75fcf78969165de6d1f0ce1cf5a1ac9f3f5715a3ceac63f02084f227",
+          "canonicalKey": "12-10-5:hm"
+        },
+        {
+          "spot": "btn-bb",
+          "runId": 41873590700,
+          "flop": "QhTd5h",
+          "id": 13470339348,
+          "name": "flop-btn-bb-QhTd5h",
+          "successfulJobId": 126727311983,
+          "successfulJobName": "Solve btn-bb QhTd5h",
+          "jobCompletedAt": "2026-11-06T02:08:20Z",
+          "artifactCreatedAt": "2026-11-06T02:08:17Z",
+          "digest": "sha256:797ff771d13a39824e33d6e6014232be972a6628fa6b8ff53c165a9d60441274",
+          "canonicalKey": "12-10-5:hl"
+        }
+      ]
+    }
+  ]
+}
