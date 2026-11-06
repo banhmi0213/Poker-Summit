@@ -6,16 +6,20 @@ const equity=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker
 const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
 // --fit file (2026/10/29): realisation fitted from the per-hand flop EVs (scripts/poker-gto/calibrate-hands.cjs).
 const fitFile=arg('fit'),fit=fitFile?JSON.parse(fs.readFileSync(fitFile,'utf8')):null;if(fit){require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts')).setRealizeFit(fit);console.log('realisation fit',fitFile);}
+// --postflop file (2026/11/06): called pots valued from the solved flops (scripts/poker-gto/postflop-table.cjs) instead of equity × realisation.
+const pfFile=arg('postflop'),pf=pfFile?JSON.parse(fs.readFileSync(pfFile,'utf8')):null;if(pf){require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts')).setPostflopTable(pf.table);console.log('postflop table',pfFile,Object.keys(pf.table).length,'spots');}
 // --stack N --ante A (2026/10/30): tournament depths, e.g. --stack 20 --ante 1 (big blind ante) → preflop-20bb.json.
 const stack=Number(arg('stack',100)),ante=Number(arg('ante',0));
 // --rake BPS --rake-cap BB (2026/10/31): cash-game rake, e.g. --rake 300 --rake-cap 3 → preflop-rake300-3.json.
 const rakeBps=Number(arg('rake',0)),rakeCap=Number(arg('rake-cap',0)),rake=rakeBps>0?{bps:rakeBps,capBb:rakeCap>0?rakeCap:Infinity}:undefined;
 // --seats 8|9 (owner 2026/11/1: 大会・リングは8〜9人卓が基本) → preflop-9max.json, preflop-9max-40bb.json, preflop-9max-rake500-5.json.
 const seats=Number(arg('seats',6)),POSITIONS=positionsFor(seats),tag=seats===6?'':`-${seats}max`;
-const iters=Number(arg('iters',2000)),s=new PreflopSolver(equity,{stack,ante,seats,...(rake?{rake}:{})}),t0=Date.now();
+const sizes=arg('sizes');
+const iters=Number(arg('iters',2000)),s=new PreflopSolver(equity,{stack,ante,seats,...(rake?{rake}:{}),...(sizes?{sizes}:{})}),t0=Date.now();
 const terminals=(function count(n){return n.type==='terminal'?1:n.children.reduce((a,c)=>a+count(c),0);})(s.root);
 console.log(`decisions ${s.decisions.length} terminals ${terminals}`);
 while(s.iterations<iters){s.run(50);console.log(`iter ${s.iterations} avg regret ${s.averageRegret().toFixed(5)}BB ${((Date.now()-t0)/1000).toFixed(0)}s`);}
+if(pf){const {POSTFLOP_MISSES}=require(path.resolve(__dirname,'../../lib/poker/preflop-solver.ts'));console.log('postflop misses',JSON.stringify([...POSTFLOP_MISSES].sort((a,b)=>b[1]-a[1]).slice(0,30)));}
 const round=v=>Math.round(v*1000)/1000;
 // Situation and a Japanese title from the action history ("UTGF HJ2.5 COC" ...).
 function describe(d){

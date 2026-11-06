@@ -71,7 +71,8 @@ const r1=(v:number)=>Math.round(v*10)/10;
 /** rake (2026/10/31, owner: レーキの率ごとの表 3%・3BB／5%・5BB／10%・10BB): taken only from pots that see a flop
  * (no flop, no drop). bps = basis points (300 = 3%), capBb = the most taken from one pot, in big blinds. */
 export type PreflopRake={bps:number;capBb:number};
-export type PreflopConfig={stack:number;ante:number;rake?:PreflopRake;/** players at the table, 6 (default), 8 or 9 */seats?:number};
+export type PreflopConfig={stack:number;ante:number;rake?:PreflopRake;/** players at the table, 6 (default), 8 or 9 */seats?:number;
+ /** 'wizard' (2026/11/06): raise sizes of the GTO Wizard 6-max 100BB reference (SB opens 3.5BB; 3-bets IP 3.4x, SB 11.5BB, BB 12.5BB vs UTG/HJ, 13BB vs CO/BTN, 10.5BB vs SB; 4-bets IP 2.12x, OOP 2.7x), so the charts can be checked against it */sizes?:'wizard'};
 /** Pots keep growing after the flop, so the rake is worked out on the pot the hand usually ends with:
  * the preflop pot times this (limped and single-raised pots grow the most; an all-in pot is already final). */
 export const RAKE_POT_GROWTH:Record<'limp'|'srp'|'3bp'|'4bp'|'allin'|'threeWay',number>={limp:2.5,srp:2.5,'3bp':1.6,'4bp':1.2,allin:1,threeWay:2.5};
@@ -82,7 +83,7 @@ export function rakeTaken(rake:PreflopRake|undefined,pot:number,kind:keyof typeo
 export const DEFAULT_PREFLOP:PreflopConfig={stack:100,ante:0};
 /** Build the simplified preflop tree. */
 export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
- const N=cfg.seats??6,SB=N-2,BB=N-1,NAMES=positionsFor(N),POST=postOrder(N),STACK=cfg.stack,J=(x:number)=>x>=STACK*0.45?STACK:x,OPEN=STACK>=50?2.5:STACK>=30?2.2:2,SB_OPEN=STACK>=50?3:2.5;
+ const N=cfg.seats??6,SB=N-2,BB=N-1,NAMES=positionsFor(N),POST=postOrder(N),STACK=cfg.stack,J=(x:number)=>x>=STACK*0.45?STACK:x,OPEN=STACK>=50?2.5:STACK>=30?2.2:2,SB_OPEN=STACK>=50?(cfg.sizes==='wizard'?3.5:3):2.5,WIZ=cfg.sizes==='wizard';
  const raiseAct=(to:number,label:string):PreflopAction=>to>=STACK?{label:'オールイン',kind:'allin',to:STACK}:{label,kind:'raise',to};
  let id=0;const decisions:PreflopDecision[]=[];
  const dec=(player:number,history:string,facing:number,actions:PreflopAction[],children:PreflopNode[]):PreflopDecision=>{const d:PreflopDecision={type:'decision',id:id++,player,history,facing,actions,children};decisions.push(d);return d;};
@@ -125,7 +126,7 @@ export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
  // Players after the opener answer one by one: fold, call (heads-up to the flop) or 3-bet.
  function facingOpen(o:number,p:number,inv:number[],history:string):PreflopNode{
   if(p>BB)return {type:'terminal',invested:inv,winner:o};
-  const open=inv[o],three=J(p>=SB?(o===SB?9:11):r1(open*3)),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
+  const open=inv[o],three=J(WIZ?(p===BB?(o===SB?10.5:o<=1?12.5:13):p===SB?11.5:r1(open*3.4)):p>=SB?(o===SB?9:11):r1(open*3)),called=[...inv];called[p]=open;const raised=[...inv];raised[p]=three;
   return dec(p,history,open,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},raiseAct(three,`3ベット ${three}BB`)],
    [facingOpen(o,p+1,inv,history+`${name(p)}F `),p<BB&&o!==SB?afterCall(o,p,p+1,called,history+`${name(p)}C `):{type:'terminal',invested:called,showdown:{a:o,b:p,kind:'srp',aggr:o}},three>=STACK?facing5bet(o,p,raised,history+`${name(p)}AI `):facing3bet(o,p,raised,history+`${name(p)}${three} `)]);
  }
@@ -152,7 +153,7 @@ export function buildPreflopTree(cfg:PreflopConfig=DEFAULT_PREFLOP){
     openerFolded?{type:'terminal',invested:called,showdown:{a:c,b:q,kind:'3bp',aggr:q}}:{type:'terminal',invested:called,threeWay:[o,c,q]}]);
  }
  function facing3bet(o:number,t:number,inv:number[],history:string):PreflopNode{
-  const three=inv[t],ip=POST[o]>POST[t],four=J(r1(three*(ip?2.2:2.5))),called=[...inv];called[o]=three;const raised=[...inv];raised[o]=four;
+  const three=inv[t],ip=POST[o]>POST[t],four=J(r1(three*(WIZ?(ip?2.12:2.7):(ip?2.2:2.5)))),called=[...inv];called[o]=three;const raised=[...inv];raised[o]=four;
   return dec(o,history,three,[{label:'フォールド',kind:'fold'},{label:'コール',kind:'call'},raiseAct(four,`4ベット ${four}BB`)],
    [{type:'terminal',invested:inv,winner:t},{type:'terminal',invested:called,showdown:{a:o,b:t,kind:'3bp',aggr:t}},four>=STACK?facing5bet(t,o,raised,history+`${name(o)}AI `):facing4bet(o,t,raised,history+`${name(o)}${four} `)]);
  }
