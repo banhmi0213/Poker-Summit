@@ -223,72 +223,244 @@
           "jobTotal": 201
         }
       ]
+    },
+    {
+      "observedAt": "2026-11-06T02:03:01.991Z",
+      "initial21Imported": 21,
+      "importedPer1755": {
+        "btn-bb": 319,
+        "btn-bb-3bet": 200,
+        "btn-bb-4bet": 200,
+        "btn-sb-3bet": 200,
+        "btn-sb-bb": 200,
+        "co-bb": 319,
+        "co-bb-3bet": 200,
+        "co-btn": 200,
+        "co-btn-3bet": 200,
+        "co-btn-bb": 200,
+        "hj-bb": 240,
+        "hu-3bet": 200,
+        "hu-limp": 200,
+        "hu-srp": 220,
+        "sb-bb": 281,
+        "sb-iso": 200,
+        "sb-limp": 200,
+        "utg-bb": 200,
+        "utg-bb-3bet": 200,
+        "utg-btn": 200,
+        "utg-btn-bb": 200
+      },
+      "runs": [
+        {
+          "id": 42099699418,
+          "branch": "gto-flop-solve/utg-bb/batch-20261106-01",
+          "spot": "utg-bb",
+          "total": 201,
+          "running": 7,
+          "success": 37,
+          "remaining": 163,
+          "failed": []
+        },
+        {
+          "id": 42042087498,
+          "branch": "gto-flop-solve/hj-bb/batch-20261105-02",
+          "spot": "hj-bb",
+          "total": 201,
+          "running": 6,
+          "success": 80,
+          "remaining": 120,
+          "failed": []
+        },
+        {
+          "id": 42042078557,
+          "branch": "gto-flop-solve/hu-srp/batch-20261105-02",
+          "spot": "hu-srp",
+          "total": 201,
+          "running": 7,
+          "success": 42,
+          "remaining": 158,
+          "failed": []
+        },
+        {
+          "id": 41930883732,
+          "branch": "gto-flop-solve/sb-bb/batch-20261105-01",
+          "spot": "sb-bb",
+          "total": 201,
+          "running": 7,
+          "success": 101,
+          "remaining": 99,
+          "failed": []
+        },
+        {
+          "id": 41930872021,
+          "branch": "gto-flop-solve/co-bb/batch-20261105-01",
+          "spot": "co-bb",
+          "total": 201,
+          "running": 7,
+          "success": 151,
+          "remaining": 49,
+          "failed": []
+        },
+        {
+          "id": 41873590700,
+          "branch": "gto-flop-solve/btn-bb/batch-20261105-01",
+          "spot": "btn-bb",
+          "total": 201,
+          "running": 6,
+          "success": 146,
+          "remaining": 54,
+          "failed": []
+        }
+      ],
+      "repoConcurrency": 40,
+      "allPagesVerified": true,
+      "partial178": {
+        "pr": 820,
+        "manifestBranch": "gto-flop-snapshot/20261106-1105",
+        "manifest": "data/poker-gto/fit-work/partial-20261106-1105.json",
+        "manifestBlob": "7d7cf46e77aa33f08fa5de4cab5dcb3c6aabaa18",
+        "collector": 42148027599
+      },
+      "eta": {
+        "observedAt": "2026-11-06T02:03:01.991Z",
+        "previousAt": "2026-11-05T20:31:59.748Z",
+        "elapsedHours": 5.517289722222222,
+        "initialRemaining": 0,
+        "initial21x200": "complete all21 imported stage/main via818/819",
+        "expansionSpotEtas": [
+          {
+            "spot": "utg-bb",
+            "run": 42099699418,
+            "success": 37,
+            "remaining": 163,
+            "delta": 37,
+            "ratePerHour": 6.706191239327804,
+            "etaUtc": "2026-11-07T02:21:23.223Z"
+          },
+          {
+            "spot": "hj-bb",
+            "run": 42042087498,
+            "success": 80,
+            "remaining": 120,
+            "delta": 37,
+            "ratePerHour": 6.706191239327804,
+            "etaUtc": "2026-11-06T19:56:40.076Z"
+          },
+          {
+            "spot": "hu-srp",
+            "run": 42042078557,
+            "success": 42,
+            "remaining": 158,
+            "delta": 21,
+            "ratePerHour": 3.806216649348213,
+            "etaUtc": "2026-11-07T19:33:41.724Z"
+          },
+          {
+            "spot": "sb-bb",
+            "run": 41930883732,
+            "success": 101,
+            "remaining": 99,
+            "delta": 18,
+            "ratePerHour": 3.26247141372704,
+            "etaUtc": "2026-11-07T08:23:44.327Z"
+          },
+          {
+            "spot": "co-bb",
+            "run": 41930872021,
+            "success": 151,
+            "remaining": 49,
+            "delta": 29,
+            "ratePerHour": 5.256203944338009,
+            "etaUtc": "2026-11-06T11:22:22.332Z"
+          },
+          {
+            "spot": "btn-bb",
+            "run": 41873590700,
+            "success": 146,
+            "remaining": 54,
+            "delta": 25,
+            "ratePerHour": 4.531210296843111,
+            "etaUtc": "2026-11-06T13:58:04.435Z"
+          }
+        ],
+        "full1755": {
+          "remainingComputedProxy": 32098,
+          "rateAssumed6Slots": 30.268484782911976,
+          "etaUtc": "2026-12-20T06:29:36.456Z",
+          "assumptions": "Measured six-spot successful-board differences over5.52h; includes actual40-runner contention, no extra42/40 multiplier. Same average cost and6slots maintained byClaude afterNov7. +/-2weeks or more."
+        },
+        "notSameAsInitial200": true
+      }
     }
   ],
   "estimate": {
-    "rows": [
+    "observedAt": "2026-11-06T02:03:01.991Z",
+    "previousAt": "2026-11-05T20:31:59.748Z",
+    "elapsedHours": 5.517289722222222,
+    "initialRemaining": 0,
+    "initial21x200": "complete all21 imported stage/main via818/819",
+    "expansionSpotEtas": [
+      {
+        "spot": "utg-bb",
+        "run": 42099699418,
+        "success": 37,
+        "remaining": 163,
+        "delta": 37,
+        "ratePerHour": 6.706191239327804,
+        "etaUtc": "2026-11-07T02:21:23.223Z"
+      },
+      {
+        "spot": "hj-bb",
+        "run": 42042087498,
+        "success": 80,
+        "remaining": 120,
+        "delta": 37,
+        "ratePerHour": 6.706191239327804,
+        "etaUtc": "2026-11-06T19:56:40.076Z"
+      },
       {
         "spot": "hu-srp",
-        "done": 181,
-        "delta": 0,
-        "remaining": 19,
-        "ratePerHour": 0.0,
-        "etaHours": 5.8309391575000005,
-        "etaJst": "2026-11-02T08:01:39.775663+09:00"
-      },
-      {
-        "spot": "co-bb",
-        "done": 63,
-        "delta": 3,
-        "remaining": 137,
-        "ratePerHour": 14.920409500088322,
-        "etaHours": 9.182053615833334,
-        "etaJst": "2026-11-02T11:22:43.787713+09:00"
-      },
-      {
-        "spot": "hu-3bet",
-        "done": 161,
-        "delta": 2,
-        "remaining": 39,
-        "ratePerHour": 9.946939666725548,
-        "etaHours": 3.92080391625,
-        "etaJst": "2026-11-02T06:07:03.288795+09:00"
+        "run": 42042078557,
+        "success": 42,
+        "remaining": 158,
+        "delta": 21,
+        "ratePerHour": 3.806216649348213,
+        "etaUtc": "2026-11-07T19:33:41.724Z"
       },
       {
         "spot": "sb-bb",
-        "done": 43,
-        "delta": 1,
-        "remaining": 157,
-        "ratePerHour": 4.973469833362774,
-        "etaHours": 31.5674981975,
-        "etaJst": "2026-11-03T09:45:51.388207+09:00"
+        "run": 41930883732,
+        "success": 101,
+        "remaining": 99,
+        "delta": 18,
+        "ratePerHour": 3.26247141372704,
+        "etaUtc": "2026-11-07T08:23:44.327Z"
       },
       {
-        "spot": "hu-limp",
-        "done": 159,
-        "delta": 0,
-        "remaining": 41,
-        "ratePerHour": 0.0,
-        "etaHours": 9.95280994125,
-        "etaJst": "2026-11-02T12:08:58.510485+09:00"
+        "spot": "co-bb",
+        "run": 41930872021,
+        "success": 151,
+        "remaining": 49,
+        "delta": 29,
+        "ratePerHour": 5.256203944338009,
+        "etaUtc": "2026-11-06T11:22:22.332Z"
+      },
+      {
+        "spot": "btn-bb",
+        "run": 41873590700,
+        "success": 146,
+        "remaining": 54,
+        "delta": 25,
+        "ratePerHour": 4.531210296843111,
+        "etaUtc": "2026-11-06T13:58:04.435Z"
       }
     ],
-    "summary": {
-      "fromJst": "2026-11-02T01:59:44.553973+09:00",
-      "toJst": "2026-11-02T02:11:48.394696+09:00",
-      "observedMinutes": 12.06401205,
-      "allDelta": 6,
-      "throughputPerHour": 29.840819000176644,
-      "perSpotProxyRate": 9.946939666725548,
-      "allRemaining": 3393,
-      "overallHours": 113.70331357125,
-      "overallEtaJst": "2026-11-06T19:54:00.323553+09:00",
-      "assumptions": [
-        "21 jobs / 3 spots maintained; free slots replenished without delay",
-        "unstarted spots have observed average cost per board",
-        "hu-srp then hu-limp resume when hu-3bet frees a slot",
-        "short observation window; includes all 21 spots, excludes further tournament/8-9max/overbet work"
-      ]
-    }
+    "full1755": {
+      "remainingComputedProxy": 32098,
+      "rateAssumed6Slots": 30.268484782911976,
+      "etaUtc": "2026-12-20T06:29:36.456Z",
+      "assumptions": "Measured six-spot successful-board differences over5.52h; includes actual40-runner contention, no extra42/40 multiplier. Same average cost and6slots maintained byClaude afterNov7. +/-2weeks or more."
+    },
+    "notSameAsInitial200": true
   }
 }
