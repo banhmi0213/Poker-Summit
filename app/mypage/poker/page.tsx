@@ -58,7 +58,7 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  const paidShown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
  // GTO hidden (2026/11/06, lib/poker/features.ts).
  const shown=POKER_GTO_ENABLED?paidShown:paidShown.map(p=>GTO_PANE_IDS.includes(p.id)?{...p,reviewing:true,about:undefined,
-  content:<section style={{padding:'28px 20px',textAlign:'center',lineHeight:1.9}}><p style={{margin:0,fontSize:17,fontWeight:700,color:'#f1d28f'}}>改善中です</p><p style={{margin:'6px 0 0',fontSize:14}}>計算の土台から作り直しています。公開まで、しばらくお待ちください。</p></section>}:p);
+  content:<section style={{padding:'28px 20px',textAlign:'center',lineHeight:1.9}}><p style={{margin:0,fontSize:17,fontWeight:700,color:'#f1d28f'}}>改善中です</p><p style={{margin:'6px 0 0',fontSize:14}}>答えの精度を上げるため、一時的にお休みしています。11月下旬に再開する予定です。</p><p style={{margin:'14px 0 6px',fontSize:13,opacity:.8}}>今すぐ無料で使えるもの</p><div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>{[['/poker-lobby','練習テーブル'],...([['/mypage/poker?pane=gto','オールイン・フォールド表'],['/mypage/poker?pane=river','リバー計算機'],['/mypage/poker?pane=equity','勝率計算機'],['/mypage/poker?pane=icm','ICM計算機']])].map(([href,l])=><a key={href} href={href} style={{padding:'6px 14px',border:'1px solid #d6b66e',borderRadius:999,color:'#f1d28f',fontSize:13,fontWeight:700,textDecoration:'none'}}>{l}</a>)}</div></section>}:p);
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
  return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}:${searchParams?.before??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;

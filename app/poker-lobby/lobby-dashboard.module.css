@@ -18,3 +18,6 @@
 /* 不具合を報告・要望を書く(2026/11/04): メニューのボタンと同じ見た目のリンク */
 .navigation .navLink{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;min-height:54px;padding:12px 10px;white-space:nowrap;color:#f0f5f3;text-decoration:none;border:1px solid transparent;border-radius:7px;font-weight:700;font-size:13px}.navigation .navLink>svg{width:23px;height:23px;flex-shrink:0;color:#dae5e9}.navigation .navLink:hover{background:#ffffff0c;border-color:#d3c29555}
 @media(max-width:900px){.navigation .navLink{min-height:46px;font-size:12px;gap:8px}}
+
+/* GTO paused notice (2026/11/06) */
+.gtoNotice{margin:0 0 16px;padding:16px 20px;border:1px solid #c7a462;border-radius:11px;background:linear-gradient(130deg,#fcf9f0,#efe2c8);color:#173449}.gtoNotice h2{margin:0 0 6px;font-size:16px}.gtoNotice p{margin:0;font-size:13px;line-height:1.7}.gtoNotice .gtoNoticeSub{margin-top:8px;font-weight:700}.gtoNotice>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
