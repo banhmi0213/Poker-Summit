@@ -14,7 +14,7 @@ const TOOLS=[
 export function LearnTools(){
  return <section id="tools" className={styles.tools} aria-labelledby="learn-tools-title">
   <div className={styles.head}><span className={styles.eyebrow}>FREE TOOLS</span><h2 id="learn-tools-title">登録なしで使えるGTOツール</h2></div>
-  <div className={styles.grid}>{TOOLS.map(t=>!POKER_GTO_ENABLED&&GTO_PATHS.some(p=>t.href.startsWith(p))?<div key={t.href} className={styles.card} aria-disabled="true" style={{opacity:.6}}><strong>{t.label}（改善中）</strong><span>計算の土台から作り直しています</span></div>:<Link key={t.href} href={t.href} className={styles.card}><strong>{t.label}</strong><span>{t.text}</span></Link>)}</div>
+  <div className={styles.grid}>{TOOLS.map(t=>!POKER_GTO_ENABLED&&GTO_PATHS.some(p=>t.href.startsWith(p))?<div key={t.href} className={styles.card} aria-disabled="true" style={{opacity:.6}}><strong>{t.label}（改善中）</strong><span>精度を上げるため一時お休み中（11月下旬に再開予定）</span></div>:<Link key={t.href} href={t.href} className={styles.card}><strong>{t.label}</strong><span>{t.text}</span></Link>)}</div>
  </section>;
 }
 
