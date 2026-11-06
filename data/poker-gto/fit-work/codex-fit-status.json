@@ -7701,5 +7701,14 @@
       "others"
     ],
     "deadlineBehavior": "leave active runs running; hand off run ID and remaining boards to Claude"
+  },
+  "pr821OwnerMerge": {
+    "at": "2026-11-06T06:37:26.461Z",
+    "state": "merged",
+    "merge": "71f1e5f93c6aa5fa74526c366771530a66dc4e59",
+    "head": "ff0b69ba50ccfe5d23c29d3fc0a5adfef9bdb383",
+    "allChecks": "3/3success plusVercelstatussuccess",
+    "productionVerification": "Pending: publicindex request HTTP403;do notclaim4757 deployed yet",
+    "ownerAuthorized": true
   }
 }
