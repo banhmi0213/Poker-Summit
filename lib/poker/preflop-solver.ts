@@ -49,6 +49,14 @@ let BY_STACK:Record<string,StackFit>|null=null;
 export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Record<string,number>;byStack?:Record<string,StackFit>}|null){
  PLAY_TABLE=fit?.play??null;BY_STACK=fit?.byStack??null;for(const [k,v] of Object.entries(fit?.role??{}))if(v)REALIZE_ROLE[k as keyof typeof REALIZE_ROLE]={...v};
 }
+/** Postflop values from solved flops (2026/11/06, owner: 表を一から作り直せ). Key: `${kind}|${oop seat}|${ip seat}|${aggressor seat or -}`
+ * (seat names, e.g. "srp|BB|BTN|BTN"). share[side][class] = the class's solved EV as a share of the pot at the flop (texture-weighted
+ * over the solved flops), for side "oop" / "ip". A showdown terminal with a table uses it instead of equity × realisation;
+ * classes without a value (never in that range) and spots without a table keep the old estimate, counted in POSTFLOP_MISSES. */
+export type PostflopTable=Record<string,{oop:Record<string,number>;ip:Record<string,number>}>;
+let POSTFLOP:PostflopTable|null=null;
+export const POSTFLOP_MISSES=new Map<string,number>();
+export function setPostflopTable(t:PostflopTable|null){POSTFLOP=t;POSTFLOP_MISSES.clear();}
 export function playability(label:string){
  if(PLAY_TABLE&&PLAY_TABLE[label]!==undefined)return PLAY_TABLE[label];
  const r='23456789TJQKA',a=r.indexOf(label[0]),b=r.indexOf(label[1]);if(a===b)return 1+PLAYABILITY.pair;
@@ -204,8 +212,20 @@ export class PreflopSolver{
    const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:(aggr!==undefined?role.callBy?.[this.names[aggr]]:undefined)??role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
+   const key=`${kind}|${this.names[oop]}|${this.names[ip]}|${aggr!==undefined?this.names[aggr]:'-'}`,table=kind!=='allin'&&POSTFLOP?POSTFLOP[key]:undefined;
+   if(!table&&kind!=='allin'&&POSTFLOP)POSTFLOP_MISSES.set(key,(POSTFLOP_MISSES.get(key)??0)+1);
    for(const [me,op] of [[a,b],[b,a]] as const){
     const rMe=me===ip?rIp:rOop,rOp=me===ip?rOop:rIp,ro=reach[op],v=values[me];
+    const mine=table?(me===ip?table.ip:table.oop):undefined;
+    if(mine){
+     // Solved postflop value: the class's share of the pot against the opponent's solved range.
+     for(let h=0;h<n;h++){const sh=mine[this.labels[h]];let w=0,s=0;for(let o=0;o<n;o++)w+=this.pair[h*n+o]*ro[o];
+      if(sh!==undefined){s=w*(sh*won-node.invested[me]);}
+      else{POSTFLOP_MISSES.set(key+'#class',(POSTFLOP_MISSES.get(key+'#class')??0)+1);
+       const pm=this.play[h];for(let o=0;o<n;o++){const ww=this.pair[h*n+o]*ro[o];if(!ww)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*this.play[o];s+=ww*(a1/(a1+b1)*won-node.invested[me]);}}
+      v[h]=s*rest;}
+     continue;
+    }
     const deep=kind!=='allin';for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*won-node.invested[me]);}v[h]=s*rest;}
    }
    return values;

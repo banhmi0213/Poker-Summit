@@ -51,7 +51,11 @@ const range=(spec,exclude)=>{const l=expand(spec);for(const x of exclude?expand(
 // Chart spots (version 2): weighted ranges, pot and stack from the preflop chart along SPOT.line.
 const fromChart=SPOT.line&&!arg('oop')&&!arg('ip')?chartSpot(SPOT.line,SPOT.chart):null;
 if(fromChart&&(fromChart.oop!==SPOT.oop||fromChart.ip!==SPOT.ip))throw new Error(`chart line positions ${fromChart.oop}/${fromChart.ip} differ from the spot ${SPOT.oop}/${SPOT.ip}`);
-const weighted=(w)=>combos(new Set(Object.keys(w)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));
+// --all-hands EPS (2026/11/06, preflop rebuilt from solved values): every starting hand gets at least weight EPS, so the
+// flop file has a solved value (handEv) for all 169 classes, also those the chart never brings here. EPS small (0.002)
+// keeps the equilibrium practically unchanged.
+const allHands=Number(arg('all-hands',0)),LABELS=allHands>0?JSON.parse(require('fs').readFileSync(path.resolve(__dirname,'../../data/poker-gto/preflop-equity.json'),'utf8')).labels:null;
+const weighted=(w0)=>{const w=LABELS?Object.fromEntries(LABELS.map(l=>[l,Math.max(w0[l]??0,allHands)])):w0;return combos(new Set(Object.keys(w).filter(l=>w[l]>0)),board).map(c=>({...c,weight:w[classOf(c.c1,c.c2)]}));};
 const spot=fromChart?{board,pot:fromChart.pot,stack:fromChart.stack,...SPOT.sizes,riverCurrentOnly:true,ranges:[weighted(fromChart.ranges.oop),weighted(fromChart.ranges.ip)]}
  :{board,pot:SPOT.pot,stack:SPOT.stack,...SPOT.sizes,ranges:[combos(arg('oop')?expand(arg('oop')):range(SPOT.oopRange,SPOT.oopExclude),board),combos(arg('ip')?expand(arg('ip')):range(SPOT.ipRange,SPOT.ipExclude),board)]};
 const solver=new PostflopSolver(spot);

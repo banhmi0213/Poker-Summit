@@ -41,6 +41,14 @@ module.exports={
   note:'UTGが2.5BBでオープン、BTNがコール、ブラインドは降り（ポット6.5BB）。UTGが先に打つ。',
   oopRange:'22+,A3s+,K9s+,QTs+,JTs,T9s,98s,87s,76s,65s,AJo+,KQo',
   ipRange:'22-JJ,ATs-AQs,KJs+,QJs,JTs,T9s,98s,AQo'},
+ // ---- Preflop rebuild (2026/11/06): more single-raised and 3-bet pots, ranges from the chart ----
+ 'utg-hj':{name:'UTG対HJ・シングルレイズ・100BB',short:'UTGオープン→HJコール',pot:6.5,stack:97.5,oop:'UTG',ip:'HJ',sizes:SRP,note:'UTGがオープン、HJがコール。',oopRange:'22+,AJo+',ipRange:'22+,AJo+'},
+ 'utg-co':{name:'UTG対CO・シングルレイズ・100BB',short:'UTGオープン→COコール',pot:6.5,stack:97.5,oop:'UTG',ip:'CO',sizes:SRP,note:'UTGがオープン、COがコール。',oopRange:'22+,AJo+',ipRange:'22+,AJo+'},
+ 'hj-co':{name:'HJ対CO・シングルレイズ・100BB',short:'HJオープン→COコール',pot:6.5,stack:97.5,oop:'HJ',ip:'CO',sizes:SRP,note:'HJがオープン、COがコール。',oopRange:'22+,AJo+',ipRange:'22+,AJo+'},
+ 'hj-btn':{name:'HJ対BTN・シングルレイズ・100BB',short:'HJオープン→BTNコール',pot:6.5,stack:97.5,oop:'HJ',ip:'BTN',sizes:SRP,note:'HJがオープン、BTNがコール。',oopRange:'22+,AJo+',ipRange:'22+,AJo+'},
+ 'btn-sb':{name:'BTN対SB・シングルレイズ・100BB',short:'BTNオープン→SBコール',pot:6,stack:97.5,oop:'SB',ip:'BTN',sizes:SRP,note:'BTNがオープン、SBがコール、BBは降り。',oopRange:'22+,AJo+',ipRange:'22+,AJo+'},
+ 'hj-bb-3bet':{name:'HJ対BB・3ベットポット・100BB',short:'HJオープン→BBが3ベット→HJコール',pot:23,stack:89,oop:'BB',ip:'HJ',sizes:THREE_BET,note:'HJがオープン、BBが3ベット、HJがコール。',oopRange:'TT+,AKo',ipRange:'22+,AQo'},
+ 'sb-bb-3bet':{name:'SB対BB・3ベットポット・100BB',short:'SBオープン→BBが3ベット→SBコール',pot:18,stack:91,oop:'SB',ip:'BB',sizes:THREE_BET,note:'SBがオープン、BBが3ベット、SBがコール。',oopRange:'22+,AQo',ipRange:'TT+,AKo'},
  // ---- More 3-bet pots ----
  'co-bb-3bet':{name:'CO対BB・3ベットポット・100BB',short:'COオープン→BBが3ベット→COコール',pot:22.5,stack:89,oop:'BB',ip:'CO',sizes:THREE_BET,
   note:'COが2.5BBでオープン、BBが11BBに3ベット、COがコール（ポット22.5BB）。',
@@ -69,6 +77,7 @@ module.exports={
 // this line (scripts/poker-gto/chart-ranges.cjs); the reference ranges above remain only for the page text.
 const LINES={'btn-bb':'UTGF HJF COF BTN2.5 SBF BBC','co-bb':'UTGF HJF CO2.5 BTNF SBF BBC','hj-bb':'UTGF HJ2.5 COF BTNF SBF BBC',
  'utg-bb':'UTG2.5 HJF COF BTNF SBF BBC','sb-bb':'UTGF HJF COF BTNF SB3 BBC','co-btn':'UTGF HJF CO2.5 BTNC','utg-btn':'UTG2.5 HJF COF BTNC',
+ 'utg-hj':'UTG2.5 HJC','utg-co':'UTG2.5 HJF COC','hj-co':'UTGF HJ2.5 COC','hj-btn':'UTGF HJ2.5 COF BTNC','btn-sb':'UTGF HJF COF BTN2.5 SBC BBF','hj-bb-3bet':'UTGF HJ2.5 COF BTNF SBF BB11 HJC','sb-bb-3bet':'UTGF HJF COF BTNF SB3 BB9 SBC',
  'btn-bb-3bet':'UTGF HJF COF BTN2.5 SBF BB11 BTNC','co-bb-3bet':'UTGF HJF CO2.5 BTNF SBF BB11 COC','utg-bb-3bet':'UTG2.5 HJF COF BTNF SBF BB11 UTGC',
  'btn-sb-3bet':'UTGF HJF COF BTN2.5 SB11 BTNC','co-btn-3bet':'UTGF HJF CO2.5 BTN7.5 COC','btn-bb-4bet':'UTGF HJF COF BTN2.5 SBF BB11 BTN24.2 BBC'};
 for(const [id,line] of Object.entries(LINES))if(module.exports[id])module.exports[id].line=line;
