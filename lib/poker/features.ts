@@ -9,5 +9,7 @@ export const POKER_TOURNAMENTS_ENABLED=process.env.NEXT_PUBLIC_POKER_TOURNAMENTS
 let GTO=false;
 try{GTO=process.env.NEXT_PUBLIC_POKER_GTO==='on';}catch{GTO=false;}
 export const POKER_GTO_ENABLED=GTO;
-export const GTO_PANE_IDS=['gto','preflop','flop','trainer','weak','quiz','ranges','river','plan'];
-export const GTO_PATHS=['/learn/gto-quiz','/learn/preflop','/learn/river-solver'];
+// Push/fold (exact Nash for its stated premise) and the river calculator (its own ranges from preflop-rank, not the chart)
+// are back (owner 2026/11/06 20:42).
+export const GTO_PANE_IDS=['preflop','flop','trainer','weak','quiz','ranges','plan'];
+export const GTO_PATHS=['/learn/gto-quiz','/learn/preflop'];
