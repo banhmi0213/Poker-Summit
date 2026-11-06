@@ -91,3 +91,11 @@
 @media (min-width:1100px){
  .shell:has(.panel[aria-label="フロップ戦略"][aria-label]) .heading{display:none}
 }
+
+/* 「この画面について」 (2026/11/06). The box floats over the pane so nothing below moves. */
+.panelHeading{position:relative}
+.about{display:inline}
+.panelHeading .aboutButton{display:inline-flex;align-items:center;vertical-align:middle;margin-left:10px;min-height:24px;padding:2px 10px;border:1px solid #d6b66e88;border-radius:999px;background:#ffffff08;color:#f1d28f;font-size:11px;font-weight:700;letter-spacing:.02em;line-height:1.4;white-space:nowrap}
+.panelHeading .aboutButton:hover,.panelHeading .aboutButton[aria-expanded=true]{background:#d6b66e22;border-color:#e6c47a}
+.aboutText{position:absolute;z-index:6;top:calc(100% - 4px);left:16px;right:16px;max-width:520px;display:block;padding:12px 14px;border:1px solid #bfa264;border-radius:10px;background:#183447;box-shadow:0 12px 28px #0b1a2566;color:#d9e5ec;font-size:13px;font-weight:400;line-height:1.8;letter-spacing:0;white-space:normal;text-align:left}
+@media(max-width:650px){.panelHeading .aboutButton{margin-left:8px;font-size:10px;padding:2px 8px}.aboutText{left:10px;right:10px;font-size:12px}}

@@ -19,13 +19,12 @@ export function PushFoldChart(){
  const [stack,setStack]=useState('10');
  const s=spots[stack];
  return <div className={styles.wrap}>
-  <p>2人テーブルで、お互いのチップが少ないとき（25BB以下）に「オールインかフォールドだけ」で戦う場合の正解（ナッシュ均衡）です。SB（ボタン）はオールインするか降りるか、BBはそのオールインにコールするか降りるかを選びます。</p>
   <label className={styles.stack}>持っているチップ（少ない方）<select value={stack} onChange={e=>setStack(e.target.value)}>{stacks.map(v=><option key={v} value={v}>{v}BB</option>)}</select></label>
   <div className={styles.pair}>
    <Grid freq={s.push} caption={`SB：オールインする手（全体の${s.pushPct}%）`}/>
    <Grid freq={s.call} caption={`BB：コールする手（全体の${s.callPct}%）`}/>
   </div>
   <p className={styles.legend}>表の T は 10 のことです。 <span data-on="all"/>いつも <span data-on="mix"/>ときどき（色の割合） <span data-on="none"/>降りる</p>
-  <p className={styles.note}>※アンティなし・SB 0.5BB／BB 1BBで計算。169種類のスタートハンド同士の勝率（1組2万回）から求めた均衡で、正解からのズレは1ハンドあたり{s.exploit}BB未満です。20BBを超えると、オールイン以外（小さめのレイズ）も混ぜる方が得になる場面が増えます。</p>
+  <p className={styles.note}>※アンティなし・SB 0.5BB／BB 1BB。正解からのズレは1ハンドあたり{s.exploit}BB未満。</p>
  </div>;
 }

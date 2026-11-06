@@ -127,7 +127,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
    <div className={styles.drillHand}><CardChip card={cur.hand.holes[HERO][0]}/><CardChip card={cur.hand.holes[HERO][1]}/></div>
    <MobilePlayControls mobileChildren={result?nextControls:choices}>{choices}</MobilePlayControls>
    {result&&<MobilePlayFeedback><div className={styles.feedback} data-level={result.level} aria-live="polite">
-    <p><b>{LEVEL_TEXT[result.level]}</b><span>スコア {result.score}点</span>{result.loss!==null&&<span>{result.loss>0?`EV損失 ${result.loss.toFixed(2)}BB`:'EV損失なし'}</span>}</p>
+    <p><b>{LEVEL_TEXT[result.level]}</b><span>{result.score}点</span>{result.loss!==null&&<span>{result.loss>0?`EV損失 ${result.loss.toFixed(2)}BB`:'EV損失なし'}</span>}</p>
     <p className={`${chart.note} ${styles.answerText}`}>GTO：{cur.spot.options.map(o=>`${o.text} ${pct(o.freq)}`).join('・')}</p>
     <GtoAnswerBars options={cur.spot.options} chosen={cur.spot.options[result.choice]?.text}/>
     {result.level!=='best'&&result.level!=='correct'&&<p className={styles.why}>{drillWhy(cur.spot.options,result.choice)}</p>}
@@ -135,8 +135,8 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
    </div></MobilePlayFeedback>}
   </section>}
   <section className={styles.stats} aria-label="連打の成績">
-   <p><b>成績</b><span>{stats.n}問</span><span>◎完璧 {stats.n?pct(stats.best/stats.n):'—'}</span><span>○良い以上 {stats.n?pct(stats.good/stats.n):'—'}</span><span>平均スコア {stats.n?Math.round(stats.score/stats.n):0}点</span>{stats.evCount>0&&<span>EV損失 平均 {(stats.evLoss/stats.evCount).toFixed(2)}BB</span>}</p>
-   <button type="button" className={styles.reset} onClick={()=>{const s=empty();setStats(s);write(s);}}>成績をリセット</button>
+   <p><b>成績</b><span>{stats.n}問</span><span title="◎完璧の割合">◎ {stats.n?pct(stats.best/stats.n):'—'}</span><span title="○良い以上の割合">○以上 {stats.n?pct(stats.good/stats.n):'—'}</span><span>平均 {stats.n?Math.round(stats.score/stats.n):0}点</span>{stats.evCount>0&&<span title="EV損失の平均">EV損失 {(stats.evLoss/stats.evCount).toFixed(2)}BB</span>}</p>
+   <button type="button" className={styles.reset} onClick={()=>{const s=empty();setStats(s);write(s);}}>リセット</button>
   </section>
   <p className={`${chart.note} ${styles.rulesWide}`}>{DRILL_RULES}</p>
   <details className={styles.drillRules}><summary>採点のしかた</summary><p className={chart.note}>{DRILL_RULES}</p></details>

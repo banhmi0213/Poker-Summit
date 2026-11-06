@@ -43,6 +43,16 @@ function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
  * /mypage/poker on that item (owner 2026/11/03: メニュー一覧は全部でてるようにして). Keep in step with app/mypage/poker/page.tsx. */
 const PLAYER_MENU:[string,string][]=([['ring','チップ残高・順位'],['curve','収支グラフ'],['summary','通算成績'],['upcoming','参加予定の大会'],['history','参加大会の履歴'],['tendencies','成績・癖の分析'],['gto','GTO表'],['preflop','プリフロップ表'],['flop','フロップ戦略'],['trainer','GTOと対戦'],['weak','弱点分析'],['quiz','GTO練習クイズ'],['ranges','レンジ練習'],['river','リバー計算機'],['equity','勝率計算機'],['icm','ICM計算機'],['looks','アイコン枠・プレート'],['hands','ハンド履歴'],['plan','GTOプラン']] as [string,string][])
  .filter(([id])=>(POKER_TOURNAMENTS_ENABLED||!['summary','upcoming','history'].includes(id))&&(paidFeaturesVisible()||!['plan','looks'].includes(id)));
+/** 「この画面について」 (owner 2026/11/06): the pane's longer explanation in a small box over the top of the pane, so opening
+ * it never moves the content below (the PC fit-to-screen size stays as measured). Closes on a second press, Esc or a press elsewhere. */
+function AboutScreen({text}:{text:string}){
+ const [open,setOpen]=useState(false),box=useRef<HTMLSpanElement>(null);
+ useEffect(()=>{if(!open)return;
+  const away=(e:PointerEvent)=>{if(box.current&&!box.current.contains(e.target as globalThis.Node))setOpen(false);},esc=(e:KeyboardEvent)=>{if(e.key==='Escape')setOpen(false);};
+  document.addEventListener('pointerdown',away);document.addEventListener('keydown',esc);
+  return()=>{document.removeEventListener('pointerdown',away);document.removeEventListener('keydown',esc);};},[open]);
+ return <span ref={box} className={styles.about}><button type="button" className={styles.aboutButton} aria-expanded={open} onClick={()=>setOpen(v=>!v)}>この画面について</button>{open&&<span className={styles.aboutText} role="note">{text}</span>}</span>;
+}
 export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
  const [active,setActive]=useState(panes[0]?.id),[menuOpen,setMenuOpen]=useState(false);
  const pane=panes.find(p=>p.id===active)??panes[0],fitting=FIT_TO_SCREEN.has(pane?.id??'');
@@ -67,7 +77,7 @@ export function PokerAccountWorkspace({panes}:{panes:PokerPane[]}){
      <section className={styles.summaryCard}><span className={styles.summaryIcon}><LobbyIcon name="cards"/></span><div><h2>学ぶ・練習する</h2><p>GTOの表とクイズで振り返り。</p>{shortcut(learn,'学習メニューを開く')}</div></section>
      <section className={styles.summaryCard}><span className={styles.summaryIcon}><LobbyIcon name="chart"/></span><div><h2>ハンドを振り返る</h2><p>履歴から一手ずつ再生。</p>{panes.some(p=>p.id==='hands')?<button type="button" onClick={()=>choose('hands')}>ハンド履歴を見る</button>:<Link href="/mypage/poker?pane=hands">ハンド履歴を見る</Link>}</div></section>
     </div>
-    <div ref={top} className={styles.contentGrid}><section className={styles.content}><header className={styles.panelHeading}><div><p className={styles.eyebrow}>{pane?.eyebrow}</p><h2>{pane?.label}</h2><p>{pane?.description}</p></div><span className={styles.panelIcon} aria-hidden="true"><LobbyIcon name={icons[pane?.id??'']??'cards'}/></span></header><div key={pane?.id} className={styles.panel} aria-label={pane?.label}>{GTO_PANES.has(pane?.id??'')&&<GtoInstallHint/>}<FitToScreen key={pane?.id} on={fitting}>{pane?.content}</FitToScreen></div></section>
+    <div ref={top} className={styles.contentGrid}><section className={styles.content}><header className={styles.panelHeading}><div><p className={styles.eyebrow}>{pane?.eyebrow}</p><h2>{pane?.label}{pane?.about&&<AboutScreen key={pane.id} text={pane.about}/>}</h2><p>{pane?.description}</p></div><span className={styles.panelIcon} aria-hidden="true"><LobbyIcon name={icons[pane?.id??'']??'cards'}/></span></header><div key={pane?.id} className={styles.panel} aria-label={pane?.label}>{GTO_PANES.has(pane?.id??'')&&<GtoInstallHint/>}<FitToScreen key={pane?.id} on={fitting}>{pane?.content}</FitToScreen></div></section>
      <aside className={styles.guide} aria-label="プレイのヒント"><div className={styles.guideHeading}><LobbyIcon name="finger"/><h2>次の一手につなげる</h2></div><p>記録を見直して、気になる場面から少しずつ。</p><section><span>01</span><h3>自分の傾向を知る</h3><p>参加率やレイズの割合を、ハンド数と一緒に確認。</p>{panes.some(p=>p.id==='tendencies')&&<button type="button" onClick={()=>choose('tendencies')}>成績・癖の分析を見る</button>}</section><section><span>02</span><h3>一手ずつ振り返る</h3><p>ハンドを再生して、ベットやフォールドの場面を見直す。</p><Link href="/mypage/poker/hands">ハンド履歴を開く</Link></section><Link className={styles.returnLink} href="/poker-lobby">ロビーに戻る</Link></aside>
     </div><footer className={styles.footer}><span>POKER SUMMIT · PLAYER CENTER</span><span>仮想チップでプレイ · 時刻は日本時間</span></footer>
    </main>

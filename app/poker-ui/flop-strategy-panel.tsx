@@ -1,7 +1,7 @@
 'use client';
 import {useGtoUsage} from '@/app/gto-usage-tracker';
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {GTO_FLOPS,GTO_SPOTS,cachedFlop,cachedFlopIndex,loadFlop,loadFlopIndex,seatOf,sizeNote,type FlopData} from '@/lib/poker/gto-spots';
+import {GTO_FLOPS,GTO_SPOTS,cachedFlop,cachedFlopIndex,loadFlop,loadFlopIndex,seatOf,type FlopData} from '@/lib/poker/gto-spots';
 import {resolveFlopSelection} from '@/lib/poker/flop-selection';
 import {FlopCardPicker} from './flop-card-picker';
 import styles from './gto-chart.module.css';
@@ -48,10 +48,6 @@ export function FlopStrategyPanel({flops=FLOPS}:{flops?:string[]}){
  // Per-hand EV (version 3) is the value from the start of the flop: shown on the first decision of each player only.
  const evSide:'oop'|null=data&&node&&data.handEv&&!data.spot.order&&trail.length===1?'oop':null;
  return <div ref={view} className={styles.wrap} data-flop-view><div className={styles.split} data-on={mode==='flop'&&data&&node?'':undefined}><div className={styles.splitSide}>
-  <p className={styles.intro}>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。</p>
-  <p className={`${styles.note} ${styles.intro}`}>{(data&&sizeNote(data.spot.sizes,!!data.multiway))??'ベット額の前提：シングルレイズはフロップ33%・75%と3倍レイズ、3ベットポットは33%・66%と2.5倍レイズ、4ベットポットは33%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。'}お互いのレンジはプリフロップの表から出したレンジです。</p>
-  <details className={styles.aboutMobile}><summary>この表について</summary><p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。{(data&&sizeNote(data.spot.sizes,!!data.multiway))??''}お互いのレンジはプリフロップの表から出したレンジです。</p></details>
-  <details hidden className={styles.flopAbout}><summary>この画面について</summary><p>よくある場面とフロップを前もって計算した、フロップでの正解の打ち方です。ターン・リバーのカードまで全部計算しています。{(data&&sizeNote(data.spot.sizes,!!data.multiway))??""}お互いのレンジはプリフロップの表から出したレンジです。{(data?.version??0)>=3?"正解からのズレはリバーを計算途中の戦略で測るため、実際より大きめに出ます。":""}マスにカーソルを当てると、その手の期待値も出ます。</p></details>
   <div className={styles.form}>
    <label>場面<select value={spot} onChange={e=>setSpot(e.target.value)}>{[...new Set(GTO_SPOTS.map(s=>s.group))].map(g=><optgroup key={g} label={g}>{GTO_SPOTS.filter(s=>s.group===g).map(s=><option key={s.id} value={s.id}>{s.label}</option>)}</optgroup>)}</select></label>
   </div>
