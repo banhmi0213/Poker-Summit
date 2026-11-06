@@ -44,7 +44,16 @@ test('grading: best option 100 / 正解, a never-played option ミス',()=>{
  const q={options:['フォールド','コール','3ベット 11BB'],freqs:[0,0.3,0.7],rangeFreqs:[0.5,0.3,0.2],hero:'BB',handClass:'AQo',made:null};
  assert.deepEqual(gradeQuiz(q,2),{choice:2,freq:0.7,points:100,verdict:'正解'});
  assert.equal(gradeQuiz(q,1).verdict,'まずまず');assert.equal(gradeQuiz(q,0).verdict,'ミス');
- assert.match(explainQuiz(q,gradeQuiz(q,0)).join('\n'),/選ばない打ち方/);
+ const lines=explainQuiz(q,gradeQuiz(q,0)).join('\n');
+ assert.match(lines,/あなたの選択「フォールド」：0%（いちばん多いのは「3ベット 11BB」70%）/);
+ // 根拠のない説明文は出さない (2026/11/06): only numbers from the data, no reasons in words.
+ assert.doesNotMatch(lines,/ブラフ|強い手|降りる側|受けて|決まった打ち方|打ち分ける/);
+});
+
+test('trivial questions are not asked: every question mixes, or sits on the edge of the range',()=>{
+ const rand=seeded(11);
+ for(let i=0;i<150;i++){const q=preflopQuestion(preflop,rand);assert.ok(q);
+  assert.ok(Math.max(...q.rangeFreqs)<0.9,'the whole range does not do one thing');}
 });
 
 test('practising one preflop category asks only that kind',()=>{

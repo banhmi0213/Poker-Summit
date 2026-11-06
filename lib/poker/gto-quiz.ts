@@ -53,6 +53,27 @@ function handWeight(reach:number,combos:number,freqs:number[],foldIndex:number){
  const top=Math.max(...freqs),mixed=1-top,fold=foldIndex>=0?freqs[foldIndex]:0;
  return reach*combos*(1+4*mixed)*(fold>0.98?0.25:1);
 }
+/** 当たり前すぎる問題は出さない (owner 2026/11/06, after outside feedback): a question is worth asking only when the
+ * answer is not obvious from the data itself — the hand mixes (second choice at least 10%), or, for a pure hand, a
+ * neighbouring hand (one kicker or one pair rank away) plays differently, so it sits on the edge of the range. A
+ * decision where the whole range does one thing 90% or more (e.g. a small c-bet with everything) is never asked. */
+export const QUIZ_MIX=0.1;
+const second=(xs:number[])=>[...xs].sort((a,b)=>b-a)[1]??0;
+const argmax=(xs:number[])=>xs.indexOf(Math.max(...xs));
+function neighbours(cls:string):string[]{
+ const a=R.indexOf(cls[0]),b=R.indexOf(cls[1]),out:string[]=[];
+ if(a===b){for(const d of [-1,1])if(R[a+d])out.push(R[a+d]+R[a+d]);return out;}
+ for(const d of [-1,1]){const k=b+d;if(k>=0&&k<a)out.push(R[a]+R[k]+cls[2]);}
+ out.push(R[a]+R[b]+(cls[2]==='s'?'o':'s'));
+ return out;
+}
+export function worthAsking(freqs:number[],rangeFreqs:number[],edge=false){
+ if(Math.max(...rangeFreqs)>=0.9)return false;
+ return second(freqs)>=QUIZ_MIX||edge;
+}
+const onEdge=(strategy:Record<string,number[]>,cls:string,reach:Record<string,number>)=>{
+ const mine=argmax(strategy[cls]);return neighbours(cls).some(n=>strategy[n]&&reach[n]>0.02&&argmax(strategy[n])!==mine);
+};
 
 // ---------- preflop ----------
 const KIND_WEIGHT:Record<string,number>={open:30,vsOpen:35,vs3bet:22,overcall:5,vs4bet:6,vs5bet:2,vsLimp:6,vsIso:4,vsSqueeze:3};
@@ -77,11 +98,11 @@ export function preflopQuestion(data:PreflopData,random:()=>number=Math.random,k
   const node=pick(data.nodes,n=>kind&&n.kind.toLowerCase()!==kind.toLowerCase()?0:(KIND_WEIGHT[n.kind]??1)/Math.max(1,data.nodes.filter(m=>m.kind===n.kind).length),random);if(!node)return null;
   const reach=preflopReach(data,node),fold=node.actions.findIndex(a=>a.kind==='fold');
   const classes=Object.keys(node.strategy);
-  const cls=pick(classes,c=>handWeight(reach[c],combosOf(c),node.strategy[c],fold),random);if(!cls)continue;
+  const range=node.actions.map((_,k)=>classes.reduce((s,c)=>s+reach[c]*combosOf(c)*(node.strategy[c][k]??0),0)),rangeN=norm(range);
+  const cls=pick(classes,c=>worthAsking(node.strategy[c],rangeN,onEdge(node.strategy,c,reach))?handWeight(reach[c],combosOf(c),node.strategy[c],fold):0,random);if(!cls)continue;
   const cards=cardsFor(cls,[],random);if(!cards)continue;
-  const range=node.actions.map((_,k)=>classes.reduce((s,c)=>s+reach[c]*combosOf(c)*(node.strategy[c][k]??0),0));
-  return {kind:'preflop',category:`preflop-${node.kind.toLowerCase()}`,title:`6人テーブル・100BB・プリフロップ`,scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
-   options:node.actions.map(a=>a.label),freqs:norm(node.strategy[cls]),rangeFreqs:norm(range),made:null};
+  return {kind:'preflop',category:`preflop-${node.kind.toLowerCase()}`,title:'6人テーブル・100BB・プリフロップ',scene:sceneText(node),hero:node.player,cards,board:[],handClass:cls,
+   options:node.actions.map(a=>a.label),freqs:norm(node.strategy[cls]),rangeFreqs:rangeN,made:null};
  }
  return null;
 }
@@ -102,10 +123,11 @@ export function flopQuestion(file:FlopData,spot:string,title:string,detail:strin
  for(let attempt=0;attempt<6;attempt++){
   const {node,history}=flopNodeFor(file,random),fold=node.actions.findIndex(a=>a.kind==='fold');
   const classes=Object.keys(node.classes);
-  const cls=pick(classes,c=>handWeight(node.classes[c][0],combosOf(c),node.classes[c].slice(1),fold),random);if(!cls)continue;
+  if(!worthAsking(node.total,norm(node.total),true))continue;
+  const cls=pick(classes,c=>second(node.classes[c].slice(1))>=QUIZ_MIX?handWeight(node.classes[c][0],combosOf(c),node.classes[c].slice(1),fold):0,random);if(!cls)continue;
   const cards=cardsFor(cls,file.board,random);if(!cards)continue;
   // Suit-aware row for these exact cards when the file has one (flush draws, backdoors).
-  const row=flopRow(node,cards[0],cards[1],file.board)??node.classes[cls];if(!row||!(row[0]>0))continue;
+  const row=flopRow(node,cards[0],cards[1],file.board)??node.classes[cls];if(!row||!(row[0]>0)||second(row.slice(1))<QUIZ_MIX)continue;
   const hero=seatOf(file,node.player);
   return {kind:'flop',category:`flop-${spot}`,title,scene:`${detail}。${history.length?`フロップで${history.join('、')}。`:''}`,hero,cards,board:[...file.board],handClass:cls,
    options:node.actions.map(a=>a.label),freqs:norm(row.slice(1)),rangeFreqs:norm(node.total),made:madeHandLabel(cards.map(toCard),file.board.map(toCard))};
@@ -119,23 +141,15 @@ export function gradeQuiz(q:QuizQuestion,choice:number):QuizGrade{
  const best=Math.max(...q.freqs),freq=q.freqs[choice]??0,ratio=best>0?freq/best:0;
  return {choice,freq,points:Math.round(ratio*100),verdict:ratio>=0.8?'正解':ratio>=0.3?'まずまず':'ミス'};
 }
-const aggressive=(label:string)=>/ベット|レイズ|オープン|オールイン/.test(label);
 const listText=(q:QuizQuestion,freqs:number[])=>freqs.map((f,i)=>[q.options[i],f] as const).filter(([,f])=>f>=0.005).sort((a,b)=>b[1]-a[1]).map(([o,f])=>`「${o}」${pct(f)}`).join('・');
-/** Lines of explanation shown after answering. */
+/** Lines shown after answering (owner 2026/11/06: 根拠のない説明文は出さない). Only what the computed data says: the
+ * frequencies for this hand, where the chosen option stands among them, the whole range's frequencies, and the made
+ * hand on the board. No reasons are written in words, because the data holds frequencies, not reasons. */
 export function explainQuiz(q:QuizQuestion,g:QuizGrade):string[]{
- const order=q.freqs.map((f,i)=>[f,i] as const).sort((a,b)=>b[0]-a[0]),best=order[0][1],bestLabel=q.options[best];
- const out:string[]=[];
- out.push(`GTOは${q.handClass}で：${listText(q,q.freqs)}`);
- if(g.verdict==='正解')out.push(order[0][0]>=0.9?`「${q.options[g.choice]}」がこの手の決まった打ち方です。`:`「${q.options[g.choice]}」はこの手でいちばん多い打ち方の一つです。`);
- else if(g.verdict==='まずまず')out.push(`「${q.options[g.choice]}」もGTOが${pct(g.freq)}混ぜる打ち方です。いちばん多いのは「${bestLabel}」。`);
- else out.push(g.freq>=0.005?`「${q.options[g.choice]}」はGTOでは${pct(g.freq)}しか選びません。基本は「${bestLabel}」です。`:`「${q.options[g.choice]}」はGTOでは選ばない打ち方です。基本は「${bestLabel}」です。`);
- if(order[0][0]<0.7&&order.length>1&&order[1][0]>=0.2)out.push(`この手は「${bestLabel}」と「${q.options[order[1][1]]}」を混ぜる手です。どちらか一つに決めず、割合どおりに打ち分けるのがGTOです。`);
- out.push(`この場面で${q.hero}が持っている手全体では：${listText(q,q.rangeFreqs)}`);
- const handAgg=q.options.reduce((s,o,i)=>s+(aggressive(o)?q.freqs[i]:0),0),rangeAgg=q.options.reduce((s,o,i)=>s+(aggressive(o)?q.rangeFreqs[i]:0),0);
- const fold=q.options.findIndex(o=>o==='フォールド'),handFold=fold>=0?q.freqs[fold]:0,rangeFold=fold>=0?q.rangeFreqs[fold]:0;
- if(handFold>=0.9&&rangeFold<0.9)out.push(`${q.handClass}はこの場面で続けるには弱く、降りる側の手です。`);
- else if(rangeAgg>0.02&&rangeAgg<0.7&&handAgg>=Math.min(0.9,rangeAgg*1.8))out.push(`${q.handClass}は全体より攻める割合が高い手です（全体 ${pct(rangeAgg)}、この手 ${pct(handAgg)}）。強い手としての攻めか、ブラフに向いた手です。`);
- else if(rangeAgg>0.1&&handAgg<rangeAgg*0.4&&handFold<0.5)out.push(`${q.handClass}は攻めるより受けて続ける側の手です（攻める割合 全体 ${pct(rangeAgg)}、この手 ${pct(handAgg)}）。`);
+ const best=q.freqs.indexOf(Math.max(...q.freqs));
+ const out=[`GTOの割合（${q.handClass}）：${listText(q,q.freqs)}`];
+ out.push(g.choice===best?`あなたの選択「${q.options[g.choice]}」：${pct(g.freq)}（いちばん多い打ち方）`:`あなたの選択「${q.options[g.choice]}」：${pct(g.freq)}（いちばん多いのは「${q.options[best]}」${pct(q.freqs[best])}）`);
+ out.push(`${q.hero}の手全体の割合：${listText(q,q.rangeFreqs)}`);
  if(q.made)out.push(`いまの役：${q.made}`);
  return out;
 }

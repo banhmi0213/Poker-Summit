@@ -51,7 +51,7 @@ function useGtoReview(hand:HandHistoryView){
 export function gtoText(r:GtoReview){
  if(r.source==='none')return `GTO：${reasonText(r.reason)}`;
  const opts=r.options.filter(o=>o.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(o=>`${o.text} ${pct(o.freq)}`).join('・');
- return `GTO：${opts}${r.approx?'（近似値：その場の簡易計算・採点なし）':r.played===null?'（この打ち方は表にありません）':''}`;
+ return `GTO：${opts}${r.approx?'（近似値：近い計算か簡易計算・採点なし）':r.played===null?'（この打ち方は表にありません）':''}`;
 }
 
 /** Step through a finished hand. step 0 = forced bets posted, step N = hand finished. */

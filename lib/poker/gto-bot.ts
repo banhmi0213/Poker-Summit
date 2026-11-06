@@ -143,6 +143,9 @@ function flopFile(data:GtoData,spot:string,flop:string):FlopData|null{
  }
  return null;
 }
+/** The flop data stands in for another flop or spot (nearest computed flop, or a proxy spot): shown as 近似値, not graded
+ * (owner 2026/11/06: 採点・解説は計算した場面そのものの結果だけで). */
+const standIn=(file:FlopData,flopText:string,spot:string)=>canonicalFlop(file.flop)!==canonicalFlop(flopText)||(!!file.spot.id&&file.spot.id!==spot);
 const sizeOf=(label:string)=>{const m=/([\d.]+)%/.exec(label);return m?Number(m[1])/100:null;};
 function flopIndexOf(node:FlopNode,a:LoggedAction):number{
  const kinds=node.actions.map(x=>x.kind);
@@ -269,7 +272,7 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
    const row=noHole?[0,...node.actions.map(()=>0)]:flopRow(node,code(v.hole[0]),code(v.hole[1]),v.board.slice(0,3).map(code));if(!row)return fb('flop-class-missing');
    const at=node;
    const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
-   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a),grid:normalizeGrid(grid),nearFlop:canonicalFlop(file.flop)===canonicalFlop(flopText)?undefined:file.flop,proxySpot:file.spot.id&&file.spot.id!==spot?file.spot.id:undefined};
+   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>flopIndexOf(at,a),grid:normalizeGrid(grid),nearFlop:canonicalFlop(file.flop)===canonicalFlop(flopText)?undefined:file.flop,proxySpot:file.spot.id&&file.spot.id!==spot?file.spot.id:undefined,...(standIn(file,flopText,spot)||depthData?{approx:true}:{})};
   }
   // Turn and river: narrow both ranges through the flop, then solve from the turn (reused on the river).
   if(file)trackFlop(file,flopActs,ranges,pair,v.board.slice(0,3).map(code));
@@ -303,7 +306,10 @@ export function gtoStrategy(v:GtoView,data:GtoData,budgetMs=5000,rangeOnly=false
   // Only from a solve close enough to equilibrium (2% of the pot): a short solve's values can disagree with its own shares.
   if(opts.withEv&&h!==undefined&&s.expl===undefined)s.expl=s.solver.exploitability();
   const ev=opts.withEv&&h!==undefined&&(s.expl??1)<=EV_MAX_EXPL?s.solver.actionEvsAt(at.steps,player,h):null;
-  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:h===undefined?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid),...(ev&&ev.length===k&&ev.every(Number.isFinite)?{ev}:{})};
+  return {source:'solver',options:node.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*v.bb})),freqs:h===undefined?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>solverIndex(node,a,bb),grid:normalizeGrid(grid),...(ev&&ev.length===k&&ev.every(Number.isFinite)?{ev}:{}),
+   // Not graded (owner 2026/11/06: 計算結果だけを根拠に): ranges from another flop or spot, a 60BB table on 100BB flops, or a
+   // turn solve, which gets only a few dozen iterations in a decision's time.
+   ...((file&&standIn(file,flopText,spot))||depthData||v.board.length===4?{approx:true}:{})};
  }catch(e){return fb('error:'+(e instanceof Error?e.message:String(e)).slice(0,60));}
 }
 
@@ -340,7 +346,7 @@ function multiwayStrategy(v:GtoView,multi:{spot:string;order:string[];file:FlopD
   const at=node,row=noHole?[0,...at.actions.map(()=>0)]:at.classes[classOf(code(v.hole[0]),code(v.hole[1]))];if(!row)return fb('flop-class-missing');
   const grid:GtoGrid={};for(const [cls,r] of Object.entries(at.classes))grid[cls]={reach:r[0]/combosOf(cls),freqs:r.slice(1)};
   return {source:'flop',options:at.actions.map(x=>({kind:x.kind,label:x.label,to:null})),freqs:row.slice(1),indexOf:a=>multiIndexOf(at,a),grid:normalizeGrid(grid),
-   nearFlop:canonicalFlop(multi.file.flop)===canonicalFlop(flopText)?undefined:multi.file.flop,proxySpot:multi.file.spot.id&&multi.file.spot.id!==multi.spot?multi.file.spot.id:undefined};
+   nearFlop:canonicalFlop(multi.file.flop)===canonicalFlop(flopText)?undefined:multi.file.flop,proxySpot:multi.file.spot.id&&multi.file.spot.id!==multi.spot?multi.file.spot.id:undefined,...(standIn(multi.file,flopText,multi.spot)?{approx:true}:{})};
  }
  // Later streets: only while all three are still in (after a fold the heads-up path takes over).
  if(v.players.filter(p=>!p.folded).length!==3)return null;
@@ -366,7 +372,8 @@ function multiwayStrategy(v:GtoView,multi:{spot:string;order:string[];file:FlopD
  for(let i=0;i<side.n;i++){const w=side.w[i];if(!(w>0))continue;const cls=classOf(side.c1[i],side.c2[i]),e=acc[cls]??=({w:0,f:new Array(k).fill(0)});e.w+=w;for(let j=0;j<k;j++)e.f[j]+=w*st[i*k+j];}
  const grid:GtoGrid={};for(const [cls,e] of Object.entries(acc))grid[cls]={reach:e.w/combosOf(cls),freqs:e.f.map(x=>x/e.w)};
  const bb=v.bb;
- return {source:'solver',options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>multiIndexOf(at,a,bb),grid:normalizeGrid(grid)};
+ // A three-way turn or river solve in a decision's time (one bet size, up to 200 iterations): a guide, not graded (2026/11/06).
+ return {source:'solver',approx:true,options:at.actions.map(a=>({kind:a.kind,label:a.label,to:a.to*bb})),freqs:h<0?new Array(k).fill(0):Array.from(st.slice(h*k,h*k+k)),indexOf:a=>multiIndexOf(at,a,bb),grid:normalizeGrid(grid)};
 }
 // ---------- four or more players (2026/10/30, 近似値) ----------
 /** Hand classes strongest first (equity against a random hand), for estimated ranges. */
