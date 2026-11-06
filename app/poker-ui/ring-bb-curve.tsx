@@ -1,4 +1,5 @@
 'use client';
+import {POKER_GTO_ENABLED} from '@/lib/poker/features';
 import {useGtoUsage} from '@/app/gto-usage-tracker';
 // 収支グラフ (owner 2026/11/01): your lifetime ring result in BB, hand by hand. Only your own numbers.
 import {useEffect,useMemo,useState} from 'react';
@@ -15,7 +16,7 @@ export function RingBbCurve(){
  if(failed)return null;
  if(!points)return <p role="status">収支グラフを読み込んでいます…</p>;
  if(points.length<2)return <p>リングで2ハンド以上打つと、収支グラフが表示されます。</p>;
- const W=640,H=220,P=36,last=points[points.length-1],xs=points.map(p=>p[0]),ev=last[3]>0.05,ys=points.flatMap(p=>ev?[p[1],p[1]+p[3]]:[p[1]]);
+ const W=640,H=220,P=36,last=points[points.length-1],xs=points.map(p=>p[0]),ev=POKER_GTO_ENABLED&&last[3]>0.05,ys=points.flatMap(p=>ev?[p[1],p[1]+p[3]]:[p[1]]);
  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(0,...ys),maxY=Math.max(0,...ys),spanY=maxY-minY||1,spanX=maxX-minX||1;
  const x=(n:number)=>P+(n-minX)/spanX*(W-P*1.5),y=(v:number)=>H-P/1.5-(v-minY)/spanY*(H-P*1.4);
  const path=points.map((p,i)=>`${i?'L':'M'}${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join(' ');

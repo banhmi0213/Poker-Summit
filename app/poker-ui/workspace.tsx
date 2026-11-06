@@ -6,7 +6,7 @@ import {SummitMark} from './brand-mark';
 import {PokerAccountWorkspace} from './account-workspace';
 /** description: one line under the title. about (owner 2026/11/06, 文字を減らす): the longer explanation, opened from 「この画面について」. */
 export type PokerPane={id:string;label:string;eyebrow:string;description:string;about?:string;
- /** 見直し中 (owner 2026/11/06): the content rests on the simplified preflop model and is being rebuilt. */
+ /** 改善中 (owner 2026/11/06): the content rests on the simplified preflop model and is being rebuilt. */
  reviewing?:boolean;content:ReactNode};
 type WorkspaceProps={kind:'lobby'|'account';panes:PokerPane[];admin?:boolean;guest?:boolean};
 export function PokerWorkspace(props:WorkspaceProps){return props.kind==='account'?<PokerAccountWorkspace panes={props.panes}/>:<LegacyWorkspace {...props}/>;}

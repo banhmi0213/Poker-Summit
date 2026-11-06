@@ -1,6 +1,7 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { classifyScrape, BLOCK_AT_ONCE } from "@/lib/scrape-watch";
 import { updateSession } from "@/lib/supabase/middleware";
+import { GTO_PATHS, POKER_GTO_ENABLED } from "@/lib/poker/features";
 
 const CANONICAL_HOST = "pokersummit.jp";
 
@@ -21,6 +22,11 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
   ) {
     const url = new URL(request.nextUrl.pathname + request.nextUrl.search, `https://${CANONICAL_HOST}`);
     return NextResponse.redirect(url, 308);
+  }
+  // GTO hidden (owner 2026/11/06, lib/poker/features.ts): its public pages go to the learning top.
+  const path = request.nextUrl.pathname;
+  if (!POKER_GTO_ENABLED && GTO_PATHS.some((p) => path === p || path.startsWith(p + "/"))) {
+    return NextResponse.redirect(new URL("/learn", request.url), 307);
   }
   return await updateSession(request);
 }

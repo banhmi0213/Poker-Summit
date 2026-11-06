@@ -4,7 +4,7 @@ import {loadRingMonthly} from '@/lib/poker/ring-monthly';
 import {RingMonthlyView} from '@/app/poker-ui/ring-monthly-view';
 import {RingRankView} from '@/app/poker-ui/ring-rank-view';
 import {RingBbCurve} from '@/app/poker-ui/ring-bb-curve';
-import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
+import {GTO_PANE_IDS,POKER_GTO_ENABLED,POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
@@ -55,7 +55,10 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  // Ring-first release: tournament panes stay hidden until tournaments open.
  const tourneyShown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
  // Paid features hidden (lib/billing/visibility.ts): no 「GTOプラン」 pane, no 「アイコン枠・プレート」 pane.
- const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ const paidShown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ // GTO hidden (2026/11/06, lib/poker/features.ts).
+ const shown=POKER_GTO_ENABLED?paidShown:paidShown.map(p=>GTO_PANE_IDS.includes(p.id)?{...p,reviewing:true,about:undefined,
+  content:<section style={{padding:'28px 20px',textAlign:'center',lineHeight:1.9}}><p style={{margin:0,fontSize:17,fontWeight:700,color:'#f1d28f'}}>改善中です</p><p style={{margin:'6px 0 0',fontSize:14}}>計算の土台から作り直しています。公開まで、しばらくお待ちください。</p></section>}:p);
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
  return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}:${searchParams?.before??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;

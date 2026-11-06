@@ -1,4 +1,5 @@
 'use client';
+import {POKER_GTO_ENABLED} from '@/lib/poker/features';
 import {useEffect,useMemo,useRef,useState} from 'react';
 import styles from './hand-history.module.css';
 import {HistoryCards,chips,handDate,handTitle} from './hand-history-list';
@@ -61,7 +62,7 @@ export function HandReplay({hand,shared=false,backHref}:{hand:HandHistoryView;sh
  const [step,setStep]=useState(first),[rangeAt,setRangeAt]=useState<number|null>(null);
  const reviews=useMemo(()=>reviewDecisions(hand),[hand]);
  const reviewAt=new Map(reviews.map(r=>[r.index,r]));
- const gto=useGtoReview(hand),gtoAt=new Map(gto.reviews.map(r=>[r.index,r])),otherAt=new Map(gto.others.map(o=>[o.index,o.range])),canGto=hand.players.some(p=>p.you&&p.hole?.length===2)&&hand.actions.some(a=>!['ante','sb','bb'].includes(a.type)&&hand.players.find(p=>p.seatId===a.seatId)?.you);
+ const gto=useGtoReview(hand),gtoAt=new Map(gto.reviews.map(r=>[r.index,r])),otherAt=new Map(gto.others.map(o=>[o.index,o.range])),canGto=POKER_GTO_ENABLED&&hand.players.some(p=>p.you&&p.hole?.length===2)&&hand.actions.some(a=>!['ante','sb','bb'].includes(a.type)&&hand.players.find(p=>p.seatId===a.seatId)?.you);
  // When the review arrives, open the range at the clearest miss (else the first judged decision), like Olympia's GTO panel.
  useEffect(()=>{if(gto.status!=='done')return;const judged=gto.reviews.filter(r=>r.source!=='none'&&r.range);
   const pick=[...judged].filter(r=>r.source!=='none'&&r.verdict==='rare').sort((a,b)=>(a.source!=='none'&&b.source!=='none'?(a.played??1)-(b.played??1):0))[0]??judged[0];
