@@ -1392,7 +1392,10 @@
       "others"
     ],
     "smallQueuedDemandAllowed": true,
-    "doNotCancelAtHandoff": true
+    "doNotCancelAtHandoff": true,
+    "latestOwnerCorrectionAt": "2026-11-06T05:19:14.414Z",
+    "targetRepoRunningJobs": 40,
+    "fillIdleWithExpansion": true
   },
   "utgBbStart": {
     "run": 41464873348,
@@ -4927,7 +4930,7 @@
     "afterDeadline": "Leave all ongoing GitHub Actions calculations running; report IDs, successful/remaining counts, manifests and collection ranges to Claude. Disable only the GTO monitoring automation after final handoff; perform no further GTO work.",
     "noNewUiFeatureWork": true,
     "allowExpansionUntilDeadline": true,
-    "latestOwnerClarification": "【最優先・2026-11-05オーナー再訂正】止めるのは画面・機能の新しい修正だけ。フロップの見回り、追加batchの開始、部分回収・検証・反映は2026-11-07 17:00日本時間（2026-11-07T08:00:00Z）まで継続する。空き枠へ1,755通りの追加計算をbtn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他の順に補充し、他CIを含め同時40jobsを使い切るよう計画する。期限時点の計算中runはキャンセルせず、そのまま稼働させる。最終引き継ぎにrun ID・成功/残り枚数・manifest・既回収範囲を記録し、Claudeが回収を引き継ぐ。最終報告後は見回りautomationのみ無効化し、以後こちらからGTO作業を行わない。",
+    "latestOwnerClarification": "【最優先・2026-11-06オーナー訂正】止めるのは画面・機能の新しい修正だけ。空き枠には1,755通りへの追加計算を入れ、他CIを含む同時40jobsを使い切る。追加順はbtn-bb→co-bb→sb-bb→hu-srp→hj-bb→utg-bb→co-btn→その他。2026-11-07 17:00日本時間（2026-11-07T08:00:00Z）時点で計算中のrunは停止・キャンセルせずそのまま稼働させる。Claude引継ぎには各run ID、成功枚数、残り枚数、manifest、既回収範囲を記載する。",
     "keepRunningJobsAtDeadline": true,
     "cancelRunningJobsAtDeadline": false,
     "priority": [
@@ -4939,7 +4942,8 @@
       "utg-bb",
       "co-btn",
       "others"
-    ]
+    ],
+    "instructionConfirmedAt": "2026-11-06T05:19:14.414Z"
   },
   "observationHistory": [
     {
@@ -7679,5 +7683,23 @@
       ]
     },
     "next": "Fresh main/head/conflict/checks; only all checks success merge. Owner authorized self merge. Pre/post owner-copy, verify production. No duplicate PR."
+  },
+  "instructionRevision": {
+    "appliedAt": "2026-11-06T05:19:14.414Z",
+    "source": "owner correction",
+    "stopOnly": "new UI/function changes",
+    "expansionContinuesUntil": "2026-11-07T08:00:00Z",
+    "targetConcurrentJobsIncludingCI": 40,
+    "priority": [
+      "btn-bb",
+      "co-bb",
+      "sb-bb",
+      "hu-srp",
+      "hj-bb",
+      "utg-bb",
+      "co-btn",
+      "others"
+    ],
+    "deadlineBehavior": "leave active runs running; hand off run ID and remaining boards to Claude"
   }
 }
