@@ -1,4 +1,5 @@
 'use client';
+import {POKER_GTO_ENABLED} from '@/lib/poker/features';
 import {useEffect,useMemo,useState} from 'react';
 import styles from './hand-history.module.css';
 import {HandHistoryList,type HandGtoMark} from './hand-history-list';
@@ -47,12 +48,14 @@ export function HandHistoryGto({hands,base,moreHref}:{hands:HandHistoryView[];ba
  const [flags,setFlags]=useState<Record<string,HandFlags>|null>(null),[progress,setProgress]=useState<[number,number]|null>(null),[filter,setFilter]=useState<'all'|'pre'|'post'>('all'),[page,setPage]=useState(0);
  useEffect(()=>setPage(0),[hands,filter]);
  useEffect(()=>{let live=true;setFlags(null);
+  if(!POKER_GTO_ENABLED)return;
   void flagHands(hands,(f,done,total)=>{if(!live)return;setFlags(f);setProgress(done<total?[done,total]:null);},()=>live).catch(()=>{if(live)setProgress(null);});
   return ()=>{live=false;};},[hands]);
  const marks=useMemo(()=>flags?Object.fromEntries(Object.entries(flags as Record<string,HandFlags>).map(([k,f])=>[k,markOf(f)])):undefined,[flags]);
  const shown=filter==='all'||!flags?hands:hands.filter(h=>{const f=flags[h.handId];return f&&(filter==='pre'?f.pre.off>0:f.post.off>0);});
  const pages=Math.max(1,Math.ceil(shown.length/PER_PAGE));
  const count=(k:'pre'|'post')=>flags?Object.values(flags as Record<string,HandFlags>).filter(f=>f[k].off>0).length:0;
+ if(!POKER_GTO_ENABLED)return <HandHistoryList hands={hands} base={base}/>;
  return <>
   <div className={styles.gtoBar} role="group" aria-label="GTOで絞り込み">
    <button type="button" aria-pressed={filter==='all'} onClick={()=>setFilter('all')}>すべて</button>

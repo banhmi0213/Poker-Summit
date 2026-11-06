@@ -4,7 +4,7 @@ import {loadRingMonthly} from '@/lib/poker/ring-monthly';
 import {RingMonthlyView} from '@/app/poker-ui/ring-monthly-view';
 import {RingRankView} from '@/app/poker-ui/ring-rank-view';
 import {RingBbCurve} from '@/app/poker-ui/ring-bb-curve';
-import {POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
+import {GTO_PANE_IDS,POKER_GTO_ENABLED,POKER_TOURNAMENTS_ENABLED} from '@/lib/poker/features';
 import {StatisticsView} from '@/app/poker-tournaments/statistics-view';
 import {PokerWorkspace} from '@/app/poker-ui/workspace';
 import {loadHandHistories,loadHandStats} from '@/lib/poker/hand-histories';
@@ -39,12 +39,12 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'history',label:'参加大会の履歴',eyebrow:'TOURNAMENT HISTORY',description:'これまでの大会と最終順位。',content:data?<StatisticsView data={data} section="history"/>:unavailable},
  {id:'tendencies',label:'成績・癖の分析',eyebrow:'PLAY TENDENCIES',description:'リングゲームのハンドから、参加率やベットの傾向を集計。',content:tendencies?<><HandStatsByStake all={tendencies.ring} stakes={tendencies.stakes??[]}/><GtoDeviationView/></>:unavailable},
  {id:'gto',label:'GTO表',eyebrow:'GTO CHARTS',description:'少ないチップのオールイン・フォールド表。',about:'2人テーブルで、お互いのチップが少ないとき（25BB以下）に「オールインかフォールドだけ」で戦う場合の正解（ナッシュ均衡）です。SB（ボタン）はオールインするか降りるか、BBはそのオールインにコールするか降りるかを選びます。アンティなし・SB 0.5BB／BB 1BBで、169種類のスタートハンド同士の勝率から求めています。20BBを超えると、オールイン以外（小さめのレイズ）も混ぜる方が得になる場面が増えます。',content:<PushFoldChart/>},
- {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',description:'立場ごとの正解の割合。',about:'プリフロップの打ち方を、計算で求めた表です（6人テーブルと2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人テーブルは100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
- {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',description:'フロップごとの正解の打ち方。',about:'よくある場面とフロップを前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめです。ターン・リバーのカードまで全部計算しています。まだ計算していないフロップは、近いフロップの答えを出します。ベット額の前提：シングルレイズはフロップ33%・66%・125%と3倍レイズ、3ベットポットは33%・66%・100%と2.5倍レイズ、4ベットポットは25%・50%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジはプリフロップの表から出したレンジです。マスにカーソルを当てると、その手の期待値も出ます。',content:<FlopStrategyPanel/>},
- {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',description:'GTOのCPUと打って、1手ごとに採点。',about:'GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN → CO → HJ → UTG → BB → SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell} practiceSpot={searchParams?.practice}/>},
- {id:'weak',label:'弱点分析',eyebrow:'YOUR LEAKS',description:'損が大きかった場面から並べます。',about:'リング・大会・練習テーブル・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。ミスは、GTOがその手で選ぶ割合が8%未満の打ち方です。EV損失は、その場でいちばん得な打ち方と比べたチップの差です（プリフロップと、計算が十分に詰められたターン・リバー）。4人以上のポットや計算していない場面は数えていません。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
- {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',description:'計算済みの場面から出題して採点。',about:'GTOの計算結果から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。いちばん多い打ち方を選べば100点、GTOが混ぜて使う打ち方は割合に応じた点数です。',content:<GtoQuiz/>},
- {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',description:'自分でレンジを塗って採点。',about:'場面を選んで、自分ならプレイする手をマスを押して塗ります。「答え合わせ」でGTOの表と比べて採点します（塗らなかった手はフォールド）。答え合わせのあとにマスを押すと、その手のGTOの割合が出ます。',content:<RangeTrainer/>},
+ {id:'preflop',label:'プリフロップ表',eyebrow:'PREFLOP CHARTS',reviewing:true,description:'立場ごとの正解の割合。',about:'プリフロップの打ち方を、計算で求めた表です（6人テーブルと2人のときを切り替えられます。2人のときはボタンがSBで、リンプもあります）。6人テーブルは100BBのほか、大会向けに60・40・20・10BB（BBアンティあり）の表と、キャッシュゲーム向けにレーキ（5%・10%）ありの表もあります。立場ごとに、手札ごとのオープン・コール・3ベットなどの割合を色で表しています。',content:<PreflopChartPanel standard={gto.standard} pro={gto.pro} upsell={gto.upsell}/>},
+ {id:'flop',label:'フロップ戦略',eyebrow:'FLOP STRATEGY',reviewing:true,description:'フロップごとの正解の打ち方。',about:'よくある場面とフロップを前もって計算した、手札ごとの正解の打ち方と、ボードの形ごとの全体まとめです。ターン・リバーのカードまで全部計算しています。まだ計算していないフロップは、近いフロップの答えを出します。ベット額の前提：シングルレイズはフロップ33%・66%・125%と3倍レイズ、3ベットポットは33%・66%・100%と2.5倍レイズ、4ベットポットは25%・50%。ターン66%・リバー75%（オールインはポットの1.5倍以内のときだけ）。お互いのレンジはプリフロップの表から出したレンジです。マスにカーソルを当てると、その手の期待値も出ます。',content:<FlopStrategyPanel/>},
+ {id:'trainer',label:'GTOと対戦',eyebrow:'PLAY VS GTO',reviewing:true,description:'GTOのCPUと打って、1手ごとに採点。',about:'GTOで打つCPU5人と6人テーブルで1ハンドずつ打ちます。自分のカードは表向き、座る場所は1ハンドごとに1つずつ動きます（BTN → CO → HJ → UTG → BB → SB）。自分が打つたびに、その手でGTOがその打ち方をどれくらい選ぶかで採点します。スタックは毎ハンド全員100BBです。',content:<GtoTrainer standard={gto.standard} upsell={gto.upsell} practiceSpot={searchParams?.practice}/>},
+ {id:'weak',label:'弱点分析',eyebrow:'YOUR LEAKS',reviewing:true,description:'損が大きかった場面から並べます。',about:'リング・大会・練習テーブル・GTOと対戦で打った判断を全部GTOと比べて、損が大きかった場面から並べます。ミスは、GTOがその手で選ぶ割合が8%未満の打ち方です。EV損失は、その場でいちばん得な打ち方と比べたチップの差です（プリフロップと、計算が十分に詰められたターン・リバー）。4人以上のポットや計算していない場面は数えていません。',content:<GtoWeakSpots limit={gto.standard?undefined:FREE_WEAK_SPOTS} upsell={gto.upsell}/>},
+ {id:'quiz',label:'GTO練習クイズ',eyebrow:'GTO QUIZ',reviewing:true,description:'計算済みの場面から出題して採点。',about:'GTOの計算結果から1問ずつ出題します。自分ならどう打つかを選ぶと、GTOがその手でそれぞれの打ち方を選ぶ割合と照らして採点し、解説を出します。いちばん多い打ち方を選べば100点、GTOが混ぜて使う打ち方は割合に応じた点数です。',content:<GtoQuiz/>},
+ {id:'ranges',label:'レンジ練習',eyebrow:'RANGE TRAINER',reviewing:true,description:'自分でレンジを塗って採点。',about:'場面を選んで、自分ならプレイする手をマスを押して塗ります。「答え合わせ」でGTOの表と比べて採点します（塗らなかった手はフォールド）。答え合わせのあとにマスを押すと、その手のGTOの割合が出ます。',content:<RangeTrainer/>},
  {id:'river',label:'リバー計算機',eyebrow:'RIVER SOLVER',description:'ターン・リバーの正解の打ち方を計算。',about:'ターン（4枚目）かリバー（5枚目）からの2人勝負を、近似なしで解きます。ボード・ポット・残りチップ・お互いのレンジを決めると、手札ごとの正解の打ち方（チェック・ベット・コール・フォールドの割合）が出ます。ターンからの計算はリバーのカードを全部解くので、20〜40秒ほどかかります。',content:<RiverSolverPanel/>},
  {id:'equity',label:'勝率計算機',eyebrow:'EQUITY & POT ODDS',description:'勝率とポットオッズの計算。',about:'ハンド同士の勝率と、リバーまでにできる役の確率を計算します。ポットオッズから、コールが得かどうかも確かめられます。',content:<EquityCalculator/>},
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会終盤のオールイン・コールの範囲。',about:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
@@ -55,7 +55,10 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  // Ring-first release: tournament panes stay hidden until tournaments open.
  const tourneyShown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
  // Paid features hidden (lib/billing/visibility.ts): no 「GTOプラン」 pane, no 「アイコン枠・プレート」 pane.
- const shown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ const paidShown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ // GTO hidden (2026/11/06, lib/poker/features.ts).
+ const shown=POKER_GTO_ENABLED?paidShown:paidShown.map(p=>GTO_PANE_IDS.includes(p.id)?{...p,reviewing:true,about:undefined,
+  content:<section style={{padding:'28px 20px',textAlign:'center',lineHeight:1.9}}><p style={{margin:0,fontSize:17,fontWeight:700,color:'#f1d28f'}}>改善中です</p><p style={{margin:'6px 0 0',fontSize:14}}>計算の土台から作り直しています。公開まで、しばらくお待ちください。</p></section>}:p);
  // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
  return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}:${searchParams?.before??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;

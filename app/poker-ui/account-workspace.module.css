@@ -99,3 +99,7 @@
 .panelHeading .aboutButton:hover,.panelHeading .aboutButton[aria-expanded=true]{background:#d6b66e22;border-color:#e6c47a}
 .aboutText{position:absolute;z-index:6;top:calc(100% - 4px);left:16px;right:16px;max-width:520px;display:block;padding:12px 14px;border:1px solid #bfa264;border-radius:10px;background:#183447;box-shadow:0 12px 28px #0b1a2566;color:#d9e5ec;font-size:13px;font-weight:400;line-height:1.8;letter-spacing:0;white-space:normal;text-align:left}
 @media(max-width:650px){.panelHeading .aboutButton{margin-left:8px;font-size:10px;padding:2px 8px}.aboutText{left:10px;right:10px;font-size:12px}}
+
+/* 見直し中 (2026/11/06) */
+.panelHeading .reviewing{display:inline-flex;align-items:center;vertical-align:middle;margin-left:10px;min-height:22px;padding:1px 9px;border-radius:999px;background:#d6b66e;color:#14283a;font-size:11px;font-weight:800;letter-spacing:.04em;line-height:1.4;white-space:nowrap}
+@media(max-width:650px){.panelHeading .reviewing{margin-left:8px;font-size:10px;padding:1px 7px}}

@@ -1,4 +1,5 @@
 "use client";
+import {POKER_GTO_ENABLED} from '@/lib/poker/features';
 import {nameSize} from '@/app/poker-ui/name-size';
 import { recordPracticeHand } from "@/app/poker-ui/gto-practice-record";
 import {publicAction,type ActionKind} from "@/lib/poker/action-feedback";
@@ -685,7 +686,7 @@ export default function PokerTablePreview({ member, initialDeal, tournament, ser
         <small>{autoChoice === "CHECK" ? "チェック可能ならCHECK、コールが必要ならFOLD" : autoChoice === "FOLD" ? "自分の番で自動FOLD" : "未選択（0秒でCHECKまたはFOLD）"}</small>
       </div>
       <p role="status" aria-live="polite">{bettingMessage}</p>
-      {!tournament && handFinished && myDecisions.current.length > 0 && <div className={styles.gtoReview} aria-label="GTOで振り返る">
+      {POKER_GTO_ENABLED && !tournament && handFinished && myDecisions.current.length > 0 && <div className={styles.gtoReview} aria-label="GTOで振り返る">
         {!liveReview && <button type="button" onClick={startLiveReview}>GTOで振り返る</button>}
         {liveReview?.status === "running" && <p role="status">GTOを計算中…（数秒かかります）</p>}
         

@@ -22,7 +22,7 @@ export default async function Page(){
  return <div className="portal"><PortalHeader userEmail={user?.email}/>
   <main className={styles.page}>
    <nav className={styles.breadcrumb} aria-label="パンくず"><Link href="/">TOP</Link> <span>›</span> <Link href="/learn">GTO・学習</Link> <span>›</span> 今日のGTOクイズ</nav>
-   <h1 className={styles.title}>今日のGTOクイズ（{m}月{d}日）</h1>
+   <h1 className={styles.title}>今日のGTOクイズ（{m}月{d}日）<span style={{display:'inline-block',verticalAlign:'middle',marginLeft:10,padding:'1px 9px',borderRadius:999,background:'#d6b66e',color:'#14283a',fontSize:12,fontWeight:800,letterSpacing:'.04em'}}>改善中</span></h1>
    <p className={styles.lead}>毎日5問。選ぶとGTOと比べて採点し、解説が出ます。</p>
    {questions?<DailyQuiz date={date} questions={questions} member={Boolean(user)} url={`${SITE_URL}/learn/gto-quiz`}/>:<p>今日の問題を準備中です。</p>}
    <article className={styles.article} style={{marginTop:24}}>
