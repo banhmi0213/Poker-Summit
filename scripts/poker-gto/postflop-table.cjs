@@ -7,7 +7,9 @@ const fs=require('fs'),path=require('path');require('./common.cjs');
 const {allTextures,texture,distance}=require(path.resolve(__dirname,'../../lib/poker/flop-subset.ts'));
 const SPOTS=require('./spots.cjs');
 const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
-const root=path.resolve(__dirname,'../../public/poker-gto/flops');
+// --roots a,b (2026/11/06): directories of <spot>/<flop>.json; the first one holding at least --min flops of a spot wins
+// (the rebuilt all-hands solves first, the published flops as fallback).
+const ROOTS=(arg('roots','')||path.resolve(__dirname,'../../public/poker-gto/flops')).split(',').filter(Boolean),MIN=Number(arg('min',3));
 // Pot kind and preflop aggressor from the spot's line: the last raiser.
 function kindOf(line){
  const toks=line.split(' ').map(t=>/^(UTG|HJ|CO|BTN|SB|BB)(.*)$/.exec(t)).filter(Boolean);
@@ -20,8 +22,9 @@ function kindOf(line){
 const textures=allTextures(),out={},report=[];
 for(const [id,S] of Object.entries(SPOTS)){
  if(!S.line||(S.players??2)!==2||id.startsWith('hu-'))continue;
- const dir=path.join(root,id);if(!fs.existsSync(dir))continue;
- const files=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8'))).filter(d=>d.version>=3&&d.handEv);
+ let files=[],used='';for(const root of ROOTS){const dir=path.join(root,id);if(!fs.existsSync(dir))continue;
+  const fl=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8'))).filter(d=>d.version>=3&&d.handEv);
+  if(fl.length>=MIN||(!files.length&&fl.length)){files=fl;used=root;if(fl.length>=MIN)break;}}
  if(!files.length)continue;
  const tex=files.map(d=>texture(d.flop)),w=new Array(files.length).fill(0);
  for(const t of textures){let best=0,bd=Infinity;tex.forEach((x,i)=>{const d=distance(t,x);if(d<bd){bd=d;best=i;}});w[best]+=t.weight;}
@@ -29,7 +32,7 @@ for(const [id,S] of Object.entries(SPOTS)){
  for(const side of ['oop','ip']){const acc=new Map();
   files.forEach((d,f)=>{const pot=d.spot.pot;for(const [cls,ev] of Object.entries(d.handEv[side])){const e=acc.get(cls)??[0,0];e[0]+=w[f]*ev/pot;e[1]+=w[f];acc.set(cls,e);}});
   for(const [cls,[s,W]] of acc)if(W>0)entry[side][cls]=Math.round(s/W*10000)/10000;}
- out[key]=entry;report.push(`${id} → ${key}: ${files.length} flops, classes oop ${Object.keys(entry.oop).length} ip ${Object.keys(entry.ip).length}`);
+ out[key]=entry;report.push(`${id} → ${key}: ${files.length} flops from ${path.basename(used)}, classes oop ${Object.keys(entry.oop).length} ip ${Object.keys(entry.ip).length}`);
 }
 const file=arg('out',path.resolve(__dirname,'../../data/poker-gto/postflop-table.json'));
 fs.writeFileSync(file,JSON.stringify({version:1,built:new Date().toISOString().slice(0,10),from:'solved flops (handEv / pot, texture-weighted)',table:out}));
