@@ -27,19 +27,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh run download "${{ steps.run.outputs.id }}" --repo "${{ github.repository }}" --pattern 'flop-*' --dir "$RUNNER_TEMP/flops"
+          gh run download "${{ steps.run.outputs.id }}" --repo "${{ github.repository }}" --pattern 'rebuild-*' --dir "$RUNNER_TEMP/flops"
           n=$(ls "$RUNNER_TEMP/flops" | wc -l); echo "artifacts: $n"
-          mkdir -p public/poker-gto/flops
-          for d in "$RUNNER_TEMP"/flops/*/; do cp -r "$d". public/poker-gto/flops/; done
+          mkdir -p data/poker-gto/rebuild
+          for d in "$RUNNER_TEMP"/flops/*/; do cp -r "$d". data/poker-gto/rebuild/; done
       - name: Commit to gto-flop-results
         run: |
           set -o pipefail
           exec > >(tee log.txt) 2>&1
           trap 'tail -n 8 log.txt | while IFS= read -r l; do echo "::warning::${l:0:500}"; done' EXIT
-          ls -la public/poker-gto/flops
+          ls -la data/poker-gto/rebuild
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git checkout -b "gto-flop-out/${{ steps.run.outputs.id }}"
-          git add public/poker-gto/flops
+          git checkout -b "gto-rebuild-out/${{ steps.run.outputs.id }}"
+          git add data/poker-gto/rebuild
           git commit -m "フロップ戦略の計算結果（run ${{ steps.run.outputs.id }}）"
-          git push -f origin "gto-flop-out/${{ steps.run.outputs.id }}"
+          git push -f origin "gto-rebuild-out/${{ steps.run.outputs.id }}"
