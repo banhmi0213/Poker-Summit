@@ -150,7 +150,7 @@ function GtoHandTrainer({initialMode='all'}:{initialMode?:TrainerMode}={}){
   const played=next.log[next.log.length-1];
   const fb:Feedback={street:STREET_TEXT[hand.street],played:actText(played.type,played.to,played.allIn),level:null,score:null,freq:null,evLoss:null,
    options:known?menu.filter(x=>x.freq>=0.005).sort((a,b)=>b.freq-a.freq).map(x=>({text:x.text,freq:x.freq})):[],
-   note:!known?`採点なし：${reasonText(spot.reason)}`:spot.approx?'近似値：4人以上のポットや計算待ちの場面のため、その場の簡易計算です。GTOの割合は目安です（採点なし）':spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined};
+   note:!known?`採点なし：${reasonText(spot.reason)}`:spot.approx?'近似値：この場面そのものの計算がないため、近いフロップ・近い場面の計算か、その場の簡易計算です。GTOの割合は目安です（採点なし）':spot.nearFlop?`近いフロップ（${spot.nearFlop}）の計算で判定`:undefined};
   if(graded){// GTO's most frequent choice counts as no loss (the chart's EVs are within a few hundredths of a BB there, rarely more).
    const g=gradeChoice(menu.map(x=>x.freq),i),raw=evLoss(menu,i),loss=raw===null?null:g.level==='best'?0:raw;fb.level=g.level;fb.score=g.score;fb.freq=g.freq;fb.evLoss=loss;
    sendGtoRecords([recordRow(view,'trainer',{freqs:menu.map(x=>x.freq),chosen:i,action:fb.played,evLoss:loss})]);
