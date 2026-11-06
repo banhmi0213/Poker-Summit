@@ -60,13 +60,52 @@ const threads=Number(arg('threads',1)),stopThreads=threads>1&&board.length===3?r
 const t0=Date.now(),log=m=>console.log(`[${flop} ${((Date.now()-t0)/60000).toFixed(1)}min] ${m}`);
 log(`${spotId} combos OOP(${SPOT.oop}) ${solver.sides[0].n} IP(${SPOT.ip}) ${solver.sides[1].n}`);
 let expl=Infinity,checks=[];
+// Early stop (2026/11/06, owner: 250回固定をやめて、答えが固まったら止める). The measured exploitability is not usable
+// (no river averages), so the stop looks at what is actually exported: the flop strategies. Every --stable-every
+// iterations the flop decisions reached by at least 5% are compared with the previous look; when no action's overall
+// share moved more than --stable-pt points and the hands moved less than --stable-hand points on average, twice in a
+// row, the answer has settled. --stop on: stop there. --stop shadow: keep going to --max-iters and record where it
+// would have stopped and how far that answer is from the final one (to check the rule before trusting it).
+const stopMode=arg('stop','off'),stableEvery=Number(arg('stable-every',25)),minIters=Number(arg('min-iters',125));
+const stablePt=Number(arg('stable-pt',1)),stableHand=Number(arg('stable-hand',1.5));
+function flopLook(){
+ const out=[];
+ (function walk(steps,reach){
+  const v=describe(solver,steps);if(v.kind!=='act'||v.street!=='flop')return;
+  out.push({key:steps.join('.'),reach,total:v.total,classes:v.classes});
+  v.actions.forEach((_,i)=>walk([...steps,i],reach*v.total[i]));
+ })([],1);
+ return out;
+}
+function lookDiff(a,b){
+ const prev=new Map(a.map(n=>[n.key,n]));let maxTotal=0,maxHand=0;
+ // Only decisions reached by at least 5% both times; how often a decision is reached shows in its parent's shares.
+ for(const n of b){const o=prev.get(n.key);if(!o||n.reach<0.05||o.reach<0.05)continue;
+  for(let i=0;i<n.total.length;i++)maxTotal=Math.max(maxTotal,Math.abs(n.total[i]-o.total[i])*100);
+  let s=0,w=0;for(const [l,e] of Object.entries(n.classes)){const f=o.classes[l];if(!f)continue;let d=0;for(let i=1;i<e.length;i++)d+=Math.abs(e[i]-f[i]);s+=e[0]*d/2;w+=e[0];}
+  if(w)maxHand=Math.max(maxHand,s/w*100);}
+ return {total:+maxTotal.toFixed(2),hand:+maxHand.toFixed(2)};
+}
+let lastLook=null,calm=0,stable=null;const stableTrail=[];
 while(solver.iterations<maxIters){
  solver.run(1);
  const it=solver.iterations,every=Number(arg('check-every',0))||(it<40?20:10);
- if(it%every===0||it>=maxIters){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log(`iter ${it} exploitability ${(expl*100).toFixed(2)}% of pot · tables ${solver.tableCount()} · rss ${(process.memoryUsage().rss/1e9).toFixed(1)}GB`);
+ if(stopMode!=='on'&&(it%every===0||it>=maxIters)){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log(`iter ${it} exploitability ${(expl*100).toFixed(2)}% of pot · tables ${solver.tableCount()} · rss ${(process.memoryUsage().rss/1e9).toFixed(1)}GB`);
   if(expl<=target)break;}
+ if(stopMode!=='off'&&it%stableEvery===0&&it>=minIters-stableEvery){
+  const look=flopLook();
+  if(lastLook){const d=lookDiff(lastLook,look);stableTrail.push([it,d.total,d.hand]);calm=d.total<=stablePt&&d.hand<=stableHand?calm+1:0;
+   log(`iter ${it} flop moved ${d.total}pt (hands ${d.hand}pt)${calm?` · calm ${calm}`:''}`);
+   if(calm>=2&&it>=minIters&&!stable){stable={iterations:it,look};if(stopMode==='on'){log(`settled at ${it} iterations`);break;}}}
+  lastLook=look;
+ }
  if((Date.now()-t0)/60000>maxMinutes){expl=solver.exploitability();checks.push([it,+(expl*100).toFixed(3)]);log('time limit');break;}
 }
+if(stopMode==='on'&&!checks.some(c=>c[0]===solver.iterations)){expl=solver.exploitability();checks.push([solver.iterations,+(expl*100).toFixed(3)]);log(`iter ${solver.iterations} exploitability ${(expl*100).toFixed(2)}% of pot`);}
+// What the rule did: where it settled, and in shadow mode how far that answer was from the one at the end.
+const stopInfo=stopMode==='off'?null:{mode:stopMode,every:stableEvery,minIters,pt:stablePt,hand:stableHand,trail:stableTrail,
+ settledAt:stable?.iterations??null,...(stopMode==='shadow'&&stable?{gapToFinal:lookDiff(stable.look,flopLook())}:{})};
+if(stopInfo)log(`early stop: ${JSON.stringify({settledAt:stopInfo.settledAt,gapToFinal:stopInfo.gapToFinal})}`);
 // Export every flop decision: per starting-hand class, reach weight (combos) and the share of each action.
 const round=v=>Math.round(v*1000)/1000;
 const nodes=[];
@@ -98,7 +137,7 @@ function handEv(p){const v=solver.handValues(p),side=solver.sides[p],acc={};
  return Object.fromEntries(Object.entries(acc).map(([l,[s,w]])=>[l,Math.round(s/w*100)/100]));}
 const out={version:fromChart?3:1,flop,board,spot:{id:spotId,name:SPOT.name,pot:spot.pot,stack:spot.stack,oop:SPOT.oop,ip:SPOT.ip,note:SPOT.note,ranges:{oop:SPOT.oopRange,oopExclude:SPOT.oopExclude??'',ip:SPOT.ipRange,ipExclude:SPOT.ipExclude??''},...(fromChart?{line:SPOT.line,chartRanges:fromChart.ranges}:{}),sizes:SPOT.sizes},
  iterations:solver.iterations,exploitability:+(expl*100).toFixed(3),checks,ev:{oop:round(ev0),ip:round(ev1)},...(fromChart?{handEv:{oop:handEv(0),ip:handEv(1)},
- riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),threads,peakGB:+(process.resourceUsage().maxRSS/1048576).toFixed(2),nodes};
+ riverCurrent:'exploitability measured with the river current strategy (no river averages are kept)'}:{}),...(stopInfo?{earlyStop:stopInfo}:{}),minutes:+((Date.now()-t0)/60000).toFixed(1),threads,peakGB:+(process.resourceUsage().maxRSS/1048576).toFixed(2),nodes};
 if(stopThreads)stopThreads();
 fs.mkdirSync(outDir,{recursive:true});
 fs.writeFileSync(path.join(outDir,flop+'.json'),JSON.stringify(out));
