@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-11-06T08:06:47.361Z",
+  "checkedAt": "2026-11-06T08:17:04.888Z",
   "fitReports": {
     "20": {
       "round": 6,
@@ -6000,7 +6000,7 @@
     "manifestBlob": "0e2e3721885c1256df7f8444075f6c585a92c919",
     "manifestReadback": true,
     "run": 42185279750,
-    "state": "collecting-pinned199",
+    "state": "direct-artifact-recovered-validated-PR822-pending",
     "outputBranch": "gto-flop-partial-out/20261106-1702",
     "selected": [
       {
@@ -6666,7 +6666,12 @@
           "12-10-5:hl"
         ]
       }
-    ]
+    ],
+    "directApiDownload": true,
+    "exactRecoveredCount": 199,
+    "apiLocalBlobHashMatch": true,
+    "collectorState": "queued-auxiliary-output-not-required-for-direct-verified-intake",
+    "stagePR": 822
   },
   "flopImport816": {
     "pr": 816,
@@ -6905,10 +6910,9 @@
     }
   },
   "workBranch": {
-    "name": "chatgpt/gto-flops-snapshot-20261106-k",
-    "head": "cecf31841dc3ad4f1c83f83f661671e213ad24b8",
-    "tree": "7630f88bd89d093cbe91e9b3a5b5515b1f7187bb",
-    "githubLocalTreeMatch": true
+    "branch": "chatgpt/gto-flops-snapshot-20261106-l",
+    "head": "998b17e5d30ece67dae2102061e38831227481ac",
+    "tree": "e9b88eb35a1916880a3653a8310c3db1b1d9c5d7"
   },
   "expansionRunRegistry": [
     {
@@ -7087,11 +7091,12 @@
     "Six active batches use40 jobs includingCI. Replenish completed spot in ownerpriority; monitor/partial recovery until2026-11-07T08:00Z. Atdeadline leave all solvesrunning, handoff all IDs/manifests/artifactranges; disable only6ae76f9802748191b3487089ae17ebac."
   ],
   "intakePending": {
-    "state": "pinned199-collecting",
+    "state": "validated-PR822-pending",
     "count": 199,
     "manifest": "data/poker-gto/fit-work/partial-20261106-1702.json",
     "branch": "gto-flop-snapshot/20261106-1702",
-    "blob": "0e2e3721885c1256df7f8444075f6c585a92c919"
+    "blob": "0e2e3721885c1256df7f8444075f6c585a92c919",
+    "pr": 822
   },
   "snapshotCollectionHistory": [
     {
@@ -8388,6 +8393,30 @@
     "head": "ff0b69ba50ccfe5d23c29d3fc0a5adfef9bdb383",
     "allChecks": "3/3success plusVercelstatussuccess",
     "productionVerification": "Pending: publicindex request HTTP403;do notclaim4757 deployed yet",
-    "ownerAuthorized": true
+    "ownerAuthorized": true,
+    "productionPublicIndex": {
+      "verifiedAt": "2026-11-06T08:09Z",
+      "url": "https://pokersummit.jp/poker-gto/flops/index.json",
+      "total": 4757,
+      "all21CountsMatch": true,
+      "method": "actualCloudChromeDOMJSON",
+      "gtoUi": "unauthenticated/login-shown; not verified after authentication"
+    }
+  },
+  "flopImport822": {
+    "pr": 822,
+    "url": "https://github.com/banhmi0213/Poker-Summit/pull/822",
+    "state": "checks-pending",
+    "branch": "chatgpt/gto-flops-snapshot-20261106-l",
+    "head": "998b17e5d30ece67dae2102061e38831227481ac",
+    "tree": "e9b88eb35a1916880a3653a8310c3db1b1d9c5d7",
+    "localTreeMatch": true,
+    "tests": {
+      "pass": 68,
+      "fail": 0
+    },
+    "diffCheck": true,
+    "exactRecovered": 199,
+    "pendingImported": false
   }
 }
