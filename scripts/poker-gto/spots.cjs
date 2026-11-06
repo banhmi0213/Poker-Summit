@@ -76,7 +76,7 @@ module.exports={
 // Preflop line of each spot in the chart (2026/10/27). flop-solve.cjs takes ranges, pot and stack from the chart along
 // this line (scripts/poker-gto/chart-ranges.cjs); the reference ranges above remain only for the page text.
 const LINES={'btn-bb':'UTGF HJF COF BTN2.5 SBF BBC','co-bb':'UTGF HJF CO2.5 BTNF SBF BBC','hj-bb':'UTGF HJ2.5 COF BTNF SBF BBC',
- 'utg-bb':'UTG2.5 HJF COF BTNF SBF BBC','sb-bb':'UTGF HJF COF BTNF SB3 BBC','co-btn':'UTGF HJF CO2.5 BTNC','utg-btn':'UTG2.5 HJF COF BTNC',
+ 'utg-bb':'UTG2.5 HJF COF BTNF SBF BBC','sb-bb':'UTGF HJF COF BTNF SB3.5 BBC','co-btn':'UTGF HJF CO2.5 BTNC','utg-btn':'UTG2.5 HJF COF BTNC',
  'utg-hj':'UTG2.5 HJC','utg-co':'UTG2.5 HJF COC','hj-co':'UTGF HJ2.5 COC','hj-btn':'UTGF HJ2.5 COF BTNC','btn-sb':'UTGF HJF COF BTN2.5 SBC BBF','hj-bb-3bet':'UTGF HJ2.5 COF BTNF SBF BB11 HJC','sb-bb-3bet':'UTGF HJF COF BTNF SB3 BB9 SBC',
  'btn-bb-3bet':'UTGF HJF COF BTN2.5 SBF BB11 BTNC','co-bb-3bet':'UTGF HJF CO2.5 BTNF SBF BB11 COC','utg-bb-3bet':'UTG2.5 HJF COF BTNF SBF BB11 UTGC',
  'btn-sb-3bet':'UTGF HJF COF BTN2.5 SB11 BTNC','co-btn-3bet':'UTGF HJF CO2.5 BTN7.5 COC','btn-bb-4bet':'UTGF HJF COF BTN2.5 SBF BB11 BTN24.2 BBC'};
