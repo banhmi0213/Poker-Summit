@@ -48,7 +48,21 @@ const descriptions: Record<Hand["kind"], string> = {
  offsuit: "オフスート：異なるマークの2枚"
 };
 
+// 2026/11/07 オーナー指示：ポジション別の参考レンジは外す（正しいプリフロップ表ができるまで）。
+// 表の読み方の図だけを出す。参考レンジの練習は PreflopRangeTrainerWithRanges に残してある。
 export function PreflopRangeTrainer() {
+ return <section className={styles.trainer} aria-labelledby="preflop-range-title">
+  <header className={styles.header}>
+   <span className={styles.eyebrow}>POKER SUMMIT · LESSON</span>
+   <h2 id="preflop-range-title">169種類のハンド表を読んでみよう</h2>
+   <p>対角線がポケットペア、右上がスーテッド、左下がオフスートです。</p>
+  </header>
+  <img src="/blog-assets/starting-hand-grid.png" alt="13×13スターティングハンド表の読み方（対角線がポケットペア、右上がスーテッド、左下がオフスート）" width={1536} height={1024} style={{width:"100%",height:"auto",borderRadius:12,display:"block"}} />
+  <p className={styles.note}>ポジション別の参考レンジは、計算を作り直しています。公開まで、しばらくお待ちください。</p>
+ </section>;
+}
+
+export function PreflopRangeTrainerWithRanges() {
  const usageAnswer=useGtoAnswer('lesson',true);
  const [position, setPosition] = useState<Position>("UTG");
  const [selected, setSelected] = useState<Hand>(handAt(0, 1));
