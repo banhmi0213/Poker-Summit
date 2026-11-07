@@ -6,7 +6,7 @@
 const fs=require('fs'),path=require('path');require('./common.cjs');
 const {allTextures,texture,distance}=require(path.resolve(__dirname,'../../lib/poker/flop-subset.ts'));
 const SPOTS=require('./spots.cjs');
-const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i>=0?process.argv[i+1]:d;};
+const arg=(k,d)=>{const i=process.argv.indexOf('--'+k);return i<0?d:(process.argv[i+1]&&!process.argv[i+1].startsWith('--')?process.argv[i+1]:true);};
 // --roots a,b (2026/11/06): directories of <spot>/<flop>.json; the first one holding at least --min flops of a spot wins
 // (the rebuilt all-hands solves first, the published flops as fallback).
 const ROOTS=(arg('roots','')||path.resolve(__dirname,'../../public/poker-gto/flops')).split(',').filter(Boolean),MIN=Number(arg('min',3));
@@ -22,6 +22,18 @@ function kindOf(line){
 const textures=allTextures(),out={},report=[];
 for(const [id,S] of Object.entries(SPOTS)){
  if(!S.line||(S.players??2)!==2||id.startsWith('hu-'))continue;
+ // --merge: per class, take the root whose flops cover that class most often (old flops: many flops, in-range classes only;
+ // rebuilt flops: few flops, every class). The table also keeps the ranges the flops were solved with (entry.ranges), so the
+ // preflop solver can follow the opponent's current range.
+ if(arg('merge')){const {kind,aggr}=kindOf(S.line),key=`${kind}|${S.oop}|${S.ip}|${aggr}`,entry={oop:{},ip:{}},cnt={oop:{},ip:{}};let note=[],rangesOf=null;
+  for(const root of ROOTS){const dir=path.join(root,id);if(!fs.existsSync(dir))continue;
+   const fl=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8'))).filter(d=>d.version>=3&&d.handEv);if(!fl.length)continue;
+   const tex=fl.map(d=>texture(d.flop)),w=new Array(fl.length).fill(0);
+   for(const t of textures){let best=0,bd=Infinity;tex.forEach((x,i)=>{const d=distance(t,x);if(d<bd){bd=d;best=i;}});w[best]+=t.weight;}
+   for(const side of ['oop','ip']){const acc=new Map();fl.forEach((d,f)=>{for(const [c,ev] of Object.entries(d.handEv[side])){const e=acc.get(c)??[0,0,0];e[0]+=w[f]*ev/d.spot.pot;e[1]+=w[f];e[2]++;acc.set(c,e);}});
+    for(const [c,[sm,W,n]] of acc)if(W>0&&n>(cnt[side][c]??0)){entry[side][c]=Math.round(sm/W*10000)/10000;cnt[side][c]=n;}}
+   if(!rangesOf&&fl[0].spot.chartRanges)rangesOf=fl[0].spot.chartRanges;note.push(path.basename(root)+':'+fl.length);}
+  if(Object.keys(entry.oop).length){if(rangesOf)entry.ranges=rangesOf;out[key]=entry;report.push(`${id} → ${key}: ${note.join(' ')}`);}continue;}
  let files=[],used='';for(const root of ROOTS){const dir=path.join(root,id);if(!fs.existsSync(dir))continue;
   const fl=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8'))).filter(d=>d.version>=3&&d.handEv);
   if(fl.length>=MIN||(!files.length&&fl.length)){files=fl;used=root;if(fl.length>=MIN)break;}}

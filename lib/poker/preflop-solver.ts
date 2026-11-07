@@ -53,7 +53,10 @@ export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Reco
  * (seat names, e.g. "srp|BB|BTN|BTN"). share[side][class] = the class's solved EV as a share of the pot at the flop (texture-weighted
  * over the solved flops), for side "oop" / "ip". A showdown terminal with a table uses it instead of equity × realisation;
  * classes without a value (never in that range) and spots without a table keep the old estimate, counted in POSTFLOP_MISSES. */
-export type PostflopTable=Record<string,{oop:Record<string,number>;ip:Record<string,number>}>;
+export type PostflopTable=Record<string,{oop:Record<string,number>;ip:Record<string,number>;
+ /** the ranges the flops were solved with (class → frequency); with them the share follows the opponent's current range:
+  * share × equity(class vs current range) / equity(class vs solved range), i.e. the solved realisation kept and the equity updated */
+ ranges?:{oop:Record<string,number>;ip:Record<string,number>}}>;
 let POSTFLOP:PostflopTable|null=null;
 export const POSTFLOP_MISSES=new Map<string,number>();
 export function setPostflopTable(t:PostflopTable|null){POSTFLOP=t;POSTFLOP_MISSES.clear();}
@@ -195,6 +198,13 @@ export class PreflopSolver{
   for(let h=0;h<n;h++){let sum=0;for(let a=0;a<k;a++){const v=Math.max(0,src[h*k+a]);out[h*k+a]=v;sum+=v;}for(let a=0;a<k;a++)out[h*k+a]=sum>0?out[h*k+a]/sum:1/k;}
   return out;
  }
+ /** Equity of every class against the ranges a table's flops were solved with (cached per table key). */
+ #refCache=new Map<string,{oop:Float64Array;ip:Float64Array}>();
+ #eqRef(key:string,r:{oop:Record<string,number>;ip:Record<string,number>}){
+  let c=this.#refCache.get(key);if(c)return c;const n=this.n,one=(opp:Record<string,number>)=>{const out=new Float64Array(n),w=Float64Array.from(this.labels,l=>opp[l]??0);
+   for(let h=0;h<n;h++){let a=0,b=0;for(let o=0;o<n;o++){const x=this.pair[h*n+o]*w[o];a+=x;b+=x*this.eq[h*n+o];}out[h]=a>0?b/a:0;}return out;};
+  c={oop:one(r.ip),ip:one(r.oop)};this.#refCache.set(key,c);return c;
+ }
  /** Probability mass a player's range still has (prior × reach). */
  #mass(reach:Float64Array){let m=0;for(let h=0;h<this.n;h++)m+=this.prior[h]*reach[h];return m;}
  /** Counterfactual values: values[p][h] = expected chips for player p holding h, weighted by the others' reach. */
@@ -213,15 +223,16 @@ export class PreflopSolver{
    const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:(aggr!==undefined?role.callBy?.[this.names[aggr]]:undefined)??role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
-   const key=`${kind}|${this.names[oop]}|${this.names[ip]}|${aggr!==undefined?this.names[aggr]:'-'}`,table=kind!=='allin'&&POSTFLOP?POSTFLOP[key]:undefined;
+   const key=`${kind}|${this.names[oop]}|${this.names[ip]}|${aggr!==undefined?this.names[aggr]:'-'}`,table=kind!=='allin'&&POSTFLOP?POSTFLOP[key]:undefined,ref=table?.ranges?this.#eqRef(key,table.ranges):null;
    if(!table&&kind!=='allin'&&POSTFLOP)POSTFLOP_MISSES.set(key,(POSTFLOP_MISSES.get(key)??0)+1);
    for(const [me,op] of [[a,b],[b,a]] as const){
     const rMe=me===ip?rIp:rOop,rOp=me===ip?rOop:rIp,ro=reach[op],v=values[me];
     const mine=table?(me===ip?table.ip:table.oop):undefined;
     if(mine){
      // Solved postflop value: the class's share of the pot against the opponent's solved range.
-     for(let h=0;h<n;h++){const sh=mine[this.labels[h]];let w=0,s=0;for(let o=0;o<n;o++)w+=this.pair[h*n+o]*ro[o];
-      if(sh!==undefined){s=w*(sh*won-node.invested[me]);}
+     const eqRef=ref?(me===ip?ref.ip:ref.oop):null;
+     for(let h=0;h<n;h++){const sh=mine[this.labels[h]];let w=0,s=0,e=0;for(let o=0;o<n;o++){const x=this.pair[h*n+o]*ro[o];w+=x;e+=x*this.eq[h*n+o];}
+      if(sh!==undefined){const adj=eqRef&&eqRef[h]>0.005&&w>0?(e/w)/eqRef[h]:1;s=w*(sh*adj*won-node.invested[me]);}
       else{POSTFLOP_MISSES.set(key+'#class',(POSTFLOP_MISSES.get(key+'#class')??0)+1);
        const pm=this.play[h];for(let o=0;o<n;o++){const ww=this.pair[h*n+o]*ro[o];if(!ww)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*this.play[o];s+=ww*(a1/(a1+b1)*won-node.invested[me]);}}
       v[h]=s*rest;}
