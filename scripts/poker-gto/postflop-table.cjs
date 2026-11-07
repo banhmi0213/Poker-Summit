@@ -19,9 +19,34 @@ function kindOf(line){
  const k=raises.length<=1?'srp':raises.length===2?'3bp':'4bp';
  return {kind:limp&&raises.length===1?'srp':k,aggr:raises.length?raises[raises.length-1][1]:'-'};
 }
+const EQ=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/preflop-equity.json'),'utf8')),EQI=Object.fromEntries(EQ.labels.map((l,i)=>[l,i]));
+const RK='23456789TJQKA',cardsOf=l=>{const a=RK.indexOf(l[0]),b=RK.indexOf(l[1]),out=[];for(let x=0;x<4;x++)for(let y=0;y<4;y++){if(a===b&&y<=x)continue;if(l[2]==='s'&&x!==y)continue;if(l[2]==='o'&&x===y)continue;out.push([a*4+x,b*4+y]);}return out;};
+const CARDS=Object.fromEntries(EQ.labels.map(l=>[l,cardsOf(l)])),PAIR={};
+const pairOk=(h,o)=>{const k=h+'|'+o;if(PAIR[k]!==undefined)return PAIR[k];let ok=0;for(const [p,q] of CARDS[h])for(const [r,t] of CARDS[o])if(p!==r&&p!==t&&q!==r&&q!==t)ok++;return PAIR[k]=ok;};
+// Equity of class l against a weighted range over all boards (preflop all-in equity of the class pair, card removal counted).
+function eqVs(l,opp){let w=0,s=0;for(const [o,x] of Object.entries(opp)){if(!(x>0))continue;const k=pairOk(l,o)*x;w+=k;s+=k*EQ.eq[EQI[l]][EQI[o]]/10000;}return w>0?s/w:null;}
+const median=a=>{const b=[...a].sort((x,y)=>x-y);return b.length?b[b.length>>1]:NaN;};
 const textures=allTextures(),out={},report=[];
 for(const [id,S] of Object.entries(SPOTS)){
  if(!S.line||(S.players??2)!==2||id.startsWith('hu-'))continue;
+ // --ratio (2026/11/07): from the rebuilt flops (all hands, with <flop>.eq.json from flop-equity.cjs) take each class's
+ // realisation = Σ value / Σ equity over the solved flops, times its equity against the same range over all flops.
+ // The few solved flops then only have to get the realisation right, not how often the class hits the board.
+ if(arg('ratio')){const {kind,aggr}=kindOf(S.line),key=`${kind}|${S.oop}|${S.ip}|${aggr}`,dir=path.join(ROOTS[0],id);
+  if(!fs.existsSync(dir))continue;const fl=fs.readdirSync(dir).filter(f=>f.endsWith('.json')&&!f.endsWith('.eq.json')&&fs.existsSync(path.join(dir,f.replace('.json','.eq.json'))))
+   .map(f=>({d:JSON.parse(fs.readFileSync(path.join(dir,f),'utf8')),e:JSON.parse(fs.readFileSync(path.join(dir,f.replace('.json','.eq.json')),'utf8'))})).filter(x=>x.d.handEv);
+  if(fl.length<Number(arg('min-ratio',4)))continue;const ranges=fl[0].d.spot.chartRanges,entry={oop:{},ip:{},ranges},rz={oop:{},ip:{}};
+  // Control variate: value = mean over the solved flops + b × (equity over all flops − mean equity on the solved flops),
+  // b = pooled slope of value on equity across classes and flops (per side). A class that hit unusually often on the
+  // chosen flops gets its surplus taken back at the rate value actually moves with equity.
+  for(const side of ['oop','ip']){const opp=ranges[side==='oop'?'ip':'oop'];let sx=0,sy=0,sxx=0,sxy=0,N=0;const per={};
+   for(const l of EQ.labels){const xs=[],ys=[];for(const {d,e} of fl){const v=d.handEv[side][l],q=e[side][l];if(v===undefined||q===undefined)continue;xs.push(q);ys.push(v/d.spot.pot);}
+    if(!xs.length)continue;per[l]=[xs,ys];const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;
+    xs.forEach((x,i)=>{sx+=x-mx;sy+=ys[i]-my;sxx+=(x-mx)**2;sxy+=(x-mx)*(ys[i]-my);N++;});}
+   const slope=sxx>0?sxy/sxx:1;rz[side].slope=slope;
+   for(const [l,[xs,ys]] of Object.entries(per)){const all=eqVs(l,opp);if(all===null)continue;const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;
+    entry[side][l]=Math.round((my+slope*(all-mx))*10000)/10000;}}
+  out[key]=entry;report.push(`${id} → ${key}: ratio over ${fl.length} flops, slope oop ${rz.oop.slope.toFixed(2)} ip ${rz.ip.slope.toFixed(2)}`);continue;}
  // --merge: per class, take the root whose flops cover that class most often (old flops: many flops, in-range classes only;
  // rebuilt flops: few flops, every class). The table also keeps the ranges the flops were solved with (entry.ranges), so the
  // preflop solver can follow the opponent's current range.
