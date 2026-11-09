@@ -1,0 +1,50 @@
+name: Poker preflop experiments
+
+# GTO rebuild (2026/11/09, owner: プリフロップに全力で、40台使え): solve many preflop variants at once, one job per variant
+# listed in data/poker-gto/exp/variants.json ({name, table, env}). Each job uploads its chart as an artifact; the comparison
+# with the reference charts runs outside the repository. Trigger: push a gto-pf-exp/<anything> branch.
+on:
+  push:
+    branches: ["gto-pf-exp/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      variants: ${{ steps.v.outputs.variants }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: echo "variants=$(cat data/poker-gto/exp/variants.json)" >> "$GITHUB_OUTPUT"
+  solve:
+    needs: plan
+    name: Solve ${{ matrix.v.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 40
+      matrix:
+        v: ${{ fromJSON(needs.plan.outputs.variants) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Solve
+        env:
+          GTO_3WAY_R: ${{ matrix.v.env || '0.28,0.15' }}
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+        run: |
+          mkdir -p out
+          node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs --seats 6 --sizes wizard --postflop ${{ matrix.v.table }} --iters ${{ vars.GTO_PF_EXP_ITERS || '1000' }} --out out/${{ matrix.v.name }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pf-${{ matrix.v.name }}
+          path: out/${{ matrix.v.name }}.json
+          retention-days: 7

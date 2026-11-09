@@ -60,6 +60,8 @@ export type PostflopTable=Record<string,{oop:Record<string,number>;ip:Record<str
 let POSTFLOP:PostflopTable|null=null;
 export const POSTFLOP_MISSES=new Map<string,number>();
 export function setPostflopTable(t:PostflopTable|null){POSTFLOP=t;POSTFLOP_MISSES.clear();}
+/** Three-way realisation penalties for the first and second to act (2026/11/09 experiments: GTO_3WAY_R="0.28,0.15"). */
+const THREE_WAY_R=((globalThis as {process?:{env?:Record<string,string|undefined>}}).process?.env?.GTO_3WAY_R??'0.28,0.15').split(',').map(Number);
 export function playability(label:string){
  if(PLAY_TABLE&&PLAY_TABLE[label]!==undefined)return PLAY_TABLE[label];
  const r='23456789TJQKA',a=r.indexOf(label[0]),b=r.indexOf(label[1]);if(a===b)return 1+PLAYABILITY.pair;
@@ -267,7 +269,7 @@ export class PreflopSolver{
   * scaled by position (first to act postflop realises least) and playability. */
  #threeWay(node:PreflopTerminal,reach:Float64Array[],mass:number[],pot:number){
   const n=this.n,P=this.seats,POST=this.post,[x,y,z]=node.threeWay!,values=Array.from({length:P},()=>new Float64Array(n));
-  const order=[x,y,z].sort((u,v)=>POST[u]-POST[v]),R=new Map([[order[0],1-0.28*this.depth],[order[1],1-0.15*this.depth],[order[2],1.0]]);
+  const order=[x,y,z].sort((u,v)=>POST[u]-POST[v]),R=new Map([[order[0],1-THREE_WAY_R[0]*this.depth],[order[1],1-THREE_WAY_R[1]*this.depth],[order[2],1.0]]);
   for(let p=0;p<P;p++)if(p!==x&&p!==y&&p!==z){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
   let rest=1;for(let q=0;q<P;q++)if(q!==x&&q!==y&&q!==z)rest*=mass[q];
   const eq=this.eq,pair=this.pair,play=this.play;
