@@ -113,3 +113,34 @@ Object.assign(module.exports,{
  'hu-3bet':{name:'2人・3ベットポット・100BB',short:'SBオープン→BB3ベット→SBコール（2人）',pot:20,stack:90,oop:'BB',ip:'SB',sizes:THREE_BET,chart:'hu',line:'SB2.5 BB10 SBC',
   note:'2人のとき。SBが2.5BBでオープン、BBが10BBに3ベット、SBがコール（ポット20BB）。BBが先に打つ。',oopRange:'2人用プリフロップ表のBBの3ベット',ipRange:'2人用プリフロップ表のSBのコール'},
 });
+
+// ---- Pots the postflop table lacked (2026/11/09): without solved flops the preflop chart valued them with a rough
+// formula, which made 4-bets look bad and 3-bets almost free. Ranges come from the rebuild chart (chart 'r4'). ----
+{const R4={pot:0,stack:0,chart:'r4',flopCount:6,oopRange:'プリフロップ表から',ipRange:'プリフロップ表から'};
+ const FOUR_BET={betSizes:[0.25,0.5],raiseSizes:[],maxRaises:1,turnBetSizes:[0.5],turnRaiseSizes:[],turnMaxRaises:1,riverBetSizes:[0.75],riverRaiseSizes:[],riverMaxRaises:1,allinMaxPot:1.5};
+ const add=(id,name,oop,ip,sizes,line)=>{module.exports[id]={...R4,name,short:name,note:name+'（再構築用）',oop,ip,sizes,line};};
+ // single-raised pots, SB flats
+ add('utg-sb','UTGオープン→SBコール','SB','UTG',SRP,'UTG2.5 HJF COF BTNF SBC BBF');
+ add('hj-sb','HJオープン→SBコール','SB','HJ',SRP,'UTGF HJ2.5 COF BTNF SBC BBF');
+ add('co-sb','COオープン→SBコール','SB','CO',SRP,'UTGF HJF CO2.5 BTNF SBC BBF');
+ // 3-bet pots
+ add('utg-sb-3bet','UTGオープン→SBが3ベット→UTGコール','SB','UTG',THREE_BET,'UTG2.5 HJF COF BTNF SB11.5 UTGC');
+ add('hj-sb-3bet','HJオープン→SBが3ベット→HJコール','SB','HJ',THREE_BET,'UTGF HJ2.5 COF BTNF SB11.5 HJC');
+ add('co-sb-3bet','COオープン→SBが3ベット→COコール','SB','CO',THREE_BET,'UTGF HJF CO2.5 BTNF SB11.5 COC');
+ add('utg-btn-3bet','UTGオープン→BTNが3ベット→UTGコール','UTG','BTN',THREE_BET,'UTG2.5 HJF COF BTN8.5 UTGC');
+ add('hj-btn-3bet','HJオープン→BTNが3ベット→HJコール','HJ','BTN',THREE_BET,'UTGF HJ2.5 COF BTN8.5 HJC');
+ add('utg-co-3bet','UTGオープン→COが3ベット→UTGコール','UTG','CO',THREE_BET,'UTG2.5 HJF CO8.5 UTGC');
+ add('hj-co-3bet','HJオープン→COが3ベット→HJコール','HJ','CO',THREE_BET,'UTGF HJ2.5 CO8.5 HJC');
+ // 4-bet pots (opener 4-bets, the 3-bettor calls)
+ add('co-bb-4bet','COオープン→BB3ベット→CO4ベット→BBコール','BB','CO',FOUR_BET,'UTGF HJF CO2.5 BTNF SBF BB13 CO27.6 BBC');
+ add('co-sb-4bet','COオープン→SB3ベット→CO4ベット→SBコール','SB','CO',FOUR_BET,'UTGF HJF CO2.5 BTNF SB11.5 CO24.4 SBC');
+ add('co-btn-4bet','COオープン→BTN3ベット→CO4ベット→BTNコール','CO','BTN',FOUR_BET,'UTGF HJF CO2.5 BTN8.5 CO23 BTNC');
+ add('btn-sb-4bet','BTNオープン→SB3ベット→BTN4ベット→SBコール','SB','BTN',FOUR_BET,'UTGF HJF COF BTN2.5 SB11.5 BTN24.4 SBC');
+ add('hj-bb-4bet','HJオープン→BB3ベット→HJ4ベット→BBコール','BB','HJ',FOUR_BET,'UTGF HJ2.5 COF BTNF SBF BB12.5 HJ26.5 BBC');
+ add('hj-sb-4bet','HJオープン→SB3ベット→HJ4ベット→SBコール','SB','HJ',FOUR_BET,'UTGF HJ2.5 COF BTNF SB11.5 HJ24.4 SBC');
+ add('hj-btn-4bet','HJオープン→BTN3ベット→HJ4ベット→BTNコール','HJ','BTN',FOUR_BET,'UTGF HJ2.5 COF BTN8.5 HJ23 BTNC');
+ add('hj-co-4bet','HJオープン→CO3ベット→HJ4ベット→COコール','HJ','CO',FOUR_BET,'UTGF HJ2.5 CO8.5 HJ23 COC');
+ add('utg-sb-4bet','UTGオープン→SB3ベット→UTG4ベット→SBコール','SB','UTG',FOUR_BET,'UTG2.5 HJF COF BTNF SB11.5 UTG24.4 SBC');
+ add('utg-btn-4bet','UTGオープン→BTN3ベット→UTG4ベット→BTNコール','UTG','BTN',FOUR_BET,'UTG2.5 HJF COF BTN8.5 UTG23 BTNC');
+ add('utg-co-4bet','UTGオープン→CO3ベット→UTG4ベット→COコール','UTG','CO',FOUR_BET,'UTG2.5 HJF CO8.5 UTG23 COC');
+}

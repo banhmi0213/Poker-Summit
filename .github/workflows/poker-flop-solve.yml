@@ -27,6 +27,8 @@ jobs:
           spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
           node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
           flops='["Qh8d3c","KhTd7h","8h5d3d","Th6d6c","Jh7h4c","AhJd8c","KhKd5h","Ah6d3d","5h3d3c","Qh9h5h","9h6d4c","QhTdTc"]'
+          # Spots with flopCount (2026/11/09) solve only the first N of these boards.
+          flops=$(node -e "const s=require('./scripts/poker-gto/spots.cjs')['$spot'];const f=$flops;console.log(JSON.stringify(f.slice(0,s.flopCount||f.length)))")
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}

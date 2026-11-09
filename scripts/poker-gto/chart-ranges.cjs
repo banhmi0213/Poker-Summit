@@ -5,6 +5,9 @@ const fs=require('fs'),path=require('path');
 // Heads-up lines (2026/10/29) use preflop-hu.json: SB is the button, acts first preflop and last after the flop.
 const load=f=>{const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../public/poker-gto/'+f),'utf8'));return new Map(c.nodes.map(n=>[n.player+'|'+n.history,n]));};
 const CHARTS={'6max':{byKey:load('preflop.json'),post:['SB','BB','UTG','HJ','CO','BTN']},hu:{byKey:load('preflop-hu.json'),post:['BB','SB']}};
+// Rebuild chart (2026/11/09): the pots missing from the postflop table take their ranges from the current experiment chart
+// (Wizard-sized bets), which has the 3-bet and 4-bet lines the published chart lacks.
+Object.defineProperty(CHARTS,'r4',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-r4.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 const BLIND={SB:0.5,BB:1};
 function chartSpot(line,chartName='6max',players=2){
  const {byKey,post:POST}=CHARTS[chartName];
