@@ -8,6 +8,7 @@ alter table public.blog_entries add constraint blog_entries_category_check
     'ハンド・役',
     '戦略の基礎',
     '実践ノウハウ',
+    'ゲーム・アプリ',
     'トーナメント',
     '大会レポート',
     '店舗紹介',
