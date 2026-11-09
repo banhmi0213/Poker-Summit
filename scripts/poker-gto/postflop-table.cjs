@@ -39,13 +39,23 @@ for(const [id,S] of Object.entries(SPOTS)){
   // Control variate: value = mean over the solved flops + b × (equity over all flops − mean equity on the solved flops),
   // b = pooled slope of value on equity across classes and flops (per side). A class that hit unusually often on the
   // chosen flops gets its surplus taken back at the rate value actually moves with equity.
-  for(const side of ['oop','ip']){const opp=ranges[side==='oop'?'ip':'oop'];let sx=0,sy=0,sxx=0,sxy=0,N=0;const per={};
+  for(const side of ['oop','ip']){const opp=ranges[side==='oop'?'ip':'oop'],eqAll={};let sx=0,sy=0,sxx=0,sxy=0,N=0;const per={};
    for(const l of EQ.labels){const xs=[],ys=[];for(const {d,e} of fl){const v=d.handEv[side][l],q=e[side][l];if(v===undefined||q===undefined)continue;xs.push(q);ys.push(v/d.spot.pot);}
     if(!xs.length)continue;per[l]=[xs,ys];const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;
     xs.forEach((x,i)=>{sx+=x-mx;sy+=ys[i]-my;sxx+=(x-mx)**2;sxy+=(x-mx)*(ys[i]-my);N++;});}
    const slope=sxx>0?sxy/sxx:1;rz[side].slope=slope;
    for(const [l,[xs,ys]] of Object.entries(per)){const all=eqVs(l,opp);if(all===null)continue;const mx=xs.reduce((a,b)=>a+b)/xs.length,my=ys.reduce((a,b)=>a+b)/ys.length;
-    entry[side][l]=Math.round((my+slope*(all-mx))*10000)/10000;}}
+    entry[side][l]=Math.round((my+slope*(all-mx))*10000)/10000;eqAll[l]=all;}
+   // --shrink K (2026/11/09): with only a few solved flops a class's value still carries its own board luck (JTs below K4s
+   // in a 3-bet pot). Fit value on equity across classes (quadratic, pair/suited shifts) and pull each class toward that fit
+   // by K/(n+K), n = solved flops. K=0 keeps the old table.
+   const K=Number(arg('shrink',0));if(K>0){const ls=Object.keys(entry[side]).filter(l=>eqAll[l]!==undefined),n=fl.length,lam=n/(n+K);
+    const feat=l=>{const q=eqAll[l];return [1,q,q*q,l.length===2?1:0,l[2]==='s'?1:0];},P=5,A=Array.from({length:P},()=>Array(P+1).fill(0));
+    for(const l of ls){const f=feat(l),y=entry[side][l],w=l.length===2?6:l[2]==='s'?4:12;for(let i=0;i<P;i++){for(let j=0;j<P;j++)A[i][j]+=w*f[i]*f[j];A[i][P]+=w*f[i]*y;}}
+    for(let i=0;i<P;i++)A[i][i]+=1e-9;
+    for(let i=0;i<P;i++){let m=i;for(let r=i+1;r<P;r++)if(Math.abs(A[r][i])>Math.abs(A[m][i]))m=r;[A[i],A[m]]=[A[m],A[i]];for(let r=0;r<P;r++){if(r===i)continue;const c=A[r][i]/A[i][i];for(let j=i;j<=P;j++)A[r][j]-=c*A[i][j];}}
+    const beta=A.map((r,i)=>r[P]/r[i]);
+    for(const l of ls){const fit=feat(l).reduce((s,x,i)=>s+x*beta[i],0);entry[side][l]=Math.round((fit+lam*(entry[side][l]-fit))*10000)/10000;}}}
   out[key]=entry;report.push(`${id} → ${key}: ratio over ${fl.length} flops, slope oop ${rz.oop.slope.toFixed(2)} ip ${rz.ip.slope.toFixed(2)}`);continue;}
  // --merge: per class, take the root whose flops cover that class most often (old flops: many flops, in-range classes only;
  // rebuilt flops: few flops, every class). The table also keeps the ranges the flops were solved with (entry.ranges), so the
