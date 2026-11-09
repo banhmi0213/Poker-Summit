@@ -11,7 +11,7 @@ export const AI_CRAWLERS = [
 /** ChatGPT などで検索されたときに、このサイトを結果に出すためのロボット（オーナー 2026/10/31：GPTで探したりもするよな）。
  * Google と同じ扱い：公開ページは見てよく、記録もしない。 */
 export const AI_SEARCH_BOTS = [
-  "OAI-SearchBot", "ChatGPT-User", "Claude-SearchBot", "Claude-User", "PerplexityBot", "Perplexity-User", "DuckAssistBot", "MistralAI-User",
+  "OAI-SearchBot", "ChatGPT-User", "Amzn-SearchBot", "Claude-SearchBot", "Claude-User", "PerplexityBot", "Perplexity-User", "DuckAssistBot", "MistralAI-User",
 ];
 /** 検索エンジン・SNSのリンクプレビューなど、普通の巡回（記録しない）。 */
 const ALLOWED = [/googlebot/i, /adsbot-google/i, /mediapartners-google/i, /google-inspectiontool/i, /bingbot/i, /msnbot/i, /\bapplebot\b(?!-extended)/i, /duckduckbot/i, /yandex/i, /baiduspider/i,
@@ -24,15 +24,19 @@ const TOOLS: [RegExp, string][] = [[/curl\//i, "curl"], [/wget/i, "wget"], [/pyt
 const HEADLESS: [RegExp, string][] = [[/headlesschrome/i, "HeadlessChrome"], [/phantomjs/i, "PhantomJS"], [/puppeteer/i, "Puppeteer"], [/playwright/i, "Playwright"], [/selenium/i, "Selenium"]];
 
 /** 名乗って来る収集ロボットで、止めると決めたもの（名前の一部で見る）。見つけたら最初の1回から止める。 */
-export const BLOCKED_BOTS = ["FREEZEOUTResearch"];
+export const BLOCKED_BOTS = ["FREEZEOUTResearch",
+  // SEOツールの収集ロボット(2026/11/09 オーナー：1日900件はおかしい)。Google の順位には関係しない。
+  "AhrefsBot", "AhrefsSiteAudit", "SemrushBot", "SiteAuditBot", "MJ12bot", "DotBot", "DataForSeoBot", "BLEXBot", "PetalBot", "SeekportBot", "serpstatbot", "Barkrowler", "SEOkicks", "MegaIndex", "ZoominfoBot"];
 
 export type ScrapeCategory = "ai" | "tool" | "headless" | "no-ua" | "no-browser";
 export const SCRAPE_CATEGORY_LABEL: Record<ScrapeCategory, string> = {
   ai: "AIの収集ロボット", tool: "プログラム・ツール", headless: "自動操作のブラウザ", "no-ua": "名乗らないアクセス", "no-browser": "ブラウザらしくないアクセス",
 };
 
-/** 最初の1回から止める種類。「ブラウザらしくないアクセス」は量で判断する（同じIPから10分で30ページを超えたら止める）。 */
-export const BLOCK_AT_ONCE: ScrapeCategory[] = ["ai", "tool", "headless", "no-ua"];
+/** 最初の1回から止める種類。
+ * 2026/11/09 から「ブラウザらしくないアクセス」も最初から止める：店舗ページを1つのIPから1ページずつ、たくさんのIPに分けて集める相手が来ていて、
+ * 同じIPの量では止められなかったため。普通のブラウザは言語設定と sec-fetch-* を必ず送るので、普通の人は止まらない。 */
+export const BLOCK_AT_ONCE: ScrapeCategory[] = ["ai", "tool", "headless", "no-ua", "no-browser"];
 
 /** 疑わしいアクセスなら種類と名前、普通のアクセスなら null。 */
 export function classifyScrape(userAgent: string | null, headers: { acceptLanguage: string | null; secFetchSite: string | null }): { category: ScrapeCategory; bot: string } | null {

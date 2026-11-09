@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const top = [...groups.values()].sort((a, b) => b.n - a.n).slice(0, 15);
     const lines = [
       `前の24時間に、自動のアクセスが ${rows.length.toLocaleString()} 件ありました（相手 ${groups.size} 種類）。`,
-      "AIの収集ロボット・プログラム・自動操作のブラウザ・名乗らないアクセスは、最初から止めています。",
+      "AIやSEOツールの収集ロボット・プログラム・自動操作のブラウザ・名乗らないアクセス・ブラウザらしくないアクセスは、全部最初から止めています。",
       "",
       "多い順：",
       ...top.map((g) => `・${g.label}：${g.bot}　${g.n}件（IP ${g.ips.size}個）`),

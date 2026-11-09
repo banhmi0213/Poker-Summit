@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
 // スクレイピングの見張りと遮断。2026/10/30 に記録とメール通知を始め、2026/11/02 から止めるようにした（オーナー指示：スクレイピングきたらすぐ止めなあかん）。
 // AIの収集ロボット・プログラム/ツール・自動操作のブラウザ・名乗らないアクセスは最初の1回から 403。
-// ブラウザらしくないアクセスは、同じIPから10分で30ページを超えたらそのIPを7日間止める（scrape_blocks）。
+// ブラウザらしくないアクセスも 2026/11/09 から最初の1回で止める（IPを分けて店舗ページを集める相手が来たため）。
 // 普通のブラウザはここで何も問い合わせないので、表示は遅くならない。robots.txt はルールを確かめに来た相手なので見せる。
 async function watchScraping(request: NextRequest, event: NextFetchEvent): Promise<NextResponse | null> {
   if (request.method !== "GET" && request.method !== "HEAD") return null;
