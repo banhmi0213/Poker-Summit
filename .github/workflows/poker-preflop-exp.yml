@@ -36,6 +36,8 @@ jobs:
           node-version: "24"
       - name: Install TypeScript loader
         run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Extra settings
+        run: echo '${{ toJSON(matrix.v.vars || fromJSON('{}')) }}' | jq -r 'to_entries[]|"\(.key)=\(.value)"' >> "$GITHUB_ENV"
       - name: Solve
         env:
           GTO_3WAY_R: ${{ matrix.v.env || '0.28,0.15' }}

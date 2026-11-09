@@ -16,6 +16,9 @@ const rakeBps=Number(arg('rake',0)),rakeCap=Number(arg('rake-cap',0)),rake=rakeB
 const seats=Number(arg('seats',6)),POSITIONS=positionsFor(seats),tag=seats===6?'':`-${seats}max`;
 const sizes=arg('sizes');
 const iters=Number(arg('iters',2000)),s=new PreflopSolver(equity,{stack,ante,seats,...(rake?{rake}:{}),...(sizes?{sizes}:{})}),t0=Date.now();
+// --lock file (2026/11/09, diagnosis only): {history: {hand: [p per action]}} fixes those decisions' strategies.
+const lockFile=arg('lock');if(lockFile){const L=JSON.parse(fs.readFileSync(lockFile,'utf8'));for(const d of s.decisions){const m=L[d.history.trim()];if(!m)continue;const k=d.actions.length,a=new Float64Array(s.n*k);
+ s.labels.forEach((l,h)=>{const v=m[l];for(let i=0;i<k;i++)a[h*k+i]=v?v[i]:(i===0?1:0);});s.locks.set(d.history.trim(),a);}console.log('locked',s.locks.size,'decisions');}
 const terminals=(function count(n){return n.type==='terminal'?1:n.children.reduce((a,c)=>a+count(c),0);})(s.root);
 console.log(`decisions ${s.decisions.length} terminals ${terminals}`);
 while(s.iterations<iters){s.run(50);console.log(`iter ${s.iterations} avg regret ${s.averageRegret().toFixed(5)}BB ${((Date.now()-t0)/1000).toFixed(0)}s`);}

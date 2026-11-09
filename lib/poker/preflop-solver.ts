@@ -61,6 +61,8 @@ let POSTFLOP:PostflopTable|null=null;
 export const POSTFLOP_MISSES=new Map<string,number>();
 export function setPostflopTable(t:PostflopTable|null){POSTFLOP=t;POSTFLOP_MISSES.clear();}
 /** Three-way realisation penalties for the first and second to act (2026/11/09 experiments: GTO_3WAY_R="0.28,0.15"). */
+const ENV=(globalThis as {process?:{env?:Record<string,string|undefined>}}).process?.env??{};
+const FALLBACK:Record<string,number[]|undefined>={srp:ENV.GTO_FALLBACK_SRP?.split(',').map(Number),'3bp':ENV.GTO_FALLBACK_3BP?.split(',').map(Number),'4bp':ENV.GTO_FALLBACK_4BP?.split(',').map(Number)};
 const THREE_WAY_R=((globalThis as {process?:{env?:Record<string,string|undefined>}}).process?.env?.GTO_3WAY_R??'0.28,0.15').split(',').map(Number);
 export function playability(label:string){
  if(PLAY_TABLE&&PLAY_TABLE[label]!==undefined)return PLAY_TABLE[label];
@@ -195,7 +197,11 @@ export class PreflopSolver{
   const {root,decisions}=buildPreflopTree(cfg);this.root=root;this.decisions=decisions;
   this.regret=decisions.map(d=>new Float64Array(n*d.actions.length));this.avg=decisions.map(d=>new Float64Array(n*d.actions.length));
  }
+ /** Fixed strategies by history (2026/11/09, diagnosis): a locked decision always plays this, so the action EVs of the
+  * rest of the tree can be read against a given strategy. locks[history][hand*k+action]. */
+ locks=new Map<string,Float64Array>();
  strategy(d:PreflopDecision,average=false){
+  const lk=this.locks.get(d.history.trim());if(lk)return lk;
   const k=d.actions.length,n=this.n,src=average?this.avg[d.id]:this.regret[d.id],out=new Float64Array(n*k);
   for(let h=0;h<n;h++){let sum=0;for(let a=0;a<k;a++){const v=Math.max(0,src[h*k+a]);out[h*k+a]=v;sum+=v;}for(let a=0;a<k;a++)out[h*k+a]=sum>0?out[h*k+a]/sum:1/k;}
   return out;
@@ -222,7 +228,9 @@ export class PreflopSolver{
    if(node.threeWay)return this.#threeWay(node,reach,mass,pot-rakeTaken(this.cfg.rake,pot,'threeWay'));
    const {a,b,kind,aggr}=node.showdown!,won=pot-rakeTaken(this.cfg.rake,pot,kind),ip=POST[a]>POST[b]?a:b,oop=ip===a?b:a,role=kind==='srp'||kind==='3bp'||kind==='4bp'?this.role[kind]:null;
    // Shorter stacks leave less to play for after the flop: realisation moves towards 1 (by the square root of the depth).
-   const sc=(r:number)=>1-(1-r)*this.depth,rOop=sc(role?(oop===aggr?role.aggr:(aggr!==undefined?role.callBy?.[this.names[aggr]]:undefined)??role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
+   const sc=(r:number)=>1-(1-r)*this.depth;let rOop=sc(role?(oop===aggr?role.aggr:(aggr!==undefined?role.callBy?.[this.names[aggr]]:undefined)??role.call):REALIZE[kind][0]),rIp=sc(role?1:REALIZE[kind][1]);
+   // Pots with no solved flops (2026/11/09, experiments): GTO_FALLBACK_<KIND>="rOop,rIp,play" overrides the formula.
+   const fb=FALLBACK[kind];if(fb){rOop=sc(fb[0]);rIp=sc(fb[1]);}const usePlay=fb?fb[2]>0:true;
    let rest=1;for(let q=0;q<P;q++)if(q!==a&&q!==b)rest*=mass[q];
    for(let p=0;p<P;p++)if(p!==a&&p!==b){let others=1;for(let q=0;q<P;q++)if(q!==p)others*=mass[q];values[p].fill(-node.invested[p]*others);}
    const key=`${kind}|${this.names[oop]}|${this.names[ip]}|${aggr!==undefined?this.names[aggr]:'-'}`,table=kind!=='allin'&&POSTFLOP?POSTFLOP[key]:undefined,ref=table?.ranges?this.#eqRef(key,table.ranges):null;
@@ -240,7 +248,7 @@ export class PreflopSolver{
       v[h]=s*rest;}
      continue;
     }
-    const deep=kind!=='allin';for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*won-node.invested[me]);}v[h]=s*rest;}
+    const deep=kind!=='allin'&&usePlay;for(let h=0;h<n;h++){let s=0;const pm=deep?this.play[h]:1;for(let o=0;o<n;o++){const w=this.pair[h*n+o]*ro[o];if(!w)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*(deep?this.play[o]:1),share=a1/(a1+b1);s+=w*(share*won-node.invested[me]);}v[h]=s*rest;}
    }
    return values;
   }
