@@ -56,12 +56,15 @@ export function setRealizeFit(fit:{role?:Partial<typeof REALIZE_ROLE>;play?:Reco
 export type PostflopTable=Record<string,{oop:Record<string,number>;ip:Record<string,number>;
  /** the ranges the flops were solved with (class → frequency); with them the share follows the opponent's current range:
   * share × equity(class vs current range) / equity(class vs solved range), i.e. the solved realisation kept and the equity updated */
- ranges?:{oop:Record<string,number>;ip:Record<string,number>}}>;
+ ranges?:{oop:Record<string,number>;ip:Record<string,number>};
+ /** own-range coefficients [c, d] per side (see the showdown terminal) */
+ rc?:{oop:[number,number];ip:[number,number]}}>;
 let POSTFLOP:PostflopTable|null=null;
 export const POSTFLOP_MISSES=new Map<string,number>();
 export function setPostflopTable(t:PostflopTable|null){POSTFLOP=t;POSTFLOP_MISSES.clear();}
 /** Three-way realisation penalties for the first and second to act (2026/11/09 experiments: GTO_3WAY_R="0.28,0.15"). */
 const ENV=(globalThis as {process?:{env?:Record<string,string|undefined>}}).process?.env??{};
+const RANGE_K=Number(ENV.GTO_RANGE_K??0)||0;
 const FALLBACK:Record<string,number[]|undefined>={srp:ENV.GTO_FALLBACK_SRP?.split(',').map(Number),'3bp':ENV.GTO_FALLBACK_3BP?.split(',').map(Number),'4bp':ENV.GTO_FALLBACK_4BP?.split(',').map(Number)};
 const THREE_WAY_R=((globalThis as {process?:{env?:Record<string,string|undefined>}}).process?.env?.GTO_3WAY_R??'0.28,0.15').split(',').map(Number);
 export function playability(label:string){
@@ -241,8 +244,17 @@ export class PreflopSolver{
     if(mine){
      // Solved postflop value: the class's share of the pot against the opponent's solved range.
      const eqRef=ref?(me===ip?ref.ip:ref.oop):null;
+     // Own-range term (2026/11/10): in the solved flops a hand's share depends on how strong the rest of its range is,
+     // share ≈ … + (c + d·q)(R − R_ref), q = the hand's equity, R = its whole range's equity (d < 0: in a strong range
+     // weak hands do better and strong hands worse). Without it a hand's value ignores what else takes the same line,
+     // so nothing pushes ranges to mix. Coefficients per side in table.rc, scaled by GTO_RANGE_K.
+     const rc=RANGE_K&&table.rc&&eqRef&&table.ranges?(me===ip?table.rc.ip:table.rc.oop):null;let dR=0;const qNow=rc?new Float64Array(n):null;
+     if(rc&&qNow&&eqRef){const rm=reach[me],own=me===ip?table.ranges!.ip:table.ranges!.oop;let num=0,den=0,rn=0,rd=0;
+      for(let h=0;h<n;h++){let w=0,e=0;for(let o=0;o<n;o++){const x=this.pair[h*n+o]*ro[o];w+=x;e+=x*this.eq[h*n+o];}qNow[h]=w>0?e/w:0;
+       const m=this.prior[h]*rm[h];num+=m*qNow[h];den+=m;const f=(own[this.labels[h]]??0)*this.combos[h];rn+=f*eqRef[h];rd+=f;}
+      dR=den>0&&rd>0?num/den-rn/rd:0;}
      for(let h=0;h<n;h++){const sh=mine[this.labels[h]];let w=0,s=0,e=0;for(let o=0;o<n;o++){const x=this.pair[h*n+o]*ro[o];w+=x;e+=x*this.eq[h*n+o];}
-      if(sh!==undefined){const adj=eqRef&&eqRef[h]>0.005&&w>0?(e/w)/eqRef[h]:1;s=w*(sh*adj*won-node.invested[me]);}
+      if(sh!==undefined){const adj=eqRef&&eqRef[h]>0.005&&w>0?(e/w)/eqRef[h]:1;s=w*((sh*adj+(rc&&qNow?RANGE_K*(rc[0]+rc[1]*qNow[h])*dR:0))*won-node.invested[me]);}
       else{POSTFLOP_MISSES.set(key+'#class',(POSTFLOP_MISSES.get(key+'#class')??0)+1);
        const pm=this.play[h];for(let o=0;o<n;o++){const ww=this.pair[h*n+o]*ro[o];if(!ww)continue;const e=this.eq[h*n+o],a1=e*rMe*pm,b1=(1-e)*rOp*this.play[o];s+=ww*(a1/(a1+b1)*won-node.invested[me]);}}
       v[h]=s*rest;}
