@@ -26,7 +26,7 @@ jobs:
         run: |
           spot="${GITHUB_REF_NAME#gto-flop-solve/}"; spot="${spot%%/*}"
           node -e "const s=require('./scripts/poker-gto/spots.cjs');if(!s['$spot'])process.exit(1)"
-          flops='["Qh8d3c","KhTd7h","8h5d3d","Th6d6c","Jh7h4c","AhJd8c","KhKd5h","Ah6d3d","5h3d3c","Qh9h5h","9h6d4c","QhTdTc","KhJd4d","6h4d2c","Jh9d7d","Th4h4c","AhQh8c","Qh4d2c","8h8d5h","AhTd4c","9h7d3h","JhTd7c","9h6h3h","Kh9d3h","Jh4d2h","Kh5d5c","AhAdQc","JhJd4c","Kh6d4c","6h4d2h","KhQdTc","Th7d3c","Qh8h5c","Qh9h9c","AhJh6h","Jh9d3d"]'
+          flops=$(node -e "console.log(JSON.stringify(require('./data/poker-gto/r5-remaining.json')['$spot']||[]))")
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
@@ -54,7 +54,7 @@ jobs:
       - name: Push the result to gto-rebuild-data (so it can be read before the whole run ends)
         run: |
           f=$(find out -name '*.json' | head -1); [ -n "$f" ] || exit 0
-          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"; git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           for i in 1 2 3 4 5 6 7 8; do
             rm -rf "$RUNNER_TEMP/d"; git clone -q --depth 1 --branch gto-rebuild-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$RUNNER_TEMP/d" || exit 1
             mkdir -p "$RUNNER_TEMP/d/${{ needs.plan.outputs.spot }}"; cp "$f" "$RUNNER_TEMP/d/${{ needs.plan.outputs.spot }}/${{ matrix.flop }}.json"
