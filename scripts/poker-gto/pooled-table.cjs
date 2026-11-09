@@ -29,10 +29,10 @@ const groups={};
 for(const root of DATA)for(const id of fs.readdirSync(root)){const S=SPOTS[id],dir=path.join(root,id);if(!S||!fs.statSync(dir).isDirectory())continue;
  for(const f of fs.readdirSync(dir).filter(f=>f.endsWith('.json')&&!f.endsWith('.eq.json'))){const ef=path.join(dir,f.replace('.json','.eq.json'));if(!fs.existsSync(ef))continue;
   const d=JSON.parse(fs.readFileSync(path.join(dir,f),'utf8')),e=JSON.parse(fs.readFileSync(ef,'utf8'));if(!d.handEv)continue;
-  for(const side of ['oop','ip']){const g=groups[roleOf(S,side)]??={xs:[],ys:[],cs:[]};
-   for(const [c,v] of Object.entries(d.handEv[side])){const q=e[side][c];if(q===undefined)continue;g.xs.push(q);g.ys.push(v/d.spot.pot);g.cs.push(c);}}}}
+  for(const side of ['oop','ip']){const g=groups[roleOf(S,side)]??={xs:[],ys:[],cs:[],ss:[]};
+   for(const [c,v] of Object.entries(d.handEv[side])){const q=e[side][c];if(q===undefined)continue;g.xs.push(q);g.ys.push(v/d.spot.pot);g.cs.push(c);g.ss.push(id+'|'+side);}}}}
 // Fit g (ridge-smoothed piecewise linear) then shrunk class shifts.
-const model={};
+const model={},spotOff={};
 for(const [gk,g] of Object.entries(groups)){const A=Array.from({length:KN},()=>new Array(KN+1).fill(0));
  g.xs.forEach((x,n)=>{const h=hat(x);for(let i=0;i<KN;i++){if(!h[i])continue;for(let j=0;j<KN;j++)A[i][j]+=h[i]*h[j];A[i][KN]+=h[i]*g.ys[n];}});
  const lam=g.xs.length*1e-3;for(let i=0;i<KN;i++){A[i][i]+=lam*2;if(i>0)A[i][i-1]-=lam;if(i<KN-1)A[i][i+1]-=lam;}
@@ -40,8 +40,16 @@ for(const [gk,g] of Object.entries(groups)){const A=Array.from({length:KN},()=>n
  const knots=A.map((r,i)=>r[KN]/r[i]),G=x=>hat(x).reduce((s,w,i)=>s+w*knots[i],0);
  const sum={},cnt={};g.xs.forEach((x,n)=>{const c=g.cs[n];sum[c]=(sum[c]??0)+g.ys[n]-G(x);cnt[c]=(cnt[c]??0)+1;});
  const shift={};for(const c in sum)shift[c]=sum[c]/(cnt[c]+K);
+ // Spot level (2026/11/09): how well this spot's hands realise their equity as a whole (position, stack to pot, ranges)
+ // differs from the pooled curve; the spot's own flops estimate that one number well, so it is added back.
+ const so={},sn={};g.xs.forEach((x,n)=>{const k=g.ss[n];so[k]=(so[k]??0)+g.ys[n]-G(x)-(shift[g.cs[n]]??0);sn[k]=(sn[k]??0)+1;});
+ for(const k in so)spotOff[k]=so[k]/sn[k];
  model[gk]={knots,shift,G,n:g.xs.length};
  console.log(gk,'samples',g.xs.length,'knots',knots.map(v=>v.toFixed(2)).join(' '));}
+if(arg('adjust')){const t=JSON.parse(fs.readFileSync(arg('adjust'),'utf8'));
+ for(const [id,S] of Object.entries(SPOTS)){const {kind,aggr}=kindOf(S.line),key=`${kind}|${S.oop}|${S.ip}|${aggr}`,e=t.table[key];if(!e)continue;
+  for(const side of ['oop','ip']){const o=spotOff[id+'|'+side]??0;for(const c in e[side])e[side][c]=Math.round((e[side][c]+o)*10000)/10000;console.log(id,side,'offset',o.toFixed(3));}}
+ fs.writeFileSync(OUT,JSON.stringify(t));console.log('saved',OUT);process.exit(0);}
 // 2. Representative flops, weighted by the textures nearest to each.
 const pool=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/flops.json'),'utf8')),step=Math.max(1,Math.floor(pool.length/NF));
 const flops=pool.filter((_,i)=>i%step===0).slice(0,NF),tex=flops.map(texture),w=new Array(flops.length).fill(0);
