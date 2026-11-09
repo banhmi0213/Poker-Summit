@@ -40,6 +40,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "gto-rebuild-out/${{ steps.run.outputs.id }}"
-          git add data/poker-gto/rebuild
+          # Data-only branch: keep Vercel from deploying it.
+          jq '.git.deploymentEnabled=false' vercel.json > v.tmp && mv v.tmp vercel.json
+          git add data/poker-gto/rebuild vercel.json
           git commit -m "フロップ戦略の計算結果（run ${{ steps.run.outputs.id }}）"
           git push -f origin "gto-rebuild-out/${{ steps.run.outputs.id }}"

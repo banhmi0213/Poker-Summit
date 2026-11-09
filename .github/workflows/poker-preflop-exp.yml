@@ -47,8 +47,9 @@ jobs:
           node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs --seats 6 --sizes wizard --postflop ${{ matrix.v.table }} --iters ${{ vars.GTO_PF_EXP_ITERS || '1000' }} --out out/${{ matrix.v.name }}.json
       - name: Push chart
         run: |
+          # vercel.json keeps Vercel from trying (and failing) to deploy this data-only branch.
           # Artifacts are not reachable from the comparison machine; each chart goes to its own branch instead.
           B="gto-pf-exp-out/${GITHUB_REF_NAME#gto-pf-exp/}-${{ matrix.v.name }}"
-          mkdir -p "$RUNNER_TEMP/o" && cp out/${{ matrix.v.name }}.json "$RUNNER_TEMP/o/chart.json"
-          cd "$RUNNER_TEMP/o" && git init -q -b "$B" && git add chart.json && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "${{ matrix.v.name }}"
+          mkdir -p "$RUNNER_TEMP/o" && cp out/${{ matrix.v.name }}.json "$RUNNER_TEMP/o/chart.json" && echo '{"git":{"deploymentEnabled":false}}' > "$RUNNER_TEMP/o/vercel.json"
+          cd "$RUNNER_TEMP/o" && git init -q -b "$B" && git add chart.json vercel.json && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "${{ matrix.v.name }}"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$B"
