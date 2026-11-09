@@ -1,7 +1,7 @@
 // スクレイピングの記録と運営への通知(2026/10/30、オーナー指示：スクレイピングされたら速攻わかるように)。
 // 止める判断は middleware（最初から止める種類）とここ（量が多いIPを止める）。
-// middleware からだけ呼ぶ(CRON_SECRET 必須)。AI・ツール・自動ブラウザ・名乗らないアクセスは初回で、
-// ブラウザらしくないアクセスは同じIPから10分で30ページ以上のときに、同じ相手は1時間に1回まで知らせる。
+// middleware からだけ呼ぶ(CRON_SECRET 必須)。2026/11/09 からブラウザらしくないアクセスも middleware で最初から止めるので、
+// ここで量を見てIPを止めるのは、止める種類から外れたものが来たときの予備。すぐのメールは新しくIPを止めたときだけ。
 import { NextResponse, type NextRequest } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 import { alertAdmin } from "@/lib/admin-alert";

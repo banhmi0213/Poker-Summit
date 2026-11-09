@@ -24,7 +24,7 @@ export default async function ScrapeWatchPage({ searchParams }: { searchParams: 
     <div className="container">
       <h1 style={{ fontSize: 20, marginBottom: 8 }}>スクレイピング監視</h1>
       <p className="muted" style={{ fontSize: 13, lineHeight: 1.8, marginBottom: 12 }}>
-        サイトの情報を自動で集めている疑いのあるアクセスの記録です（AIの収集ロボット、プログラム・ツール、自動操作のブラウザなど）。AIの収集ロボット・プログラム・自動操作のブラウザ・名乗らないアクセスは最初から止めています。ブラウザらしくないアクセスは、同じIPから10分で30ページを超えたらそのIPを7日間止めます。
+        サイトの情報を自動で集めている疑いのあるアクセスの記録です（AIの収集ロボット、プログラム・ツール、自動操作のブラウザなど）。AIの収集ロボット・SEOツールの収集ロボット・プログラム・自動操作のブラウザ・名乗らないアクセス・ブラウザらしくないアクセスは、最初から止めています。
         見つけたときは「通知先メールアドレス」にメールで知らせます（同じ相手は1時間に1回まで。ブラウザらしくないアクセスは同じIPから10分で30ページ以上のとき）。記録は90日で消えます。
       </p>
       <p style={{ marginBottom: 12, fontSize: 13 }}>{[1, 7, 30].map((d) => <a key={d} href={`?days=${d}`} style={{ marginRight: 12, fontWeight: d === days ? 700 : 400 }}>{d === 1 ? "24時間" : `${d}日`}</a>)}{hits.length.toLocaleString()}件{hits.length >= 2000 ? "（最新2000件まで）" : ""}</p>
