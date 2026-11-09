@@ -29,6 +29,8 @@ jobs:
           flops='["Qh8d3c","KhTd7h","8h5d3d","Th6d6c","Jh7h4c","AhJd8c","KhKd5h","Ah6d3d","5h3d3c","Qh9h5h","9h6d4c","QhTdTc"]'
           # Spots with flopCount (2026/11/09) solve only the first N of these boards.
           flops=$(node -e "const s=require('./scripts/poker-gto/spots.cjs')['$spot'];const f=$flops;console.log(JSON.stringify(f.slice(0,s.flopCount||f.length)))")
+          # A tag starting with "set2" (2026/11/10) solves 12 other boards instead (all of them), to cut the noise of few flops.
+          case "${GITHUB_REF_NAME##*/}" in set2*) flops='["Qh9d5c","7h5h2h","QhTh8c","9h7d5d","Kh4d2c","AhQdTd","Ah9h6c","Kh7d5d","Th8d6d","7h6d4c","Kh5h5c","JhJd4c"]';; esac
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
