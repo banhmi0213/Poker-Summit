@@ -8,7 +8,7 @@ on:
     branches: ["gto-pf-exp/**"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   plan:
@@ -43,8 +43,11 @@ jobs:
         run: |
           mkdir -p out
           node --max-old-space-size=6000 scripts/poker-gto/preflop-solve.cjs --seats 6 --sizes wizard --postflop ${{ matrix.v.table }} --iters ${{ vars.GTO_PF_EXP_ITERS || '1000' }} --out out/${{ matrix.v.name }}.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pf-${{ matrix.v.name }}
-          path: out/${{ matrix.v.name }}.json
-          retention-days: 7
+      - name: Push chart
+        run: |
+          # Artifacts are not reachable from the comparison machine; each chart goes to its own branch instead.
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          B="gto-pf-exp-out/${GITHUB_REF_NAME#gto-pf-exp/}-${{ matrix.v.name }}"
+          mkdir -p "$RUNNER_TEMP/o" && cp out/${{ matrix.v.name }}.json "$RUNNER_TEMP/o/chart.json"
+          cd "$RUNNER_TEMP/o" && git init -q -b "$B" && git add chart.json && git commit -qm "${{ matrix.v.name }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "$B"
