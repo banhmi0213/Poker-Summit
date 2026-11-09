@@ -60,7 +60,7 @@ jobs:
           for i in 1 2 3 4 5 6 7 8; do
             rm -rf "$RUNNER_TEMP/d"; git clone -q --depth 1 --branch gto-rebuild-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$RUNNER_TEMP/d" || exit 1
             mkdir -p "$RUNNER_TEMP/d/${{ needs.plan.outputs.spot }}"; cp "$f" "$RUNNER_TEMP/d/${{ needs.plan.outputs.spot }}/${{ matrix.flop }}.json"
-            (cd "$RUNNER_TEMP/d" && git add -A && git commit -qm "${{ needs.plan.outputs.spot }} ${{ matrix.flop }}" && git push -q origin gto-rebuild-data) && break
+            (cd "$RUNNER_TEMP/d" && git add -A && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "${{ needs.plan.outputs.spot }} ${{ matrix.flop }}" && git push -q origin gto-rebuild-data) && break
             sleep $((RANDOM % 20 + 5))
           done
       - uses: actions/upload-artifact@v4
