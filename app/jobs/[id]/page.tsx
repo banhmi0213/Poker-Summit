@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { StorePhoneButton } from "@/app/stores/store-contact";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -64,7 +65,6 @@ function jobPostingJsonLd(j: any) {
         addressCountry: "JP",
         ...(store.pref ? { addressRegion: store.pref } : {}),
         ...(store.city ? { addressLocality: store.city } : {}),
-        ...(store.address ? { streetAddress: store.address } : {}),
       },
     },
   };
@@ -93,7 +93,7 @@ export default async function JobDetailPage({
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, title, job_type, experience_level, training_details, transportation_details, application_deadline, salary, description, status, posted_at, created_at, banner_image_url, store_id, stores(id, name, category, pref, city, address, tel, status)"
+      "id, title, job_type, experience_level, training_details, transportation_details, application_deadline, salary, description, status, posted_at, created_at, banner_image_url, store_id, stores(id, name, category, pref, city, status)"
     )
     .eq("id", params.id)
     .maybeSingle();
@@ -132,7 +132,6 @@ export default async function JobDetailPage({
     .eq("job_id", j.id);
 
   const jobDetailBanner = await Promise.all([pickBanner(supabase, "job_detail", { pref: j.stores?.pref, device: "pc" }), pickBanner(supabase, "job_detail", { pref: j.stores?.pref, device: "mobile" })]);
-  const phone = j.stores?.tel ? String(j.stores.tel).replace(/[^+0-9]/g, "") : "";
 
   return (
     <div>
@@ -196,10 +195,10 @@ export default async function JobDetailPage({
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-          {phone && (
-            <a href={`tel:${phone}`} className="btn primary">
+          {j.stores?.id && (
+            <StorePhoneButton id={j.stores.id} className="btn primary">
               電話をかける
-            </a>
+            </StorePhoneButton>
           )}
           {appliedByMe ? (
             <button type="button" className="btn" disabled>

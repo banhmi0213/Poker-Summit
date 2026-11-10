@@ -27,6 +27,7 @@ import { DetailTabLink } from "./detail-tab-link";
 import { StoreEventFilter } from "./store-event-filter";
 import { StoreSchedule } from "./store-schedule";
 import { DetailIcon } from "./detail-icon";
+import { StoreAddress, StoreContactIcons, StoreMapEmbedByAddress, StoreMapLink, StorePhoneButton, StorePhoneText } from "../store-contact";
 import { MenuDetail } from "./menu-detail";
 import { StoreDetailTabs } from "./store-detail-tabs";
 import { DEFAULT_OG_IMAGE, DEFAULT_OG_IMAGES, SITE_NAME, absoluteUrl, clip, pageTitle } from "@/lib/seo";
@@ -146,7 +147,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const [{ data: store }, { data: photo }] = await Promise.all([
     supabase
       .from("stores")
-      .select("id,name,category,pref,city,address,tel,description,nearest_station,lat,lng,logo_url,banner_url,x_url,instagram_url")
+      .select("id,name,category,pref,city,description,nearest_station,lat,lng,logo_url,banner_url")
       .eq("id", params.id)
       .in("status", ["approved", "listed"])
       .maybeSingle<SeoStore>(),
@@ -184,7 +185,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
   const url = absoluteUrl(`/stores/${store.id}`);
   const images = [store.banner_url, ...photos.map((p) => p.url), store.logo_url].filter((v): v is string => !!v);
-  const sameAs = [store.x_url, store.instagram_url].filter((v): v is string => !!v && /^https?:\/\//.test(v));
   const business: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "EntertainmentBusiness",
@@ -197,23 +197,17 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
       addressCountry: "JP",
       ...(store.pref ? { addressRegion: store.pref } : {}),
       ...(store.city ? { addressLocality: store.city } : {}),
-      ...(store.address ? { streetAddress: store.address } : {}),
     },
   };
-  if (store.tel) business.telephone = store.tel;
+  // 電話番号・番地・SNS・Googleマップの場所はページに入れない(2026/11/10 オーナー：店舗情報が抜かれまくっている)。人が開いたあとに /api/store-contact から出す。
   if (images.length) business.image = Array.from(new Set(images)).slice(0, 5);
   if (store.logo_url) business.logo = store.logo_url;
   if (typeof store.lat === "number" && typeof store.lng === "number") {
     business.geo = { "@type": "GeoCoordinates", latitude: store.lat, longitude: store.lng };
   }
-  if (sameAs.length) business.sameAs = sameAs;
   // 店舗が入れた営業時間を優先し、無ければGoogleマップの営業時間を使う
   const spec = store.hours ? openingHoursSpec(store.hours) : googleHoursSpec(store.google_hours_periods);
   if (spec) business.openingHoursSpecification = spec;
-  // Googleマップの店舗(place_id)と結びついていれば、地図のURLを示す(ローカル検索での同一店舗の判定に効く)
-  if (store.google_place_id) {
-    business.hasMap = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`;
-  }
 
   const crumbs = [
     { name: "TOP", item: absoluteUrl("/") },
@@ -233,13 +227,6 @@ function storeJsonLd(store: SeoStore, photos: { url: string }[]) {
 // 未登録の項目: 「店舗に／お問い合わせください」の切れ目でだけ折り返す
 function AskStore() {
   return <><span style={{ display: "inline-block" }}>店舗に</span><span style={{ display: "inline-block" }}>お問い合わせください</span></>;
-}
-
-// 住所の番地(1-1-22 など)や部屋番号が途中で改行されないよう、数字のかたまりは1つにまとめる
-function keepNumbersTogether(text: string) {
-  return text.split(/([0-9０-９]+(?:[-－ー‐−][0-9０-９]+)*(?:号室|号|階|F)?)/).map((part, i) =>
-    i % 2 === 1 ? <span key={i} style={{ whiteSpace: "nowrap" }}>{part}</span> : part
-  );
 }
 
 export default async function StoreDetailPage({
@@ -365,13 +352,10 @@ export default async function StoreDetailPage({
   const hasCoords = store.lat != null && store.lng != null;
   const mapQuery = hasCoords
     ? `${store.lat},${store.lng}`
-    : [store.address, store.pref, store.city, store.name].filter(Boolean).join(" ");
-  // Googleマップの場所と結びついている店舗は、その場所(place_id)で開く。経路案内もそのまま使える。
-  const mapUrl = store.google_place_id
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(store.name)}&query_place_id=${encodeURIComponent(store.google_place_id)}`
-    : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
-  const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : store.address;
-  const phone = store.tel ? String(store.tel).replace(/[^+0-9]/g, "") : "";
+    : [store.pref, store.city, store.name].filter(Boolean).join(" ");
+  // Googleマップの場所(place_id)・番地は、開いたあとに StoreMapLink が取りに行って差し替える。
+  const mapUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(mapQuery);
+  const mapEmbedQuery = hasCoords ? `${store.lat},${store.lng}` : null;
 
   const storeFlags = displayFlagsById.get(store.id);
 
@@ -437,15 +421,15 @@ export default async function StoreDetailPage({
     pref: store.pref,
     city: store.city,
     cityNickname: store.city ? CITY_NICKNAMES[store.city] ?? null : null,
-    address: store.address,
+    address: null,
     station: station || null,
     hoursText: store.hours,
     googleHoursText: Array.isArray(store.google_hours_text) ? (store.google_hours_text as string[]) : null,
     nearby: nearby.map((s) => ({ name: s.name, km: hasCoords && s.lat != null && s.lng != null ? distanceKm(store.lat, store.lng, s.lat, s.lng) : null })),
     cityStoreCount,
     upcomingEvents,
-    hasX: Boolean(store.x_url),
-    hasInstagram: Boolean(store.instagram_url),
+    hasX: false,
+    hasInstagram: false,
     siteName: SITE_NAME,
   });
 
@@ -472,26 +456,12 @@ export default async function StoreDetailPage({
             {/* 店舗の連絡先・SNS(2026/10、店舗管理画面のメール・LINE・X・
                 Instagram欄と連携)。値が入っているものだけアイコンを表示する。 */}
             <div aria-label="店舗の連絡先・SNS" style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {store.email && (
-                <a href={`mailto:${store.email}`} aria-label="メール" data-store-contact="email" style={{ display: "inline-flex", color: "#63a5ac", width: 28, height: 28 }}>
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M3 4h18a2 2 0 0 1 2 2v1l-11 7L1 7V6a2 2 0 0 1 2-2Zm-2 5.4 10.5 6.7a1 1 0 0 0 1 0L23 9.4V18a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2Z"/></svg>
-                </a>
-              )}
-              {store.line_url && (
-                <a href={store.line_url} target="_blank" rel="noopener noreferrer" aria-label="LINE" data-store-contact="line" style={{ display: "inline-flex", width: 28, height: 28 }}>
-                  <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="#06c755"/><path d="M23 12.4c0-4.1-4-7.4-9-7.4S5 8.3 5 12.4c0 3.7 3.2 6.8 7.5 7.3.3.1.8.3.7.8l-.3 1.7c-.1.5.3.7.7.4C19 19.2 23 16.2 23 12.4Z" fill="white"/><text x="14" y="14" textAnchor="middle" fontSize="5.4" fontWeight="800" fontFamily="Arial,sans-serif" fill="#06c755">LINE</text></svg>
-                </a>
-              )}
-              {store.x_url && (
-                <a href={store.x_url} target="_blank" rel="noopener noreferrer" aria-label="X" data-store-contact="x" style={{ display: "inline-flex", color: "#222", width: 28, height: 28 }}>
-                  <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.3l-4.9-7.4L5.3 22H2.2l8.2-9.4L2.9 2h6.5l4.4 6.7L18.9 2ZM17.8 20h1.7L8.3 4H6.5Z"/></svg>
-                </a>
-              )}
-              {store.instagram_url && (
-                <a href={store.instagram_url} target="_blank" rel="noopener noreferrer" aria-label="Instagram" data-store-contact="instagram" style={{ display: "inline-flex", width: 28, height: 28 }}>
-                  <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><defs><linearGradient id="store-instagram-gradient" x1="0" y1="1" x2="1" y2="0"><stop stopColor="#f6b94c"/><stop offset=".45" stopColor="#ed4264"/><stop offset="1" stopColor="#8951c8"/></linearGradient></defs><rect x="1" y="1" width="26" height="26" rx="7" fill="url(#store-instagram-gradient)"/><rect x="6" y="6" width="16" height="16" rx="5" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="14" cy="14" r="4" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="19.5" cy="8.5" r="1.2" fill="white"/></svg>
-                </a>
-              )}
+              <StoreContactIcons id={store.id} icons={{
+                email: <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true"><path d="M3 4h18a2 2 0 0 1 2 2v1l-11 7L1 7V6a2 2 0 0 1 2-2Zm-2 5.4 10.5 6.7a1 1 0 0 0 1 0L23 9.4V18a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2Z"/></svg>,
+                line: <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><circle cx="14" cy="14" r="13" fill="#06c755"/><path d="M23 12.4c0-4.1-4-7.4-9-7.4S5 8.3 5 12.4c0 3.7 3.2 6.8 7.5 7.3.3.1.8.3.7.8l-.3 1.7c-.1.5.3.7.7.4C19 19.2 23 16.2 23 12.4Z" fill="white"/><text x="14" y="14" textAnchor="middle" fontSize="5.4" fontWeight="800" fontFamily="Arial,sans-serif" fill="#06c755">LINE</text></svg>,
+                x: <svg viewBox="0 0 24 24" width="25" height="25" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23 22h-6.3l-4.9-7.4L5.3 22H2.2l8.2-9.4L2.9 2h6.5l4.4 6.7L18.9 2ZM17.8 20h1.7L8.3 4H6.5Z"/></svg>,
+                instagram: <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true"><defs><linearGradient id="store-instagram-gradient" x1="0" y1="1" x2="1" y2="0"><stop stopColor="#f6b94c"/><stop offset=".45" stopColor="#ed4264"/><stop offset="1" stopColor="#8951c8"/></linearGradient></defs><rect x="1" y="1" width="26" height="26" rx="7" fill="url(#store-instagram-gradient)"/><rect x="6" y="6" width="16" height="16" rx="5" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="14" cy="14" r="4" fill="none" stroke="white" strokeWidth="1.8"/><circle cx="19.5" cy="8.5" r="1.2" fill="white"/></svg>,
+              }} />
             </div>
           <form action={async () => { "use server"; await toggleFavoriteStore(store.id, path); }}>
             <button type="submit" className={`btn sd-favorite ${isFavoriteStore ? "is-active" : ""}`}>
@@ -511,16 +481,16 @@ export default async function StoreDetailPage({
                 </>
               ) : <AskStore />}</dd></div>
               <div><dt><DetailIcon name="train" />最寄り駅</dt><dd>{store.nearest_station || store.station || <AskStore />}</dd></div>
-              <div><dt><DetailIcon name="pin" />住所</dt><dd>{keepNumbersTogether(store.address || [store.pref, store.city].filter(Boolean).join(" ") || "未登録")}</dd></div>
-              <div><dt><DetailIcon name="phone" />電話番号</dt><dd>{store.tel ? <a href={`tel:${phone}`}>{store.tel}</a> : "未登録"}</dd></div>
+              <div><dt><DetailIcon name="pin" />住所</dt><dd><StoreAddress id={store.id} fallback={[store.pref, store.city].filter(Boolean).join(" ")} /></dd></div>
+              <div><dt><DetailIcon name="phone" />電話番号</dt><dd><StorePhoneText id={store.id} /></dd></div>
             </dl>
             <div className="sd-contact-actions">
-              <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="btn primary"><DetailIcon name="pin" />地図・経路を見る</a>
-              {phone ? <a href={`tel:${phone}`} className="btn"><DetailIcon name="phone" />電話をかける</a> : <Link href="/contact" className="btn">お問い合わせ</Link>}
+              <StoreMapLink id={store.id} name={store.name} fallbackHref={mapUrl} className="btn primary"><DetailIcon name="pin" />地図・経路を見る</StoreMapLink>
+              <StorePhoneButton id={store.id} className="btn" fallback={<Link href="/contact" className="btn">お問い合わせ</Link>}><DetailIcon name="phone" />電話をかける</StorePhoneButton>
             </div>
-            {mapEmbedQuery && <iframe className="sd-map" title={store.name + "の所在地"}
+            {mapEmbedQuery ? <iframe className="sd-map" title={store.name + "の所在地"}
               src={"https://maps.google.com/maps?q=" + encodeURIComponent(mapEmbedQuery) + "&output=embed"}
-              loading="lazy" referrerPolicy="no-referrer-when-downgrade" />}
+              loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <StoreMapEmbedByAddress id={store.id} title={store.name + "の所在地"} />}
           </aside>
         </div>
         </div>
@@ -706,11 +676,9 @@ export default async function StoreDetailPage({
                   応募する
                 </Link>
               )}
-              {phone && (
-                <a href={`tel:${phone}`} className="btn" style={{ fontSize: 12.5 }}>
-                  <DetailIcon name="phone" />電話をかける
-                </a>
-              )}
+              <StorePhoneButton id={store.id} className="btn" style={{ fontSize: 12.5 }}>
+                <DetailIcon name="phone" />電話をかける
+              </StorePhoneButton>
               <ReportForm kind="job" label="通報" action={reportJob.bind(null, j.id, path)} />
             </div>
           </div>

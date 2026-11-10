@@ -3,3 +3,8 @@
 -- 公開ページの読み込みは lib/store-columns.ts の STORE_PUBLIC_COLUMNS を使う(select("*") は anon では失敗する)。
 revoke select on public.stores from anon;
 grant select (id,name,category,region,pref,city,address,tel,hours,description,status,created_at,updated_at,line_url,area_keywords,is_recommended,lat,lng,logo_url,google_place_id,nearest_station,email,x_url,instagram_url,banner_url,is_national_pickup,google_hours_text,google_hours_periods,google_hours_fetched_at) on public.stores to anon;
+
+-- 2段目(2026/11/10 案1)：住所(番地)・電話番号・メール・LINE/X/Instagram・Googleマップの場所も anon から外す。
+-- 店舗ページなどは /api/store-contact(BotID で自動操作を断る)から、人が開いたあとに出す。
+revoke select on public.stores from anon;
+grant select (id,name,category,region,pref,city,hours,description,status,created_at,updated_at,area_keywords,is_recommended,lat,lng,logo_url,nearest_station,banner_url,is_national_pickup,google_hours_text,google_hours_periods,google_hours_fetched_at) on public.stores to anon;

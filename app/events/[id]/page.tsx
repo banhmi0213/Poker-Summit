@@ -1,4 +1,5 @@
 import { ReadableName } from "@/app/readable-name";
+import { StoreAddress, StoreMapLink } from "@/app/stores/store-contact";
 import { isEventEnded } from "@/lib/event-end";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -54,7 +55,6 @@ function eventJsonLd(e: any) {
       addressCountry: "JP",
       ...(store.pref ? { addressRegion: store.pref } : {}),
       ...(store.city ? { addressLocality: store.city } : {}),
-      ...(store.address ? { streetAddress: store.address } : {}),
     };
   } else if (e.location) {
     place.address = { "@type": "PostalAddress", addressCountry: "JP", streetAddress: e.location };
@@ -83,7 +83,7 @@ function date(value: string | null, time = false) {
 export default async function EventDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: event, error } = await supabase.from("events").select("id,title,location,description,start_at,end_at,category,store_id,banner_image_url,stores(id,name,pref,city,address,nearest_station,banner_url,logo_url,status)").eq("id",params.id).eq("status","published").maybeSingle();
+  const { data: event, error } = await supabase.from("events").select("id,title,location,description,start_at,end_at,category,store_id,banner_image_url,stores(id,name,pref,city,nearest_station,banner_url,logo_url,status)").eq("id",params.id).eq("status","published").maybeSingle();
   if (error) throw new Error("イベント情報を読み込めませんでした。");
   if (!event) notFound();
   const e = event as any;
@@ -102,7 +102,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
   const { data: otherEvents, error: otherError } = e.store_id ? await supabase.from("events").select("id,title,start_at,category,banner_image_url").eq("store_id",e.store_id).eq("status","published").neq("id",e.id).gte("start_at",new Date().toISOString()).order("start_at").limit(3) : { data: [], error: null };
   if (otherError) throw new Error("関連イベントを読み込めませんでした。");
   const location = e.location || [store?.pref,store?.city].filter(Boolean).join(" ") || "未定";
-  const mapQuery = [e.location,store?.address,store?.name].filter(Boolean).join(" ");
+  const mapQuery = [e.location,store?.pref,store?.city,store?.name].filter(Boolean).join(" ");
   return <div>
     {e.start_at && <JsonLd data={eventJsonLd(e)} />}
     <PortalHeader userEmail={user?.email}/>
@@ -121,7 +121,7 @@ export default async function EventDetailPage({ params }: { params: { id: string
             <dl className={styles.details}><div><dt>イベント種別</dt><dd>{e.category || "未登録"}</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div><div><dt>主催店舗</dt><dd>{store?.name || "未登録"}</dd></div></dl>
           </section>
           <section id="structure" className={styles.section}><h2>ストラクチャー</h2><div className={styles.notice}>ブラインド・スタートスタック・レイトレジストなどの情報は、大会概要または主催店舗の案内をご確認ください。</div></section>
-          <section id="access" className={styles.section}><h2>⌖ 会場・アクセス</h2><div className={styles.access}><div><strong>{store?.name || location}</strong><p>{store?.address || location}</p>{store?.nearest_station && <p>最寄駅：{store.nearest_station}</p>}</div>{mapQuery && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer" className={styles.outline}>⌖ 地図・経路を見る</a>}</div></section>
+          <section id="access" className={styles.section}><h2>⌖ 会場・アクセス</h2><div className={styles.access}><div><strong>{store?.name || location}</strong><p>{store ? <StoreAddress id={store.id} fallback={location} /> : location}</p>{store?.nearest_station && <p>最寄駅：{store.nearest_station}</p>}</div>{store ? <StoreMapLink id={store.id} name={store.name} fallbackHref={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} className={styles.outline}>⌖ 地図・経路を見る</StoreMapLink> : mapQuery && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noopener noreferrer" className={styles.outline}>⌖ 地図・経路を見る</a>}</div></section>
         </article>
         <aside className={styles.sidebar}>
           <section className={styles.panel}><h2>♟ 参加情報</h2><dl className={styles.participation}><div><dt>参加費</dt><dd>主催店舗にご確認ください</dd></div><div><dt>開始日時</dt><dd>{date(e.start_at)} {date(e.start_at,true)}</dd></div><div><dt>終了日時</dt><dd>{e.end_at ? `${date(e.end_at)} ${date(e.end_at,true)}` : "未定"}</dd></div></dl>
