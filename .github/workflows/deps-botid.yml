@@ -1,0 +1,22 @@
+name: Add botid dependency (one-off)
+on:
+  push:
+    branches: ['deps/botid']
+permissions:
+  contents: write
+jobs:
+  add:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install botid@latest --save --no-audit --no-fund
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -q .github/workflows/deps-botid.yml
+          git add package.json package-lock.json
+          git commit -m "Add botid (store contact protection, owner 2026/11/10)"
+          git push
