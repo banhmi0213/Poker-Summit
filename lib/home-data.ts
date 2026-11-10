@@ -44,7 +44,7 @@ async function loadHomePublicData(currentPref: string | null) {
   ] = await Promise.all([
     supabase.from("site_settings").select("announcement").eq("id", true).maybeSingle(),
     Promise.all([
-      supabase.from("stores").select("*", { count: "exact", head: true }).in("status", ["approved", "listed"]),
+      supabase.from("stores").select("id", { count: "exact", head: true }).in("status", ["approved", "listed"]),
       supabase.from("jobs").select("*", { count: "exact", head: true }).eq("status", "open"),
       // 未ログインはサミットの本文を読めない(列ごとの権限)ので、件数は id だけで数える(2026/10/20)
       supabase.from("board_posts").select("id", { count: "exact", head: true }).eq("status", "visible"),
