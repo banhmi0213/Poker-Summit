@@ -1,4 +1,5 @@
 import { getVisitorId, isStaffDevice } from "@/lib/visitor";
+import { STORE_PUBLIC_COLUMNS } from "@/lib/store-columns";
 import { ReadableName } from "@/app/readable-name";
 import { couponExpiryLabel, notExpiredFilter } from "@/lib/coupon-expiry";
 import type { Metadata } from "next";
@@ -267,7 +268,7 @@ export default async function StoreDetailPage({
     supabase.auth.getUser(),
     supabase
       .from("stores")
-      .select("*")
+      .select(STORE_PUBLIC_COLUMNS)
       .eq("id", params.id)
       .in("status", ["approved", "listed"])
       .maybeSingle(),

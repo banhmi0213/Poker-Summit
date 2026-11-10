@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { STORE_PUBLIC_COLUMNS } from "@/lib/store-columns";
 import { PREF_OPTIONS } from "@/lib/constants";
 
 export const PICKUP_PER_PREF_LIMIT = 10;
@@ -88,7 +89,7 @@ function lotteryScore(month: string, id: string) {
 /** 指定したidの店舗を全列で取り、idの順番どおりに並べて返す */
 async function fetchFullStoresInOrder(supabase: SupabaseClient, ids: string[]): Promise<any[]> {
   if (!ids.length) return [];
-  const { data, error } = await supabase.from("stores").select("*").in("id", ids).in("status", ["approved", "listed"]);
+  const { data, error } = await supabase.from("stores").select(STORE_PUBLIC_COLUMNS).in("id", ids).in("status", ["approved", "listed"]);
   if (error) throw new Error(error.message);
   const byId = new Map((data ?? []).map((s: any) => [s.id, s]));
   return ids.map((id) => byId.get(id)).filter(Boolean);
