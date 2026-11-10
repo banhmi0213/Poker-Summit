@@ -20,6 +20,7 @@ jobs:
     outputs:
       spot: ${{ steps.plan.outputs.spot }}
       flops: ${{ steps.plan.outputs.flops }}
+      iters: ${{ steps.plan.outputs.iters }}
     steps:
       - uses: actions/checkout@v4
       - id: plan
@@ -31,6 +32,10 @@ jobs:
           flops=$(node -e "const s=require('./scripts/poker-gto/spots.cjs')['$spot'];const f=$flops;console.log(JSON.stringify(f.slice(0,s.flopCount||f.length)))")
           # A tag starting with "set2" (2026/11/10) solves 12 other boards instead (all of them), to cut the noise of few flops.
           case "${GITHUB_REF_NAME##*/}" in set2*) flops='["Qh9d5c","7h5h2h","QhTh8c","9h7d5d","Kh4d2c","AhQdTd","Ah9h6c","Kh7d5d","Th8d6d","7h6d4c","Kh5h5c","JhJd4c"]';; esac
+          # A tag starting with "lite" (2026/11/10) solves only the first 3 boards with 100 iterations, for a quick preflop re-solve.
+          iters=150
+          case "${GITHUB_REF_NAME##*/}" in lite*) flops=$(node -e "console.log(JSON.stringify($flops.slice(0,3)))"); iters=100;; esac
+          echo "iters=$iters" >> "$GITHUB_OUTPUT"
           echo "spot=$spot" >> "$GITHUB_OUTPUT"; echo "flops=$flops" >> "$GITHUB_OUTPUT"; echo "$spot: $flops"
   solve:
     name: Solve ${{ needs.plan.outputs.spot }} ${{ matrix.flop }}
@@ -54,7 +59,7 @@ jobs:
       - name: Solve
         env:
           NODE_PATH: ${{ runner.temp }}/ts/node_modules
-        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0' }} --max-iters 150 --check-every 50 --max-minutes 320 --stop on --all-hands 0.002 --threads $(nproc) --out out
+        run: node --max-old-space-size=14000 scripts/poker-gto/flop-solve.cjs --spot ${{ needs.plan.outputs.spot }} --flop ${{ matrix.flop }} --target ${{ vars.GTO_FLOP_TARGET || '0' }} --max-iters ${{ needs.plan.outputs.iters }} --check-every 50 --max-minutes 320 --stop on --all-hands 0.002 --threads $(nproc) --out out
       - name: Push the result to gto-rebuild-data (so it can be read before the whole run ends)
         run: |
           f=$(find out -name '*.json' | head -1); [ -n "$f" ] || exit 0
