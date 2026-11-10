@@ -22,7 +22,6 @@ import {GtoQuiz} from '@/app/poker-ui/gto-quiz';
 import {PreflopChartPanel} from '@/app/poker-ui/preflop-chart-panel';
 import {HandHistoryGto} from '@/app/poker-ui/hand-history-gto';
 import {CosmeticsSettings} from '@/app/poker-ui/my-cosmetics';
-import {GtoPlanPanel} from '@/app/poker-ui/gto-plan-panel';
 import {paidFeaturesVisible} from '@/lib/billing/visibility';
 import {getGtoPlanStatus} from '@/lib/billing/plan';
 import {FREE_WEAK_SPOTS,gtoAccess} from '@/lib/poker/gto-access';
@@ -50,16 +49,15 @@ export default async function Page({searchParams}:{searchParams?:{pane?:string;b
  {id:'icm',label:'ICM計算機',eyebrow:'ICM PUSH / FOLD',description:'大会終盤のオールイン・コールの範囲。',about:'大会の終盤に、順位ごとの配分の取り分（ICM）を考えたオールイン・コールの範囲を計算します。',content:<IcmPanel/>},
  {id:'looks',label:'アイコン枠・プレート',eyebrow:'LOOKS',description:'テーブルで他の会員にも見える、アイコン枠とネームプレートを選びます（2026/11/01）。',content:<CosmeticsSettings kinds={['frame','plate']}/>},
  {id:'hands',label:'ハンド履歴',eyebrow:'HAND HISTORY',description:'プレイしたハンドを1つずつ再生して振り返る。',content:hands?<HandHistoryGto hands={hands} base="/mypage/poker/hands" moreHref={hands.length===20?`/mypage/poker?pane=hands&before=${encodeURIComponent(hands[hands.length-1].playedAt)}`:null}/>:unavailable},
- {id:'plan',label:'GTOプラン',eyebrow:'GTO PLAN',description:'ご利用中のGTOプランと、お支払い・解約。',content:<GtoPlanPanel status={plan} message={searchParams?.billing}/>},
  ];
  // Ring-first release: tournament panes stay hidden until tournaments open.
  const tourneyShown=POKER_TOURNAMENTS_ENABLED?panes:panes.filter(p=>!['summary','upcoming','history'].includes(p.id));
- // Paid features hidden (lib/billing/visibility.ts): no 「GTOプラン」 pane, no 「アイコン枠・プレート」 pane.
- const paidShown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>!['plan','looks'].includes(p.id));
+ // Paid features hidden (lib/billing/visibility.ts): no 「アイコン枠・プレート」 pane. GTO is free (owner 2026/11/10): the 「GTOプラン」 pane is gone.
+ const paidShown=paidFeaturesVisible()?tourneyShown:tourneyShown.filter(p=>p.id!=='looks');
  // GTO hidden (2026/11/06, lib/poker/features.ts).
  const shown=POKER_GTO_ENABLED?paidShown:paidShown.map(p=>GTO_PANE_IDS.includes(p.id)?{...p,reviewing:true,about:undefined,
   content:<section style={{padding:'28px 20px',textAlign:'center',lineHeight:1.9}}><p style={{margin:0,fontSize:17,fontWeight:700,color:'#f1d28f'}}>改善中です</p><p style={{margin:'6px 0 0',fontSize:14}}>答えの精度を上げるため、一時的にお休みしています。11月下旬に再開する予定です。</p><p style={{margin:'14px 0 6px',fontSize:13,opacity:.8}}>今すぐ無料で使えるもの</p><div style={{display:'flex',flexWrap:'wrap',gap:8,justifyContent:'center'}}>{[['/poker-lobby','練習テーブル'],...([['/mypage/poker?pane=gto','オールイン・フォールド表'],['/mypage/poker?pane=river','リバー計算機'],['/mypage/poker?pane=equity','勝率計算機'],['/mypage/poker?pane=icm','ICM計算機']])].map(([href,l])=><a key={href} href={href} style={{padding:'6px 14px',border:'1px solid #d6b66e',borderRadius:999,color:'#f1d28f',fontSize:13,fontWeight:700,textDecoration:'none'}}>{l}</a>)}</div></section>}:p);
- // ?pane=plan (back from KOMOJU or a cancel) opens that pane first.
+ // ?pane=<id> opens that pane first.
  const first=shown.findIndex(p=>p.id===searchParams?.pane);
  return <PokerWorkspace key={`${searchParams?.pane??'default'}:${searchParams?.practice??''}:${searchParams?.before??''}`} kind="account" panes={first>0?[shown[first],...shown.filter((_,i)=>i!==first)]:shown}/>;
 }

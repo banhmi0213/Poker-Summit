@@ -17,10 +17,13 @@ test('NEXT_PUBLIC_PAID_FEATURES=on (staging testers) shows them again',()=>{
  assert.equal(c.frameItem('frame_gold').id,'gold');assert.ok(c.plateStyle('plate_gold'));assert.ok(c.threadCardStyle('thread_gold'));
  fresh(undefined);
 });
-test('pages: /pricing is noindex/nofollow and unlinked while off; the plan and looks panes are filtered',()=>{
+test('GTO is free (owner 2026/11/10): no pricing page, no GTO plan pane, no plan text in terms / tokushoho, no plan upsell',()=>{
  const read=f=>fs.readFileSync(path.join(__dirname,'..',f),'utf8');
- assert.match(read('app/pricing/page.tsx'),/robots:\{index:false,follow:false\}/);
+ assert.equal(fs.existsSync(path.join(__dirname,'..','app/pricing/page.tsx')),false);
+ assert.match(read('next.config.mjs'),/source: "\/pricing", destination: "\/"/);
  assert.doesNotMatch(read('app/sitemap.ts'),/`\$\{base\}\/pricing/);
- assert.match(read('app/mypage/poker/page.tsx'),/paidFeaturesVisible\(\)\?tourneyShown:tourneyShown\.filter\(p=>!\['plan','looks'\]/);
- for(const f of ['app/terms/page.tsx','app/tokushoho/page.tsx'])assert.match(read(f),/paidFeaturesVisible\(\)\?<a href="\/pricing">/);
+ assert.match(read('app/mypage/poker/page.tsx'),/paidFeaturesVisible\(\)\?tourneyShown:tourneyShown\.filter\(p=>p\.id!=='looks'\)/);
+ assert.doesNotMatch(read('app/mypage/poker/page.tsx'),/GtoPlanPanel|id:'plan'/);
+ for(const f of ['app/terms/page.tsx','app/tokushoho/page.tsx'])assert.doesNotMatch(read(f),/GTOプラン（|gto-plans|\/pricing/);
+ for(const f of ['app/poker-ui/preflop-chart-panel.tsx','app/poker-ui/preflop-drill.tsx','app/poker-ui/gto-weak-spots.tsx','lib/email.ts'])assert.doesNotMatch(read(f),/\/pricing|スタンダードプランで|プロプランで/);
 });

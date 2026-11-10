@@ -3,7 +3,7 @@ import {createServiceRoleClient} from '@/lib/supabase/service-role';
 import {GTO_TIER_LABEL,GTO_TRIAL_DAYS,KOMOJU_PERIOD,PRO_PRICE_CHANGE_AT,PRO_PRICE_VERSION,laterPrice,priceAt,yen,type BillingPeriod,type PaidTier} from './plans';
 import {cancelPlan,noticesDue,priceSwitchDue,statusFromKomoju,trialDue,type PlanStatus} from './state';
 import {PRO_ROADMAP} from './pro-roadmap';
-import {sendGtoBillingAlertEmail,sendGtoPriceNoticeEmail} from '@/lib/email';
+import {sendGtoBillingAlertEmail} from '@/lib/email';
 import {createCustomerSession,createSubscription,deleteSubscription,getSession,getSubscription,sessionCustomerId,KomojuError} from './komoju';
 
 /** Server-side GTO plan operations. Every write goes through the service role; members only read their own status. */
@@ -134,23 +134,7 @@ export async function switchPrices(limit=50){
  return {switched,failed};
 }
 
-/** Cron: the 2027-02-01 / 2027-02-22 price-change notices by email to every プロ member who will be charged.
- * One record per member per notice (gto_plan_notices) — a member is never mailed twice for the same notice. */
-export async function sendProPriceNotices(limit=100){
- const due=noticesDue(Date.now());let sent=0;
- for(const n of due){
-  const {data,error}=await db().from('gto_member_plans').select('id,member_id,period').eq('tier','pro').in('status',['trialing','active','past_due']).limit(1000);
-  if(error)throw new Error('plan_read_failed');
-  for(const row of (data??[]) as {id:string;member_id:string;period:BillingPeriod}[]){
-   if(sent>=limit)return {sent};
-   const {error:claim}=await db().from('gto_plan_notices').insert({member_id:row.member_id,notice_key:n.key});
-   if(claim)continue; // already sent (unique) or not writable: skip
-   try{
-    const {data:u}=await db().auth.admin.getUserById(row.member_id);const to=u?.user?.email;
-    if(to&&!to.endsWith('@withdrawn.invalid'))await sendGtoPriceNoticeEmail({to,period:row.period,newPrice:laterPrice('pro',row.period),done:PRO_ROADMAP.filter(i=>i.done).map(i=>i.label),planned:PRO_ROADMAP.filter(i=>!i.done).map(i=>i.label),yenText:yen});
-    sent++;
-   }catch{await db().from('gto_plan_notices').delete().eq('member_id',row.member_id).eq('notice_key',n.key);} // retry next run
-  }
- }
- return {sent};
+/** The プロ price-change notice email was removed (GTO is free, owner 2026/11/10). Kept as a no-op so the dormant billing cron still builds. */
+export async function sendProPriceNotices(_limit=100){
+ return {sent:0};
 }

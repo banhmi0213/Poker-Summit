@@ -118,7 +118,7 @@ export function PreflopDrill({weak=false,upsell=false,practiceSpot:requestedSpot
    {review.length>0&&!reviewing&&<button type="button" onClick={()=>void show(modeKey,review)}>外した手を復習する<span className={styles.reviewCountLegacy}>（{review.length}）</span><span className={styles.reviewCount} aria-label={`復習 ${review.length}問`}>{review.length}</span></button>}
    {reviewing&&<button type="button" onClick={()=>start()}>復習をやめる</button>}
   </div></MobilePlaySettings>
-  {modeKey==='weak'&&!weak&&<div className={chart.storeInvite}><b>自分の弱点の練習はスタンダードプランで使えます</b><span>リング・大会・練習で外した場面だけを集めて、集中して出題します。</span>{upsell&&<a href="/pricing">プランを見る</a>}</div>}
+  {modeKey==='weak'&&!weak&&<div className={chart.storeInvite}><b>自分の弱点の練習は改善中です</b><span>リング・大会・練習で外した場面だけを集めて、集中して出題できるように準備しています。</span></div>}
   {loading&&!cur&&<p role="status">問題を作っています…</p>}
   {error&&<p role="alert">{error}</p>}
   {cur&&<section aria-live="polite">

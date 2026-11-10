@@ -41,8 +41,8 @@ function FitToScreen({on,children}:{on:boolean;children:ReactNode}){
 }
 /** The player page's menu, for pages that show a single pane (a hand replay): every item still shows and opens
  * /mypage/poker on that item (owner 2026/11/03: メニュー一覧は全部でてるようにして). Keep in step with app/mypage/poker/page.tsx. */
-const PLAYER_MENU:[string,string][]=([['ring','チップ残高・順位'],['curve','収支グラフ'],['summary','通算成績'],['upcoming','参加予定の大会'],['history','参加大会の履歴'],['tendencies','成績・癖の分析'],['gto','GTO表'],['preflop','プリフロップ表'],['flop','フロップ戦略'],['trainer','GTOと対戦'],['weak','弱点分析'],['quiz','GTO練習クイズ'],['ranges','レンジ練習'],['river','リバー計算機'],['equity','勝率計算機'],['icm','ICM計算機'],['looks','アイコン枠・プレート'],['hands','ハンド履歴'],['plan','GTOプラン']] as [string,string][])
- .filter(([id])=>(POKER_TOURNAMENTS_ENABLED||!['summary','upcoming','history'].includes(id))&&(paidFeaturesVisible()||!['plan','looks'].includes(id)));
+const PLAYER_MENU:[string,string][]=([['ring','チップ残高・順位'],['curve','収支グラフ'],['summary','通算成績'],['upcoming','参加予定の大会'],['history','参加大会の履歴'],['tendencies','成績・癖の分析'],['gto','GTO表'],['preflop','プリフロップ表'],['flop','フロップ戦略'],['trainer','GTOと対戦'],['weak','弱点分析'],['quiz','GTO練習クイズ'],['ranges','レンジ練習'],['river','リバー計算機'],['equity','勝率計算機'],['icm','ICM計算機'],['looks','アイコン枠・プレート'],['hands','ハンド履歴']] as [string,string][])
+ .filter(([id])=>(POKER_TOURNAMENTS_ENABLED||!['summary','upcoming','history'].includes(id))&&(paidFeaturesVisible()||id!=='looks'));
 /** 「この画面について」 (owner 2026/11/06): the pane's longer explanation in a small box over the top of the pane, so opening
  * it never moves the content below (the PC fit-to-screen size stays as measured). Closes on a second press, Esc or a press elsewhere. */
 function AboutScreen({text}:{text:string}){
