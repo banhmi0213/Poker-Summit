@@ -29,20 +29,19 @@ async function loadStoreListData(f: StoreListFilters) {
 
   let storesQuery = supabase
     .from("stores")
-    .select("id, name, category, region, pref, city, address, lat, lng, description, status, logo_url, banner_url")
+    .select("id, name, category, region, pref, city, lat, lng, description, status, logo_url, banner_url")
     .in("status", ["approved", "listed"])
     // created_at が同じ行の並びを固定するため id でも並べる
     .order("created_at", { ascending: false })
     .order("id", { ascending: false });
 
   if (f.q) {
-    // 店名だけでなく住所・紹介文・エリアキーワード・市区町村・都道府県・地方でも探す
+    // 店名だけでなく紹介文・エリアキーワード・市区町村・都道府県・地方でも探す
     const escaped = f.q.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     const pattern = `"%${escaped}%"`;
     storesQuery = storesQuery.or(
       [
         `name.ilike.${pattern}`,
-        `address.ilike.${pattern}`,
         `description.ilike.${pattern}`,
         `area_keywords.ilike.${pattern}`,
         `city.ilike.${pattern}`,

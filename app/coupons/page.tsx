@@ -82,7 +82,7 @@ export default async function CouponsPage({
   const { data: rawCoupons } = await supabase
     .from("coupons")
     .select(
-      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, address, status)"
+      "id, title, discount, description, code, valid_until, expires_at, usage_limit, used_count, offer_type, banner_image_url, store_id, created_at, stores(name, category, pref, city, status)"
     )
     .eq("active", true);
 

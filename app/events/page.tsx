@@ -37,7 +37,7 @@ export default async function EventsPage({ searchParams }: {
   const { data: { user } } = await supabase.auth.getUser();
   const now = new Date().toISOString();
   const [{ data, error }, domesticEvents] = await Promise.all([
-    supabase.from("events").select("*, stores(name, pref, city, address)").eq("status", "published"),
+    supabase.from("events").select("*, stores(name, pref, city)").eq("status", "published"),
     getDomesticTournamentEvents(supabase, now),
   ]);
   if (error) throw new Error("イベントを読み込めませんでした。");

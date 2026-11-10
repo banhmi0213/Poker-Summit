@@ -15,6 +15,7 @@ import Script from "next/script";
 import { Suspense } from "react";
 import { GaPageView } from "./ga-page-view";
 import { ServiceWorkerRegister } from "./service-worker-register";
+import { BotIdClient } from "botid/client";
 
 // Google アナリティクス(GA4、2026/10)。本番(pokersummit.jp)だけで計測し、プレビュー環境では読み込まない。
 const GA_MEASUREMENT_ID = "G-M5QMYFSCHJ";
@@ -58,6 +59,8 @@ export default function RootLayout({
             __html: `(function(){try{var h=location.hostname,o=atob("cG9rZXJzdW1taXQuanA=");if(h&&h!==o&&h!=="localhost"&&h!=="127.0.0.1"&&!/\\.vercel\\.app$/.test(h)){location.replace("https://"+o+location.pathname+location.search+location.hash)}}catch(e){}})();`,
           }}
         />
+        {/* 店舗の電話番号・住所などは、自動操作のブラウザかを確かめてから出す(BotID、2026/11/10 オーナー：店舗情報が抜かれまくっている) */}
+        <BotIdClient protect={[{ path: "/api/store-contact", method: "POST" }]} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

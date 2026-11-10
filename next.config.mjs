@@ -1,3 +1,5 @@
+import { withBotId } from "botid/next/config";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
@@ -27,4 +29,5 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// BotID(2026/11/10)：店舗の連絡先を出す /api/store-contact を自動操作のブラウザから守る。
+export default withBotId(nextConfig);
