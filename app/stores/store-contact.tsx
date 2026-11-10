@@ -85,6 +85,7 @@ export function StoreAddress({ id, fallback }: { id: string; fallback: string })
 export function StorePhoneText({ id }: { id: string }) {
   const { status, contact } = useStoreContact(id);
   if (status === "loading") return <span className="muted">読み込み中</span>;
+  if (status === "error") return <span className="muted">表示できませんでした。ページを読み込み直してください。</span>;
   if (!contact?.tel) return <>未登録</>;
   return <a href={`tel:${telDigits(contact.tel)}`}>{contact.tel}</a>;
 }

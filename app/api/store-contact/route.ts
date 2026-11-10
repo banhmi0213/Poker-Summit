@@ -19,8 +19,14 @@ export async function POST(req: NextRequest) {
   }
   ids = Array.from(new Set(ids)).slice(0, MAX_IDS);
   if (!ids.length) return NextResponse.json({ error: "bad request" }, { status: 400, headers: noStore });
-  const verification = await checkBotId();
-  if (verification.isBot) {
+  // BotID の確認そのものが失敗したとき(設定の不具合など)は、普通の人に連絡先が出なくならないよう通す。記録は残す。
+  let isBot = false;
+  try {
+    isBot = (await checkBotId()).isBot;
+  } catch (e) {
+    console.error("[store-contact] BotID check failed", e);
+  }
+  if (isBot) {
     const svc = createServiceRoleClient();
     // スクレイピング監視の一覧に残す(止めた記録)。失敗してもそのまま断る。
     await svc.from("scrape_hits").insert({ ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(), ua: (req.headers.get("user-agent") ?? "").slice(0, 400), path: `/api/store-contact (${ids.length}店)`, category: "headless", bot: "BotID" }).then(() => undefined, () => undefined);
