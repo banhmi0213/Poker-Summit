@@ -8,6 +8,9 @@ const CHARTS={'6max':{byKey:load('preflop.json'),post:['SB','BB','UTG','HJ','CO'
 // Rebuild chart (2026/11/09): the pots missing from the postflop table take their ranges from the current experiment chart
 // (Wizard-sized bets), which has the 3-bet and 4-bet lines the published chart lacks.
 Object.defineProperty(CHARTS,'r4',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-r4.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
+// Iteration chart (2026/11/10): flop ranges were taken from older charts, so a hand outside the solved range kept a
+// best-response value and the preflop chart drifted into lines it was never solved in. it1 = the current charts averaged.
+Object.defineProperty(CHARTS,'it1',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-it1.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 const BLIND={SB:0.5,BB:1};
 function chartSpot(line,chartName='6max',players=2){
  const {byKey,post:POST}=CHARTS[chartName];
