@@ -10,7 +10,7 @@ export const revalidate = 3600;
 const PUBLIC_STORE_STATUSES = ["approved", "listed"];
 const PAGE_SIZE = 1000;
 
-// /pricing is intentionally NOT listed: direct URL only for the KOMOJU review (lib/billing/visibility.ts).
+// /pricing was removed (GTO is free, owner 2026/11/10); it redirects to the top page.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
  const base=SITE_URL;
  const supabase=await createClient();

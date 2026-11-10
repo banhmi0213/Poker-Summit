@@ -27,7 +27,7 @@ const KIND_SHORT:Record<string,string>={open:'オープン',vsLimp:'リンプさ
 
 type Table='6max'|'8max'|'9max'|'hu';
 /** standard / pro: the member's plan (lib/poker/gto-access). 8/9-max charts are スタンダード (tournament depths プロ); with
- * upsell a free member sees them in the menu with a button to /pricing instead of the chart. All off while paid features are hidden. */
+ * upsell a member sees them in the menu marked 改善中 instead of the chart. GTO is free (2026/11/10): no plan, no link to a pricing page. */
 export function PreflopChartPanel({standard=false,pro=false,upsell=false}:{standard?:boolean;pro?:boolean;upsell?:boolean}={}){
  useGtoUsage('preflop');
  const [controlsOpen,setControlsOpen]=useState(false),controlId=useId();
@@ -63,7 +63,7 @@ export function PreflopChartPanel({standard=false,pro=false,upsell=false}:{stand
     {mine.length>1&&(mine.length<=8?<ChipRow label="相手" value={node?.id??-1} options={mine.map(n=>({value:n.id,label:shortTitle(n.title)}))} onChange={v=>setId(v)}/>:
      <label className={styles.chipSelect}>相手<select value={node?.id??''} onChange={e=>setId(Number(e.target.value))}>{mine.map(n=><option key={n.id} value={n.id}>{shortTitle(n.title)}</option>)}</select></label>)}
    </div>}
-   {locked&&<div className={styles.storeInvite}><b>{depth!==100?'大会向けの8〜9人テーブルの表はプロプランで使えます':'8〜9人テーブルの表はスタンダードプランで使えます'}</b><span>実際の店と同じ人数のテーブルで、ポジションごとの正解の打ち方が見られます。</span>{upsell&&<a href="/pricing">プランを見る</a>}</div>}
+   {locked&&<div className={styles.storeInvite}><b>{depth!==100?'大会向けの8〜9人テーブルの表は改善中です':'8〜9人テーブルの表は改善中です'}</b><span>実際の店と同じ人数のテーブルで、ポジションごとの正解の打ち方が見られるように準備しています。</span></div>}
    {!locked&&node&&<>
     <p className={styles.totals}><b>{node.title}</b>：全体では {node.actions.map((a,i)=>`${a.label} ${pct(totals[i]??0)}`).join('・')}</p>
     

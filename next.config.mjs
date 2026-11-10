@@ -2,6 +2,10 @@ import { withBotId } from "botid/next/config";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // GTOは完全無料(オーナー 2026/11/10)。料金ページは消したので、/pricing はトップへ。
+  async redirects() {
+    return [{ source: "/pricing", destination: "/", permanent: false }];
+  },
   async headers() {
     return [{
       source: "/images/jobs-banner-light-v3.webp",

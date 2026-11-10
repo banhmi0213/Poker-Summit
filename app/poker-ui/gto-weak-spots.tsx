@@ -75,7 +75,6 @@ export function GtoWeakSpots({limit,upsell=false}:{limit?:number;upsell?:boolean
      <small>{SOURCE_TEXT[e.source]}・{new Date(e.at).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'})}{(e.source==='ring'||e.source==='tournament')&&e.ref&&<> ・<a href={`/mypage/poker/hands/${e.ref}`}>ハンドを見る</a></>}</small>
     </li>)}</ul>}</div>}
    </li>;})}</ol>}
-   {upsell&&(data.more??0)>0&&<div className={styles.upsell}><p>ほかに{data.more}の場面があります。スタンダードプランで全部見られます。</p><a href="/pricing">プランを見る</a></div>}
    <p className={styles.note}>ミス＝GTOがその手で選ぶ割合が8%未満の打ち方。EV損失は、その場でいちばん得な打ち方と比べたチップの差（プリフロップと、計算が十分に詰められたターン・リバー）。4人以上のポットや計算していない場面は数えていません。</p>
   </>}
  </div>;

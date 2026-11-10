@@ -4,9 +4,9 @@ import {GTO_BILLING_FLAG,isPeriod,normalizeTier} from '@/lib/billing/plans';
 import {komojuConfigured} from '@/lib/billing/komoju';
 import {startCheckout} from '@/lib/billing/service';
 export const dynamic='force-dynamic';
-/** GTO plan sign-up (form POST from the pricing page): send the member to KOMOJU's card page. Dormant until billing is on. */
+/** GTO plan sign-up: send the member to KOMOJU's card page. Dormant: GTO is free (owner 2026/11/10), the pricing page is gone and billing is off. */
 export async function POST(req:NextRequest){
- const back=(q:string)=>NextResponse.redirect(new URL('/pricing?'+q,req.url),303);
+ const back=(q:string)=>NextResponse.redirect(new URL('/mypage/poker?billing='+q,req.url),303);
  if(!GTO_BILLING_FLAG||!komojuConfigured())return back('status=unavailable');
  const form=await req.formData().catch(()=>null),tier=normalizeTier(form?.get('tier')),period=form?.get('period');
  if(!tier||!isPeriod(period)||form?.get('agree')!=='on')return back('status=invalid');
@@ -14,7 +14,7 @@ export async function POST(req:NextRequest){
  const priceAck=form?.get('price_ack')==='on';
  if(tier==='pro'&&!priceAck)return back('status=price_ack');
  const client=await createClient();const {data:{user}}=await client.auth.getUser();
- if(!user)return NextResponse.redirect(new URL('/login?next=/pricing',req.url),303);
+ if(!user)return NextResponse.redirect(new URL('/login?next=/mypage/poker',req.url),303);
  try{
   const r=await startCheckout(user.id,user.email??null,tier,period,new URL(req.url).origin,priceAck);
   if('error' in r)return back(r.error==='price_ack_required'?'status=price_ack':'status=already');
