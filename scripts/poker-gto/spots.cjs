@@ -165,3 +165,6 @@ Object.assign(module.exports,{
  // pot is solved with strong hands in SB's range (their old values were out-of-range best responses). Lite tag.
  for(const id of ['sb-limp','sb-iso','sb-bb','sb-bb-3bet']){const s=module.exports['i1-'+id];module.exports['l1-'+id]={...s,chart:'lp1',flopCount:3,name:s.name.replace('（再計算1）','（リンプ形）'),note:s.note.replace('（再計算1）','（リンプ形）')};}
  for(const id of Object.keys(IT1)){const s=module.exports['i1-'+id];module.exports['i2-'+id]={...s,chart:'it2',flopCount:3,name:s.name.replace('（再計算1）','（再計算2）'),note:s.note.replace('（再計算1）','（再計算2）')};}}
+// SB limp prior, full boards (2026/11/12): the l1 spots on all 12 boards at the normal iteration count, to see whether the high
+// SB share in the limped pot is lite-solve noise. Run with a non-lite tag (e.g. full1).
+for(const id of ['sb-limp','sb-iso','sb-bb','sb-bb-3bet']){const s=module.exports['l1-'+id];const {flopCount,...r}=s;module.exports['l2-'+id]={...r,name:s.name.replace('（リンプ形）','（リンプ形・12ボード）'),note:s.note.replace('（リンプ形）','（リンプ形・12ボード）')};}
