@@ -152,4 +152,7 @@ Object.assign(module.exports,{
   note:s.short+'（再計算1）',oop:s.oop,ip:s.ip,sizes:s.sizes,oopRange:'プリフロップ表から',ipRange:'プリフロップ表から',line};}
  module.exports['i1-test']={...module.exports['i1-btn-bb-3bet'],flopCount:1};
  // Iteration 2 (2026/11/11): same lines, ranges from chart-it2 (half it1, half the preflop solved from the it1 flops). Run with a lite tag (3 boards).
+ // Polarized prior (2026/11/11): 3-bet/4-bet pots only, ranges from chart-pol (our own polar 3-bet/4-bet shapes, see
+ // polarize in the experiment log). Run with a lite tag (3 boards).
+ for(const id of Object.keys(IT1).filter(k=>/3bet|4bet/.test(k))){const s=module.exports['i1-'+id];module.exports['p1-'+id]={...s,chart:'pol',flopCount:3,name:s.name.replace('（再計算1）','（3bet形）'),note:s.note.replace('（再計算1）','（3bet形）')};}
  for(const id of Object.keys(IT1)){const s=module.exports['i1-'+id];module.exports['i2-'+id]={...s,chart:'it2',flopCount:3,name:s.name.replace('（再計算1）','（再計算2）'),note:s.note.replace('（再計算1）','（再計算2）')};}}
