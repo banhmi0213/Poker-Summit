@@ -155,4 +155,6 @@ Object.assign(module.exports,{
  // Polarized prior (2026/11/11): 3-bet/4-bet pots only, ranges from chart-pol (our own polar 3-bet/4-bet shapes, see
  // polarize in the experiment log). Run with a lite tag (3 boards).
  for(const id of Object.keys(IT1).filter(k=>/3bet|4bet/.test(k))){const s=module.exports['i1-'+id];module.exports['p1-'+id]={...s,chart:'pol',flopCount:3,name:s.name.replace('（再計算1）','（3bet形）'),note:s.note.replace('（再計算1）','（3bet形）')};}
+ // Polarized prior, round 2 (2026/11/11): chart-pol2 = polarize of the preflop solved on the p1 flops.
+ for(const id of Object.keys(IT1).filter(k=>/3bet|4bet/.test(k))){const s=module.exports['i1-'+id];module.exports['p2-'+id]={...s,chart:'pol2',flopCount:3,name:s.name.replace('（再計算1）','（3bet形2）'),note:s.note.replace('（再計算1）','（3bet形2）')};}
  for(const id of Object.keys(IT1)){const s=module.exports['i1-'+id];module.exports['i2-'+id]={...s,chart:'it2',flopCount:3,name:s.name.replace('（再計算1）','（再計算2）'),note:s.note.replace('（再計算1）','（再計算2）')};}}

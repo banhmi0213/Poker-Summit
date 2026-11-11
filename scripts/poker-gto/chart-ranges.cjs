@@ -13,6 +13,7 @@ Object.defineProperty(CHARTS,'r4',{get(){const c=JSON.parse(fs.readFileSync(path
 Object.defineProperty(CHARTS,'it1',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-it1.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 Object.defineProperty(CHARTS,'it2',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-it2.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 Object.defineProperty(CHARTS,'pol',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-pol.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
+Object.defineProperty(CHARTS,'pol2',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-pol2.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 const BLIND={SB:0.5,BB:1};
 function chartSpot(line,chartName='6max',players=2){
  const {byKey,post:POST}=CHARTS[chartName];
