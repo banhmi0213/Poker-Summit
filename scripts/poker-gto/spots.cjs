@@ -161,4 +161,7 @@ Object.assign(module.exports,{
  for(const id of Object.keys(IT1).filter(k=>/3bet|4bet/.test(k))){const s=module.exports['i1-'+id];module.exports['p3-'+id]={...s,chart:'pol3',flopCount:3,name:s.name.replace('（再計算1）','（3bet形3）'),note:s.note.replace('（再計算1）','（3bet形3）')};}
  // Polarized prior, round 4 (2026/11/11): chart-pol4 = polarize of the preflop solved with calibrated out-of-range values.
  for(const id of Object.keys(IT1).filter(k=>/3bet|4bet/.test(k))){const s=module.exports['i1-'+id];module.exports['p4-'+id]={...s,chart:'pol4',flopCount:3,name:s.name.replace('（再計算1）','（3bet形4）'),note:s.note.replace('（再計算1）','（3bet形4）')};}
+ // SB limp prior (2026/11/11): chart-lp1 = chart-pol4 with SB first-in mixing limp/raise with its strongest hands, so the limp
+ // pot is solved with strong hands in SB's range (their old values were out-of-range best responses). Lite tag.
+ for(const id of ['sb-limp','sb-iso','sb-bb','sb-bb-3bet']){const s=module.exports['i1-'+id];module.exports['l1-'+id]={...s,chart:'lp1',flopCount:3,name:s.name.replace('（再計算1）','（リンプ形）'),note:s.note.replace('（再計算1）','（リンプ形）')};}
  for(const id of Object.keys(IT1)){const s=module.exports['i1-'+id];module.exports['i2-'+id]={...s,chart:'it2',flopCount:3,name:s.name.replace('（再計算1）','（再計算2）'),note:s.note.replace('（再計算1）','（再計算2）')};}}
