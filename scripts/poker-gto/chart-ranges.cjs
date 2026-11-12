@@ -16,6 +16,7 @@ Object.defineProperty(CHARTS,'pol',{get(){const c=JSON.parse(fs.readFileSync(pat
 Object.defineProperty(CHARTS,'pol2',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-pol2.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 Object.defineProperty(CHARTS,'pol3',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-pol3.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 Object.defineProperty(CHARTS,'pol4',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-pol4.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
+Object.defineProperty(CHARTS,'f1',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-f1.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 Object.defineProperty(CHARTS,'lp1',{get(){const c=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../data/poker-gto/exp/chart-lp1.json'),'utf8'));return {byKey:new Map(c.nodes.map(n=>[n.player+'|'+n.history,n])),post:['SB','BB','UTG','HJ','CO','BTN']};}});
 const BLIND={SB:0.5,BB:1};
 function chartSpot(line,chartName='6max',players=2){

@@ -168,3 +168,7 @@ Object.assign(module.exports,{
 // SB limp prior, full boards (2026/11/12): the l1 spots on all 12 boards at the normal iteration count, to see whether the high
 // SB share in the limped pot is lite-solve noise. Run with a non-lite tag (e.g. full1).
 for(const id of ['sb-limp','sb-iso','sb-bb','sb-bb-3bet']){const s=module.exports['l1-'+id];const {flopCount,...r}=s;module.exports['l2-'+id]={...r,name:s.name.replace('（リンプ形）','（リンプ形・12ボード）'),note:s.note.replace('（リンプ形）','（リンプ形・12ボード）')};}
+// Full re-solve, round f1 (2026/11/12): every spot on all 12 boards at the normal iteration count, ranges from chart-f1
+// (polarize of the preflop solved on the calibrated, per-spot-tuned table). The tuned scale factors are dropped after this:
+// the preflop is solved again on the table from these full solves only. Run with a non-lite tag (full1).
+{const ids=Object.keys(module.exports).filter(k=>k.startsWith('i2-')).map(k=>k.slice(3));for(const id of ids){const s=module.exports['i1-'+id];const {flopCount,...r}=s;module.exports['f1-'+id]={...r,chart:'f1',name:s.name.replace('（再計算1）','（全ボード1）'),note:s.note.replace('（再計算1）','（全ボード1）')};}}
