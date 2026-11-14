@@ -145,3 +145,12 @@ const out={iters:ITERS,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64
 for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
  const st={};for(let c=0;c<NC;c++){avgStrat(t,c,sv);st[LABELS[c]]=[...sv.slice(0,t.k)].map(x=>+x.toFixed(3));}out.nodes.push({name,actions:acts,strategy:st});}
 fs.writeFileSync(arg('out','joint-proto.json'),JSON.stringify(out));console.log('done',((Date.now()-t0)/1000).toFixed(0)+'s');
+// Diagnosis (DIAG=1): realisation of the called pot for BB and BTN classes with the average strategies.
+if(process.env.DIAG){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
+ let s1=0;for(let i=0;i<N;i++)s1+=reach[1][i];const cr=new Float64Array(NC);for(let i=0;i<N;i++)cr[cls[i]]+=reach[1][i];
+ const pot=5.5;const rows=[];for(const h of ['AA','AKs','KQo','JTs','T9o','98o','72o','K2o','Q5s']){const c=CIDX[h];let e=0,w=0;for(let d=0;d<NC;d++){e+=cr[d]*EQ.eq[c][d]/10000;w+=cr[d];}
+  let v=0,n=0;for(let i=0;i<N;i++)if(cls[i]===c){v+=v0[i];n++;}v/=n;const val=v/s1+2.5;rows.push(h+' eq '+(e/w).toFixed(3)+' share '+(val/pot).toFixed(3)+' R '+(val/pot/(e/w)).toFixed(2));}
+ console.log(rows.join('\n'));}
+if(process.env.DIAG){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
+ let a=0,b=0,s0=0,s1=0;for(let i=0;i<N;i++){a+=v0[i]*reach[0][i];b+=v1[i]*reach[1][i];s0+=reach[0][i];s1+=reach[1][i];}
+ console.log('avg BB',(a/s0/s1).toFixed(3),'avg BTN',(b/s0/s1).toFixed(3),'sum+5',(a/s0/s1+b/s0/s1+5).toFixed(3));}
