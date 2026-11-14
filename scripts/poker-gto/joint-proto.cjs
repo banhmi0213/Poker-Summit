@@ -120,7 +120,7 @@ function makePost(name,pot0,stack){
   const ctx={street:'flop',key:(SAMPLE?boards[f].tex:f)+'F',info:b.finfo,ok:b.ok};
   return round(ctx,mask(reach,b.ok),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
    for(let r=0;r<NR;r++){const [a,c]=streetTurn(f,r,rc,p,iv,h,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NR;out[1][i]+=c[i]/NR;}}return out;},train);}
- return {name,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
+ return {name,T2,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
   for(let f=0;f<NF;f++){const [a,b]=streetFlop(f,reach,pot,inv,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NF;out[1][i]+=b[i]/NF;}}return out;}};
 }
 const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87);
@@ -141,8 +141,15 @@ function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(
    if(b===1)return TBP.play(r3,[13,13],train);
    return decide(tBB4,classInfo,0,r3,2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
     :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
+// Checkpoints (--save file every 100 iterations, --load file): regrets and averages of every table, and the iteration count.
+const SAVE=arg('save'),LOAD=arg('load');let START=1;
+const dumpT=t=>({k:t.k,reg:Array.from(t.reg),avg:Array.from(t.avg)}),loadT=(t,d)=>{t.reg.set(d.reg);t.avg.set(d.avg);};
+function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(const P of [SRP,TBP]){o.post[P.name]={};for(const [k,t] of P.T2)o.post[P.name][k]=dumpT(t);}
+ fs.writeFileSync(SAVE+'.tmp',JSON.stringify(o));fs.renameSync(SAVE+'.tmp',SAVE);}
+if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
+ for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const t=table(B,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
 const t0=Date.now();
-for(let it=1;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
+for(let it=START;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
 // ---- output: average strategies per class
 const out={iters:ITERS,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
