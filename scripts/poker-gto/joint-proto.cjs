@@ -82,7 +82,7 @@ function showdown(reach,pot,inv,run){const v0=new Float64Array(N),v1=new Float64
 // ---- postflop game (per pot type): flop, turn, river betting rounds over the sampled runouts.
 // Sizes: flop 33% pot; turn 75%; river 75% and all-in. Facing a bet: fold, call, and on the turn/river raise all-in.
 // Infosets: (pot type, board id, street, betting history) x strength bucket of the street.
-const SIZES={flop:[0.33],turn:[0.75],river:[0.75,9]};
+const SIZES=process.env.SZ?JSON.parse(process.env.SZ):process.env.NOBET?{flop:[],turn:[],river:[]}:{flop:[0.33],turn:[0.75],river:[0.75,9]};
 function makePost(name,pot0,stack){
  const T2=new Map();// key -> table with B rows
  const tab=(key,k)=>{let t=T2.get(key);if(!t){t=table(B,k);T2.set(key,t);}return t;};
@@ -100,7 +100,7 @@ function makePost(name,pot0,stack){
     if(k==='x'){if(p===1||h.endsWith('x'))return next(r2,pot,inv,h+'x');return node(1,r2,pot,inv,0,false,h+'x');}
     if(k==='c'){const c=Math.min(facing,left(p));const iv=inv.slice();iv[p]+=c;return next(r2,pot+c,iv,h+'c');}
     // bet or raise: amt = chips this player adds now; the opponent then faces (amt - what it already matched this round)
-    const iv=inv.slice();iv[p]+=amt;const face=amt-(facing||0);return node(o,r2,pot+amt,iv,face,k==='r'||raised,h+k);
+    const iv=inv.slice();iv[p]+=amt;const face=amt-(facing||0);return node(o,r2,pot+amt,iv,face,k==='r'||raised,h+k+a);
    },train);}
   return node(0,reach,pot,inv,0,false,hist);
  }
@@ -154,3 +154,8 @@ if(process.env.DIAG){const reach=[new Float64Array(N).fill(1),Float64Array.from(
 if(process.env.DIAG){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
  let a=0,b=0,s0=0,s1=0;for(let i=0;i<N;i++){a+=v0[i]*reach[0][i];b+=v1[i]*reach[1][i];s0+=reach[0][i];s1+=reach[1][i];}
  console.log('avg BB',(a/s0/s1).toFixed(3),'avg BTN',(b/s0/s1).toFixed(3),'sum+5',(a/s0/s1+b/s0/s1+5).toFixed(3));}
+// Postflop-only check (POSTONLY=iters): both players hold the BTN opening range; train the SRP game alone.
+if(process.env.POSTONLY){const reach=[Float64Array.from(btnOpen),Float64Array.from(btnOpen)];
+ for(let it=1;it<=+process.env.POSTONLY;it++){T=it;SRP.play(reach,[2.5,2.5],true);floorAll(SRP.tables());
+  if(it%20===0||it<4){const [v0,v1]=SRP.play(reach,[2.5,2.5],false);let a=0,b=0,s=0;for(let i=0;i<N;i++){a+=v0[i]*reach[0][i];b+=v1[i]*reach[1][i];s+=reach[0][i];}
+   console.log('post it',it,'OOP',(a/s/s).toFixed(3),'IP',(b/s/s).toFixed(3));}}}
