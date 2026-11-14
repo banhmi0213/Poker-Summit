@@ -24,7 +24,10 @@ const chart=JSON.parse(fs.readFileSync(arg('chart'),'utf8'));
 const btnNode=chart.nodes.find(n=>n.player==='BTN'&&n.history==='UTGF HJF COF');
 const btnOpen=new Float64Array(N);for(let i=0;i<N;i++){const s=btnNode.strategy[LABELS[cls[i]]];btnOpen[i]=s?s[1]:0;}
 // ---- boards: flops and runouts, ranks and buckets
-const boards=[];
+let boards=[];const SAMPLE=!!process.env.SAMPLE;
+// SAMPLE=1 (chance sampling): fresh flops every iteration; postflop infosets keyed by flop texture instead of the flop itself.
+const RK='23456789TJQKA';function texOf(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=new Set(rk).size<3?1:0,hi=Math.max(...rk);return 'm'+su+'p'+pr+'h'+(hi>=11?2:hi>=8?1:0);}
+function buildBoards(){boards=[];
 const NV=+arg('rivers',3);
 function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N),live=[];
  for(let i=0;i<N;i++){const [a,b]=combos[i];if(!ok[i]||cards.includes(a)||cards.includes(b))continue;okr[i]=1;rank[i]=evalCodes([a,b,...cards]);live.push(i);}
@@ -43,7 +46,8 @@ for(let f=0;f<NF;f++){const used=new Set();const flop=[];while(flop.length<3){co
   for(let i=0;i<N;i++)if(tcnt[i])ths[i]/=tcnt[i];
   runs.push({okt,tinfo:quant(tl,ths),rivers});}
  for(let i=0;i<N;i++)if(fcnt[i])fhs[i]/=fcnt[i];const fl=[];for(let i=0;i<N;i++)if(ok[i])fl.push(i);
- const fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs});}
+ const fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs,tex:texOf(flop)});}}
+buildBoards();
 // ---- regret tables
 function table(nInfo,k){return {k,reg:new Float64Array(nInfo*k),avg:new Float64Array(nInfo*k)};}
 function strat(t,info,out){const k=t.k;let s=0;for(let a=0;a<k;a++){const v=Math.max(0,t.reg[info*k+a]);out[a]=v;s+=v;}for(let a=0;a<k;a++)out[a]=s>0?out[a]/s:1/k;}
@@ -64,7 +68,7 @@ function decide(t,infoOf,p,reach,k,child,train){
   }
  return [v0,v1];
 }
-function floorAll(ts){for(const t of ts)for(let j=0;j<t.reg.length;j++)if(t.reg[j]<0)t.reg[j]=0;}
+function floorAll(ts){if(SAMPLE)return;for(const t of ts)for(let j=0;j<t.reg.length;j++)if(t.reg[j]<0)t.reg[j]=0;}
 // ---- terminals
 // fold: winner gets pot; each player's payoff = (won? pot:0) - invested. Weighted by opponent reach sum (no card removal).
 function foldVal(reach,pot,inv,winner,okMask){let s0=0,s1=0;for(let i=0;i<N;i++){if(okMask&&!okMask[i])continue;s0+=reach[0][i];s1+=reach[1][i];}
@@ -106,14 +110,14 @@ function makePost(name,pot0,stack){
  let base=[0,0];
  function mask(reach,ok){return [reach[0].map((x,i)=>ok[i]?x:0),reach[1].map((x,i)=>ok[i]?x:0)];}
  function streetRiver(f,r,v,reach,pot,inv,hist,train){const run=boards[f].runs[r].rivers[v];
-  const ctx={street:'river',key:f+'.'+r+'.'+v+'R'+hist,info:run.rinfo,ok:run.okr};
+  const ctx={street:'river',key:(SAMPLE?boards[f].tex:f+'.'+r+'.'+v)+'R'+hist,info:run.rinfo,ok:run.okr};
   return round(ctx,mask(reach,run.okr),pot,inv,'',(rc,p,iv)=>showdown(rc,p,iv,run),train);}
  function streetTurn(f,r,reach,pot,inv,hist,train){const run=boards[f].runs[r];
-  const ctx={street:'turn',key:f+'.'+r+'T'+hist,info:run.tinfo,ok:run.okt};
+  const ctx={street:'turn',key:(SAMPLE?boards[f].tex:f+'.'+r)+'T'+hist,info:run.tinfo,ok:run.okt};
   return round(ctx,mask(reach,run.okt),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
    for(let v=0;v<run.rivers.length;v++){const [a,c]=streetRiver(f,r,v,rc,p,iv,hist+'/'+h,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/run.rivers.length;out[1][i]+=c[i]/run.rivers.length;}}return out;},train);}
  function streetFlop(f,reach,pot,inv,train){const b=boards[f];
-  const ctx={street:'flop',key:f+'F',info:b.finfo,ok:b.ok};
+  const ctx={street:'flop',key:(SAMPLE?boards[f].tex:f)+'F',info:b.finfo,ok:b.ok};
   return round(ctx,mask(reach,b.ok),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
    for(let r=0;r<NR;r++){const [a,c]=streetTurn(f,r,rc,p,iv,h,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NR;out[1][i]+=c[i]/NR;}}return out;},train);}
  return {name,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
@@ -138,7 +142,7 @@ function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(
    return decide(tBB4,classInfo,0,r3,2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
     :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
 const t0=Date.now();
-for(let it=1;it<=ITERS;it++){T=it;root(true);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
+for(let it=1;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
 // ---- output: average strategies per class
 const out={iters:ITERS,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
