@@ -25,29 +25,25 @@ const btnNode=chart.nodes.find(n=>n.player==='BTN'&&n.history==='UTGF HJF COF');
 const btnOpen=new Float64Array(N);for(let i=0;i<N;i++){const s=btnNode.strategy[LABELS[cls[i]]];btnOpen[i]=s?s[1]:0;}
 // ---- boards: flops and runouts, ranks and buckets
 const boards=[];
+const NV=+arg('rivers',3);
+function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N),live=[];
+ for(let i=0;i<N;i++){const [a,b]=combos[i];if(!ok[i]||cards.includes(a)||cards.includes(b))continue;okr[i]=1;rank[i]=evalCodes([a,b,...cards]);live.push(i);}
+ live.sort((x,y)=>rank[x]-rank[y]);const pct=new Float64Array(N),groups=[];let k=0;
+ while(k<live.length){let e=k;while(e+1<live.length&&rank[live[e+1]]===rank[live[k]])e++;const p=((k+e)/2+0.5)/live.length;for(let q=k;q<=e;q++)pct[live[q]]=p;groups.push(live.slice(k,e+1));k=e+1;}
+ const rinfo=new Int32Array(N).fill(-1);for(const i of live)rinfo[i]=Math.min(B-1,Math.floor(pct[i]*B));return {okr,rinfo,groups,pct};}
+const quant=(list,score)=>{const o=new Int32Array(N).fill(-1);const s=list.slice().sort((x,y)=>score[x]-score[y]);s.forEach((i,k)=>o[i]=Math.min(B-1,Math.floor(k/s.length*B)));return o;};
 for(let f=0;f<NF;f++){const used=new Set();const flop=[];while(flop.length<3){const c=Math.floor(rnd()*52);if(!used.has(c)){used.add(c);flop.push(c);}}
- const runs=[];for(let r=0;r<NR;r++){const u=new Set(used),tr=[];while(tr.length<2){const c=Math.floor(rnd()*52);if(!u.has(c)){u.add(c);tr.push(c);}}runs.push(tr);}
  const ok=new Uint8Array(N);for(let i=0;i<N;i++){const [a,b]=combos[i];ok[i]=used.has(a)||used.has(b)?0:1;}
- const hs2=new Float64Array(N),rv=[];
- for(const [t,rv_] of runs){const board=[...flop,t,rv_];const okr=new Uint8Array(N),rank=new Float64Array(N);const live=[];
-  for(let i=0;i<N;i++){const [a,b]=combos[i];if(!ok[i]||a===t||b===t||a===rv_||b===rv_)continue;okr[i]=1;rank[i]=evalCodes([a,b,...board]);live.push(i);}
-  live.sort((x,y)=>rank[x]-rank[y]);
-  // percentile with ties sharing the middle
-  const pct=new Float64Array(N);let k=0;while(k<live.length){let e=k;while(e+1<live.length&&rank[live[e+1]]===rank[live[k]])e++;const p=((k+e)/2+0.5)/live.length;for(let q=k;q<=e;q++)pct[live[q]]=p;k=e+1;}
-  for(const i of live)hs2[i]+=pct[i]*pct[i]/NR;
-  const bucket=new Int16Array(N).fill(-1);for(const i of live)bucket[i]=Math.min(B-1,Math.floor(pct[i]*B));
-  // groups of equal rank in ascending order, for the showdown sweep
-  const groups=[];k=0;while(k<live.length){let e=k;while(e+1<live.length&&rank[live[e+1]]===rank[live[k]])e++;groups.push(live.slice(k,e+1));k=e+1;}
-  // turn: strength percentile on the 6-card board (E[HS^2] over 8 sampled rivers)
-  const okt=new Uint8Array(N),ths=new Float64Array(N),tl=[];for(let i=0;i<N;i++){const [a,b]=combos[i];if(!ok[i]||a===t||b===t)continue;okt[i]=1;tl.push(i);}
-  const u2=new Set([...flop,t]);for(let q=0;q<8;q++){let rr;do{rr=Math.floor(rnd()*52);}while(u2.has(rr));const bd=[...flop,t,rr],rk=new Float64Array(N),lv=tl.filter(i=>combos[i][0]!==rr&&combos[i][1]!==rr);
-   for(const i of lv)rk[i]=evalCodes([combos[i][0],combos[i][1],...bd]);lv.sort((x,y)=>rk[x]-rk[y]);lv.forEach((i,k2)=>{const p=(k2+0.5)/lv.length;ths[i]+=p*p/8;});}
-  const tb=new Int16Array(N).fill(-1);const ts=tl.slice().sort((x,y)=>ths[x]-ths[y]);ts.forEach((i,k2)=>tb[i]=Math.min(B-1,Math.floor(k2/ts.length*B)));
-  rv.push({okr,okt,rinfo:Int32Array.from(bucket),tinfo:Int32Array.from(tb),groups,cards:[t,rv_]});}
- // flop buckets: E[HS^2] quantiles over the live combos
- const live=[];for(let i=0;i<N;i++)if(ok[i])live.push(i);live.sort((x,y)=>hs2[x]-hs2[y]);
- const fb=new Int16Array(N).fill(-1);live.forEach((i,k)=>fb[i]=Math.min(B-1,Math.floor(k/live.length*B)));
- boards.push({flop,ok,fb,finfo:Int32Array.from(fb),runs:rv});}
+ const fhs=new Float64Array(N),fcnt=new Float64Array(N),runs=[];const turns=new Set();
+ for(let r=0;r<NR;r++){let t;do{t=Math.floor(rnd()*52);}while(used.has(t)||turns.has(t));turns.add(t);
+  const okt=new Uint8Array(N),tl=[];for(let i=0;i<N;i++){const [a,b]=combos[i];if(ok[i]&&a!==t&&b!==t){okt[i]=1;tl.push(i);}}
+  const ths=new Float64Array(N),tcnt=new Float64Array(N),rivers=[],rs=new Set([...flop,t]);
+  for(let v=0;v<NV;v++){let rv;do{rv=Math.floor(rnd()*52);}while(rs.has(rv));rs.add(rv);const ri=riverInfo([...flop,t,rv],okt);rivers.push(ri);
+   for(let i=0;i<N;i++)if(ri.okr[i]){const q=ri.pct[i]*ri.pct[i];ths[i]+=q;tcnt[i]++;fhs[i]+=q;fcnt[i]++;}}
+  for(let i=0;i<N;i++)if(tcnt[i])ths[i]/=tcnt[i];
+  runs.push({okt,tinfo:quant(tl,ths),rivers});}
+ for(let i=0;i<N;i++)if(fcnt[i])fhs[i]/=fcnt[i];const fl=[];for(let i=0;i<N;i++)if(ok[i])fl.push(i);
+ const fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs});}
 // ---- regret tables
 function table(nInfo,k){return {k,reg:new Float64Array(nInfo*k),avg:new Float64Array(nInfo*k)};}
 function strat(t,info,out){const k=t.k;let s=0;for(let a=0;a<k;a++){const v=Math.max(0,t.reg[info*k+a]);out[a]=v;s+=v;}for(let a=0;a<k;a++)out[a]=s>0?out[a]/s:1/k;}
@@ -106,12 +102,13 @@ function makePost(name,pot0,stack){
  }
  let base=[0,0];
  function mask(reach,ok){return [reach[0].map((x,i)=>ok[i]?x:0),reach[1].map((x,i)=>ok[i]?x:0)];}
- function streetRiver(f,r,reach,pot,inv,hist,train){const run=boards[f].runs[r];
-  const ctx={street:'river',key:f+'.'+r+'R'+hist,info:run.rinfo,ok:run.okr};
+ function streetRiver(f,r,v,reach,pot,inv,hist,train){const run=boards[f].runs[r].rivers[v];
+  const ctx={street:'river',key:f+'.'+r+'.'+v+'R'+hist,info:run.rinfo,ok:run.okr};
   return round(ctx,mask(reach,run.okr),pot,inv,'',(rc,p,iv)=>showdown(rc,p,iv,run),train);}
  function streetTurn(f,r,reach,pot,inv,hist,train){const run=boards[f].runs[r];
   const ctx={street:'turn',key:f+'.'+r+'T'+hist,info:run.tinfo,ok:run.okt};
-  return round(ctx,mask(reach,run.okt),pot,inv,'',(rc,p,iv,h)=>streetRiver(f,r,rc,p,iv,hist+'/'+h,train),train);}
+  return round(ctx,mask(reach,run.okt),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
+   for(let v=0;v<run.rivers.length;v++){const [a,c]=streetRiver(f,r,v,rc,p,iv,hist+'/'+h,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/run.rivers.length;out[1][i]+=c[i]/run.rivers.length;}}return out;},train);}
  function streetFlop(f,reach,pot,inv,train){const b=boards[f];
   const ctx={street:'flop',key:f+'F',info:b.finfo,ok:b.ok};
   return round(ctx,mask(reach,b.ok),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
