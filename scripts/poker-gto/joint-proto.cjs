@@ -89,7 +89,10 @@ function makePost(name,pot0,stack){
   function node(p,reach,pot,inv,facing,raised,h){
    const acts=[];
    if(!facing){acts.push(['x']);for(const f of SIZES[ctx.street]){const amt=Math.min(left(p),f>=9?left(p):Math.round(pot*f*100)/100);if(amt>0&&!acts.some(a=>a[1]===amt))acts.push(['b',amt]);}}
-   else{acts.push(['f'],['c']);const callAmt=Math.min(facing,left(p));if(ctx.street!=='flop'&&!raised&&left(p)>callAmt)acts.push(['r',left(p)]);}
+   else{acts.push(['f'],['c']);const callAmt=Math.min(facing,left(p));
+    // RAISE=1: one raise per street, call + 75% of the pot after calling (all-in if that is most of the stack); else turn/river all-in only
+    if(!raised&&left(p)>callAmt){if(process.env.RAISE){let add=Math.round((callAmt+0.75*(pot+callAmt))*100)/100;if(add>0.6*left(p))add=left(p);acts.push(['r',add]);}
+     else if(ctx.street!=='flop')acts.push(['r',left(p)]);}}
    const t=tab(name+'|'+ctx.key+'|'+h+'|'+p,acts.length),info=ctx.info;
    return decide(t,info,p,reach,acts.length,(a,r2)=>{const [k,amt]=acts[a],o=1-p;
     if(k==='f')return foldVal(r2,pot,inv,o,ctx.ok);
