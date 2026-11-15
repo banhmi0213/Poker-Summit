@@ -1,0 +1,77 @@
+name: Poker joint solver experiments
+
+# GTO rebuild (2026/11/16, owner: 最大でやれ): the joint preflop+postflop prototype (scripts/poker-gto/joint-proto.cjs) for
+# many settings at once. Variants are listed in data/poker-gto/exp/joint-variants.json ({name, args, env}).
+# Each job runs one variant with one seed per core for MAXMIN minutes; 3 groups per variant give 3 x cores seeds,
+# whose strategies are averaged outside the repository. Results go to gto-rebuild-data under joint/<tag>/.
+# Trigger: push a gto-joint/<tag> branch. A tag starting with "test" runs only the first variant, one group, 3 minutes.
+on:
+  push:
+    branches: ["gto-joint/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      variants: ${{ steps.v.outputs.variants }}
+      groups: ${{ steps.v.outputs.groups }}
+      minutes: ${{ steps.v.outputs.minutes }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: |
+          tag="${GITHUB_REF_NAME##*/}"
+          case "$tag" in
+            test*) echo "variants=$(jq -c '.[:1]' data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1]' >> "$GITHUB_OUTPUT"; echo "minutes=3" >> "$GITHUB_OUTPUT";;
+            *) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2,3]' >> "$GITHUB_OUTPUT"; echo "minutes=320" >> "$GITHUB_OUTPUT";;
+          esac
+  solve:
+    needs: plan
+    name: Joint ${{ matrix.v.name }} g${{ matrix.g }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      # Account limit 40 jobs: 36 here, the rest stay free for the regular test CI.
+      max-parallel: 36
+      matrix:
+        v: ${{ fromJSON(needs.plan.outputs.variants) }}
+        g: ${{ fromJSON(needs.plan.outputs.groups) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Install TypeScript loader
+        run: npm install --prefix "$RUNNER_TEMP/ts" --no-audit --no-fund typescript@5.6.3
+      - name: Variant settings
+        run: echo '${{ toJSON(matrix.v.env) }}' | jq -r 'to_entries[]|"\(.key)=\(.value)"' >> "$GITHUB_ENV"
+      - name: Solve (one seed per core)
+        env:
+          NODE_PATH: ${{ runner.temp }}/ts/node_modules
+          MAXMIN: ${{ needs.plan.outputs.minutes }}
+        run: |
+          mkdir -p out; n=$(nproc)
+          for k in $(seq 1 $n); do
+            seed=$(( ${{ matrix.g }} * 100 + k ))
+            node --max-old-space-size=3500 scripts/poker-gto/joint-proto.cjs --chart data/poker-gto/exp/chart-1115.json --iters 100000 ${{ matrix.v.args }} --seed $seed --out out/${{ matrix.v.name }}-s$seed.json > out/${{ matrix.v.name }}-s$seed.log 2>&1 &
+          done
+          wait; tail -n 2 out/*.log
+      - name: Push the results to gto-rebuild-data
+        run: |
+          tag="${GITHUB_REF_NAME##*/}"
+          for i in 1 2 3 4 5 6 7 8; do
+            rm -rf "$RUNNER_TEMP/d"; git clone -q --depth 1 --branch gto-rebuild-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" "$RUNNER_TEMP/d" || exit 1
+            mkdir -p "$RUNNER_TEMP/d/joint/$tag"; cp out/* "$RUNNER_TEMP/d/joint/$tag/"
+            (cd "$RUNNER_TEMP/d" && git add -A && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "joint $tag ${{ matrix.v.name }} g${{ matrix.g }}" && git push -q origin gto-rebuild-data) && break
+            sleep $((RANDOM % 20 + 5))
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: joint-${{ matrix.v.name }}-g${{ matrix.g }}
+          path: out/
+          retention-days: 14

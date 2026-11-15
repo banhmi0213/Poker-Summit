@@ -168,7 +168,8 @@ const t0=Date.now();
 if(process.env.RESETPF&&START>1&&!fs.existsSync(String(SAVE)+'.reset')){for(const t of [tBB,tBTN,tBB4,tBTNa]){t.reg.fill(0);t.avg.fill(0);}T0=START-1;fs.writeFileSync(SAVE+'.reset',String(T0));console.log('preflop reset at',T0);}
 else if(process.env.RESETPF&&fs.existsSync(String(SAVE)+'.reset'))T0=+fs.readFileSync(SAVE+'.reset','utf8');
 if(PFB>1)for(const t of [tBB,tBTN,tBB4,tBTNa])PFBUF.set(t,new Float64Array(t.reg.length));
-for(let it=START;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
+let DONE=START-1;const MAXMIN=+(process.env.MAXMIN||0);/* MAXMIN=m: stop training after m minutes and write the output (used on the CI runners) */
+for(let it=START;it<=ITERS;it++){if(MAXMIN&&Date.now()-t0>MAXMIN*60000){if(SAVE)save(DONE);break;}DONE=it;T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
 // EVAL=n: with the (loaded) average strategies, average each preflop action's value over n fresh board samples and output the best response per class
 if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set(t,Array.from({length:t.k},()=>new Float64Array(N)));
@@ -179,7 +180,7 @@ if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set
   out.nodes.push({name,actions:acts,strategy:st,ev});}
  fs.writeFileSync(arg('out','joint-eval.json'),JSON.stringify(out));console.log('eval done');process.exit(0);}
 // ---- output: average strategies per class
-const out={iters:ITERS,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
+const out={iters:DONE,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
 for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
  const st={};for(let c=0;c<NC;c++){avgStrat(t,c,sv);st[LABELS[c]]=[...sv.slice(0,t.k)].map(x=>+x.toFixed(3));}out.nodes.push({name,actions:acts,strategy:st});}
 fs.writeFileSync(arg('out','joint-proto.json'),JSON.stringify(out));console.log('done',((Date.now()-t0)/1000).toFixed(0)+'s');
