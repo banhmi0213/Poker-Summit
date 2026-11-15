@@ -60,7 +60,7 @@ buildBoards();
 // ---- regret tables
 function table(nInfo,k){return {k,reg:new Float64Array(nInfo*k),avg:new Float64Array(nInfo*k)};}
 function strat(t,info,out){const k=t.k;let s=0;for(let a=0;a<k;a++){const v=Math.max(0,t.reg[info*k+a]);out[a]=v;s+=v;}for(let a=0;a<k;a++)out[a]=s>0?out[a]/s:1/k;}
-let T=0;const avgStrat=(t,info,out)=>{const k=t.k;let s=0;for(let a=0;a<k;a++)s+=t.avg[info*k+a];for(let a=0;a<k;a++)out[a]=s>0?t.avg[info*k+a]/s:1/k;};
+let T=0,T0=0;const avgStrat=(t,info,out)=>{const k=t.k;let s=0;for(let a=0;a<k;a++)s+=t.avg[info*k+a];for(let a=0;a<k;a++)out[a]=s>0?t.avg[info*k+a]/s:1/k;};
 // Decision at a node: player p, infoset id per combo (or -1 = not live), k actions. children(a, reachP') -> [v0,v1].
 // Values are counterfactual (already weighted by the opponent's reach). Players: 0 = OOP (BB), 1 = IP (BTN).
 const sg=new Float64Array(8);const PFBUF=new Map(),PFB=+(process.env.PFB||1);/* PFB=k: preflop regrets are collected for k iterations and applied together (less sampling noise) */const CAP=new Map();// EVAL: per-action counterfactual values captured at chosen preflop tables
@@ -73,7 +73,7 @@ function decide(t,infoOf,p,reach,k,child,train){
   const vp=p===0?v0:v1,vo=p===0?v1:v0,co=p===0?c1:c0,cp=p===0?c0:c1;
   for(let i=0;i<N;i++){vp[i]+=sig[i*k+a]*cp[i];vo[i]+=co[i];}}
  if(CAP.has(t)){const acc=CAP.get(t);for(let a=0;a<k;a++)for(let i=0;i<N;i++)acc[a][i]+=cv[a][i];}
- if(train){const vp=p===0?v0:v1,w=T,R=PFBUF.get(t)||t.reg;for(let i=0;i<N;i++){const inf=infoOf[i];if(inf<0)continue;for(let a=0;a<k;a++){R[inf*k+a]+=cv[a][i]-vp[i];t.avg[inf*k+a]+=w*rp[i]*sig[i*k+a];}}
+ if(train){const vp=p===0?v0:v1,w=T-T0,R=PFBUF.get(t)||t.reg;for(let i=0;i<N;i++){const inf=infoOf[i];if(inf<0)continue;for(let a=0;a<k;a++){R[inf*k+a]+=cv[a][i]-vp[i];t.avg[inf*k+a]+=w*rp[i]*sig[i*k+a];}}
   // CFR+: floor regrets
   }
  return [v0,v1];
@@ -159,6 +159,9 @@ function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(
 if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
  for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const t=table(B,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
 const t0=Date.now();
+// RESETPF=1: after --load, clear the preflop regrets/averages (keep the trained postflop) and restart the averaging weights
+if(process.env.RESETPF&&START>1&&!fs.existsSync(String(SAVE)+'.reset')){for(const t of [tBB,tBTN,tBB4,tBTNa]){t.reg.fill(0);t.avg.fill(0);}T0=START-1;fs.writeFileSync(SAVE+'.reset',String(T0));console.log('preflop reset at',T0);}
+else if(process.env.RESETPF&&fs.existsSync(String(SAVE)+'.reset'))T0=+fs.readFileSync(SAVE+'.reset','utf8');
 if(PFB>1)for(const t of [tBB,tBTN,tBB4,tBTNa])PFBUF.set(t,new Float64Array(t.reg.length));
 for(let it=START;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
