@@ -26,7 +26,12 @@ const btnOpen=new Float64Array(N);for(let i=0;i<N;i++){const s=btnNode.strategy[
 // ---- boards: flops and runouts, ranks and buckets
 let boards=[];const SAMPLE=!!process.env.SAMPLE,SCORE=+(process.env.SCORE||0),POTB=+(process.env.POT||1);
 // SAMPLE=1 (chance sampling): fresh flops every iteration; postflop infosets keyed by flop texture instead of the flop itself.
-const RK='23456789TJQKA';function texOf(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=new Set(rk).size<3?1:0,hi=Math.max(...rk);return 'm'+su+'p'+pr+'h'+(hi>=11?2:hi>=8?1:0);}
+const RK='23456789TJQKA';function texOf(fl){if(process.env.TEX==='2')return tex2(fl);return tex1(fl);}
+// TEX=2: finer flop classes: suits, paired, top rank (A/K/Q/J-T/lower), second rank band, connected (spread of distinct ranks <=4)
+function tex2(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2).sort((a,b)=>b-a),u=[...new Set(rk)],pr=u.length<3?1:0;
+ const top=rk[0]>=12?4:rk[0]>=11?3:rk[0]>=10?2:rk[0]>=8?1:0,sec=pr?0:(u[1]>=9?2:u[1]>=6?1:0),con=!pr&&(u[0]-u[u.length-1]<=4||(u[0]===12&&u[u.length-1]<=3&&u[1]<=3))?1:0;
+ return 'm'+su+'p'+pr+'t'+top+'s'+sec+'c'+con;}
+function tex1(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=new Set(rk).size<3?1:0,hi=Math.max(...rk);return 'm'+su+'p'+pr+'h'+(hi>=11?2:hi>=8?1:0);}
 function buildBoards(){boards=[];
 const NV=+arg('rivers',3);
 function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N),live=[];
