@@ -24,7 +24,7 @@ const chart=JSON.parse(fs.readFileSync(arg('chart'),'utf8'));
 const btnNode=chart.nodes.find(n=>n.player==='BTN'&&n.history==='UTGF HJF COF');
 const btnOpen=new Float64Array(N);for(let i=0;i<N;i++){const s=btnNode.strategy[LABELS[cls[i]]];btnOpen[i]=s?s[1]:0;}
 // ---- boards: flops and runouts, ranks and buckets
-let boards=[];const SAMPLE=!!process.env.SAMPLE;
+let boards=[];const SAMPLE=!!process.env.SAMPLE,SCORE=+(process.env.SCORE||0),POTB=+(process.env.POT||1);
 // SAMPLE=1 (chance sampling): fresh flops every iteration; postflop infosets keyed by flop texture instead of the flop itself.
 const RK='23456789TJQKA';function texOf(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=new Set(rk).size<3?1:0,hi=Math.max(...rk);return 'm'+su+'p'+pr+'h'+(hi>=11?2:hi>=8?1:0);}
 function buildBoards(){boards=[];
@@ -46,7 +46,16 @@ for(let f=0;f<NF;f++){const used=new Set();const flop=[];while(flop.length<3){co
   for(let i=0;i<N;i++)if(tcnt[i])ths[i]/=tcnt[i];
   runs.push({okt,tinfo:quant(tl,ths),rivers});}
  for(let i=0;i<N;i++)if(fcnt[i])fhs[i]/=fcnt[i];const fl=[];for(let i=0;i<N;i++)if(ok[i])fl.push(i);
- const fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs,tex:texOf(flop)});}}
+ if(SCORE){// SCORE=n: flop E[HS^2] from n extra random turn+river runouts (the game tree keeps its own runouts)
+  fhs.fill(0);for(let s=0;s<SCORE;s++){let t,rv;do{t=Math.floor(rnd()*52);}while(used.has(t));do{rv=Math.floor(rnd()*52);}while(used.has(rv)||rv===t);
+   const ri=riverInfo([...flop,t,rv],ok);for(let i=0;i<N;i++)if(ri.okr[i])fhs[i]+=ri.pct[i]*ri.pct[i]/SCORE*1;}
+  // combos blocked by t/rv miss some samples: rescale by their hit count is skipped (small bias, same for all)
+ }
+ let fb;if(POTB>1){// POT=p: 2-D buckets = (B/p strength bins of E[HS^2]) x (p bins of potential E[HS^2]-HS_now^2 within each strength bin)
+  const now=riverInfo(flop,ok),pot=new Float64Array(N);for(let i=0;i<N;i++)pot[i]=fhs[i]-now.pct[i]*now.pct[i];
+  const SB=Math.floor(B/POTB),sb=new Int32Array(N);const s=fl.slice().sort((x,y)=>fhs[x]-fhs[y]);s.forEach((i,k)=>sb[i]=Math.min(SB-1,Math.floor(k/s.length*SB)));
+  fb=new Int32Array(N).fill(-1);for(let g=0;g<SB;g++){const m=fl.filter(i=>sb[i]===g).sort((x,y)=>pot[x]-pot[y]);m.forEach((i,k)=>fb[i]=g*POTB+Math.min(POTB-1,Math.floor(k/m.length*POTB)));}
+ }else fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs,tex:texOf(flop)});}}
 buildBoards();
 // ---- regret tables
 function table(nInfo,k){return {k,reg:new Float64Array(nInfo*k),avg:new Float64Array(nInfo*k)};}
