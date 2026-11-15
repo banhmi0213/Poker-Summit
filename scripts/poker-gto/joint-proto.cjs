@@ -63,7 +63,7 @@ function strat(t,info,out){const k=t.k;let s=0;for(let a=0;a<k;a++){const v=Math
 let T=0;const avgStrat=(t,info,out)=>{const k=t.k;let s=0;for(let a=0;a<k;a++)s+=t.avg[info*k+a];for(let a=0;a<k;a++)out[a]=s>0?t.avg[info*k+a]/s:1/k;};
 // Decision at a node: player p, infoset id per combo (or -1 = not live), k actions. children(a, reachP') -> [v0,v1].
 // Values are counterfactual (already weighted by the opponent's reach). Players: 0 = OOP (BB), 1 = IP (BTN).
-const sg=new Float64Array(8);
+const sg=new Float64Array(8);const PFBUF=new Map(),PFB=+(process.env.PFB||1);/* PFB=k: preflop regrets are collected for k iterations and applied together (less sampling noise) */const CAP=new Map();// EVAL: per-action counterfactual values captured at chosen preflop tables
 function decide(t,infoOf,p,reach,k,child,train){
  const rp=reach[p],sig=new Float64Array(N*k);
  for(let i=0;i<N;i++){const inf=infoOf[i];if(inf<0)continue;(train?strat:avgStrat)(t,inf,sg);for(let a=0;a<k;a++)sig[i*k+a]=sg[a];}
@@ -72,7 +72,8 @@ function decide(t,infoOf,p,reach,k,child,train){
   const r2=p===0?[nr,reach[1]]:[reach[0],nr];const [c0,c1]=child(a,r2);cv.push(p===0?c0:c1);
   const vp=p===0?v0:v1,vo=p===0?v1:v0,co=p===0?c1:c0,cp=p===0?c0:c1;
   for(let i=0;i<N;i++){vp[i]+=sig[i*k+a]*cp[i];vo[i]+=co[i];}}
- if(train){const vp=p===0?v0:v1,w=T;for(let i=0;i<N;i++){const inf=infoOf[i];if(inf<0)continue;for(let a=0;a<k;a++){t.reg[inf*k+a]+=cv[a][i]-vp[i];t.avg[inf*k+a]+=w*rp[i]*sig[i*k+a];}}
+ if(CAP.has(t)){const acc=CAP.get(t);for(let a=0;a<k;a++)for(let i=0;i<N;i++)acc[a][i]+=cv[a][i];}
+ if(train){const vp=p===0?v0:v1,w=T,R=PFBUF.get(t)||t.reg;for(let i=0;i<N;i++){const inf=infoOf[i];if(inf<0)continue;for(let a=0;a<k;a++){R[inf*k+a]+=cv[a][i]-vp[i];t.avg[inf*k+a]+=w*rp[i]*sig[i*k+a];}}
   // CFR+: floor regrets
   }
  return [v0,v1];
@@ -158,8 +159,17 @@ function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(
 if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
  for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const t=table(B,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
 const t0=Date.now();
-for(let it=START;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
+if(PFB>1)for(const t of [tBB,tBTN,tBB4,tBTNa])PFBUF.set(t,new Float64Array(t.reg.length));
+for(let it=START;it<=ITERS;it++){T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
+// EVAL=n: with the (loaded) average strategies, average each preflop action's value over n fresh board samples and output the best response per class
+if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set(t,Array.from({length:t.k},()=>new Float64Array(N)));
+ for(let e=0;e<n;e++){buildBoards();root(false);if(e%10===9)console.log('eval',e+1);}
+ const out={eval:n,nodes:[]};for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']]]){const acc=CAP.get(t),st={},ev={};
+  for(let c=0;c<NC;c++){const v=new Float64Array(t.k);let m=0;for(let i=0;i<N;i++)if(cls[i]===c){m++;for(let a=0;a<t.k;a++)v[a]+=acc[a][i];}
+   const best=v.indexOf(Math.max(...v));st[LABELS[c]]=[...v].map((x,a)=>a===best?1:0);ev[LABELS[c]]=[...v].map(x=>+(x/m/n).toFixed(4));}
+  out.nodes.push({name,actions:acts,strategy:st,ev});}
+ fs.writeFileSync(arg('out','joint-eval.json'),JSON.stringify(out));console.log('eval done');process.exit(0);}
 // ---- output: average strategies per class
 const out={iters:ITERS,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
 for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
