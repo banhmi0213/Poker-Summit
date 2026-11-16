@@ -1,0 +1,31 @@
+name: Poker joint solver collect
+
+# GTO rebuild: copies the artifacts of a finished poker-joint-exp run into gto-rebuild-data under joint/<tag>/
+# (used when the per-job pushes collided). Trigger: push a gto-joint-collect/<run id>-<tag> branch.
+on:
+  push:
+    branches: ["gto-joint-collect/**"]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - id: p
+        run: |
+          b="${GITHUB_REF_NAME##*/}"; echo "run=${b%%-*}" >> "$GITHUB_OUTPUT"; echo "tag=${b#*-}" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ steps.p.outputs.run }}
+          github-token: ${{ github.token }}
+          path: art
+          merge-multiple: true
+      - name: Push to gto-rebuild-data
+        run: |
+          ls art | wc -l
+          git clone -q --depth 1 --branch gto-rebuild-data "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" d
+          mkdir -p "d/joint/${{ steps.p.outputs.tag }}"; cp -n art/* "d/joint/${{ steps.p.outputs.tag }}/" || true
+          cd d && git add -A && git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -qm "joint ${{ steps.p.outputs.tag }} collect" && git push -q origin gto-rebuild-data
