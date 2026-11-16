@@ -158,7 +158,8 @@ function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(
     :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
 // Checkpoints (--save file every 100 iterations, --load file): regrets and averages of every table, and the iteration count.
 const SAVE=arg('save'),LOAD=arg('load');let START=1;
-const dumpT=t=>({k:t.k,reg:Array.from(t.reg),avg:Array.from(t.avg)}),loadT=(t,d)=>{t.reg.set(d.reg);t.avg.set(d.avg);};
+const b64=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength).toString('base64'),unb64=s=>{const b=Buffer.from(s,'base64'),f=new Float64Array(b.byteLength/8);new Uint8Array(f.buffer).set(b);return f;};
+const dumpT=t=>({k:t.k,reg:b64(t.reg),avg:b64(t.avg)}),loadT=(t,d)=>{t.reg.set(typeof d.reg==='string'?unb64(d.reg):d.reg);t.avg.set(typeof d.avg==='string'?unb64(d.avg):d.avg);};// checkpoints store the arrays as base64 Float64 (older files: plain arrays)
 function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(const P of [SRP,TBP]){o.post[P.name]={};for(const [k,t] of P.T2)o.post[P.name][k]=dumpT(t);}
  fs.writeFileSync(SAVE+'.tmp',JSON.stringify(o));fs.renameSync(SAVE+'.tmp',SAVE);}
 if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
