@@ -1,0 +1,32 @@
+flop set 100 of 1755 classes
+loaded ck/fs100-f8-s302.json from iteration 1705
+iter 1750 576s
+iter 1800 1219s
+iter 1850 1863s
+iter 1900 2509s
+iter 1950 3145s
+iter 2000 3774s
+iter 2050 4411s
+iter 2100 5055s
+iter 2150 5707s
+iter 2200 6353s
+iter 2250 6994s
+iter 2300 7634s
+iter 2350 8267s
+iter 2400 8901s
+iter 2450 9540s
+iter 2500 10192s
+iter 2550 10845s
+iter 2600 11491s
+iter 2650 12131s
+iter 2700 12776s
+iter 2750 13413s
+iter 2800 14060s
+iter 2850 14721s
+iter 2900 15371s
+iter 2950 16004s
+iter 3000 16655s
+iter 3050 17286s
+iter 3100 17927s
+iter 3150 18569s
+done 19203s
