@@ -1,0 +1,27 @@
+flop set 100 of 1755 classes
+iter 50 733s
+iter 100 1473s
+iter 150 2224s
+iter 200 2969s
+iter 250 3713s
+iter 300 4458s
+iter 350 5206s
+iter 400 5960s
+iter 450 6708s
+iter 500 7455s
+iter 550 8192s
+iter 600 8933s
+iter 650 9675s
+iter 700 10419s
+iter 750 11177s
+iter 800 11930s
+iter 850 12672s
+iter 900 13421s
+iter 950 14176s
+iter 1000 14943s
+iter 1050 15698s
+iter 1100 16452s
+iter 1150 17198s
+iter 1200 17947s
+iter 1250 18691s
+done 19212s
