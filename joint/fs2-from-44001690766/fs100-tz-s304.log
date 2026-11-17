@@ -1,0 +1,27 @@
+flop set 100 of 1755 classes
+loaded ck/fs100-tz-s304.json from iteration 100
+iter 150 783s
+iter 200 1563s
+iter 250 2334s
+iter 300 3097s
+iter 350 3867s
+iter 400 4639s
+iter 450 5410s
+iter 500 6193s
+iter 550 6960s
+iter 600 7722s
+iter 650 8516s
+iter 700 9318s
+iter 750 10093s
+iter 800 10881s
+iter 850 11669s
+iter 900 12453s
+iter 950 13223s
+iter 1000 13993s
+iter 1050 14755s
+iter 1100 15521s
+iter 1150 16297s
+iter 1200 17064s
+iter 1250 17836s
+iter 1300 18619s
+done 19212s
