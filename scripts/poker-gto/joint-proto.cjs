@@ -172,10 +172,22 @@ function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(
 const SAVE=arg('save'),LOAD=arg('load');let START=1;
 const b64=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength).toString('base64'),unb64=s=>{const b=Buffer.from(s,'base64'),f=new Float64Array(b.byteLength/8);new Uint8Array(f.buffer).set(b);return f;};
 const dumpT=t=>({k:t.k,reg:b64(t.reg),avg:b64(t.avg)}),loadT=(t,d)=>{t.reg.set(typeof d.reg==='string'?unb64(d.reg):d.reg);t.avg.set(typeof d.avg==='string'?unb64(d.avg):d.avg);};// checkpoints store the arrays as base64 Float64 (older files: plain arrays)
-function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(const P of [SRP,TBP]){o.post[P.name]={};for(const [k,t] of P.T2)o.post[P.name][k]=dumpT(t);}
- fs.writeFileSync(SAVE+'.tmp',JSON.stringify(o));fs.renameSync(SAVE+'.tmp',SAVE);}
-if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
- for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const len=typeof d.reg==='string'?Buffer.byteLength(d.reg,'base64')/8:d.reg.length;const t=table(len/d.k,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
+// Saved as binary (one JSON header line + the raw Float64 arrays), because a JSON string of a large flop set passes the
+// engine's string limit; older JSON checkpoints still load.
+function save(it){const ts=[],hdr={it,tabs:[]};const add=(g,key,t)=>{hdr.tabs.push([g,key,t.k,t.reg.length]);ts.push(t);};
+ [tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>add('pre',String(i),t));for(const P of [SRP,TBP])for(const [k,t] of P.T2)add(P.name,k,t);
+ const fd=fs.openSync(SAVE+'.tmp','w');fs.writeSync(fd,'PSCK1\n'+JSON.stringify(hdr)+'\n');
+ for(const t of ts)for(const a of [t.reg,t.avg])fs.writeSync(fd,Buffer.from(a.buffer,a.byteOffset,a.byteLength));
+ fs.closeSync(fd);fs.renameSync(SAVE+'.tmp',SAVE);}
+if(LOAD&&fs.existsSync(LOAD)){const buf=fs.readFileSync(LOAD);
+ if(buf.subarray(0,6).toString()==='PSCK1\n'){const e=buf.indexOf(10,6),hdr=JSON.parse(buf.subarray(6,e).toString());let off=e+1;
+  const rd=n=>{const f=new Float64Array(n);new Uint8Array(f.buffer).set(buf.subarray(off,off+n*8));off+=n*8;return f;};
+  const post={srp:SRP,'3bp':TBP},pre=[tBB,tBTN,tBB4,tBTNa];
+  for(const [g,key,k,n] of hdr.tabs){const reg=rd(n),avg=rd(n);if(g==='pre'){pre[+key].reg.set(reg);pre[+key].avg.set(avg);}else{post[g].T2.set(key,{k,reg,avg});}}
+  START=hdr.it+1;}
+ else{const o=JSON.parse(buf.toString('utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
+  for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const len=typeof d.reg==='string'?Buffer.byteLength(d.reg,'base64')/8:d.reg.length;const t=table(len/d.k,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;}
+ console.log('loaded',LOAD,'from iteration',START-1);}
 const t0=Date.now();
 // RESETPF=1: after --load, clear the preflop regrets/averages (keep the trained postflop) and restart the averaging weights
 if(process.env.RESETPF&&START>1&&!fs.existsSync(String(SAVE)+'.reset')){for(const t of [tBB,tBTN,tBB4,tBTNa]){t.reg.fill(0);t.avg.fill(0);}T0=START-1;fs.writeFileSync(SAVE+'.reset',String(T0));console.log('preflop reset at',T0);}

@@ -55,6 +55,8 @@ jobs:
         run: echo '${{ toJSON(matrix.v.env) }}' | jq -r 'to_entries[]|"\(.key)=\(.value)"' >> "$GITHUB_ENV"
       - name: Previous checkpoints
         if: needs.plan.outputs.from != ''
+        # a setting whose previous job failed has no checkpoints: it starts from the beginning
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           run-id: ${{ needs.plan.outputs.from }}
