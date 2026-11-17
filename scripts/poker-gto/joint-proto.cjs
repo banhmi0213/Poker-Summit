@@ -32,6 +32,18 @@ function tex2(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2).sort(
  const top=rk[0]>=12?4:rk[0]>=11?3:rk[0]>=10?2:rk[0]>=8?1:0,sec=pr?0:(u[1]>=9?2:u[1]>=6?1:0),con=!pr&&(u[0]-u[u.length-1]<=4||(u[0]===12&&u[u.length-1]<=3&&u[1]<=3))?1:0;
  return 'm'+su+'p'+pr+'t'+top+'s'+sec+'c'+con;}
 function tex1(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=new Set(rk).size<3?1:0,hi=Math.max(...rk);return 'm'+su+'p'+pr+'h'+(hi>=11?2:hi>=8?1:0);}
+// FLOPSET=K (2026/11/17 rebuild): K representative flops chosen once (suit-isomorphic classes, stratified by texture and
+// weighted by how often they occur); every iteration samples NF of them. Postflop infosets are keyed by the flop itself,
+// and on the flop each hand (combo) has its own strategy; turn and river keep the strength buckets.
+const FLOPSET=+(process.env.FLOPSET||0);let FLOPS=[];
+if(FLOPSET){const perms=[];for(const a of [0,1,2,3])for(const b of [0,1,2,3])for(const c of [0,1,2,3])for(const d of [0,1,2,3])if(new Set([a,b,c,d]).size===4)perms.push([a,b,c,d]);
+ const can=new Map();for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)for(let c=b+1;c<52;c++){let best=null;
+  for(const pm of perms){const f=[a,b,c].map(x=>(x&~3)|pm[x&3]).sort((x,y)=>x-y);const k=f.join(',');if(best===null||k<best)best=k;}
+  can.set(best,(can.get(best)||0)+1);}
+ const list=[...can.entries()].map(([k,w])=>{const f=k.split(',').map(Number);return {f,w,t:tex2(f),r:f.map(x=>x>>2).sort((x,y)=>y-x).join('.')};});
+ list.sort((x,y)=>x.t<y.t?-1:x.t>y.t?1:x.r<y.r?-1:x.r>y.r?1:0);const tot=list.reduce((s,x)=>s+x.w,0);let cum=0,j=0;
+ for(const x of list){const lo=cum/tot;cum+=x.w;const hi=cum/tot;while(j<FLOPSET&&(j+0.5)/FLOPSET<hi){if((j+0.5)/FLOPSET>=lo)FLOPS.push(x.f);j++;}}
+ console.log('flop set',FLOPS.length,'of',list.length,'classes');}
 function buildBoards(){boards=[];
 const NV=+arg('rivers',3);
 function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N),live=[];
@@ -40,7 +52,7 @@ function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N
  while(k<live.length){let e=k;while(e+1<live.length&&rank[live[e+1]]===rank[live[k]])e++;const p=((k+e)/2+0.5)/live.length;for(let q=k;q<=e;q++)pct[live[q]]=p;groups.push(live.slice(k,e+1));k=e+1;}
  const rinfo=new Int32Array(N).fill(-1);for(const i of live)rinfo[i]=Math.min(B-1,Math.floor(pct[i]*B));return {okr,rinfo,groups,pct};}
 const quant=(list,score)=>{const o=new Int32Array(N).fill(-1);const s=list.slice().sort((x,y)=>score[x]-score[y]);s.forEach((i,k)=>o[i]=Math.min(B-1,Math.floor(k/s.length*B)));return o;};
-for(let f=0;f<NF;f++){const used=new Set();const flop=[];while(flop.length<3){const c=Math.floor(rnd()*52);if(!used.has(c)){used.add(c);flop.push(c);}}
+for(let f=0;f<NF;f++){const used=new Set();let flop=[],fid=-1;if(FLOPSET){fid=Math.floor(rnd()*FLOPS.length);flop=FLOPS[fid].slice();flop.forEach(c=>used.add(c));}else while(flop.length<3){const c=Math.floor(rnd()*52);if(!used.has(c)){used.add(c);flop.push(c);}}
  const ok=new Uint8Array(N);for(let i=0;i<N;i++){const [a,b]=combos[i];ok[i]=used.has(a)||used.has(b)?0:1;}
  const fhs=new Float64Array(N),fcnt=new Float64Array(N),runs=[];const turns=new Set();
  for(let r=0;r<NR;r++){let t;do{t=Math.floor(rnd()*52);}while(used.has(t)||turns.has(t));turns.add(t);
@@ -60,7 +72,7 @@ for(let f=0;f<NF;f++){const used=new Set();const flop=[];while(flop.length<3){co
   const now=riverInfo(flop,ok),pot=new Float64Array(N);for(let i=0;i<N;i++)pot[i]=fhs[i]-now.pct[i]*now.pct[i];
   const SB=Math.floor(B/POTB),sb=new Int32Array(N);const s=fl.slice().sort((x,y)=>fhs[x]-fhs[y]);s.forEach((i,k)=>sb[i]=Math.min(SB-1,Math.floor(k/s.length*SB)));
   fb=new Int32Array(N).fill(-1);for(let g=0;g<SB;g++){const m=fl.filter(i=>sb[i]===g).sort((x,y)=>pot[x]-pot[y]);m.forEach((i,k)=>fb[i]=g*POTB+Math.min(POTB-1,Math.floor(k/m.length*POTB)));}
- }else fb=quant(fl,fhs);boards.push({flop,ok,finfo:fb,runs,tex:texOf(flop)});}}
+ }else fb=quant(fl,fhs);if(FLOPSET){fb=new Int32Array(N).fill(-1);for(const i of fl)fb[i]=i;}boards.push({flop,ok,finfo:fb,runs,tex:FLOPSET?'f'+fid:texOf(flop)});}}
 buildBoards();
 // ---- regret tables
 function table(nInfo,k){return {k,reg:new Float64Array(nInfo*k),avg:new Float64Array(nInfo*k)};}
@@ -100,7 +112,7 @@ function showdown(reach,pot,inv,run){const v0=new Float64Array(N),v1=new Float64
 const SIZES=process.env.SZ?JSON.parse(process.env.SZ):process.env.NOBET?{flop:[],turn:[],river:[]}:{flop:[0.33],turn:[0.75],river:[0.75,9]};
 function makePost(name,pot0,stack){
  const T2=new Map();// key -> table with B rows
- const tab=(key,k)=>{let t=T2.get(key);if(!t){t=table(B,k);T2.set(key,t);}return t;};
+ const tab=(key,k,rows)=>{let t=T2.get(key);if(!t){t=table(rows||B,k);T2.set(key,t);}return t;};
  const infoOf=(bucket)=>{const o=new Int32Array(N);for(let i=0;i<N;i++)o[i]=bucket[i];return o;};
  // one betting round. ctx: {street, key(board id), bucket(Int16Array), ok(mask)}; next(reach,pot,inv,hist) continues.
  function round(ctx,reach,pot,inv,hist,next,train){
@@ -112,7 +124,7 @@ function makePost(name,pot0,stack){
     // RAISE=1: one raise per street, call + 75% of the pot after calling (all-in if that is most of the stack); else turn/river all-in only
     if(!raised&&left(p)>callAmt){if(process.env.RAISE){let add=Math.round((callAmt+0.75*(pot+callAmt))*100)/100;if(add>0.6*left(p))add=left(p);acts.push(['r',add]);}
      else if(ctx.street!=='flop')acts.push(['r',left(p)]);}}
-   const t=tab(name+'|'+ctx.key+'|'+h+'|'+p,acts.length),info=ctx.info;
+   const t=tab(name+'|'+ctx.key+'|'+h+'|'+p,acts.length,FLOPSET&&ctx.street==='flop'?N:B),info=ctx.info;
    return decide(t,info,p,reach,acts.length,(a,r2)=>{const [k,amt]=acts[a],o=1-p;
     if(k==='f')return foldVal(r2,pot,inv,o,ctx.ok);
     if(k==='x'){if(p===1||h.endsWith('x'))return next(r2,pot,inv,h+'x');return node(1,r2,pot,inv,0,false,h+'x');}
@@ -163,7 +175,7 @@ const dumpT=t=>({k:t.k,reg:b64(t.reg),avg:b64(t.avg)}),loadT=(t,d)=>{t.reg.set(t
 function save(it){const o={it,pre:[tBB,tBTN,tBB4,tBTNa].map(dumpT),post:{}};for(const P of [SRP,TBP]){o.post[P.name]={};for(const [k,t] of P.T2)o.post[P.name][k]=dumpT(t);}
  fs.writeFileSync(SAVE+'.tmp',JSON.stringify(o));fs.renameSync(SAVE+'.tmp',SAVE);}
 if(LOAD&&fs.existsSync(LOAD)){const o=JSON.parse(fs.readFileSync(LOAD,'utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
- for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const t=table(B,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
+ for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const len=typeof d.reg==='string'?Buffer.byteLength(d.reg,'base64')/8:d.reg.length;const t=table(len/d.k,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;console.log('loaded',LOAD,'from iteration',o.it);}
 const t0=Date.now();
 // RESETPF=1: after --load, clear the preflop regrets/averages (keep the trained postflop) and restart the averaging weights
 if(process.env.RESETPF&&START>1&&!fs.existsSync(String(SAVE)+'.reset')){for(const t of [tBB,tBTN,tBB4,tBTNa]){t.reg.fill(0);t.avg.fill(0);}T0=START-1;fs.writeFileSync(SAVE+'.reset',String(T0));console.log('preflop reset at',T0);}
