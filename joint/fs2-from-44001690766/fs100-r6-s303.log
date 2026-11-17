@@ -1,0 +1,25 @@
+flop set 100 of 1755 classes
+loaded ck/fs100-r6-s303.json from iteration 1285
+iter 1300 270s
+iter 1350 1159s
+iter 1400 2048s
+iter 1450 2937s
+iter 1500 3827s
+iter 1550 4715s
+iter 1600 5602s
+iter 1650 6494s
+iter 1700 7401s
+iter 1750 8298s
+iter 1800 9204s
+iter 1850 10094s
+iter 1900 10996s
+iter 1950 11882s
+iter 2000 12765s
+iter 2050 13665s
+iter 2100 14563s
+iter 2150 15452s
+iter 2200 16333s
+iter 2250 17222s
+iter 2300 18108s
+iter 2350 19005s
+done 19206s
