@@ -1,0 +1,19 @@
+flop set 100 of 1755 classes
+iter 50 492s
+/home/runner/work/Poker-Summit/Poker-Summit/scripts/poker-gto/joint-proto.cjs:176
+ fs.writeFileSync(SAVE+'.tmp',JSON.stringify(o));fs.renameSync(SAVE+'.tmp',SAVE);}
+                                   ^
+
+RangeError: Invalid string length
+    at JSON.stringify (<anonymous>)
+    at save (/home/runner/work/Poker-Summit/Poker-Summit/scripts/poker-gto/joint-proto.cjs:176:36)
+    at Object.<anonymous> (/home/runner/work/Poker-Summit/Poker-Summit/scripts/poker-gto/joint-proto.cjs:185:287)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.22.2
