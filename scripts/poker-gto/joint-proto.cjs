@@ -35,7 +35,7 @@ function tex1(fl){const su=new Set(fl.map(c=>c&3)).size,rk=fl.map(c=>c>>2),pr=ne
 // FLOPSET=K (2026/11/17 rebuild): K representative flops chosen once (suit-isomorphic classes, stratified by texture and
 // weighted by how often they occur); every iteration samples NF of them. Postflop infosets are keyed by the flop itself,
 // and on the flop each hand (combo) has its own strategy; turn and river keep the strength buckets.
-const FLOPSET=+(process.env.FLOPSET||0);let FLOPS=[];
+const FLOPSET=+(process.env.FLOPSET||0);let FLOPS=[],FORCEF=-1;
 if(FLOPSET){const perms=[];for(const a of [0,1,2,3])for(const b of [0,1,2,3])for(const c of [0,1,2,3])for(const d of [0,1,2,3])if(new Set([a,b,c,d]).size===4)perms.push([a,b,c,d]);
  const can=new Map();for(let a=0;a<52;a++)for(let b=a+1;b<52;b++)for(let c=b+1;c<52;c++){let best=null;
   for(const pm of perms){const f=[a,b,c].map(x=>(x&~3)|pm[x&3]).sort((x,y)=>x-y);const k=f.join(',');if(best===null||k<best)best=k;}
@@ -52,7 +52,7 @@ function riverInfo(cards,ok){const okr=new Uint8Array(N),rank=new Float64Array(N
  while(k<live.length){let e=k;while(e+1<live.length&&rank[live[e+1]]===rank[live[k]])e++;const p=((k+e)/2+0.5)/live.length;for(let q=k;q<=e;q++)pct[live[q]]=p;groups.push(live.slice(k,e+1));k=e+1;}
  const rinfo=new Int32Array(N).fill(-1);for(const i of live)rinfo[i]=Math.min(B-1,Math.floor(pct[i]*B));return {okr,rinfo,groups,pct};}
 const quant=(list,score)=>{const o=new Int32Array(N).fill(-1);const s=list.slice().sort((x,y)=>score[x]-score[y]);s.forEach((i,k)=>o[i]=Math.min(B-1,Math.floor(k/s.length*B)));return o;};
-for(let f=0;f<NF;f++){const used=new Set();let flop=[],fid=-1;if(FLOPSET){fid=Math.floor(rnd()*FLOPS.length);flop=FLOPS[fid].slice();flop.forEach(c=>used.add(c));}else while(flop.length<3){const c=Math.floor(rnd()*52);if(!used.has(c)){used.add(c);flop.push(c);}}
+for(let f=0;f<NF;f++){const used=new Set();let flop=[],fid=-1;if(FLOPSET){fid=FORCEF>=0?FORCEF:Math.floor(rnd()*FLOPS.length);flop=FLOPS[fid].slice();flop.forEach(c=>used.add(c));}else while(flop.length<3){const c=Math.floor(rnd()*52);if(!used.has(c)){used.add(c);flop.push(c);}}
  const ok=new Uint8Array(N);for(let i=0;i<N;i++){const [a,b]=combos[i];ok[i]=used.has(a)||used.has(b)?0:1;}
  const fhs=new Float64Array(N),fcnt=new Float64Array(N),runs=[];const turns=new Set();
  for(let r=0;r<NR;r++){let t;do{t=Math.floor(rnd()*52);}while(used.has(t)||turns.has(t));turns.add(t);
@@ -208,6 +208,16 @@ if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set
 const out={iters:DONE,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
 for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
  const st={};for(let c=0;c<NC;c++){avgStrat(t,c,sv);st[LABELS[c]]=[...sv.slice(0,t.k)].map(x=>+x.toFixed(3));}out.nodes.push({name,actions:acts,strategy:st});}
+// DIAG2=1 (with FLOPSET): pot share (final winnings / 5.5) per class in the called single-raised pot, with the average
+// strategies, BB's calling range from the trained BB node and the BTN opening range, over every flop of the set.
+if(process.env.DIAG2&&FLOPSET){const sv=new Float64Array(3),r0=new Float64Array(N);for(let i=0;i<N;i++){avgStrat(tBB,cls[i],sv);r0[i]=sv[1];}
+ const reach=[r0,Float64Array.from(btnOpen)],acc=[new Float64Array(NC),new Float64Array(NC)],cnt=[new Float64Array(NC),new Float64Array(NC)];
+ for(let f=0;f<FLOPS.length;f++){FORCEF=f;buildBoards();const ok=boards[0].ok;const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
+  for(const [me,v,opp] of [[0,v0,reach[1]],[1,v1,reach[0]]]){let tot=0;const sc=new Float64Array(52);
+   for(let j=0;j<N;j++){if(!ok[j])continue;tot+=opp[j];sc[combos[j][0]]+=opp[j];sc[combos[j][1]]+=opp[j];}
+   for(let i=0;i<N;i++){if(!ok[i]||!reach[me][i])continue;const [a,b]=combos[i],os=tot-sc[a]-sc[b]+opp[i];if(os<=0)continue;acc[me][cls[i]]+=(v[i]/os+2.5)/5.5;cnt[me][cls[i]]++;}}}
+ FORCEF=-1;out.diag={oop:{},ip:{}};for(const [me,nm] of [[0,'oop'],[1,'ip']])for(let c=0;c<NC;c++)if(cnt[me][c])out.diag[nm][LABELS[c]]=+(acc[me][c]/cnt[me][c]).toFixed(4);
+ console.log('diag2 done');}
 fs.writeFileSync(arg('out','joint-proto.json'),JSON.stringify(out));console.log('done',((Date.now()-t0)/1000).toFixed(0)+'s');
 // Diagnosis (DIAG=1): realisation of the called pot for BB and BTN classes with the average strategies.
 if(process.env.DIAG){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
