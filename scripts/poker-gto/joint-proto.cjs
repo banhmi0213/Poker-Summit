@@ -152,6 +152,9 @@ function makePost(name,pot0,stack){
 }
 const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87);
 // ---- preflop part. Player 0 = BB, 1 = BTN. Invested: BB 1, BTN 2.5, SB 0.5 dead.
+// FREEZEPOST=1: postflop plays its average strategies and is not trained (with RESETPF: the preflop is solved again
+// against the trained postflop, whose current strategies are noisier than its averages)
+const FREEZE=!!process.env.FREEZEPOST;
 const classInfo=Int32Array.from(cls);
 const tBB=table(NC,3),tBTN=table(NC,3),tBB4=table(NC,2),tBTNa=table(NC,2);
 function allin(reach){// both all-in for 100: class-level equity, no card removal
@@ -162,10 +165,10 @@ function allin(reach){// both all-in for 100: class-level equity, no card remova
 function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];
  return decide(tBB,classInfo,0,reach,3,(a,r2)=>{
   if(a===0)return foldVal(r2,4,[1,2.5],1);
-  if(a===1)return SRP.play(r2,[2.5,2.5],train);
+  if(a===1)return SRP.play(r2,[2.5,2.5],train&&!FREEZE);
   return decide(tBTN,classInfo,1,r2,3,(b,r3)=>{
    if(b===0)return foldVal(r3,16,[13,2.5],0);
-   if(b===1)return TBP.play(r3,[13,13],train);
+   if(b===1)return TBP.play(r3,[13,13],train&&!FREEZE);
    return decide(tBB4,classInfo,0,r3,2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
     :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
 // Checkpoints (--save file every 100 iterations, --load file): regrets and averages of every table, and the iteration count.
