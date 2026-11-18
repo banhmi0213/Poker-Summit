@@ -9,8 +9,20 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "200",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "CALL4": "1"
+  }
+ },
+ {
+  "name": "fs200-p2f2-rm",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1"
   }
  },
  {
@@ -23,8 +35,20 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "250",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "CALL4": "1"
+  }
+ },
+ {
+  "name": "fs250-p2f2-rm",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "250",
+   "CALL4": "1"
   }
  }
 ]
