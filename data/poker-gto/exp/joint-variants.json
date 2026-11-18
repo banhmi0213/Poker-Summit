@@ -8,9 +8,55 @@
    "SAMPLE": "1",
    "PFB": "2",
    "TEX": "2",
-   "FLOPSET": "200",
-   "FREEZEPOST": "1",
-   "EVAL": "200"
+   "FLOPSET": "200"
+  }
+ },
+ {
+  "name": "fs250-p2f2",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "250"
+  }
+ },
+ {
+  "name": "fs200-p2f2-rm",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200"
+  }
+ },
+ {
+  "name": "fs250-p2f2-rm",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "250"
+  }
+ },
+ {
+  "name": "fs300-p2f2-rm",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "300"
   }
  }
 ]

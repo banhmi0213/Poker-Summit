@@ -98,14 +98,20 @@ function decide(t,infoOf,p,reach,k,child,train){
 function floorAll(ts){if(SAMPLE)return;for(const t of ts)for(let j=0;j<t.reg.length;j++)if(t.reg[j]<0)t.reg[j]=0;}
 // ---- terminals
 // fold: winner gets pot; each player's payoff = (won? pot:0) - invested. Weighted by opponent reach sum (no card removal).
+// Board card removal (2026/11/18): a sampled board rules out the opponent hands that use its cards, so postflop sums
+// cover only part of the opponent's range while the preflop fold values cover all of it; postflop values were about
+// 12-19% too small and every negative postflop value looked closer to a fold than it is (BB defended K5o, 86o, 75o).
+// Each postflop terminal now scales the opponent sum back up by (opponent's preflop reach) / (the part the board allows).
+let PRE=null;const RC=new Map();
+function ratio(ok){let q=RC.get(ok);if(q)return q;q=[1,1];if(PRE&&!process.env.NOREMOVAL)for(let p=0;p<2;p++){let a=0,k=0;for(let i=0;i<N;i++){a+=PRE[p][i];if(ok[i])k+=PRE[p][i];}q[p]=k>0?a/k:1;}RC.set(ok,q);return q;}
 function foldVal(reach,pot,inv,winner,okMask){let s0=0,s1=0;for(let i=0;i<N;i++){if(okMask&&!okMask[i])continue;s0+=reach[0][i];s1+=reach[1][i];}
  const v0=new Float64Array(N),v1=new Float64Array(N),p0=(winner===0?pot:0)-inv[0],p1=(winner===1?pot:0)-inv[1];
- for(let i=0;i<N;i++){if(okMask&&!okMask[i])continue;v0[i]=p0*s1;v1[i]=p1*s0;}return [v0,v1];}
+ const q=okMask?ratio(okMask):[1,1];for(let i=0;i<N;i++){if(okMask&&!okMask[i])continue;v0[i]=p0*s1*q[1];v1[i]=p1*s0*q[0];}return [v0,v1];}
 function showdown(reach,pot,inv,run){const v0=new Float64Array(N),v1=new Float64Array(N);
  for(const [me,op,v] of [[0,1,v0],[1,0,v1]]){const ro=reach[op];let tot=0;for(const g of run.groups)for(const j of g)tot+=ro[j];
   let below=0;for(const g of run.groups){let eq=0;for(const j of g)eq+=ro[j];const above=tot-below-eq;
    for(const i of g)v[i]=below*(pot-inv[me])+eq*(pot/2-inv[me])+above*(-inv[me]);below+=eq;}}
- return [v0,v1];}
+ const q=ratio(run.okr);for(let i=0;i<N;i++){v0[i]*=q[1];v1[i]*=q[0];}return [v0,v1];}
 // ---- postflop game (per pot type): flop, turn, river betting rounds over the sampled runouts.
 // Sizes: flop 33% pot; turn 75%; river 75% and all-in. Facing a bet: fold, call, and on the turn/river raise all-in.
 // Infosets: (pot type, board id, street, betting history) x strength bucket of the street.
@@ -147,7 +153,7 @@ function makePost(name,pot0,stack){
   const ctx={street:'flop',key:(SAMPLE?boards[f].tex:f)+'F',info:b.finfo,ok:b.ok};
   return round(ctx,mask(reach,b.ok),pot,inv,'',(rc,p,iv,h)=>{const out=[new Float64Array(N),new Float64Array(N)];
    for(let r=0;r<NR;r++){const [a,c]=streetTurn(f,r,rc,p,iv,h,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NR;out[1][i]+=c[i]/NR;}}return out;},train);}
- return {name,T2,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
+ return {name,T2,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();PRE=reach;RC.clear();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
   for(let f=0;f<NF;f++){const [a,b]=streetFlop(f,reach,pot,inv,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NF;out[1][i]+=b[i]/NF;}}return out;}};
 }
 const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87);
@@ -217,7 +223,7 @@ if(process.env.DIAG2&&FLOPSET){const sv=new Float64Array(3),r0=new Float64Array(
  const reach=[r0,Float64Array.from(btnOpen)],acc=[new Float64Array(NC),new Float64Array(NC)],cnt=[new Float64Array(NC),new Float64Array(NC)];
  for(let f=0;f<FLOPS.length;f++){FORCEF=f;buildBoards();const ok=boards[0].ok;const [v0,v1]=SRP.play(reach,[2.5,2.5],false);
   for(const [me,v,opp] of [[0,v0,reach[1]],[1,v1,reach[0]]]){let tot=0;const sc=new Float64Array(52);
-   for(let j=0;j<N;j++){if(!ok[j])continue;tot+=opp[j];sc[combos[j][0]]+=opp[j];sc[combos[j][1]]+=opp[j];}
+   for(let j=0;j<N;j++){tot+=opp[j];sc[combos[j][0]]+=opp[j];sc[combos[j][1]]+=opp[j];}
    for(let i=0;i<N;i++){if(!ok[i]||!reach[me][i])continue;const [a,b]=combos[i],os=tot-sc[a]-sc[b]+opp[i];if(os<=0)continue;acc[me][cls[i]]+=(v[i]/os+2.5)/5.5;cnt[me][cls[i]]++;}}}
  FORCEF=-1;out.diag={oop:{},ip:{}};for(const [me,nm] of [[0,'oop'],[1,'ip']])for(let c=0;c<NC;c++)if(cnt[me][c])out.diag[nm][LABELS[c]]=+(acc[me][c]/cnt[me][c]).toFixed(4);
  console.log('diag2 done');}
