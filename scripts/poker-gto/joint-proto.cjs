@@ -156,13 +156,16 @@ function makePost(name,pot0,stack){
  return {name,T2,tables:()=>[...T2.values()],play(reach,inv,train){base=inv.slice();PRE=reach;RC.clear();const pot=inv[0]+inv[1]+0.5;const out=[new Float64Array(N),new Float64Array(N)];
   for(let f=0;f<NF;f++){const [a,b]=streetFlop(f,reach,pot,inv,train);for(let i=0;i<N;i++){out[0][i]+=a[i]/NF;out[1][i]+=b[i]/NF;}}return out;}};
 }
-const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87);
+// CALL4=1 (2026/11/18): BB facing the 4-bet to 27.5 can also call (4-bet pot postflop, 55.5 in the pot, 72.5 behind);
+// before, BB could only fold or go all-in, which pushed its 3-bets toward hands that are happy to jam.
+const CALL4=!!process.env.CALL4;
+const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87),FBP=makePost('4bp',55.5,72.5);
 // ---- preflop part. Player 0 = BB, 1 = BTN. Invested: BB 1, BTN 2.5, SB 0.5 dead.
 // FREEZEPOST=1: postflop plays its average strategies and is not trained (with RESETPF: the preflop is solved again
 // against the trained postflop, whose current strategies are noisier than its averages)
 const FREEZE=!!process.env.FREEZEPOST;
 const classInfo=Int32Array.from(cls);
-const tBB=table(NC,3),tBTN=table(NC,3),tBB4=table(NC,2),tBTNa=table(NC,2);
+const tBB=table(NC,3),tBTN=table(NC,3),tBB4=table(NC,CALL4?3:2),tBTNa=table(NC,2);
 function allin(reach){// both all-in for 100: class-level equity, no card removal
  const pot=200.5,cr=[new Float64Array(NC),new Float64Array(NC)];for(let i=0;i<N;i++){cr[0][cls[i]]+=reach[0][i];cr[1][cls[i]]+=reach[1][i];}
  const v0=new Float64Array(N),v1=new Float64Array(N);const memo=[new Float64Array(NC),new Float64Array(NC)];
@@ -175,7 +178,8 @@ function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(
   return decide(tBTN,classInfo,1,r2,3,(b,r3)=>{
    if(b===0)return foldVal(r3,16,[13,2.5],0);
    if(b===1)return TBP.play(r3,[13,13],train&&!FREEZE);
-   return decide(tBB4,classInfo,0,r3,2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
+   return decide(tBB4,classInfo,0,r3,CALL4?3:2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
+    :CALL4&&c===1?FBP.play(r4,[27.5,27.5],train&&!FREEZE)
     :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
 // Checkpoints (--save file every 100 iterations, --load file): regrets and averages of every table, and the iteration count.
 const SAVE=arg('save'),LOAD=arg('load');let START=1;
@@ -184,18 +188,18 @@ const dumpT=t=>({k:t.k,reg:b64(t.reg),avg:b64(t.avg)}),loadT=(t,d)=>{t.reg.set(t
 // Saved as binary (one JSON header line + the raw Float64 arrays), because a JSON string of a large flop set passes the
 // engine's string limit; older JSON checkpoints still load.
 function save(it){const ts=[],hdr={it,tabs:[]};const add=(g,key,t)=>{hdr.tabs.push([g,key,t.k,t.reg.length]);ts.push(t);};
- [tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>add('pre',String(i),t));for(const P of [SRP,TBP])for(const [k,t] of P.T2)add(P.name,k,t);
+ [tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>add('pre',String(i),t));for(const P of [SRP,TBP,FBP])for(const [k,t] of P.T2)add(P.name,k,t);
  const fd=fs.openSync(SAVE+'.tmp','w');fs.writeSync(fd,'PSCK1\n'+JSON.stringify(hdr)+'\n');
  for(const t of ts)for(const a of [t.reg,t.avg])fs.writeSync(fd,Buffer.from(a.buffer,a.byteOffset,a.byteLength));
  fs.closeSync(fd);fs.renameSync(SAVE+'.tmp',SAVE);}
 if(LOAD&&fs.existsSync(LOAD)){const buf=fs.readFileSync(LOAD);
  if(buf.subarray(0,6).toString()==='PSCK1\n'){const e=buf.indexOf(10,6),hdr=JSON.parse(buf.subarray(6,e).toString());let off=e+1;
   const rd=n=>{const f=new Float64Array(n);new Uint8Array(f.buffer).set(buf.subarray(off,off+n*8));off+=n*8;return f;};
-  const post={srp:SRP,'3bp':TBP},pre=[tBB,tBTN,tBB4,tBTNa];
-  for(const [g,key,k,n] of hdr.tabs){const reg=rd(n),avg=rd(n);if(g==='pre'){pre[+key].reg.set(reg);pre[+key].avg.set(avg);}else{post[g].T2.set(key,{k,reg,avg});}}
+  const post={srp:SRP,'3bp':TBP,'4bp':FBP},pre=[tBB,tBTN,tBB4,tBTNa];
+  for(const [g,key,k,n] of hdr.tabs){const reg=rd(n),avg=rd(n);if(g==='pre'){if(pre[+key].reg.length===n){pre[+key].reg.set(reg);pre[+key].avg.set(avg);}else console.log('preflop table',key,'changed size: starts empty');}else{post[g].T2.set(key,{k,reg,avg});}}
   START=hdr.it+1;}
  else{const o=JSON.parse(buf.toString('utf8'));[tBB,tBTN,tBB4,tBTNa].forEach((t,i)=>loadT(t,o.pre[i]));
-  for(const P of [SRP,TBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const len=typeof d.reg==='string'?Buffer.byteLength(d.reg,'base64')/8:d.reg.length;const t=table(len/d.k,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;}
+  for(const P of [SRP,TBP,FBP])for(const [k,d] of Object.entries(o.post[P.name]||{})){const len=typeof d.reg==='string'?Buffer.byteLength(d.reg,'base64')/8:d.reg.length;const t=table(len/d.k,d.k);loadT(t,d);P.T2.set(k,t);}START=o.it+1;}
  console.log('loaded',LOAD,'from iteration',START-1);}
 const t0=Date.now();
 // RESETPF=1: after --load, clear the preflop regrets/averages (keep the trained postflop) and restart the averaging weights
@@ -203,7 +207,7 @@ if(process.env.RESETPF&&START>1&&!fs.existsSync(String(SAVE)+'.reset')){for(cons
 else if(process.env.RESETPF&&fs.existsSync(String(SAVE)+'.reset'))T0=+fs.readFileSync(SAVE+'.reset','utf8');
 if(PFB>1)for(const t of [tBB,tBTN,tBB4,tBTNa])PFBUF.set(t,new Float64Array(t.reg.length));
 let DONE=START-1;const MAXMIN=+(process.env.MAXMIN||0);/* MAXMIN=m: stop training after m minutes and write the output (used on the CI runners) */
-for(let it=START;it<=ITERS;it++){if(MAXMIN&&Date.now()-t0>MAXMIN*60000){if(SAVE)save(DONE);break;}DONE=it;T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables()]);
+for(let it=START;it<=ITERS;it++){if(MAXMIN&&Date.now()-t0>MAXMIN*60000){if(SAVE)save(DONE);break;}DONE=it;T=it;if(SAMPLE&&it>1)buildBoards();root(true);if(PFB>1&&it%PFB===0)for(const [t,b] of PFBUF){for(let j=0;j<b.length;j++)t.reg[j]+=b[j];b.fill(0);}if(SAVE&&(it%100===0||it===ITERS))save(it);floorAll([tBB,tBTN,tBB4,tBTNa,...SRP.tables(),...TBP.tables(),...FBP.tables()]);
  if(it%50===0)console.log('iter',it,((Date.now()-t0)/1000).toFixed(0)+'s');}
 // EVAL=n: with the (loaded) average strategies, average each preflop action's value over n fresh board samples and output the best response per class
 if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set(t,Array.from({length:t.k},()=>new Float64Array(N)));
@@ -215,7 +219,7 @@ if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set
  fs.writeFileSync(arg('out','joint-eval.json'),JSON.stringify(out));console.log('eval done');process.exit(0);}
 // ---- output: average strategies per class
 const out={iters:DONE,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
-for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
+for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,CALL4?['F','C','A']:['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
  const st={};for(let c=0;c<NC;c++){avgStrat(t,c,sv);st[LABELS[c]]=[...sv.slice(0,t.k)].map(x=>+x.toFixed(3));}out.nodes.push({name,actions:acts,strategy:st});}
 // DIAG2=1 (with FLOPSET): pot share (final winnings / 5.5) per class in the called single-raised pot, with the average
 // strategies, BB's calling range from the trained BB node and the BTN opening range, over every flop of the set.
