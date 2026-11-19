@@ -9,7 +9,9 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "200",
-   "CALL4": "1"
+   "CALL4": "1",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -22,7 +24,9 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "200",
-   "CALL4": "1"
+   "CALL4": "1",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -35,7 +39,9 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "250",
-   "CALL4": "1"
+   "CALL4": "1",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -48,7 +54,9 @@
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "250",
-   "CALL4": "1"
+   "CALL4": "1",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  }
 ]
