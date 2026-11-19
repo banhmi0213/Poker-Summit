@@ -4,7 +4,7 @@ name: Poker joint solver experiments
 # many settings at once. Variants are listed in data/poker-gto/exp/joint-variants.json ({name, args, env}).
 # Each job runs one variant with one seed per core for MAXMIN minutes; 3 groups per variant give 3 x cores seeds,
 # whose strategies are averaged outside the repository. Results go to gto-rebuild-data under joint/<tag>/.
-# Trigger: push a gto-joint/<tag> branch. A tag starting with "test" runs only the first variant, one group, 3 minutes.
+# Trigger: push a gto-joint/<tag> branch. A tag starting with "pair" (all heads-up spots) runs 2 groups per variant. A tag starting with "test" runs only the first variant, one group, 3 minutes.
 # Checkpoints are kept as artifacts (ck-<variant>-g<group>); a tag ending in "-from-<run id>" continues that run's checkpoints.
 on:
   push:
@@ -30,6 +30,7 @@ jobs:
           case "$tag" in *-from-*) echo "from=${tag##*-from-}" >> "$GITHUB_OUTPUT";; *) echo "from=" >> "$GITHUB_OUTPUT";; esac
           case "$tag" in
             test*) echo "variants=$(jq -c '.[:1]' data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1]' >> "$GITHUB_OUTPUT"; echo "minutes=3" >> "$GITHUB_OUTPUT";;
+            pair*) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2]' >> "$GITHUB_OUTPUT"; echo "minutes=320" >> "$GITHUB_OUTPUT";;
             *) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2,3]' >> "$GITHUB_OUTPUT"; echo "minutes=320" >> "$GITHUB_OUTPUT";;
           esac
   solve:

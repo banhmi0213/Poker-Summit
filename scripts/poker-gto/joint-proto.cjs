@@ -23,6 +23,21 @@ const N=combos.length;
 const chart=JSON.parse(fs.readFileSync(arg('chart'),'utf8'));
 const btnNode=chart.nodes.find(n=>n.player==='BTN'&&n.history==='UTGF HJF COF');
 const btnOpen=new Float64Array(N);for(let i=0;i<N;i++){const s=btnNode.strategy[LABELS[cls[i]]];btnOpen[i]=s?s[1]:0;}
+// PAIR=<opener>,<defender> (2026/11/20, all spots): any heads-up open spot of the chart, everyone else folding. Sizes
+// (open, 3-bet, 4-bet) and the opener's range come from --chart; blinds of players not in the hand are dead money.
+// Player 0 is always the one out of position after the flop. Without PAIR: BTN opens 2.5 vs BB (the original spot).
+const PAIR=process.env.PAIR?process.env.PAIR.split(','):null;const ORD=['UTG','HJ','CO','BTN','SB','BB'],POST={SB:0.5,BB:1};
+let SZO=2.5,SZT=13,SZF=27.5,DEAD=0.5,DI=0,OI=1,OPEN=btnOpen,PNAME=null;
+if(PAIR){const [O,D]=PAIR,iO=ORD.indexOf(O),iD=ORD.indexOf(D);if(iO<0||iD<=iO)throw new Error('bad PAIR '+PAIR);
+ const num=l=>parseFloat(String(l).match(/([0-9.]+)\s*BB/)[1]);const lab=a=>a.label||a;
+ const node=(pl,h)=>{const n=chart.nodes.find(x=>x.player===pl&&x.history===h);if(!n)throw new Error('chart node missing: '+pl+' | '+h);return n;};
+ const hO=ORD.slice(0,iO).map(p=>p+'F').join(' '),nO=node(O,hO),ia=nO.actions.findIndex(a=>lab(a).includes('オープン'));SZO=num(lab(nO.actions[ia]));
+ OPEN=new Float64Array(N);for(let i=0;i<N;i++){const s=nO.strategy[LABELS[cls[i]]];OPEN[i]=s?s[ia]:0;}
+ const hD=[hO,O+SZO,...ORD.slice(iO+1,iD).map(p=>p+'F')].filter(Boolean).join(' '),nD=node(D,hD);SZT=num(lab(nD.actions.find(a=>lab(a).includes('3ベット'))));
+ const nO3=node(O,hD+' '+D+SZT);SZF=num(lab(nO3.actions.find(a=>lab(a).includes('4ベット'))));
+ DEAD=1.5-(POST[O]||0)-(POST[D]||0);const dOOP=(D==='SB'||D==='BB')&&O!=='SB';DI=dOOP?0:1;OI=1-DI;PNAME=[O,D];
+ console.log('pair',O,'opens',SZO,'|',D,'3-bets',SZT,'|',O,'4-bets',SZF,'| dead',DEAD,'| out of position:',dOOP?D:O);}
+const POSTD=PAIR?(POST[PAIR[1]]||0):1,IV=(d,o)=>DI===0?[d,o]:[o,d];
 // ---- boards: flops and runouts, ranks and buckets
 let boards=[];const SAMPLE=!!process.env.SAMPLE,SCORE=+(process.env.SCORE||0),POTB=+(process.env.POT||1);
 // SAMPLE=1 (chance sampling): fresh flops every iteration; postflop infosets keyed by flop texture instead of the flop itself.
@@ -159,7 +174,7 @@ function makePost(name,pot0,stack){
 // CALL4=1 (2026/11/18): BB facing the 4-bet to 27.5 can also call (4-bet pot postflop, 55.5 in the pot, 72.5 behind);
 // before, BB could only fold or go all-in, which pushed its 3-bets toward hands that are happy to jam.
 const CALL4=!!process.env.CALL4;
-const SRP=makePost('srp',5.5,97.5),TBP=makePost('3bp',26.5,87),FBP=makePost('4bp',55.5,72.5);
+const SRP=makePost('srp',2*SZO+DEAD,100-SZO),TBP=makePost('3bp',2*SZT+DEAD,100-SZT),FBP=makePost('4bp',2*SZF+DEAD,100-SZF);
 // ---- preflop part. Player 0 = BB, 1 = BTN. Invested: BB 1, BTN 2.5, SB 0.5 dead.
 // FREEZEPOST=1: postflop plays its average strategies and is not trained (with RESETPF: the preflop is solved again
 // against the trained postflop, whose current strategies are noisier than its averages)
@@ -167,20 +182,20 @@ const FREEZE=!!process.env.FREEZEPOST;
 const classInfo=Int32Array.from(cls);
 const tBB=table(NC,3),tBTN=table(NC,3),tBB4=table(NC,CALL4?3:2),tBTNa=table(NC,2);
 function allin(reach){// both all-in for 100: class-level equity, no card removal
- const pot=200.5,cr=[new Float64Array(NC),new Float64Array(NC)];for(let i=0;i<N;i++){cr[0][cls[i]]+=reach[0][i];cr[1][cls[i]]+=reach[1][i];}
+ const pot=200+DEAD,cr=[new Float64Array(NC),new Float64Array(NC)];for(let i=0;i<N;i++){cr[0][cls[i]]+=reach[0][i];cr[1][cls[i]]+=reach[1][i];}
  const v0=new Float64Array(N),v1=new Float64Array(N);const memo=[new Float64Array(NC),new Float64Array(NC)];
  for(const [me,op] of [[0,1],[1,0]])for(let c=0;c<NC;c++){let s=0;for(let d=0;d<NC;d++){if(!cr[op][d])continue;s+=cr[op][d]*(EQ.eq[c][d]/10000*pot-100);}memo[me][c]=s;}
  for(let i=0;i<N;i++){v0[i]=memo[0][cls[i]];v1[i]=memo[1][cls[i]];}return [v0,v1];}
-function root(train){const reach=[new Float64Array(N).fill(1),Float64Array.from(btnOpen)];
- return decide(tBB,classInfo,0,reach,3,(a,r2)=>{
-  if(a===0)return foldVal(r2,4,[1,2.5],1);
-  if(a===1)return SRP.play(r2,[2.5,2.5],train&&!FREEZE);
-  return decide(tBTN,classInfo,1,r2,3,(b,r3)=>{
-   if(b===0)return foldVal(r3,16,[13,2.5],0);
-   if(b===1)return TBP.play(r3,[13,13],train&&!FREEZE);
-   return decide(tBB4,classInfo,0,r3,CALL4?3:2,(c,r4)=>c===0?foldVal(r4,41,[13,27.5],1)
-    :CALL4&&c===1?FBP.play(r4,[27.5,27.5],train&&!FREEZE)
-    :decide(tBTNa,classInfo,1,r4,2,(d,r5)=>d===0?foldVal(r5,128,[100,27.5],0):allin(r5),train),train);},train);},train);}
+function root(train){const reach=[null,null];reach[DI]=new Float64Array(N).fill(1);reach[OI]=Float64Array.from(OPEN);
+ return decide(tBB,classInfo,DI,reach,3,(a,r2)=>{
+  if(a===0)return foldVal(r2,SZO+POSTD+DEAD,IV(POSTD,SZO),OI);
+  if(a===1)return SRP.play(r2,[SZO,SZO],train&&!FREEZE);
+  return decide(tBTN,classInfo,OI,r2,3,(b,r3)=>{
+   if(b===0)return foldVal(r3,SZT+SZO+DEAD,IV(SZT,SZO),DI);
+   if(b===1)return TBP.play(r3,[SZT,SZT],train&&!FREEZE);
+   return decide(tBB4,classInfo,DI,r3,CALL4?3:2,(c,r4)=>c===0?foldVal(r4,SZF+SZT+DEAD,IV(SZT,SZF),OI)
+    :CALL4&&c===1?FBP.play(r4,[SZF,SZF],train&&!FREEZE)
+    :decide(tBTNa,classInfo,OI,r4,2,(d,r5)=>d===0?foldVal(r5,100+SZF+DEAD,IV(100,SZF),DI):allin(r5),train),train);},train);},train);}
 // Checkpoints (--save file every 100 iterations, --load file): regrets and averages of every table, and the iteration count.
 const SAVE=arg('save'),LOAD=arg('load');let START=1;
 const b64=a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength).toString('base64'),unb64=s=>{const b=Buffer.from(s,'base64'),f=new Float64Array(b.byteLength/8);new Uint8Array(f.buffer).set(b);return f;};
@@ -219,7 +234,9 @@ if(process.env.EVAL){const n=+process.env.EVAL;for(const t of [tBB,tBTN])CAP.set
  fs.writeFileSync(arg('out','joint-eval.json'),JSON.stringify(out));console.log('eval done');process.exit(0);}
 // ---- output: average strategies per class
 const out={iters:DONE,flops:NF,runs:NR,buckets:B,nodes:[]};const sv=new Float64Array(4);
-for(const [name,t,acts] of [['BB vs BTN 2.5',tBB,['F','C','R13']],['BTN vs BB 3bet',tBTN,['F','C','R27.5']],['BB vs 4bet',tBB4,CALL4?['F','C','A']:['F','A']],['BTN vs allin',tBTNa,['F','C']]]){
+const NM=PNAME?[PNAME[1]+' vs '+PNAME[0]+' '+SZO,PNAME[0]+' vs '+PNAME[1]+' 3bet',PNAME[1]+' vs 4bet',PNAME[0]+' vs allin']:['BB vs BTN 2.5','BTN vs BB 3bet','BB vs 4bet','BTN vs allin'];
+if(PNAME)out.pair={opener:PNAME[0],defender:PNAME[1],open:SZO,threebet:SZT,fourbet:SZF,dead:DEAD};
+for(const [name,t,acts] of [[NM[0],tBB,['F','C','R'+SZT]],[NM[1],tBTN,['F','C','R'+SZF]],[NM[2],tBB4,CALL4?['F','C','A']:['F','A']],[NM[3],tBTNa,['F','C']]]){
  const st={};for(let c=0;c<NC;c++){avgStrat(t,c,sv);st[LABELS[c]]=[...sv.slice(0,t.k)].map(x=>+x.toFixed(3));}out.nodes.push({name,actions:acts,strategy:st});}
 // DIAG2=1 (with FLOPSET): pot share (final winnings / 5.5) per class in the called single-raised pot, with the average
 // strategies, BB's calling range from the trained BB node and the BTN opening range, over every flop of the set.
