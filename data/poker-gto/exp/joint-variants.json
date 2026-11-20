@@ -10,9 +10,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,HJ",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "UTG,HJ"
   }
  },
  {
@@ -26,9 +24,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,CO",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "UTG,CO"
   }
  },
  {
@@ -42,9 +38,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,BTN",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "UTG,BTN"
   }
  },
  {
@@ -58,9 +52,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,SB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "UTG,SB"
   }
  },
  {
@@ -74,9 +66,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,BB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "UTG,BB"
   }
  },
  {
@@ -90,9 +80,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,CO",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "HJ,CO"
   }
  },
  {
@@ -106,9 +94,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,BTN",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "HJ,BTN"
   }
  },
  {
@@ -122,9 +108,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,SB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "HJ,SB"
   }
  },
  {
@@ -138,9 +122,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,BB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "HJ,BB"
   }
  },
  {
@@ -154,9 +136,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "CO,BTN",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "CO,BTN"
   }
  },
  {
@@ -170,9 +150,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "CO,SB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "CO,SB"
   }
  },
  {
@@ -186,9 +164,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "CO,BB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "CO,BB"
   }
  },
  {
@@ -202,9 +178,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "BTN,SB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "BTN,SB"
   }
  },
  {
@@ -218,9 +192,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "BTN,BB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "BTN,BB"
   }
  },
  {
@@ -234,9 +206,7 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "SB,BB",
-   "RESETPF": "1",
-   "FREEZEPOST": "1"
+   "PAIR": "SB,BB"
   }
  }
 ]
