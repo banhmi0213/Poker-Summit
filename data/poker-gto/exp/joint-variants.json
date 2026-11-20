@@ -1,19 +1,5 @@
 [
  {
-  "name": "p-CO-BTN",
-  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
-  "env": {
-   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
-   "RAISE": "1",
-   "SAMPLE": "1",
-   "PFB": "2",
-   "TEX": "2",
-   "FLOPSET": "200",
-   "CALL4": "1",
-   "PAIR": "CO,BTN"
-  }
- },
- {
   "name": "p-UTG-HJ",
   "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
   "env": {
@@ -24,7 +10,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,HJ"
+   "PAIR": "UTG,HJ",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -38,7 +26,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,CO"
+   "PAIR": "UTG,CO",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -52,7 +42,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,BTN"
+   "PAIR": "UTG,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -66,7 +58,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,SB"
+   "PAIR": "UTG,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -80,7 +74,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "UTG,BB"
+   "PAIR": "UTG,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -94,7 +90,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,CO"
+   "PAIR": "HJ,CO",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -108,7 +106,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,BTN"
+   "PAIR": "HJ,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -122,7 +122,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,SB"
+   "PAIR": "HJ,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -136,7 +138,25 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "HJ,BB"
+   "PAIR": "HJ,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-CO-BTN",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "CO,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -150,7 +170,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "CO,SB"
+   "PAIR": "CO,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -164,7 +186,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "CO,BB"
+   "PAIR": "CO,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -178,7 +202,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "BTN,SB"
+   "PAIR": "BTN,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -192,7 +218,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "BTN,BB"
+   "PAIR": "BTN,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
@@ -206,7 +234,9 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "SB,BB"
+   "PAIR": "SB,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  }
 ]
