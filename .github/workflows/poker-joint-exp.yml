@@ -30,7 +30,7 @@ jobs:
           case "$tag" in *-from-*) echo "from=${tag##*-from-}" >> "$GITHUB_OUTPUT";; *) echo "from=" >> "$GITHUB_OUTPUT";; esac
           case "$tag" in
             test*) echo "variants=$(jq -c '.[:1]' data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1]' >> "$GITHUB_OUTPUT"; echo "minutes=3" >> "$GITHUB_OUTPUT";;
-            pair*) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2]' >> "$GITHUB_OUTPUT"; echo "minutes=320" >> "$GITHUB_OUTPUT";;
+            pair*) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2]' >> "$GITHUB_OUTPUT"; echo "minutes=300" >> "$GITHUB_OUTPUT";;
             *) echo "variants=$(jq -c . data/poker-gto/exp/joint-variants.json)" >> "$GITHUB_OUTPUT"; echo 'groups=[1,2,3]' >> "$GITHUB_OUTPUT"; echo "minutes=320" >> "$GITHUB_OUTPUT";;
           esac
   solve:
