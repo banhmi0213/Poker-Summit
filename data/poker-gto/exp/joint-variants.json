@@ -1,6 +1,6 @@
 [
  {
-  "name": "sw-base",
+  "name": "p-UTG-HJ",
   "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
   "env": {
    "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
@@ -10,53 +10,13 @@
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "SB,BB"
+   "PAIR": "UTG,HJ",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
-  "name": "sw-b80",
-  "args": "--flops 2 --runs 4 --rivers 3 --buckets 80",
-  "env": {
-   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
-   "RAISE": "1",
-   "SAMPLE": "1",
-   "PFB": "2",
-   "TEX": "2",
-   "FLOPSET": "200",
-   "CALL4": "1",
-   "PAIR": "SB,BB"
-  }
- },
- {
-  "name": "sw-r6",
-  "args": "--flops 2 --runs 6 --rivers 4 --buckets 40",
-  "env": {
-   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
-   "RAISE": "1",
-   "SAMPLE": "1",
-   "PFB": "2",
-   "TEX": "2",
-   "FLOPSET": "200",
-   "CALL4": "1",
-   "PAIR": "SB,BB"
-  }
- },
- {
-  "name": "sw-sz3",
-  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
-  "env": {
-   "SZ": "{\"flop\":[0.33,0.75,1.25],\"turn\":[0.5,0.75,1.25],\"river\":[0.5,0.75,1.5,9]}",
-   "RAISE": "1",
-   "SAMPLE": "1",
-   "PFB": "2",
-   "TEX": "2",
-   "FLOPSET": "200",
-   "CALL4": "1",
-   "PAIR": "SB,BB"
-  }
- },
- {
-  "name": "sw-fs400",
+  "name": "p-UTG-CO",
   "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
   "env": {
    "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
@@ -64,22 +24,219 @@
    "SAMPLE": "1",
    "PFB": "2",
    "TEX": "2",
-   "FLOPSET": "400",
+   "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "SB,BB"
+   "PAIR": "UTG,CO",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  },
  {
-  "name": "sw-noraise",
+  "name": "p-UTG-BTN",
   "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
   "env": {
    "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
    "SAMPLE": "1",
    "PFB": "2",
    "TEX": "2",
    "FLOPSET": "200",
    "CALL4": "1",
-   "PAIR": "SB,BB"
+   "PAIR": "UTG,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-UTG-SB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "UTG,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-UTG-BB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "UTG,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-HJ-CO",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "HJ,CO",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-HJ-BTN",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "HJ,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-HJ-SB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "HJ,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-HJ-BB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "HJ,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-CO-BTN",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "CO,BTN",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-CO-SB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "CO,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-CO-BB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "CO,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-BTN-SB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "BTN,SB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-BTN-BB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "BTN,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
+  }
+ },
+ {
+  "name": "p-SB-BB",
+  "args": "--flops 2 --runs 4 --rivers 3 --buckets 40",
+  "env": {
+   "SZ": "{\"flop\":[0.33,0.75],\"turn\":[0.75,1.25],\"river\":[0.75,1.5,9]}",
+   "RAISE": "1",
+   "SAMPLE": "1",
+   "PFB": "2",
+   "TEX": "2",
+   "FLOPSET": "200",
+   "CALL4": "1",
+   "PAIR": "SB,BB",
+   "RESETPF": "1",
+   "FREEZEPOST": "1"
   }
  }
 ]
