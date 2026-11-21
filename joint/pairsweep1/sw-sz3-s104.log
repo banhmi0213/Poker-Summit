@@ -1,0 +1,41 @@
+pair SB opens 3.5 | BB 3-bets 10.5 | SB 4-bets 28.4 | dead 0 | out of position: SB
+flop set 200 of 1755 classes
+iter 50 469s
+iter 100 951s
+iter 150 1433s
+iter 200 1922s
+iter 250 2406s
+iter 300 2896s
+iter 350 3385s
+iter 400 3884s
+iter 450 4379s
+iter 500 4882s
+iter 550 5378s
+iter 600 5878s
+iter 650 6371s
+iter 700 6871s
+iter 750 7362s
+iter 800 7862s
+iter 850 8364s
+iter 900 8870s
+iter 950 9365s
+iter 1000 9871s
+iter 1050 10371s
+iter 1100 10869s
+iter 1150 11366s
+iter 1200 11870s
+iter 1250 12371s
+iter 1300 12873s
+iter 1350 13372s
+iter 1400 13877s
+iter 1450 14372s
+iter 1500 14871s
+iter 1550 15365s
+iter 1600 15863s
+iter 1650 16359s
+iter 1700 16862s
+iter 1750 17355s
+iter 1800 17854s
+iter 1850 18350s
+iter 1900 18854s
+done 19208s
