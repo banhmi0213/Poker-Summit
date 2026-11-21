@@ -1,0 +1,51 @@
+pair SB opens 3.5 | BB 3-bets 10.5 | SB 4-bets 28.4 | dead 0 | out of position: SB
+flop set 200 of 1755 classes
+loaded ck/sw-sz3-s104.json from iteration 1935
+iter 1950 106s
+iter 2000 462s
+iter 2050 831s
+iter 2100 1195s
+iter 2150 1548s
+iter 2200 1900s
+iter 2250 2266s
+iter 2300 2644s
+iter 2350 3026s
+iter 2400 3411s
+iter 2450 3806s
+iter 2500 4206s
+iter 2550 4595s
+iter 2600 5005s
+iter 2650 5404s
+iter 2700 5794s
+iter 2750 6182s
+iter 2800 6560s
+iter 2850 6962s
+iter 2900 7370s
+iter 2950 7753s
+iter 3000 8156s
+iter 3050 8524s
+iter 3100 8900s
+iter 3150 9266s
+iter 3200 9635s
+iter 3250 10010s
+iter 3300 10386s
+iter 3350 10774s
+iter 3400 11172s
+iter 3450 11573s
+iter 3500 11968s
+iter 3550 12378s
+iter 3600 12783s
+iter 3650 13175s
+iter 3700 13579s
+iter 3750 13947s
+iter 3800 14322s
+iter 3850 14708s
+iter 3900 15073s
+iter 3950 15437s
+iter 4000 15847s
+iter 4050 16227s
+iter 4100 16611s
+iter 4150 16980s
+iter 4200 17348s
+iter 4250 17727s
+done 18017s
